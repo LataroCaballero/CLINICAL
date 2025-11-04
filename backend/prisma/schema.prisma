@@ -56,8 +56,18 @@ model Usuario {
   password      String
   rolId         String
   rol           Rol         @relation(fields: [rolId], references: [id])
+  tipoRol TipoRol  @default(PACIENTE)
   consultorioId String
   consultorio   Consultorio @relation(fields: [consultorioId], references: [id])
+  asignacionesSecretaria SecretariaProfesional[]
+
+  // Relación inversa con ObraSocial (creador / editor)
+  obrasSocialesCreadas  ObraSocial[] @relation("ObraSocialCreador")
+  obrasSocialesEditadas ObraSocial[] @relation("ObraSocialEditor")
+
+  // Relación inversa con Pago (quien registró el pago)
+  pagosCreados Pago[] @relation("PagoCreador")
+
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 }
@@ -78,6 +88,32 @@ model Permiso {
   rol    Rol    @relation(fields: [rolId], references: [id])
 }
 
+enum TipoRol {
+  ADMIN
+  PROFESIONAL
+  SECRETARIA
+  PACIENTE
+}
+
+// =============================
+//         SECRETARIAS
+// =============================
+
+model SecretariaProfesional {
+  id             String       @id @default(uuid())
+  secretariaId   String
+  profesionalId  String
+
+  // secretaria = Usuario con rol SECRETARIA
+  secretaria     Usuario      @relation(fields: [secretariaId], references: [id])
+  // profesional = fila en tabla Profesional
+  profesional    Profesional  @relation(fields: [profesionalId], references: [id])
+
+  // Evita duplicados de asignación
+  @@unique([secretariaId, profesionalId])
+}
+
+
 // =============================
 //        PROFESIONALES
 // =============================
@@ -93,6 +129,9 @@ model Profesional {
   turnos         Turno[]
   historias      HistoriaClinica[]
   presupuestos   Presupuesto[]
+  secretarias     SecretariaProfesional[]
+  pagos     Pago[]
+  insumos   Insumo[]
 }
 
 model Especialidad {
@@ -219,12 +258,20 @@ model Medicamento {
 // =============================
 
 model ObraSocial {
-  id        String           @id @default(uuid())
-  nombre    String
-  contacto  String?
-  planes    PlanObraSocial[]
-  pacientes Paciente[]
+  id               String           @id @default(uuid())
+  nombre           String
+  contacto         String?
+  planes           PlanObraSocial[]
+  pacientes        Paciente[]
+
+  // Trazabilidad (quién creó / editó)
+  creadaPorId      String
+  actualizadaPorId String?
+
+  creadaPor        Usuario          @relation("ObraSocialCreador", fields: [creadaPorId], references: [id])
+  actualizadaPor   Usuario?         @relation("ObraSocialEditor", fields: [actualizadaPorId], references: [id])
 }
+
 
 model PlanObraSocial {
   id           String     @id @default(uuid())
@@ -249,12 +296,24 @@ model CuentaCorriente {
 }
 
 model Pago {
-  id        String          @id @default(uuid())
-  cuentaId  String
-  cuenta    CuentaCorriente @relation(fields: [cuentaId], references: [id])
-  monto     Float
-  medioPago String
-  fecha     DateTime        @default(now())
+  id              String          @id @default(uuid())
+  cuentaId        String
+  cuenta          CuentaCorriente @relation(fields: [cuentaId], references: [id])
+  monto           Float
+  medioPago       String
+
+  // QUIEN COBRA (propietario de la agenda y finanzas)
+  profesionalId   String
+  profesional     Profesional     @relation(fields: [profesionalId], references: [id])
+
+  // QUIEN CARGÓ el pago (secretaria/admin/profesional), puede ser null
+  creadoPorId     String?
+  creadoPor       Usuario?        @relation("PagoCreador", fields: [creadoPorId], references: [id])
+
+  fecha           DateTime        @default(now())
+
+  @@index([profesionalId])
+  @@index([creadoPorId])
 }
 
 model Factura {
@@ -293,7 +352,14 @@ model Insumo {
   consultorioId String
   consultorio   Consultorio    @relation(fields: [consultorioId], references: [id])
   detalles      DetalleOrden[]
+
+  // Dueño del stock (profesional)
+  profesionalId String?
+  profesional   Profesional?   @relation(fields: [profesionalId], references: [id])
+
+  @@index([profesionalId])
 }
+
 
 model Proveedor {
   id       String        @id @default(uuid())

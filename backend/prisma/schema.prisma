@@ -1,3 +1,7 @@
+// -----------------------------
+//  Prisma Schema – CLINICAL v1.0
+// -----------------------------
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -7,10 +11,343 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  password  String
-  role      String   @default("admin")
-  createdAt DateTime @default(now())
+// =============================
+//        MODELO BASE
+// =============================
+
+model Consultorio {
+  id            String   @id @default(uuid())
+  nombre        String
+  logo          String?
+  colorPrimario String?
+  horario       String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relaciones
+  sucursales     Sucursal[]
+  usuarios       Usuario[]
+  profesionales  Profesional[]
+  pacientes      Paciente[]
+  turnos         Turno[]
+  configuracion  Configuracion?
+  notificaciones ConfiguracionNotificacion?
+  insumos        Insumo[]
+  ordenes        OrdenCompra[]
+}
+
+model Sucursal {
+  id            String      @id @default(uuid())
+  nombre        String
+  direccion     String?
+  horario       String?
+  consultorioId String
+  consultorio   Consultorio @relation(fields: [consultorioId], references: [id])
+}
+
+// =============================
+//        USUARIOS / ROLES
+// =============================
+
+model Usuario {
+  id            String      @id @default(uuid())
+  nombre        String
+  email         String      @unique
+  password      String
+  rolId         String
+  rol           Rol         @relation(fields: [rolId], references: [id])
+  consultorioId String
+  consultorio   Consultorio @relation(fields: [consultorioId], references: [id])
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+model Rol {
+  id          String    @id @default(uuid())
+  nombre      String
+  descripcion String?
+  usuarios    Usuario[]
+  permisos    Permiso[]
+}
+
+model Permiso {
+  id     String @id @default(uuid())
+  modulo String
+  accion String
+  rolId  String
+  rol    Rol    @relation(fields: [rolId], references: [id])
+}
+
+// =============================
+//        PROFESIONALES
+// =============================
+
+model Profesional {
+  id             String                    @id @default(uuid())
+  nombre         String
+  apellido       String
+  matricula      String?
+  consultorioId  String
+  consultorio    Consultorio               @relation(fields: [consultorioId], references: [id])
+  especialidades ProfesionalEspecialidad[]
+  turnos         Turno[]
+  historias      HistoriaClinica[]
+  presupuestos   Presupuesto[]
+}
+
+model Especialidad {
+  id            String                    @id @default(uuid())
+  nombre        String
+  descripcion   String?
+  profesionales ProfesionalEspecialidad[]
+}
+
+model ProfesionalEspecialidad {
+  id             String       @id @default(uuid())
+  profesionalId  String
+  especialidadId String
+  profesional    Profesional  @relation(fields: [profesionalId], references: [id])
+  especialidad   Especialidad @relation(fields: [especialidadId], references: [id])
+}
+
+// =============================
+//        PACIENTES
+// =============================
+
+model Paciente {
+  id              String            @id @default(uuid())
+  nombre          String
+  apellido        String
+  dni             String?
+  telefono        String?
+  email           String?
+  obraSocialId    String?
+  planId          String?
+  obraSocial      ObraSocial?       @relation(fields: [obraSocialId], references: [id])
+  plan            PlanObraSocial?   @relation(fields: [planId], references: [id])
+  cuentaCorriente CuentaCorriente?
+  historias       HistoriaClinica[]
+  turnos          Turno[]
+  facturas        Factura[]
+  presupuestos    Presupuesto[]
+  consultorioId   String
+  consultorio     Consultorio       @relation(fields: [consultorioId], references: [id])
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+}
+
+// =============================
+//        TURNOS
+// =============================
+
+model Turno {
+  id            String      @id @default(uuid())
+  fecha         DateTime
+  estadoId      String
+  estado        EstadoTurno @relation(fields: [estadoId], references: [id])
+  pacienteId    String
+  paciente      Paciente    @relation(fields: [pacienteId], references: [id])
+  profesionalId String
+  profesional   Profesional @relation(fields: [profesionalId], references: [id])
+  consultorioId String
+  consultorio   Consultorio @relation(fields: [consultorioId], references: [id])
+  observaciones String?
+  createdAt     DateTime    @default(now())
+}
+
+model EstadoTurno {
+  id     String  @id @default(uuid())
+  nombre String  @unique
+  color  String?
+  turnos Turno[]
+}
+
+// =============================
+//     HISTORIA CLÍNICA
+// =============================
+
+model HistoriaClinica {
+  id             String            @id @default(uuid())
+  pacienteId     String
+  profesionalId  String
+  paciente       Paciente          @relation(fields: [pacienteId], references: [id])
+  profesional    Profesional       @relation(fields: [profesionalId], references: [id])
+  registros      RegistroClinico[]
+  prescripciones Prescripcion[]
+  createdAt      DateTime          @default(now())
+}
+
+model RegistroClinico {
+  id         String          @id @default(uuid())
+  historiaId String
+  historia   HistoriaClinica @relation(fields: [historiaId], references: [id])
+  contenido  String
+  tipo       String?
+  archivoId  String?
+  archivo    Archivo?        @relation(fields: [archivoId], references: [id])
+  fecha      DateTime        @default(now())
+}
+
+model Archivo {
+  id              String            @id @default(uuid())
+  url             String
+  tipo            String?
+  tamaño         Int?
+  createdAt       DateTime          @default(now())
+  RegistroClinico RegistroClinico[]
+}
+
+model Prescripcion {
+  id            String          @id @default(uuid())
+  historiaId    String
+  historia      HistoriaClinica @relation(fields: [historiaId], references: [id])
+  medicamentoId String
+  medicamento   Medicamento     @relation(fields: [medicamentoId], references: [id])
+  dosis         String?
+  observaciones String?
+}
+
+model Medicamento {
+  id             String         @id @default(uuid())
+  nombre         String
+  descripcion    String?
+  prescripciones Prescripcion[]
+}
+
+// =============================
+//     OBRAS SOCIALES
+// =============================
+
+model ObraSocial {
+  id        String           @id @default(uuid())
+  nombre    String
+  contacto  String?
+  planes    PlanObraSocial[]
+  pacientes Paciente[]
+}
+
+model PlanObraSocial {
+  id           String     @id @default(uuid())
+  nombre       String
+  cobertura    String?
+  obraSocialId String
+  obraSocial   ObraSocial @relation(fields: [obraSocialId], references: [id])
+  pacientes    Paciente[]
+}
+
+// =============================
+//        FINANZAS
+// =============================
+
+model CuentaCorriente {
+  id         String   @id @default(uuid())
+  pacienteId String   @unique
+  paciente   Paciente @relation(fields: [pacienteId], references: [id])
+  saldo      Float    @default(0)
+  pagos      Pago[]
+  createdAt  DateTime @default(now())
+}
+
+model Pago {
+  id        String          @id @default(uuid())
+  cuentaId  String
+  cuenta    CuentaCorriente @relation(fields: [cuentaId], references: [id])
+  monto     Float
+  medioPago String
+  fecha     DateTime        @default(now())
+}
+
+model Factura {
+  id           String   @id @default(uuid())
+  pacienteId   String
+  paciente     Paciente @relation(fields: [pacienteId], references: [id])
+  total        Float
+  fechaEmision DateTime @default(now())
+  estado       String
+}
+
+model Presupuesto {
+  id            String      @id @default(uuid())
+  pacienteId    String
+  paciente      Paciente    @relation(fields: [pacienteId], references: [id])
+  profesionalId String
+  profesional   Profesional @relation(fields: [profesionalId], references: [id])
+  montoEstimado Float
+  estado        String
+  fecha         DateTime    @default(now())
+}
+
+// =============================
+//        INVENTARIO
+// =============================
+
+model Insumo {
+  id            String         @id @default(uuid())
+  nombre        String
+  cantidad      Float
+  unidad        String
+  stockMinimo   Float
+  vencimiento   DateTime?
+  proveedorId   String
+  proveedor     Proveedor      @relation(fields: [proveedorId], references: [id])
+  consultorioId String
+  consultorio   Consultorio    @relation(fields: [consultorioId], references: [id])
+  detalles      DetalleOrden[]
+}
+
+model Proveedor {
+  id       String        @id @default(uuid())
+  nombre   String
+  contacto String?
+  email    String?
+  insumos  Insumo[]
+  ordenes  OrdenCompra[]
+}
+
+model OrdenCompra {
+  id            String         @id @default(uuid())
+  proveedorId   String
+  proveedor     Proveedor      @relation(fields: [proveedorId], references: [id])
+  fecha         DateTime       @default(now())
+  total         Float
+  estado        String
+  detalles      DetalleOrden[]
+  consultorioId String
+  consultorio   Consultorio    @relation(fields: [consultorioId], references: [id])
+}
+
+model DetalleOrden {
+  id         String      @id @default(uuid())
+  ordenId    String
+  insumoId   String
+  orden      OrdenCompra @relation(fields: [ordenId], references: [id])
+  insumo     Insumo      @relation(fields: [insumoId], references: [id])
+  cantidad   Float
+  precioUnit Float
+}
+
+// =============================
+//      CONFIGURACIÓN
+// =============================
+
+model Configuracion {
+  id               String      @id @default(uuid())
+  consultorioId    String      @unique
+  consultorio      Consultorio @relation(fields: [consultorioId], references: [id])
+  horarioAtencion  String?
+  diasNoLaborables String?
+}
+
+model ConfiguracionNotificacion {
+  id            String      @id @default(uuid())
+  consultorioId String      @unique
+  consultorio   Consultorio @relation(fields: [consultorioId], references: [id])
+  activo        Boolean     @default(true)
+  horarioEnvio  String?
+}
+
+generator erd {
+  provider = "prisma-erd-generator"
+  output   = "./ERD/diagram.svg" // ✅ ruta + extensión válidas
+  format   = "svg"
 }

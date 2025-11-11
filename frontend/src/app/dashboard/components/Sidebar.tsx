@@ -1,98 +1,111 @@
 "use client";
-
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 import {
-  LayoutDashboard,
-  Users2,
-  CalendarDays,
+  Home,
+  Calendar,
+  Users,
   FileText,
   DollarSign,
-  ChevronLeft,
-  ChevronRight,
+  Settings,
+  LayoutDashboard,
+  Boxes,
+  BarChart2,
 } from "lucide-react";
+import Link from "next/link";
+import { useUIStore } from "@/lib/stores/useUIStore";
+import { motion } from "framer-motion";
+import Image from "next/image";
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-
-const links = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/dashboard/pacientes", label: "Pacientes", icon: Users2 },
-  { href: "/dashboard/turnos", label: "Turnos", icon: CalendarDays },
-  { href: "/dashboard/historia-clinica", label: "Historias Clínicas", icon: FileText },
-  { href: "/dashboard/finanzas", label: "Finanzas", icon: DollarSign },
-];
+import { usePathname } from "next/navigation";
+import UserMenu from "./UserMenu";
 
 export default function Sidebar() {
+  const { sidebarCollapsed, expandSidebar, collapseSidebar } = useUIStore();
+  const [isHovering, setIsHovering] = useState(false);
   const pathname = usePathname();
-  const [collapsed, setCollapsed] = useState(false);
+
+  const handleMouseEnter = () => {
+    if (sidebarCollapsed) {
+      setIsHovering(true);
+      expandSidebar();
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (isHovering) {
+      setIsHovering(false);
+      collapseSidebar();
+    }
+  };
+
+  const links = [
+    { href: "/dashboard", label: "Inicio", icon: <LayoutDashboard className="w-5 h-5" /> },
+    { href: "/dashboard/turnos", label: "Turnos", icon: <Calendar className="w-5 h-5" /> },
+    { href: "/dashboard/pacientes", label: "Pacientes", icon: <Users className="w-5 h-5" /> },
+    { href: "/dashboard/finanzas", label: "Finanzas", icon: <DollarSign className="w-5 h-5" /> },
+    { href: "/dashboard/stock", label: "Stock", icon: <Boxes className="w-5 h-5" /> },
+    { href: "/dashboard/reportes", label: "Reportes", icon: <BarChart2 className="w-5 h-5" /> },
+    { href: "/dashboard/configuracion", label: "Configuración", icon: <Settings className="w-5 h-5" /> },
+  ];
 
   return (
     <motion.aside
-      animate={{ width: collapsed ? 80 : 240 }}
-      transition={{ duration: 0.2 }}
-      className="h-screen border-r bg-white flex flex-col justify-between shadow-sm"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      animate={{ width: sidebarCollapsed ? "5rem" : "16rem" }}
+      transition={{ duration: 0.25 }}
+      className="h-screen bg-white/70 backdrop-blur-md border-r border-gray-200 flex flex-col justify-between p-4 transition-shadow duration-200 shadow-sm hover:shadow-md"
     >
-      {/* Header */}
-      <div>
-        <div className="flex items-center justify-between px-4 py-4 border-b">
-          <h1
-            className={`text-xl font-bold text-indigo-600 transition-opacity ${
-              collapsed ? "opacity-0" : "opacity-100"
-            }`}
-          >
-            CLINICAL
-          </h1>
-          <button
-            onClick={() => setCollapsed(!collapsed)}
-            className="hover:bg-gray-100 rounded-md p-1 transition"
-          >
-            {collapsed ? (
-              <ChevronRight className="w-5 h-5 text-gray-600" />
-            ) : (
-              <ChevronLeft className="w-5 h-5 text-gray-600" />
-            )}
-          </button>
+      <div className="flex flex-col gap-6">
+        {/* Header */}
+        <div className="flex items-center justify-center md:justify-start gap-2 px-1">
+          {!sidebarCollapsed && (
+            <h2 className="text-sm font-semibold text-gray-800">Federico García</h2>
+          )}
         </div>
 
-        {/* Links */}
-        <nav className="mt-4 flex flex-col">
-          {links.map(({ href, label, icon: Icon }) => {
-            const active = pathname === href;
-            return (
-              <Link
-                key={href}
-                href={href}
-                className={`flex items-center gap-3 px-4 py-2.5 rounded-md mx-2 mb-1 transition-colors ${
-                  active
-                    ? "bg-indigo-50 text-indigo-600 font-medium"
-                    : "text-gray-700 hover:bg-gray-50"
-                }`}
-              >
-                <Icon className="w-5 h-5 shrink-0" />
-                <AnimatePresence>
-                  {!collapsed && (
-                    <motion.span
-                      initial={{ opacity: 0, x: -5 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -5 }}
-                      transition={{ duration: 0.15 }}
-                    >
-                      {label}
-                    </motion.span>
-                  )}
-                </AnimatePresence>
-              </Link>
-            );
-          })}
+        {/* Navigation */}
+        <nav className="flex flex-col gap-1 mt-2">
+          {links.map(({ href, label, icon }) => (
+            <NavItem
+              key={href}
+              href={href}
+              icon={icon}
+              label={label}
+              collapsed={sidebarCollapsed}
+              active={pathname === href}
+            />
+          ))}
         </nav>
       </div>
 
-      {/* Footer */}
-      <div className="border-t p-4 text-center">
-        {!collapsed && (
-          <p className="text-xs text-gray-500">© 2025 Clinical v2.0</p>
-        )}
+      {/* Footer del Sidebar */}
+      <div className="mt-auto pt-4 border-t border-gray-200">
+        <UserMenu />
       </div>
     </motion.aside>
+  );
+}
+
+interface NavItemProps {
+  href: string;
+  icon: React.ReactNode;
+  label: string;
+  collapsed: boolean;
+  active?: boolean;
+}
+
+function NavItem({ href, icon, label, collapsed, active }: NavItemProps) {
+  return (
+    <Link
+      href={href}
+      className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
+        active
+          ? "bg-indigo-50 text-indigo-600 font-medium"
+          : "text-gray-700 hover:bg-gray-50 hover:text-indigo-600"
+      } ${collapsed ? "justify-center" : ""}`}
+    >
+      {icon}
+      {!collapsed && <span className="font-medium">{label}</span>}
+    </Link>
   );
 }

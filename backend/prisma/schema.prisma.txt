@@ -206,7 +206,6 @@ model Turno {
   consultorio   Consultorio @relation(fields: [consultorioId], references: [id])
   observaciones String?
   createdAt     DateTime    @default(now())
-  Pago          Pago[]
 }
 
 model EstadoTurno {
@@ -394,33 +393,21 @@ model Pago {
   cuenta    CuentaCorriente @relation(fields: [cuentaId], references: [id])
   monto     Float
   medioPago String
-  concepto  String? // ej: "Pago de turno", "Pago de presupuesto", "Venta de producto"
 
-  // QUIÉN COBRA (propietario de la agenda y finanzas)
+  // QUIEN COBRA (propietario de la agenda y finanzas)
   profesionalId String
   profesional   Profesional @relation(fields: [profesionalId], references: [id])
 
-  // QUIÉN CARGÓ el pago (secretaria/admin/profesional)
+  // QUIEN CARGÓ el pago (secretaria/admin/profesional), puede ser null
   creadoPorId String?
   creadoPor   Usuario? @relation("PagoCreador", fields: [creadoPorId], references: [id])
 
-  // RELACIONES CON ORIGEN DE PAGO
-  turnoId String?
-  turno   Turno?  @relation(fields: [turnoId], references: [id])
-
-  presupuestoId String?
-  presupuesto   Presupuesto? @relation(fields: [presupuestoId], references: [id])
-
-  ventaId String? @unique
-  venta   Venta?  @relation(fields: [ventaId], references: [id])
+  venta Venta?
 
   fecha DateTime @default(now())
 
   @@index([profesionalId])
   @@index([creadoPorId])
-  @@index([turnoId])
-  @@index([presupuestoId])
-  @@index([ventaId])
 }
 
 model Factura {
@@ -441,7 +428,6 @@ model Presupuesto {
   montoEstimado Float
   estado        String
   fecha         DateTime    @default(now())
-  Pago          Pago[]
 }
 
 model LiquidacionPractica {
@@ -544,19 +530,20 @@ model Venta {
   fecha DateTime @default(now())
   total Decimal  @db.Decimal(10, 2)
 
-  // QUIÉN REGISTRA la venta (secretaria o profesional)
+  // Quién registró (secretaria o profesional)
   usuarioId String
   usuario   Usuario @relation(fields: [usuarioId], references: [id])
 
-  // OPCIONAL: asociar la venta a un paciente
+  // Opcional: asociar a paciente
   pacienteId String?
   paciente   Paciente? @relation(fields: [pacienteId], references: [id])
 
-  // LÍNEAS DE VENTA (detalle de productos vendidos)
+  // Relación con líneas
   lineas VentaLinea[]
 
-  // RELACIÓN 1–1 inversa con PAGO
-  pago Pago?
+  // Enlace 1–1 con el pago/registro financiero
+  pago   Pago?   @relation(fields: [pagoId], references: [id])
+  pagoId String? @unique // importante: 1 venta ↔ 1 pago
 
   createdAt DateTime @default(now())
 }

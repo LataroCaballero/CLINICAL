@@ -43,10 +43,12 @@ export default function NewHistoryEntryModal({ open, onOpenChange, onSave }: any
   const [pago, setPago] = useState({ monto: "", metodo: "", nota: "" });
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
 
-  const handleFileUpload = (e: any) => {
-    const files = Array.from(e.target.files);
-    setAttachments((prev) => [...prev, ...files]);
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files) return;
+    const files = Array.from(e.target.files) as File[];
+    setAttachments((prev: File[]) => [...prev, ...files]);
   };
+  
 
   const handleSave = () => {
     const newEntry = {

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { DollarSign, CreditCard, TrendingUp, Users, FileText, BarChart3 } from "lucide-react";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid } from "recharts";
 import { useState } from "react";
+import Link from "next/link";
 
 const COLORS = ["#4F46E5", "#22C55E", "#F97316", "#EAB308"];
 
@@ -126,22 +127,32 @@ export default function FinanzasPage() {
 
       {/* Accesos rápidos */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Button className="h-20 flex flex-col items-center justify-center gap-2 bg-indigo-500 hover:bg-indigo-600 text-white">
+      <Link href="/dashboard/finanzas/cuentas-corrientes">
+        <Button className="h-20 w-full flex flex-col items-center justify-center gap-2 bg-indigo-500 hover:bg-indigo-600 text-white">
           <FileText className="w-5 h-5" />
           Cuentas Corrientes
         </Button>
-        <Button className="h-20 flex flex-col items-center justify-center gap-2 bg-indigo-500 hover:bg-indigo-600 text-white">
+      </Link>
+      <Link href="/dashboard/finanzas/facturacion">
+        <Button className="h-20 w-full flex flex-col items-center justify-center gap-2 bg-indigo-500 hover:bg-indigo-600 text-white">
           <CreditCard className="w-5 h-5" />
           Facturación
         </Button>
-        <Button className="h-20 flex flex-col items-center justify-center gap-2 bg-indigo-500 hover:bg-indigo-600 text-white">
+      </Link>
+
+      <Link href="/dashboard/finanzas/pagos">
+        <Button className="h-20 w-full flex flex-col items-center justify-center gap-2 bg-indigo-500 hover:bg-indigo-600 text-white">
           <DollarSign className="w-5 h-5" />
           Pagos
         </Button>
-        <Button className="h-20 flex flex-col items-center justify-center gap-2 bg-indigo-500 hover:bg-indigo-600 text-white">
+      </Link>
+
+      <Link href="/dashboard/finanzas/reportes">
+        <Button className="h-20 w-full flex flex-col items-center justify-center gap-2 bg-indigo-500 hover:bg-indigo-600 text-white">
           <BarChart3 className="w-5 h-5" />
           Reportes
         </Button>
+      </Link>
       </div>
     </div>
   );

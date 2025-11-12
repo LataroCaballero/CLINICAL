@@ -100,6 +100,7 @@ export default function NewMovementModal({ open, onOpenChange, type, onSave }: a
                   mode="single"
                   selected={fecha}
                   onSelect={setFecha}
+                  required={true}
                   initialFocus
                   locale={es}
                 />

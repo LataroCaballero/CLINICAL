@@ -121,6 +121,7 @@ export default function NewAppointmentModal({ open, onOpenChange, selectedEvent 
                     onSelect={(date) =>
                       setForm((prev) => ({ ...prev, fecha: date }))
                     }
+                    required={true}
                     initialFocus
                     locale={es}
                   />

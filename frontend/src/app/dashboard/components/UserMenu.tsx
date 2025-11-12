@@ -19,7 +19,7 @@ export default function UserMenu() {
       <DropdownMenuTrigger asChild>
         <button className="w-full flex items-center gap-3 rounded-lg p-2 hover:bg-gray-100 transition">
           <Avatar className="h-9 w-9">
-            <AvatarImage src="/avatar.png" alt={name} />
+            <AvatarImage src="/images/avatar.png" alt={name} />
             <AvatarFallback>{name[0]}</AvatarFallback>
           </Avatar>
           <div className="flex flex-col text-left">

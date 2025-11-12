@@ -10,6 +10,8 @@ import { AlertTriangle, Package, PlusCircle } from "lucide-react";
 import ProductDetailModal from "./components/ProductDetailModal";
 import MovementModal from "./components/MovementModal";
 import NewProductModal from "./components/NewProductModal";
+import Link from "next/link";
+import { ShoppingCart, LayoutGrid } from "lucide-react";
 
 export default function StockPage() {
   const [search, setSearch] = useState("");
@@ -94,28 +96,32 @@ export default function StockPage() {
       </div>
 
       {/* --- Barra de búsqueda y acciones --- */}
-      <div className="flex justify-between items-center mt-4">
-        <Input
-          placeholder="Buscar producto..."
-          className="w-1/3"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-        <div className="flex gap-2">
-        <Button
-            className="bg-indigo-600 text-white hover:bg-indigo-700"
-            onClick={() => setOpenNewProduct(true)}
-        >
-            + Agregar producto
-        </Button>
+      <div className="flex flex-col md:flex-row justify-between items-center mt-4 gap-3">
+      <Input
+        placeholder="Buscar producto..."
+        className="w-full md:w-1/3"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+      />
 
-        <NewProductModal
-            open={openNewProduct}
-            onOpenChange={setOpenNewProduct}
-            onSave={(p) => console.log("Nuevo producto:", p)}
-        />
-        </div>
+      <div className="flex flex-wrap gap-2 justify-end">
+        <Link href="/dashboard/stock/ventas">
+          <Button variant="outline" className="flex items-center gap-2">
+            <ShoppingCart className="w-4 h-4" /> Registrar venta
+          </Button>
+        </Link>
+
+        <Link href="/dashboard/stock/catalogo">
+          <Button variant="outline" className="flex items-center gap-2">
+            <LayoutGrid className="w-4 h-4" /> Ver catálogo
+          </Button>
+        </Link>
+
+        <Button className="bg-indigo-600 text-white hover:bg-indigo-700 flex items-center gap-2">
+          <PlusCircle className="w-4 h-4" /> Agregar producto
+        </Button>
       </div>
+    </div>
 
       {/* --- Tabla principal --- */}
       <Card className="shadow-sm mt-4">

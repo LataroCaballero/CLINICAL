@@ -196,7 +196,7 @@ export default function StockPage() {
                     open={openMovement}
                     onOpenChange={setOpenMovement}
                     product={selectedProduct}
-                    onSave={(mov) => console.log("Movimiento registrado:", mov)}
+                    onSave={(mov: any) => console.log("Movimiento registrado:", mov)}
                     />
                     </TableCell>
                   </TableRow>

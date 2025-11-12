@@ -163,6 +163,7 @@ export default function NewHistoryEntryModal({ open, onOpenChange, onSave }: any
                         mode="single"
                         selected={fecha}
                         onSelect={setFecha}
+                        required={true}
                         initialFocus
                         locale={es}
                       />

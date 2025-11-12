@@ -1,7 +1,7 @@
 "use client";
 import QuickAppointment from "../components/QuickAppointment";
 import UpcomingAppointments from "../components/UpcomingAppointments";
-import { Calendar, momentLocalizer } from "react-big-calendar";
+import { Calendar, momentLocalizer, View } from "react-big-calendar";
 import moment from "moment";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,7 +27,9 @@ moment.locale("es");
 const localizer = momentLocalizer(moment);
 
 export default function TurnosPage() {
-  const [view, setView] = useState("week");
+  type ViewType = "day" | "week" | "month";
+
+  const [view, setView] = useState<ViewType>("week");
   const [date, setDate] = useState(new Date());
   const [openModal, setOpenModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
@@ -73,7 +75,7 @@ export default function TurnosPage() {
             Agenda semanal
           </CardTitle>
           <div className="flex gap-2 items-center">
-            <Select onValueChange={(v) => setView(v)} defaultValue={view}>
+            <Select onValueChange={(v) => setView(v as ViewType)} defaultValue={view}>
               <SelectTrigger className="w-[120px]">
                 <SelectValue placeholder="Vista" />
               </SelectTrigger>
@@ -133,7 +135,7 @@ export default function TurnosPage() {
               view={view}
               date={date}
               onNavigate={() => {}}
-              onView={setView}
+              onView={(v) => setView(v as ViewType)}
               onSelectEvent={handleSelectEvent}
               toolbar={false}
               messages={{

@@ -11,11 +11,17 @@ import { useUIStore } from "@/lib/stores/useUIStore";
 import NotificationsMenu from "./NotificationsMenu";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Switch } from "@/components/ui/switch";
+import { Monitor } from "lucide-react";
+
 
 export default function Topbar() {
   const { name, role } = useUserStore();
   const { sidebarCollapsed, toggleSidebar } = useUIStore();
   const pathname = usePathname();
+
+  //Cambiar de dock a sidebar
+  const { showDock, toggleDock } = useUIStore();
 
   // 🧭 Crear el breadcrumb dinámico
   // Ejemplo: /dashboard/pacientes/123 → ["dashboard", "pacientes", "123"]
@@ -84,6 +90,11 @@ export default function Topbar() {
       {/* Right section */}
       <div className="flex items-center gap-4 pr-4">
         <NotificationsMenu />
+
+        <div className="flex items-center gap-2">
+          <Monitor className="w-4 h-4 text-gray-400" />
+          <Switch checked={showDock} onCheckedChange={toggleDock} />
+        </div>
 
         <div className="flex items-center gap-3">
           <div className="text-right">

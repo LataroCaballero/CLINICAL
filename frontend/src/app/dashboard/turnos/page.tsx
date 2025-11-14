@@ -214,7 +214,7 @@ export default function TurnosPage() {
   // ---------------------------
   // REDIMENSIONAR EVENTO (RESIZE)
   // ---------------------------
-  const handleEventResize = ({ event, start, end }) => {
+  const handleEventResize = ({ event, start, end }: any) => {
     if (isBlockedDay(start)) {
       toast.error("No se puede cambiar la duración en un día bloqueado");
       return;
@@ -231,7 +231,7 @@ export default function TurnosPage() {
   // ---------------------------
   // NUEVO TURNO AL CLICKEAR SLOT
   // ---------------------------
-  const handleSelectSlot = ({ start }) => {
+  const handleSelectSlot = ({ start }: any) => {
     if (isBlockedDay(start)) {
       toast.error("Ese día no está disponible");
       return;

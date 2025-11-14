@@ -61,7 +61,7 @@ export default function TurnosPage() {
   };
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 p-6">
       {/* Primera fila con QuickAppointment y UpcomingAppointments */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <QuickAppointment />

@@ -53,7 +53,17 @@ export default function Sidebar() {
       onMouseLeave={handleMouseLeave}
       animate={{ width: sidebarCollapsed ? "5rem" : "16rem" }}
       transition={{ duration: 0.25 }}
-      className="h-screen bg-white/70 backdrop-blur-md border-r border-gray-200 flex flex-col justify-between p-4 transition-shadow duration-200 shadow-sm hover:shadow-md"
+      className="fixed 
+      top-0 left-0 
+      h-screen 
+      bg-white/70 backdrop-blur-md 
+      border-r border-gray-200 
+      flex flex-col justify-between 
+      md:p-4 
+      transition-shadow duration-200 
+      shadow-sm hover:shadow-md
+      overflow-y-auto
+      z-50"
     >
       <div className="flex flex-col gap-6">
         {/* Header */}

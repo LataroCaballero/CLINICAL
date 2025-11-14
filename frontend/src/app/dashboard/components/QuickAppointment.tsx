@@ -1,6 +1,13 @@
 "use client";
 import * as React from "react";
-import { addMinutes, format, setHours, setMinutes } from "date-fns";
+import {
+  addMinutes,
+  format,
+  setHours,
+  setMinutes,
+  isSameDay,
+  parse,
+} from "date-fns";
 import { es } from "date-fns/locale";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
@@ -18,9 +25,52 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Search } from "lucide-react";
 
+
+// Configuraciones del consultorio
+const workingDays = [3, 5]; // Lunes a Viernes (0=Domingo)
+const workingHours = {
+  start: "10:00",
+  end: "18:00",
+  interval: 30, // minutos
+};
+
+// Mocks de turnos ya tomados
+const bookedAppointments: Record<string, string[]> = {
+  "2025-11-19": ["10:00", "11:30", "15:00"],
+  "2025-11-21": ["10:30", "12:00"],
+};
+
+function generateTimeSlots(date: Date | undefined): string[] {
+  if (!date) return [];
+
+  const day = date.getDay();
+
+  // Día NO laboral → sin horarios
+  if (!workingDays.includes(day)) return [];
+
+  const [startH, startM] = workingHours.start.split(":").map(Number);
+  const [endH, endM] = workingHours.end.split(":").map(Number);
+
+  const start = setMinutes(setHours(new Date(), startH), startM);
+  const end = setMinutes(setHours(new Date(), endH), endM);
+
+  const slots: string[] = [];
+  let current = start;
+
+  while (current <= end) {
+    slots.push(format(current, "HH:mm"));
+    current = addMinutes(current, workingHours.interval);
+  }
+
+  // Remover horarios ocupados
+  const key = format(date, "yyyy-MM-dd");
+  const taken = bookedAppointments[key] || [];
+
+  return slots.filter((s) => !taken.includes(s));
+}
+
+
 export default function QuickAppointment() {
-  const [date, setDate] = React.useState<Date | undefined>(new Date());
-  const [selectedTime, setSelectedTime] = React.useState<string | null>(null);
   const [open, setOpen] = React.useState(false);
   const [showSearch, setShowSearch] = React.useState(false);
   const [searchTerm, setSearchTerm] = React.useState("");
@@ -39,31 +89,41 @@ export default function QuickAppointment() {
       p.dni.includes(searchTerm)
   );
 
-  // Horarios del día
-  const start = setHours(setMinutes(new Date(), 0), 8);
-  const hours = Array.from({ length: 49 }, (_, i) =>
-    format(addMinutes(start, i * 15), "HH:mm")
-  );
+  const [date, setDate] = React.useState<Date | undefined>(new Date());
+  const [selectedTime, setSelectedTime] = React.useState<string | null>(null);
+
+  // Horarios generados dinámicamente
+  const availableHours = generateTimeSlots(date);
 
   return (
     <>
       {/* Tarjeta principal */}
       <Card className="bg-white border border-gray-200 shadow-sm rounded-xl overflow-hidden mt-8">
-        <CardContent className="flex flex-col md:flex-row gap-4 p-4 md:p-6">
-          {/* Calendario */}
-          <div className="w-full md:w-[60%] flex justify-center">
-            <Calendar
-              mode="single"
-              selected={date}
-              onSelect={setDate}
-              locale={es}
-              className="rounded-md border border-gray-100"
-            />
-          </div>
+      <CardContent className="flex flex-col md:flex-row gap-4 p-4 md:p-6">
+        
+        {/* Calendario */}
+        <div className="w-full md:w-[60%] flex justify-center">
+          <Calendar
+            mode="single"
+            selected={date}
+            onSelect={(d) => {
+              setDate(d);
+              setSelectedTime(null);
+            }}
+            locale={es}
+            disabled={(d) => !workingDays.includes(d.getDay())}
+            className="rounded-md border border-gray-100"
+          />
+        </div>
 
-          {/* Horarios */}
-          <div className="w-full md:w-[40%] flex flex-col gap-2 overflow-y-auto max-h-[420px] pr-2">
-            {hours.map((time) => (
+        {/* Horarios disponibles */}
+        <div className="w-full md:w-[40%] flex flex-col gap-2 overflow-y-auto max-h-[293px] pr-2">
+          {availableHours.length === 0 ? (
+            <p className="text-sm text-gray-500 px-2">
+              No hay horarios disponibles para este día.
+            </p>
+          ) : (
+            availableHours.map((time) => (
               <Button
                 key={time}
                 variant={selectedTime === time ? "default" : "outline"}
@@ -74,13 +134,15 @@ export default function QuickAppointment() {
               >
                 {time}
               </Button>
-            ))}
-          </div>
-        </CardContent>
+            ))
+          )}
+        </div>
+      </CardContent>
 
-        <CardFooter className="flex items-center justify-between p-4 border-t text-sm text-gray-600">
-          <span>Seleccioná un horario para reservar un turno!</span>
-          <Button
+      <CardFooter className="flex items-center justify-between p-4 border-t text-sm text-gray-600">
+        <span>Seleccioná un horario disponible para reservar un turno!</span>
+
+        <Button
             onClick={() => {
               if (!date || !selectedTime)
                 return alert("Seleccioná fecha y hora");
@@ -121,7 +183,7 @@ export default function QuickAppointment() {
                     onClick={() => setShowSearch(true)}
                     className="flex-1 text-left px-3 py-2 text-sm hover:bg-gray-50"
                   >
-                    + Seleccionar Paciente
+                    Seleccionar Paciente
                   </button>
                 </div>
               ) : (

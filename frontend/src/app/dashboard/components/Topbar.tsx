@@ -1,27 +1,18 @@
 "use client";
 import {
-  Bell,
   ChevronRight,
-  UserCircle2,
   PanelLeftClose,
   PanelLeftOpen,
 } from "lucide-react";
-import { useUserStore } from "@/lib/stores/useUserStore";
 import { useUIStore } from "@/lib/stores/useUIStore";
 import NotificationsMenu from "./NotificationsMenu";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Switch } from "@/components/ui/switch";
-import { Monitor } from "lucide-react";
 
 
 export default function Topbar() {
-  const { name, role } = useUserStore();
   const { sidebarCollapsed, toggleSidebar } = useUIStore();
   const pathname = usePathname();
-
-  //Cambiar de dock a sidebar
-  const { showDock, toggleDock } = useUIStore();
 
   // 🧭 Crear el breadcrumb dinámico
   // Ejemplo: /dashboard/pacientes/123 → ["dashboard", "pacientes", "123"]
@@ -40,9 +31,9 @@ export default function Topbar() {
   };
 
   return (
-    <header className="flex items-center justify-between bg-transparent border-b border-gray-200 pb-3">
+    <header className={`flex items-center justify-between bg-transparent border-b border-gray-200 pb-3 transition-all duration-300 pt-3 ${sidebarCollapsed ? "md:ml-20" : "md:ml-64"}`}>
       {/* Left section */}
-      <div className="h-[64px] flex items-center justify-between px-4">
+      <div className="h-[10px] flex items-center justify-between px-4">
         {/* Toggle sidebar */}
         <button
           onClick={toggleSidebar}
@@ -90,23 +81,6 @@ export default function Topbar() {
       {/* Right section */}
       <div className="flex items-center gap-4 pr-4">
         <NotificationsMenu />
-
-        <div className="flex items-center gap-2">
-          <Monitor className="w-4 h-4 text-gray-400" />
-          <Switch checked={showDock} onCheckedChange={toggleDock} />
-        </div>
-
-        <div className="flex items-center gap-3">
-          <div className="text-right">
-            <p className="text-sm font-medium text-gray-800">{name}</p>
-            <p className="text-xs text-gray-500 capitalize">
-              {role.toLowerCase()}
-            </p>
-          </div>
-          <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden">
-            <UserCircle2 className="w-6 h-6 text-gray-400" />
-          </div>
-        </div>
       </div>
     </header>
   );

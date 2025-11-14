@@ -1,7 +1,9 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import {
+  MenuDock,
+  type MenuDockItem,
+} from "@/components/ui/shadcn-io/menu-dock/index";
 import {
   LayoutDashboard,
   Calendar,
@@ -10,50 +12,29 @@ import {
   Boxes,
   BarChart2,
   Settings,
-  UserCircle2,
 } from "lucide-react";
-import {
-  Dock,
-  DockIcon,
-  DockItem,
-  DockLabel,
-} from "@/components/ui/shadcn-io/dock/index";
 
 export default function DockNav() {
-  const pathname = usePathname();
-
-  const links = [
-    { href: "/dashboard", label: "Inicio", icon: LayoutDashboard },
-    { href: "/dashboard/turnos", label: "Turnos", icon: Calendar },
-    { href: "/dashboard/pacientes", label: "Pacientes", icon: Users },
-    { href: "/dashboard/finanzas", label: "Finanzas", icon: DollarSign },
-    { href: "/dashboard/stock", label: "Stock", icon: Boxes },
-    { href: "/dashboard/reportes", label: "Reportes", icon: BarChart2 },
-    { href: "/dashboard/configuracion", label: "Configuración", icon: Settings },
-  ];
+    const menuItems: MenuDockItem[] = [
+        { label: 'Inicio', icon: LayoutDashboard, onClick: () => console.log('Home') },
+        { label: 'Turnos', icon: Calendar, onClick: () => console.log('Home') },
+        { label: 'Pacientes', icon: Users, onClick: () => console.log('Home') },
+        { label: 'Finanzas', icon: DollarSign, onClick: () => console.log('Home') },
+        { label: 'Stock', icon: Boxes, onClick: () => console.log('Home') },
+        { label: 'Reportes', icon: BarChart2, onClick: () => console.log('Home') },
+        { label: 'Perfil', icon: Settings, onClick: () => console.log('Profile') }
+      ];
 
   return (
-    <Dock className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] backdrop-blur-md bg-white/70 border border-gray-200 shadow-lg align-middle">
-      {links.map(({ href, label, icon: Icon }) => (
-        <Link key={href} href={href}>
-          <DockItem
-            className={`flex flex-col items-center justify-center align-middle ${
-              pathname === href ? "text-indigo-600" : "text-gray-600 hover:text-indigo-500"
-            }`}
-          >
-            <DockIcon className="flex items-center justify-center w-12 h-12">
-              <Icon className="w-5 h-5" />
-            </DockIcon>
-            <DockLabel>{label}</DockLabel>
-          </DockItem>
-        </Link>
-      ))}
-      <DockItem>
-        <DockIcon>
-          <UserCircle2 className="w-5 h-5 text-gray-500" />
-        </DockIcon>
-        <DockLabel>Perfil</DockLabel>
-      </DockItem>
-    </Dock>
+    
+    <div className="fixed w-full bottom-0 overflow-x-auto no-scrollbar">
+        <div className="w-max mx-auto px-0">
+          <MenuDock
+            items={menuItems}
+            variant="default"
+            className="!w-max !max-w-none !border-0 md:hidden"
+          />
+        </div>
+      </div>
   );
 }

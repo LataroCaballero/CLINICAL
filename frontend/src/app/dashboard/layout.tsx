@@ -5,12 +5,14 @@ import DockNav from "./components/DockNav";
 import { useUIStore } from "@/lib/stores/useUIStore";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { showDock } = useUIStore();
+  const { sidebarCollapsed } = useUIStore();
   
   return (
-    <div className="flex min-h-screen bg-gray-50 text-gray-800">
-      {/* Sidebar fijo a la izquierda */}
-      {!showDock && <Sidebar />}
+    <div className="flex">
+      {/* Sidebar solo desktop */}
+      <div className="hidden md:flex">
+        <Sidebar />
+      </div>
 
       {/* Contenedor principal */}
       <div className="flex-1 flex flex-col">
@@ -22,10 +24,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
 
         {/* Contenido principal del dashboard */}
-        <main className="flex-1 overflow-y-auto px-4 md:px-6 pb-6">
+        <main className={`flex-1 overflow-y-auto transition-all duration-300 ${sidebarCollapsed ? "md:ml-20" : "md:ml-64"}`}>
           {children}
-          {showDock && <DockNav />}
         </main>
+        <div className="z-100">
+          <DockNav/>
+        </div>
       </div>
     </div>
   );

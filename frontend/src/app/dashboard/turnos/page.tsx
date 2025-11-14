@@ -197,7 +197,7 @@ export default function TurnosPage() {
   // ---------------------------
   // DRAG & DROP: MOVER EVENTO
   // ---------------------------
-  const handleEventMove = ({ event, start, end }) => {
+  const handleEventMove = ({ event, start, end }: any) => {
     if (isBlockedDay(start)) {
       toast.error("Ese día no está disponible");
       return;

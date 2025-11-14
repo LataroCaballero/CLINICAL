@@ -9,7 +9,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { FileUp, CalendarIcon } from "lucide-react";
 import dynamic from "next/dynamic";
 import {
@@ -25,13 +25,72 @@ import {
   SelectItem,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent
+} from "@/components/ui/tabs";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { createPortal } from "react-dom";
+import SignaturePad from "signature_pad";
 
 const Editor = dynamic(() => import("./TiptapEditor"), { ssr: false });
+
+function DrawingCanvas({ onSaveDrawing }: { onSaveDrawing: (file: File) => void }) {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const pad = useRef<any>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    canvas.width = 1500;
+    canvas.height = 498;
+
+    pad.current = new SignaturePad(canvas, {
+      backgroundColor: "white",
+      penColor: "black",
+      throttle: 0,
+      minWidth: 1,
+      maxWidth: 3,
+    });
+  }, []);
+
+  const handleSave = () => {
+    if (!pad.current) return;
+    const dataURL = pad.current.toDataURL("image/png");
+
+    fetch(dataURL)
+      .then((res) => res.blob())
+      .then((blob) => {
+        const file = new File([blob], `dibujo-${Date.now()}.png`, {
+          type: "image/png",
+        });
+        onSaveDrawing(file);
+      });
+  };
+
+  return (
+    <div className="space-y-3">
+      <canvas
+        ref={canvasRef}
+        className="border rounded-md w-full h-[500px] bg-white touch-manipulation"
+      />
+      <div className="flex gap-3">
+        <Button variant="outline" onClick={() => pad.current?.clear()}>
+          Limpiar
+        </Button>
+        <Button onClick={handleSave} className="bg-indigo-500 text-white">
+          Guardar dibujo
+        </Button>
+      </div>
+    </div>
+  );
+}
 
 export default function NewHistoryEntryModal({ open, onOpenChange, onSave }: any) {
   const [title, setTitle] = useState("");
@@ -188,10 +247,33 @@ export default function NewHistoryEntryModal({ open, onOpenChange, onSave }: any
                 </Select>
               </div>
 
-              {/* Editor enriquecido */}
-              <div>
-                <Label>Contenido</Label>
-                <Editor content={content} onChange={setContent} />
+              {/* Tabs Editor / Dibujo */}
+              <div className="mt-4">
+                <Tabs defaultValue="texto" className="w-full">
+                  <TabsList className="w-full justify-start mb-3">
+                    <TabsTrigger value="texto">Texto</TabsTrigger>
+                    <TabsTrigger value="dibujo">Dibujo</TabsTrigger>
+                  </TabsList>
+
+                  {/* Editor de texto */}
+                  <TabsContent value="texto">
+                    <Label>Contenido</Label>
+                    <Editor content={content} onChange={setContent} />
+                  </TabsContent>
+
+                  {/* Canvas */}
+                  <TabsContent value="dibujo">
+                    <Label>Dibujo a mano</Label>
+                    <DrawingCanvas
+                      onSaveDrawing={(file) =>
+                        setAttachments((prev: File[]) => [...prev, file])
+                      }
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      El dibujo se guardará como imagen en los adjuntos.
+                    </p>
+                  </TabsContent>
+                </Tabs>
               </div>
 
               {/* Archivos adjuntos */}

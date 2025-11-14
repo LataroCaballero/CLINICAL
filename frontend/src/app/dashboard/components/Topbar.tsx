@@ -28,6 +28,11 @@ export default function Topbar() {
     stock: "Stock",
     reportes: "Reportes",
     configuracion: "Configuración",
+    "cuentas-corrientes": "Cuentas Corrientes",
+    facturacion: "Facturación",
+    pagos: "Pagos",
+    ventas: "Registrar Ventas",
+    catalogo: "Ver Catálogo"
   };
 
   return (
@@ -37,7 +42,7 @@ export default function Topbar() {
         {/* Toggle sidebar */}
         <button
           onClick={toggleSidebar}
-          className="p-2 rounded-md hover:bg-gray-100 transition"
+          className="hidden md:block p-2 rounded-md hover:bg-gray-100 transition"
         >
           {sidebarCollapsed ? (
             <PanelLeftOpen className="w-5 h-5 text-gray-600" />

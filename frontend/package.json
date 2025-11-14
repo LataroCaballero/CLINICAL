@@ -46,6 +46,8 @@
     "react-dom": "19.2.0",
     "react-hook-form": "^7.66.0",
     "recharts": "^3.3.0",
+    "signature_pad": "^5.1.1",
+    "sonner": "^2.0.7",
     "tailwind-merge": "^3.4.0",
     "tiptap": "^1.32.2",
     "vaul": "^1.1.2",

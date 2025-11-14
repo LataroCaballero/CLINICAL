@@ -62,7 +62,7 @@ export default function NewAppointmentModal({ open, onOpenChange, selectedEvent 
   };
 
   const handleWhatsApp = () => {
-    console.log(`Enviar recordatorio a ${form.paciente} por WhatsApp`);
+    window.open("https://wa.link/5zuo1r", "_blank")
     // Aquí luego integrás la automatización (Twilio o API de WhatsApp)
   };
 

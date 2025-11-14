@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import {
   MenuDock,
   type MenuDockItem,
@@ -15,15 +16,17 @@ import {
 } from "lucide-react";
 
 export default function DockNav() {
-    const menuItems: MenuDockItem[] = [
-        { label: 'Inicio', icon: LayoutDashboard, onClick: () => console.log('Home') },
-        { label: 'Turnos', icon: Calendar, onClick: () => console.log('Home') },
-        { label: 'Pacientes', icon: Users, onClick: () => console.log('Home') },
-        { label: 'Finanzas', icon: DollarSign, onClick: () => console.log('Home') },
-        { label: 'Stock', icon: Boxes, onClick: () => console.log('Home') },
-        { label: 'Reportes', icon: BarChart2, onClick: () => console.log('Home') },
-        { label: 'Perfil', icon: Settings, onClick: () => console.log('Profile') }
-      ];
+  const router = useRouter();
+
+  const menuItems: MenuDockItem[] = [
+    { label: "Inicio", icon: LayoutDashboard, onClick: () => router.push("/dashboard") },
+    { label: "Turnos", icon: Calendar, onClick: () => router.push("/dashboard/turnos") },
+    { label: "Pacientes", icon: Users, onClick: () => router.push("/dashboard/pacientes") },
+    { label: "Finanzas", icon: DollarSign, onClick: () => router.push("/dashboard/finanzas") },
+    { label: "Stock", icon: Boxes, onClick: () => router.push("/dashboard/stock") },
+    { label: "Reportes", icon: BarChart2, onClick: () => router.push("/dashboard/reportes") },
+    { label: "Perfil", icon: Settings, onClick: () => router.push("/dashboard/perfil") },
+  ];
 
   return (
     

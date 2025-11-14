@@ -11,7 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useUserStore } from "@/lib/stores/useUserStore";
 import { LogOut, Settings, User, Bell, CreditCard } from "lucide-react";
 
-export default function UserMenu() {
+export default function UserMenu({ collapsed }: { collapsed: boolean }) {
   const { name, role } = useUserStore();
 
   return (
@@ -22,10 +22,12 @@ export default function UserMenu() {
             <AvatarImage src="/images/avatar.png" alt={name} />
             <AvatarFallback>{name[0]}</AvatarFallback>
           </Avatar>
-          <div className="flex flex-col text-left">
-            <span className="text-sm font-semibold text-gray-800">{name}</span>
-            <span className="text-xs text-gray-500">{role.toLowerCase()}</span>
-          </div>
+          {!collapsed && (
+            <div className="flex flex-col leading-tight">
+              <span className="text-sm font-medium text-gray-800">Federico García</span>
+              <span className="text-xs text-gray-500">Profesional</span>
+            </div>
+          )}
         </button>
       </DropdownMenuTrigger>
 

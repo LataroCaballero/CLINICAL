@@ -90,7 +90,7 @@ export default function Sidebar() {
 
       {/* Footer del Sidebar */}
       <div className="mt-auto pt-4 border-t border-gray-200">
-        <UserMenu />
+        <UserMenu collapsed={sidebarCollapsed} />
       </div>
     </motion.aside>
   );

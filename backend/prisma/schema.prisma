@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
@@ -44,6 +44,37 @@ model Usuario {
   updatedAt             DateTime                @updatedAt
   LiquidacionObraSocial LiquidacionObraSocial[]
   MovimientoStock       MovimientoStock[]
+
+  tokens      RefreshToken[]
+  AuthSession AuthSession[]
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  user      Usuario  @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+}
+
+model AuthSession {
+  id     String  @id @default(uuid())
+  userId String
+  user   Usuario @relation(fields: [userId], references: [id])
+
+  refreshToken String?  @unique
+  device       String?
+  ipAddress    String?
+  userAgent    String?
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  expiresAt  DateTime
+  lastUsedAt DateTime @default(now())
+
+  revoked   Boolean   @default(false)
+  revokedAt DateTime?
 }
 
 model Profesional {

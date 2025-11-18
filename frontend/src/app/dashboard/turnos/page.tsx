@@ -30,6 +30,17 @@ moment.locale("es");
 const localizer = momentLocalizer(moment);
 const DnDCalendar = withDragAndDrop(Calendar);
 
+interface CalendarEvent {
+  id: number;
+  title: string;
+  paciente: string;
+  start: Date;
+  end: Date;
+  tipo: string;
+  estado: string;
+  observaciones?: string;
+}
+
 // ---------------------------
 // CONFIGURACIÓN DEL PROFESIONAL
 // ---------------------------
@@ -57,7 +68,7 @@ function isBlockedDay(start: Date) {
 // -------------------------------------
 // EVENTOS DE PRUEBA (DEBERÍAN VENIR DEL BACKEND)
 // -------------------------------------
-const initialEvents = [
+const initialEvents: CalendarEvent[] = [
   {
     id: 1,
     title: "Consulta – Lautaro Caballero",
@@ -316,8 +327,8 @@ export default function TurnosPage() {
             <DnDCalendar
               localizer={localizer}
               events={events}
-              startAccessor="start"
-              endAccessor="end"
+              startAccessor={(event) => event.start}
+              endAccessor={(event) => event.end}
               selectable
               resizable
               view={view}

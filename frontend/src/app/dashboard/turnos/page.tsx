@@ -416,13 +416,13 @@ export default function TurnosPage() {
               // COLORES DE EVENTOS
               eventPropGetter={(event) => {
                 let backgroundColor =
-                  event.tipo === "Consulta"
+                (event as CalendarEvent).tipo === "Consulta"
                     ? "#E0E7FF"
-                    : event.tipo === "Intervención"
+                    : (event as CalendarEvent).tipo === "Intervención"
                     ? "#FEE2E2"
                     : "#DCFCE7";
 
-                if (event.estado === "Confirmado") {
+                if ((event as CalendarEvent).estado === "Confirmado") {
                   backgroundColor = "#4ADE80";
                 }
 

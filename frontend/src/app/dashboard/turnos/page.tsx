@@ -327,8 +327,8 @@ export default function TurnosPage() {
             <DnDCalendar
               localizer={localizer}
               events={events}
-              startAccessor={(event) => event.start}
-              endAccessor={(event) => event.end}
+              startAccessor={(event) => (event as CalendarEvent).start}
+              endAccessor={(event) => (event as CalendarEvent).end}
               selectable
               resizable
               view={view}

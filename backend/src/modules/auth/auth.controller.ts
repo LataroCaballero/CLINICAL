@@ -1,9 +1,10 @@
-import { Body, Controller, Post, Req } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { RefreshDto } from './dto/refresh.dto';
 import { LogoutDto } from './dto/logout.dto';
+import { Auth } from './decorators/auth.decorator';
 
 @Controller('auth')
 export class AuthController {
@@ -32,5 +33,11 @@ export class AuthController {
   @Post('logout-all')
   logoutAll(@Body() dto: LogoutDto) {
     return this.authService.logoutAll(dto);
+  }
+
+  @Get('me')
+  @Auth()
+  me(@Req() req) {
+    return req.user;
   }
 }

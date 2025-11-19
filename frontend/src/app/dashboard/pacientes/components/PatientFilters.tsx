@@ -3,10 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import PatientFormModal from "./PatientFormModal";
 import { useState } from "react";
+import AutocompletePaciente from "@/components/AutocompletePaciente";
 
 export default function PatientFilters() {
   const [activeTab, setActiveTab] = useState("activos");
   const [openModal, setOpenModal] = useState(false);
+  const [paciente, setPaciente] = useState<any>(null);
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
@@ -32,7 +34,13 @@ export default function PatientFilters() {
       </div>
 
       <div className="flex items-center gap-2">
-        <Input placeholder="Buscar..." className="w-64" />
+        <div className="w-sm">
+          <AutocompletePaciente
+            onSelect={(p) => setPaciente(p)}
+            value={paciente?.nombreCompleto}
+            avatarUrl={paciente?.fotoUrl}
+          />
+        </div>
         <Button variant="outline">Filtrar</Button>
         <Button
           className="bg-indigo-500 hover:bg-indigo-600 text-white"

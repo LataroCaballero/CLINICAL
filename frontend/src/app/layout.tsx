@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { BackgroundBeams } from "../components/ui/shadcn-io/background-beams/index";
+import { Providers } from "./providers";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,9 +30,9 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <BackgroundBeams className="absolute inset-0" />
-          <div className="relative z-10">
-            {children}
-          </div>
+        <div className="relative z-10">
+          <Providers>{children}</Providers>
+        </div>
       </body>
     </html>
   );

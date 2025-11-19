@@ -1,4 +1,5 @@
 "use client";
+
 import {
   Home,
   Calendar,
@@ -38,19 +39,48 @@ export default function Sidebar() {
   };
 
   const links = [
-    { href: "/dashboard", label: "Inicio", icon: <LayoutDashboard className="w-5 h-5" /> },
-    { href: "/dashboard/turnos", label: "Turnos", icon: <Calendar className="w-5 h-5" /> },
-    { href: "/dashboard/pacientes", label: "Pacientes", icon: <Users className="w-5 h-5" /> },
-    { href: "/dashboard/finanzas", label: "Finanzas", icon: <DollarSign className="w-5 h-5" /> },
-    { href: "/dashboard/stock", label: "Stock", icon: <Boxes className="w-5 h-5" /> },
-    { href: "/dashboard/reportes", label: "Reportes", icon: <BarChart2 className="w-5 h-5" /> },
-    { href: "/dashboard/configuracion", label: "Configuración", icon: <Settings className="w-5 h-5" /> },
+    {
+      href: "/dashboard",
+      label: "Inicio",
+      icon: <LayoutDashboard className="w-5 h-5" />,
+    },
+    {
+      href: "/dashboard/turnos",
+      label: "Turnos",
+      icon: <Calendar className="w-5 h-5" />,
+    },
+    {
+      href: "/dashboard/pacientes",
+      label: "Pacientes",
+      icon: <Users className="w-5 h-5" />,
+    },
+    {
+      href: "/dashboard/finanzas",
+      label: "Finanzas",
+      icon: <DollarSign className="w-5 h-5" />,
+    },
+    {
+      href: "/dashboard/stock",
+      label: "Stock",
+      icon: <Boxes className="w-5 h-5" />,
+    },
+    {
+      href: "/dashboard/reportes",
+      label: "Reportes",
+      icon: <BarChart2 className="w-5 h-5" />,
+    },
+    {
+      href: "/dashboard/configuracion",
+      label: "Configuración",
+      icon: <Settings className="w-5 h-5" />,
+    },
   ];
 
   return (
     <motion.aside
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
+      initial={false}
       animate={{ width: sidebarCollapsed ? "5rem" : "16rem" }}
       transition={{ duration: 0.25 }}
       className="fixed 
@@ -69,7 +99,9 @@ export default function Sidebar() {
         {/* Header */}
         <div className="flex items-center justify-center md:justify-start gap-2 px-1">
           {!sidebarCollapsed && (
-            <h2 className="text-sm font-semibold text-gray-800">Federico García</h2>
+            <h2 className="text-sm font-semibold text-gray-800">
+              Federico García
+            </h2>
           )}
         </div>
 

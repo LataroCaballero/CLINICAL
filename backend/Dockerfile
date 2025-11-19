@@ -8,11 +8,11 @@ COPY package*.json ./
 # Instalar dependencias
 RUN npm install
 
-# Ahora sí copiar el resto del código (incluye /prisma)
+# Copiar resto del código
 COPY . .
 
-# Generar prisma client
-RUN npx prisma generate
+# Generar Prisma Client sin engines (NO necesita DATABASE_URL)
+RUN npx prisma generate --no-engine
 
 # Compilar NestJS
 RUN npm run build

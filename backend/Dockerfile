@@ -2,19 +2,19 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# 1) Copiar package.json + package-lock.json
+# Copiar dependencias primero
 COPY package*.json ./
 
-# 2) Instalar dependencias
+# Instalar dependencias
 RUN npm install
 
-# 3) Copiar todo el código (incluye prisma/)
+# Ahora sí copiar el resto del código (incluye /prisma)
 COPY . .
 
-# 4) Generar Prisma Client
+# Generar prisma client
 RUN npx prisma generate
 
-# 5) Build NestJS
+# Compilar NestJS
 RUN npm run build
 
 EXPOSE 3000

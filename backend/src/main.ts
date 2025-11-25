@@ -5,14 +5,11 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   app.enableCors({
-    origin: [
-      'http://localhost:3001',
-      'https://clinical-git-frontendtest1-lautaro-caballeros-projects.vercel.app',
-      'https://tu-dominio.com',
-    ],
+    origin: ['http://localhost:3000', 'https://clinical-azure.vercel.app/'],
     credentials: true,
   });
 
-  await app.listen(process.env.PORT ?? 3000);
+  const port = process.env.PORT || 3001;
+  await app.listen(port, 'localhost');
 }
 bootstrap();

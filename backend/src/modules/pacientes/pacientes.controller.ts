@@ -7,7 +7,7 @@ import {
   Param,
   Body,
   Query,
-  Res,
+  Header,
 } from '@nestjs/common';
 import { PacientesService } from './pacientes.service';
 import { CreatePacienteDto } from './dto/create-paciente.dto';
@@ -37,11 +37,10 @@ export class PacientesController {
   }
 
   @Get('suggest')
-  async suggest(@Res() res, @Query('q') q: string) {
-    res.setHeader('Cache-Control', 'no-store');
-    res.setHeader('Pragma', 'no-cache');
-    res.setHeader('Expires', '0');
-
+  @Header('Cache-Control', 'no-store')
+  @Header('Pragma', 'no-cache')
+  @Header('Expires', '0')
+  async suggest(@Query('q') q: string) {
     const results = await this.pacientesService.suggest(q);
     return results ?? [];
   }

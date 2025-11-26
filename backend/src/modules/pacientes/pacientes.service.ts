@@ -1,6 +1,6 @@
 // pacientes.service.ts
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../../../prisma/prisma.service';
+import { PrismaService } from '@prisma/client/generator-build';
 import { CreatePacienteDto } from './dto/create-paciente.dto';
 import { UpdatePacienteDto } from './dto/update-paciente.dto';
 import { SearchPacienteDto } from './dto/search-paciente.dto';

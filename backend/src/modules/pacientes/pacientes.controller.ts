@@ -43,7 +43,7 @@ export class PacientesController {
     res.setHeader('Expires', '0');
 
     const results = await this.pacientesService.suggest(q);
-    return res.json(results);
+    return results ?? [];
   }
 
   @Get()

@@ -1,5 +1,8 @@
 "use client";
+
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,6 +11,41 @@ import Link from "next/link";
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+  const router = useRouter();
+
+  const { register, handleSubmit } = useForm();
+
+  const onSubmit = async (data: any) => {
+    setErrorMsg(""); // limpio errores
+
+    try {
+      const api = process.env.NEXT_PUBLIC_API_URL;
+
+      const res = await fetch(`${api}/auth/login`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: data.email,
+          password: data.password,
+        }),
+      });
+
+      const json = await res.json();
+
+      if (!res.ok) {
+        setErrorMsg(json.message || "Error al iniciar sesión");
+        return;
+      }
+
+      // Si llegamos acá, login OK
+      router.push("/dashboard");
+    } catch (error: any) {
+      setErrorMsg("Error de conexión con el servidor");
+      console.error(error);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-linear-to-br from-[#f9fafb] to-[#eef2ff] flex items-center justify-center px-4">
@@ -16,24 +54,38 @@ export default function LoginPage() {
           <CardTitle className="text-2xl font-semibold tracking-tight text-[#3b3b58]">
             Iniciar sesión
           </CardTitle>
-          <p className="text-sm text-gray-500 mt-1">Accedé al sistema del consultorio</p>
+          <p className="text-sm text-gray-500 mt-1">
+            Accedé al sistema del consultorio
+          </p>
         </CardHeader>
         <CardContent>
-          <form className="flex flex-col gap-4">
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="flex flex-col gap-4"
+          >
+            {errorMsg && (
+              <p className="text-red-600 text-sm text-center">{errorMsg}</p>
+            )}
+
             <div>
-              <label className="text-sm text-gray-600">Correo electrónico</label>
+              <label className="text-sm text-gray-600">
+                Correo electrónico
+              </label>
               <Input
                 type="email"
                 placeholder="ejemplo@correo.com"
                 className="mt-1"
+                {...register("email", { required: true })}
               />
             </div>
+
             <div>
               <label className="text-sm text-gray-600">Contraseña</label>
               <div className="relative mt-1">
                 <Input
                   type={showPassword ? "text" : "password"}
                   placeholder="********"
+                  {...register("password", { required: true })}
                 />
                 <button
                   type="button"
@@ -48,15 +100,17 @@ export default function LoginPage() {
                 </button>
               </div>
             </div>
-            <Button className="w-full bg-[#6366f1] hover:bg-[#4f46e5] text-white font-medium">
+
+            <Button
+              type="submit"
+              className="w-full bg-[#6366f1] hover:bg-[#4f46e5] text-white font-medium"
+            >
               Ingresar
             </Button>
           </form>
+
           <div className="text-center mt-4">
-            <Link
-              href="#"
-              className="text-sm text-[#6366f1] hover:underline"
-            >
+            <Link href="#" className="text-sm text-[#6366f1] hover:underline">
               ¿Olvidaste tu contraseña?
             </Link>
           </div>

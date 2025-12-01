@@ -10,6 +10,7 @@ export function usePacienteSuggest(query: string) {
     queryFn: async () => {
       const res = await axios.get("/pacientes/suggest", {
         params: { q: debounced },
+        withCredentials: true,
       });
       return res.data;
     },

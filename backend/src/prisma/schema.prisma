@@ -1,0 +1,587 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Permiso {
+  id        String     @id @default(uuid())
+  rol       RolUsuario
+  modulo    String
+  accion    String
+  permitido Boolean    @default(true)
+}
+
+model Usuario {
+  id                    String                  @id @default(uuid())
+  email                 String                  @unique
+  passwordHash          String
+  rol                   RolUsuario
+  nombre                String
+  apellido              String
+  telefono              String?
+  fotoUrl               String?
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+  AuthSession           AuthSession[]
+  LiquidacionObraSocial LiquidacionObraSocial[]
+  MovimientoStock       MovimientoStock[]
+  paciente              Paciente?
+  profesional           Profesional?
+  tokens                RefreshToken[]
+  secretaria            Secretaria?
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  user      Usuario  @relation(fields: [userId], references: [id])
+}
+
+model AuthSession {
+  id           String    @id @default(uuid())
+  userId       String
+  refreshToken String?   @unique
+  device       String?
+  ipAddress    String?
+  userAgent    String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  expiresAt    DateTime
+  lastUsedAt   DateTime  @default(now())
+  revoked      Boolean   @default(false)
+  revokedAt    DateTime?
+  user         Usuario   @relation(fields: [userId], references: [id])
+}
+
+model Profesional {
+  id              String              @id @default(uuid())
+  usuarioId       String              @unique
+  matricula       String?
+  especialidad    String?
+  bio             String?
+  duracionDefault Int?
+  agenda          Json?
+  createdAt       DateTime            @default(now())
+  cirugias        Cirugia[]
+  Factura         Factura[]
+  HistoriaClinica HistoriaClinica[]
+  pacientes       Paciente[]          @relation("ProfesionalPaciente")
+  practicas       PracticaRealizada[]
+  Presupuesto     Presupuesto[]
+  usuario         Usuario             @relation(fields: [usuarioId], references: [id])
+  turnos          Turno[]
+}
+
+model Secretaria {
+  id             String   @id @default(uuid())
+  usuarioId      String   @unique
+  horarioTrabajo Json?
+  permisosExtras Json?
+  createdAt      DateTime @default(now())
+  usuario        Usuario  @relation(fields: [usuarioId], references: [id])
+}
+
+/// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
+model Paciente {
+  id                         String            @id @default(uuid())
+  usuarioId                  String?           @unique
+  nombreCompleto             String
+  dni                        String            @unique
+  fechaNacimiento            DateTime?
+  telefono                   String
+  telefonoAlternativo        String?
+  email                      String?
+  direccion                  String?
+  fotoUrl                    String?
+  obraSocialId               String?
+  plan                       String?
+  alergias                   String[]
+  condiciones                String[]
+  diagnostico                String?
+  tratamiento                String?
+  deriva                     String?
+  lugarIntervencion          String?
+  objetivos                  String?
+  consentimientoFirmado      Boolean           @default(false)
+  indicacionesEnviadas       Boolean           @default(false)
+  fechaIndicaciones          DateTime?
+  estado                     EstadoPaciente    @default(ACTIVO)
+  contactoEmergenciaNombre   String?
+  contactoEmergenciaTelefono String?
+  contactoEmergenciaRelacion String?
+  profesionalId              String?
+  createdAt                  DateTime          @default(now())
+  updatedAt                  DateTime          @updatedAt
+  consentimientosDocumentos  Archivo[]         @relation("PacienteConsentimientos")
+  archivos                   Archivo[]         @relation("ArchivosPaciente")
+  cuentaCorriente            CuentaCorriente?
+  estudios                   EstudioPaciente[]
+  historiasClinicas          HistoriaClinica[]
+  mensajesInternos           MensajeInterno[]
+  profesional                Profesional?      @relation("ProfesionalPaciente", fields: [profesionalId], references: [id])
+  usuario                    Usuario?          @relation(fields: [usuarioId], references: [id])
+  presupuestos               Presupuesto[]
+  turnos                     Turno[]
+  VentaProducto              VentaProducto[]
+
+  @@index([dni(ops: raw("gin_trgm_ops"))], map: "idx_paciente_dni_trgm", type: Gin)
+  @@index([telefono(ops: raw("gin_trgm_ops"))], map: "idx_paciente_telefono_trgm", type: Gin)
+}
+
+model MensajeInterno {
+  id          String   @id @default(uuid())
+  mensaje     String
+  autorUserId String
+  pacienteId  String
+  timestamp   DateTime @default(now())
+  paciente    Paciente @relation(fields: [pacienteId], references: [id])
+}
+
+model EstudioPaciente {
+  id            String    @id @default(uuid())
+  nombre        String
+  solicitadoPor String?
+  estado        Boolean   @default(false)
+  fechaEntrega  DateTime?
+  pacienteId    String
+  paciente      Paciente  @relation(fields: [pacienteId], references: [id])
+}
+
+model HistoriaClinica {
+  id            String                   @id @default(uuid())
+  pacienteId    String
+  profesionalId String
+  createdAt     DateTime                 @default(now())
+  updatedAt     DateTime                 @updatedAt
+  paciente      Paciente                 @relation(fields: [pacienteId], references: [id])
+  profesional   Profesional              @relation(fields: [profesionalId], references: [id])
+  entradas      HistoriaClinicaEntrada[]
+}
+
+model HistoriaClinicaEntrada {
+  id                String          @id @default(uuid())
+  historiaClinicaId String
+  fecha             DateTime        @default(now())
+  contenido         Json?
+  firmaProfesional  String?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  archivos          Archivo[]       @relation("ArchivosEntradaHC")
+  historiaClinica   HistoriaClinica @relation(fields: [historiaClinicaId], references: [id])
+  pago              MovimientoCC?
+  Turno             Turno[]
+}
+
+model Archivo {
+  id                       String                  @id @default(uuid())
+  url                      String
+  tipo                     String
+  descripcion              String?
+  pacienteId               String?
+  consentimientoPacienteId String?
+  entradaHCId              String?
+  presupuestoId            String?
+  facturaId                String?
+  createdAt                DateTime                @default(now())
+  consentimientoPaciente   Paciente?               @relation("PacienteConsentimientos", fields: [consentimientoPacienteId], references: [id])
+  entradaHC                HistoriaClinicaEntrada? @relation("ArchivosEntradaHC", fields: [entradaHCId], references: [id])
+  factura                  Factura?                @relation(fields: [facturaId], references: [id])
+  paciente                 Paciente?               @relation("ArchivosPaciente", fields: [pacienteId], references: [id])
+  presupuesto              Presupuesto?            @relation(fields: [presupuestoId], references: [id])
+}
+
+model CuentaCorriente {
+  id                   String         @id @default(uuid())
+  pacienteId           String         @unique
+  saldoActual          Decimal        @default(0.0) @db.Decimal(10, 2)
+  totalPagadoHistorico Decimal        @default(0.0) @db.Decimal(10, 2)
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+  paciente             Paciente       @relation(fields: [pacienteId], references: [id])
+  movimientos          MovimientoCC[]
+}
+
+model MovimientoCC {
+  id                       String                  @id @default(uuid())
+  cuentaCorrienteId        String
+  monto                    Decimal                 @db.Decimal(10, 2)
+  tipo                     TipoMovimiento
+  descripcion              String?
+  fecha                    DateTime                @default(now())
+  historiaClinicaEntradaId String?                 @unique
+  presupuestoId            String?
+  turnoId                  String?
+  Factura                  Factura[]
+  cuentaCorriente          CuentaCorriente         @relation(fields: [cuentaCorrienteId], references: [id])
+  entradaHC                HistoriaClinicaEntrada? @relation(fields: [historiaClinicaEntradaId], references: [id])
+  presupuesto              Presupuesto?            @relation("PagosPresupuesto", fields: [presupuestoId], references: [id])
+  turno                    Turno?                  @relation(fields: [turnoId], references: [id])
+  Presupuesto              Presupuesto[]
+  ventaProducto            VentaProducto?
+}
+
+model Presupuesto {
+  id                String            @id @default(uuid())
+  pacienteId        String
+  profesionalId     String
+  subtotal          Decimal           @db.Decimal(10, 2)
+  descuentos        Decimal           @default(0) @db.Decimal(10, 2)
+  total             Decimal           @db.Decimal(10, 2)
+  estado            EstadoPresupuesto @default(BORRADOR)
+  fechaEnviado      DateTime?
+  fechaAceptado     DateTime?
+  fechaRechazado    DateTime?
+  motivoRechazo     String?
+  cargoMovimientoId String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  Archivo           Archivo[]
+  pagos             MovimientoCC[]    @relation("PagosPresupuesto")
+  cargoMovimiento   MovimientoCC?     @relation(fields: [cargoMovimientoId], references: [id])
+  paciente          Paciente          @relation(fields: [pacienteId], references: [id])
+  profesional       Profesional       @relation(fields: [profesionalId], references: [id])
+  items             PresupuestoItem[]
+}
+
+model PresupuestoItem {
+  id             String      @id @default(uuid())
+  presupuestoId  String
+  descripcion    String
+  cantidad       Int         @default(1)
+  precioUnitario Decimal     @db.Decimal(10, 2)
+  total          Decimal     @db.Decimal(10, 2)
+  orden          Int         @default(0)
+  presupuesto    Presupuesto @relation(fields: [presupuestoId], references: [id])
+}
+
+model ObraSocial {
+  id                    String                  @id @default(uuid())
+  nombre                String
+  cuit                  String?
+  domicilio             String?
+  condicionIVA          String?
+  LiquidacionObraSocial LiquidacionObraSocial[]
+  planes                PlanObraSocial[]
+  practicas             PracticaObraSocial[]
+}
+
+model PlanObraSocial {
+  id           String     @id @default(uuid())
+  obraSocialId String
+  nombre       String
+  cobertura    String?
+  obraSocial   ObraSocial @relation(fields: [obraSocialId], references: [id])
+}
+
+model PracticaObraSocial {
+  id           String     @id @default(uuid())
+  obraSocialId String
+  codigo       String
+  descripcion  String
+  monto        Decimal    @db.Decimal(10, 2)
+  obraSocial   ObraSocial @relation(fields: [obraSocialId], references: [id])
+}
+
+model PracticaRealizada {
+  id                String                 @id @default(uuid())
+  pacienteId        String
+  profesionalId     String
+  obraSocialId      String?
+  codigo            String
+  descripcion       String
+  monto             Decimal                @db.Decimal(10, 2)
+  coseguro          Decimal                @default(0) @db.Decimal(10, 2)
+  fecha             DateTime               @default(now())
+  estadoLiquidacion EstadoLiquidacion      @default(PENDIENTE)
+  liquidacionId     String?
+  facturaId         String?
+  MovimientoStock   MovimientoStock[]
+  factura           Factura?               @relation(fields: [facturaId], references: [id])
+  liquidacion       LiquidacionObraSocial? @relation(fields: [liquidacionId], references: [id])
+  Profesional       Profesional            @relation(fields: [profesionalId], references: [id])
+}
+
+model LiquidacionObraSocial {
+  id           String              @id @default(uuid())
+  obraSocialId String
+  periodo      String
+  fechaPago    DateTime?
+  montoTotal   Decimal             @db.Decimal(10, 2)
+  usuarioId    String?
+  facturaId    String?
+  createdAt    DateTime            @default(now())
+  factura      Factura?            @relation(fields: [facturaId], references: [id])
+  obraSocial   ObraSocial          @relation(fields: [obraSocialId], references: [id])
+  usuario      Usuario?            @relation(fields: [usuarioId], references: [id])
+  practicas    PracticaRealizada[]
+}
+
+model Factura {
+  id            String                  @id @default(uuid())
+  tipo          TipoFactura
+  numero        String                  @unique
+  fecha         DateTime                @default(now())
+  cuit          String?
+  razonSocial   String?
+  domicilio     String?
+  subtotal      Decimal                 @db.Decimal(10, 2)
+  impuestos     Decimal                 @db.Decimal(10, 2)
+  total         Decimal                 @db.Decimal(10, 2)
+  profesionalId String
+  movimientoId  String?
+  Archivo       Archivo[]
+  movimiento    MovimientoCC?           @relation(fields: [movimientoId], references: [id])
+  profesional   Profesional             @relation(fields: [profesionalId], references: [id])
+  liquidaciones LiquidacionObraSocial[]
+  practicas     PracticaRealizada[]
+  VentaProducto VentaProducto[]
+}
+
+model VentaProducto {
+  id              String              @id @default(uuid())
+  pacienteId      String?
+  total           Decimal             @db.Decimal(10, 2)
+  medioPago       String
+  fecha           DateTime            @default(now())
+  movimientoId    String?             @unique
+  facturaId       String?
+  MovimientoStock MovimientoStock[]
+  factura         Factura?            @relation(fields: [facturaId], references: [id])
+  movimiento      MovimientoCC?       @relation(fields: [movimientoId], references: [id])
+  paciente        Paciente?           @relation(fields: [pacienteId], references: [id])
+  items           VentaProductoItem[]
+}
+
+model VentaProductoItem {
+  id              String        @id @default(uuid())
+  ventaProductoId String
+  productoId      String
+  cantidad        Int
+  precioUnitario  Decimal       @db.Decimal(10, 2)
+  subtotal        Decimal       @db.Decimal(10, 2)
+  producto        Producto      @relation(fields: [productoId], references: [id])
+  ventaProducto   VentaProducto @relation(fields: [ventaProductoId], references: [id])
+}
+
+model Producto {
+  id                String              @id @default(uuid())
+  nombre            String
+  categoria         String?
+  descripcion       String?
+  sku               String?             @unique
+  imagenUrl         String?
+  tipo              TipoProducto
+  unidadMedida      String?
+  costoBase         Decimal?            @db.Decimal(10, 2)
+  precioSugerido    Decimal?            @db.Decimal(10, 2)
+  requiereLote      Boolean             @default(false)
+  descuentaStock    Boolean             @default(true)
+  inventario        Inventario?
+  lotes             Lote[]
+  OrdenCompraItem   OrdenCompraItem[]
+  proveedores       ProductoProveedor[]
+  VentaProductoItem VentaProductoItem[]
+}
+
+model Inventario {
+  id             String            @id @default(uuid())
+  productoId     String            @unique
+  stockActual    Int               @default(0)
+  stockMinimo    Int               @default(0)
+  stockReservado Int               @default(0)
+  precioActual   Decimal?          @db.Decimal(10, 2)
+  producto       Producto          @relation(fields: [productoId], references: [id])
+  movimientos    MovimientoStock[]
+}
+
+model MovimientoStock {
+  id              String              @id @default(uuid())
+  inventarioId    String
+  tipo            TipoMovimientoStock
+  cantidad        Int
+  motivo          String?
+  fecha           DateTime            @default(now())
+  usuarioId       String?
+  ventaProductoId String?
+  practicaId      String?
+  ordenCompraId   String?
+  loteId          String?
+  inventario      Inventario          @relation(fields: [inventarioId], references: [id])
+  lote            Lote?               @relation(fields: [loteId], references: [id])
+  ordenCompra     OrdenCompra?        @relation(fields: [ordenCompraId], references: [id])
+  practica        PracticaRealizada?  @relation(fields: [practicaId], references: [id])
+  usuario         Usuario?            @relation(fields: [usuarioId], references: [id])
+  ventaProducto   VentaProducto?      @relation(fields: [ventaProductoId], references: [id])
+}
+
+model Lote {
+  id               String            @id @default(uuid())
+  productoId       String
+  lote             String?
+  fechaVencimiento DateTime?
+  cantidadInicial  Int
+  cantidadActual   Int
+  producto         Producto          @relation(fields: [productoId], references: [id])
+  movimientos      MovimientoStock[]
+}
+
+model Proveedor {
+  id          String              @id @default(uuid())
+  nombre      String
+  cuit        String?
+  direccion   String?
+  telefono    String?
+  email       String?
+  OrdenCompra OrdenCompra[]
+  productos   ProductoProveedor[]
+}
+
+model ProductoProveedor {
+  id              String    @id @default(uuid())
+  productoId      String
+  proveedorId     String
+  precioHistorico Decimal?  @db.Decimal(10, 2)
+  producto        Producto  @relation(fields: [productoId], references: [id])
+  proveedor       Proveedor @relation(fields: [proveedorId], references: [id])
+}
+
+model OrdenCompra {
+  id             String            @id @default(uuid())
+  proveedorId    String
+  fechaCreacion  DateTime          @default(now())
+  fechaRecepcion DateTime?
+  estado         EstadoOrdenCompra @default(PENDIENTE)
+  movimientos    MovimientoStock[]
+  proveedor      Proveedor         @relation(fields: [proveedorId], references: [id])
+  items          OrdenCompraItem[]
+}
+
+model OrdenCompraItem {
+  id             String      @id @default(uuid())
+  ordenCompraId  String
+  productoId     String
+  cantidad       Int
+  precioUnitario Decimal     @db.Decimal(10, 2)
+  ordenCompra    OrdenCompra @relation(fields: [ordenCompraId], references: [id])
+  producto       Producto    @relation(fields: [productoId], references: [id])
+}
+
+model TipoTurno {
+  id              String  @id @default(uuid())
+  nombre          String  @unique
+  descripcion     String?
+  mensajeBase     String?
+  instrucciones   String?
+  duracionDefault Int?
+  turnos          Turno[]
+}
+
+model Turno {
+  id                  String                  @id @default(uuid())
+  pacienteId          String
+  profesionalId       String
+  tipoTurnoId         String
+  inicio              DateTime
+  fin                 DateTime
+  estado              EstadoTurno             @default(PENDIENTE)
+  observaciones       String?
+  comentarioMensaje   String?
+  notificacionEnviada Boolean                 @default(false)
+  esCirugia           Boolean                 @default(false)
+  cirugiaId           String?
+  entradaHCId         String?
+  createdAt           DateTime                @default(now())
+  updatedAt           DateTime                @updatedAt
+  MovimientoCC        MovimientoCC[]
+  cirugia             Cirugia?                @relation(fields: [cirugiaId], references: [id])
+  entradaHC           HistoriaClinicaEntrada? @relation(fields: [entradaHCId], references: [id])
+  paciente            Paciente                @relation(fields: [pacienteId], references: [id])
+  profesional         Profesional             @relation(fields: [profesionalId], references: [id])
+  tipoTurno           TipoTurno               @relation(fields: [tipoTurnoId], references: [id])
+}
+
+model Cirugia {
+  id            String      @id @default(uuid())
+  pacienteId    String
+  profesionalId String
+  fecha         DateTime
+  duracion      Int?
+  descripcion   String?
+  Profesional   Profesional @relation(fields: [profesionalId], references: [id])
+  turnos        Turno[]
+}
+
+enum RolUsuario {
+  ADMIN
+  PROFESIONAL
+  SECRETARIA
+  PACIENTE
+  FACTURADOR
+}
+
+enum EstadoPaciente {
+  ACTIVO
+  ARCHIVADO
+  QUIRURGICO
+  PRESUPUESTO
+  PRIMERA
+  PRACTICA_CONSULTORIO
+}
+
+enum TipoMovimiento {
+  CARGO
+  PAGO
+}
+
+enum EstadoPresupuesto {
+  BORRADOR
+  ENVIADO
+  ACEPTADO
+  RECHAZADO
+  CANCELADO
+}
+
+enum EstadoLiquidacion {
+  PENDIENTE
+  PAGADO
+}
+
+enum TipoFactura {
+  FACTURA
+  RECIBO
+}
+
+enum TipoProducto {
+  INSUMO
+  PRODUCTO_VENTA
+  USO_INTERNO
+}
+
+enum TipoMovimientoStock {
+  ENTRADA
+  SALIDA
+  AJUSTE
+}
+
+enum EstadoOrdenCompra {
+  PENDIENTE
+  ENVIADA
+  RECIBIDA
+  CANCELADA
+}
+
+enum EstadoTurno {
+  PENDIENTE
+  CONFIRMADO
+  CANCELADO
+  AUSENTE
+  FINALIZADO
+}

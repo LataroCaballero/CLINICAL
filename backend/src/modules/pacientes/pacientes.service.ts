@@ -1,6 +1,6 @@
 // pacientes.service.ts
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '@prisma/client/generator-build';
+import { PrismaService } from '../../prisma/prisma.service';
 import { CreatePacienteDto } from './dto/create-paciente.dto';
 import { UpdatePacienteDto } from './dto/update-paciente.dto';
 import { SearchPacienteDto } from './dto/search-paciente.dto';
@@ -114,6 +114,7 @@ export class PacientesService {
     const query = q.trim();
 
     try {
+      console.log('>>> SUGGEST START', query);
       const results = await this.prisma.$queryRaw<
         Array<{
           id: string;
@@ -153,6 +154,8 @@ export class PacientesService {
       ORDER BY score DESC
       LIMIT 10;
     `;
+
+      console.log('>>> SUGGEST END');
 
       // Nunca devolver undefined → el frontend siempre recibe array
       return results ?? [];

@@ -3,7 +3,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { AuditMiddleware } from './common/middleware/audit.middleware';
 import { UsuariosModule } from './modules/usuarios/usuarios.module';
-import { PrismaModule } from '@prisma/client/generator-build';
+import { PrismaModule } from './prisma/prisma.module';
 import { PacientesModule } from './modules/pacientes/pacientes.module';
 
 @Module({

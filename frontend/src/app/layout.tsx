@@ -4,6 +4,7 @@ import "./globals.css";
 import { BackgroundBeams } from "../components/ui/shadcn-io/background-beams/index";
 import { Providers } from "./providers";
 import axios from "axios";
+import dynamic from "next/dynamic";
 
 axios.defaults.withCredentials = true;
 

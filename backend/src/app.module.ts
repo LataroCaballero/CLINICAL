@@ -5,12 +5,22 @@ import { AuditMiddleware } from './common/middleware/audit.middleware';
 import { UsuariosModule } from './modules/usuarios/usuarios.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { PacientesModule } from './modules/pacientes/pacientes.module';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
-  imports: [PrismaModule, AuthModule, UsuariosModule, PacientesModule],
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: '.env', // <- carga el .env desde ./backend/.env
+    }),
+    PrismaModule,
+    AuthModule,
+    UsuariosModule,
+    PacientesModule,
+  ],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(AuditMiddleware).forRoutes('*'); // audita todo
+    consumer.apply(AuditMiddleware).forRoutes('*');
   }
 }

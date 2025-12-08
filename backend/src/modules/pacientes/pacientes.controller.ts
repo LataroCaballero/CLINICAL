@@ -12,7 +12,7 @@ import {
 import { PacientesService } from './pacientes.service';
 import { CreatePacienteDto } from './dto/create-paciente.dto';
 import { UpdatePacienteDto } from './dto/update-paciente.dto';
-import { SearchPacienteDto } from './dto/search-paciente.dto';
+import { PacienteListaDto } from './dto/paciente-lista.dto';
 
 @Controller('pacientes')
 export class PacientesController {
@@ -46,8 +46,8 @@ export class PacientesController {
   }
 
   @Get()
-  search(@Query() query: SearchPacienteDto) {
-    return this.pacientesService.search(query); // tu búsqueda completa
+  async listarPacientes(): Promise<PacienteListaDto[]> {
+    return this.pacientesService.obtenerListaPacientes();
   }
 
   // Obtener por ID

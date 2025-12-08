@@ -5,6 +5,7 @@ import { CreatePacienteDto } from './dto/create-paciente.dto';
 import { UpdatePacienteDto } from './dto/update-paciente.dto';
 import { SearchPacienteDto } from './dto/search-paciente.dto';
 import { PacienteSuggest } from 'src/common/types/paciente-suggest.type';
+import { PacienteListaDto } from './dto/paciente-lista.dto';
 
 @Injectable()
 export class PacientesService {
@@ -13,6 +14,91 @@ export class PacientesService {
   // Crear
   create(dto: CreatePacienteDto) {
     return this.prisma.paciente.create({ data: dto });
+  }
+
+  async obtenerListaPacientes(): Promise<PacienteListaDto[]> {
+    const ahora = new Date();
+
+    const pacientes = await this.prisma.paciente.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: {
+        usuario: {
+          select: {
+            fotoUrl: true,
+          },
+        },
+        cuentaCorriente: {
+          select: {
+            saldoActual: true,
+          },
+        },
+        obraSocial: {
+          select: {
+            nombre: true,
+          },
+        },
+        estudios: {
+          select: {
+            estado: true,
+          },
+        },
+        turnos: {
+          select: {
+            inicio: true,
+          },
+          orderBy: {
+            inicio: 'desc',
+          },
+        },
+        presupuestos: {
+          select: {
+            estado: true,
+          },
+        },
+      },
+    });
+
+    const lista: PacienteListaDto[] = pacientes.map((p) => {
+      const turnosOrdenados = p.turnos.sort(
+        (a, b) => a.inicio.getTime() - b.inicio.getTime(),
+      );
+
+      const pasado = turnosOrdenados.filter((t) => t.inicio < ahora);
+      const futuro = turnosOrdenados.filter((t) => t.inicio >= ahora);
+
+      const ultimoTurno = pasado.length
+        ? pasado[pasado.length - 1].inicio
+        : null;
+      const proximoTurno = futuro.length ? futuro[0].inicio : null;
+
+      const estudiosPendientes = p.estudios.filter(
+        (e) => e.estado !== true,
+      ).length;
+
+      const presupuestosActivos = p.presupuestos.filter((pr) =>
+        ['ENVIADO', 'ACEPTADO'].includes(pr.estado),
+      ).length;
+
+      return {
+        id: p.id,
+        fotoUrl: p.fotoUrl ?? p.usuario?.fotoUrl ?? null,
+        nombreCompleto: p.nombreCompleto,
+        dni: p.dni,
+        telefono: p.telefono,
+        email: p.email,
+        obraSocialNombre: (p as any).obraSocial?.nombre ?? null,
+        plan: p.plan,
+        ultimoTurno,
+        proximoTurno,
+        deuda: Number(p.cuentaCorriente?.saldoActual ?? 0),
+        estado: p.estado,
+        consentimientoFirmado: p.consentimientoFirmado,
+        estudiosPendientes,
+        presupuestosActivos,
+      };
+    });
+
+    return lista;
   }
 
   // Actualizar

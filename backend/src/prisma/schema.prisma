@@ -3,9 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model Permiso {
@@ -126,6 +125,7 @@ model Paciente {
   estudios                   EstudioPaciente[]
   historiasClinicas          HistoriaClinica[]
   mensajesInternos           MensajeInterno[]
+  obraSocial                 ObraSocial?       @relation(fields: [obraSocialId], references: [id])
   profesional                Profesional?      @relation("ProfesionalPaciente", fields: [profesionalId], references: [id])
   usuario                    Usuario?          @relation(fields: [usuarioId], references: [id])
   presupuestos               Presupuesto[]
@@ -269,6 +269,7 @@ model ObraSocial {
   domicilio             String?
   condicionIVA          String?
   LiquidacionObraSocial LiquidacionObraSocial[]
+  Paciente              Paciente[]
   planes                PlanObraSocial[]
   practicas             PracticaObraSocial[]
 }

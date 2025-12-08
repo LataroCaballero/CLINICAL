@@ -1,12 +1,19 @@
-'use client';
-import Sidebar from "./components/Sidebar";
+"use client";
+
 import Topbar from "./components/Topbar";
 import DockNav from "./components/DockNav";
 import { useUIStore } from "@/lib/stores/useUIStore";
+import dynamic from "next/dynamic";
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+const Sidebar = dynamic(() => import("./components/Sidebar"), { ssr: false });
+
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const { sidebarCollapsed } = useUIStore();
-  
+
   return (
     <div className="flex">
       {/* Sidebar solo desktop */}
@@ -24,11 +31,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
 
         {/* Contenido principal del dashboard */}
-        <main className={`flex-1 overflow-y-auto transition-all duration-300 ${sidebarCollapsed ? "md:ml-20" : "md:ml-64"}`}>
+        <main
+          className={`flex-1 overflow-y-auto transition-all duration-300 ${
+            sidebarCollapsed ? "md:ml-20" : "md:ml-64"
+          }`}
+        >
           {children}
         </main>
         <div className="z-100">
-          <DockNav/>
+          <DockNav />
         </div>
       </div>
     </div>

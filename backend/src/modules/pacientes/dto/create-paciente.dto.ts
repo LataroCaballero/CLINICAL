@@ -4,9 +4,12 @@ import {
   IsArray,
   IsDateString,
   IsBoolean,
+  IsEnum,
 } from 'class-validator';
+import { EstadoPaciente } from '@prisma/client';
 
 export class CreatePacienteDto {
+  // Datos básicos
   @IsString()
   nombreCompleto: string;
 
@@ -54,6 +57,7 @@ export class CreatePacienteDto {
   @IsArray()
   condiciones?: string[];
 
+  // Datos médicos
   @IsOptional()
   @IsString()
   diagnostico?: string;
@@ -74,7 +78,39 @@ export class CreatePacienteDto {
   @IsString()
   objetivos?: string;
 
+  // Consentimientos + indicaciones
   @IsOptional()
   @IsBoolean()
   consentimientoFirmado?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  indicacionesEnviadas?: boolean;
+
+  @IsOptional()
+  @IsDateString()
+  fechaIndicaciones?: string;
+
+  // Contacto de emergencia
+  @IsOptional()
+  @IsString()
+  contactoEmergenciaNombre?: string;
+
+  @IsOptional()
+  @IsString()
+  contactoEmergenciaTelefono?: string;
+
+  @IsOptional()
+  @IsString()
+  contactoEmergenciaRelacion?: string;
+
+  // Profesional asignado
+  @IsOptional()
+  @IsString()
+  profesionalId?: string;
+
+  // Estado inicial del paciente (enum Prisma)
+  @IsOptional()
+  @IsEnum(EstadoPaciente)
+  estado?: EstadoPaciente;
 }

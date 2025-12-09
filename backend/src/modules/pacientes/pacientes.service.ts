@@ -9,12 +9,48 @@ import { PacienteListaDto } from './dto/paciente-lista.dto';
 
 @Injectable()
 export class PacientesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   // Crear
-  create(dto: CreatePacienteDto) {
-    return this.prisma.paciente.create({ data: dto });
+  async create(dto: CreatePacienteDto) {
+    return this.prisma.paciente.create({
+      data: {
+        nombreCompleto: dto.nombreCompleto,
+        dni: dto.dni,
+        fechaNacimiento: dto.fechaNacimiento ? new Date(dto.fechaNacimiento) : null,
+        telefono: dto.telefono,
+        telefonoAlternativo: dto.telefonoAlternativo,
+        email: dto.email,
+        direccion: dto.direccion,
+        fotoUrl: dto.fotoUrl,
+
+        obraSocialId: dto.obraSocialId,
+        plan: dto.plan,
+
+        alergias: dto.alergias ?? [],
+        condiciones: dto.condiciones ?? [],
+
+        diagnostico: dto.diagnostico,
+        tratamiento: dto.tratamiento,
+        deriva: dto.deriva,
+        lugarIntervencion: dto.lugarIntervencion,
+        objetivos: dto.objetivos,
+
+        consentimientoFirmado: dto.consentimientoFirmado ?? false,
+        indicacionesEnviadas: dto.indicacionesEnviadas ?? false,
+        fechaIndicaciones: dto.fechaIndicaciones ? new Date(dto.fechaIndicaciones) : null,
+
+        contactoEmergenciaNombre: dto.contactoEmergenciaNombre,
+        contactoEmergenciaTelefono: dto.contactoEmergenciaTelefono,
+        contactoEmergenciaRelacion: dto.contactoEmergenciaRelacion,
+
+        profesionalId: dto.profesionalId || null,
+
+        estado: dto.estado ?? undefined,
+      },
+    });
   }
+
 
   async obtenerListaPacientes(): Promise<PacienteListaDto[]> {
     const ahora = new Date();

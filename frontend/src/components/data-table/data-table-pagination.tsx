@@ -75,14 +75,15 @@ export function DataTablePagination<TData>({
       </div>
 
       {/* DERECHA — BUTTON GROUP */}
-      <ButtonGroup variant="outline">
+      <ButtonGroup variant="outline" className="bg-white dark:bg-background border border-input rounded-md">
         {/* Primera página */}
         <Button
           size="sm"
           onClick={() => table.setPageIndex(0)}
           disabled={pageIndex === 0}
+          className="bg-white hover:bg-gray-100 dark:bg-background"
         >
-          <ChevronsLeft className="h-4 w-4" />
+          <ChevronsLeft className="h-4 w-4 text-black" />
         </Button>
 
         {/* Página anterior */}
@@ -90,8 +91,9 @@ export function DataTablePagination<TData>({
           size="sm"
           onClick={() => table.previousPage()}
           disabled={!table.getCanPreviousPage()}
+          className="bg-white hover:bg-gray-100 dark:bg-background"
         >
-          <ChevronLeft className="h-4 w-4" />
+          <ChevronLeft className="h-4 w-4 text-black" />
         </Button>
 
         {/* Página siguiente */}
@@ -99,8 +101,9 @@ export function DataTablePagination<TData>({
           size="sm"
           onClick={() => table.nextPage()}
           disabled={!table.getCanNextPage()}
+          className="bg-white hover:bg-gray-100 dark:bg-background"
         >
-          <ChevronRight className="h-4 w-4" />
+          <ChevronRight className="h-4 w-4 text-black" />
         </Button>
 
         {/* Última página */}
@@ -108,8 +111,9 @@ export function DataTablePagination<TData>({
           size="sm"
           onClick={() => table.setPageIndex(pageCount - 1)}
           disabled={pageIndex === pageCount - 1}
+          className="bg-white hover:bg-gray-100 dark:bg-background"
         >
-          <ChevronsRight className="h-4 w-4" />
+          <ChevronsRight className="h-4 w-4 text-black" />
         </Button>
       </ButtonGroup>
     </div>

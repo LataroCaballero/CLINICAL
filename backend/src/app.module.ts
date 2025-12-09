@@ -6,6 +6,8 @@ import { UsuariosModule } from './modules/usuarios/usuarios.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { PacientesModule } from './modules/pacientes/pacientes.module';
 import { ConfigModule } from '@nestjs/config';
+import { ObrasSocialesModule } from './modules/obras-sociales/obras-sociales.module';
+import { ProfesionalesModule } from './modules/profesionales/profesionales.module';
 
 @Module({
   imports: [
@@ -17,6 +19,8 @@ import { ConfigModule } from '@nestjs/config';
     AuthModule,
     UsuariosModule,
     PacientesModule,
+    ObrasSocialesModule,
+    ProfesionalesModule,
   ],
 })
 export class AppModule implements NestModule {

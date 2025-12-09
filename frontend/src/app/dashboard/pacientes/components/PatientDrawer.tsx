@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import PacienteDetails from "./PacienteDetails";
 import PacienteDetailsSkeleton from "./PacienteDetailsSkeleton";
 import { usePaciente } from "@/hooks/usePaciente";
+import { useState } from "react";
 
 export default function PatientDrawer({
   open,
@@ -26,28 +27,40 @@ export default function PatientDrawer({
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="max-h-[90vh] overflow-y-auto">
-        <DrawerHeader>
-          <DrawerTitle>Información del paciente</DrawerTitle>
+      <DrawerContent className="max-h-[90vh] flex flex-col">
+
+        {/* HEADER */}
+        <DrawerHeader className="border-b">
+          <DrawerTitle className="text-lg font-semibold text-center">
+            Información del paciente
+          </DrawerTitle>
         </DrawerHeader>
 
-        <div className="p-4">
-          {isLoading && <PacienteDetailsSkeleton />}
+        {/* CONTENIDO SCROLLEABLE */}
+        <div className="flex-1 overflow-y-auto px-6 py-4">
+          <div className="max-w-3xl mx-auto">
 
-          {isError && (
-            <div className="p-4 border border-red-300 rounded text-red-600">
-              Error al cargar el paciente.
-            </div>
-          )}
+            {isLoading && <PacienteDetailsSkeleton />}
 
-          {paciente && !isLoading && <PacienteDetails paciente={paciente} />}
+            {isError && (
+              <div className="p-4 border border-red-300 rounded text-red-600">
+                Error al cargar el paciente.
+              </div>
+            )}
+
+            {paciente && !isLoading && <PacienteDetails paciente={paciente} />}
+          </div>
         </div>
 
-        <div className="p-4 flex justify-end">
+        {/* FOOTER FIJO */}
+        <div className="border-t p-4 bg-white">
           <DrawerClose asChild>
-            <Button variant="outline">Cerrar</Button>
+            <Button variant="outline" className="w-full max-w-sm mx-auto block">
+              Cerrar
+            </Button>
           </DrawerClose>
         </div>
+
       </DrawerContent>
     </Drawer>
   );

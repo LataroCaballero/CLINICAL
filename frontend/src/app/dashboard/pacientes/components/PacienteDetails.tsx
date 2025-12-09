@@ -28,23 +28,23 @@ export default function PacienteDetails({ paciente, obraSocialNombre }: any) {
   const edad = calcularEdad(paciente.fechaNacimiento);
 
   return (
-    <div className="space-y-8 px-2 pb-8">
+    <div className="space-y-6 px-2 pb-6 max-w-3xl mx-auto">
       {/* =======================
           HEADER
       ======================== */}
       <div className="flex items-start gap-4">
         {/* Foto */}
-        <div className="w-24 h-24 rounded-full overflow-hidden border bg-gray-200">
+        <div className="w-20 h-20 rounded-full overflow-hidden border bg-gray-200 shrink-0">
           {paciente.fotoUrl ? (
             <Image
               src={paciente.fotoUrl}
               alt={paciente.nombreCompleto}
-              width={100}
-              height={100}
-              className="object-cover"
+              width={80}
+              height={80}
+              className="object-cover w-full h-full"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-3xl text-gray-500">
+            <div className="w-full h-full flex items-center justify-center text-2xl text-gray-500">
               {paciente.nombreCompleto?.charAt(0)}
             </div>
           )}
@@ -52,7 +52,7 @@ export default function PacienteDetails({ paciente, obraSocialNombre }: any) {
 
         {/* Nombre + info básica */}
         <div className="flex flex-col justify-center">
-          <h2 className="text-2xl font-semibold">{paciente.nombreCompleto}</h2>
+          <h2 className="text-xl font-semibold leading-tight">{paciente.nombreCompleto}</h2>
 
           <p className="text-gray-600 flex items-center gap-2 mt-1">
             <IdCard className="w-4 h-4" /> DNI: {paciente.dni}
@@ -67,11 +67,11 @@ export default function PacienteDetails({ paciente, obraSocialNombre }: any) {
       {/* =======================
           GRID DE 2 COLUMNAS
       ======================== */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         {/* DATOS DE CONTACTO */}
         <section>
-          <h3 className="text-sm font-semibold mb-3">Datos de contacto</h3>
-          <div className="space-y-2 text-gray-700 pl-2">
+          <h3 className="text-sm font-semibold mb-2">Datos de contacto</h3>
+          <div className="space-y-1 text-gray-700 pl-2">
             <p className="flex items-center gap-2">
               <Mail className="w-4 h-4" /> {paciente.email || "Sin email"}
             </p>
@@ -83,8 +83,8 @@ export default function PacienteDetails({ paciente, obraSocialNombre }: any) {
 
         {/* OBRA SOCIAL */}
         <section>
-          <h3 className="text-sm font-semibold mb-3">Obra social</h3>
-          <div className="space-y-2 text-gray-700 pl-2">
+          <h3 className="text-sm font-semibold mb-2">Obra social</h3>
+          <div className="space-y-1 text-gray-700 pl-2">
             <p>• {obraSocialNombre || "Sin obra social"}</p>
             {paciente.plan && <p>• Plan: {paciente.plan}</p>}
           </div>
@@ -92,9 +92,9 @@ export default function PacienteDetails({ paciente, obraSocialNombre }: any) {
 
         {/* INFORMACIÓN MÉDICA */}
         <section>
-          <h3 className="text-sm font-semibold mb-3">Información médica</h3>
+          <h3 className="text-sm font-semibold mb-2">Información médica</h3>
 
-          <div className="space-y-2 text-gray-700 pl-2">
+          <div className="space-y-1 text-gray-700 pl-2">
             <p className="flex gap-2">
               <Stethoscope className="w-4 h-4 mt-1" />
               Diagnóstico: {paciente.diagnostico || "-"}
@@ -114,10 +114,9 @@ export default function PacienteDetails({ paciente, obraSocialNombre }: any) {
 
         {/* CONSENTIMIENTOS */}
         <section>
-          <h3 className="text-sm font-semibold mb-3">Consentimientos</h3>
+          <h3 className="text-sm font-semibold mb-2">Consentimientos</h3>
 
-          <div className="space-y-2 text-gray-700 pl-2">
-            {/* Consentimiento */}
+          <div className="space-y-1 text-gray-700 pl-2">
             <p className="flex items-center gap-2">
               {paciente.consentimientoFirmado ? (
                 <Check className="text-green-600 w-4 h-4" />
@@ -127,7 +126,6 @@ export default function PacienteDetails({ paciente, obraSocialNombre }: any) {
               Consentimiento firmado
             </p>
 
-            {/* Indicaciones */}
             <p className="flex items-center gap-2">
               {paciente.indicacionesEnviadas ? (
                 <>
@@ -142,11 +140,14 @@ export default function PacienteDetails({ paciente, obraSocialNombre }: any) {
               )}
             </p>
 
-            {/* Estado */}
             <p className="flex items-center gap-2">
               Estado:{" "}
               <strong
-                className={paciente.estado === "ACTIVO" ? "text-green-700" : ""}
+                className={
+                  paciente.estado === "ACTIVO"
+                    ? "text-green-700"
+                    : "text-gray-800"
+                }
               >
                 {paciente.estado || "-"}
               </strong>
@@ -158,8 +159,8 @@ export default function PacienteDetails({ paciente, obraSocialNombre }: any) {
       {/* =======================
           BOTONES DE ACCIÓN
       ======================== */}
-      <div className="border-t pt-6">
-        <h3 className="text-sm font-semibold mb-4">Acciones rápidas</h3>
+      <div className="border-t pt-5">
+        <h3 className="text-sm font-semibold mb-3">Acciones rápidas</h3>
 
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
           <ActionButton
@@ -191,8 +192,8 @@ export default function PacienteDetails({ paciente, obraSocialNombre }: any) {
 // COMPONENTE REUTILIZABLE PARA LOS BOTONES
 function ActionButton({ icon, label }: any) {
   return (
-    <button className="flex flex-col items-center justify-center p-4 border rounded-lg hover:bg-muted transition text-sm">
-      <span className="mb-2">{icon}</span>
+    <button className="flex flex-col items-center justify-center p-3 border rounded-md hover:bg-muted transition text-sm min-h-[70px]">
+      <span className="mb-1">{icon}</span>
       {label}
     </button>
   );

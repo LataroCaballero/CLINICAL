@@ -1,0 +1,33 @@
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+
+export const createPaciente = async (payload) => {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/pacientes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+        const error = await res.text();
+        throw new Error(error || "Error al crear paciente");
+    }
+
+    return res.json();
+};
+
+export function useCreatePaciente() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: createPaciente,
+        onSuccess: () => {
+            toast.success("Paciente creado correctamente");
+            queryClient.invalidateQueries({ queryKey: ["pacientes"] });
+        },
+        onError: (error) => {
+            toast.error(error.message || "Error al crear paciente");
+        },
+    });
+}

@@ -12,6 +12,10 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { Plus } from "lucide-react";
+import NewPacienteModal from "@/app/dashboard/pacientes/components/NewPacienteModal";
+import { useCreatePaciente } from "@/hooks/useCreatePaciente";
+import { useProfesionales } from "@/hooks/useProfesionales";
+import { useObrasSociales } from "@/hooks/useObrasSociales";
 
 interface DataTableToolbarProps {
   table: Table<any>;
@@ -23,6 +27,15 @@ export function DataTableToolbar({ table, onNewPaciente }: DataTableToolbarProps
     nombreCompleto: string;
     fotoUrl: string | null;
   } | null>(null);
+  const [openNewPaciente, setOpenNewPaciente] = useState(false);
+
+  const { data: obrasSocialesData } = useObrasSociales();
+  const { data: profesionalesData } = useProfesionales();
+
+  console.log("OBRAS SOCIALES:", obrasSocialesData);
+  console.log("PROFESIONALES:", profesionalesData);
+
+  const createPacienteMutation = useCreatePaciente();
 
   const setEstadoFilter = (value: string | null) => {
     table.getColumn("estado")?.setFilterValue(value === "todos" ? "" : value);
@@ -75,13 +88,18 @@ export function DataTableToolbar({ table, onNewPaciente }: DataTableToolbarProps
       </div>
 
       {/* RIGHT SIDE → BOTÓN NUEVO PACIENTE */}
-      <Button
-        className="h-10 px-4 shadow-sm"
-        onClick={onNewPaciente}
-      >
+      <Button className="h-10 px-4 shadow-sm" onClick={() => setOpenNewPaciente(true)}>
         <Plus className="mr-2 h-4 w-4" />
         Nuevo paciente
       </Button>
+
+      <NewPacienteModal
+        open={openNewPaciente}
+        onClose={() => setOpenNewPaciente(false)}
+        onCreate={(payload) => createPacienteMutation.mutate(payload)}
+        obrasSociales={obrasSocialesData}
+        profesionales={profesionalesData}
+      />
     </div>
   );
 }

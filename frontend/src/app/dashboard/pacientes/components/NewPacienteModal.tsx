@@ -58,12 +58,12 @@ const schema = z.object({
     ]).default("ACTIVO"),
 });
 
-type FormValues = z.infer<typeof schema>;
+type NewPacienteFormValues = z.infer<typeof schema>;
 
 export default function NewPacienteModal({ open, onClose, onCreate, obrasSociales, profesionales }: any) {
     const [step, setStep] = useState(1);
 
-    const form = useForm<FormValues>({
+    const form = useForm<NewPacienteFormValues>({
         resolver: zodResolver(schema),
         defaultValues: {
             consentimientoFirmado: false,

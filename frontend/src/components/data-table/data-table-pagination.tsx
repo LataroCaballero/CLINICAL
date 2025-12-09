@@ -1,6 +1,23 @@
 "use client";
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectItem,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  ButtonGroup,
+} from "@/components/ui/button-group"; // IMPORTANTE
+import {
+  ChevronsLeft,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsRight,
+} from "lucide-react";
 import type { Table } from "@tanstack/react-table";
 
 interface DataTablePaginationProps<TData> {
@@ -10,42 +27,91 @@ interface DataTablePaginationProps<TData> {
 export function DataTablePagination<TData>({
   table,
 }: DataTablePaginationProps<TData>) {
+  const initialPageSize = table.getState().pagination.pageSize || 10;
+  const [rowsPerPage, setRowsPerPage] = useState(initialPageSize);
+
   const pagination = table.getState().pagination;
   const pageIndex = pagination.pageIndex;
-  const pageSize = pagination.pageSize;
 
   const totalRows = table.getFilteredRowModel().rows.length;
-  const pageCount = table.getPageCount() || 1;
+  const pageCount = Math.ceil(totalRows / rowsPerPage) || 1;
 
   return (
     <div className="flex items-center justify-between py-4">
-      {/* IZQUIERDA: info */}
-      <div className="text-sm text-muted-foreground">
-        Página <span className="font-semibold">{pageIndex + 1}</span> de{" "}
-        <span className="font-semibold">{pageCount}</span> —{" "}
-        <span className="font-semibold">{totalRows}</span> pacientes
+      {/* IZQUIERDA */}
+      <div className="flex items-center gap-4">
+        {/* SELECTOR ROWS PER PAGE */}
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">Filas por página</span>
+
+          <Select
+            value={String(rowsPerPage)}
+            onValueChange={(value) => {
+              const newSize = Number(value);
+              setRowsPerPage(newSize);
+              table.setPageSize(newSize);
+              table.setPageIndex(0);
+            }}
+          >
+            <SelectTrigger className="w-[90px] h-9">
+              <SelectValue />
+            </SelectTrigger>
+
+            <SelectContent>
+              <SelectItem value="10">10</SelectItem>
+              <SelectItem value="20">20</SelectItem>
+              <SelectItem value="30">30</SelectItem>
+              <SelectItem value="40">40</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* INFO DE PÁGINA */}
+        <div className="text-sm text-muted-foreground">
+          Página <span className="font-semibold">{pageIndex + 1}</span> de{" "}
+          <span className="font-semibold">{pageCount}</span> —{" "}
+          <span className="font-semibold">{totalRows}</span> pacientes
+        </div>
       </div>
 
-      {/* DERECHA: botones */}
-      <div className="flex items-center gap-2">
+      {/* DERECHA — BUTTON GROUP */}
+      <ButtonGroup variant="outline">
+        {/* Primera página */}
         <Button
-          variant="outline"
+          size="sm"
+          onClick={() => table.setPageIndex(0)}
+          disabled={pageIndex === 0}
+        >
+          <ChevronsLeft className="h-4 w-4" />
+        </Button>
+
+        {/* Página anterior */}
+        <Button
           size="sm"
           onClick={() => table.previousPage()}
           disabled={!table.getCanPreviousPage()}
         >
-          Anterior
+          <ChevronLeft className="h-4 w-4" />
         </Button>
 
+        {/* Página siguiente */}
         <Button
-          variant="outline"
           size="sm"
           onClick={() => table.nextPage()}
           disabled={!table.getCanNextPage()}
         >
-          Siguiente
+          <ChevronRight className="h-4 w-4" />
         </Button>
-      </div>
+
+        {/* Última página */}
+        <Button
+          size="sm"
+          onClick={() => table.setPageIndex(pageCount - 1)}
+          disabled={pageIndex === pageCount - 1}
+        >
+          <ChevronsRight className="h-4 w-4" />
+        </Button>
+      </ButtonGroup>
     </div>
   );
 }

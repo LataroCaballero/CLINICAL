@@ -14,7 +14,37 @@ export const pacienteColumns: ColumnDef<any>[] = [
   {
     accessorKey: "nombreCompleto",
     header: "Nombre",
-    cell: ({ row }) => row.original.nombreCompleto,
+    cell: ({ row }) => {
+      const nombre = row.original.nombreCompleto;
+      const foto = row.original.fotoUrl;
+
+      const getInitial = (name?: string) =>
+        name ? name.charAt(0).toUpperCase() : "?";
+
+      return (
+        <div className="flex items-center gap-3">
+          {foto ? (
+            <img
+              src={foto}
+              alt={nombre}
+              className="h-9 w-9 rounded-full object-cover border"
+            />
+          ) : (
+            <div
+              className="
+              h-9 w-9 rounded-full bg-indigo-600 text-white
+              flex items-center justify-center
+              text-sm font-semibold
+            "
+            >
+              {getInitial(nombre)}
+            </div>
+          )}
+
+          <span className="font-medium text-gray-900">{nombre}</span>
+        </div>
+      );
+    },
   },
 
   // OBRA SOCIAL (resuelta desde backend o incluida en row.original)

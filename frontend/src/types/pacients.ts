@@ -10,7 +10,13 @@ export interface PacienteListItem {
   ultimoTurno?: string | null; // llega como ISO string desde el backend
   proximoTurno?: string | null;
   deuda: number;
-  estado: "ACTIVO" | "INACTIVO";
+  estado:
+  | "ACTIVO"
+  | "ARCHIVADO"
+  | "QUIRURGICO"
+  | "PRESUPUESTO"
+  | "PRIMERA"
+  | "PRACTICA_CONSULTORIO";
   consentimientoFirmado: boolean;
   estudiosPendientes: number;
   presupuestosActivos: number;

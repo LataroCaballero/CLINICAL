@@ -44,8 +44,8 @@ const schema = z.object({
     fechaIndicaciones: z.string().optional(),
     objetivos: z.string().optional(),
 
-    contactoEmergenciaNombre: z.string().optional(),
-    contactoEmergenciaTelefono: z.string().optional(),
+    contactoEmergenciaNombre: z.string(),
+    contactoEmergenciaTelefono: z.string(),
     contactoEmergenciaRelacion: z.string().optional(),
 
     estado: z.enum([
@@ -55,7 +55,7 @@ const schema = z.object({
         "PRESUPUESTO",
         "PRIMERA",
         "PRACTICA_CONSULTORIO"
-    ]).default("ACTIVO"),
+    ])
 });
 
 type NewPacienteFormValues = z.infer<typeof schema>;

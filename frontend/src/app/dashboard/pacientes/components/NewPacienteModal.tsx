@@ -19,7 +19,7 @@ import { PlanCombobox } from "@/components/PlanCombobox";
 
 // ---------------- VALIDACIÓN ----------------
 
-const schema = z.object({
+const newPacienteSchema = z.object({
     nombreCompleto: z.string().min(3),
     dni: z.string().min(7),
     telefono: z.string().min(6),
@@ -58,13 +58,13 @@ const schema = z.object({
     ])
 });
 
-type NewPacienteFormValues = z.infer<typeof schema>;
+type NewPacienteFormValues = z.infer<typeof newPacienteSchema>;
 
 export default function NewPacienteModal({ open, onClose, onCreate, obrasSociales, profesionales }: any) {
     const [step, setStep] = useState(1);
 
     const form = useForm<NewPacienteFormValues>({
-        resolver: zodResolver(schema),
+        resolver: zodResolver(newPacienteSchema),
         defaultValues: {
             consentimientoFirmado: false,
             indicacionesEnviadas: false,
@@ -75,7 +75,7 @@ export default function NewPacienteModal({ open, onClose, onCreate, obrasSociale
     const next = () => setStep((s) => s + 1);
     const back = () => setStep((s) => s - 1);
 
-    const onSubmit = (data: FormValues) => {
+    const onSubmit = (data: NewPacienteFormValues) => {
         const payload = {
             // Datos básicos
             nombreCompleto: data.nombreCompleto,

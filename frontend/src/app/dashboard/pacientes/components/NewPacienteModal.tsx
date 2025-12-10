@@ -15,16 +15,17 @@ import { AlergiasChips } from "@/components/AlergiasChips";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import type { Resolver } from "react-hook-form";
 import { PlanCombobox } from "@/components/PlanCombobox";
 
 // ---------------- VALIDACIÓN ----------------
 
-const newPacienteSchema = z.object({
+const schema = z.object({
     nombreCompleto: z.string().min(3),
     dni: z.string().min(7),
     telefono: z.string().min(6),
     telefonoAlternativo: z.string().optional(),
-    email: z.string().email().optional(),
+    email: z.email().optional(),
     fechaNacimiento: z.string().optional(),
     direccion: z.string().optional(),
     fotoUrl: z.string().optional(),
@@ -39,13 +40,13 @@ const newPacienteSchema = z.object({
     lugarIntervencion: z.string().optional(),
     profesionalId: z.string().optional(),
 
-    consentimientoFirmado: z.boolean().default(false),
-    indicacionesEnviadas: z.boolean().default(false),
+    consentimientoFirmado: z.boolean(),
+    indicacionesEnviadas: z.boolean(),
     fechaIndicaciones: z.string().optional(),
     objetivos: z.string().optional(),
 
-    contactoEmergenciaNombre: z.string(),
-    contactoEmergenciaTelefono: z.string(),
+    contactoEmergenciaNombre: z.string().optional(),
+    contactoEmergenciaTelefono: z.string().optional(),
     contactoEmergenciaRelacion: z.string().optional(),
 
     estado: z.enum([
@@ -58,19 +59,22 @@ const newPacienteSchema = z.object({
     ])
 });
 
-type NewPacienteFormValues = z.infer<typeof newPacienteSchema>;
+type NewPacienteFormValues = z.infer<typeof schema>;
+
 
 export default function NewPacienteModal({ open, onClose, onCreate, obrasSociales, profesionales }: any) {
     const [step, setStep] = useState(1);
 
     const form = useForm<NewPacienteFormValues>({
-        resolver: zodResolver(newPacienteSchema),
+        resolver: zodResolver(schema),
         defaultValues: {
             consentimientoFirmado: false,
             indicacionesEnviadas: false,
             estado: "ACTIVO",
         },
     });
+
+
 
     const next = () => setStep((s) => s + 1);
     const back = () => setStep((s) => s - 1);
@@ -104,20 +108,20 @@ export default function NewPacienteModal({ open, onClose, onCreate, obrasSociale
             tratamiento: data.tratamiento || undefined,
             deriva: data.deriva || undefined,
             lugarIntervencion: data.lugarIntervencion || undefined,
-            objetivos: data.objetivos || undefined,
+            // Profesional asignado
+            profesionalId: data.profesionalId || undefined,
 
             // Consentimientos e indicaciones
             consentimientoFirmado: data.consentimientoFirmado ?? false,
             indicacionesEnviadas: data.indicacionesEnviadas ?? false,
             fechaIndicaciones: data.fechaIndicaciones || undefined,
+            objetivos: data.objetivos || undefined,
 
             // Emergencias
             contactoEmergenciaNombre: data.contactoEmergenciaNombre || undefined,
             contactoEmergenciaTelefono: data.contactoEmergenciaTelefono || undefined,
             contactoEmergenciaRelacion: data.contactoEmergenciaRelacion || undefined,
 
-            // Profesional asignado
-            profesionalId: data.profesionalId || undefined,
 
             // Estado inicial
             estado: data.estado || "ACTIVO",
@@ -255,7 +259,7 @@ export default function NewPacienteModal({ open, onClose, onCreate, obrasSociale
                                         planes={planesDisponibles}
                                         obraSocialId={obraSeleccionada}
                                         value={form.watch("plan")}
-                                        onChange={(val) => form.setValue("plan", val)}
+                                        onChange={(val: string) => form.setValue("plan", val)}
                                     />
                                 </div>
                             )}

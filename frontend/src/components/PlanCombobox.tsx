@@ -54,9 +54,9 @@ export function PlanCombobox({ planes, value, onChange, obraSocialId }: any) {
             if (value === deletedObj?.nombre) onChange("");
 
             // Actualizar desde el cache automáticamente
-            queryClient.invalidateQueries(["obrasSociales"]);
+            queryClient.invalidateQueries({ queryKey: ["obrasSociales"] });
 
-            const updated = queryClient.getQueryData(["obrasSociales"]);
+            const updated = queryClient.getQueryData(["obrasSociales"]) as any[] | undefined;
             const os = updated?.find((o: any) => o.id === obraSocialId);
 
             setDeleting(null);

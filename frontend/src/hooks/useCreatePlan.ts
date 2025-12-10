@@ -18,7 +18,7 @@ export function useCreatePlan() {
         },
 
         onSuccess: () => {
-            queryClient.invalidateQueries(["obrasSociales"]);
+            queryClient.invalidateQueries({ queryKey: ["obrasSociales"] });
         }
     });
 }

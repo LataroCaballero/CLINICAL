@@ -96,7 +96,7 @@ export function DataTableToolbar({ table, onNewPaciente }: DataTableToolbarProps
       <NewPacienteModal
         open={openNewPaciente}
         onClose={() => setOpenNewPaciente(false)}
-        onCreate={(payload) => createPacienteMutation.mutate(payload)}
+        onCreate={(payload: any) => createPacienteMutation.mutate(payload)}
         obrasSociales={obrasSocialesData}
         profesionales={profesionalesData}
       />

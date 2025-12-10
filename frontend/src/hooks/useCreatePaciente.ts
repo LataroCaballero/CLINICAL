@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-export const createPaciente = async (payload) => {
+export const createPaciente = async (payload: any) => {
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/pacientes`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

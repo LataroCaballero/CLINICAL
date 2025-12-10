@@ -75,7 +75,7 @@ export function DataTablePagination<TData>({
       </div>
 
       {/* DERECHA — BUTTON GROUP */}
-      <ButtonGroup variant="outline" className="bg-white dark:bg-background border border-input rounded-md">
+      <ButtonGroup className="bg-white dark:bg-background border border-input rounded-md">
         {/* Primera página */}
         <Button
           size="sm"

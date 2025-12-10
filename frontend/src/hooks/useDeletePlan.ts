@@ -14,7 +14,7 @@ export function useDeletePlan() {
             return res.json();
         },
         onSuccess: () => {
-            queryClient.invalidateQueries(["obrasSociales"]);
+            queryClient.invalidateQueries({ queryKey: ["obrasSociales"] });
         }
     });
 }

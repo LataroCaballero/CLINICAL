@@ -1,4 +1,4 @@
-import { PacienteListItem } from "@/types/pacientes";
+import { PacienteListItem } from "@/types/pacients";
 
 export async function fetchPacientes(): Promise<PacienteListItem[]> {
   const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/pacientes`, {

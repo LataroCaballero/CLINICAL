@@ -6,13 +6,14 @@ import { UpdatePacienteDto } from './dto/update-paciente.dto';
 import { SearchPacienteDto } from './dto/search-paciente.dto';
 import { PacienteSuggest } from 'src/common/types/paciente-suggest.type';
 import { PacienteListaDto } from './dto/paciente-lista.dto';
-import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+import { ESTADO_PRIORITY } from '../../common/constants/pacientes.constants';
+import { EstadoPaciente } from '@prisma/client';
 
 @Injectable()
 export class PacientesService {
   constructor(private prisma: PrismaService) { }
 
-  // Crear
+  // Crear  
   async create(dto: CreatePacienteDto) {
     console.log("DTO RECIBIDO:", dto);
     try {
@@ -120,6 +121,19 @@ export class PacientesService {
         estudiosPendientes,
         presupuestosActivos,
       };
+    });
+
+    lista.sort((a, b) => {
+      const pa =
+        a.estado ? ESTADO_PRIORITY[a.estado as EstadoPaciente] ?? 99 : 99;
+      const pb =
+        b.estado ? ESTADO_PRIORITY[b.estado as EstadoPaciente] ?? 99 : 99;
+
+      // Primero orden por prioridad de estado
+      if (pa !== pb) return pa - pb;
+
+      // Luego, por ejemplo, por nombre para que sea estable dentro del grupo
+      return a.nombreCompleto.localeCompare(b.nombreCompleto);
     });
 
     return lista;

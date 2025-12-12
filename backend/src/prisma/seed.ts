@@ -537,7 +537,7 @@ async function main() {
 
     for (let i = 0; i < cantidad; i++) {
       const obra = random(obras);
-      const practica = random(obra.practicas);
+      const practica = random(obra.practicas) as PracticaObraSocial;
 
       const data: Prisma.PracticaRealizadaUncheckedCreateInput = {
         pacienteId: pac.id,

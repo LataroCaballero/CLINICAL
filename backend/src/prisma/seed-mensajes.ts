@@ -48,7 +48,7 @@ async function main() {
   const entradasHC = [];
 
   for (const pac of pacientes) {
-    const profesional = random(profesionales);
+    const profesional = random(profesionales) as { id: string };
 
     const historia = await prisma.historiaClinica.create({
       data: {
@@ -122,7 +122,7 @@ async function main() {
   for (const prov of proveedores) {
     const productosRandom = faker.helpers.arrayElements(productos, 5);
 
-    for (const prod of productosRandom) {
+    for (const prod of productosRandom as { id: string }[]) {
       const data: Prisma.ProductoProveedorUncheckedCreateInput = {
         proveedorId: prov.id,
         productoId: prod.id,

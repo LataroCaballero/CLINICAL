@@ -41,6 +41,8 @@ export function DataTableToolbar({ table, onNewPaciente }: DataTableToolbarProps
     table.getColumn("estado")?.setFilterValue(value === "todos" ? "" : value);
   };
 
+  const [open, setOpen] = useState(false);
+
   return (
     <div className="flex w-full justify-between items-center gap-4 py-2">
 
@@ -88,14 +90,13 @@ export function DataTableToolbar({ table, onNewPaciente }: DataTableToolbarProps
       </div>
 
       {/* RIGHT SIDE → BOTÓN NUEVO PACIENTE */}
-      <Button className="h-10 px-4 shadow-sm" onClick={() => setOpenNewPaciente(true)}>
-        <Plus className="mr-2 h-4 w-4" />
+      <Button onClick={() => setOpen(true)}>
         Nuevo paciente
       </Button>
 
       <NewPacienteModal
-        open={openNewPaciente}
-        onClose={() => setOpenNewPaciente(false)}
+        open={open}
+        onClose={() => setOpen(false)}
         onCreate={(payload: any) => createPacienteMutation.mutate(payload)}
         obrasSociales={obrasSocialesData}
         profesionales={profesionalesData}

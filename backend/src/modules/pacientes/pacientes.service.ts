@@ -1,11 +1,12 @@
 // pacientes.service.ts
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreatePacienteDto } from './dto/create-paciente.dto';
 import { UpdatePacienteDto } from './dto/update-paciente.dto';
 import { SearchPacienteDto } from './dto/search-paciente.dto';
 import { PacienteSuggest } from 'src/common/types/paciente-suggest.type';
 import { PacienteListaDto } from './dto/paciente-lista.dto';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 
 @Injectable()
 export class PacientesService {
@@ -13,43 +14,58 @@ export class PacientesService {
 
   // Crear
   async create(dto: CreatePacienteDto) {
-    return this.prisma.paciente.create({
-      data: {
-        nombreCompleto: dto.nombreCompleto,
-        dni: dto.dni,
-        fechaNacimiento: dto.fechaNacimiento ? new Date(dto.fechaNacimiento) : null,
-        telefono: dto.telefono,
-        telefonoAlternativo: dto.telefonoAlternativo,
-        email: dto.email,
-        direccion: dto.direccion,
-        fotoUrl: dto.fotoUrl,
+    try {
+      return this.prisma.paciente.create({
+        data: {
+          nombreCompleto: dto.nombreCompleto,
+          dni: dto.dni,
+          fechaNacimiento: dto.fechaNacimiento ? new Date(dto.fechaNacimiento) : null,
+          telefono: dto.telefono,
+          telefonoAlternativo: dto.telefonoAlternativo,
+          email: dto.email,
+          direccion: dto.direccion,
+          fotoUrl: dto.fotoUrl,
 
-        obraSocialId: dto.obraSocialId,
-        plan: dto.plan,
+          obraSocialId: dto.obraSocialId,
+          plan: dto.plan,
 
-        alergias: dto.alergias ?? [],
-        condiciones: dto.condiciones ?? [],
+          alergias: dto.alergias ?? [],
+          condiciones: dto.condiciones ?? [],
 
-        diagnostico: dto.diagnostico,
-        tratamiento: dto.tratamiento,
-        deriva: dto.deriva,
-        lugarIntervencion: dto.lugarIntervencion,
-        objetivos: dto.objetivos,
+          diagnostico: dto.diagnostico,
+          tratamiento: dto.tratamiento,
+          deriva: dto.deriva,
+          lugarIntervencion: dto.lugarIntervencion,
+          objetivos: dto.objetivos,
 
-        consentimientoFirmado: dto.consentimientoFirmado ?? false,
-        indicacionesEnviadas: dto.indicacionesEnviadas ?? false,
-        fechaIndicaciones: dto.fechaIndicaciones ? new Date(dto.fechaIndicaciones) : null,
+          consentimientoFirmado: dto.consentimientoFirmado ?? false,
+          indicacionesEnviadas: dto.indicacionesEnviadas ?? false,
+          fechaIndicaciones: dto.fechaIndicaciones ? new Date(dto.fechaIndicaciones) : null,
 
-        contactoEmergenciaNombre: dto.contactoEmergenciaNombre,
-        contactoEmergenciaTelefono: dto.contactoEmergenciaTelefono,
-        contactoEmergenciaRelacion: dto.contactoEmergenciaRelacion,
+          contactoEmergenciaNombre: dto.contactoEmergenciaNombre,
+          contactoEmergenciaTelefono: dto.contactoEmergenciaTelefono,
+          contactoEmergenciaRelacion: dto.contactoEmergenciaRelacion,
 
-        profesionalId: dto.profesionalId || null,
+          profesionalId: dto.profesionalId || null,
 
-        estado: dto.estado ?? undefined,
-      },
-    });
+          estado: dto.estado ?? undefined,
+        },
+      });
+    }
+    catch (error) {
+      if (
+        error instanceof PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        const target = error.meta?.target as string[] | undefined;
+        if (Array.isArray(target) && target.includes('dni')) {
+          throw new ConflictException('El DNI ingresado ya está registrado.');
+        }
+      }
+      throw error; // Cualquier otro error lo dejo pasar
+    }
   }
+
 
 
   async obtenerListaPacientes(): Promise<PacienteListaDto[]> {

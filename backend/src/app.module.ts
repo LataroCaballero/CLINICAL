@@ -8,6 +8,8 @@ import { PacientesModule } from './modules/pacientes/pacientes.module';
 import { ConfigModule } from '@nestjs/config';
 import { ObrasSocialesModule } from './modules/obras-sociales/obras-sociales.module';
 import { ProfesionalesModule } from './modules/profesionales/profesionales.module';
+import { DiagnosticosModule } from './diagnosticos/diagnosticos.module';
+import { TratamientosModule } from './modules/tratamientos/tratamientos.module';
 
 @Module({
   imports: [
@@ -21,6 +23,8 @@ import { ProfesionalesModule } from './modules/profesionales/profesionales.modul
     PacientesModule,
     ObrasSocialesModule,
     ProfesionalesModule,
+    DiagnosticosModule,
+    TratamientosModule
   ],
 })
 export class AppModule implements NestModule {

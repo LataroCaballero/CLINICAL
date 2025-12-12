@@ -520,6 +520,18 @@ model Cirugia {
   turnos        Turno[]
 }
 
+model DiagnosticoCatalogo {
+  id        String   @id @default(uuid())
+  nombre    String   @unique
+  createdAt DateTime @default(now())
+}
+
+model TratamientoCatalogo {
+  id        String   @id @default(uuid())
+  nombre    String   @unique
+  createdAt DateTime @default(now())
+}
+
 enum RolUsuario {
   ADMIN
   PROFESIONAL

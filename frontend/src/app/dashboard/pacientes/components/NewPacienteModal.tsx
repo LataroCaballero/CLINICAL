@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +17,9 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Resolver } from "react-hook-form";
 import { PlanCombobox } from "@/components/PlanCombobox";
+import { CondicionesChips } from "@/components/CondicionesChips";
+import { DiagnosticoCombobox } from "@/components/DiagnosticoCombobox";
+import { TratamientoCombobox } from "@/components/TratamientosCombobox";
 
 // ---------------- VALIDACIÓN ----------------
 
@@ -25,10 +28,18 @@ const schema = z.object({
     dni: z.string().min(7),
     telefono: z.string().min(6),
     telefonoAlternativo: z.string().optional(),
-    email: z.email().optional(),
+    email: z.string().refine((val) => {
+        // Si está vacío, undefined o solo tiene @, es válido (es opcional)
+        if (!val || val.trim() === '' || val.trim() === '@' || val.startsWith('@')) return true;
+        // Si tiene valor, debe ser un email válido con parte local
+        const trimmed = val.trim();
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed) && !trimmed.startsWith('@');
+    }, {
+        message: "Email inválido"
+    }).optional(),
     fechaNacimiento: z.string().optional(),
     direccion: z.string().optional(),
-    fotoUrl: z.string().optional(),
+    fotoUrl: z.union([z.string(), z.instanceof(File)]).optional(),
 
     obraSocialId: z.string().optional(),
     plan: z.string().optional(),
@@ -64,6 +75,9 @@ type NewPacienteFormValues = z.infer<typeof schema>;
 
 export default function NewPacienteModal({ open, onClose, onCreate, obrasSociales, profesionales }: any) {
     const [step, setStep] = useState(1);
+    const [canScrollUp, setCanScrollUp] = useState(false);
+    const [canScrollDown, setCanScrollDown] = useState(false);
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
 
     const form = useForm<NewPacienteFormValues>({
         resolver: zodResolver(schema),
@@ -74,21 +88,66 @@ export default function NewPacienteModal({ open, onClose, onCreate, obrasSociale
         },
     });
 
+    const checkScroll = () => {
+        const container = scrollContainerRef.current;
+        if (!container) return;
+
+        const { scrollTop, scrollHeight, clientHeight } = container;
+        setCanScrollUp(scrollTop > 0);
+        setCanScrollDown(scrollTop < scrollHeight - clientHeight - 1);
+    };
+
+    useEffect(() => {
+        const container = scrollContainerRef.current;
+        if (!container) return;
+
+        checkScroll();
+        container.addEventListener("scroll", checkScroll);
+
+        // También verificar cuando cambia el step o el contenido
+        const resizeObserver = new ResizeObserver(checkScroll);
+        resizeObserver.observe(container);
+
+        return () => {
+            container.removeEventListener("scroll", checkScroll);
+            resizeObserver.disconnect();
+        };
+    }, [step, open]);
+
 
 
     const next = () => setStep((s) => s + 1);
     const back = () => setStep((s) => s - 1);
 
     const onSubmit = (data: NewPacienteFormValues) => {
+        console.log("form values:", data);
+
+        // Manejar fotoUrl: si es un File, convertirlo a URL temporal o omitirlo
+        let fotoUrlValue: string | undefined = undefined;
+        if (data.fotoUrl) {
+            if (data.fotoUrl instanceof File) {
+                // Si es un File nuevo, crear URL temporal (en producción deberías subirlo primero)
+                fotoUrlValue = URL.createObjectURL(data.fotoUrl);
+            } else {
+                fotoUrlValue = data.fotoUrl;
+            }
+        }
+
         const payload = {
             // Datos básicos
             nombreCompleto: data.nombreCompleto,
             dni: data.dni,
             telefono: data.telefono,
-            telefonoAlternativo: data.telefonoAlternativo || undefined,
-            email: data.email || undefined,
-            direccion: data.direccion || undefined,
-            fotoUrl: data.fotoUrl || undefined,
+            telefonoAlternativo: data.telefonoAlternativo?.trim() || undefined,
+            email: (() => {
+                const email = data.email?.trim();
+                if (!email || email === '' || email === '@' || email.startsWith('@')) {
+                    return undefined;
+                }
+                return email;
+            })(),
+            direccion: data.direccion?.trim() || undefined,
+            fotoUrl: fotoUrlValue,
             fechaNacimiento: data.fechaNacimiento || undefined,
 
             // Obra social
@@ -147,278 +206,323 @@ export default function NewPacienteModal({ open, onClose, onCreate, obrasSociale
 
     return (
         <Dialog open={open} onOpenChange={onClose}>
-            <DialogContent className="max-w-xl">
-                <DialogHeader>
+            <DialogContent className="max-w-xl max-h-[90vh] p-0 flex flex-col">
+                <DialogHeader className={`p-6 pb-2 flex-shrink-0 transition-shadow duration-200 ${canScrollUp ? 'shadow-[inset_0_10px_10px_-10px_rgba(0,0,0,0.15)]' : ''}`}>
                     <DialogTitle>Nuevo paciente</DialogTitle>
                 </DialogHeader>
 
-                <Progress value={progress} className="mb-6" />
+                <div className="px-6 flex-shrink-0">
+                    <Progress value={progress} className="mb-4" />
+                </div>
 
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <div
+                    ref={scrollContainerRef}
+                    className="overflow-y-auto px-6 py-2 space-y-6 flex-1 min-h-0"
+                >
+                    <form
+                        id="newPacienteForm"
+                        onSubmit={form.handleSubmit(onSubmit, (errors) => {
+                            console.error("Errores de validación:", errors);
+                            console.log("Valores del formulario:", form.getValues());
+                        })}
+                        className="space-y-6"
+                    >
 
-                    {/* STEP 1 – DATOS PERSONALES */}
-                    {step === 1 && (
-                        <div className="space-y-4">
+                        {/* STEP 1 – DATOS PERSONALES */}
+                        {step === 1 && (
+                            <div className="space-y-4">
 
-                            <div className="grid gap-1.5">
-                                <label className="text-sm font-medium text-muted-foreground">Nombre completo</label>
-                                <Input {...form.register("nombreCompleto")} placeholder="Juan Pérez" />
-                            </div>
+                                <div className="grid gap-1.5">
+                                    <label className="text-sm font-medium text-muted-foreground">Nombre completo</label>
+                                    <Input {...form.register("nombreCompleto")} placeholder="Juan Pérez" />
+                                </div>
 
-                            <div className="grid gap-1.5">
-                                <label className="text-sm font-medium text-muted-foreground">DNI</label>
-                                <Input {...form.register("dni")} placeholder="40111222" />
-                            </div>
+                                <div className="grid gap-1.5">
+                                    <label className="text-sm font-medium text-muted-foreground">DNI</label>
+                                    <Input {...form.register("dni")} placeholder="40111222" />
+                                </div>
 
-                            <div className="grid gap-1.5">
-                                <label className="text-sm font-medium text-muted-foreground">Teléfono principal</label>
-                                <PhoneInput
-                                    value={form.watch("telefono")}
-                                    onChange={(v: string) => form.setValue("telefono", v)}
-                                />
-                            </div>
-
-                            <div className="grid gap-1.5">
-                                <label className="text-sm font-medium text-muted-foreground">Teléfono alternativo</label>
-                                <PhoneInput
-                                    value={form.watch("telefonoAlternativo")}
-                                    onChange={(v: string) => form.setValue("telefonoAlternativo", v)}
-                                />
-                            </div>
-
-                            <div className="grid gap-1.5">
-                                <label className="text-sm font-medium text-muted-foreground">Email</label>
-                                <EmailInput
-                                    value={form.watch("email")}
-                                    onChange={(v: string) => form.setValue("email", v)}
-                                />
-                            </div>
-
-                            <div className="grid gap-1.5">
-                                <label className="text-sm font-medium text-muted-foreground">Fecha de nacimiento</label>
-
-                                <BirthDatePicker
-                                    value={form.watch("fechaNacimiento")}
-                                    onChange={(v: string) => form.setValue("fechaNacimiento", v)}
-                                />
-                            </div>
-
-
-                            <div className="grid gap-1.5">
-                                <label className="text-sm font-medium text-muted-foreground">Dirección</label>
-                                <Input {...form.register("direccion")} placeholder="Calle, ciudad..." />
-                            </div>
-
-                            <div className="grid gap-1.5">
-                                <label className="text-sm font-medium text-muted-foreground">Foto del paciente</label>
-
-                                <PhotoUploader
-                                    value={form.watch("fotoUrl")}
-                                    onChange={(val: any) => form.setValue("fotoUrl", val)}
-                                />
-                            </div>
-
-                        </div>
-                    )}
-
-
-                    {/* STEP 2 – INFO MÉDICA */}
-                    {step === 2 && (
-                        <div className="space-y-4">
-
-
-                            {/* OBRA SOCIAL */}
-                            <div className="grid gap-1.5">
-                                <label className="text-sm font-medium text-muted-foreground">Obra Social</label>
-
-                                <Select
-                                    onValueChange={(obraId) => {
-                                        form.setValue("obraSocialId", obraId);
-                                        form.setValue("plan", "");
-                                    }}
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Seleccionar obra social" />
-                                    </SelectTrigger>
-
-                                    <SelectContent>
-                                        {obras.map((o: any) => (
-                                            <SelectItem key={o.id} value={o.id}>
-                                                {o.nombre}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-
-                            {/* PLAN */}
-                            {obraSeleccionada && (
-                                <div className="grid gap-1.5 animate-in fade-in slide-in-from-top-1">
-                                    <label className="text-sm font-medium text-muted-foreground">Plan</label>
-                                    <PlanCombobox
-                                        planes={planesDisponibles}
-                                        obraSocialId={obraSeleccionada}
-                                        value={form.watch("plan")}
-                                        onChange={(val: string) => form.setValue("plan", val)}
+                                <div className="grid gap-1.5">
+                                    <label className="text-sm font-medium text-muted-foreground">Teléfono principal</label>
+                                    <PhoneInput
+                                        value={form.watch("telefono") || ""}
+                                        onChange={(v: string) => form.setValue("telefono", v)}
                                     />
                                 </div>
-                            )}
 
-                            {/* ALERGIAS */}
-                            <div className="grid gap-1.5">
-                                <label className="text-sm font-medium text-muted-foreground">Alergias</label>
-
-                                <AlergiasChips
-                                    value={form.watch("alergias")}
-                                    onChange={(val: string) => form.setValue("alergias", val)}
-                                />
-                            </div>
-
-                            {/* CONDICIONES */}
-                            <div className="grid gap-1.5">
-                                <label className="text-sm font-medium text-muted-foreground">Condiciones preexistentes</label>
-                                <Input {...form.register("condiciones")} placeholder="Hipertensión, asma…" />
-                            </div>
-
-                            {/* DIAGNOSTICO */}
-                            <div className="grid gap-1.5">
-                                <label className="text-sm font-medium text-muted-foreground">Diagnóstico</label>
-                                <Input {...form.register("diagnostico")} />
-                            </div>
-
-                            {/* TRATAMIENTO */}
-                            <div className="grid gap-1.5">
-                                <label className="text-sm font-medium text-muted-foreground">Tratamiento</label>
-                                <Input {...form.register("tratamiento")} />
-                            </div>
-
-                            {/* DERIVA */}
-                            <div className="grid gap-1.5">
-                                <label className="text-sm font-medium text-muted-foreground">Deriva</label>
-                                <Input {...form.register("deriva")} />
-                            </div>
-
-                            {/* LUGAR INTERVENCION */}
-                            <div className="grid gap-1.5">
-                                <label className="text-sm font-medium text-muted-foreground">Lugar de intervención</label>
-                                <Input {...form.register("lugarIntervencion")} />
-                            </div>
-
-                            {/* PROFESIONAL */}
-                            <div className="grid gap-1.5">
-                                <label className="text-sm font-medium text-muted-foreground">Profesional a cargo</label>
-
-                                <Select onValueChange={(v) => form.setValue("profesionalId", v)}>
-                                    <SelectTrigger><SelectValue placeholder="Seleccionar profesional" /></SelectTrigger>
-                                    <SelectContent>
-                                        {profes.map((p: any) => (
-                                            <SelectItem key={p.id} value={p.id}>
-                                                {p.usuario?.nombre} {p.usuario?.apellido}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-
-                        </div>
-                    )}
-
-
-                    {/* STEP 3 – CONSENTIMIENTOS Y OTROS */}
-                    {step === 3 && (
-                        <div className="space-y-4">
-
-                            {/* CONSENTIMIENTO */}
-                            <div className="grid gap-1.5">
-                                <label className="text-sm font-medium text-muted-foreground">
-                                    Consentimiento firmado
-                                </label>
-                                <Checkbox
-                                    checked={form.watch("consentimientoFirmado")}
-                                    onCheckedChange={(v) => form.setValue("consentimientoFirmado", Boolean(v))}
-                                />
-                            </div>
-
-                            {/* INDICACIONES */}
-                            <div className="grid gap-1.5">
-                                <label className="text-sm font-medium text-muted-foreground">
-                                    Indicaciones enviadas
-                                </label>
-                                <Checkbox
-                                    checked={form.watch("indicacionesEnviadas")}
-                                    onCheckedChange={(v) => form.setValue("indicacionesEnviadas", Boolean(v))}
-                                />
-                            </div>
-
-                            {form.watch("indicacionesEnviadas") && (
                                 <div className="grid gap-1.5">
-                                    <label className="text-sm font-medium text-muted-foreground">Fecha de indicaciones</label>
-                                    <Input type="date" {...form.register("fechaIndicaciones")} />
+                                    <label className="text-sm font-medium text-muted-foreground">Teléfono alternativo</label>
+                                    <PhoneInput
+                                        value={form.watch("telefonoAlternativo") || ""}
+                                        onChange={(v: string) => form.setValue("telefonoAlternativo", v)}
+                                    />
                                 </div>
-                            )}
 
-                            {/* OBJETIVOS */}
-                            <div className="grid gap-1.5">
-                                <label className="text-sm font-medium text-muted-foreground">Objetivos del paciente</label>
-                                <Input {...form.register("objetivos")} placeholder="Ej: Bajar dolor…" />
+                                <div className="grid gap-1.5">
+                                    <label className="text-sm font-medium text-muted-foreground">Email</label>
+                                    <EmailInput
+                                        value={form.watch("email") || ""}
+                                        onChange={(v: string) => form.setValue("email", v)}
+                                    />
+                                </div>
+
+                                <div className="grid gap-1.5">
+                                    <label className="text-sm font-medium text-muted-foreground">Fecha de nacimiento</label>
+
+                                    <BirthDatePicker
+                                        value={form.watch("fechaNacimiento") || ""}
+                                        onChange={(v: string) => form.setValue("fechaNacimiento", v)}
+                                    />
+                                </div>
+
+
+                                <div className="grid gap-1.5">
+                                    <label className="text-sm font-medium text-muted-foreground">Dirección</label>
+                                    <Input {...form.register("direccion")} placeholder="Calle, ciudad..." />
+                                </div>
+
+                                <div className="grid gap-1.5">
+                                    <label className="text-sm font-medium text-muted-foreground">Foto del paciente</label>
+
+                                    <PhotoUploader
+                                        value={form.watch("fotoUrl") || ""}
+                                        onChange={(val: any) => form.setValue("fotoUrl", val)}
+                                    />
+                                </div>
+
                             </div>
+                        )}
 
-                            {/* CONTACTO EMERGENCIA */}
-                            <div className="grid gap-1.5">
-                                <label className="text-sm font-medium text-muted-foreground">Nombre contacto emergencia</label>
-                                <Input {...form.register("contactoEmergenciaNombre")} />
+                        {/* STEP 2 – INFO MÉDICA */}
+                        {step === 2 && (
+                            <div className="space-y-4">
+
+                                <div className="grid grid-cols-2">
+                                    {/* OBRA SOCIAL */}
+                                    <div className="grid gap-1.5">
+                                        <label className="text-sm font-medium text-muted-foreground">Obra Social</label>
+
+                                        <Select
+                                            value={form.watch("obraSocialId") || ""}
+                                            onValueChange={(obraId) => {
+                                                form.setValue("obraSocialId", obraId);
+                                                form.setValue("plan", "");
+                                            }}
+                                        >
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Seleccionar obra social" />
+                                            </SelectTrigger>
+
+                                            <SelectContent>
+                                                {obras.map((o: any) => (
+                                                    <SelectItem key={o.id} value={o.id}>
+                                                        {o.nombre}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+
+                                    </div>
+
+                                    {/* PLAN */}
+                                    {obraSeleccionada && (
+                                        <div className="grid gap-1.5 animate-in fade-in slide-in-from-top-1">
+                                            <label className="text-sm font-medium text-muted-foreground">Plan</label>
+                                            <PlanCombobox
+                                                planes={planesDisponibles}
+                                                obraSocialId={obraSeleccionada}
+                                                value={form.watch("plan")}
+                                                onChange={(val: string) => form.setValue("plan", val)}
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* ALERGIAS */}
+                                <div className="grid gap-1.5">
+                                    <label className="text-sm font-medium text-muted-foreground">Alergias</label>
+
+                                    <AlergiasChips
+                                        value={form.watch("alergias")}
+                                        onChange={(val: string) => form.setValue("alergias", val)}
+                                    />
+                                </div>
+
+                                {/* CONDICIONES */}
+                                <div className="grid gap-1.5">
+                                    <label className="text-sm font-medium text-muted-foreground">
+                                        Condiciones preexistentes
+                                    </label>
+
+                                    <CondicionesChips
+                                        value={form.watch("condiciones")}
+                                        onChange={(val: string) => form.setValue("condiciones", val)}
+                                    />
+                                </div>
+
+
+                                {/* DIAGNOSTICO */}
+                                <div className="grid gap-1.5">
+                                    <label className="text-sm font-medium text-muted-foreground">Diagnóstico</label>
+
+                                    <DiagnosticoCombobox
+                                        value={form.watch("diagnostico")}
+                                        onChange={(v: string) => form.setValue("diagnostico", v)}
+                                    />
+                                </div>
+
+                                {/* TRATAMIENTO */}
+                                <div className="grid gap-1.5">
+                                    <label className="text-sm font-medium text-muted-foreground">Tratamiento</label>
+                                    <TratamientoCombobox
+                                        value={form.watch("tratamiento")}
+                                        onChange={(val: string | undefined) => form.setValue("tratamiento", val)}
+                                    />
+
+                                </div>
+
+                                {/* DERIVA */}
+                                <div className="grid gap-1.5">
+                                    <label className="text-sm font-medium text-muted-foreground">Deriva</label>
+                                    <Input {...form.register("deriva")} />
+                                </div>
+
+                                {/* LUGAR INTERVENCION */}
+                                <div className="grid gap-1.5">
+                                    <label className="text-sm font-medium text-muted-foreground">Lugar de intervención</label>
+                                    <Input {...form.register("lugarIntervencion")} />
+                                </div>
+
+                                {/* PROFESIONAL */}
+                                <div className="grid gap-1.5">
+                                    <label className="text-sm font-medium text-muted-foreground">Profesional a cargo</label>
+
+                                    <Select
+                                        value={form.watch("profesionalId") || ""}
+                                        onValueChange={(v) => form.setValue("profesionalId", v)}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Seleccionar profesional" />
+                                        </SelectTrigger>
+
+                                        <SelectContent>
+                                            {profes.map((p: any) => (
+                                                <SelectItem key={p.id} value={p.id}>
+                                                    {p.usuario?.nombre} {p.usuario?.apellido}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+
+                                </div>
+
                             </div>
+                        )}
 
-                            <div className="grid gap-1.5">
-                                <label className="text-sm font-medium text-muted-foreground">Teléfono emergencia</label>
-                                <Input {...form.register("contactoEmergenciaTelefono")} />
+                        {/* STEP 3 – CONSENTIMIENTOS Y OTROS */}
+                        {step === 3 && (
+                            <div className="space-y-4">
+
+                                {/* CONSENTIMIENTO */}
+                                <div className="grid gap-1.5">
+                                    <label className="text-sm font-medium text-muted-foreground">
+                                        Consentimiento firmado
+                                    </label>
+                                    <Checkbox
+                                        checked={form.watch("consentimientoFirmado")}
+                                        onCheckedChange={(v) => form.setValue("consentimientoFirmado", Boolean(v))}
+                                    />
+                                </div>
+
+                                {/* INDICACIONES */}
+                                <div className="grid gap-1.5">
+                                    <label className="text-sm font-medium text-muted-foreground">
+                                        Indicaciones enviadas
+                                    </label>
+                                    <Checkbox
+                                        checked={form.watch("indicacionesEnviadas")}
+                                        onCheckedChange={(v) => form.setValue("indicacionesEnviadas", Boolean(v))}
+                                    />
+                                </div>
+
+                                {form.watch("indicacionesEnviadas") && (
+                                    <div className="grid gap-1.5">
+                                        <label className="text-sm font-medium text-muted-foreground">Fecha de indicaciones</label>
+                                        <Input type="date" {...form.register("fechaIndicaciones")} />
+                                    </div>
+                                )}
+
+                                {/* OBJETIVOS */}
+                                <div className="grid gap-1.5">
+                                    <label className="text-sm font-medium text-muted-foreground">Objetivos del paciente</label>
+                                    <Input {...form.register("objetivos")} placeholder="Ej: Bajar dolor…" />
+                                </div>
+
+                                {/* CONTACTO EMERGENCIA */}
+                                <div className="grid gap-1.5">
+                                    <label className="text-sm font-medium text-muted-foreground">Nombre contacto emergencia</label>
+                                    <Input {...form.register("contactoEmergenciaNombre")} />
+                                </div>
+
+                                <div className="grid gap-1.5">
+                                    <label className="text-sm font-medium text-muted-foreground">Teléfono emergencia</label>
+                                    <Input {...form.register("contactoEmergenciaTelefono")} />
+                                </div>
+
+                                <div className="grid gap-1.5">
+                                    <label className="text-sm font-medium text-muted-foreground">Relación</label>
+                                    <Input {...form.register("contactoEmergenciaRelacion")} />
+                                </div>
+
+                                {/* ESTADO */}
+                                <div className="grid gap-1.5">
+                                    <label className="text-sm font-medium text-muted-foreground">Estado del paciente</label>
+                                    <Select onValueChange={(v) => form.setValue("estado", v as any)}>
+                                        <SelectTrigger><SelectValue placeholder="Seleccionar estado" /></SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="ACTIVO">Activo</SelectItem>
+                                            <SelectItem value="ARCHIVADO">Archivado</SelectItem>
+                                            <SelectItem value="QUIRURGICO">Quirúrgico</SelectItem>
+                                            <SelectItem value="PRESUPUESTO">Presupuesto</SelectItem>
+                                            <SelectItem value="PRIMERA">Primera consulta</SelectItem>
+                                            <SelectItem value="PRACTICA_CONSULTORIO">Práctica en consultorio</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
                             </div>
+                        )}
+                    </form>
+                </div>
 
-                            <div className="grid gap-1.5">
-                                <label className="text-sm font-medium text-muted-foreground">Relación</label>
-                                <Input {...form.register("contactoEmergenciaRelacion")} />
-                            </div>
 
-                            {/* ESTADO */}
-                            <div className="grid gap-1.5">
-                                <label className="text-sm font-medium text-muted-foreground">Estado del paciente</label>
-                                <Select onValueChange={(v) => form.setValue("estado", v as any)}>
-                                    <SelectTrigger><SelectValue placeholder="Seleccionar estado" /></SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="ACTIVO">Activo</SelectItem>
-                                        <SelectItem value="ARCHIVADO">Archivado</SelectItem>
-                                        <SelectItem value="QUIRURGICO">Quirúrgico</SelectItem>
-                                        <SelectItem value="PRESUPUESTO">Presupuesto</SelectItem>
-                                        <SelectItem value="PRIMERA">Primera consulta</SelectItem>
-                                        <SelectItem value="PRACTICA_CONSULTORIO">Práctica en consultorio</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
 
-                        </div>
+                {/* FOOTER BUTTONS */}
+                <div className="px-6 py-4 border-t flex justify-between bg-white">
+                    {step > 1 ? (
+                        <Button type="button" variant="outline" onClick={back}>
+                            Atrás
+                        </Button>
+                    ) : (
+                        <div />
                     )}
 
+                    {step < 3 ? (
+                        <Button type="button" onClick={next} asChild>
+                            <button type="button">Siguiente</button>
+                        </Button>
+                    ) : (
+                        <Button
+                            type="submit"
+                            form="newPacienteForm"
+                            className="bg-blue-600 text-white"
+                        >
+                            Crear paciente
+                        </Button>
+                    )}
+                </div>
 
-                    {/* FOOTER BUTTONS */}
-                    <div className="flex justify-between pt-4">
-                        {step > 1 ? (
-                            <Button type="button" variant="outline" onClick={back}>
-                                Atrás
-                            </Button>
-                        ) : (
-                            <div />
-                        )}
 
-                        {step < 3 ? (
-                            <Button type="button" onClick={next}>Siguiente</Button>
-                        ) : (
-                            <Button type="submit" className="bg-blue-600 text-white">
-                                Crear paciente
-                            </Button>
-                        )}
-                    </div>
-
-                </form>
             </DialogContent>
         </Dialog>
     );

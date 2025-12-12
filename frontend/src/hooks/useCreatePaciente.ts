@@ -27,24 +27,25 @@ export function useCreatePaciente() {
                 body: JSON.stringify(data),
             });
 
+            // Intentar parsear JSON sin romper
+            let body: any = null;
+            try {
+                body = await res.json();
+            } catch {
+                body = null;
+            }
+
             if (!res.ok) {
-                const error = await res.json();
-                throw error;
+                // Asegurar que siempre se propaga un error útil
+                throw (
+                    body || {
+                        statusCode: res.status,
+                        message: "Error desconocido al crear paciente",
+                    }
+                );
             }
 
-            return res.json();
+            return body;
         },
-
-        onError: (error: any) => {
-            if (error?.statusCode === 409) {
-                toast.error("El DNI ya está registrado.");
-            } else {
-                toast.error("Ocurrió un error al crear el paciente.");
-            }
-        },
-
-        onSuccess: () => {
-            toast.success("Paciente creado correctamente.");
-        }
     });
 }

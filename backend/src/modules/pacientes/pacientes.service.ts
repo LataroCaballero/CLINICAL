@@ -1,5 +1,5 @@
 // pacientes.service.ts
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreatePacienteDto } from './dto/create-paciente.dto';
 import { UpdatePacienteDto } from './dto/update-paciente.dto';
@@ -14,57 +14,29 @@ export class PacientesService {
 
   // Crear
   async create(dto: CreatePacienteDto) {
+    console.log("DTO RECIBIDO:", dto);
     try {
+      const data = {
+        ...dto,
+        fechaNacimiento: dto.fechaNacimiento ? new Date(dto.fechaNacimiento) : null,
+        fechaIndicaciones: dto.fechaIndicaciones ? new Date(dto.fechaIndicaciones) : null,
+      };
       return this.prisma.paciente.create({
-        data: {
-          nombreCompleto: dto.nombreCompleto,
-          dni: dto.dni,
-          fechaNacimiento: dto.fechaNacimiento ? new Date(dto.fechaNacimiento) : null,
-          telefono: dto.telefono,
-          telefonoAlternativo: dto.telefonoAlternativo,
-          email: dto.email,
-          direccion: dto.direccion,
-          fotoUrl: dto.fotoUrl,
-
-          obraSocialId: dto.obraSocialId,
-          plan: dto.plan,
-
-          alergias: dto.alergias ?? [],
-          condiciones: dto.condiciones ?? [],
-
-          diagnostico: dto.diagnostico,
-          tratamiento: dto.tratamiento,
-          deriva: dto.deriva,
-          lugarIntervencion: dto.lugarIntervencion,
-          objetivos: dto.objetivos,
-
-          consentimientoFirmado: dto.consentimientoFirmado ?? false,
-          indicacionesEnviadas: dto.indicacionesEnviadas ?? false,
-          fechaIndicaciones: dto.fechaIndicaciones ? new Date(dto.fechaIndicaciones) : null,
-
-          contactoEmergenciaNombre: dto.contactoEmergenciaNombre,
-          contactoEmergenciaTelefono: dto.contactoEmergenciaTelefono,
-          contactoEmergenciaRelacion: dto.contactoEmergenciaRelacion,
-
-          profesionalId: dto.profesionalId || null,
-
-          estado: dto.estado ?? undefined,
-        },
+        data,
       });
     }
-    catch (error) {
-      if (
-        error instanceof PrismaClientKnownRequestError &&
-        error.code === 'P2002'
-      ) {
-        const target = error.meta?.target as string[] | undefined;
-        if (Array.isArray(target) && target.includes('dni')) {
-          throw new ConflictException('El DNI ingresado ya está registrado.');
-        }
+    catch (error: any) {
+      console.log("ERROR CAPTURADO EN CATCH:", error);
+
+      // Manejar directamente por STRUCTURE
+      if (error.code === "P2002" && error.meta?.target?.includes("dni")) {
+        throw new ConflictException("El DNI ingresado ya está registrado.");
       }
-      throw error; // Cualquier otro error lo dejo pasar
+
+      throw new InternalServerErrorException("Error interno al crear paciente");
     }
   }
+
 
 
 

@@ -16,6 +16,7 @@ import NewPacienteModal from "@/app/dashboard/pacientes/components/NewPacienteMo
 import { useCreatePaciente } from "@/hooks/useCreatePaciente";
 import { useProfesionales } from "@/hooks/useProfesionales";
 import { useObrasSociales } from "@/hooks/useObrasSociales";
+import { toast } from "sonner";
 
 interface DataTableToolbarProps {
   table: Table<any>;
@@ -97,7 +98,29 @@ export function DataTableToolbar({ table, onNewPaciente }: DataTableToolbarProps
       <NewPacienteModal
         open={open}
         onClose={() => setOpen(false)}
-        onCreate={(payload: any) => createPacienteMutation.mutate(payload)}
+        onCreate={(payload, setError, setGlobalError) => {
+          // Limpiamos cualquier error global anterior
+          setGlobalError("");
+
+          createPacienteMutation.mutate(payload, {
+            onError: (error: any) => {
+              console.log("ERROR RECIBIDO:", error);
+
+              if (error?.statusCode === 409) {
+                setGlobalError("El DNI ingresado ya está registrado.");
+                return;
+              }
+
+              setGlobalError("Ocurrió un error al crear el paciente.");
+            },
+
+            onSuccess: () => {
+              toast.success("Paciente creado correctamente");
+              setOpen(false);
+            },
+          });
+        }}
+
         obrasSociales={obrasSocialesData}
         profesionales={profesionalesData}
       />

@@ -20,6 +20,8 @@ import { PlanCombobox } from "@/components/PlanCombobox";
 import { CondicionesChips } from "@/components/CondicionesChips";
 import { DiagnosticoCombobox } from "@/components/DiagnosticoCombobox";
 import { TratamientoCombobox } from "@/components/TratamientosCombobox";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+
 
 // ---------------- VALIDACIÓN ----------------
 
@@ -73,7 +75,19 @@ const schema = z.object({
 type NewPacienteFormValues = z.infer<typeof schema>;
 
 
-export default function NewPacienteModal({ open, onClose, onCreate, obrasSociales, profesionales }: any) {
+export default function NewPacienteModal({
+    open,
+    onClose,
+    onCreate,
+    obrasSociales,
+    profesionales
+}: {
+    open: boolean;
+    onClose: () => void;
+    onCreate: (payload: any, setError: any, setGlobalError: (msg: string) => void) => void;
+    obrasSociales: any[];
+    profesionales: any[];
+}) {
     const [step, setStep] = useState(1);
     const [canScrollUp, setCanScrollUp] = useState(false);
     const [canScrollDown, setCanScrollDown] = useState(false);
@@ -186,8 +200,7 @@ export default function NewPacienteModal({ open, onClose, onCreate, obrasSociale
             estado: data.estado || "ACTIVO",
         };
 
-        onCreate(payload); // Llama a la mutation
-        onClose();
+        onCreate(payload, form.setError, setGlobalError);
     };
 
 
@@ -203,10 +216,22 @@ export default function NewPacienteModal({ open, onClose, onCreate, obrasSociale
     const planesDisponibles =
         obras.find((o: any) => o.id === obraSeleccionada)?.planes ?? [];
 
+    const [globalError, setGlobalError] = useState<string | null>(null);
+
+
 
     return (
         <Dialog open={open} onOpenChange={onClose}>
             <DialogContent className="max-w-xl max-h-[90vh] p-0 flex flex-col">
+                {globalError && (
+                    <div className="px-6 pt-4 animate-in fade-in slide-in-from-top-5 
+      duration-300">
+                        <Alert variant="destructive">
+                            <AlertTitle>Error</AlertTitle>
+                            <AlertDescription>{globalError}</AlertDescription>
+                        </Alert>
+                    </div>
+                )}
                 <DialogHeader className={`p-6 pb-2 flex-shrink-0 transition-shadow duration-200 ${canScrollUp ? 'shadow-[inset_0_10px_10px_-10px_rgba(0,0,0,0.15)]' : ''}`}>
                     <DialogTitle>Nuevo paciente</DialogTitle>
                 </DialogHeader>
@@ -240,6 +265,15 @@ export default function NewPacienteModal({ open, onClose, onCreate, obrasSociale
                                 <div className="grid gap-1.5">
                                     <label className="text-sm font-medium text-muted-foreground">DNI</label>
                                     <Input {...form.register("dni")} placeholder="40111222" />
+
+                                    {form.formState.errors.dni && (
+                                        <Alert variant="destructive" className="mt-2">
+                                            <AlertTitle>Error</AlertTitle>
+                                            <AlertDescription>
+                                                {form.formState.errors.dni.message}
+                                            </AlertDescription>
+                                        </Alert>
+                                    )}
                                 </div>
 
                                 <div className="grid gap-1.5">

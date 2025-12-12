@@ -8,7 +8,9 @@ import {
   Body,
   Query,
   Header,
+  UsePipes
 } from '@nestjs/common';
+import { SanitizeEmptyValuesPipe } from '../../common/pipes/sanitize-empty-values.pipe';
 import { PacientesService } from './pacientes.service';
 import { CreatePacienteDto } from './dto/create-paciente.dto';
 import { UpdatePacienteDto } from './dto/update-paciente.dto';
@@ -16,10 +18,11 @@ import { PacienteListaDto } from './dto/paciente-lista.dto';
 
 @Controller('pacientes')
 export class PacientesController {
-  constructor(private readonly pacientesService: PacientesService) {}
+  constructor(private readonly pacientesService: PacientesService) { }
 
   // RF-007 — Alta de pacientes
   @Post()
+  @UsePipes(new SanitizeEmptyValuesPipe())
   create(@Body() dto: CreatePacienteDto) {
     return this.pacientesService.create(dto);
   }

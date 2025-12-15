@@ -1,13 +1,18 @@
 "use client";
 
+import ObjectionSelect from "@/components/ObjectionSelect";
 import { ColumnDef } from "@tanstack/react-table";
 import { Check, X } from "lucide-react";
+
+import { EstadoPresupuesto } from "@/types/presupuesto";
+import EstadoPresupuestoChip from "../../components/presupuestos/EstadoPresupuestoChip";
 
 // Utilidad para formatear fecha
 const formatDate = (dateString?: string | null) => {
   if (!dateString) return "-";
   return new Date(dateString).toLocaleDateString("es-AR");
 };
+
 
 export const pacienteColumns: ColumnDef<any>[] = [
   // NOMBRE COMPLETO
@@ -20,6 +25,10 @@ export const pacienteColumns: ColumnDef<any>[] = [
 
       const getInitial = (name?: string) =>
         name ? name.charAt(0).toUpperCase() : "?";
+      console.log(
+        row.original.indicacionesEnviadas,
+        typeof row.original.indicacionesEnviadas
+      );
 
       return (
         <div className="flex items-center gap-3">
@@ -68,48 +77,17 @@ export const pacienteColumns: ColumnDef<any>[] = [
     cell: ({ row }) => row.original.tratamiento || "-",
   },
 
-  // LUGAR INTERVENCIÓN
+  //PRESUPUESTO
   {
-    accessorKey: "lugarIntervencion",
-    header: "Lugar intervención",
-    cell: ({ row }) => row.original.lugarIntervencion || "-",
-  },
-
-  // CONSENTIMIENTO FIRMADO
-  {
-    accessorKey: "consentimientoFirmado",
-    header: "Consentimiento",
+    accessorKey: "presupuestoEstado",
+    header: "Presupuesto",
     cell: ({ row }) => {
-      const value = row.original.consentimientoFirmado;
-      return value ? (
-        <Check className="text-green-600 w-5 h-5" />
-      ) : (
-        <X className="text-red-600 w-5 h-5" />
-      );
-    },
-  },
+      const estado = row.original.presupuestoEstado as
+        | EstadoPresupuesto
+        | null
+        | undefined;
 
-  // INDICACIONES ENVIADAS + FECHA
-  {
-    accessorKey: "indicacionesEnviadas",
-    header: "Indicaciones",
-    cell: ({ row }) => {
-      const enviado = row.original.indicacionesEnviadas;
-      const fecha = row.original.fechaIndicaciones;
-
-      return (
-        <div className="flex items-center gap-2">
-          {enviado ? (
-            <Check className="text-green-600 w-5 h-5" />
-          ) : (
-            <X className="text-red-600 w-5 h-5" />
-          )}
-
-          {enviado && (
-            <span className="text-xs text-gray-600">{formatDate(fecha)}</span>
-          )}
-        </div>
-      );
+      return <EstadoPresupuestoChip estado={estado} />;
     },
   },
 
@@ -160,22 +138,40 @@ export const pacienteColumns: ColumnDef<any>[] = [
     },
   },
 
-  // DEUDA
+  // OBJECIÓN
   {
-    accessorKey: "deuda",
-    header: "Deuda",
-    cell: ({ row }) => {
-      const deuda = row.original.deuda || 0;
+    accessorKey: "objecion",
+    header: "Objeción",
+    cell: ({ row, table }) => {
+      const paciente = row.original;
 
-      return deuda > 0 ? (
-        <span className="px-2 py-1 bg-red-600 text-white text-xs rounded">
-          Deudor (${deuda})
-        </span>
-      ) : (
-        <span className="px-2 py-1 bg-green-600 text-white text-xs rounded">
-          Sin deuda
-        </span>
+      return (
+        <div
+          className="w-full"
+          onClick={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
+        >
+          <ObjectionSelect
+            pacienteId={paciente.id}
+            value={paciente.objecion}
+            onChange={(newObjecion) => {
+              // 🔴 ACTUALIZA LA TABLA EN MEMORIA
+              const meta = table.options.meta as
+                | {
+                  updateData?: (
+                    rowIndex: number,
+                    columnId: string,
+                    value: any
+                  ) => void;
+                }
+                | undefined;
+
+              meta?.updateData?.(row.index, "objecion", newObjecion);
+            }}
+          />
+        </div>
       );
     },
-  },
+  }
+
 ];

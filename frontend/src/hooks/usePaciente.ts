@@ -1,11 +1,12 @@
 "use client";
 
+import { PacienteDetalle } from "@/types/pacients";
 import { useQuery } from "@tanstack/react-query";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export function usePaciente(id: string | null) {
-  return useQuery({
+  return useQuery<PacienteDetalle>({
     queryKey: ["paciente", id],
     enabled: !!id,
     queryFn: async () => {

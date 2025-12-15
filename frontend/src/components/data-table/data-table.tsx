@@ -9,7 +9,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 
 import {
   Table,
@@ -31,14 +31,21 @@ export function DataTable<TData, TValue>({
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
 }) {
-  const [globalFilter, setGlobalFilter] = React.useState("");
-  const [drawerOpen, setDrawerOpen] = React.useState(false);
-  const [selectedPatientId, setSelectedPatientId] = React.useState<
-    string | null
-  >(null);
+
+  // 1) ESTADO LOCAL — copia editable de los datos originales
+  const [tableData, setTableData] = useState<TData[]>(data);
+
+  // 2) sincronizamos cuando cambian los datos desde el backend
+  useEffect(() => {
+    setTableData(data);
+  }, [data]);
+
+  const [globalFilter, setGlobalFilter] = useState("");
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
 
   const table = useReactTable({
-    data,
+    data: tableData, // ← usamos la copia local editable
     columns,
     state: {
       globalFilter,
@@ -60,6 +67,23 @@ export function DataTable<TData, TValue>({
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+
+    // 3) ESTA FUNCIÓN ES LA CLAVE: permite editar la tabla en tiempo real
+    meta: {
+      updateData: (rowIndex: number, columnId: string, value: any) => {
+        setTableData((prev) =>
+          prev.map((row, index) => {
+            if (index === rowIndex) {
+              return {
+                ...row,
+                [columnId]: value,
+              };
+            }
+            return row;
+          })
+        );
+      },
+    },
   });
 
   const handleRowClick = (paciente: any) => {

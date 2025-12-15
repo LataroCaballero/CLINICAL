@@ -24,6 +24,7 @@ export default function PatientDrawer({
   pacienteId: string | null;
 }) {
   const { data: paciente, isLoading, isError } = usePaciente(pacienteId);
+  console.log("PACIENTE DRAWER", paciente);
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>

@@ -131,6 +131,8 @@ model Paciente {
   presupuestos               Presupuesto[]
   turnos                     Turno[]
   VentaProducto              VentaProducto[]
+  objecionId   String?
+  objecion     Objection? @relation(fields: [objecionId], references: [id])
 
   @@index([dni(ops: raw("gin_trgm_ops"))], map: "idx_paciente_dni_trgm", type: Gin)
   @@index([telefono(ops: raw("gin_trgm_ops"))], map: "idx_paciente_telefono_trgm", type: Gin)
@@ -530,6 +532,15 @@ model TratamientoCatalogo {
   id        String   @id @default(uuid())
   nombre    String   @unique
   createdAt DateTime @default(now())
+}
+
+model Objection {
+  id        String   @id @default(uuid())
+  nombre    String   @unique
+  pacientes Paciente[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 enum RolUsuario {

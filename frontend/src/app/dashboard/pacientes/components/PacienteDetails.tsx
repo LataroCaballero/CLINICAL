@@ -15,8 +15,9 @@ import {
   MessageSquare,
   Wallet,
 } from "lucide-react";
+import { MedicalChips } from "@/components/ui/MedicalChips";
 
-export default function PacienteDetails({ paciente, obraSocialNombre }: any) {
+export default function PacienteDetails({ paciente }: any) {
   if (!paciente) return null;
 
   const calcularEdad = (fechaNac?: string) => {
@@ -26,41 +27,59 @@ export default function PacienteDetails({ paciente, obraSocialNombre }: any) {
   };
 
   const edad = calcularEdad(paciente.fechaNacimiento);
+  const obraSocialNombre = paciente.obraSocial?.nombre ?? "Sin obra social";
 
   return (
     <div className="space-y-6 px-2 pb-6 max-w-3xl mx-auto">
       {/* =======================
           HEADER
       ======================== */}
-      <div className="flex items-start gap-4">
-        {/* Foto */}
-        <div className="w-20 h-20 rounded-full overflow-hidden border bg-gray-200 shrink-0">
-          {paciente.fotoUrl ? (
-            <Image
-              src={paciente.fotoUrl}
-              alt={paciente.nombreCompleto}
-              width={80}
-              height={80}
-              className="object-cover w-full h-full"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-2xl text-gray-500">
-              {paciente.nombreCompleto?.charAt(0)}
-            </div>
-          )}
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        {/* BLOQUE IZQUIERDO */}
+        <div className="flex items-start gap-4">
+          {/* Foto */}
+          <div className="w-20 h-20 rounded-full overflow-hidden border bg-gray-200 shrink-0">
+            {paciente.fotoUrl ? (
+              <Image
+                src={paciente.fotoUrl}
+                alt={paciente.nombreCompleto}
+                width={80}
+                height={80}
+                className="object-cover w-full h-full"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-2xl text-gray-500">
+                {paciente.nombreCompleto?.charAt(0)}
+              </div>
+            )}
+          </div>
+
+          {/* Nombre + info básica */}
+          <div className="flex flex-col justify-center">
+            <h2 className="text-xl font-semibold leading-tight">{paciente.nombreCompleto}</h2>
+
+            <p className="text-gray-600 flex items-center gap-2 mt-1">
+              <IdCard className="w-4 h-4" /> DNI: {paciente.dni}
+            </p>
+
+            <p className="text-gray-600 flex items-center gap-2">
+              <Calendar className="w-4 h-4" /> Edad: {edad} años
+            </p>
+          </div>
         </div>
+        {/* BLOQUE DERECHO – ALERTAS MÉDICAS */}
+        <div className="flex gap-4 flex-wrap sm:justify-end">
+          <MedicalChips
+            title="Alergias"
+            items={paciente.alergias}
+            variant="destructive"
+          />
 
-        {/* Nombre + info básica */}
-        <div className="flex flex-col justify-center">
-          <h2 className="text-xl font-semibold leading-tight">{paciente.nombreCompleto}</h2>
-
-          <p className="text-gray-600 flex items-center gap-2 mt-1">
-            <IdCard className="w-4 h-4" /> DNI: {paciente.dni}
-          </p>
-
-          <p className="text-gray-600 flex items-center gap-2">
-            <Calendar className="w-4 h-4" /> Edad: {edad} años
-          </p>
+          <MedicalChips
+            title="Condiciones"
+            items={paciente.condiciones}
+            variant="secondary"
+          />
         </div>
       </div>
 
@@ -85,7 +104,7 @@ export default function PacienteDetails({ paciente, obraSocialNombre }: any) {
         <section>
           <h3 className="text-sm font-semibold mb-2">Obra social</h3>
           <div className="space-y-1 text-gray-700 pl-2">
-            <p>• {obraSocialNombre || "Sin obra social"}</p>
+            <p>• {obraSocialNombre}</p>
             {paciente.plan && <p>• Plan: {paciente.plan}</p>}
           </div>
         </section>

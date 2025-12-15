@@ -7,6 +7,9 @@ export class PacienteListaDto {
   email?: string | null;
   obraSocialNombre?: string | null;
   plan?: string | null;
+  diagnostico?: string | null;
+  tratamiento?: string | null;
+  lugarIntervencion?: string | null;
   ultimoTurno?: Date | null;
   proximoTurno?: Date | null;
   deuda: number;
@@ -14,4 +17,8 @@ export class PacienteListaDto {
   consentimientoFirmado: boolean;
   estudiosPendientes: number;
   presupuestosActivos: number;
+  objecion?: {
+    id: string;
+    nombre: string;
+  } | null;
 }

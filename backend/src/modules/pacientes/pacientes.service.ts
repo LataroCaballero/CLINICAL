@@ -8,6 +8,7 @@ import { PacienteSuggest } from 'src/common/types/paciente-suggest.type';
 import { PacienteListaDto } from './dto/paciente-lista.dto';
 import { ESTADO_PRIORITY } from '../../common/constants/pacientes.constants';
 import { EstadoPaciente } from '@prisma/client';
+import { EstadoPresupuesto } from '@prisma/client';
 
 @Injectable()
 export class PacientesService {
@@ -80,6 +81,7 @@ export class PacientesService {
             estado: true,
           },
         },
+        objecion: true
       },
     });
 
@@ -113,14 +115,27 @@ export class PacientesService {
         email: p.email,
         obraSocialNombre: (p as any).obraSocial?.nombre ?? null,
         plan: p.plan,
+        diagnostico: p.diagnostico ?? null,
+        tratamiento: p.tratamiento ?? null,
+        lugarIntervencion: p.lugarIntervencion ?? null,
         ultimoTurno,
         proximoTurno,
         deuda: Number(p.cuentaCorriente?.saldoActual ?? 0),
         estado: p.estado,
         consentimientoFirmado: p.consentimientoFirmado,
-        estudiosPendientes,
-        presupuestosActivos,
-      };
+        estudiosPendientes: p.estudios.filter(e => e.estado === false).length,
+        presupuestosActivos: p.presupuestos.filter(
+          pr =>
+            pr.estado === EstadoPresupuesto.BORRADOR ||
+            pr.estado === EstadoPresupuesto.ENVIADO
+        ).length,
+        objecion: p.objecion
+          ? {
+            id: p.objecion.id,
+            nombre: p.objecion.nombre,
+          }
+          : null,
+      } satisfies PacienteListaDto;
     });
 
     lista.sort((a, b) => {
@@ -156,7 +171,12 @@ export class PacientesService {
 
   // Buscar por ID
   async findOne(id: string) {
-    const paciente = await this.prisma.paciente.findUnique({ where: { id } });
+    const paciente = await this.prisma.paciente.findUnique({
+      where: { id },
+      include: {
+        obraSocial: true,
+      },
+    });
     if (!paciente) throw new NotFoundException('Paciente no encontrado');
     return paciente;
   }

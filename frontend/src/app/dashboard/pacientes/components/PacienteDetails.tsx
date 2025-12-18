@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { MedicalChips } from "@/components/ui/MedicalChips";
 
-export default function PacienteDetails({ paciente }: any) {
+export default function PacienteDetails({ paciente, onAction }: { paciente: any; onAction?: (view: "default" | "datos" | "historia" | "turnos" | "mensajes" | "cuenta") => void }) {
   if (!paciente) return null;
 
   const calcularEdad = (fechaNac?: string) => {
@@ -185,22 +185,27 @@ export default function PacienteDetails({ paciente }: any) {
           <ActionButton
             icon={<UserCircle2 className="w-5 h-5" />}
             label="Datos completos"
+            onClick={() => onAction?.("datos")}
           />
           <ActionButton
             icon={<ClipboardList className="w-5 h-5" />}
             label="Historia clínica"
+            onClick={() => onAction?.("historia")}
           />
           <ActionButton
             icon={<Wallet className="w-5 h-5" />}
             label="Cuenta corriente"
+            onClick={() => onAction?.("cuenta")}
           />
           <ActionButton
             icon={<CalendarDays className="w-5 h-5" />}
             label="Turnos"
+            onClick={() => onAction?.("turnos")}
           />
           <ActionButton
             icon={<MessageSquare className="w-5 h-5" />}
             label="Mensajes internos"
+            onClick={() => onAction?.("mensajes")}
           />
         </div>
       </div>
@@ -209,9 +214,12 @@ export default function PacienteDetails({ paciente }: any) {
 }
 
 // COMPONENTE REUTILIZABLE PARA LOS BOTONES
-function ActionButton({ icon, label }: any) {
+function ActionButton({ icon, label, onClick }: { icon: React.ReactNode; label: string; onClick?: () => void }) {
   return (
-    <button className="flex flex-col items-center justify-center p-3 border rounded-md hover:bg-muted transition text-sm min-h-[70px]">
+    <button
+      onClick={onClick}
+      className="flex flex-col items-center justify-center p-3 border rounded-md hover:bg-muted transition text-sm min-h-[70px]"
+    >
       <span className="mb-1">{icon}</span>
       {label}
     </button>

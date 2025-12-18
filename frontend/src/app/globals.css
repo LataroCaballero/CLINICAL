@@ -117,6 +117,7 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
@@ -125,7 +126,14 @@
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+.neu-inset {
+  background: #e0e0e0;
+  box-shadow: inset 41px 41px 38px #d0d0d0,
+    inset -41px -41px 38px #f0f0f0;
 }

@@ -13,6 +13,9 @@ import PacienteDetails from "./PacienteDetails";
 import PacienteDetailsSkeleton from "./PacienteDetailsSkeleton";
 import { usePaciente } from "@/hooks/usePaciente";
 import { useState } from "react";
+import DatosCompletos from "@/components/patient/PatientDrawer/views/DatosCompletos";
+import HistoriaClinica from "@/components/patient/PatientDrawer/views/HistoriaClinica";
+import TurnosPaciente from "@/components/patient/PatientDrawer/views/TurnosPaciente";
 
 export default function PatientDrawer({
   open,
@@ -24,7 +27,7 @@ export default function PatientDrawer({
   pacienteId: string | null;
 }) {
   const { data: paciente, isLoading, isError } = usePaciente(pacienteId);
-  console.log("PACIENTE DRAWER", paciente);
+  const [view, setView] = useState<"default" | "datos" | "historia" | "turnos" | "mensajes" | "cuenta">("default");
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
@@ -49,7 +52,29 @@ export default function PatientDrawer({
               </div>
             )}
 
-            {paciente && !isLoading && <PacienteDetails paciente={paciente} />}
+            {paciente && !isLoading && view === "default" && (
+              <PacienteDetails
+                paciente={paciente}
+                onAction={setView}
+              />
+            )}
+            {view === "datos" && paciente &&
+              <DatosCompletos
+                paciente={paciente}
+                onBack={() => setView("default")}
+              />
+            }
+            {view === "historia" && paciente &&
+              <HistoriaClinica
+                pacienteId={paciente.id}
+                onBack={() => setView("default")}
+              />
+            }
+            {view === "turnos" && paciente &&
+              <TurnosPaciente
+                pacienteId={paciente.id}
+              />
+            }
           </div>
         </div>
 

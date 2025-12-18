@@ -16,6 +16,7 @@ import { CreatePacienteDto } from './dto/create-paciente.dto';
 import { UpdatePacienteDto } from './dto/update-paciente.dto';
 import { PacienteListaDto } from './dto/paciente-lista.dto';
 import { PrismaService } from '@/src/prisma/prisma.service';
+import { UpdatePacienteSectionDto } from "./dto/update-paciente-section.dto";
 
 @Controller('pacientes')
 export class PacientesController {
@@ -33,9 +34,9 @@ export class PacientesController {
   }
 
   // RF-007 — Modificar datos
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() dto: UpdatePacienteDto) {
-    return this.pacientesService.update(id, dto);
+  @Patch(":id")
+  updatePacienteSection(@Param("id") id: string, @Body() dto: UpdatePacienteSectionDto) {
+    return this.pacientesService.updatePacienteSection(id, dto);
   }
 
   // RF-007 — Baja lógica (opcional)

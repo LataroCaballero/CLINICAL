@@ -4,6 +4,7 @@ import "./globals.css";
 import { BackgroundBeams } from "../components/ui/shadcn-io/background-beams/index";
 import { Providers } from "./providers";
 import axios from "axios";
+import { Toaster } from "sonner";
 import dynamic from "next/dynamic";
 
 axios.defaults.withCredentials = true;
@@ -37,6 +38,7 @@ export default function RootLayout({
         <div className="relative z-10">
           <Providers>{children}</Providers>
         </div>
+        <Toaster richColors position="bottom-right" />
       </body>
     </html>
   );

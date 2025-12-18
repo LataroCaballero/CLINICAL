@@ -9,6 +9,8 @@ import { PacienteListaDto } from './dto/paciente-lista.dto';
 import { ESTADO_PRIORITY } from '../../common/constants/pacientes.constants';
 import { EstadoPaciente } from '@prisma/client';
 import { EstadoPresupuesto } from '@prisma/client';
+import { BadRequestException } from "@nestjs/common";
+import { UpdatePacienteSectionDto } from "./dto/update-paciente-section.dto";
 
 @Injectable()
 export class PacientesService {
@@ -308,5 +310,143 @@ export class PacientesService {
       // Cualquier error interno → devolver []
       return [];
     }
+  }
+
+  async updatePacienteSection(id: string, dto: UpdatePacienteSectionDto) {
+    switch (dto.section) {
+      case "contacto":
+        return this.updateContacto(id, dto.data);
+      case "emergencia":
+        return this.updateEmergencia(id, dto.data);
+      case "cobertura":
+        return this.updateCobertura(id, dto.data);
+      case "clinica":
+        return this.updateClinica(id, dto.data);
+      case "estado":
+        return this.updateEstado(id, dto.data);
+      case "personales":
+        return this.updatePersonales(id, dto.data);
+
+      // después implementamos:
+      // case "personales": return ...
+      // case "emergencia": return ...
+      // etc
+
+      default:
+        throw new BadRequestException("Sección no soportada");
+    }
+  }
+
+  private async updateContacto(id: string, data: any) {
+    // whitelist explícito
+    const patch = {
+      telefono: data.telefono,
+      telefonoAlternativo: data.telefonoAlternativo ?? null,
+      email: data.email ?? null,
+    };
+
+    // validación mínima backend
+    if (typeof patch.telefono !== "string" || patch.telefono.trim().length < 6) {
+      throw new BadRequestException("Teléfono inválido");
+    }
+    if (patch.email && typeof patch.email !== "string") {
+      throw new BadRequestException("Email inválido");
+    }
+
+    return this.prisma.paciente.update({
+      where: { id },
+      data: patch,
+    });
+  }
+
+  private async updateEmergencia(id: string, data: any) {
+    const patch = {
+      contactoEmergenciaNombre: data.contactoEmergenciaNombre,
+      contactoEmergenciaRelacion: data.contactoEmergenciaRelacion,
+      contactoEmergenciaTelefono: data.contactoEmergenciaTelefono,
+    };
+
+    if (
+      !patch.contactoEmergenciaNombre ||
+      !patch.contactoEmergenciaRelacion ||
+      !patch.contactoEmergenciaTelefono
+    ) {
+      throw new BadRequestException("Datos de emergencia inválidos");
+    }
+
+    return this.prisma.paciente.update({
+      where: { id },
+      data: patch,
+    });
+  }
+
+  private async updateCobertura(id: string, data: any) {
+    const patch = {
+      obraSocialId: data.obraSocialId ?? null,
+      plan: data.plan ?? null,
+    };
+
+    if (patch.obraSocialId && typeof patch.obraSocialId !== "string") {
+      throw new BadRequestException("Obra social inválida");
+    }
+
+    return this.prisma.paciente.update({
+      where: { id },
+      data: patch,
+    });
+  }
+
+  private async updateClinica(id: string, data: any) {
+    const patch = {
+      alergias: data.alergias ?? [],
+      condiciones: data.condiciones ?? [],
+      diagnostico: data.diagnostico ?? null,
+      tratamiento: data.tratamiento ?? null,
+      deriva: data.deriva ?? null,
+      lugarIntervencion: data.lugarIntervencion ?? null,
+      objetivos: data.objetivos ?? null,
+    };
+
+    return this.prisma.paciente.update({
+      where: { id },
+      data: patch,
+    });
+  }
+
+  private async updateEstado(id: string, data: any) {
+    if (data.indicacionesEnviadas && !data.fechaIndicaciones) {
+      throw new BadRequestException(
+        "Fecha de indicaciones requerida"
+      );
+    }
+
+    return this.prisma.paciente.update({
+      where: { id },
+      data: {
+        estado: data.estado,
+        consentimientoFirmado: data.consentimientoFirmado,
+        indicacionesEnviadas: data.indicacionesEnviadas,
+        fechaIndicaciones: data.indicacionesEnviadas
+          ? new Date(data.fechaIndicaciones)
+          : null,
+      },
+    });
+  }
+
+  private async updatePersonales(id: string, data: any) {
+    if (!data.nombreCompleto || data.nombreCompleto.length < 3) {
+      throw new BadRequestException("Nombre inválido");
+    }
+
+    return this.prisma.paciente.update({
+      where: { id },
+      data: {
+        nombreCompleto: data.nombreCompleto,
+        fechaNacimiento: data.fechaNacimiento
+          ? new Date(data.fechaNacimiento)
+          : null,
+        direccion: data.direccion ?? null,
+      },
+    });
   }
 }

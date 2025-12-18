@@ -10,6 +10,7 @@ import { ObrasSocialesModule } from './modules/obras-sociales/obras-sociales.mod
 import { ProfesionalesModule } from './modules/profesionales/profesionales.module';
 import { DiagnosticosModule } from './diagnosticos/diagnosticos.module';
 import { TratamientosModule } from './modules/tratamientos/tratamientos.module';
+import { HistoriaClinicaModule } from './modules/historia-clinica/historia-clinica.module';
 
 @Module({
   imports: [
@@ -24,7 +25,8 @@ import { TratamientosModule } from './modules/tratamientos/tratamientos.module';
     ObrasSocialesModule,
     ProfesionalesModule,
     DiagnosticosModule,
-    TratamientosModule
+    TratamientosModule,
+    HistoriaClinicaModule
   ],
 })
 export class AppModule implements NestModule {

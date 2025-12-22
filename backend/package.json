@@ -38,6 +38,7 @@
     "class-validator": "^0.14.2",
     "dotenv": "^17.2.3",
     "faker": "^6.6.6",
+    "nest": "^0.1.6",
     "nodemailer": "^7.0.10",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",

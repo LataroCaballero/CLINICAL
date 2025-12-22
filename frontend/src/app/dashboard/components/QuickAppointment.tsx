@@ -1,13 +1,6 @@
 "use client";
 import * as React from "react";
-import {
-  addMinutes,
-  format,
-  setHours,
-  setMinutes,
-  isSameDay,
-  parse,
-} from "date-fns";
+import { addMinutes, format, setHours, setMinutes, parse } from "date-fns";
 import { es } from "date-fns/locale";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
@@ -20,32 +13,25 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Search } from "lucide-react";
 import AutocompletePaciente from "@/components/AutocompletePaciente";
+import { useTiposTurno } from "@/hooks/useTipoTurnos";
+import { api } from "@/lib/api";
+import { useQueryClient } from "@tanstack/react-query";
 
-// Configuraciones del consultorio
-const workingDays = [3, 5]; // Lunes a Viernes (0=Domingo)
+// Configuración del consultorio (MVP)
+const workingDays = [1, 2, 3, 4, 5]; // Lunes a Viernes
 const workingHours = {
   start: "10:00",
   end: "18:00",
-  interval: 30, // minutos
-};
-
-// Mocks de turnos ya tomados
-const bookedAppointments: Record<string, string[]> = {
-  "2025-11-19": ["10:00", "11:30", "15:00"],
-  "2025-11-21": ["10:30", "12:00"],
+  interval: 30,
 };
 
 function generateTimeSlots(date: Date | undefined): string[] {
   if (!date) return [];
 
   const day = date.getDay();
-
-  // Día NO laboral → sin horarios
   if (!workingDays.includes(day)) return [];
 
   const [startH, startM] = workingHours.start.split(":").map(Number);
@@ -62,38 +48,61 @@ function generateTimeSlots(date: Date | undefined): string[] {
     current = addMinutes(current, workingHours.interval);
   }
 
-  // Remover horarios ocupados
-  const key = format(date, "yyyy-MM-dd");
-  const taken = bookedAppointments[key] || [];
-
-  return slots.filter((s) => !taken.includes(s));
+  return slots;
 }
 
-export default function QuickAppointment() {
+type Props = {
+  profesionalId: string;
+};
+
+export default function QuickAppointment({ profesionalId }: Props) {
+  const queryClient = useQueryClient();
+
+  const { data: tiposTurno = [] } = useTiposTurno();
+
   const [open, setOpen] = React.useState(false);
-  const [showSearch, setShowSearch] = React.useState(false);
-  const [searchTerm, setSearchTerm] = React.useState("");
-  const [patientModal, setPatientModal] = React.useState(false);
-  const [paciente, setPaciente] = React.useState<any>(null);
-
-  // Pacientes de ejemplo
-  const patients = [
-    { id: 1, name: "María Pérez", dni: "39288774" },
-    { id: 2, name: "Juan Gómez", dni: "35111902" },
-    { id: 3, name: "Lucía Fernández", dni: "40444911" },
-  ];
-
-  const filteredPatients = patients.filter(
-    (p) =>
-      p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.dni.includes(searchTerm)
-  );
-
   const [date, setDate] = React.useState<Date | undefined>(new Date());
   const [selectedTime, setSelectedTime] = React.useState<string | null>(null);
 
-  // Horarios generados dinámicamente
+  const [paciente, setPaciente] = React.useState<any>(null);
+  const [tipoTurnoId, setTipoTurnoId] = React.useState<string>("");
+  const [observaciones, setObservaciones] = React.useState("");
+
   const availableHours = generateTimeSlots(date);
+
+  const tipoTurnoSeleccionado = tiposTurno.find((t) => t.id === tipoTurnoId);
+
+  async function confirmarTurno() {
+    if (!paciente || !tipoTurnoId || !date || !selectedTime) {
+      alert("Completá paciente, tipo de turno, fecha y horario.");
+      return;
+    }
+
+    const inicio = parse(
+      `${format(date, "yyyy-MM-dd")} ${selectedTime}`,
+      "yyyy-MM-dd HH:mm",
+      new Date()
+    );
+
+    await api.post("/turnos", {
+      pacienteId: paciente.id,
+      profesionalId,
+      tipoTurnoId,
+      inicio: inicio.toISOString(),
+      observaciones,
+    });
+
+    // Refrescar calendario y upcoming
+    queryClient.invalidateQueries({ queryKey: ["turnos", "rango"] });
+    queryClient.invalidateQueries({ queryKey: ["turnos", "upcoming"] });
+
+    // Reset
+    setOpen(false);
+    setSelectedTime(null);
+    setPaciente(null);
+    setTipoTurnoId("");
+    setObservaciones("");
+  }
 
   return (
     <>
@@ -115,7 +124,7 @@ export default function QuickAppointment() {
             />
           </div>
 
-          {/* Horarios disponibles */}
+          {/* Horarios */}
           <div className="w-full md:w-[40%] flex flex-col gap-2 overflow-y-auto max-h-[293px] pr-2">
             {availableHours.length === 0 ? (
               <p className="text-sm text-gray-500 px-2">
@@ -139,7 +148,7 @@ export default function QuickAppointment() {
         </CardContent>
 
         <CardFooter className="flex items-center justify-between p-4 border-t text-sm text-gray-600">
-          <span>Seleccioná un horario disponible para reservar un turno!</span>
+          <span>Seleccioná un horario disponible para reservar un turno</span>
 
           <Button
             onClick={() => {
@@ -154,7 +163,7 @@ export default function QuickAppointment() {
         </CardFooter>
       </Card>
 
-      {/* Modal principal: datos del turno */}
+      {/* Modal */}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
@@ -165,36 +174,43 @@ export default function QuickAppointment() {
           </DialogHeader>
 
           <div className="grid gap-4 py-4">
-            {/* Selector de paciente */}
-            <div className="grid gap-2">
-              <AutocompletePaciente
-                onSelect={(p) => setPaciente(p)}
-                value={paciente?.nombreCompleto}
-                avatarUrl={paciente?.fotoUrl}
-              />
-            </div>
+            {/* Paciente */}
+            <AutocompletePaciente
+              onSelect={(p) => setPaciente(p)}
+              value={paciente?.nombreCompleto}
+              avatarUrl={paciente?.fotoUrl}
+            />
 
             {/* Tipo de turno */}
             <div className="grid gap-2">
               <Label>Tipo de turno</Label>
-              <select className="border rounded-md px-3 py-2 text-sm">
-                <option>Primera vez</option>
-                <option>Consulta</option>
-                <option>Prequirúrgico</option>
-                <option>Cirugía</option>
-                <option>Tratamiento</option>
+              <select
+                className="border rounded-md px-3 py-2 text-sm"
+                value={tipoTurnoId}
+                onChange={(e) => setTipoTurnoId(e.target.value)}
+              >
+                <option value="">Seleccionar tipo</option>
+                {tiposTurno.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.nombre}
+                  </option>
+                ))}
               </select>
             </div>
 
             {/* Observaciones */}
             <div className="grid gap-2">
               <Label>Observaciones</Label>
-              <Textarea placeholder="Notas adicionales (opcional)" />
+              <Textarea
+                placeholder="Notas adicionales (opcional)"
+                value={observaciones}
+                onChange={(e) => setObservaciones(e.target.value)}
+              />
             </div>
 
-            {/* Fecha y hora */}
+            {/* Resumen */}
             <div className="text-sm text-gray-500 mt-2">
-              <strong>Fecha:</strong> {date ? format(date, "dd/MM/yyyy") : "—"}{" "}
+              <strong>Fecha:</strong> {date ? format(date, "dd/MM/yyyy") : "—"}
               <br />
               <strong>Hora:</strong> {selectedTime || "—"}
             </div>
@@ -206,58 +222,9 @@ export default function QuickAppointment() {
             </Button>
             <Button
               className="bg-indigo-500 hover:bg-indigo-600 text-white"
-              onClick={() => {
-                setOpen(false);
-                alert("✅ Turno agendado correctamente");
-              }}
+              onClick={confirmarTurno}
             >
               Confirmar turno
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Submodal para crear paciente */}
-      <Dialog open={patientModal} onOpenChange={setPatientModal}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Registrar nuevo paciente</DialogTitle>
-            <DialogDescription>
-              Completá los datos principales para dar de alta al paciente.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label>Nombre completo</Label>
-              <Input placeholder="Ej. María Pérez" />
-            </div>
-            <div className="grid gap-2">
-              <Label>DNI</Label>
-              <Input placeholder="Ej. 39288774" />
-            </div>
-            <div className="grid gap-2">
-              <Label>Teléfono</Label>
-              <Input placeholder="Ej. +54 9 264 1234567" />
-            </div>
-            <div className="grid gap-2">
-              <Label>Obra social</Label>
-              <Input placeholder="Ej. OSDE, Swiss Medical..." />
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setPatientModal(false)}>
-              Cancelar
-            </Button>
-            <Button
-              className="bg-indigo-500 hover:bg-indigo-600 text-white"
-              onClick={() => {
-                alert("👤 Paciente creado correctamente");
-                setPatientModal(false);
-              }}
-            >
-              Guardar paciente
             </Button>
           </DialogFooter>
         </DialogContent>

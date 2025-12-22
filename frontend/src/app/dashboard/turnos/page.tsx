@@ -1,11 +1,16 @@
 "use client";
+
+import { useEffect, useMemo, useState } from "react";
 import QuickAppointment from "../components/QuickAppointment";
 import UpcomingAppointments from "../components/UpcomingAppointments";
+
 import { Calendar, momentLocalizer } from "react-big-calendar";
 import moment from "moment";
 import "react-big-calendar/lib/css/react-big-calendar.css";
+import withDragAndDrop from "react-big-calendar/lib/addons/dragAndDrop";
+import "react-big-calendar/lib/addons/dragAndDrop/styles.css";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -15,6 +20,7 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+
 import NewAppointmentModal from "./NewAppointmentModal";
 import {
   Tooltip,
@@ -22,16 +28,17 @@ import {
   TooltipTrigger,
   TooltipContent,
 } from "@/components/ui/tooltip";
-import withDragAndDrop from "react-big-calendar/lib/addons/dragAndDrop";
-import "react-big-calendar/lib/addons/dragAndDrop/styles.css";
+
 import { toast } from "sonner";
-import { useEffect } from "react";
 import { useTurnosRango } from "@/hooks/useTurnosRangos";
 import { useProfesionales } from "@/hooks/useProfesionales";
+import { useReprogramarTurno } from "@/hooks/useReprogramarTurnos";
 
 moment.locale("es");
 const localizer = momentLocalizer(moment);
 const DnDCalendar = withDragAndDrop(Calendar);
+
+type ViewType = "day" | "week" | "month";
 
 interface CalendarEvent {
   id: string;
@@ -40,12 +47,12 @@ interface CalendarEvent {
   start: Date;
   end: Date;
   tipo: string;
-  estado: string;
+  estado: "PENDIENTE" | "CONFIRMADO" | "CANCELADO" | "AUSENTE" | "FINALIZADO";
   observaciones?: string;
 }
 
 // ---------------------------
-// CONFIGURACIÓN DEL PROFESIONAL
+// CONFIGURACIÓN DEL PROFESIONAL (UI)
 // ---------------------------
 const config = {
   workingDays: [1, 2, 3, 4, 5], // lun - vie
@@ -54,9 +61,6 @@ const config = {
   extraAvailableDays: ["2025-11-17"],
 };
 
-// ---------------------------
-// FUNCIÓN PARA VERIFICAR SI UN DÍA ESTÁ BLOQUEADO
-// ---------------------------
 function isBlockedDay(start: Date) {
   const day = start.getDay();
   const dateStr = start.toISOString().slice(0, 10);
@@ -69,105 +73,142 @@ function isBlockedDay(start: Date) {
 }
 
 export default function TurnosPage() {
-  type ViewType = "day" | "week" | "month";
-
   const [view, setView] = useState<ViewType>("week");
   const [date, setDate] = useState(new Date());
+
   const [openModal, setOpenModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
-  const [events, setEvents] = useState<any[]>([]);
+
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
 
   const { data: profesionales = [] } = useProfesionales();
   const [profesionalId, setProfesionalId] = useState<string>("");
 
+  const reprogramar = useReprogramarTurno();
+
+  // Default profesional
   useEffect(() => {
     if (!profesionalId && profesionales.length > 0) {
       setProfesionalId(profesionales[0].id);
     }
   }, [profesionales, profesionalId]);
 
-  const desde = moment(date).startOf(view).format("YYYY-MM-DD");
-  const hasta = moment(date).endOf(view).format("YYYY-MM-DD");
+  // Rango visible según view y date
+  const desde = useMemo(
+    () => moment(date).startOf(view).format("YYYY-MM-DD"),
+    [date, view]
+  );
+  const hasta = useMemo(
+    () => moment(date).endOf(view).format("YYYY-MM-DD"),
+    [date, view]
+  );
 
-  const { data: turnosRango = [], isLoading } = useTurnosRango(
+  const { data: turnosRango = [] } = useTurnosRango(
     profesionalId || undefined,
     desde,
     hasta
   );
 
+  // Map turnos -> eventos
   useEffect(() => {
-    const mapped = turnosRango.map((t) => ({
-      id: t.id, // OJO: ahora es string (no number)
-      title: `${t.tipoTurno?.nombre ?? "Turno"} – ${t.paciente?.nombreCompleto ?? ""}`,
+    const mapped: CalendarEvent[] = (turnosRango as any[]).map((t) => ({
+      id: t.id,
+      title: `${t.tipoTurno?.nombre ?? "Turno"} – ${
+        t.paciente?.nombreCompleto ?? ""
+      }`,
       paciente: t.paciente?.nombreCompleto ?? "",
       start: new Date(t.inicio),
       end: new Date(t.fin),
       tipo: t.tipoTurno?.nombre ?? "Turno",
-      estado: t.estado, // viene del enum
+      estado: t.estado,
       observaciones: t.observaciones ?? "",
     }));
 
     setEvents(mapped);
   }, [turnosRango]);
 
+  // Optimistic update helper
+  function updateEventTime(eventId: string, start: Date, end: Date) {
+    setEvents((prev) =>
+      prev.map((e) => (e.id === eventId ? { ...e, start, end } : e))
+    );
+  }
+
   const handleSelectEvent = (event: any) => {
     setSelectedEvent(event);
     setOpenModal(true);
   };
 
-  // ---------------------------
-  // DRAG & DROP: MOVER EVENTO
-  // ---------------------------
+  // DRAG & DROP: mover evento
   const handleEventMove = ({ event, start, end }: any) => {
-    if (isBlockedDay(start)) {
-      toast.error("Ese día no está disponible");
+    // bloqueos por estado
+    if (event?.estado === "CANCELADO" || event?.estado === "FINALIZADO") {
+      toast.error("No podés reprogramar un turno cancelado o finalizado.");
       return;
     }
 
-    const updated = events.map((ev) =>
-      ev.id === event.id ? { ...ev, start, end } : ev
-    );
+    const prev = events; // snapshot
+    updateEventTime(event.id, start, end);
 
-    setEvents(updated);
-    // TODO: llamar al backend para guardar
+    reprogramar.mutate(
+      { id: event.id, inicio: start, fin: end },
+      {
+        onError: (err: any) => {
+          setEvents(prev); // rollback
+          toast.error(
+            err?.response?.data?.message ??
+              "No se pudo reprogramar: solapamiento o estado inválido."
+          );
+        },
+        onSuccess: () => {
+          toast.success("Turno reprogramado.");
+        },
+      }
+    );
   };
 
-  // ---------------------------
-  // REDIMENSIONAR EVENTO (RESIZE)
-  // ---------------------------
+  // RESIZE: redimensionar evento
   const handleEventResize = ({ event, start, end }: any) => {
-    if (isBlockedDay(start)) {
-      toast.error("No se puede cambiar la duración en un día bloqueado");
+    if (event?.estado === "CANCELADO" || event?.estado === "FINALIZADO") {
+      toast.error("No podés reprogramar un turno cancelado o finalizado.");
       return;
     }
 
-    const updated = events.map((ev) =>
-      ev.id === event.id ? { ...ev, start, end } : ev
-    );
+    const prev = events;
+    updateEventTime(event.id, start, end);
 
-    setEvents(updated);
-    // TODO: llamar backend
+    reprogramar.mutate(
+      { id: event.id, inicio: start, fin: end },
+      {
+        onError: (err: any) => {
+          setEvents(prev);
+          toast.error(
+            err?.response?.data?.message ??
+              "No se pudo reprogramar: solapamiento o estado inválido."
+          );
+        },
+        onSuccess: () => {
+          toast.success("Turno actualizado.");
+        },
+      }
+    );
   };
 
-  // ---------------------------
-  // NUEVO TURNO AL CLICKEAR SLOT
-  // ---------------------------
+  // Nuevo turno al clickear slot
   const handleSelectSlot = ({ start }: any) => {
     if (isBlockedDay(start)) {
       toast.error("Ese día no está disponible");
       return;
     }
-
     setSelectedEvent(null);
     setOpenModal(true);
   };
 
   return (
     <div className="flex flex-col gap-6 p-6 max-w-[100vw]">
-
       {/* PRIMERA FILA */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <QuickAppointment />
+        {!!profesionalId && <QuickAppointment profesionalId={profesionalId} />}
         <UpcomingAppointments profesionalId={profesionalId} />
       </div>
 
@@ -175,29 +216,32 @@ export default function TurnosPage() {
       <Card className="p-4 shadow-sm">
         <CardHeader className="flex justify-between items-center">
           <CardTitle className="text-base font-medium text-gray-800">
-            Agenda semanal
+            Agenda
           </CardTitle>
 
-
-
           <div className="flex gap-2 items-center">
-            <Select
-              value={profesionalId}
-              onValueChange={(v) => setProfesionalId(v)}
-            >
+            <Select value={profesionalId} onValueChange={setProfesionalId}>
               <SelectTrigger className="w-[220px]">
                 <SelectValue placeholder="Profesional" />
               </SelectTrigger>
               <SelectContent>
-                {profesionales.map((p: any) => (
-                  <SelectItem key={p.id} value={p.id}>
-                    {p.usuario?.nombre} {p.usuario?.apellido}
-                  </SelectItem>
-                ))}
+                {profesionales.map((p: any) => {
+                  const label =
+                    p.nombreCompleto ??
+                    `${p.usuario?.nombre ?? ""} ${
+                      p.usuario?.apellido ?? ""
+                    }`.trim() ??
+                    "Profesional";
+                  return (
+                    <SelectItem key={p.id} value={p.id}>
+                      {label}
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
 
-            <Select onValueChange={(v) => setView(v as ViewType)} defaultValue={view}>
+            <Select value={view} onValueChange={(v) => setView(v as ViewType)}>
               <SelectTrigger className="w-[120px]">
                 <SelectValue placeholder="Vista" />
               </SelectTrigger>
@@ -250,13 +294,13 @@ export default function TurnosPage() {
             </h2>
           </div>
 
-          {/* CALENDARIO COMPLETO */}
+          {/* CALENDARIO */}
           <div className="rounded-md border border-gray-200 overflow-hidden">
             <DnDCalendar
               localizer={localizer}
               events={events}
-              startAccessor={(event) => (event as CalendarEvent).start}
-              endAccessor={(event) => (event as CalendarEvent).end}
+              startAccessor="start"
+              endAccessor="end"
               selectable
               resizable
               view={view}
@@ -268,8 +312,12 @@ export default function TurnosPage() {
               onSelectSlot={handleSelectSlot}
               onEventDrop={handleEventMove}
               onEventResize={handleEventResize}
-              draggableAccessor={() => true}
-              resizableAccessor={() => true}
+              draggableAccessor={(event: any) =>
+                event?.estado !== "CANCELADO" && event?.estado !== "FINALIZADO"
+              }
+              resizableAccessor={(event: any) =>
+                event?.estado !== "CANCELADO" && event?.estado !== "FINALIZADO"
+              }
               toolbar={false}
               messages={{
                 today: "Hoy",
@@ -290,20 +338,25 @@ export default function TurnosPage() {
                       </TooltipTrigger>
 
                       <TooltipContent className="bg-white border text-gray-700 shadow-md text-xs p-2">
-                        <p><strong>Paciente:</strong> {event.paciente}</p>
-                        <p><strong>Tipo:</strong> {event.tipo}</p>
-                        <p><strong>Hora:</strong> {moment(event.start).format("HH:mm")} hs</p>
+                        <p>
+                          <strong>Paciente:</strong> {event.paciente}
+                        </p>
+                        <p>
+                          <strong>Tipo:</strong> {event.tipo}
+                        </p>
+                        <p>
+                          <strong>Hora:</strong>{" "}
+                          {moment(event.start).format("HH:mm")} hs
+                        </p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
                 ),
               }}
-
               // SOMBREADO POR DÍA
-              dayPropGetter={(date) => {
-                const day = date.getDay();
-                const dateStr = date.toISOString().slice(0, 10);
-
+              dayPropGetter={(d: Date) => {
+                const day = d.getDay();
+                const dateStr = d.toISOString().slice(0, 10);
                 let style: React.CSSProperties = {};
 
                 if (config.blockedDays.includes(dateStr)) {
@@ -317,42 +370,48 @@ export default function TurnosPage() {
                   return { style };
                 }
 
-                if (!config.workingDays.includes(day) &&
-                  !config.extraAvailableDays.includes(dateStr)) {
+                if (
+                  !config.workingDays.includes(day) &&
+                  !config.extraAvailableDays.includes(dateStr)
+                ) {
                   style.backgroundColor = "#E5E7EB";
                   style.opacity = 0.75;
                 }
 
                 return { style };
               }}
-
               // SOMBREADO POR HORAS
-              slotPropGetter={(date) => {
-                const dateStr = date.toISOString().slice(0, 10);
+              slotPropGetter={(d: Date) => {
+                const dateStr = d.toISOString().slice(0, 10);
 
                 if (config.surgeryDays.includes(dateStr)) {
                   return { style: { backgroundColor: "#FEF9C3" } };
                 }
 
                 if (config.blockedDays.includes(dateStr)) {
-                  return { style: { backgroundColor: "#F3F4F6", opacity: 0.5 } };
+                  return {
+                    style: { backgroundColor: "#F3F4F6", opacity: 0.5 },
+                  };
                 }
 
                 return {};
               }}
-
               // COLORES DE EVENTOS
-              eventPropGetter={(event) => {
-                let backgroundColor =
-                  (event as CalendarEvent).tipo === "Consulta"
-                    ? "#E0E7FF"
-                    : (event as CalendarEvent).tipo === "Intervención"
-                      ? "#FEE2E2"
-                      : "#DCFCE7";
+              eventPropGetter={(event: any) => {
+                const tipo = (event as CalendarEvent).tipo || "";
+                const estado = (event as CalendarEvent).estado;
 
-                if ((event as CalendarEvent).estado === "Confirmado") {
-                  backgroundColor = "#4ADE80";
-                }
+                let backgroundColor = tipo.toLowerCase().includes("consulta")
+                  ? "#E0E7FF"
+                  : tipo.toLowerCase().includes("cirug")
+                  ? "#FEE2E2"
+                  : "#DCFCE7";
+
+                // estados del backend
+                if (estado === "CONFIRMADO") backgroundColor = "#BBF7D0";
+                if (estado === "CANCELADO") backgroundColor = "#E5E7EB";
+                if (estado === "AUSENTE") backgroundColor = "#E5E7EB";
+                if (estado === "FINALIZADO") backgroundColor = "#DBEAFE";
 
                 return {
                   style: {

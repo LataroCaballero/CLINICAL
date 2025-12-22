@@ -11,6 +11,8 @@ import { ProfesionalesModule } from './modules/profesionales/profesionales.modul
 import { DiagnosticosModule } from './diagnosticos/diagnosticos.module';
 import { TratamientosModule } from './modules/tratamientos/tratamientos.module';
 import { HistoriaClinicaModule } from './modules/historia-clinica/historia-clinica.module';
+import { TurnosModule } from './modules/turnos/turnos.module';
+import { TiposTurnoModule } from './modules/tipos-turno/tipos-turno.module';
 
 @Module({
   imports: [
@@ -26,7 +28,9 @@ import { HistoriaClinicaModule } from './modules/historia-clinica/historia-clini
     ProfesionalesModule,
     DiagnosticosModule,
     TratamientosModule,
-    HistoriaClinicaModule
+    HistoriaClinicaModule,
+    TurnosModule,
+    TiposTurnoModule
   ],
 })
 export class AppModule implements NestModule {

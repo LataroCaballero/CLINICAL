@@ -15,7 +15,7 @@ import { usePaciente } from "@/hooks/usePaciente";
 import { useState } from "react";
 import DatosCompletos from "@/components/patient/PatientDrawer/views/DatosCompletos";
 import HistoriaClinica from "@/components/patient/PatientDrawer/views/HistoriaClinica";
-import TurnosPaciente from "@/components/patient/PatientDrawer/views/TurnosPaciente";
+import PacienteTurnos from "@/components/patient/PatientDrawer/views/TurnosPaciente";
 
 export default function PatientDrawer({
   open,
@@ -71,8 +71,9 @@ export default function PatientDrawer({
               />
             }
             {view === "turnos" && paciente &&
-              <TurnosPaciente
+              <PacienteTurnos
                 pacienteId={paciente.id}
+                onBack={() => setView("default")}
               />
             }
           </div>

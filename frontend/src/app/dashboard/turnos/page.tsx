@@ -25,13 +25,16 @@ import {
 import withDragAndDrop from "react-big-calendar/lib/addons/dragAndDrop";
 import "react-big-calendar/lib/addons/dragAndDrop/styles.css";
 import { toast } from "sonner";
+import { useEffect } from "react";
+import { useTurnosRango } from "@/hooks/useTurnosRangos";
+import { useProfesionales } from "@/hooks/useProfesionales";
 
 moment.locale("es");
 const localizer = momentLocalizer(moment);
 const DnDCalendar = withDragAndDrop(Calendar);
 
 interface CalendarEvent {
-  id: number;
+  id: string;
   title: string;
   paciente: string;
   start: Date;
@@ -65,132 +68,6 @@ function isBlockedDay(start: Date) {
   );
 }
 
-// -------------------------------------
-// EVENTOS DE PRUEBA (DEBERÍAN VENIR DEL BACKEND)
-// -------------------------------------
-const initialEvents: CalendarEvent[] = [
-  {
-    id: 1,
-    title: "Consulta – Lautaro Caballero",
-    paciente: "Lautaro Caballero",
-    start: new Date(2025, 10, 11, 10, 0),
-    end: new Date(2025, 10, 11, 10, 30),
-    tipo: "Consulta",
-    estado: "Pendiente",
-    observaciones: "Primera vez",
-  },
-  {
-    id: 2,
-    title: "Intervención – Daniel Martínez",
-    paciente: "Daniel Martínez",
-    start: new Date(2025, 10, 12, 11, 0),
-    end: new Date(2025, 10, 12, 13, 0),
-    tipo: "Intervención",
-    estado: "Confirmado",
-    observaciones: "Blefaroplastia superior",
-  },
-  {
-    id: 3,
-    title: "Consulta – María González",
-    paciente: "María González",
-    start: new Date(2025, 10, 13, 9, 30),
-    end: new Date(2025, 10, 13, 10, 0),
-    tipo: "Consulta",
-    estado: "Confirmado",
-    observaciones: "Control postoperatorio",
-  },
-  {
-    id: 4,
-    title: "Intervención – Juan Pérez",
-    paciente: "Juan Pérez",
-    start: new Date(2025, 10, 13, 14, 0),
-    end: new Date(2025, 10, 13, 16, 0),
-    tipo: "Intervención",
-    estado: "Pendiente",
-    observaciones: "Rinoplastia",
-  },
-  {
-    id: 5,
-    title: "Consulta – Paula Gómez",
-    paciente: "Paula Gómez",
-    start: new Date(2025, 10, 14, 10, 0),
-    end: new Date(2025, 10, 14, 10, 30),
-    tipo: "Consulta",
-    estado: "Cancelado",
-    observaciones: "Cancelado por paciente",
-  },
-  {
-    id: 6,
-    title: "Consulta – Andrés Castillo",
-    paciente: "Andrés Castillo",
-    start: new Date(2025, 10, 14, 11, 0),
-    end: new Date(2025, 10, 14, 11, 30),
-    tipo: "Consulta",
-    estado: "Confirmado",
-    observaciones: "",
-  },
-  {
-    id: 7,
-    title: "Intervención – Martina Silva",
-    paciente: "Martina Silva",
-    start: new Date(2025, 10, 15, 8, 0),
-    end: new Date(2025, 10, 15, 10, 30),
-    tipo: "Intervención",
-    estado: "Confirmado",
-    observaciones: "Lipo HD",
-  },
-  {
-    id: 8,
-    title: "Consulta – Ricardo López",
-    paciente: "Ricardo López",
-    start: new Date(2025, 10, 15, 11, 0),
-    end: new Date(2025, 10, 15, 11, 30),
-    tipo: "Consulta",
-    estado: "Ausente",
-    observaciones: "No se presentó",
-  },
-  {
-    id: 9,
-    title: "Consulta – Patricia Fernández",
-    paciente: "Patricia Fernández",
-    start: new Date(2025, 10, 16, 9, 0),
-    end: new Date(2025, 10, 16, 9, 30),
-    tipo: "Consulta",
-    estado: "Pendiente",
-    observaciones: "",
-  },
-  {
-    id: 10,
-    title: "Intervención – Nicolás Herrera",
-    paciente: "Nicolás Herrera",
-    start: new Date(2025, 10, 16, 12, 0),
-    end: new Date(2025, 10, 16, 15, 0),
-    tipo: "Intervención",
-    estado: "Confirmado",
-    observaciones: "Ginecomastia",
-  },
-  {
-    id: 11,
-    title: "Consulta – Sofía Reyes",
-    paciente: "Sofía Reyes",
-    start: new Date(2025, 10, 17, 15, 30),
-    end: new Date(2025, 10, 17, 16, 0),
-    tipo: "Consulta",
-    estado: "Pendiente",
-    observaciones: "Revisión de resultados",
-  },
-  {
-    id: 12,
-    title: "Consulta – Javier Morales",
-    paciente: "Javier Morales",
-    start: new Date(2025, 10, 17, 16, 0),
-    end: new Date(2025, 10, 17, 16, 30),
-    tipo: "Consulta",
-    estado: "Confirmado",
-    observaciones: "",
-  },
-];
-
 export default function TurnosPage() {
   type ViewType = "day" | "week" | "month";
 
@@ -198,7 +75,40 @@ export default function TurnosPage() {
   const [date, setDate] = useState(new Date());
   const [openModal, setOpenModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
-  const [events, setEvents] = useState<any[]>(initialEvents);
+  const [events, setEvents] = useState<any[]>([]);
+
+  const { data: profesionales = [] } = useProfesionales();
+  const [profesionalId, setProfesionalId] = useState<string>("");
+
+  useEffect(() => {
+    if (!profesionalId && profesionales.length > 0) {
+      setProfesionalId(profesionales[0].id);
+    }
+  }, [profesionales, profesionalId]);
+
+  const desde = moment(date).startOf(view).format("YYYY-MM-DD");
+  const hasta = moment(date).endOf(view).format("YYYY-MM-DD");
+
+  const { data: turnosRango = [], isLoading } = useTurnosRango(
+    profesionalId || undefined,
+    desde,
+    hasta
+  );
+
+  useEffect(() => {
+    const mapped = turnosRango.map((t) => ({
+      id: t.id, // OJO: ahora es string (no number)
+      title: `${t.tipoTurno?.nombre ?? "Turno"} – ${t.paciente?.nombreCompleto ?? ""}`,
+      paciente: t.paciente?.nombreCompleto ?? "",
+      start: new Date(t.inicio),
+      end: new Date(t.fin),
+      tipo: t.tipoTurno?.nombre ?? "Turno",
+      estado: t.estado, // viene del enum
+      observaciones: t.observaciones ?? "",
+    }));
+
+    setEvents(mapped);
+  }, [turnosRango]);
 
   const handleSelectEvent = (event: any) => {
     setSelectedEvent(event);
@@ -258,7 +168,7 @@ export default function TurnosPage() {
       {/* PRIMERA FILA */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <QuickAppointment />
-        <UpcomingAppointments />
+        <UpcomingAppointments profesionalId={profesionalId} />
       </div>
 
       {/* SEGUNDA FILA: CALENDARIO */}
@@ -268,7 +178,25 @@ export default function TurnosPage() {
             Agenda semanal
           </CardTitle>
 
+
+
           <div className="flex gap-2 items-center">
+            <Select
+              value={profesionalId}
+              onValueChange={(v) => setProfesionalId(v)}
+            >
+              <SelectTrigger className="w-[220px]">
+                <SelectValue placeholder="Profesional" />
+              </SelectTrigger>
+              <SelectContent>
+                {profesionales.map((p: any) => (
+                  <SelectItem key={p.id} value={p.id}>
+                    {p.usuario?.nombre} {p.usuario?.apellido}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
             <Select onValueChange={(v) => setView(v as ViewType)} defaultValue={view}>
               <SelectTrigger className="w-[120px]">
                 <SelectValue placeholder="Vista" />
@@ -390,7 +318,7 @@ export default function TurnosPage() {
                 }
 
                 if (!config.workingDays.includes(day) &&
-                    !config.extraAvailableDays.includes(dateStr)) {
+                  !config.extraAvailableDays.includes(dateStr)) {
                   style.backgroundColor = "#E5E7EB";
                   style.opacity = 0.75;
                 }
@@ -416,11 +344,11 @@ export default function TurnosPage() {
               // COLORES DE EVENTOS
               eventPropGetter={(event) => {
                 let backgroundColor =
-                (event as CalendarEvent).tipo === "Consulta"
+                  (event as CalendarEvent).tipo === "Consulta"
                     ? "#E0E7FF"
                     : (event as CalendarEvent).tipo === "Intervención"
-                    ? "#FEE2E2"
-                    : "#DCFCE7";
+                      ? "#FEE2E2"
+                      : "#DCFCE7";
 
                 if ((event as CalendarEvent).estado === "Confirmado") {
                   backgroundColor = "#4ADE80";

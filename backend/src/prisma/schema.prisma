@@ -509,6 +509,10 @@ model Turno {
   paciente            Paciente                @relation(fields: [pacienteId], references: [id])
   profesional         Profesional             @relation(fields: [profesionalId], references: [id])
   tipoTurno           TipoTurno               @relation(fields: [tipoTurnoId], references: [id])
+
+  @@index([profesionalId, inicio])
+  @@index([pacienteId, inicio])
+  @@index([estado])
 }
 
 model Cirugia {

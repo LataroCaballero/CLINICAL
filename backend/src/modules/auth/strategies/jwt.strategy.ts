@@ -1,10 +1,11 @@
+import { PrismaService } from '@/src/prisma/prisma.service';
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor() {
+  constructor(private prisma: PrismaService) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
@@ -13,9 +14,21 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: any) {
-    return {
-      id: payload.sub,
+    const baseUser = {
+      userId: payload.sub,
       rol: payload.rol,
+      profesionalId: null,
     };
+
+    if (payload.rol === 'PROFESIONAL') {
+      const profesional = await this.prisma.profesional.findUnique({
+        where: { usuarioId: payload.sub },
+        select: { id: true },
+      });
+
+      baseUser.profesionalId = profesional?.id ?? null;
+    }
+
+    return baseUser;
   }
 }

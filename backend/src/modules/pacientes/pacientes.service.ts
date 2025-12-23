@@ -1,5 +1,10 @@
 // pacientes.service.ts
-import { ConflictException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreatePacienteDto } from './dto/create-paciente.dto';
 import { UpdatePacienteDto } from './dto/update-paciente.dto';
@@ -7,42 +12,42 @@ import { SearchPacienteDto } from './dto/search-paciente.dto';
 import { PacienteSuggest } from 'src/common/types/paciente-suggest.type';
 import { PacienteListaDto } from './dto/paciente-lista.dto';
 import { ESTADO_PRIORITY } from '../../common/constants/pacientes.constants';
-import { EstadoPaciente } from '@prisma/client';
+import { EstadoPaciente, RolUsuario } from '@prisma/client';
 import { EstadoPresupuesto } from '@prisma/client';
-import { BadRequestException } from "@nestjs/common";
-import { UpdatePacienteSectionDto } from "./dto/update-paciente-section.dto";
+import { BadRequestException } from '@nestjs/common';
+import { UpdatePacienteSectionDto } from './dto/update-paciente-section.dto';
 
 @Injectable()
 export class PacientesService {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
-  // Crear  
+  // Crear
   async create(dto: CreatePacienteDto) {
-    console.log("DTO RECIBIDO:", dto);
+    console.log('DTO RECIBIDO:', dto);
     try {
       const data = {
         ...dto,
-        fechaNacimiento: dto.fechaNacimiento ? new Date(dto.fechaNacimiento) : null,
-        fechaIndicaciones: dto.fechaIndicaciones ? new Date(dto.fechaIndicaciones) : null,
+        fechaNacimiento: dto.fechaNacimiento
+          ? new Date(dto.fechaNacimiento)
+          : null,
+        fechaIndicaciones: dto.fechaIndicaciones
+          ? new Date(dto.fechaIndicaciones)
+          : null,
       };
       return this.prisma.paciente.create({
         data,
       });
-    }
-    catch (error: any) {
-      console.log("ERROR CAPTURADO EN CATCH:", error);
+    } catch (error: any) {
+      console.log('ERROR CAPTURADO EN CATCH:', error);
 
       // Manejar directamente por STRUCTURE
-      if (error.code === "P2002" && error.meta?.target?.includes("dni")) {
-        throw new ConflictException("El DNI ingresado ya está registrado.");
+      if (error.code === 'P2002' && error.meta?.target?.includes('dni')) {
+        throw new ConflictException('El DNI ingresado ya está registrado.');
       }
 
-      throw new InternalServerErrorException("Error interno al crear paciente");
+      throw new InternalServerErrorException('Error interno al crear paciente');
     }
   }
-
-
-
 
   async obtenerListaPacientes(): Promise<PacienteListaDto[]> {
     const ahora = new Date();
@@ -83,7 +88,7 @@ export class PacientesService {
             estado: true,
           },
         },
-        objecion: true
+        objecion: true,
       },
     });
 
@@ -125,26 +130,28 @@ export class PacientesService {
         deuda: Number(p.cuentaCorriente?.saldoActual ?? 0),
         estado: p.estado,
         consentimientoFirmado: p.consentimientoFirmado,
-        estudiosPendientes: p.estudios.filter(e => e.estado === false).length,
+        estudiosPendientes: p.estudios.filter((e) => e.estado === false).length,
         presupuestosActivos: p.presupuestos.filter(
-          pr =>
+          (pr) =>
             pr.estado === EstadoPresupuesto.BORRADOR ||
-            pr.estado === EstadoPresupuesto.ENVIADO
+            pr.estado === EstadoPresupuesto.ENVIADO,
         ).length,
         objecion: p.objecion
           ? {
-            id: p.objecion.id,
-            nombre: p.objecion.nombre,
-          }
+              id: p.objecion.id,
+              nombre: p.objecion.nombre,
+            }
           : null,
       } satisfies PacienteListaDto;
     });
 
     lista.sort((a, b) => {
-      const pa =
-        a.estado ? ESTADO_PRIORITY[a.estado as EstadoPaciente] ?? 99 : 99;
-      const pb =
-        b.estado ? ESTADO_PRIORITY[b.estado as EstadoPaciente] ?? 99 : 99;
+      const pa = a.estado
+        ? (ESTADO_PRIORITY[a.estado as EstadoPaciente] ?? 99)
+        : 99;
+      const pb = b.estado
+        ? (ESTADO_PRIORITY[b.estado as EstadoPaciente] ?? 99)
+        : 99;
 
       // Primero orden por prioridad de estado
       if (pa !== pb) return pa - pb;
@@ -314,17 +321,17 @@ export class PacientesService {
 
   async updatePacienteSection(id: string, dto: UpdatePacienteSectionDto) {
     switch (dto.section) {
-      case "contacto":
+      case 'contacto':
         return this.updateContacto(id, dto.data);
-      case "emergencia":
+      case 'emergencia':
         return this.updateEmergencia(id, dto.data);
-      case "cobertura":
+      case 'cobertura':
         return this.updateCobertura(id, dto.data);
-      case "clinica":
+      case 'clinica':
         return this.updateClinica(id, dto.data);
-      case "estado":
+      case 'estado':
         return this.updateEstado(id, dto.data);
-      case "personales":
+      case 'personales':
         return this.updatePersonales(id, dto.data);
 
       // después implementamos:
@@ -333,7 +340,7 @@ export class PacientesService {
       // etc
 
       default:
-        throw new BadRequestException("Sección no soportada");
+        throw new BadRequestException('Sección no soportada');
     }
   }
 
@@ -346,11 +353,14 @@ export class PacientesService {
     };
 
     // validación mínima backend
-    if (typeof patch.telefono !== "string" || patch.telefono.trim().length < 6) {
-      throw new BadRequestException("Teléfono inválido");
+    if (
+      typeof patch.telefono !== 'string' ||
+      patch.telefono.trim().length < 6
+    ) {
+      throw new BadRequestException('Teléfono inválido');
     }
-    if (patch.email && typeof patch.email !== "string") {
-      throw new BadRequestException("Email inválido");
+    if (patch.email && typeof patch.email !== 'string') {
+      throw new BadRequestException('Email inválido');
     }
 
     return this.prisma.paciente.update({
@@ -371,7 +381,7 @@ export class PacientesService {
       !patch.contactoEmergenciaRelacion ||
       !patch.contactoEmergenciaTelefono
     ) {
-      throw new BadRequestException("Datos de emergencia inválidos");
+      throw new BadRequestException('Datos de emergencia inválidos');
     }
 
     return this.prisma.paciente.update({
@@ -386,8 +396,8 @@ export class PacientesService {
       plan: data.plan ?? null,
     };
 
-    if (patch.obraSocialId && typeof patch.obraSocialId !== "string") {
-      throw new BadRequestException("Obra social inválida");
+    if (patch.obraSocialId && typeof patch.obraSocialId !== 'string') {
+      throw new BadRequestException('Obra social inválida');
     }
 
     return this.prisma.paciente.update({
@@ -415,9 +425,7 @@ export class PacientesService {
 
   private async updateEstado(id: string, data: any) {
     if (data.indicacionesEnviadas && !data.fechaIndicaciones) {
-      throw new BadRequestException(
-        "Fecha de indicaciones requerida"
-      );
+      throw new BadRequestException('Fecha de indicaciones requerida');
     }
 
     return this.prisma.paciente.update({
@@ -435,7 +443,7 @@ export class PacientesService {
 
   private async updatePersonales(id: string, data: any) {
     if (!data.nombreCompleto || data.nombreCompleto.length < 3) {
-      throw new BadRequestException("Nombre inválido");
+      throw new BadRequestException('Nombre inválido');
     }
 
     return this.prisma.paciente.update({
@@ -448,5 +456,26 @@ export class PacientesService {
         direccion: data.direccion ?? null,
       },
     });
+  }
+
+  async findAll(scope: { profesionalId: string | null; rol: RolUsuario }) {
+    if (scope.profesionalId) {
+      const exists = await this.prisma.profesional.findUnique({
+        where: { id: scope.profesionalId },
+        select: { id: true },
+      });
+
+      if (!exists) {
+        throw new NotFoundException('Profesional no encontrado');
+      }
+    }
+
+    const where: any = {};
+
+    if (scope.profesionalId) {
+      where.profesionalId = scope.profesionalId;
+    }
+
+    return this.prisma.paciente.findMany({ where });
   }
 }

@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateTurnoDto } from './dto/create-turno.dto';
-import { EstadoTurno } from '@prisma/client';
+import { EstadoTurno, RolUsuario } from '@prisma/client';
 import { getDayRange } from '@/src/common/utils/date-range';
 import { ReprogramarTurnoDto } from './dto/reprogramar-turno.dto';
 
@@ -332,6 +332,30 @@ export class TurnosService {
     return this.prisma.turno.update({
       where: { id: turnoId },
       data: { inicio, fin },
+    });
+  }
+
+  async findAll(scope: { profesionalId: string | null; rol: RolUsuario }) {
+    if (scope.profesionalId) {
+      const exists = await this.prisma.profesional.findUnique({
+        where: { id: scope.profesionalId },
+        select: { id: true },
+      });
+
+      if (!exists) {
+        throw new NotFoundException('Profesional no encontrado');
+      }
+    }
+
+    const where: any = {};
+
+    if (scope.profesionalId) {
+      where.profesionalId = scope.profesionalId;
+    }
+
+    return this.prisma.turno.findMany({
+      where,
+      orderBy: { inicio: 'asc' },
     });
   }
 }

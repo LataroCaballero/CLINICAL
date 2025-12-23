@@ -7,12 +7,17 @@ import {
   Query,
   Patch,
   BadRequestException,
+  Req,
+  UseGuards,
 } from '@nestjs/common';
 import { TurnosService } from './turnos.service';
 import { CreateTurnoDto } from './dto/create-turno.dto';
 import { FindTurnosDto } from './dto/find-turnos.dto';
 import { ReprogramarTurnoDto } from './dto/reprogramar-turno.dto';
+import { resolveScope } from '@/src/common/scope/resolve-scope';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
+@UseGuards(JwtAuthGuard)
 @Controller('turnos')
 export class TurnosController {
   constructor(private readonly turnosService: TurnosService) {}
@@ -23,13 +28,13 @@ export class TurnosController {
   }
 
   @Get()
-  async listar(@Query() query: FindTurnosDto) {
-    if (query.pacienteId) {
-      return this.turnosService.obtenerTurnosPorPaciente(query.pacienteId);
-    }
+  findAll(@Req() req: any, @Query('profesionalId') profesionalId?: string) {
+    const scope = resolveScope({
+      user: req.user,
+      requestedProfesionalId: profesionalId,
+    });
 
-    // En MVP no exponemos listados generales
-    return [];
+    return this.turnosService.findAll(scope);
   }
 
   @Patch(':id/cancelar')

@@ -36,6 +36,7 @@ export class AuthController {
     return this.authService.logoutAll(dto);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get('me')
   @Auth()
   me(@Req() req) {

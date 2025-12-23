@@ -16,7 +16,7 @@ import {
 import { ChevronDown } from "lucide-react";
 
 import { useObjecionSuggest } from "@/hooks/useObjecionSuggest";
-import axios from "@/lib/axios";
+import { api } from "@/lib/axios";
 import { useState } from "react";
 
 interface Objection {
@@ -39,7 +39,7 @@ export default function ObjectionSelect({ pacienteId, value, onChange }: Objecti
 
     // Seleccionar objeción existente
     const handleSelect = async (obj: Objection | null) => {
-        await axios.patch(`${process.env.NEXT_PUBLIC_API_URL}/pacientes/${pacienteId}/objecion`, {
+        await api.patch(`${process.env.NEXT_PUBLIC_API_URL}/pacientes/${pacienteId}/objecion`, {
             objecionId: obj?.id ?? null,
         });
 
@@ -49,7 +49,7 @@ export default function ObjectionSelect({ pacienteId, value, onChange }: Objecti
 
     // Crear nueva objeción
     const handleCreate = async () => {
-        const { data: created } = await axios.post(
+        const { data: created } = await api.post(
             `${process.env.NEXT_PUBLIC_API_URL}/pacientes/objeciones`,
             { nombre: query }
         );

@@ -40,6 +40,10 @@ export default function LoginPage() {
       }
 
       // Si llegamos acá, login OK
+      if (json?.accessToken) {
+        localStorage.setItem("accessToken", json.accessToken);
+      }
+
       router.push("/dashboard");
     } catch (error: any) {
       setErrorMsg("Error de conexión con el servidor");

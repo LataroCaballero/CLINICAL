@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import axios from "@/lib/axios";
+import { api } from "@/lib/axios";
 
 export function useObjecionSuggest(query: string) {
     return useQuery({
@@ -12,7 +12,7 @@ export function useObjecionSuggest(query: string) {
                     ? `/pacientes/objeciones/suggest?query=` // backend debería devolver todas
                     : `/pacientes/objeciones/suggest?query=${q}`;
 
-            const { data } = await axios.get(url);
+            const { data } = await api.get(url);
             return data;
         },
     });

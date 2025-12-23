@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import axios from "@/lib/axios";
+import { api } from "@/lib/axios";
 import { useDebounce } from "@/hooks/useDebounce";
 
 export function usePacienteSuggest(query: string) {
@@ -8,7 +8,7 @@ export function usePacienteSuggest(query: string) {
   return useQuery({
     queryKey: ["pacientes-suggest", debounced],
     queryFn: async () => {
-      const res = await axios.get("/pacientes/suggest", {
+      const res = await api.get("/pacientes/suggest", {
         params: { q: debounced },
         withCredentials: true,
       });

@@ -18,6 +18,8 @@ import Image from "next/image";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import UserMenu from "./UserMenu";
+import { ProfessionalSelector } from "@/components/ProfessionalSelector";
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 
 export default function Sidebar() {
   const { sidebarCollapsed, expandSidebar, collapseSidebar } = useUIStore();
@@ -37,6 +39,15 @@ export default function Sidebar() {
       collapseSidebar();
     }
   };
+
+  const { data: user, isLoading } = useCurrentUser();
+
+  if (isLoading || !user) return null;
+
+  const canSelectProfessional =
+    user.rol === 'ADMIN' ||
+    user.rol === 'SECRETARIA' ||
+    user.rol === 'FACTURADOR';
 
   const links = [
     {
@@ -98,11 +109,7 @@ export default function Sidebar() {
       <div className="flex flex-col gap-6">
         {/* Header */}
         <div className="flex items-center justify-center md:justify-start gap-2 px-1">
-          {!sidebarCollapsed && (
-            <h2 className="text-sm font-semibold text-gray-800">
-              Federico García
-            </h2>
-          )}
+          {!sidebarCollapsed && canSelectProfessional && <ProfessionalSelector />}
         </div>
 
         {/* Navigation */}
@@ -140,11 +147,10 @@ function NavItem({ href, icon, label, collapsed, active }: NavItemProps) {
   return (
     <Link
       href={href}
-      className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
-        active
-          ? "bg-indigo-50 text-indigo-600 font-medium"
-          : "text-gray-700 hover:bg-gray-50 hover:text-indigo-600"
-      } ${collapsed ? "justify-center" : ""}`}
+      className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${active
+        ? "bg-indigo-50 text-indigo-600 font-medium"
+        : "text-gray-700 hover:bg-gray-50 hover:text-indigo-600"
+        } ${collapsed ? "justify-center" : ""}`}
     >
       {icon}
       {!collapsed && <span className="font-medium">{label}</span>}

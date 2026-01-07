@@ -41,7 +41,6 @@ import { AgendaConfig } from "@/hooks/useProfesionalMe";
 
 moment.locale("es");
 const localizer = momentLocalizer(moment);
-const DnDCalendar = withDragAndDrop(Calendar);
 
 type ViewType = "day" | "week" | "month";
 
@@ -55,6 +54,8 @@ interface CalendarEvent {
   estado: "PENDIENTE" | "CONFIRMADO" | "CANCELADO" | "AUSENTE" | "FINALIZADO";
   observaciones?: string;
 }
+
+const DnDCalendar = withDragAndDrop<CalendarEvent>(Calendar);
 
 // Helper para formatear fecha local (sin problemas de timezone)
 function formatLocalDate(date: Date): string {

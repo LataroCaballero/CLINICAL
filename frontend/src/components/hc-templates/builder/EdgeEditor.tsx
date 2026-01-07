@@ -40,7 +40,7 @@ export function EdgeEditor({ edges, nodes, onUpdate }: EdgeEditorProps) {
   };
 
   // Get all decision nodes for condition keys
-  const decisionNodes = nodes.filter((n): n is DecisionNode => n.type === 'decision');
+  const decisionNodes = nodes.filter((n) => n.type === 'decision') as DecisionNode[];
 
   return (
     <Card>
@@ -127,10 +127,7 @@ export function EdgeEditor({ edges, nodes, onUpdate }: EdgeEditorProps) {
                     <SelectContent>
                       <SelectItem value="__none__">(Sin condición)</SelectItem>
                       {decisionNodes.map((node) => (
-                        <SelectItem
-                          key={node.id}
-                          value={'key' in node ? node.key : node.id}
-                        >
+                        <SelectItem key={node.id} value={node.key}>
                           {node.title}
                         </SelectItem>
                       ))}

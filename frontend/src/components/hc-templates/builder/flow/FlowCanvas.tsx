@@ -237,7 +237,7 @@ export function FlowCanvas({
           type: 'smoothstep',
           markerEnd: { type: MarkerType.ArrowClosed },
         }}
-        connectionLineType="smoothstep"
+        connectionLineStyle={{ strokeDasharray: '0', strokeLinejoin: 'round' }}
         snapToGrid
         snapGrid={[15, 15]}
       >

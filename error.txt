@@ -1,0 +1,40 @@
+20:15:11.837 Running build in Washington, D.C., USA (East) – iad1
+20:15:11.838 Build machine configuration: 2 cores, 8 GB
+20:15:11.989 Cloning github.com/LataroCaballero/CLINICAL (Branch: main, Commit: 780e5fc)
+20:15:12.416 Cloning completed: 427.000ms
+20:15:14.122 Restored build cache from previous deployment (95dQEd25YWGmWJHohH3by7UX1WkP)
+20:15:15.634 Running "vercel build"
+20:15:16.050 Vercel CLI 50.1.6
+20:15:16.394 Installing dependencies...
+20:15:18.601 
+20:15:18.601 added 45 packages in 2s
+20:15:18.604 
+20:15:18.605 192 packages are looking for funding
+20:15:18.605   run `npm fund` for details
+20:15:18.645 Detected Next.js version: 16.0.7
+20:15:18.645 Running "npm run build"
+20:15:18.758 
+20:15:18.758 > frontend@0.1.0 build
+20:15:18.759 > next build
+20:15:18.759 
+20:15:19.762  ⚠ `images.domains` is deprecated in favor of `images.remotePatterns`. Please update next.config.ts to protect your application from malicious users.
+20:15:19.786    ▲ Next.js 16.0.7 (Turbopack)
+20:15:19.787 
+20:15:19.853    Creating an optimized production build ...
+20:16:03.896  ✓ Compiled successfully in 43s
+20:16:03.903    Running TypeScript ...
+20:16:17.543 Failed to compile.
+20:16:17.543 
+20:16:17.543 ./src/app/dashboard/components/QuickAppointment.tsx:169:58
+20:16:17.543 Type error: Argument of type 'AgendaConfig | null | undefined' is not assignable to parameter of type 'AgendaConfig | null'.
+20:16:17.543   Type 'undefined' is not assignable to type 'AgendaConfig | null'.
+20:16:17.543 
+20:16:17.543 [0m [90m 167 |[39m
+20:16:17.543  [90m 168 |[39m   [90m// Determinar si el día seleccionado es de cirugía[39m
+20:16:17.544 [31m[1m>[22m[39m[90m 169 |[39m   [36mconst[39m isSurgeryDaySelected [33m=[39m date [33m?[39m isSurgeryDay(date[33m,[39m agenda) [33m:[39m [36mfalse[39m[33m;[39m
+20:16:17.544  [90m     |[39m                                                          [31m[1m^[22m[39m
+20:16:17.544  [90m 170 |[39m
+20:16:17.544  [90m 171 |[39m   [36mconst[39m tipoTurnoSeleccionado [33m=[39m tiposTurno[33m.[39mfind((t) [33m=>[39m t[33m.[39mid [33m===[39m tipoTurnoId)[33m;[39m
+20:16:17.544  [90m 172 |[39m[0m
+20:16:17.588 Next.js build worker exited with code: 1 and signal: null
+20:16:17.646 Error: Command "npm run build" exited with 1

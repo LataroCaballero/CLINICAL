@@ -166,7 +166,7 @@ export default function QuickAppointment({ profesionalId }: Props) {
   const [duracionMinutos, setDuracionMinutos] = React.useState<number>(30);
 
   // Determinar si el día seleccionado es de cirugía
-  const isSurgeryDaySelected = date ? isSurgeryDay(date, agenda) : false;
+  const isSurgeryDaySelected = date ? isSurgeryDay(date, agenda ?? null) : false;
 
   const tipoTurnoSeleccionado = tiposTurno.find((t) => t.id === tipoTurnoId);
 
@@ -186,7 +186,7 @@ export default function QuickAppointment({ profesionalId }: Props) {
   );
 
   // Generar slots y filtrar los ocupados usando la duración seleccionada
-  const allSlots = generateTimeSlots(date, agenda);
+  const allSlots = generateTimeSlots(date, agenda ?? null);
   const availableHours = date
     ? filterAvailableSlots(allSlots, turnosDelDia, date, duracionMinutos)
     : [];
@@ -258,14 +258,14 @@ export default function QuickAppointment({ profesionalId }: Props) {
                 today.setHours(0, 0, 0, 0);
                 if (d < today) return true;
                 // Deshabilitar días no laborales
-                if (!isWorkingDay(d, agenda)) return true;
+                if (!isWorkingDay(d, agenda ?? null)) return true;
                 // Deshabilitar días bloqueados
-                if (isDayBlocked(d, agenda)) return true;
+                if (isDayBlocked(d, agenda ?? null)) return true;
                 return false;
               }}
               modifiers={{
-                cirugia: (d) => isSurgeryDay(d, agenda),
-                bloqueado: (d) => isDayBlocked(d, agenda),
+                cirugia: (d) => isSurgeryDay(d, agenda ?? null),
+                bloqueado: (d) => isDayBlocked(d, agenda ?? null),
               }}
               modifiersStyles={{
                 cirugia: {

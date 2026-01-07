@@ -17,8 +17,8 @@ export function ReviewNode({ node, schema, answers, computed }: ReviewNodeProps)
   const answeredNodes = schema.nodes.filter((n) => {
     if (n.type === 'review') return false;
     if (n.type === 'decision' || n.type === 'text' || n.type === 'checklist') {
-      const key = 'key' in n ? n.key : n.id;
-      return answers[key] !== undefined;
+      const nodeWithKey = n as { key: string };
+      return answers[nodeWithKey.key] !== undefined;
     }
     if (n.type === 'step') {
       return n.fields.some((f) => answers[f.key] !== undefined);

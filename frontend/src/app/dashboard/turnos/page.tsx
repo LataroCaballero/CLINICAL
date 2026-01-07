@@ -307,9 +307,8 @@ export default function TurnosPage() {
   useEffect(() => {
     const mapped: CalendarEvent[] = (turnosRango as any[]).map((t) => ({
       id: t.id,
-      title: `${t.tipoTurno?.nombre ?? "Turno"} – ${
-        t.paciente?.nombreCompleto ?? ""
-      }`,
+      title: `${t.tipoTurno?.nombre ?? "Turno"} – ${t.paciente?.nombreCompleto ?? ""
+        }`,
       paciente: t.paciente?.nombreCompleto ?? "",
       start: new Date(t.inicio),
       end: new Date(t.fin),
@@ -324,12 +323,12 @@ export default function TurnosPage() {
   // Calcular rango horario según la vista
   // Para día y semana, usar el rango más extenso de la semana para no cortar eventos
   const timeRange = useMemo(() => {
-    const weekRange = getWeekTimeRange(normalizedDate, agenda);
+    const weekRange = getWeekTimeRange(normalizedDate, agenda ?? null);
 
     // Si es vista diaria, podemos mostrar el rango específico del día
     // pero con margen para no cortar eventos
     if (view === "day") {
-      const dayRange = getDayTimeRange(normalizedDate, agenda);
+      const dayRange = getDayTimeRange(normalizedDate, agenda ?? null);
       if (dayRange) {
         // Agregar 1 hora de margen antes y después
         const min = new Date(dayRange.min);
@@ -389,7 +388,7 @@ export default function TurnosPage() {
           setEvents(prev); // rollback
           toast.error(
             err?.response?.data?.message ??
-              "No se pudo reprogramar: solapamiento o estado inválido."
+            "No se pudo reprogramar: solapamiento o estado inválido."
           );
         },
         onSuccess: () => {
@@ -416,7 +415,7 @@ export default function TurnosPage() {
           setEvents(prev);
           toast.error(
             err?.response?.data?.message ??
-              "No se pudo reprogramar: solapamiento o estado inválido."
+            "No se pudo reprogramar: solapamiento o estado inválido."
           );
         },
         onSuccess: () => {
@@ -428,11 +427,11 @@ export default function TurnosPage() {
 
   // Nuevo turno al clickear slot
   const handleSelectSlot = ({ start }: any) => {
-    if (isDayBlocked(start, agenda)) {
+    if (isDayBlocked(start, agenda ?? null)) {
       toast.error("Ese día no está disponible");
       return;
     }
-    if (isSurgeryDay(start, agenda)) {
+    if (isSurgeryDay(start, agenda ?? null)) {
       // En día de cirugía, abrir modal de cirugía
       setSurgeryDate(start);
       setOpenSurgeryModal(true);
@@ -577,9 +576,9 @@ export default function TurnosPage() {
                     const dayDate = currentDay.clone().hour(12).minute(0).second(0).toDate();
                     const isCurrentMonth = currentDay.month() === moment(normalizedDate).month();
                     const isToday = currentDay.isSame(moment(), "day");
-                    const blocked = isDayBlocked(dayDate, agenda);
-                    const surgery = isSurgeryDay(dayDate, agenda);
-                    const slots = getAvailableSlotsCount(dayDate, agenda, events);
+                    const blocked = isDayBlocked(dayDate, agenda ?? null);
+                    const surgery = isSurgeryDay(dayDate, agenda ?? null);
+                    const slots = getAvailableSlotsCount(dayDate, agenda ?? null, events);
 
                     let bgColor = "bg-white";
                     if (!isCurrentMonth) bgColor = "bg-gray-50";
@@ -589,22 +588,20 @@ export default function TurnosPage() {
                     days.push(
                       <div
                         key={currentDay.format("YYYY-MM-DD")}
-                        className={`min-h-[80px] p-2 border-b border-r ${bgColor} ${
-                          isToday ? "ring-2 ring-inset ring-indigo-500" : ""
-                        } cursor-pointer hover:bg-gray-50 transition-colors`}
+                        className={`min-h-[80px] p-2 border-b border-r ${bgColor} ${isToday ? "ring-2 ring-inset ring-indigo-500" : ""
+                          } cursor-pointer hover:bg-gray-50 transition-colors`}
                         onClick={() => {
                           setDate(dayDate);
                           setView("day");
                         }}
                       >
                         <div
-                          className={`text-sm font-medium ${
-                            !isCurrentMonth
+                          className={`text-sm font-medium ${!isCurrentMonth
                               ? "text-gray-400"
                               : isToday
-                              ? "text-indigo-600"
-                              : "text-gray-700"
-                          }`}
+                                ? "text-indigo-600"
+                                : "text-gray-700"
+                            }`}
                         >
                           {currentDay.format("D")}
                         </div>
@@ -727,13 +724,13 @@ export default function TurnosPage() {
                   const style: React.CSSProperties = {};
 
                   // Día de cirugía (amarillo)
-                  if (isSurgeryDay(d, agenda)) {
+                  if (isSurgeryDay(d, agenda ?? null)) {
                     style.backgroundColor = "#FEF9C3";
                     return { style };
                   }
 
                   // Día bloqueado o no laboral (gris)
-                  if (isDayBlocked(d, agenda)) {
+                  if (isDayBlocked(d, agenda ?? null)) {
                     style.backgroundColor = "#E5E7EB";
                     style.opacity = 0.6;
                     return { style };
@@ -744,12 +741,12 @@ export default function TurnosPage() {
                 // SOMBREADO POR HORAS (usando fecha local)
                 slotPropGetter={(d: Date) => {
                   // Día de cirugía
-                  if (isSurgeryDay(d, agenda)) {
+                  if (isSurgeryDay(d, agenda ?? null)) {
                     return { style: { backgroundColor: "#FEF9C3" } };
                   }
 
                   // Día bloqueado
-                  if (isDayBlocked(d, agenda)) {
+                  if (isDayBlocked(d, agenda ?? null)) {
                     return {
                       style: { backgroundColor: "#F3F4F6", opacity: 0.5 },
                     };
@@ -765,8 +762,8 @@ export default function TurnosPage() {
                   let backgroundColor = tipo.toLowerCase().includes("consulta")
                     ? "#E0E7FF"
                     : tipo.toLowerCase().includes("cirug")
-                    ? "#FEE2E2"
-                    : "#DCFCE7";
+                      ? "#FEE2E2"
+                      : "#DCFCE7";
 
                   // estados del backend
                   if (estado === "CONFIRMADO") backgroundColor = "#BBF7D0";

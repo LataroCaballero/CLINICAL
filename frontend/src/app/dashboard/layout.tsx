@@ -1,8 +1,11 @@
 "use client";
 
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Topbar from "./components/Topbar";
 import DockNav from "./components/DockNav";
 import { useUIStore } from "@/lib/stores/useUIStore";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 import dynamic from "next/dynamic";
 
 const Sidebar = dynamic(() => import("./components/Sidebar"), { ssr: false });
@@ -13,6 +16,32 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const { sidebarCollapsed } = useUIStore();
+  const router = useRouter();
+  const { data: user, isLoading, isError } = useCurrentUser();
+
+  useEffect(() => {
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+      router.replace("/login");
+      return;
+    }
+    if (!isLoading && (isError || !user)) {
+      localStorage.removeItem("accessToken");
+      router.replace("/login");
+    }
+  }, [isLoading, isError, user, router]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
 
   return (
     <div className="flex">

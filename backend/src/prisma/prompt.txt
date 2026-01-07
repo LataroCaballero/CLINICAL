@@ -1,0 +1,374 @@
+Edits
+1. Al crear un turno en QuickAppointment en un dia de cirugía, me da como error que me falta algún campo y es el tipo de turno, por lo que deberia (si es dia de cirugía) colocarse como default y no poder cambiarlo el tipo de Cirugía, ademas tiene que poder configurarse la duración.
+2. En La lista de horarios de QuickAppointments siguen apareciendo horarios en los que hay turnos reservados
+
+
+
+
+Quiero que implementes un sistema configurable y escalable de “plantillas de formularios” para crear entradas en la Historia Clínica (HC). La idea es que, en vez de hardcodear el formulario, el flujo sea JSON-driven: un motor interpreta una plantilla y va mostrando pasos dinámicos, con bifurcaciones (breakpoints tipo rombo) según decisiones del profesional.
+
+0) Contexto técnico (asumir stack actual)
+	•	Frontend: Next.js (App Router) + React + TypeScript + shadcn/ui + Tailwind.
+	•	Manejo de formularios: react-hook-form + zod (y/o validación equivalente).
+	•	Data fetching/mutations: TanStack Query.
+	•	Backend: NestJS + Prisma + Postgres (Supabase).
+	•	Existe módulo de pacientes e historia clínica con endpoints para entradas (si falta algo, implementarlo).
+	•	El feature se integra en la UI existente (PatientDrawer / vista de Historia Clínica).
+
+⸻
+
+1) Objetivo del feature
+
+1.1 Template Builder (Configuración)
+
+En un panel de “Configuración”, el admin debe poder:
+	•	Crear/editar/publicar plantillas de entradas de HC.
+	•	Definir un flujo como grafo/estado con:
+	•	Nodos de tipo “Decisión” (rombo) que ramifican el camino.
+	•	Nodos de tipo “Paso” (form step) con campos.
+	•	Nodos de tipo “Texto/Editor” (descripción adicional).
+	•	Nodos de tipo “Cálculo” (presupuesto automático).
+	•	Nodos de tipo “Checklist” (productos/insumos).
+	•	Guardar la plantilla como JSON con una estructura estándar.
+	•	Mantener versionado: al publicar cambios, generar nueva versión (no romper entradas previas).
+
+Importante: no es necesario implementar un editor visual estilo Excalidraw. Sí debe ser “interactivo”:
+
+	•	UI de edición por lista de nodos + configuración por panel lateral
+	•	definiciones de branches por “reglas” (si X == Y, next = Z)
+	•	previsualización del flujo (al menos como “Stepper + mapa simple”).
+
+1.2 Template Runner (Formulario dinámico)
+
+Al crear una nueva entrada de HC:
+	•	El profesional selecciona una plantilla (por defecto “Primera consulta”).
+	•	Se abre un wizard por pasos, con progreso, back/next, guardado de borrador.
+	•	El camino se define por las decisiones tomadas.
+	•	Debe ser rápido, guiado, y difícil de usar mal:
+	•	validación inline
+	•	defaults inteligentes
+	•	“guardado automático” (draft) en cada cambio relevante o al avanzar de paso
+	•	resumen final antes de “finalizar”
+	•	Al finalizar:
+	•	se persiste la entrada con templateId, templateVersion, answers (JSON), y computed (presupuesto, items, etc.)
+	•	queda visible en el timeline de HC.
+
+⸻
+
+2) Modelo de datos (Prisma)
+
+Crear modelos (o extender los existentes) con estos conceptos mínimos:
+
+2.1 Plantillas
+	•	HistoriaClinicaTemplate
+	•	id (uuid)
+	•	nombre (string)
+	•	descripcion (string, opcional)
+	•	estado (DRAFT | PUBLISHED | ARCHIVED)
+	•	currentVersionId (fk a versión publicada actual, opcional)
+	•	timestamps
+	•	HistoriaClinicaTemplateVersion
+	•	id (uuid)
+	•	templateId (fk)
+	•	version (int incremental por template)
+	•	schema (jsonb)  ← el JSON estándar del flujo
+	•	publishedAt (datetime, opcional)
+	•	timestamps
+
+2.2 Entradas de HC (instancias)
+	•	HistoriaClinicaEntry (o tu modelo actual de “Entrada”)
+	•	id
+	•	pacienteId
+	•	templateId
+	•	templateVersionId
+	•	status (DRAFT | FINALIZED | SIGNED si aplica)
+	•	answers (jsonb)   ← respuestas del profesional
+	•	computed (jsonb)  ← presupuesto calculado, checklist final, etc.
+	•	timestamps
+
+Si ya existe un modelo de entradas, adaptarlo sin romper compatibilidad.
+
+⸻
+
+3) API (NestJS)
+
+Implementar endpoints CRUD y runner:
+
+3.1 Templates (admin)
+	•	GET /config/hc-templates → lista templates
+	•	POST /config/hc-templates → crear template (draft)
+	•	GET /config/hc-templates/:id → detalle + versiones
+	•	PUT /config/hc-templates/:id → editar metadatos (nombre/desc)
+	•	POST /config/hc-templates/:id/versions → crear nueva versión draft (copiando última publicada o la última draft)
+	•	PUT /config/hc-templates/:id/versions/:versionId → guardar schema JSON
+	•	POST /config/hc-templates/:id/versions/:versionId/publish → publicar (marca publishedAt + set currentVersionId)
+	•	POST /config/hc-templates/:id/archive → archivar
+
+3.2 Runner (profesional)
+	•	GET /hc/templates/available → templates publicadas disponibles para seleccionar
+	•	GET /hc/templates/:templateId/version/:versionId → schema JSON
+	•	POST /pacientes/:pacienteId/hc/entries → crear entrada draft con templateVersionId + answers inicial vacío
+	•	PATCH /pacientes/:pacienteId/hc/entries/:entryId → autosave (answers/computed/status draft)
+	•	POST /pacientes/:pacienteId/hc/entries/:entryId/finalize → valida y finaliza (status FINALIZED) y persistir computed definitivo
+
+⸻
+
+4) Especificación del JSON estándar (schema)
+
+Definir un formato estable. Debe soportar:
+	•	grafo dirigido por nodes + edges
+	•	reglas condicionales basadas en respuestas
+	•	nodos con campos
+	•	nodos computed (presupuesto)
+	•	nodos checklist
+
+4.1 Propuesta de estructura (implementar esta o una equivalente, pero consistente)
+
+{
+  "id": "template-primera-consulta",
+  "name": "Primera consulta",
+  "startNodeId": "n_entry_type",
+  "nodes": [
+    {
+      "id": "n_entry_type",
+      "type": "decision",
+      "title": "¿Qué tipo de entrada es?",
+      "key": "entryType",
+      "ui": { "control": "radio-cards" },
+      "options": [
+        { "value": "primera_consulta", "label": "Primera consulta" },
+        { "value": "control", "label": "Control" },
+        { "value": "post_operatorio", "label": "Post-operatorio" },
+        { "value": "practica_consultorio", "label": "Práctica consultorio" }
+      ]
+    },
+
+    {
+      "id": "n_tipo_practica",
+      "type": "decision",
+      "title": "¿Qué tipo es?",
+      "key": "tipoPractica",
+      "ui": { "control": "radio-cards" },
+      "options": [
+        { "value": "cirugia", "label": "Cirugía" },
+        { "value": "practica_consultorio", "label": "Práctica en consultorio" }
+      ]
+    },
+
+    {
+      "id": "n_cirugia_subtipo",
+      "type": "decision",
+      "title": "Cirugía: ¿Cuál?",
+      "key": "cirugiaSubtipo",
+      "ui": { "control": "select" },
+      "options": [
+        { "value": "abdominoplastia", "label": "Abdominoplastia" },
+        { "value": "mastoplastia", "label": "Mastoplastia" },
+        { "value": "rinoplastia", "label": "Rinoplastia" },
+        { "value": "otros", "label": "Otros (texto)" }
+      ],
+      "extra": {
+        "othersTextKey": "cirugiaSubtipoOtros"
+      }
+    },
+
+    {
+      "id": "n_diagnostico",
+      "type": "decision",
+      "title": "¿Cuál es el diagnóstico?",
+      "key": "diagnostico",
+      "ui": { "control": "multi-select" },
+      "dynamicOptions": {
+        "by": "cirugiaSubtipo",
+        "map": {
+          "abdominoplastia": ["Piel", "Músculo", "Grasa", "Pared", "Hernia", "Otros"],
+          "mastoplastia": ["Hipomastia", "Hipertrofia", "Ptosis", "Contractura Capsular", "Hernia", "Otros"],
+          "rinoplastia": ["Dorso alto", "Dorso bajo", "Giba", "Dorso ancho", "Punta caída", "Punta indefinida", "Base ancha", "Laterorrinia", "Otros"]
+        }
+      }
+    },
+
+    {
+      "id": "n_tratamiento",
+      "type": "decision",
+      "title": "¿Cuál es el tratamiento?",
+      "key": "tratamiento",
+      "ui": { "control": "radio-cards" },
+      "options": [
+        { "value": "abdominoplastia", "label": "Abdominoplastia" },
+        { "value": "mastoplastia", "label": "Mastoplastia" },
+        { "value": "rinoplastia", "label": "Rinoplastia" },
+        { "value": "lunar_cirugia_local", "label": "Lunar / Cirugía local" },
+        { "value": "tratamiento_facial", "label": "Tratamiento facial" },
+        { "value": "otros", "label": "Otros (texto)" }
+      ],
+      "extra": { "othersTextKey": "tratamientoOtros" }
+    },
+
+    {
+      "id": "n_procedimiento",
+      "type": "step",
+      "title": "Procedimiento",
+      "fields": [
+        {
+          "type": "richtext",
+          "key": "procedimientoDescripcion",
+          "label": "Descripción del procedimiento",
+          "ui": { "presetFromSelections": true }
+        },
+        {
+          "type": "drawing",
+          "key": "procedimientoDibujo",
+          "label": "Dibujo (opcional)"
+        }
+      ]
+    },
+
+    {
+      "id": "n_presupuesto",
+      "type": "computed",
+      "title": "Presupuesto",
+      "key": "presupuesto",
+      "compute": {
+        "sourceKeys": ["tratamiento", "procedimientosSeleccionados", "checklistProductos", "itemsAdicionales"],
+        "pricingConfigRef": "hcPricing"
+      },
+      "ui": {
+        "allowOverrides": true,
+        "allowAdditionalItems": true
+      }
+    },
+
+    {
+      "id": "n_checklist",
+      "type": "checklist",
+      "title": "Checklist de productos",
+      "key": "checklistProductos",
+      "items": [
+        { "value": "faja", "label": "Faja" },
+        { "value": "cremas", "label": "Cremas" },
+        { "value": "medicamento", "label": "Medicamento" }
+      ]
+    },
+
+    {
+      "id": "n_review",
+      "type": "review",
+      "title": "Revisión final",
+      "ui": { "showSummary": true }
+    }
+  ],
+  "edges": [
+    { "from": "n_entry_type", "to": "n_tipo_practica", "when": { "eq": ["entryType", "primera_consulta"] } },
+    { "from": "n_tipo_practica", "to": "n_cirugia_subtipo", "when": { "eq": ["tipoPractica", "cirugia"] } },
+    { "from": "n_cirugia_subtipo", "to": "n_diagnostico" },
+    { "from": "n_diagnostico", "to": "n_tratamiento" },
+    { "from": "n_tratamiento", "to": "n_procedimiento" },
+    { "from": "n_procedimiento", "to": "n_checklist" },
+    { "from": "n_checklist", "to": "n_presupuesto" },
+    { "from": "n_presupuesto", "to": "n_review" }
+  ]
+}
+
+4.2 Reglas y validación
+	•	Cada nodo debe poder declarar:
+	•	required a nivel de campo o nodo
+	•	validación zod (o equivalente) generada dinámicamente por tipo de campo
+	•	El motor debe resolver el próximo nodo así:
+	•	primero evalúa edges con when
+	•	si no hay when, usa edge directo (sin condición)
+	•	si hay múltiples matches, elegir el primero (documentarlo)
+
+⸻
+
+5) Motor de ejecución (Template Runner)
+
+Implementar un componente tipo:
+	•	DynamicTemplateWizard(templateSchema, entryId, initialAnswers)
+
+Requerimientos UX:
+	•	Stepper/progreso (aunque el flujo sea ramificado): mostrar “Paso X de Y estimado” y títulos.
+	•	Botones: Atrás / Siguiente / Guardar borrador / Finalizar.
+	•	Autosave:
+	•	al cambiar valores con debounce (ej. 800–1200ms)
+	•	y siempre al avanzar de paso
+	•	Estados:
+	•	loading skeleton al cargar schema/entry
+	•	error state con retry
+	•	“Prefill inteligente”:
+	•	El nodo “Procedimiento” precarga texto base según selecciones previas (tratamiento/procedimientos).
+	•	Debe permitir editar/append texto adicional y opcionalmente “dibujo”.
+	•	Presupuesto:
+	•	Cálculo automático por item (lista de precios configurable desde Configuración).
+	•	Permitir “items adicionales” (nombre + precio) y override por item si está habilitado.
+	•	Mostrar subtotal, extras, total.
+
+Persistencia:
+	•	answers guarda las respuestas raw.
+	•	computed guarda el presupuesto resultante y cualquier derivado (ej. items, total, timestamp del cálculo).
+
+⸻
+
+6) Panel de Configuración (Template Builder)
+
+Implementar una UI que permita:
+	•	Crear template (nombre/desc).
+	•	Crear/editar versiones.
+	•	Editar schema JSON asistido:
+	•	Lista de nodos (con “Agregar nodo” por tipo).
+	•	Editor de propiedades por nodo (title, key, options, fields).
+	•	Editor de edges (from/to + condición when).
+	•	Validación del schema (mostrar errores y no permitir publicar si es inválido).
+	•	“Preview”:
+	•	ejecutar el wizard en modo sandbox (sin guardar entry real) para testear flujo.
+
+Extra importante: Guardar y publicar debe ser seguro. Entradas existentes deben seguir usando el versionId con el que fueron creadas.
+
+⸻
+
+7) Seed inicial
+
+Crear por defecto:
+	•	Template “Primera consulta” ya publicada, basada en el diagrama.
+	•	Config de pricing hcPricing inicial con valores dummy editables desde Configuración.
+
+⸻
+
+8) Criterios de aceptación (obligatorios)
+	1.	Puedo crear una plantilla desde Configuración, agregar nodos/edges, guardar version draft y publicarla.
+	2.	Puedo seleccionar una plantilla publicada al crear una entrada de HC.
+	3.	El wizard ramifica el flujo según decisiones (rombos).
+	4.	Se guarda borrador automáticamente y puedo cerrar/abrir sin perder progreso.
+	5.	El presupuesto se calcula automáticamente con precios configurables; permite items adicionales.
+	6.	Al finalizar, la entrada queda persistida con templateVersionId y se visualiza correctamente en la HC.
+	7.	Si publico una nueva versión, las entradas anteriores siguen funcionando con la versión vieja.
+	8.	Código con TypeScript estricto, componentes desacoplados, y manejo de errores/estados.
+
+⸻
+
+9) Entregables técnicos
+	•	Migración Prisma + modelos.
+	•	Módulo NestJS para templates (config) y runner (hc).
+	•	Componentes frontend:
+	•	TemplateBuilder
+	•	DynamicTemplateWizard
+	•	renderers por tipo de nodo/campo
+	•	Validación de schema + tests mínimos (unit tests de “resolveNextNode” y “computeBudget”).
+	•	Seed de “Primera consulta”.
+
+⸻
+
+Notas de implementación (decisiones recomendadas)
+	•	Tratar el template como una state machine: nodes + edges + answers -> nextNode.
+	•	Separar:
+	•	“resolver” (lógica pura)
+	•	“render” (UI)
+	•	“persistencia” (API)
+	•	Mantener extensible: agregar tipos de nodos sin romper templates.
+
+⸻
+
+Qué necesito que generes ahora
+	1.	PR completo con todo lo anterior implementado.
+	2.	Incluí el schema de “Primera consulta” inicial alineado al diagrama.
+	3.	Documentación breve (README) de cómo crear una nueva plantilla y cómo funciona el JSON.

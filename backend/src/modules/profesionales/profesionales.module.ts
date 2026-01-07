@@ -4,7 +4,7 @@ import { ProfesionalesService } from './profesionales.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 @Module({
-    controllers: [ProfesionalesController],
-    providers: [ProfesionalesService, PrismaService],
+  controllers: [ProfesionalesController],
+  providers: [ProfesionalesService, PrismaService],
 })
-export class ProfesionalesModule { }
+export class ProfesionalesModule {}

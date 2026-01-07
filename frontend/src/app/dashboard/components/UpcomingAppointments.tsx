@@ -109,17 +109,30 @@ export default function UpcomingAppointments({ profesionalId }: Props) {
     );
   }
 
-  const fechaEncontrada = data?.fecha ?? yyyyMmDd(new Date());
   const turnos: TurnoAgenda[] = data?.turnos ?? [];
+  const fechaStr = data?.fecha; // Date string from query (yyyy-MM-dd format)
 
   const hoyStr = yyyyMmDd(new Date());
-  const esHoy = fechaEncontrada === hoyStr;
+  const esHoy = fechaStr === hoyStr;
 
-  const header = esHoy
+  // Parse date manually to avoid timezone issues
+  // Using explicit year, month, day avoids UTC interpretation
+  const fechaDate = fechaStr
+    ? (() => {
+        const [year, month, day] = fechaStr.split("-").map(Number);
+        return new Date(year, month - 1, day, 12, 0, 0);
+      })()
+    : new Date();
+
+  // Only show "del día" when it's today and we have turnos
+  // Otherwise show the specific date
+  const header = esHoy && turnos.length > 0
     ? "Próximos turnos del día"
-    : `Turnos para el próximo ${capitalize(
-      format(new Date(`${fechaEncontrada}T00:00:00`), "EEEE", { locale: es })
-    )}`;
+    : turnos.length > 0
+      ? `Turnos para el próximo ${capitalize(
+          format(fechaDate, "EEEE d 'de' MMMM", { locale: es })
+        )}`
+      : "Próximos turnos";
 
   return (
     <Card className="bg-white border border-gray-200 shadow-sm rounded-xl overflow-hidden max-h-[492px] mt-8">

@@ -2,6 +2,7 @@
 
 import {
   ColumnDef,
+  VisibilityState,
   flexRender,
   getCoreRowModel,
   getPaginationRowModel,
@@ -22,16 +23,47 @@ import {
 
 import { DataTablePagination } from "./data-table-pagination";
 import { DataTableToolbar } from "./data-table-toolbar";
+import { DataTableColumnToggle } from "./data-table-column-toggle";
 import PatientDrawer from "../../app/dashboard/pacientes/components/PatientDrawer";
+
+interface DataTableProps<TData, TValue> {
+  columns: ColumnDef<TData, TValue>[];
+  data: TData[];
+  storageKey?: string;
+  showColumnToggle?: boolean;
+  showToolbar?: boolean;
+  showPagination?: boolean;
+  headerActions?: React.ReactNode;
+}
+
+function loadColumnVisibility(key: string): VisibilityState | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const stored = localStorage.getItem(`column-visibility-${key}`);
+    return stored ? JSON.parse(stored) : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveColumnVisibility(key: string, state: VisibilityState) {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(`column-visibility-${key}`, JSON.stringify(state));
+  } catch {
+    // ignore storage errors
+  }
+}
 
 export function DataTable<TData, TValue>({
   columns,
   data,
-}: {
-  columns: ColumnDef<TData, TValue>[];
-  data: TData[];
-}) {
-
+  storageKey,
+  showColumnToggle = false,
+  showToolbar = true,
+  showPagination = true,
+  headerActions,
+}: DataTableProps<TData, TValue>) {
   // 1) ESTADO LOCAL — copia editable de los datos originales
   const [tableData, setTableData] = useState<TData[]>(data);
 
@@ -40,17 +72,33 @@ export function DataTable<TData, TValue>({
     setTableData(data);
   }, [data]);
 
+  // Column visibility state
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(
+    () => (storageKey ? loadColumnVisibility(storageKey) ?? {} : {})
+  );
+
+  // Persist column visibility when it changes
+  useEffect(() => {
+    if (storageKey && Object.keys(columnVisibility).length > 0) {
+      saveColumnVisibility(storageKey, columnVisibility);
+    }
+  }, [columnVisibility, storageKey]);
+
   const [globalFilter, setGlobalFilter] = useState("");
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
+  const [selectedPatientId, setSelectedPatientId] = useState<string | null>(
+    null
+  );
 
   const table = useReactTable({
     data: tableData, // ← usamos la copia local editable
     columns,
     state: {
       globalFilter,
+      columnVisibility,
     },
     onGlobalFilterChange: setGlobalFilter,
+    onColumnVisibilityChange: setColumnVisibility,
 
     globalFilterFn: (row, columnId, filterValue) => {
       if (!filterValue) return true;
@@ -93,7 +141,19 @@ export function DataTable<TData, TValue>({
 
   return (
     <div className="space-y-4">
-      <DataTableToolbar table={table} />
+      {(showToolbar || showColumnToggle || headerActions) && (
+        <div className="flex items-center justify-between gap-4">
+          {showToolbar ? (
+            <DataTableToolbar table={table} />
+          ) : (
+            <div className="flex-1" />
+          )}
+          <div className="flex items-center gap-2">
+            {showColumnToggle && <DataTableColumnToggle table={table} />}
+            {headerActions}
+          </div>
+        </div>
+      )}
 
       <div className="rounded-md border bg-white">
         <Table>
@@ -148,10 +208,12 @@ export function DataTable<TData, TValue>({
         </Table>
       </div>
 
-      <DataTablePagination
-        key={table.getState().pagination.pageIndex}
-        table={table}
-      />
+      {showPagination && (
+        <DataTablePagination
+          key={table.getState().pagination.pageIndex}
+          table={table}
+        />
+      )}
 
       {/* Drawer controlado desde la tabla */}
       <PatientDrawer

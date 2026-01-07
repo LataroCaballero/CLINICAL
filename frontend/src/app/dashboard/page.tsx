@@ -2,18 +2,19 @@
 
 import KpiCard from "./components/KpiCard";
 import PatientsTable from "./components/PatientsTable";
-import { RoleSelector } from "./components/RoleSelector";
 import QuickAppointment from "./components/QuickAppointment";
 import UpcomingAppointments from "./components/UpcomingAppointments";
+import { useEffectiveProfessionalId } from "@/hooks/useEffectiveProfessionalId";
 
 export default function DashboardPage() {
+  const effectiveProfessionalId = useEffectiveProfessionalId();
+
   return (
     <div className="relative">
       <div className="flex min-h-screen bg-transparent text-gray-800 flex-col justify-center">
 
         {/* Main content */}
         <div className="flex-1 flex flex-col p-6">
-          <RoleSelector />
 
           {/* KPIs */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
@@ -25,8 +26,16 @@ export default function DashboardPage() {
 
           {/* Quick appointment scheduler */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-            <QuickAppointment profesionalId={""} />
-            <UpcomingAppointments />
+            {effectiveProfessionalId ? (
+              <>
+                <QuickAppointment profesionalId={effectiveProfessionalId} />
+                <UpcomingAppointments profesionalId={effectiveProfessionalId} />
+              </>
+            ) : (
+              <div className="col-span-2 bg-white rounded-xl border p-8 text-center text-muted-foreground">
+                Seleccioná un profesional para ver turnos y agendar citas.
+              </div>
+            )}
           </div>
 
           {/* Patients table */}

@@ -8,24 +8,59 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useUserStore } from "@/lib/stores/useUserStore";
 import { LogOut, Settings, User, Bell, CreditCard } from "lucide-react";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { logout } from "@/lib/api";
+
+const ROL_LABELS: Record<string, string> = {
+  ADMIN: "Administrador",
+  PROFESIONAL: "Profesional",
+  SECRETARIA: "Secretaria",
+  PACIENTE: "Paciente",
+  FACTURADOR: "Facturador",
+};
 
 export default function UserMenu({ collapsed }: { collapsed: boolean }) {
-  const { name, role } = useUserStore();
+  const { data: user } = useCurrentUser();
+  const router = useRouter();
+  const queryClient = useQueryClient();
+
+  const fullName = user ? `${user.nombre} ${user.apellido}` : "";
+  const initials = user ? `${user.nombre[0]}${user.apellido[0]}` : "";
+  const rolLabel = user ? ROL_LABELS[user.rol] || user.rol : "";
+
+  const handleLogout = () => {
+    queryClient.clear();
+    logout(); // Llama al backend y limpia tokens
+  };
+
+  const handleGoToConfig = () => {
+    router.push("/dashboard/configuracion");
+  };
+
+  const handleNotifications = () => {
+    toast.info("Notificaciones en construcción", {
+      description: "Esta funcionalidad estará disponible próximamente.",
+    });
+  };
+
+  if (!user) return null;
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button className="w-full flex items-center gap-3 rounded-lg p-2 hover:bg-gray-100 transition">
           <Avatar className="h-9 w-9">
-            <AvatarImage src="/images/avatar.png" alt={name} />
-            <AvatarFallback>{name[0]}</AvatarFallback>
+            <AvatarImage src={user.fotoUrl || "/images/avatar.png"} alt={fullName} />
+            <AvatarFallback>{initials}</AvatarFallback>
           </Avatar>
           {!collapsed && (
-            <div className="flex flex-col leading-tight">
-              <span className="text-sm font-medium text-gray-800">Federico García</span>
-              <span className="text-xs text-gray-500">Profesional</span>
+            <div className="flex flex-col leading-tight text-left">
+              <span className="text-sm font-medium text-gray-800">{fullName}</span>
+              <span className="text-xs text-gray-500">{rolLabel}</span>
             </div>
           )}
         </button>
@@ -37,34 +72,49 @@ export default function UserMenu({ collapsed }: { collapsed: boolean }) {
         align="end"
       >
         <DropdownMenuLabel className="text-sm font-medium">
-          {name}
-          <p className="text-xs text-gray-500 mt-1">{role.toLowerCase()}</p>
+          {fullName}
+          <p className="text-xs text-gray-500 mt-1">{rolLabel}</p>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
 
-        <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
+        <DropdownMenuItem
+          className="flex items-center gap-2 cursor-pointer"
+          onClick={handleGoToConfig}
+        >
           <User className="w-4 h-4 text-gray-500" />
           Mi perfil
         </DropdownMenuItem>
 
-        <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
+        <DropdownMenuItem
+          className="flex items-center gap-2 cursor-pointer"
+          onClick={handleGoToConfig}
+        >
           <Settings className="w-4 h-4 text-gray-500" />
           Configuración del sistema
         </DropdownMenuItem>
 
-        <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
+        <DropdownMenuItem
+          className="flex items-center gap-2 cursor-pointer"
+          onClick={handleNotifications}
+        >
           <Bell className="w-4 h-4 text-gray-500" />
           Notificaciones
         </DropdownMenuItem>
 
-        <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
+        <DropdownMenuItem
+          className="flex items-center gap-2 cursor-pointer"
+          onClick={handleGoToConfig}
+        >
           <CreditCard className="w-4 h-4 text-gray-500" />
           Suscripción y facturación
         </DropdownMenuItem>
 
         <DropdownMenuSeparator />
 
-        <DropdownMenuItem className="flex items-center gap-2 text-red-500 cursor-pointer">
+        <DropdownMenuItem
+          className="flex items-center gap-2 text-red-500 cursor-pointer"
+          onClick={handleLogout}
+        >
           <LogOut className="w-4 h-4" />
           Cerrar sesión
         </DropdownMenuItem>

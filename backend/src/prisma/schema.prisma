@@ -61,21 +61,22 @@ model AuthSession {
 }
 
 model Profesional {
-  id              String              @id @default(uuid())
-  usuarioId       String              @unique
+  id              String                    @id @default(uuid())
+  usuarioId       String                    @unique
   matricula       String?
   especialidad    String?
   bio             String?
   duracionDefault Int?
   agenda          Json?
-  createdAt       DateTime            @default(now())
+  createdAt       DateTime                  @default(now())
   cirugias        Cirugia[]
   Factura         Factura[]
   HistoriaClinica HistoriaClinica[]
-  pacientes       Paciente[]          @relation("ProfesionalPaciente")
+  hcTemplates     HistoriaClinicaTemplate[]
+  pacientes       Paciente[]                @relation("ProfesionalPaciente")
   practicas       PracticaRealizada[]
   Presupuesto     Presupuesto[]
-  usuario         Usuario             @relation(fields: [usuarioId], references: [id])
+  usuario         Usuario                   @relation(fields: [usuarioId], references: [id])
   turnos          Turno[]
 }
 
@@ -130,9 +131,10 @@ model Paciente {
   usuario                    Usuario?          @relation(fields: [usuarioId], references: [id])
   presupuestos               Presupuesto[]
   turnos                     Turno[]
+  cirugias                   Cirugia[]
   VentaProducto              VentaProducto[]
-  objecionId   String?
-  objecion     Objection? @relation(fields: [objecionId], references: [id])
+  objecionId                 String?
+  objecion                   Objection?        @relation(fields: [objecionId], references: [id])
 
   @@index([dni(ops: raw("gin_trgm_ops"))], map: "idx_paciente_dni_trgm", type: Gin)
   @@index([telefono(ops: raw("gin_trgm_ops"))], map: "idx_paciente_telefono_trgm", type: Gin)
@@ -169,17 +171,64 @@ model HistoriaClinica {
 }
 
 model HistoriaClinicaEntrada {
-  id                String          @id @default(uuid())
+  id                String   @id @default(uuid())
   historiaClinicaId String
-  fecha             DateTime        @default(now())
+  fecha             DateTime @default(now())
   contenido         Json?
   firmaProfesional  String?
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
-  archivos          Archivo[]       @relation("ArchivosEntradaHC")
-  historiaClinica   HistoriaClinica @relation(fields: [historiaClinicaId], references: [id])
-  pago              MovimientoCC?
-  Turno             Turno[]
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Campos para entradas basadas en plantillas
+  templateId        String?
+  templateVersionId String?
+  status            EstadoEntradaHC @default(FINALIZED)
+  answers           Json?
+  computed          Json?
+
+  archivos        Archivo[]                       @relation("ArchivosEntradaHC")
+  historiaClinica HistoriaClinica                 @relation(fields: [historiaClinicaId], references: [id])
+  template        HistoriaClinicaTemplate?        @relation(fields: [templateId], references: [id])
+  templateVersion HistoriaClinicaTemplateVersion? @relation(fields: [templateVersionId], references: [id])
+  pago            MovimientoCC?
+  Turno           Turno[]
+
+  @@index([templateId])
+  @@index([status])
+}
+
+model HistoriaClinicaTemplate {
+  id               String            @id @default(uuid())
+  nombre           String
+  descripcion      String?
+  profesionalId    String
+  estado           EstadoPlantillaHC @default(DRAFT)
+  currentVersionId String?           @unique
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  profesional    Profesional                      @relation(fields: [profesionalId], references: [id])
+  currentVersion HistoriaClinicaTemplateVersion?  @relation("CurrentVersion", fields: [currentVersionId], references: [id])
+  versions       HistoriaClinicaTemplateVersion[] @relation("TemplateVersions")
+  entradas       HistoriaClinicaEntrada[]
+
+  @@index([profesionalId, estado])
+}
+
+model HistoriaClinicaTemplateVersion {
+  id          String    @id @default(uuid())
+  templateId  String
+  version     Int       @default(1)
+  schema      Json
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  template          HistoriaClinicaTemplate  @relation("TemplateVersions", fields: [templateId], references: [id])
+  currentOfTemplate HistoriaClinicaTemplate? @relation("CurrentVersion")
+  entradas          HistoriaClinicaEntrada[]
+
+  @@unique([templateId, version])
+  @@index([templateId])
 }
 
 model Archivo {
@@ -484,6 +533,7 @@ model TipoTurno {
   mensajeBase     String?
   instrucciones   String?
   duracionDefault Int?
+  esCirugia       Boolean @default(false)
   turnos          Turno[]
 }
 
@@ -516,14 +566,47 @@ model Turno {
 }
 
 model Cirugia {
-  id            String      @id @default(uuid())
-  pacienteId    String
-  profesionalId String
-  fecha         DateTime
-  duracion      Int?
-  descripcion   String?
-  Profesional   Profesional @relation(fields: [profesionalId], references: [id])
-  turnos        Turno[]
+  id                   String         @id @default(uuid())
+  pacienteId           String
+  profesionalId        String
+  fecha                DateTime
+  horaEstimadaInicio   String?
+  duracion             Int?
+  procedimiento        String?
+  descripcion          String?
+  tipoAnestesia        TipoAnestesia?
+  quirofano            String?
+  ayudante             String?
+  anestesiologo        String?
+  notasPreoperatorias  String?
+  notasPostoperatorias String?
+  estado               EstadoCirugia  @default(PROGRAMADA)
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @default(now()) @updatedAt
+
+  paciente    Paciente    @relation(fields: [pacienteId], references: [id])
+  profesional Profesional @relation(fields: [profesionalId], references: [id])
+  turnos      Turno[]
+
+  @@index([pacienteId])
+  @@index([profesionalId])
+  @@index([fecha])
+}
+
+enum EstadoCirugia {
+  PROGRAMADA
+  EN_CURSO
+  COMPLETADA
+  CANCELADA
+  SUSPENDIDA
+}
+
+enum TipoAnestesia {
+  LOCAL
+  SEDACION
+  GENERAL
+  REGIONAL
+  NINGUNA
 }
 
 model DiagnosticoCatalogo {
@@ -539,10 +622,10 @@ model TratamientoCatalogo {
 }
 
 model Objection {
-  id        String   @id @default(uuid())
-  nombre    String   @unique
+  id        String     @id @default(uuid())
+  nombre    String     @unique
   pacientes Paciente[]
-  
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -612,4 +695,15 @@ enum EstadoTurno {
   CANCELADO
   AUSENTE
   FINALIZADO
+}
+
+enum EstadoPlantillaHC {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum EstadoEntradaHC {
+  DRAFT
+  FINALIZED
 }

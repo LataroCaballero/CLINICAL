@@ -5,50 +5,50 @@ import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class DiagnosticosService {
-    constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
-    // Obtener todos (para el Command)
-    findAll() {
-        return this.prisma.diagnosticoCatalogo.findMany({
-            orderBy: { nombre: 'asc' },
-        });
+  // Obtener todos (para el Command)
+  findAll() {
+    return this.prisma.diagnosticoCatalogo.findMany({
+      orderBy: { nombre: 'asc' },
+    });
+  }
+
+  // Crear (idempotente: si existe, lo devuelve)
+  async create(dto: CreateDiagnosticoDto) {
+    const nombre = dto.nombre.trim();
+
+    if (!nombre) {
+      throw new Error('El nombre del diagnóstico no puede estar vacío');
     }
 
-    // Crear (idempotente: si existe, lo devuelve)
-    async create(dto: CreateDiagnosticoDto) {
-        const nombre = dto.nombre.trim();
+    return this.prisma.diagnosticoCatalogo.upsert({
+      where: { nombre },
+      update: {},
+      create: { nombre },
+    });
+  }
 
-        if (!nombre) {
-            throw new Error('El nombre del diagnóstico no puede estar vacío');
-        }
+  // Opcional: búsqueda por texto (para autocompletar con filtro backend)
+  search(q: string) {
+    const query = q.trim();
+    if (!query) return this.findAll();
 
-        return this.prisma.diagnosticoCatalogo.upsert({
-            where: { nombre },
-            update: {},
-            create: { nombre },
-        });
-    }
+    return this.prisma.diagnosticoCatalogo.findMany({
+      where: {
+        nombre: {
+          contains: query,
+          mode: 'insensitive',
+        },
+      },
+      orderBy: { nombre: 'asc' },
+    });
+  }
 
-    // Opcional: búsqueda por texto (para autocompletar con filtro backend)
-    search(q: string) {
-        const query = q.trim();
-        if (!query) return this.findAll();
-
-        return this.prisma.diagnosticoCatalogo.findMany({
-            where: {
-                nombre: {
-                    contains: query,
-                    mode: 'insensitive',
-                },
-            },
-            orderBy: { nombre: 'asc' },
-        });
-    }
-
-    // Opcional: eliminar (por si después querés administrar catálogo)
-    async remove(id: string) {
-        return this.prisma.diagnosticoCatalogo.delete({
-            where: { id },
-        });
-    }
+  // Opcional: eliminar (por si después querés administrar catálogo)
+  async remove(id: string) {
+    return this.prisma.diagnosticoCatalogo.delete({
+      where: { id },
+    });
+  }
 }

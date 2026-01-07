@@ -6,6 +6,7 @@ import UpcomingAppointments from "../components/UpcomingAppointments";
 
 import { Calendar, momentLocalizer } from "react-big-calendar";
 import moment from "moment";
+import "moment/locale/es";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import withDragAndDrop from "react-big-calendar/lib/addons/dragAndDrop";
 import "react-big-calendar/lib/addons/dragAndDrop/styles.css";
@@ -22,6 +23,8 @@ import {
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import NewAppointmentModal from "./NewAppointmentModal";
+import AppointmentDetailModal from "./AppointmentDetailModal";
+import SurgeryAppointmentModal from "./SurgeryAppointmentModal";
 import {
   Tooltip,
   TooltipProvider,
@@ -31,8 +34,10 @@ import {
 
 import { toast } from "sonner";
 import { useTurnosRango } from "@/hooks/useTurnosRangos";
-import { useProfesionales } from "@/hooks/useProfesionales";
 import { useReprogramarTurno } from "@/hooks/useReprogramarTurnos";
+import { useEffectiveProfessionalId } from "@/hooks/useEffectiveProfessionalId";
+import { useAgenda } from "@/hooks/useAgenda";
+import { AgendaConfig } from "@/hooks/useProfesionalMe";
 
 moment.locale("es");
 const localizer = momentLocalizer(moment);
@@ -51,60 +56,249 @@ interface CalendarEvent {
   observaciones?: string;
 }
 
-// ---------------------------
-// CONFIGURACIÓN DEL PROFESIONAL (UI)
-// ---------------------------
-const config = {
-  workingDays: [1, 2, 3, 4, 5], // lun - vie
-  surgeryDays: ["2025-11-15", "2025-11-20"],
-  blockedDays: ["2025-11-18", "2025-11-25"],
-  extraAvailableDays: ["2025-11-17"],
-};
+// Helper para formatear fecha local (sin problemas de timezone)
+function formatLocalDate(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
 
-function isBlockedDay(start: Date) {
-  const day = start.getDay();
-  const dateStr = start.toISOString().slice(0, 10);
+// Helper para verificar si un día está bloqueado según la agenda
+function isDayBlocked(date: Date, agenda: AgendaConfig | null): boolean {
+  if (!agenda) return false;
 
-  return (
-    config.blockedDays.includes(dateStr) ||
-    (!config.workingDays.includes(day) &&
-      !config.extraAvailableDays.includes(dateStr))
-  );
+  const dateStr = formatLocalDate(date);
+  const dayOfWeek = date.getDay();
+
+  // Si es día de cirugía, NO está bloqueado (se pueden agendar cirugías)
+  if (isSurgeryDay(date, agenda)) return false;
+
+  // Verificar días bloqueados extraordinarios
+  const bloqueado = agenda.diasBloqueados?.some((d) => {
+    if (d.fechaFin) {
+      return dateStr >= d.fecha && dateStr <= d.fechaFin;
+    }
+    return d.fecha === dateStr;
+  });
+
+  if (bloqueado) return true;
+
+  // Verificar si el día de la semana está activo en horarios de trabajo
+  if (agenda.horariosTrabajo) {
+    const diaConfig = agenda.horariosTrabajo[dayOfWeek];
+    // Si no hay config para este día o no está activo, está bloqueado
+    if (!diaConfig || !diaConfig.activo) return true;
+  }
+
+  return false;
+}
+
+// Helper para verificar si es día de cirugía
+function isSurgeryDay(date: Date, agenda: AgendaConfig | null): boolean {
+  if (!agenda?.diasCirugia) return false;
+  const dateStr = formatLocalDate(date);
+  return agenda.diasCirugia.some((d) => d.fecha === dateStr);
+}
+
+// Calcular rango horario para un día específico
+function getDayTimeRange(
+  date: Date,
+  agenda: AgendaConfig | null
+): { min: Date; max: Date } | null {
+  if (!agenda) return null;
+
+  const dateStr = formatLocalDate(date);
+  const dayOfWeek = date.getDay();
+
+  // Si es día de cirugía, usar horario de cirugía
+  const surgeryConfig = agenda.diasCirugia?.find((d) => d.fecha === dateStr);
+  if (surgeryConfig) {
+    const [startH, startM] = surgeryConfig.inicio.split(":").map(Number);
+    const [endH, endM] = surgeryConfig.fin.split(":").map(Number);
+    const min = new Date(date);
+    min.setHours(startH, startM, 0, 0);
+    const max = new Date(date);
+    max.setHours(endH, endM, 0, 0);
+    return { min, max };
+  }
+
+  // Usar horario de trabajo normal
+  const dayConfig = agenda.horariosTrabajo?.[dayOfWeek];
+  if (!dayConfig?.activo || !dayConfig.bloques?.length) return null;
+
+  // Encontrar el inicio más temprano y fin más tardío
+  let earliestStart = "23:59";
+  let latestEnd = "00:00";
+
+  for (const bloque of dayConfig.bloques) {
+    if (bloque.inicio < earliestStart) earliestStart = bloque.inicio;
+    if (bloque.fin > latestEnd) latestEnd = bloque.fin;
+  }
+
+  const [startH, startM] = earliestStart.split(":").map(Number);
+  const [endH, endM] = latestEnd.split(":").map(Number);
+
+  const min = new Date(date);
+  min.setHours(startH, startM, 0, 0);
+  const max = new Date(date);
+  max.setHours(endH, endM, 0, 0);
+
+  return { min, max };
+}
+
+// Calcular rango horario más extenso de la semana
+function getWeekTimeRange(
+  date: Date,
+  agenda: AgendaConfig | null
+): { min: Date; max: Date } {
+  const defaultMin = new Date(date);
+  defaultMin.setHours(8, 0, 0, 0);
+  const defaultMax = new Date(date);
+  defaultMax.setHours(20, 0, 0, 0);
+
+  if (!agenda?.horariosTrabajo) return { min: defaultMin, max: defaultMax };
+
+  let globalEarliestStart = "23:59";
+  let globalLatestEnd = "00:00";
+
+  // Revisar todos los días de la semana
+  for (let i = 0; i < 7; i++) {
+    const dayConfig = agenda.horariosTrabajo[i];
+    if (!dayConfig?.activo || !dayConfig.bloques?.length) continue;
+
+    for (const bloque of dayConfig.bloques) {
+      if (bloque.inicio < globalEarliestStart) globalEarliestStart = bloque.inicio;
+      if (bloque.fin > globalLatestEnd) globalLatestEnd = bloque.fin;
+    }
+  }
+
+  // También considerar días de cirugía en la semana actual
+  const weekStart = moment(date).startOf("week");
+  const weekEnd = moment(date).endOf("week");
+
+  agenda.diasCirugia?.forEach((d) => {
+    const surgeryDate = moment(d.fecha);
+    if (surgeryDate.isBetween(weekStart, weekEnd, "day", "[]")) {
+      if (d.inicio < globalEarliestStart) globalEarliestStart = d.inicio;
+      if (d.fin > globalLatestEnd) globalLatestEnd = d.fin;
+    }
+  });
+
+  if (globalEarliestStart === "23:59" || globalLatestEnd === "00:00") {
+    return { min: defaultMin, max: defaultMax };
+  }
+
+  const [startH, startM] = globalEarliestStart.split(":").map(Number);
+  const [endH, endM] = globalLatestEnd.split(":").map(Number);
+
+  const min = new Date(date);
+  min.setHours(startH, startM, 0, 0);
+  const max = new Date(date);
+  max.setHours(endH, endM, 0, 0);
+
+  return { min, max };
+}
+
+// Calcular slots disponibles para un día
+function getAvailableSlotsCount(
+  date: Date,
+  agenda: AgendaConfig | null,
+  existingEvents: CalendarEvent[],
+  slotDuration: number = 30
+): { total: number; reserved: number; available: number } {
+  if (!agenda) return { total: 0, reserved: 0, available: 0 };
+
+  const dateStr = formatLocalDate(date);
+  const dayOfWeek = date.getDay();
+
+  // Si está bloqueado, no hay slots
+  if (isDayBlocked(date, agenda)) {
+    return { total: 0, reserved: 0, available: 0 };
+  }
+
+  let totalMinutes = 0;
+
+  // Si es día de cirugía
+  const surgeryConfig = agenda.diasCirugia?.find((d) => d.fecha === dateStr);
+  if (surgeryConfig) {
+    const [startH, startM] = surgeryConfig.inicio.split(":").map(Number);
+    const [endH, endM] = surgeryConfig.fin.split(":").map(Number);
+    totalMinutes = (endH * 60 + endM) - (startH * 60 + startM);
+  } else {
+    // Día normal de trabajo
+    const dayConfig = agenda.horariosTrabajo?.[dayOfWeek];
+    if (dayConfig?.activo && dayConfig.bloques?.length) {
+      for (const bloque of dayConfig.bloques) {
+        const [startH, startM] = bloque.inicio.split(":").map(Number);
+        const [endH, endM] = bloque.fin.split(":").map(Number);
+        totalMinutes += (endH * 60 + endM) - (startH * 60 + startM);
+      }
+    }
+  }
+
+  const total = Math.floor(totalMinutes / slotDuration);
+
+  // Contar turnos reservados (no cancelados ni ausentes)
+  const reserved = existingEvents.filter((e) => {
+    const eventDateStr = formatLocalDate(e.start);
+    return (
+      eventDateStr === dateStr &&
+      e.estado !== "CANCELADO" &&
+      e.estado !== "AUSENTE"
+    );
+  }).length;
+
+  return { total, reserved, available: Math.max(0, total - reserved) };
 }
 
 export default function TurnosPage() {
   const [view, setView] = useState<ViewType>("week");
-  const [date, setDate] = useState(new Date());
+  const [date, setDate] = useState(() => {
+    // Inicializar con la fecha a mediodía para evitar problemas de timezone
+    const d = new Date();
+    d.setHours(12, 0, 0, 0);
+    return d;
+  });
 
-  const [openModal, setOpenModal] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
+  const [openNewModal, setOpenNewModal] = useState(false);
+  const [openDetailModal, setOpenDetailModal] = useState(false);
+  const [openSurgeryModal, setOpenSurgeryModal] = useState(false);
+  const [surgeryDate, setSurgeryDate] = useState<Date | undefined>(undefined);
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
 
   const [events, setEvents] = useState<CalendarEvent[]>([]);
 
-  const { data: profesionales = [] } = useProfesionales();
-  const [profesionalId, setProfesionalId] = useState<string>("");
+  const effectiveProfessionalId = useEffectiveProfessionalId();
+  const { data: agenda } = useAgenda(effectiveProfessionalId);
+
+  // Normalizar la fecha para evitar problemas
+  const normalizedDate = useMemo(() => {
+    const d = new Date(date);
+    d.setHours(12, 0, 0, 0);
+    return d;
+  }, [date]);
 
   const reprogramar = useReprogramarTurno();
 
-  // Default profesional
-  useEffect(() => {
-    if (!profesionalId && profesionales.length > 0) {
-      setProfesionalId(profesionales[0].id);
-    }
-  }, [profesionales, profesionalId]);
-
   // Rango visible según view y date
-  const desde = useMemo(
-    () => moment(date).startOf(view).format("YYYY-MM-DD"),
-    [date, view]
-  );
-  const hasta = useMemo(
-    () => moment(date).endOf(view).format("YYYY-MM-DD"),
-    [date, view]
-  );
+  // Para la vista mensual, incluir semanas completas al inicio y fin
+  const desde = useMemo(() => {
+    if (view === "month") {
+      return moment(normalizedDate).startOf("month").startOf("week").format("YYYY-MM-DD");
+    }
+    return moment(normalizedDate).startOf(view).format("YYYY-MM-DD");
+  }, [normalizedDate, view]);
+
+  const hasta = useMemo(() => {
+    if (view === "month") {
+      return moment(normalizedDate).endOf("month").endOf("week").format("YYYY-MM-DD");
+    }
+    return moment(normalizedDate).endOf(view).format("YYYY-MM-DD");
+  }, [normalizedDate, view]);
 
   const { data: turnosRango = [] } = useTurnosRango(
-    profesionalId || undefined,
+    effectiveProfessionalId ?? undefined,
     desde,
     hasta
   );
@@ -127,6 +321,44 @@ export default function TurnosPage() {
     setEvents(mapped);
   }, [turnosRango]);
 
+  // Calcular rango horario según la vista
+  // Para día y semana, usar el rango más extenso de la semana para no cortar eventos
+  const timeRange = useMemo(() => {
+    const weekRange = getWeekTimeRange(normalizedDate, agenda);
+
+    // Si es vista diaria, podemos mostrar el rango específico del día
+    // pero con margen para no cortar eventos
+    if (view === "day") {
+      const dayRange = getDayTimeRange(normalizedDate, agenda);
+      if (dayRange) {
+        // Agregar 1 hora de margen antes y después
+        const min = new Date(dayRange.min);
+        min.setHours(min.getHours() - 1);
+        const max = new Date(dayRange.max);
+        max.setHours(max.getHours() + 1);
+        return { min, max };
+      }
+    }
+
+    return weekRange;
+  }, [view, normalizedDate, agenda]);
+
+  // Formato de fecha/rango para mostrar en header
+  const dateRangeLabel = useMemo(() => {
+    if (view === "day") {
+      return moment(normalizedDate).format("D [de] MMMM [de] YYYY");
+    }
+    if (view === "week") {
+      const start = moment(normalizedDate).startOf("week");
+      const end = moment(normalizedDate).endOf("week");
+      if (start.month() === end.month()) {
+        return `${start.format("D")} - ${end.format("D [de] MMMM [de] YYYY")}`;
+      }
+      return `${start.format("D [de] MMMM")} - ${end.format("D [de] MMMM [de] YYYY")}`;
+    }
+    return moment(normalizedDate).format("MMMM [de] YYYY");
+  }, [view, normalizedDate]);
+
   // Optimistic update helper
   function updateEventTime(eventId: string, start: Date, end: Date) {
     setEvents((prev) =>
@@ -134,9 +366,9 @@ export default function TurnosPage() {
     );
   }
 
-  const handleSelectEvent = (event: any) => {
+  const handleSelectEvent = (event: CalendarEvent) => {
     setSelectedEvent(event);
-    setOpenModal(true);
+    setOpenDetailModal(true);
   };
 
   // DRAG & DROP: mover evento
@@ -196,20 +428,37 @@ export default function TurnosPage() {
 
   // Nuevo turno al clickear slot
   const handleSelectSlot = ({ start }: any) => {
-    if (isBlockedDay(start)) {
+    if (isDayBlocked(start, agenda)) {
       toast.error("Ese día no está disponible");
       return;
     }
-    setSelectedEvent(null);
-    setOpenModal(true);
+    if (isSurgeryDay(start, agenda)) {
+      // En día de cirugía, abrir modal de cirugía
+      setSurgeryDate(start);
+      setOpenSurgeryModal(true);
+      return;
+    }
+    setOpenNewModal(true);
   };
+
+  if (!effectiveProfessionalId) {
+    return (
+      <div className="flex flex-col gap-6 p-6 max-w-[100vw]">
+        <Card className="p-8">
+          <p className="text-center text-muted-foreground">
+            Seleccioná un profesional desde el selector global para ver la agenda.
+          </p>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-6 p-6 max-w-[100vw]">
       {/* PRIMERA FILA */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {!!profesionalId && <QuickAppointment profesionalId={profesionalId} />}
-        <UpcomingAppointments profesionalId={profesionalId} />
+        <QuickAppointment profesionalId={effectiveProfessionalId} />
+        <UpcomingAppointments profesionalId={effectiveProfessionalId} />
       </div>
 
       {/* SEGUNDA FILA: CALENDARIO */}
@@ -220,27 +469,6 @@ export default function TurnosPage() {
           </CardTitle>
 
           <div className="flex gap-2 items-center">
-            <Select value={profesionalId} onValueChange={setProfesionalId}>
-              <SelectTrigger className="w-[220px]">
-                <SelectValue placeholder="Profesional" />
-              </SelectTrigger>
-              <SelectContent>
-                {profesionales.map((p: any) => {
-                  const label =
-                    p.nombreCompleto ??
-                    `${p.usuario?.nombre ?? ""} ${
-                      p.usuario?.apellido ?? ""
-                    }`.trim() ??
-                    "Profesional";
-                  return (
-                    <SelectItem key={p.id} value={p.id}>
-                      {label}
-                    </SelectItem>
-                  );
-                })}
-              </SelectContent>
-            </Select>
-
             <Select value={view} onValueChange={(v) => setView(v as ViewType)}>
               <SelectTrigger className="w-[120px]">
                 <SelectValue placeholder="Vista" />
@@ -252,16 +480,30 @@ export default function TurnosPage() {
               </SelectContent>
             </Select>
 
-            <Button variant="default" onClick={() => setOpenModal(true)}>
+            <Button variant="default" onClick={() => setOpenNewModal(true)}>
               Nuevo turno
             </Button>
           </div>
         </CardHeader>
 
         <NewAppointmentModal
-          open={openModal}
-          onOpenChange={setOpenModal}
-          selectedEvent={selectedEvent}
+          open={openNewModal}
+          onOpenChange={setOpenNewModal}
+          onSwitchToSurgery={() => {
+            setOpenSurgeryModal(true);
+          }}
+        />
+
+        <AppointmentDetailModal
+          open={openDetailModal}
+          onOpenChange={setOpenDetailModal}
+          event={selectedEvent}
+        />
+
+        <SurgeryAppointmentModal
+          open={openSurgeryModal}
+          onOpenChange={setOpenSurgeryModal}
+          defaultDate={surgeryDate}
         />
 
         <CardContent>
@@ -271,159 +513,281 @@ export default function TurnosPage() {
               <Button
                 variant="outline"
                 size="icon"
-                onClick={() => setDate(moment(date).subtract(1, view).toDate())}
+                onClick={() => {
+                  const d = moment(normalizedDate).subtract(1, view).toDate();
+                  d.setHours(12, 0, 0, 0);
+                  setDate(d);
+                }}
               >
                 <ChevronLeft className="w-4 h-4" />
               </Button>
 
-              <Button variant="outline" onClick={() => setDate(new Date())}>
+              <Button variant="outline" onClick={() => {
+                const d = new Date();
+                d.setHours(12, 0, 0, 0);
+                setDate(d);
+              }}>
                 Hoy
               </Button>
 
               <Button
                 variant="outline"
                 size="icon"
-                onClick={() => setDate(moment(date).add(1, view).toDate())}
+                onClick={() => {
+                  const d = moment(normalizedDate).add(1, view).toDate();
+                  d.setHours(12, 0, 0, 0);
+                  setDate(d);
+                }}
               >
                 <ChevronRight className="w-4 h-4" />
               </Button>
             </div>
 
-            <h2 className="text-sm font-medium text-gray-700">
-              {moment(date).format("MMMM YYYY")}
+            <h2 className="text-base font-semibold text-gray-800 capitalize">
+              {dateRangeLabel}
             </h2>
           </div>
 
           {/* CALENDARIO */}
-          <div className="rounded-md border border-gray-200 overflow-hidden">
-            <DnDCalendar
-              localizer={localizer}
-              events={events}
-              startAccessor="start"
-              endAccessor="end"
-              selectable
-              resizable
-              view={view}
-              date={date}
-              style={{ height: 600 }}
-              onView={(v) => setView(v as ViewType)}
-              onNavigate={setDate}
-              onSelectEvent={handleSelectEvent}
-              onSelectSlot={handleSelectSlot}
-              onEventDrop={handleEventMove}
-              onEventResize={handleEventResize}
-              draggableAccessor={(event: any) =>
-                event?.estado !== "CANCELADO" && event?.estado !== "FINALIZADO"
-              }
-              resizableAccessor={(event: any) =>
-                event?.estado !== "CANCELADO" && event?.estado !== "FINALIZADO"
-              }
-              toolbar={false}
-              messages={{
-                today: "Hoy",
-                previous: "Anterior",
-                next: "Siguiente",
-                month: "Mes",
-                week: "Semana",
-                day: "Día",
-              }}
-              components={{
-                event: ({ event }: any) => (
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div className="cursor-pointer px-2 py-1 rounded-md text-sm font-medium truncate">
-                          {event.title}
+          {view === "month" ? (
+            // Vista mensual personalizada con conteo de slots
+            // En español, la semana empieza en Lunes
+            <div className="rounded-md border border-gray-200 overflow-hidden">
+              <div className="grid grid-cols-7 bg-gray-50 border-b">
+                {["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"].map((d) => (
+                  <div
+                    key={d}
+                    className="p-2 text-center text-sm font-medium text-gray-600"
+                  >
+                    {d}
+                  </div>
+                ))}
+              </div>
+              <div className="grid grid-cols-7">
+                {(() => {
+                  const startOfMonth = moment(normalizedDate).startOf("month");
+                  const endOfMonth = moment(normalizedDate).endOf("month");
+                  const startDate = startOfMonth.clone().startOf("week");
+                  const endDate = endOfMonth.clone().endOf("week");
+                  const days: JSX.Element[] = [];
+
+                  let currentDay = startDate.clone();
+                  while (currentDay.isSameOrBefore(endDate, "day")) {
+                    // Crear fecha normalizada a mediodía para evitar problemas de timezone
+                    const dayDate = currentDay.clone().hour(12).minute(0).second(0).toDate();
+                    const isCurrentMonth = currentDay.month() === moment(normalizedDate).month();
+                    const isToday = currentDay.isSame(moment(), "day");
+                    const blocked = isDayBlocked(dayDate, agenda);
+                    const surgery = isSurgeryDay(dayDate, agenda);
+                    const slots = getAvailableSlotsCount(dayDate, agenda, events);
+
+                    let bgColor = "bg-white";
+                    if (!isCurrentMonth) bgColor = "bg-gray-50";
+                    else if (blocked) bgColor = "bg-gray-100";
+                    else if (surgery) bgColor = "bg-yellow-50";
+
+                    days.push(
+                      <div
+                        key={currentDay.format("YYYY-MM-DD")}
+                        className={`min-h-[80px] p-2 border-b border-r ${bgColor} ${
+                          isToday ? "ring-2 ring-inset ring-indigo-500" : ""
+                        } cursor-pointer hover:bg-gray-50 transition-colors`}
+                        onClick={() => {
+                          setDate(dayDate);
+                          setView("day");
+                        }}
+                      >
+                        <div
+                          className={`text-sm font-medium ${
+                            !isCurrentMonth
+                              ? "text-gray-400"
+                              : isToday
+                              ? "text-indigo-600"
+                              : "text-gray-700"
+                          }`}
+                        >
+                          {currentDay.format("D")}
                         </div>
-                      </TooltipTrigger>
 
-                      <TooltipContent className="bg-white border text-gray-700 shadow-md text-xs p-2">
-                        <p>
-                          <strong>Paciente:</strong> {event.paciente}
-                        </p>
-                        <p>
-                          <strong>Tipo:</strong> {event.tipo}
-                        </p>
-                        <p>
-                          <strong>Hora:</strong>{" "}
-                          {moment(event.start).format("HH:mm")} hs
-                        </p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                ),
-              }}
-              // SOMBREADO POR DÍA
-              dayPropGetter={(d: Date) => {
-                const day = d.getDay();
-                const dateStr = d.toISOString().slice(0, 10);
-                let style: React.CSSProperties = {};
+                        {isCurrentMonth && !blocked && slots.total > 0 && (
+                          <div className="mt-1 space-y-0.5">
+                            <div className="text-xs text-gray-600">
+                              <span className="font-medium text-green-600">
+                                {slots.available}
+                              </span>{" "}
+                              disponibles
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              <span className="font-medium">{slots.reserved}</span>{" "}
+                              reservados
+                            </div>
+                          </div>
+                        )}
 
-                if (config.blockedDays.includes(dateStr)) {
-                  style.backgroundColor = "#F3F4F6";
-                  style.opacity = 0.6;
+                        {isCurrentMonth && blocked && (
+                          <div className="mt-1 text-xs text-gray-400">
+                            No disponible
+                          </div>
+                        )}
+
+                        {isCurrentMonth && surgery && (
+                          <div className="mt-1 text-xs text-yellow-700 font-medium">
+                            Cirugía
+                          </div>
+                        )}
+                      </div>
+                    );
+
+                    currentDay.add(1, "day");
+                  }
+
+                  return days;
+                })()}
+              </div>
+            </div>
+          ) : (
+            // Vista diaria y semanal con react-big-calendar
+            <div className="rounded-md border border-gray-200 overflow-hidden">
+              <DnDCalendar
+                localizer={localizer}
+                events={events}
+                startAccessor="start"
+                endAccessor="end"
+                selectable
+                resizable
+                view={view}
+                date={normalizedDate}
+                min={timeRange.min}
+                max={timeRange.max}
+                style={{ height: 600 }}
+                onView={(v) => setView(v as ViewType)}
+                onNavigate={(newDate) => {
+                  const d = new Date(newDate);
+                  d.setHours(12, 0, 0, 0);
+                  setDate(d);
+                }}
+                onSelectEvent={handleSelectEvent}
+                onSelectSlot={handleSelectSlot}
+                onEventDrop={handleEventMove}
+                onEventResize={handleEventResize}
+                draggableAccessor={(event: any) =>
+                  event?.estado !== "CANCELADO" && event?.estado !== "FINALIZADO"
+                }
+                resizableAccessor={(event: any) =>
+                  event?.estado !== "CANCELADO" && event?.estado !== "FINALIZADO"
+                }
+                toolbar={false}
+                formats={{
+                  // Ocultar la hora en los eventos
+                  eventTimeRangeFormat: () => "",
+                  eventTimeRangeStartFormat: () => "",
+                  eventTimeRangeEndFormat: () => "",
+                }}
+                messages={{
+                  today: "Hoy",
+                  previous: "Anterior",
+                  next: "Siguiente",
+                  month: "Mes",
+                  week: "Semana",
+                  day: "Día",
+                }}
+                components={{
+                  event: ({ event }: any) => (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="cursor-pointer px-1 py-0.5 text-xs font-medium truncate leading-tight">
+                            <div className="font-semibold truncate">{event.tipo}</div>
+                            <div className="truncate text-gray-600">{event.paciente}</div>
+                          </div>
+                        </TooltipTrigger>
+
+                        <TooltipContent className="bg-white border text-gray-700 shadow-md text-xs p-2">
+                          <p>
+                            <strong>Paciente:</strong> {event.paciente}
+                          </p>
+                          <p>
+                            <strong>Tipo:</strong> {event.tipo}
+                          </p>
+                          <p>
+                            <strong>Hora:</strong>{" "}
+                            {moment(event.start).format("HH:mm")} -{" "}
+                            {moment(event.end).format("HH:mm")} hs
+                          </p>
+                          <p>
+                            <strong>Estado:</strong> {event.estado}
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  ),
+                }}
+                // SOMBREADO POR DÍA (usando agenda real con fecha local)
+                dayPropGetter={(d: Date) => {
+                  const style: React.CSSProperties = {};
+
+                  // Día de cirugía (amarillo)
+                  if (isSurgeryDay(d, agenda)) {
+                    style.backgroundColor = "#FEF9C3";
+                    return { style };
+                  }
+
+                  // Día bloqueado o no laboral (gris)
+                  if (isDayBlocked(d, agenda)) {
+                    style.backgroundColor = "#E5E7EB";
+                    style.opacity = 0.6;
+                    return { style };
+                  }
+
                   return { style };
-                }
+                }}
+                // SOMBREADO POR HORAS (usando fecha local)
+                slotPropGetter={(d: Date) => {
+                  // Día de cirugía
+                  if (isSurgeryDay(d, agenda)) {
+                    return { style: { backgroundColor: "#FEF9C3" } };
+                  }
 
-                if (config.surgeryDays.includes(dateStr)) {
-                  style.backgroundColor = "#FEF9C3";
-                  return { style };
-                }
+                  // Día bloqueado
+                  if (isDayBlocked(d, agenda)) {
+                    return {
+                      style: { backgroundColor: "#F3F4F6", opacity: 0.5 },
+                    };
+                  }
 
-                if (
-                  !config.workingDays.includes(day) &&
-                  !config.extraAvailableDays.includes(dateStr)
-                ) {
-                  style.backgroundColor = "#E5E7EB";
-                  style.opacity = 0.75;
-                }
+                  return {};
+                }}
+                // COLORES DE EVENTOS
+                eventPropGetter={(event: any) => {
+                  const tipo = (event as CalendarEvent).tipo || "";
+                  const estado = (event as CalendarEvent).estado;
 
-                return { style };
-              }}
-              // SOMBREADO POR HORAS
-              slotPropGetter={(d: Date) => {
-                const dateStr = d.toISOString().slice(0, 10);
+                  let backgroundColor = tipo.toLowerCase().includes("consulta")
+                    ? "#E0E7FF"
+                    : tipo.toLowerCase().includes("cirug")
+                    ? "#FEE2E2"
+                    : "#DCFCE7";
 
-                if (config.surgeryDays.includes(dateStr)) {
-                  return { style: { backgroundColor: "#FEF9C3" } };
-                }
+                  // estados del backend
+                  if (estado === "CONFIRMADO") backgroundColor = "#BBF7D0";
+                  if (estado === "CANCELADO") backgroundColor = "#E5E7EB";
+                  if (estado === "AUSENTE") backgroundColor = "#E5E7EB";
+                  if (estado === "FINALIZADO") backgroundColor = "#DBEAFE";
 
-                if (config.blockedDays.includes(dateStr)) {
                   return {
-                    style: { backgroundColor: "#F3F4F6", opacity: 0.5 },
+                    style: {
+                      backgroundColor,
+                      borderRadius: "4px",
+                      color: "#1E1E1E",
+                      border: "none",
+                      padding: "2px 4px",
+                      fontSize: "11px",
+                    },
                   };
-                }
-
-                return {};
-              }}
-              // COLORES DE EVENTOS
-              eventPropGetter={(event: any) => {
-                const tipo = (event as CalendarEvent).tipo || "";
-                const estado = (event as CalendarEvent).estado;
-
-                let backgroundColor = tipo.toLowerCase().includes("consulta")
-                  ? "#E0E7FF"
-                  : tipo.toLowerCase().includes("cirug")
-                  ? "#FEE2E2"
-                  : "#DCFCE7";
-
-                // estados del backend
-                if (estado === "CONFIRMADO") backgroundColor = "#BBF7D0";
-                if (estado === "CANCELADO") backgroundColor = "#E5E7EB";
-                if (estado === "AUSENTE") backgroundColor = "#E5E7EB";
-                if (estado === "FINALIZADO") backgroundColor = "#DBEAFE";
-
-                return {
-                  style: {
-                    backgroundColor,
-                    borderRadius: "6px",
-                    color: "#1E1E1E",
-                    border: "none",
-                  },
-                };
-              }}
-            />
-          </div>
+                }}
+              />
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

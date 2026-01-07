@@ -12,8 +12,9 @@ import {
 } from '@nestjs/common';
 import { TurnosService } from './turnos.service';
 import { CreateTurnoDto } from './dto/create-turno.dto';
-import { FindTurnosDto } from './dto/find-turnos.dto';
 import { ReprogramarTurnoDto } from './dto/reprogramar-turno.dto';
+import { CobrarTurnoDto } from './dto/cobrar-turno.dto';
+import { CreateCirugiaTurnoDto } from './dto/create-cirugia-turno.dto';
 import { resolveScope } from '@/src/common/scope/resolve-scope';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
@@ -27,14 +28,23 @@ export class TurnosController {
     return this.turnosService.crearTurno(dto);
   }
 
+  @Post('cirugia')
+  crearCirugia(@Body() dto: CreateCirugiaTurnoDto) {
+    return this.turnosService.crearTurnoCirugia(dto);
+  }
+
   @Get()
-  findAll(@Req() req: any, @Query('profesionalId') profesionalId?: string) {
+  findAll(
+    @Req() req: any,
+    @Query('profesionalId') profesionalId?: string,
+    @Query('pacienteId') pacienteId?: string,
+  ) {
     const scope = resolveScope({
       user: req.user,
       requestedProfesionalId: profesionalId,
     });
 
-    return this.turnosService.findAll(scope);
+    return this.turnosService.findAll(scope, pacienteId);
   }
 
   @Patch(':id/cancelar')
@@ -45,6 +55,11 @@ export class TurnosController {
   @Patch(':id/finalizar')
   finalizar(@Param('id') id: string) {
     return this.turnosService.finalizarTurno(id);
+  }
+
+  @Patch(':id/confirmar')
+  confirmar(@Param('id') id: string) {
+    return this.turnosService.confirmarTurno(id);
   }
 
   @Patch(':id/reprogramar')
@@ -83,5 +98,10 @@ export class TurnosController {
       desde,
       hasta,
     );
+  }
+
+  @Post(':id/cobrar')
+  cobrar(@Param('id') id: string, @Body() dto: CobrarTurnoDto) {
+    return this.turnosService.cobrarTurno(id, dto);
   }
 }

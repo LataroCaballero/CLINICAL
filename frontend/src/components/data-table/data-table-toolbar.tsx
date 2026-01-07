@@ -104,14 +104,15 @@ export function DataTableToolbar({ table, onNewPaciente }: DataTableToolbarProps
 
           createPacienteMutation.mutate(payload, {
             onError: (error: any) => {
-              console.log("ERROR RECIBIDO:", error);
+              const status = error?.response?.status || error?.statusCode;
+              const message = error?.response?.data?.message || error?.message;
 
-              if (error?.statusCode === 409) {
+              if (status === 409 || message?.includes("DNI")) {
                 setGlobalError("El DNI ingresado ya está registrado.");
                 return;
               }
 
-              setGlobalError("Ocurrió un error al crear el paciente.");
+              setGlobalError(message || "Ocurrió un error al crear el paciente.");
             },
 
             onSuccess: () => {

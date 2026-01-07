@@ -39,9 +39,15 @@ export default function LoginPage() {
         return;
       }
 
-      // Si llegamos acá, login OK
+      // Si llegamos acá, login OK - guardamos todos los tokens
       if (json?.accessToken) {
         localStorage.setItem("accessToken", json.accessToken);
+      }
+      if (json?.refreshToken) {
+        localStorage.setItem("refreshToken", json.refreshToken);
+      }
+      if (json?.sessionId) {
+        localStorage.setItem("sessionId", json.sessionId);
       }
 
       router.push("/dashboard");

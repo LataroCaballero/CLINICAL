@@ -1,9 +1,16 @@
-import { IsIn, IsObject } from "class-validator";
+import { IsIn, IsObject } from 'class-validator';
 
 export class UpdatePacienteSectionDto {
-    @IsIn(["personales", "contacto", "emergencia", "cobertura", "clinica", "estado"])
-    section: string;
+  @IsIn([
+    'personales',
+    'contacto',
+    'emergencia',
+    'cobertura',
+    'clinica',
+    'estado',
+  ])
+  section: string;
 
-    @IsObject()
-    data: Record<string, any>;
+  @IsObject()
+  data: Record<string, any>;
 }

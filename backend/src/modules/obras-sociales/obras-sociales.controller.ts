@@ -4,23 +4,23 @@ import { CreatePlanDto } from './dto/plan.dto';
 
 @Controller('obras-sociales')
 export class ObrasSocialesController {
-    constructor(private readonly obrasSocialesService: ObrasSocialesService) { }
+  constructor(private readonly obrasSocialesService: ObrasSocialesService) {}
 
-    @Get()
-    findAll() {
-        return this.obrasSocialesService.findAll();
-    }
+  @Get()
+  findAll() {
+    return this.obrasSocialesService.findAll();
+  }
 
-    @Post(':obraSocialId/planes')
-    createPlan(
-        @Param('obraSocialId') obraSocialId: string,
-        @Body() dto: CreatePlanDto
-    ) {
-        return this.obrasSocialesService.createPlan(obraSocialId, dto);
-    }
+  @Post(':obraSocialId/planes')
+  createPlan(
+    @Param('obraSocialId') obraSocialId: string,
+    @Body() dto: CreatePlanDto,
+  ) {
+    return this.obrasSocialesService.createPlan(obraSocialId, dto);
+  }
 
-    @Delete('planes/:planId')
-    deletePlan(@Param('planId') planId: string) {
-        return this.obrasSocialesService.deletePlan(planId);
-    }
+  @Delete('planes/:planId')
+  deletePlan(@Param('planId') planId: string) {
+    return this.obrasSocialesService.deletePlan(planId);
+  }
 }

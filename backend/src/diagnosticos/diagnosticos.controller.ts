@@ -12,7 +12,7 @@ import { CreateDiagnosticoDto } from './dto/create-diagnostico.dto';
 
 @Controller('diagnosticos')
 export class DiagnosticosController {
-  constructor(private readonly diagnosticosService: DiagnosticosService) { }
+  constructor(private readonly diagnosticosService: DiagnosticosService) {}
 
   // GET /diagnosticos  (lista completa o filtrada por q)
   @Get()

@@ -1,10 +1,8 @@
 "use client";
 
 import {
-  Home,
   Calendar,
   Users,
-  FileText,
   DollarSign,
   Settings,
   LayoutDashboard,
@@ -14,12 +12,12 @@ import {
 import Link from "next/link";
 import { useUIStore } from "@/lib/stores/useUIStore";
 import { motion } from "framer-motion";
-import Image from "next/image";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import UserMenu from "./UserMenu";
 import { ProfessionalSelector } from "@/components/ProfessionalSelector";
 import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { toast } from "sonner";
 
 export default function Sidebar() {
   const { sidebarCollapsed, expandSidebar, collapseSidebar } = useUIStore();
@@ -69,16 +67,19 @@ export default function Sidebar() {
       href: "/dashboard/finanzas",
       label: "Finanzas",
       icon: <DollarSign className="w-5 h-5" />,
+      disabled: true,
     },
     {
       href: "/dashboard/stock",
       label: "Stock",
       icon: <Boxes className="w-5 h-5" />,
+      disabled: true,
     },
     {
       href: "/dashboard/reportes",
       label: "Reportes",
       icon: <BarChart2 className="w-5 h-5" />,
+      disabled: true,
     },
     {
       href: "/dashboard/configuracion",
@@ -114,7 +115,7 @@ export default function Sidebar() {
 
         {/* Navigation */}
         <nav className="flex flex-col gap-1 mt-2">
-          {links.map(({ href, label, icon }) => (
+          {links.map(({ href, label, icon, disabled }) => (
             <NavItem
               key={href}
               href={href}
@@ -122,6 +123,7 @@ export default function Sidebar() {
               label={label}
               collapsed={sidebarCollapsed}
               active={pathname === href}
+              disabled={disabled}
             />
           ))}
         </nav>
@@ -141,16 +143,38 @@ interface NavItemProps {
   label: string;
   collapsed: boolean;
   active?: boolean;
+  disabled?: boolean;
 }
 
-function NavItem({ href, icon, label, collapsed, active }: NavItemProps) {
+function NavItem({ href, icon, label, collapsed, active, disabled }: NavItemProps) {
+  const handleDisabledClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    toast.info(`${label} en construcción`, {
+      description: "Esta funcionalidad estará disponible próximamente.",
+    });
+  };
+
+  const baseClasses = `flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${collapsed ? "justify-center" : ""}`;
+
+  if (disabled) {
+    return (
+      <button
+        onClick={handleDisabledClick}
+        className={`${baseClasses} text-gray-400 hover:bg-gray-50 cursor-not-allowed w-full`}
+      >
+        {icon}
+        {!collapsed && <span className="font-medium">{label}</span>}
+      </button>
+    );
+  }
+
   return (
     <Link
       href={href}
-      className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${active
+      className={`${baseClasses} ${active
         ? "bg-indigo-50 text-indigo-600 font-medium"
         : "text-gray-700 hover:bg-gray-50 hover:text-indigo-600"
-        } ${collapsed ? "justify-center" : ""}`}
+        }`}
     >
       {icon}
       {!collapsed && <span className="font-medium">{label}</span>}

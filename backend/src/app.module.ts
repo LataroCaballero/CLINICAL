@@ -13,6 +13,9 @@ import { TratamientosModule } from './modules/tratamientos/tratamientos.module';
 import { HistoriaClinicaModule } from './modules/historia-clinica/historia-clinica.module';
 import { TurnosModule } from './modules/turnos/turnos.module';
 import { TiposTurnoModule } from './modules/tipos-turno/tipos-turno.module';
+import { CuentasCorrientesModule } from './modules/cuentas-corrientes/cuentas-corrientes.module';
+import { PresupuestosModule } from './modules/presupuestos/presupuestos.module';
+import { HCTemplatesModule } from './modules/hc-templates/hc-templates.module';
 
 @Module({
   imports: [
@@ -29,8 +32,11 @@ import { TiposTurnoModule } from './modules/tipos-turno/tipos-turno.module';
     DiagnosticosModule,
     TratamientosModule,
     HistoriaClinicaModule,
+    HCTemplatesModule,
     TurnosModule,
-    TiposTurnoModule
+    TiposTurnoModule,
+    CuentasCorrientesModule,
+    PresupuestosModule,
   ],
 })
 export class AppModule implements NestModule {

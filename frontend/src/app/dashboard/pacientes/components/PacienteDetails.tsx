@@ -14,10 +14,11 @@ import {
   CalendarDays,
   MessageSquare,
   Wallet,
+  Receipt,
 } from "lucide-react";
 import { MedicalChips } from "@/components/ui/MedicalChips";
 
-export default function PacienteDetails({ paciente, onAction }: { paciente: any; onAction?: (view: "default" | "datos" | "historia" | "turnos" | "mensajes" | "cuenta") => void }) {
+export default function PacienteDetails({ paciente, onAction }: { paciente: any; onAction?: (view: "default" | "datos" | "historia" | "turnos" | "mensajes" | "cuenta" | "presupuestos") => void }) {
   if (!paciente) return null;
 
   const calcularEdad = (fechaNac?: string) => {
@@ -196,6 +197,11 @@ export default function PacienteDetails({ paciente, onAction }: { paciente: any;
             icon={<Wallet className="w-5 h-5" />}
             label="Cuenta corriente"
             onClick={() => onAction?.("cuenta")}
+          />
+          <ActionButton
+            icon={<Receipt className="w-5 h-5" />}
+            label="Presupuestos"
+            onClick={() => onAction?.("presupuestos")}
           />
           <ActionButton
             icon={<CalendarDays className="w-5 h-5" />}

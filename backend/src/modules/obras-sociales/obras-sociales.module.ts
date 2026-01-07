@@ -4,7 +4,7 @@ import { ObrasSocialesService } from './obras-sociales.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 @Module({
-    controllers: [ObrasSocialesController],
-    providers: [ObrasSocialesService, PrismaService],
+  controllers: [ObrasSocialesController],
+  providers: [ObrasSocialesService, PrismaService],
 })
-export class ObrasSocialesModule { }
+export class ObrasSocialesModule {}

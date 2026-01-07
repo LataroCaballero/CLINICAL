@@ -61,6 +61,7 @@ export class PacientesController {
     return results ?? [];
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get()
   findAll(@Req() req: any, @Query('profesionalId') profesionalId?: string) {
     const scope = resolveScope({

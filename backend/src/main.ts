@@ -2,7 +2,6 @@ import { NestFactory, HttpAdapterHost } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { PrismaClientExceptionFilter } from './prisma-client-exception/prisma-client-exception.filter';
 
-
 async function bootstrap() {
   console.log('DATABASE_URL desde Nest:', process.env.DATABASE_URL);
 

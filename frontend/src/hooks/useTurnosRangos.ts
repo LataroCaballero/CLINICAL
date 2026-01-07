@@ -26,6 +26,7 @@ export function useTurnosRango(
       return data;
     },
     enabled: !!profesionalId && !!desde && !!hasta,
-    staleTime: 1000 * 10,
+    staleTime: 0, // Siempre refetch para tener datos actualizados
+    refetchOnWindowFocus: true,
   });
 }

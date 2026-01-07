@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { JSX, useEffect, useMemo, useState } from "react";
 import QuickAppointment from "../components/QuickAppointment";
 import UpcomingAppointments from "../components/UpcomingAppointments";
 
@@ -597,10 +597,10 @@ export default function TurnosPage() {
                       >
                         <div
                           className={`text-sm font-medium ${!isCurrentMonth
-                              ? "text-gray-400"
-                              : isToday
-                                ? "text-indigo-600"
-                                : "text-gray-700"
+                            ? "text-gray-400"
+                            : isToday
+                              ? "text-indigo-600"
+                              : "text-gray-700"
                             }`}
                         >
                           {currentDay.format("D")}

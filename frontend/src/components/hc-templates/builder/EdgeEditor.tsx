@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import type { TemplateEdge, TemplateNode } from '@/types/hc-templates';
+import type { TemplateEdge, TemplateNode, DecisionNode } from '@/types/hc-templates';
 
 interface EdgeEditorProps {
   edges: TemplateEdge[];
@@ -40,9 +40,7 @@ export function EdgeEditor({ edges, nodes, onUpdate }: EdgeEditorProps) {
   };
 
   // Get all decision nodes for condition keys
-  const decisionNodes = nodes.filter((n) => n.type === 'decision') as Array<
-    TemplateNode & { key: string }
-  >;
+  const decisionNodes = nodes.filter((n): n is DecisionNode => n.type === 'decision');
 
   return (
     <Card>

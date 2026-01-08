@@ -602,7 +602,7 @@ export default function DatosCompletos({
                     value={
                         <EditableDate
                             disabled={!isEditing("personales") || saving}
-                            value={personalesForm.fechaNacimiento}
+                            value={personalesForm.fechaNacimiento ?? null}
                             onChange={(v) =>
                                 setPersonalesForm((f) => ({ ...f, fechaNacimiento: v }))
                             }

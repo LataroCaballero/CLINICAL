@@ -28,8 +28,8 @@ export default function UserMenu({ collapsed }: { collapsed: boolean }) {
   const router = useRouter();
   const queryClient = useQueryClient();
 
-  const fullName = user ? `${user.nombre} ${user.apellido}` : "";
-  const initials = user ? `${user.nombre[0]}${user.apellido[0]}` : "";
+  const fullName = user ? `${user.nombre || ''} ${user.apellido || ''}`.trim() : "";
+  const initials = user ? `${user.nombre?.[0] || ''}${user.apellido?.[0] || ''}`.toUpperCase() || 'U' : "";
   const rolLabel = user ? ROL_LABELS[user.rol] || user.rol : "";
 
   const handleLogout = () => {

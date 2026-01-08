@@ -1,11 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
+import { api } from "@/lib/axios";
 
 export function useProfesionales() {
     return useQuery({
         queryKey: ["profesionales"],
         queryFn: async () => {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/profesionales`);
-            return res.json();
+            const { data } = await api.get("/profesionales");
+            return data;
         },
     });
 }

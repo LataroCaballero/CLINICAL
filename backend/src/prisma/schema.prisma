@@ -551,6 +551,12 @@ model Turno {
   esCirugia           Boolean                 @default(false)
   cirugiaId           String?
   entradaHCId         String?
+
+  // LiveTurno session tracking
+  inicioReal          DateTime?               // Cuando inicio realmente la sesion
+  finReal             DateTime?               // Cuando termino la sesion
+  duracionRealMinutos Int?                    // Calculado al cerrar sesion
+
   createdAt           DateTime                @default(now())
   updatedAt           DateTime                @updatedAt
   MovimientoCC        MovimientoCC[]

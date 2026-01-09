@@ -15,6 +15,8 @@ import { CreateTurnoDto } from './dto/create-turno.dto';
 import { ReprogramarTurnoDto } from './dto/reprogramar-turno.dto';
 import { CobrarTurnoDto } from './dto/cobrar-turno.dto';
 import { CreateCirugiaTurnoDto } from './dto/create-cirugia-turno.dto';
+import { IniciarSesionDto } from './dto/iniciar-sesion.dto';
+import { CerrarSesionDto } from './dto/cerrar-sesion.dto';
 import { resolveScope } from '@/src/common/scope/resolve-scope';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
@@ -103,5 +105,25 @@ export class TurnosController {
   @Post(':id/cobrar')
   cobrar(@Param('id') id: string, @Body() dto: CobrarTurnoDto) {
     return this.turnosService.cobrarTurno(id, dto);
+  }
+
+  // ==================== LiveTurno Session Endpoints ====================
+
+  @Post(':id/iniciar-sesion')
+  iniciarSesion(@Param('id') id: string, @Body() dto?: IniciarSesionDto) {
+    return this.turnosService.iniciarSesion(id, dto);
+  }
+
+  @Patch(':id/cerrar-sesion')
+  cerrarSesion(@Param('id') id: string, @Body() dto?: CerrarSesionDto) {
+    return this.turnosService.cerrarSesion(id, dto);
+  }
+
+  @Get('sesion-activa')
+  sesionActiva(@Query('profesionalId') profesionalId: string) {
+    if (!profesionalId) {
+      throw new BadRequestException('Debe especificar profesionalId.');
+    }
+    return this.turnosService.obtenerSesionActiva(profesionalId);
   }
 }

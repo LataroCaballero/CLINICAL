@@ -7,6 +7,12 @@ import DockNav from "./components/DockNav";
 import { useUIStore } from "@/lib/stores/useUIStore";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import dynamic from "next/dynamic";
+import {
+  LiveTurnoPanel,
+  LiveTurnoIndicator,
+  LiveTurnoRecoveryDialog,
+  LiveTurnoSyncChecker,
+} from "@/components/live-turno";
 
 const Sidebar = dynamic(() => import("./components/Sidebar"), { ssr: false });
 
@@ -71,6 +77,12 @@ export default function DashboardLayout({
           <DockNav />
         </div>
       </div>
+
+      {/* LiveTurno Global Components */}
+      <LiveTurnoPanel />
+      <LiveTurnoIndicator />
+      <LiveTurnoRecoveryDialog />
+      <LiveTurnoSyncChecker />
     </div>
   );
 }

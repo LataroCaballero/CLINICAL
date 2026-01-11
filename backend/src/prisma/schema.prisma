@@ -33,6 +33,8 @@ model Usuario {
   profesional           Profesional?
   tokens                RefreshToken[]
   secretaria            Secretaria?
+  mensajesEnviados      MensajeInterno[]        @relation("MensajesEnviados")
+  mensajesLeidos        MensajeLectura[]        @relation("MensajesLeidos")
 }
 
 model RefreshToken {
@@ -141,12 +143,38 @@ model Paciente {
 }
 
 model MensajeInterno {
-  id          String   @id @default(uuid())
-  mensaje     String
-  autorUserId String
-  pacienteId  String
-  timestamp   DateTime @default(now())
-  paciente    Paciente @relation(fields: [pacienteId], references: [id])
+  id         String            @id @default(uuid())
+  mensaje    String
+  prioridad  PrioridadMensaje  @default(MEDIA)
+  autorId    String
+  pacienteId String
+  createdAt  DateTime          @default(now())
+
+  autor      Usuario           @relation("MensajesEnviados", fields: [autorId], references: [id])
+  paciente   Paciente          @relation(fields: [pacienteId], references: [id])
+  lecturas   MensajeLectura[]
+
+  @@index([pacienteId, createdAt])
+  @@index([autorId])
+}
+
+model MensajeLectura {
+  id        String   @id @default(uuid())
+  mensajeId String
+  usuarioId String
+  leidoAt   DateTime @default(now())
+
+  mensaje   MensajeInterno @relation(fields: [mensajeId], references: [id], onDelete: Cascade)
+  usuario   Usuario        @relation("MensajesLeidos", fields: [usuarioId], references: [id])
+
+  @@unique([mensajeId, usuarioId])
+  @@index([usuarioId])
+}
+
+enum PrioridadMensaje {
+  ALTA
+  MEDIA
+  BAJA
 }
 
 model EstudioPaciente {

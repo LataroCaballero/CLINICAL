@@ -18,6 +18,7 @@ import HistoriaClinica from "@/components/patient/PatientDrawer/views/HistoriaCl
 import PacienteTurnos from "@/components/patient/PatientDrawer/views/TurnosPaciente";
 import CuentaCorrienteView from "@/components/patient/PatientDrawer/views/CuentaCorrienteView";
 import PresupuestosView from "@/components/patient/PatientDrawer/views/PresupuestosView";
+import MensajesView from "@/components/patient/PatientDrawer/views/MensajesView";
 
 export default function PatientDrawer({
   open,
@@ -87,6 +88,13 @@ export default function PatientDrawer({
             {view === "presupuestos" && paciente &&
               <PresupuestosView
                 pacienteId={paciente.id}
+                onBack={() => setView("default")}
+              />
+            }
+            {view === "mensajes" && paciente &&
+              <MensajesView
+                pacienteId={paciente.id}
+                pacienteNombre={paciente.nombreCompleto}
                 onBack={() => setView("default")}
               />
             }

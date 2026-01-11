@@ -16,6 +16,7 @@ import { TiposTurnoModule } from './modules/tipos-turno/tipos-turno.module';
 import { CuentasCorrientesModule } from './modules/cuentas-corrientes/cuentas-corrientes.module';
 import { PresupuestosModule } from './modules/presupuestos/presupuestos.module';
 import { HCTemplatesModule } from './modules/hc-templates/hc-templates.module';
+import { MensajesInternosModule } from './modules/mensajes-internos/mensajes-internos.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { HCTemplatesModule } from './modules/hc-templates/hc-templates.module';
     TiposTurnoModule,
     CuentasCorrientesModule,
     PresupuestosModule,
+    MensajesInternosModule,
   ],
 })
 export class AppModule implements NestModule {

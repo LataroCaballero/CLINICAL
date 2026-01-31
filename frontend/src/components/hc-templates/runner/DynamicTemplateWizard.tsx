@@ -18,6 +18,11 @@ import { TextNode } from './nodes/TextNode';
 import { ChecklistNode } from './nodes/ChecklistNode';
 import { ComputedNode } from './nodes/ComputedNode';
 import { ReviewNode } from './nodes/ReviewNode';
+import { DrawingNode } from './nodes/DrawingNode';
+import { DiagnosisNode } from './nodes/DiagnosisNode';
+import { TreatmentNode } from './nodes/TreatmentNode';
+import { ProcedureNode } from './nodes/ProcedureNode';
+import { BudgetNode } from './nodes/BudgetNode';
 import type {
   TemplateSchema,
   DecisionNode as DecisionNodeType,
@@ -26,6 +31,11 @@ import type {
   ChecklistNode as ChecklistNodeType,
   ComputedNode as ComputedNodeType,
   ReviewNode as ReviewNodeType,
+  DrawingNode as DrawingNodeType,
+  DiagnosisNode as DiagnosisNodeType,
+  TreatmentNode as TreatmentNodeType,
+  ProcedureNode as ProcedureNodeType,
+  BudgetNode as BudgetNodeType,
 } from '@/types/hc-templates';
 
 interface DynamicTemplateWizardProps {
@@ -314,6 +324,53 @@ function renderNode(
           schema={schema}
           answers={answers}
           computed={computed}
+        />
+      );
+
+    case 'drawing':
+      return (
+        <DrawingNode
+          node={node as DrawingNodeType}
+          value={answers[(node as DrawingNodeType).key] as string}
+          onChange={(value) => onChange((node as DrawingNodeType).key, value)}
+        />
+      );
+
+    case 'diagnosis':
+      return (
+        <DiagnosisNode
+          node={node as DiagnosisNodeType}
+          value={answers[(node as DiagnosisNodeType).key] as string | { value: string; otherText?: string }}
+          onChange={(value) => onChange((node as DiagnosisNodeType).key, value)}
+        />
+      );
+
+    case 'treatment':
+      return (
+        <TreatmentNode
+          node={node as TreatmentNodeType}
+          value={answers[(node as TreatmentNodeType).key] as Parameters<typeof TreatmentNode>[0]['value']}
+          onChange={(value) => onChange((node as TreatmentNodeType).key, value)}
+        />
+      );
+
+    case 'procedure':
+      return (
+        <ProcedureNode
+          node={node as ProcedureNodeType}
+          value={answers[(node as ProcedureNodeType).key] as Parameters<typeof ProcedureNode>[0]['value']}
+          onChange={(value) => onChange((node as ProcedureNodeType).key, value)}
+          answers={answers}
+        />
+      );
+
+    case 'budget':
+      return (
+        <BudgetNode
+          node={node as BudgetNodeType}
+          value={answers[(node as BudgetNodeType).key] as Parameters<typeof BudgetNode>[0]['value']}
+          onChange={(value) => onChange((node as BudgetNodeType).key, value)}
+          answers={answers}
         />
       );
 

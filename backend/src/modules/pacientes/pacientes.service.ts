@@ -476,6 +476,20 @@ export class PacientesService {
       where.profesionalId = scope.profesionalId;
     }
 
-    return this.prisma.paciente.findMany({ where });
+    const pacientes = await this.prisma.paciente.findMany({
+      where,
+      include: {
+        obraSocial: {
+          select: {
+            nombre: true,
+          },
+        },
+      },
+    });
+
+    return pacientes.map((p) => ({
+      ...p,
+      obraSocialNombre: p.obraSocial?.nombre ?? null,
+    }));
   }
 }

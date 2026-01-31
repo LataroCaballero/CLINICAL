@@ -17,6 +17,8 @@ import { CuentasCorrientesModule } from './modules/cuentas-corrientes/cuentas-co
 import { PresupuestosModule } from './modules/presupuestos/presupuestos.module';
 import { HCTemplatesModule } from './modules/hc-templates/hc-templates.module';
 import { MensajesInternosModule } from './modules/mensajes-internos/mensajes-internos.module';
+import { StockModule } from './modules/stock/stock.module';
+import { FinanzasModule } from './modules/finanzas/finanzas.module';
 
 @Module({
   imports: [
@@ -39,6 +41,8 @@ import { MensajesInternosModule } from './modules/mensajes-internos/mensajes-int
     CuentasCorrientesModule,
     PresupuestosModule,
     MensajesInternosModule,
+    StockModule,
+    FinanzasModule,
   ],
 })
 export class AppModule implements NestModule {

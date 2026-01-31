@@ -5,55 +5,49 @@ import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@
 import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ShoppingCart, Search } from "lucide-react";
-import Image from "next/image";
+import { ShoppingCart, Search, Loader2, AlertTriangle, Package } from "lucide-react";
 import ProductDetailModal from "./components/ProductDetailModal";
+import { useInventario } from "@/hooks/useInventario";
+import { useCategorias } from "@/hooks/useProductos";
+import { Inventario } from "@/types/stock";
 
 export default function CatalogoPage() {
   const [categoria, setCategoria] = useState<string>("todos");
   const [busqueda, setBusqueda] = useState<string>("");
-  const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
+  const [selectedInventario, setSelectedInventario] = useState<Inventario | null>(null);
 
-  // Datos mock
-  const productos = [
-    {
-      id: 1,
-      nombre: "Crema Regeneradora Facial",
-      descripcion: "Con ácido hialurónico y colágeno. Ideal para piel seca o dañada.",
-      precio: 8500,
-      stock: 12,
-      categoria: "cremas",
-      imagen: "/images/crema.jpg",
-      usoInterno: false,
-    },
-    {
-      id: 2,
-      nombre: "Suplemento Colágeno Plus",
-      descripcion: "Complemento nutricional para mejorar elasticidad de la piel.",
-      precio: 12500,
-      stock: 7,
-      categoria: "suplementos",
-      imagen: "/images/suplemento.jpg",
-      usoInterno: false,
-    },
-    {
-      id: 3,
-      nombre: "Mascarilla Hidratante",
-      descripcion: "Uso exclusivo interno para tratamientos post operatorios.",
-      precio: 3000,
-      stock: 20,
-      categoria: "accesorios",
-      imagen: "/images/mascarilla.jpg",
-      usoInterno: true,
-    },
-  ];
+  // Datos reales del backend
+  const { data: inventario, isLoading, error } = useInventario();
+  const { data: categoriasData } = useCategorias();
 
-  const productosFiltrados = productos.filter(
-    (p) =>
-      !p.usoInterno &&
-      (categoria === "todos" || p.categoria === categoria) &&
-      p.nombre.toLowerCase().includes(busqueda.toLowerCase())
-  );
+  // Filtrar solo productos de venta con stock > 0
+  const productosFiltrados = inventario?.filter(
+    (inv) =>
+      inv.producto.tipo === "PRODUCTO_VENTA" &&
+      inv.stockActual > 0 &&
+      (categoria === "todos" || inv.producto.categoria === categoria) &&
+      inv.producto.nombre.toLowerCase().includes(busqueda.toLowerCase())
+  ) ?? [];
+
+  // Obtener categorías únicas de productos de venta
+  const categorias = categoriasData ?? [];
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 gap-4">
+        <AlertTriangle className="w-12 h-12 text-red-500" />
+        <p className="text-red-600">Error al cargar el catálogo</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-6 p-8">
@@ -79,9 +73,11 @@ export default function CatalogoPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="todos">Todos</SelectItem>
-              <SelectItem value="cremas">Cremas</SelectItem>
-              <SelectItem value="suplementos">Suplementos</SelectItem>
-              <SelectItem value="accesorios">Accesorios</SelectItem>
+              {categorias.map((cat) => (
+                <SelectItem key={cat} value={cat}>
+                  {cat}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -89,49 +85,50 @@ export default function CatalogoPage() {
 
       {/* Grid de productos */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {productosFiltrados.map((producto) => (
+        {productosFiltrados.map((inv) => (
           <Card
-            key={producto.id}
+            key={inv.id}
             className="overflow-hidden shadow-sm hover:shadow-md transition-all border border-gray-200 bg-white"
           >
-            <div className="relative h-56 w-full">
-              <Image
-                src={producto.imagen}
-                alt={producto.nombre}
-                fill
-                className="object-cover"
-              />
+            <div className="relative h-56 w-full bg-gradient-to-br from-indigo-50 to-purple-50 flex items-center justify-center">
+              {inv.producto.imagenUrl ? (
+                <img
+                  src={inv.producto.imagenUrl}
+                  alt={inv.producto.nombre}
+                  className="object-cover w-full h-full"
+                />
+              ) : (
+                <Package className="w-16 h-16 text-indigo-200" />
+              )}
             </div>
 
             <CardHeader>
-              <h3 className="text-lg font-semibold text-gray-800">{producto.nombre}</h3>
-              <p className="text-sm text-gray-500 line-clamp-2">{producto.descripcion}</p>
+              <h3 className="text-lg font-semibold text-gray-800">{inv.producto.nombre}</h3>
+              <p className="text-sm text-gray-500 line-clamp-2">
+                {inv.producto.descripcion ?? "Sin descripción"}
+              </p>
             </CardHeader>
 
             <CardContent>
               <p className="text-lg font-semibold text-indigo-600">
-                ${producto.precio.toLocaleString("es-AR")}
+                ${(Number(inv.precioActual) || Number(inv.producto.precioSugerido) || 0).toLocaleString("es-AR")}
               </p>
-              <p className="text-sm text-gray-500">Stock disponible: {producto.stock}</p>
-              <Badge variant="outline" className="mt-2 capitalize">
-                {producto.categoria}
-              </Badge>
+              <p className="text-sm text-gray-500">Stock disponible: {inv.stockActual}</p>
+              {inv.producto.categoria && (
+                <Badge variant="outline" className="mt-2 capitalize">
+                  {inv.producto.categoria}
+                </Badge>
+              )}
             </CardContent>
 
             <CardFooter className="flex justify-end">
-            <Button
+              <Button
                 className="bg-indigo-600 text-white hover:bg-indigo-700 flex items-center gap-2"
-                onClick={() => setSelectedProduct(producto)}
-            >
+                onClick={() => setSelectedInventario(inv)}
+              >
                 <ShoppingCart className="w-4 h-4" />
                 Ver detalle
-            </Button>
-
-            <ProductDetailModal
-                product={selectedProduct}
-                open={!!selectedProduct}
-                onOpenChange={() => setSelectedProduct(null)}
-            />
+              </Button>
             </CardFooter>
           </Card>
         ))}
@@ -142,6 +139,13 @@ export default function CatalogoPage() {
           </div>
         )}
       </div>
+
+      {/* Modal de detalle */}
+      <ProductDetailModal
+        inventario={selectedInventario}
+        open={!!selectedInventario}
+        onOpenChange={(open) => !open && setSelectedInventario(null)}
+      />
     </div>
   );
 }

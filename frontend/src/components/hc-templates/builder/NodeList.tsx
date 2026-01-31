@@ -28,6 +28,11 @@ const NODE_TYPE_LABELS: Record<NodeType, string> = {
   checklist: 'Checklist',
   computed: 'Presupuesto',
   review: 'Revisión',
+  drawing: 'Dibujo',
+  diagnosis: 'Diagnóstico',
+  treatment: 'Tratamiento',
+  procedure: 'Procedimiento',
+  budget: 'Presupuesto',
 };
 
 const NODE_TYPE_COLORS: Record<NodeType, string> = {
@@ -37,6 +42,11 @@ const NODE_TYPE_COLORS: Record<NodeType, string> = {
   checklist: 'border-l-purple-500',
   computed: 'border-l-orange-500',
   review: 'border-l-pink-500',
+  drawing: 'border-l-teal-500',
+  diagnosis: 'border-l-indigo-500',
+  treatment: 'border-l-emerald-500',
+  procedure: 'border-l-cyan-500',
+  budget: 'border-l-amber-500',
 };
 
 export function NodeList({

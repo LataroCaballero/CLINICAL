@@ -347,6 +347,7 @@ export function TemplateBuilder({ templateId, onBack }: TemplateBuilderProps) {
                 node={selectedNode}
                 onUpdate={handleUpdateNode}
                 onDelete={() => handleRemoveNode(selectedNode.id)}
+                allNodes={nodes}
               />
             ) : (
               <Card>
@@ -456,6 +457,47 @@ function createEmptyNode(type: NodeType, index: number): TemplateNode {
       return {
         ...baseNode,
         type: 'review',
+      };
+    case 'drawing':
+      return {
+        ...baseNode,
+        type: 'drawing',
+        key: `drawing_${index}`,
+        ui: { width: 400, height: 300, strokeWidth: 4 },
+      };
+    case 'diagnosis':
+      return {
+        ...baseNode,
+        type: 'diagnosis',
+        key: `diagnosis_${index}`,
+        options: [],
+        ui: { control: 'radio-cards', allowOther: false },
+        syncToPaciente: true,
+      };
+    case 'treatment':
+      return {
+        ...baseNode,
+        type: 'treatment',
+        key: `treatment_${index}`,
+        ui: { multiSelect: true, showPrice: true, showDescription: false },
+        syncToPaciente: true,
+      };
+    case 'procedure':
+      return {
+        ...baseNode,
+        type: 'procedure',
+        key: `procedure_${index}`,
+        sourceNodeKey: '',
+        ui: { showIndicaciones: true, showProcedimiento: true, allowComments: true },
+      };
+    case 'budget':
+      return {
+        ...baseNode,
+        type: 'budget',
+        key: `budget_${index}`,
+        sourceNodeKey: '',
+        ui: { allowQuantityEdit: true, allowPriceEdit: false, allowAdditionalItems: false, allowDiscount: true },
+        createPresupuesto: false,
       };
   }
 }

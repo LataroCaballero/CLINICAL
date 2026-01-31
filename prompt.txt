@@ -1,0 +1,136 @@
+Implementar el módulo financiero completo: Cuentas Corrientes, Pagos/Ingresos, Presupuestos (enlazado a cuenta corriente), Facturación/Comprobantes, Reportes financieros, y (teniendo en cuenta el rol Facturador) la extensión de liquidaciones y panel mensual.
+
+REFERENCIA DE REQUISITOS (a cumplir)
+- RF-015: Cuentas Corrientes (estado por paciente, pagos parciales, medios de pago, recibos, antigüedad de deuda).
+- RF-016: Facturación (facturas/recibos, integración obras sociales, coseguros, valores diferenciados, liquidación pendiente).
+- RF-017: Gestión de Pagos (efectivo/transferencia/tarjeta, reportes ingresos diarios).
+- RF-017 (Presupuestos): crear/enviar, estados, presupuestos aceptados a cuenta corriente.
+- Extensión Rol Facturador:
+  - RF-028: Liquidaciones pendientes por práctica (filtros, agrupadores, bulk “Pagado”, registrar fecha+usuario, bloquear edición).
+  - RF-029: Panel mensual consolidado + facturación parcial.
+  - RF-030: Datos fiscales por obra social + generar comprobante + PDF/email.
+  - RF-031: Reporte histórico por período + filtros + export PDF/CSV.
+- RF-022/023: Reportes financieros + exportación.
+
+REGLAS DE IMPLEMENTACIÓN
+3) Mantener consistencia de componentes: DataTable/columns helpers, filtros, chips, badges, etc.
+4) Todas las pantallas deben contemplar: loading, empty state, error state, retry, permisos/roles, y accesibilidad.
+5) Si endpoints no existen o no están claros:
+   - Buscá en el código del frontend el “API client” o services existentes y su patrón.
+   - Buscá en el backend (si está en el monorepo o accesible) los controllers/routes.
+   - Si aun así falta, dejá un adapter aislado + mocks tipados y un TODO muy explícito con el contrato esperado.
+   - Pero igualmente completá el UI/UX con datos simulados para que quede navegable.
+
+ARQUITECTURA FRONTEND (ENTREGABLES)
+A) NAVEGACIÓN / IA DE FINANZAS
+Crear entrada de menú “Finanzas” con sub-secciones:
+- Resumen (Dashboard financiero)
+- Ingresos (Pagos)
+- Cuentas por cobrar (Cuentas Corrientes)
+- Presupuestos
+- Facturación/Comprobantes
+- Reportes
+- (Solo Facturador y medico) Liquidaciones / Cierre Mensual
+
+B) PÁGINAS / VISTAS (mínimo)
+1) Dashboard Finanzas (/finanzas)
+   - KPIs: ingresos hoy, semana, mes; cuentas por cobrar; morosidad; pendientes de liquidación; top obras sociales.
+   - Gráficos (Recharts) simples: ingresos por día (30 días), por obra social, por profesional.
+   - Atajos: “Registrar pago”, “Ver cuenta corriente”, “Ver liquidaciones”.
+
+2) Cuentas Corrientes (/finanzas/cuentas-corrientes)
+   - Tabla de pacientes con: saldo actual, vencido, último pago, estado (al día / moroso), acciones.
+   - Filtros: nombre/DNI, obra social, estado, rango saldo.
+   - Click -> detalle de cuenta corriente del paciente.
+
+3) Detalle Cuenta Corriente Paciente (/pacientes/[id]/cuenta-corriente o route equivalente)
+   - Timeline/tabla de movimientos: cargos (prácticas/procedimientos/ventas productos), pagos, ajustes.
+   - Mostrar “Antigüedad de deuda” (aging buckets: 0-30, 31-60, 61-90, +90).
+   - CTA “Registrar pago” (modal/drawer) con:
+     - monto, medio (efectivo/transferencia/tarjeta), fecha, referencia/nota, adjunto opcional (comprobante).
+     - soporte a pagos parciales.
+   - Botón “Generar recibo” (PDF) por pago o por rango.
+
+4) Pagos e Ingresos (/finanzas/pagos)
+   - Tabla de pagos con: fecha, paciente, concepto, medio, monto, usuario, estado (confirmado/anulado).
+   - Filtros: fecha (rango), medio de pago, profesional, obra social, paciente.
+   - “Reporte de ingresos diarios”: vista agregada por día + export CSV/PDF.
+
+5) Presupuestos (/finanzas/presupuestos)
+   - Tabla con estados (BORRADOR/ENVIADO/ACEPTADO/RECHAZADO/CANCELADO), paciente, total, fecha, acciones.
+   - Crear presupuesto (si ya existe, mejorar UX):
+     - ítems (prácticas, honorarios, insumos), descuentos, observaciones.
+     - Enviar por PDF/Email/WhatsApp (si integración no está, dejar UI + placeholders + TODO).
+   - Acción “Aceptar” -> impacta en cuenta corriente (crea cargo o plan de pagos según soporte existente).
+   - Historial de cambios de estado.
+
+6) Facturación / Comprobantes (/finanzas/facturacion)
+   - Listado de comprobantes emitidos (factura/recibo/nota): fecha, receptor (particular/obra social/clínica), monto, estado, descarga PDF.
+   - Flujo “Generar comprobante”:
+     - elegir segmento: obra social / clínica / particular
+     - autocompletar datos fiscales (si obra social)
+     - permitir facturación parcial (monto a facturar + saldo pendiente)
+     - guardar registro y permitir descarga PDF
+   - Si AFIP/electrónica no está integrada: dejar “Comprobante interno” con numeración y PDF.
+
+7) Reportes (/finanzas/reportes)
+   - Reportes financieros: ingresos por período, por profesional, por obra social, por práctica, cuentas por cobrar, morosidad, pagos pendientes.
+   - Cada reporte con filtros + tabla + export CSV/PDF + (opcional) envío programado (si no existe, UI placeholder).
+
+C) EXTENSIÓN ROL FACTURADOR (si el rol existe en el sistema)
+1) Liquidaciones Pendientes (/finanzas/liquidaciones)
+   - DataTable: por práctica individual: fecha procedimiento, paciente, profesional, obra social, código/desc práctica, monto, estado (Pendiente/Pagado).
+   - Filtros + agrupadores: obra social, profesional, fecha, estado.
+   - Bulk action: seleccionar múltiples filas -> “Marcar como pagado”.
+   - Al marcar pagado: registrar fecha + usuario que liquida.
+   - Prácticas pagadas quedan bloqueadas para edición posterior (en UI deshabilitar acciones, mostrar lock badge).
+
+2) Panel Mensual / Cierre (/finanzas/cierre-mensual)
+   - Resumen consolidado: total por obra social, por clínica, particulares, total global.
+   - Acciones: “Emitir comprobante” por segmento.
+   - Soportar facturación parcial y saldo pendiente.
+
+3) Datos Fiscales Obras Sociales (en flujo de comprobante o página de configuración)
+   - Selector obra social -> precarga CUIT, domicilio, condición IVA, etc.
+   - Generar comprobante + guardar + PDF + enviar por email (si no hay, dejar UI + TODO).
+
+4) Histórico Facturación
+   - Consulta por período, usuario, obra social, estado.
+   - Export CSV/PDF.
+
+IMPLEMENTACIÓN TÉCNICA (PATRONES)
+- Crear/normalizar capa de “api/finanzas”:
+  - hooks con TanStack Query: useFinanzasDashboard, usePagos, useCuentaCorriente, usePresupuestos, useLiquidaciones, etc.
+  - invalidaciones claras al crear pago / cambiar estado presupuesto / marcar liquidación pagada.
+- Tipos: definir DTOs en /types o donde corresponda, alineados a backend.
+- Componentes reutilizables:
+  - MoneyCell (formato moneda ARS configurable), DateCell, StatusBadge, PaymentMethodBadge.
+  - Filtros: DateRangePicker, MultiSelect (obra social/profesional), SearchInput.
+  - ExportButton (CSV/PDF) con estrategia: si backend expone endpoints de export, consumir; si no, generar CSV client-side.
+- Formularios:
+  - React Hook Form + Zod; validaciones: monto > 0, fecha requerida, medio requerido, referencias opcionales.
+- Permisos:
+  - Respetar RBAC ya existente. Si hay guard de rutas/hoc, usarlo.
+  - Ocultar “Liquidaciones/Cierre Mensual” si no es Facturador/Admin.
+
+CRITERIOS DE ACEPTACIÓN (DEBÉS DEJARLO FUNCIONANDO)
+- Navegación de Finanzas completa y sin rutas rotas.
+- Listados con filtros/paginación/orden.
+- Registro de pago (modal) funciona y actualiza cuenta corriente + listados (optimistic o refetch).
+- Presupuestos: al menos ver, crear (si existía), cambiar estado y reflejar en cuenta corriente al aceptar.
+- Reporte ingresos diarios: agregación por día visible y export CSV funcionando.
+- Liquidaciones (si rol facturador): tabla + bulk pagado + lock UI.
+- Manejo de errores consistente (toast + empty states).
+- Código limpio, tipado y consistente con el repo.
+
+SALIDA ESPERADA DE TU PARTE (Claude)
+1) Lista de archivos que vas a crear/modificar (tree).
+3) Si detectás gaps de backend, dejá contratos claros (interfaces + endpoints esperados) y mock para no frenar el UI.
+
+Empezá ahora: proponé la estructura y luego implementá por prioridad:
+(1) navegación + dashboard,
+(2) cuentas corrientes (lista + detalle + registrar pago),
+(3) pagos/ingresos,
+(4) presupuestos,
+(5) reportes/export,
+(6) facturador (liquidaciones + cierre).

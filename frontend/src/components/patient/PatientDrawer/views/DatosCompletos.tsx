@@ -8,6 +8,7 @@ import { ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
+import { api } from "@/lib/api";
 
 export default function DatosCompletos({
     paciente,
@@ -215,30 +216,17 @@ export default function DatosCompletos({
         }
 
         try {
-            try {
-                setSaving(true);
+            setSaving(true);
 
-                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/pacientes/${paciente.id}`, {
-                    method: "PATCH",
-                    headers: { "Content-Type": "application/json" },
-                    credentials: "include",
-                    body: JSON.stringify({
-                        section: "contacto",
-                        data: result.data,
-                    }),
-                });
+            await api.patch(`/pacientes/${paciente.id}`, {
+                section: "contacto",
+                data: result.data,
+            });
 
-                if (!res.ok) {
-                    throw new Error("Error al guardar");
-                }
-
-                toast.success("Datos de contacto actualizados correctamente");
-                setEditingSection(null);
-            } catch (e) {
-                toast.error("No se pudieron guardar los cambios");
-            } finally {
-                setSaving(false);
-            }
+            toast.success("Datos de contacto actualizados correctamente");
+            setEditingSection(null);
+        } catch (e) {
+            toast.error("No se pudieron guardar los cambios");
         } finally {
             setSaving(false);
         }
@@ -277,20 +265,10 @@ export default function DatosCompletos({
         try {
             setSaving(true);
 
-            const res = await fetch(
-                `${process.env.NEXT_PUBLIC_API_URL}/pacientes/${paciente.id}`,
-                {
-                    method: "PATCH",
-                    headers: { "Content-Type": "application/json" },
-                    credentials: "include",
-                    body: JSON.stringify({
-                        section: "emergencia",
-                        data: result.data,
-                    }),
-                }
-            );
-
-            if (!res.ok) throw new Error();
+            await api.patch(`/pacientes/${paciente.id}`, {
+                section: "emergencia",
+                data: result.data,
+            });
 
             toast.success("Contacto de emergencia actualizado correctamente");
             setEditingSection(null);
@@ -335,20 +313,10 @@ export default function DatosCompletos({
         try {
             setSaving(true);
 
-            const res = await fetch(
-                `${process.env.NEXT_PUBLIC_API_URL}/pacientes/${paciente.id}`,
-                {
-                    method: "PATCH",
-                    headers: { "Content-Type": "application/json" },
-                    credentials: "include",
-                    body: JSON.stringify({
-                        section: "cobertura",
-                        data: result.data,
-                    }),
-                }
-            );
-
-            if (!res.ok) throw new Error();
+            await api.patch(`/pacientes/${paciente.id}`, {
+                section: "cobertura",
+                data: result.data,
+            });
 
             toast.success("Cobertura médica actualizada correctamente");
             setEditingSection(null);
@@ -391,20 +359,10 @@ export default function DatosCompletos({
         try {
             setSaving(true);
 
-            const res = await fetch(
-                `${process.env.NEXT_PUBLIC_API_URL}/pacientes/${paciente.id}`,
-                {
-                    method: "PATCH",
-                    headers: { "Content-Type": "application/json" },
-                    credentials: "include",
-                    body: JSON.stringify({
-                        section: "clinica",
-                        data: result.data,
-                    }),
-                }
-            );
-
-            if (!res.ok) throw new Error();
+            await api.patch(`/pacientes/${paciente.id}`, {
+                section: "clinica",
+                data: result.data,
+            });
 
             toast.success("Información clínica actualizada correctamente");
             setEditingSection(null);
@@ -459,20 +417,10 @@ export default function DatosCompletos({
         try {
             setSaving(true);
 
-            const res = await fetch(
-                `${process.env.NEXT_PUBLIC_API_URL}/pacientes/${paciente.id}`,
-                {
-                    method: "PATCH",
-                    headers: { "Content-Type": "application/json" },
-                    credentials: "include",
-                    body: JSON.stringify({
-                        section: "estado",
-                        data: result.data,
-                    }),
-                }
-            );
-
-            if (!res.ok) throw new Error();
+            await api.patch(`/pacientes/${paciente.id}`, {
+                section: "estado",
+                data: result.data,
+            });
 
             toast.success("Estado del paciente actualizado correctamente");
             setEditingSection(null);
@@ -524,20 +472,10 @@ export default function DatosCompletos({
         try {
             setSaving(true);
 
-            const res = await fetch(
-                `${process.env.NEXT_PUBLIC_API_URL}/pacientes/${paciente.id}`,
-                {
-                    method: "PATCH",
-                    headers: { "Content-Type": "application/json" },
-                    credentials: "include",
-                    body: JSON.stringify({
-                        section: "personales",
-                        data: result.data,
-                    }),
-                }
-            );
-
-            if (!res.ok) throw new Error();
+            await api.patch(`/pacientes/${paciente.id}`, {
+                section: "personales",
+                data: result.data,
+            });
 
             toast.success("Datos personales actualizados correctamente");
             setEditingSection(null);

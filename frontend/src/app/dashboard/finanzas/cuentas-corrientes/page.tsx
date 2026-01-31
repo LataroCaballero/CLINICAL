@@ -1,185 +1,356 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Search, DollarSign, ArrowUpCircle, ArrowDownCircle } from "lucide-react";
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerClose } from "@/components/ui/drawer";
-import { Label } from "@/components/ui/label";
-import NewMovimientoModal from "./components/NewMovimientoModal";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Search,
+  Filter,
+  ArrowUpDown,
+  Eye,
+  DollarSign,
+  AlertTriangle,
+  CheckCircle2,
+  Plus,
+} from "lucide-react";
+import Link from "next/link";
+import { useCuentasCorrientes } from "@/hooks/useFinanzas";
+import { CuentasCorrientesFilters } from "@/types/finanzas";
+import RegistrarPagoModal from "./components/RegistrarPagoModal";
+
+function formatMoney(value: number): string {
+  return new Intl.NumberFormat("es-AR", {
+    style: "currency",
+    currency: "ARS",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(value);
+}
+
+function formatDate(dateStr: string | null): string {
+  if (!dateStr) return "-";
+  return new Date(dateStr).toLocaleDateString("es-AR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+}
 
 export default function CuentasCorrientesPage() {
-  const [search, setSearch] = useState("");
-  const [selectedPatient, setSelectedPatient] = useState<any | null>(null);
-  const [openDrawer, setOpenDrawer] = useState(false);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const estadoParam = searchParams.get("estado");
 
-  const pacientes = [
-    { id: 1, nombre: "Lautaro Caballero", saldo: 25000 },
-    { id: 2, nombre: "Federico García", saldo: -12000 },
-    { id: 3, nombre: "Ana Pérez", saldo: 0 },
-    { id: 4, nombre: "Carlos Gómez", saldo: 34000 },
-  ];
+  const [filters, setFilters] = useState<CuentasCorrientesFilters>({
+    search: "",
+    estado: (estadoParam as "AL_DIA" | "MOROSO" | "TODOS") || "TODOS",
+  });
+  const [sortField, setSortField] = useState<"saldo" | "nombre" | "ultimoPago">("saldo");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+  const [pagoModalOpen, setPagoModalOpen] = useState(false);
+  const [selectedPacienteId, setSelectedPacienteId] = useState<string | null>(null);
 
-  const movimientosMock = [
-    { id: 1, fecha: "02/11/2025", tipo: "Pago", descripcion: "Pago por tratamiento facial", monto: 20000 },
-    { id: 2, fecha: "05/11/2025", tipo: "Cargo", descripcion: "Nuevo tratamiento corporal", monto: -15000 },
-    { id: 3, fecha: "09/11/2025", tipo: "Pago", descripcion: "Pago parcial", monto: 10000 },
-  ];
+  const { data: cuentas, isLoading, error, refetch } = useCuentasCorrientes(filters);
 
-  const handleOpen = (paciente: any) => {
-    setSelectedPatient(paciente);
-    setOpenDrawer(true);
-  };
-
-  const [openModal, setOpenModal] = useState(false);
-  const [movimientos, setMovimientos] = useState(movimientosMock);
-
-  const handleAddMovimiento = (nuevo: any) => {
-    setMovimientos((prev) => [nuevo, ...prev]);
-    // actualiza el saldo del paciente
-    if (selectedPatient) {
-      selectedPatient.saldo += nuevo.monto;
+  const handleSort = (field: typeof sortField) => {
+    if (sortField === field) {
+      setSortDir(sortDir === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortDir("desc");
     }
   };
 
+  const handleRegistrarPago = (pacienteId: string) => {
+    setSelectedPacienteId(pacienteId);
+    setPagoModalOpen(true);
+  };
+
+  const sortedCuentas = [...(cuentas || [])].sort((a, b) => {
+    let comparison = 0;
+    switch (sortField) {
+      case "saldo":
+        comparison = a.saldoActual - b.saldoActual;
+        break;
+      case "nombre":
+        comparison = a.paciente.nombreCompleto.localeCompare(b.paciente.nombreCompleto);
+        break;
+      case "ultimoPago":
+        const dateA = a.ultimoPago ? new Date(a.ultimoPago).getTime() : 0;
+        const dateB = b.ultimoPago ? new Date(b.ultimoPago).getTime() : 0;
+        comparison = dateA - dateB;
+        break;
+    }
+    return sortDir === "asc" ? comparison : -comparison;
+  });
+
+  const filteredCuentas = sortedCuentas.filter((cuenta) => {
+    if (filters.search) {
+      const searchLower = filters.search.toLowerCase();
+      const matchesSearch =
+        cuenta.paciente.nombreCompleto.toLowerCase().includes(searchLower) ||
+        cuenta.paciente.dni.includes(filters.search);
+      if (!matchesSearch) return false;
+    }
+    if (filters.estado && filters.estado !== "TODOS") {
+      if (cuenta.estado !== filters.estado) return false;
+    }
+    return true;
+  });
+
   return (
     <div className="flex flex-col gap-6 p-6">
-      <h1 className="text-2xl font-semibold text-gray-800">Cuentas Corrientes</h1>
-
-      {/* Filtro */}
-      <div className="flex items-center gap-3">
-        <div className="relative w-full max-w-sm">
-          <Search className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
-          <Input
-            type="text"
-            placeholder="Buscar paciente..."
-            className="pl-9"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold text-gray-800">Cuentas Corrientes</h1>
+          <p className="text-sm text-gray-500 mt-1">
+            Gestiona los saldos y pagos de tus pacientes
+          </p>
         </div>
       </div>
 
-      {/* Tabla de pacientes */}
+      {/* Filtros */}
       <Card className="border shadow-sm">
-        <CardHeader>
-          <CardTitle className="text-base font-medium text-gray-700">Listado de pacientes</CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          <ScrollArea className="h-[420px]">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50 border-b text-gray-600">
-                <tr>
-                  <th className="text-left py-3 px-4">Paciente</th>
-                  <th className="text-left py-3 px-4">Saldo actual</th>
-                  <th className="text-right py-3 px-4">Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {pacientes
-                  .filter((p) =>
-                    p.nombre.toLowerCase().includes(search.toLowerCase())
-                  )
-                  .map((p) => (
-                    <tr key={p.id} className="border-b hover:bg-gray-50 transition">
-                      <td className="py-3 px-4">{p.nombre}</td>
-                      <td
-                        className={`py-3 px-4 font-medium ${
-                          p.saldo > 0
-                            ? "text-green-600"
-                            : p.saldo < 0
-                            ? "text-red-600"
-                            : "text-gray-500"
-                        }`}
-                      >
-                        ${p.saldo.toLocaleString("es-AR")}
-                      </td>
-                      <td className="py-3 px-4 text-right">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleOpen(p)}
-                        >
-                          Ver movimientos
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
-          </ScrollArea>
+        <CardContent className="pt-4">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Input
+                placeholder="Buscar por nombre o DNI..."
+                className="pl-10"
+                value={filters.search}
+                onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+              />
+            </div>
+            <Select
+              value={filters.estado}
+              onValueChange={(v) =>
+                setFilters({ ...filters, estado: v as "AL_DIA" | "MOROSO" | "TODOS" })
+              }
+            >
+              <SelectTrigger className="w-full md:w-[180px]">
+                <Filter className="w-4 h-4 mr-2" />
+                <SelectValue placeholder="Estado" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="TODOS">Todos</SelectItem>
+                <SelectItem value="AL_DIA">Al día</SelectItem>
+                <SelectItem value="MOROSO">Morosos</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </CardContent>
       </Card>
 
-      {/* Drawer de detalle */}
-      <Drawer open={openDrawer} onOpenChange={setOpenDrawer}>
-        <DrawerContent className="max-w-md ml-auto">
-          <DrawerHeader>
-            <DrawerTitle className="text-lg font-semibold">
-              {selectedPatient?.nombre}
-            </DrawerTitle>
-            <DrawerDescription>
-              Saldo actual:{" "}
-              <span
-                className={`font-medium ${
-                  selectedPatient?.saldo > 0
-                    ? "text-green-600"
-                    : selectedPatient?.saldo < 0
-                    ? "text-red-600"
-                    : "text-gray-500"
-                }`}
+      {/* Tabla */}
+      <Card className="border shadow-sm">
+        <CardContent className="p-0">
+          {isLoading ? (
+            <div className="p-6 space-y-4">
+              {[...Array(5)].map((_, i) => (
+                <Skeleton key={i} className="h-12 w-full" />
+              ))}
+            </div>
+          ) : error ? (
+            <div className="p-6 text-center">
+              <AlertTriangle className="w-12 h-12 text-amber-500 mx-auto mb-4" />
+              <p className="text-gray-600">Error al cargar las cuentas corrientes</p>
+              <Button
+                variant="outline"
+                className="mt-4"
+                onClick={() => refetch()}
               >
-                ${selectedPatient?.saldo?.toLocaleString("es-AR")}
-              </span>
-            </DrawerDescription>
-          </DrawerHeader>
+                Reintentar
+              </Button>
+            </div>
+          ) : filteredCuentas.length === 0 ? (
+            <div className="p-12 text-center">
+              <DollarSign className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-500">No se encontraron cuentas corrientes</p>
+              {filters.search && (
+                <p className="text-sm text-gray-400 mt-2">
+                  Probá ajustar los filtros de búsqueda
+                </p>
+              )}
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead
+                    className="cursor-pointer hover:bg-gray-50"
+                    onClick={() => handleSort("nombre")}
+                  >
+                    <div className="flex items-center gap-2">
+                      Paciente
+                      {sortField === "nombre" && (
+                        <ArrowUpDown className="w-4 h-4" />
+                      )}
+                    </div>
+                  </TableHead>
+                  <TableHead>DNI</TableHead>
+                  <TableHead>Obra Social</TableHead>
+                  <TableHead
+                    className="cursor-pointer hover:bg-gray-50 text-right"
+                    onClick={() => handleSort("saldo")}
+                  >
+                    <div className="flex items-center justify-end gap-2">
+                      Saldo Actual
+                      {sortField === "saldo" && (
+                        <ArrowUpDown className="w-4 h-4" />
+                      )}
+                    </div>
+                  </TableHead>
+                  <TableHead className="text-right">Vencido</TableHead>
+                  <TableHead
+                    className="cursor-pointer hover:bg-gray-50"
+                    onClick={() => handleSort("ultimoPago")}
+                  >
+                    <div className="flex items-center gap-2">
+                      Último Pago
+                      {sortField === "ultimoPago" && (
+                        <ArrowUpDown className="w-4 h-4" />
+                      )}
+                    </div>
+                  </TableHead>
+                  <TableHead>Estado</TableHead>
+                  <TableHead className="text-right">Acciones</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredCuentas.map((cuenta) => (
+                  <TableRow
+                    key={cuenta.id}
+                    className="cursor-pointer hover:bg-gray-50"
+                    onClick={() =>
+                      router.push(`/dashboard/pacientes/${cuenta.pacienteId}/cuenta-corriente`)
+                    }
+                  >
+                    <TableCell className="font-medium">
+                      {cuenta.paciente.nombreCompleto}
+                    </TableCell>
+                    <TableCell className="text-gray-500">
+                      {cuenta.paciente.dni}
+                    </TableCell>
+                    <TableCell>
+                      {cuenta.paciente.obraSocial?.nombre || (
+                        <span className="text-gray-400">Particular</span>
+                      )}
+                    </TableCell>
+                    <TableCell
+                      className={`text-right font-semibold ${
+                        cuenta.saldoActual > 0 ? "text-red-600" : "text-gray-600"
+                      }`}
+                    >
+                      {formatMoney(cuenta.saldoActual)}
+                    </TableCell>
+                    <TableCell
+                      className={`text-right ${
+                        cuenta.saldoVencido > 0 ? "text-amber-600" : "text-gray-400"
+                      }`}
+                    >
+                      {cuenta.saldoVencido > 0 ? formatMoney(cuenta.saldoVencido) : "-"}
+                    </TableCell>
+                    <TableCell className="text-gray-500">
+                      {formatDate(cuenta.ultimoPago)}
+                    </TableCell>
+                    <TableCell>
+                      {cuenta.estado === "AL_DIA" ? (
+                        <Badge
+                          variant="outline"
+                          className="bg-emerald-50 text-emerald-700 border-emerald-200"
+                        >
+                          <CheckCircle2 className="w-3 h-3 mr-1" />
+                          Al día
+                        </Badge>
+                      ) : (
+                        <Badge
+                          variant="outline"
+                          className="bg-amber-50 text-amber-700 border-amber-200"
+                        >
+                          <AlertTriangle className="w-3 h-3 mr-1" />
+                          Moroso
+                        </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRegistrarPago(cuenta.pacienteId);
+                          }}
+                        >
+                          <Plus className="w-4 h-4 mr-1" />
+                          Pago
+                        </Button>
+                        <Link
+                          href={`/dashboard/pacientes/${cuenta.pacienteId}/cuenta-corriente`}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Button variant="ghost" size="sm">
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                        </Link>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
 
-          <ScrollArea className="h-[60vh] px-4">
-            {movimientosMock.map((mov) => (
-              <div
-                key={mov.id}
-                className="flex items-start justify-between border-b py-3"
-              >
-                <div>
-                  <p className="text-sm text-gray-700 font-medium">
-                    {mov.descripcion}
-                  </p>
-                  <p className="text-xs text-gray-500">{mov.fecha}</p>
-                </div>
-                <div
-                  className={`text-sm font-semibold flex items-center gap-1 ${
-                    mov.monto > 0 ? "text-green-600" : "text-red-600"
-                  }`}
-                >
-                  {mov.monto > 0 ? (
-                    <ArrowUpCircle className="w-4 h-4" />
-                  ) : (
-                    <ArrowDownCircle className="w-4 h-4" />
-                  )}
-                  ${Math.abs(mov.monto).toLocaleString("es-AR")}
-                </div>
-              </div>
-            ))}
-          </ScrollArea>
+      {/* Resumen */}
+      {!isLoading && filteredCuentas.length > 0 && (
+        <div className="flex items-center justify-between text-sm text-gray-500">
+          <span>
+            Mostrando {filteredCuentas.length} cuenta{filteredCuentas.length !== 1 && "s"}
+          </span>
+          <span>
+            Total por cobrar:{" "}
+            <span className="font-semibold text-gray-700">
+              {formatMoney(
+                filteredCuentas.reduce((sum, c) => sum + c.saldoActual, 0)
+              )}
+            </span>
+          </span>
+        </div>
+      )}
 
-          {/* Registrar nuevo movimiento */}
-          <div className="border-t bg-gray-50 p-4 flex justify-between items-center">
-          <Button variant="outline" onClick={() => setOpenModal(true)}>
-            Registrar movimiento
-          </Button>
-          <NewMovimientoModal
-            open={openModal}
-            onOpenChange={setOpenModal}
-            onSave={handleAddMovimiento}
-          />
-            <DrawerClose asChild>
-              <Button variant="secondary">Cerrar</Button>
-            </DrawerClose>
-          </div>
-        </DrawerContent>
-      </Drawer>
+      {/* Modal para registrar pago */}
+      <RegistrarPagoModal
+        open={pagoModalOpen}
+        onOpenChange={setPagoModalOpen}
+        pacienteId={selectedPacienteId}
+        onSuccess={() => {
+          refetch();
+          setPagoModalOpen(false);
+        }}
+      />
     </div>
   );
 }

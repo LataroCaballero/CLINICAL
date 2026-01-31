@@ -75,11 +75,16 @@ model Profesional {
   Factura         Factura[]
   HistoriaClinica HistoriaClinica[]
   hcTemplates     HistoriaClinicaTemplate[]
+  inventarios     Inventario[]
+  lotes           Lote[]
+  ordenesCompra   OrdenCompra[]
   pacientes       Paciente[]                @relation("ProfesionalPaciente")
   practicas       PracticaRealizada[]
   Presupuesto     Presupuesto[]
   usuario         Usuario                   @relation(fields: [usuarioId], references: [id])
   turnos          Turno[]
+  tratamientos    Tratamiento[]
+  ventasProducto  VentaProducto[]
 }
 
 model Secretaria {
@@ -143,16 +148,16 @@ model Paciente {
 }
 
 model MensajeInterno {
-  id         String            @id @default(uuid())
+  id         String           @id @default(uuid())
   mensaje    String
-  prioridad  PrioridadMensaje  @default(MEDIA)
+  prioridad  PrioridadMensaje @default(MEDIA)
   autorId    String
   pacienteId String
-  createdAt  DateTime          @default(now())
+  createdAt  DateTime         @default(now())
 
-  autor      Usuario           @relation("MensajesEnviados", fields: [autorId], references: [id])
-  paciente   Paciente          @relation(fields: [pacienteId], references: [id])
-  lecturas   MensajeLectura[]
+  autor    Usuario          @relation("MensajesEnviados", fields: [autorId], references: [id])
+  paciente Paciente         @relation(fields: [pacienteId], references: [id])
+  lecturas MensajeLectura[]
 
   @@index([pacienteId, createdAt])
   @@index([autorId])
@@ -164,8 +169,8 @@ model MensajeLectura {
   usuarioId String
   leidoAt   DateTime @default(now())
 
-  mensaje   MensajeInterno @relation(fields: [mensajeId], references: [id], onDelete: Cascade)
-  usuario   Usuario        @relation("MensajesLeidos", fields: [usuarioId], references: [id])
+  mensaje MensajeInterno @relation(fields: [mensajeId], references: [id], onDelete: Cascade)
+  usuario Usuario        @relation("MensajesLeidos", fields: [usuarioId], references: [id])
 
   @@unique([mensajeId, usuarioId])
   @@index([usuarioId])
@@ -293,11 +298,16 @@ model MovimientoCC {
   cuentaCorrienteId        String
   monto                    Decimal                 @db.Decimal(10, 2)
   tipo                     TipoMovimiento
+  medioPago                MedioPago?
   descripcion              String?
+  referencia               String?                 // Número de comprobante, transferencia, etc.
   fecha                    DateTime                @default(now())
+  anulado                  Boolean                 @default(false)
+  fechaAnulacion           DateTime?
   historiaClinicaEntradaId String?                 @unique
   presupuestoId            String?
   turnoId                  String?
+  usuarioId                String?
   Factura                  Factura[]
   cuentaCorriente          CuentaCorriente         @relation(fields: [cuentaCorrienteId], references: [id])
   entradaHC                HistoriaClinicaEntrada? @relation(fields: [historiaClinicaEntradaId], references: [id])
@@ -305,6 +315,9 @@ model MovimientoCC {
   turno                    Turno?                  @relation(fields: [turnoId], references: [id])
   Presupuesto              Presupuesto[]
   ventaProducto            VentaProducto?
+
+  @@index([cuentaCorrienteId, fecha])
+  @@index([tipo, fecha])
 }
 
 model Presupuesto {
@@ -409,25 +422,34 @@ model Factura {
   tipo          TipoFactura
   numero        String                  @unique
   fecha         DateTime                @default(now())
+  estado        EstadoFactura           @default(EMITIDA)
   cuit          String?
   razonSocial   String?
   domicilio     String?
+  condicionIVA  String?
+  concepto      String?
   subtotal      Decimal                 @db.Decimal(10, 2)
   impuestos     Decimal                 @db.Decimal(10, 2)
   total         Decimal                 @db.Decimal(10, 2)
   profesionalId String
   movimientoId  String?
+  obraSocialId  String?
+  pacienteId    String?
   Archivo       Archivo[]
   movimiento    MovimientoCC?           @relation(fields: [movimientoId], references: [id])
   profesional   Profesional             @relation(fields: [profesionalId], references: [id])
   liquidaciones LiquidacionObraSocial[]
   practicas     PracticaRealizada[]
   VentaProducto VentaProducto[]
+
+  @@index([profesionalId, fecha])
+  @@index([estado])
 }
 
 model VentaProducto {
   id              String              @id @default(uuid())
   pacienteId      String?
+  profesionalId   String
   total           Decimal             @db.Decimal(10, 2)
   medioPago       String
   fecha           DateTime            @default(now())
@@ -437,6 +459,7 @@ model VentaProducto {
   factura         Factura?            @relation(fields: [facturaId], references: [id])
   movimiento      MovimientoCC?       @relation(fields: [movimientoId], references: [id])
   paciente        Paciente?           @relation(fields: [pacienteId], references: [id])
+  profesional     Profesional         @relation(fields: [profesionalId], references: [id])
   items           VentaProductoItem[]
 }
 
@@ -464,7 +487,7 @@ model Producto {
   precioSugerido    Decimal?            @db.Decimal(10, 2)
   requiereLote      Boolean             @default(false)
   descuentaStock    Boolean             @default(true)
-  inventario        Inventario?
+  inventarios       Inventario[]
   lotes             Lote[]
   OrdenCompraItem   OrdenCompraItem[]
   proveedores       ProductoProveedor[]
@@ -473,13 +496,17 @@ model Producto {
 
 model Inventario {
   id             String            @id @default(uuid())
-  productoId     String            @unique
+  productoId     String
+  profesionalId  String
   stockActual    Int               @default(0)
   stockMinimo    Int               @default(0)
   stockReservado Int               @default(0)
   precioActual   Decimal?          @db.Decimal(10, 2)
   producto       Producto          @relation(fields: [productoId], references: [id])
+  profesional    Profesional       @relation(fields: [profesionalId], references: [id])
   movimientos    MovimientoStock[]
+
+  @@unique([productoId, profesionalId])
 }
 
 model MovimientoStock {
@@ -505,11 +532,13 @@ model MovimientoStock {
 model Lote {
   id               String            @id @default(uuid())
   productoId       String
+  profesionalId    String
   lote             String?
   fechaVencimiento DateTime?
   cantidadInicial  Int
   cantidadActual   Int
   producto         Producto          @relation(fields: [productoId], references: [id])
+  profesional      Profesional       @relation(fields: [profesionalId], references: [id])
   movimientos      MovimientoStock[]
 }
 
@@ -536,10 +565,12 @@ model ProductoProveedor {
 model OrdenCompra {
   id             String            @id @default(uuid())
   proveedorId    String
+  profesionalId  String
   fechaCreacion  DateTime          @default(now())
   fechaRecepcion DateTime?
   estado         EstadoOrdenCompra @default(PENDIENTE)
   movimientos    MovimientoStock[]
+  profesional    Profesional       @relation(fields: [profesionalId], references: [id])
   proveedor      Proveedor         @relation(fields: [proveedorId], references: [id])
   items          OrdenCompraItem[]
 }
@@ -566,33 +597,33 @@ model TipoTurno {
 }
 
 model Turno {
-  id                  String                  @id @default(uuid())
+  id                  String      @id @default(uuid())
   pacienteId          String
   profesionalId       String
   tipoTurnoId         String
   inicio              DateTime
   fin                 DateTime
-  estado              EstadoTurno             @default(PENDIENTE)
+  estado              EstadoTurno @default(PENDIENTE)
   observaciones       String?
   comentarioMensaje   String?
-  notificacionEnviada Boolean                 @default(false)
-  esCirugia           Boolean                 @default(false)
+  notificacionEnviada Boolean     @default(false)
+  esCirugia           Boolean     @default(false)
   cirugiaId           String?
   entradaHCId         String?
 
   // LiveTurno session tracking
-  inicioReal          DateTime?               // Cuando inicio realmente la sesion
-  finReal             DateTime?               // Cuando termino la sesion
-  duracionRealMinutos Int?                    // Calculado al cerrar sesion
+  inicioReal          DateTime? // Cuando inicio realmente la sesion
+  finReal             DateTime? // Cuando termino la sesion
+  duracionRealMinutos Int? // Calculado al cerrar sesion
 
-  createdAt           DateTime                @default(now())
-  updatedAt           DateTime                @updatedAt
-  MovimientoCC        MovimientoCC[]
-  cirugia             Cirugia?                @relation(fields: [cirugiaId], references: [id])
-  entradaHC           HistoriaClinicaEntrada? @relation(fields: [entradaHCId], references: [id])
-  paciente            Paciente                @relation(fields: [pacienteId], references: [id])
-  profesional         Profesional             @relation(fields: [profesionalId], references: [id])
-  tipoTurno           TipoTurno               @relation(fields: [tipoTurnoId], references: [id])
+  createdAt    DateTime                @default(now())
+  updatedAt    DateTime                @updatedAt
+  MovimientoCC MovimientoCC[]
+  cirugia      Cirugia?                @relation(fields: [cirugiaId], references: [id])
+  entradaHC    HistoriaClinicaEntrada? @relation(fields: [entradaHCId], references: [id])
+  paciente     Paciente                @relation(fields: [pacienteId], references: [id])
+  profesional  Profesional             @relation(fields: [profesionalId], references: [id])
+  tipoTurno    TipoTurno               @relation(fields: [tipoTurnoId], references: [id])
 
   @@index([profesionalId, inicio])
   @@index([pacienteId, inicio])
@@ -655,6 +686,24 @@ model TratamientoCatalogo {
   createdAt DateTime @default(now())
 }
 
+model Tratamiento {
+  id              String      @id @default(uuid())
+  nombre          String
+  descripcion     String?
+  precio          Decimal     @default(0) @db.Decimal(10, 2)
+  indicaciones    String?     @db.Text
+  procedimiento   String?     @db.Text
+  duracionMinutos Int?
+  profesionalId   String
+  profesional     Profesional @relation(fields: [profesionalId], references: [id])
+  activo          Boolean     @default(true)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@unique([nombre, profesionalId])
+  @@index([profesionalId, activo])
+}
+
 model Objection {
   id        String     @id @default(uuid())
   nombre    String     @unique
@@ -684,6 +733,20 @@ enum EstadoPaciente {
 enum TipoMovimiento {
   CARGO
   PAGO
+}
+
+enum MedioPago {
+  EFECTIVO
+  TRANSFERENCIA
+  TARJETA_DEBITO
+  TARJETA_CREDITO
+  MERCADO_PAGO
+  OTRO
+}
+
+enum EstadoFactura {
+  EMITIDA
+  ANULADA
 }
 
 enum EstadoPresupuesto {

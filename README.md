@@ -174,4 +174,4 @@ npm run test
 ## 🧾 Licencia
 
 Proyecto propiedad de **AndesCode**  
-© 2025 — Todos los derechos reservados.
+© 2026 — Todos los derechos reservados.

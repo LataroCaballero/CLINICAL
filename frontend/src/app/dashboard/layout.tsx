@@ -7,6 +7,13 @@ import DockNav from "./components/DockNav";
 import { useUIStore } from "@/lib/stores/useUIStore";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import dynamic from "next/dynamic";
+import {
+  LiveTurnoPanel,
+  LiveTurnoIndicator,
+  LiveTurnoRecoveryDialog,
+  LiveTurnoSyncChecker,
+} from "@/components/live-turno";
+import { MensajesProvider } from "@/providers/MensajesProvider";
 
 const Sidebar = dynamic(() => import("./components/Sidebar"), { ssr: false });
 
@@ -44,33 +51,41 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="flex">
-      {/* Sidebar solo desktop */}
-      <div className="hidden md:flex">
-        <Sidebar />
-      </div>
+    <MensajesProvider>
+      <div className="flex">
+        {/* Sidebar solo desktop */}
+        <div className="hidden md:flex">
+          <Sidebar />
+        </div>
 
-      {/* Contenedor principal */}
-      <div className="flex-1 flex flex-col">
-        {/* Contenedor que controla el espacio vertical */}
-        <div className="bg-gray-50">
-          <div className="bg-white border shadow-sm">
-            <Topbar />
+        {/* Contenedor principal */}
+        <div className="flex-1 flex flex-col">
+          {/* Contenedor que controla el espacio vertical */}
+          <div className="bg-gray-50">
+            <div className="bg-white border shadow-sm">
+              <Topbar />
+            </div>
+          </div>
+
+          {/* Contenido principal del dashboard */}
+          <main
+            className={`flex-1 overflow-y-auto transition-all duration-300 ${
+              sidebarCollapsed ? "md:ml-20" : "md:ml-64"
+            }`}
+          >
+            {children}
+          </main>
+          <div className="z-100">
+            <DockNav />
           </div>
         </div>
 
-        {/* Contenido principal del dashboard */}
-        <main
-          className={`flex-1 overflow-y-auto transition-all duration-300 ${
-            sidebarCollapsed ? "md:ml-20" : "md:ml-64"
-          }`}
-        >
-          {children}
-        </main>
-        <div className="z-100">
-          <DockNav />
-        </div>
+        {/* LiveTurno Global Components */}
+        <LiveTurnoPanel />
+        <LiveTurnoIndicator />
+        <LiveTurnoRecoveryDialog />
+        <LiveTurnoSyncChecker />
       </div>
-    </div>
+    </MensajesProvider>
   );
 }

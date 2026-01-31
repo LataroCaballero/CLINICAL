@@ -8,20 +8,37 @@ import {
   LayoutDashboard,
   Boxes,
   BarChart2,
+  ShoppingCart,
+  Package,
+  ChevronDown,
 } from "lucide-react";
 import Link from "next/link";
 import { useUIStore } from "@/lib/stores/useUIStore";
-import { motion } from "framer-motion";
-import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import UserMenu from "./UserMenu";
 import { ProfessionalSelector } from "@/components/ProfessionalSelector";
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { toast } from "sonner";
 
+interface SubItem {
+  href: string;
+  label: string;
+}
+
+interface LinkItem {
+  href: string;
+  label: string;
+  icon: React.ReactNode;
+  disabled?: boolean;
+  subItems?: SubItem[];
+}
+
 export default function Sidebar() {
   const { sidebarCollapsed, expandSidebar, collapseSidebar } = useUIStore();
   const [isHovering, setIsHovering] = useState(false);
+  const [expandedMenu, setExpandedMenu] = useState<string | null>(null);
   const pathname = usePathname();
 
   const handleMouseEnter = () => {
@@ -40,6 +57,15 @@ export default function Sidebar() {
 
   const { data: user, isLoading } = useCurrentUser();
 
+  // Auto-expand menu if current path matches a subitem
+  useEffect(() => {
+    if (pathname.startsWith("/dashboard/stock")) {
+      setExpandedMenu("/dashboard/stock");
+    } else if (pathname.startsWith("/dashboard/finanzas")) {
+      setExpandedMenu("/dashboard/finanzas");
+    }
+  }, [pathname]);
+
   if (isLoading || !user) return null;
 
   const canSelectProfessional =
@@ -47,7 +73,7 @@ export default function Sidebar() {
     user.rol === 'SECRETARIA' ||
     user.rol === 'FACTURADOR';
 
-  const links = [
+  const links: LinkItem[] = [
     {
       href: "/dashboard",
       label: "Inicio",
@@ -67,13 +93,22 @@ export default function Sidebar() {
       href: "/dashboard/finanzas",
       label: "Finanzas",
       icon: <DollarSign className="w-5 h-5" />,
-      disabled: true,
+      subItems: [
+        { href: "/dashboard/finanzas", label: "Resumen" },
+        { href: "/dashboard/finanzas/balance", label: "Balance" },
+        { href: "/dashboard/finanzas/presupuestos", label: "Presupuestos" },
+        { href: "/dashboard/finanzas/facturacion", label: "Facturación" },
+      ],
     },
     {
       href: "/dashboard/stock",
       label: "Stock",
       icon: <Boxes className="w-5 h-5" />,
-      disabled: true,
+      subItems: [
+        { href: "/dashboard/stock", label: "Inventario" },
+        { href: "/dashboard/stock/ventas", label: "Ventas" },
+        { href: "/dashboard/stock/catalogo", label: "Catálogo" },
+      ],
     },
     {
       href: "/dashboard/reportes",
@@ -88,6 +123,10 @@ export default function Sidebar() {
     },
   ];
 
+  const toggleMenu = (href: string) => {
+    setExpandedMenu(expandedMenu === href ? null : href);
+  };
+
   return (
     <motion.aside
       onMouseEnter={handleMouseEnter}
@@ -95,14 +134,14 @@ export default function Sidebar() {
       initial={false}
       animate={{ width: sidebarCollapsed ? "5rem" : "16rem" }}
       transition={{ duration: 0.25 }}
-      className="fixed 
-      top-0 left-0 
-      h-screen 
-      bg-white/70 backdrop-blur-md 
-      border-r border-gray-200 
-      flex flex-col justify-between 
-      md:p-4 
-      transition-shadow duration-200 
+      className="fixed
+      top-0 left-0
+      h-screen
+      bg-white/70 backdrop-blur-md
+      border-r border-gray-200
+      flex flex-col justify-between
+      md:p-4
+      transition-shadow duration-200
       shadow-sm hover:shadow-md
       overflow-y-auto
       z-50"
@@ -115,16 +154,60 @@ export default function Sidebar() {
 
         {/* Navigation */}
         <nav className="flex flex-col gap-1 mt-2">
-          {links.map(({ href, label, icon, disabled }) => (
-            <NavItem
-              key={href}
-              href={href}
-              icon={icon}
-              label={label}
-              collapsed={sidebarCollapsed}
-              active={pathname === href}
-              disabled={disabled}
-            />
+          {links.map((link) => (
+            <div key={link.href}>
+              {link.subItems && !link.disabled ? (
+                // Menu con subitems
+                <>
+                  <NavItemWithSub
+                    href={link.href}
+                    icon={link.icon}
+                    label={link.label}
+                    collapsed={sidebarCollapsed}
+                    active={pathname.startsWith(link.href)}
+                    expanded={expandedMenu === link.href}
+                    onToggle={() => toggleMenu(link.href)}
+                  />
+                  <AnimatePresence>
+                    {expandedMenu === link.href && !sidebarCollapsed && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="ml-6 mt-1 flex flex-col gap-1 border-l-2 border-gray-200 pl-3">
+                          {link.subItems.map((sub) => (
+                            <Link
+                              key={sub.href}
+                              href={sub.href}
+                              className={`text-sm py-1.5 px-2 rounded-md transition-colors ${
+                                pathname === sub.href
+                                  ? "text-indigo-600 bg-indigo-50 font-medium"
+                                  : "text-gray-600 hover:text-indigo-600 hover:bg-gray-50"
+                              }`}
+                            >
+                              {sub.label}
+                            </Link>
+                          ))}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </>
+              ) : (
+                // Menu simple
+                <NavItem
+                  href={link.href}
+                  icon={link.icon}
+                  label={link.label}
+                  collapsed={sidebarCollapsed}
+                  active={pathname === link.href}
+                  disabled={link.disabled}
+                />
+              )}
+            </div>
           ))}
         </nav>
       </div>
@@ -179,5 +262,49 @@ function NavItem({ href, icon, label, collapsed, active, disabled }: NavItemProp
       {icon}
       {!collapsed && <span className="font-medium">{label}</span>}
     </Link>
+  );
+}
+
+interface NavItemWithSubProps {
+  href: string;
+  icon: React.ReactNode;
+  label: string;
+  collapsed: boolean;
+  active?: boolean;
+  expanded: boolean;
+  onToggle: () => void;
+}
+
+function NavItemWithSub({ href, icon, label, collapsed, active, expanded, onToggle }: NavItemWithSubProps) {
+  const baseClasses = `flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors w-full ${collapsed ? "justify-center" : ""}`;
+
+  if (collapsed) {
+    return (
+      <Link
+        href={href}
+        className={`${baseClasses} ${active
+          ? "bg-indigo-50 text-indigo-600 font-medium"
+          : "text-gray-700 hover:bg-gray-50 hover:text-indigo-600"
+          }`}
+      >
+        {icon}
+      </Link>
+    );
+  }
+
+  return (
+    <button
+      onClick={onToggle}
+      className={`${baseClasses} ${active
+        ? "bg-indigo-50 text-indigo-600 font-medium"
+        : "text-gray-700 hover:bg-gray-50 hover:text-indigo-600"
+        }`}
+    >
+      {icon}
+      <span className="font-medium flex-1 text-left">{label}</span>
+      <ChevronDown
+        className={`w-4 h-4 transition-transform ${expanded ? "rotate-180" : ""}`}
+      />
+    </button>
   );
 }

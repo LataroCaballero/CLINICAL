@@ -147,15 +147,15 @@ export function FlowCanvas({
     (changes) => {
       onNodesChange(changes);
 
-      // Only update template nodes if position changed
+      // Only update template nodes if position changed (drag ended)
       const positionChanges = changes.filter(
         (c) => c.type === 'position' && c.dragging === false
       );
       if (positionChanges.length > 0) {
-        // Use the latest nodes state
+        // Defer parent update to avoid setState during render
         setNodes((currentNodes) => {
           const updated = flowNodesToTemplate(currentNodes, templateNodes);
-          onTemplateNodesChange(updated);
+          queueMicrotask(() => onTemplateNodesChange(updated));
           return currentNodes;
         });
       }
@@ -171,9 +171,10 @@ export function FlowCanvas({
       // Update template edges on remove
       const removeChanges = changes.filter((c) => c.type === 'remove');
       if (removeChanges.length > 0) {
+        // Defer parent update to avoid setState during render
         setEdges((currentEdges) => {
           const updated = flowEdgesToTemplate(currentEdges, templateEdges);
-          onTemplateEdgesChange(updated);
+          queueMicrotask(() => onTemplateEdgesChange(updated));
           return currentEdges;
         });
       }
@@ -252,6 +253,11 @@ export function FlowCanvas({
               checklist: '#a855f7',
               computed: '#f97316',
               review: '#ec4899',
+              drawing: '#14b8a6',
+              diagnosis: '#6366f1',
+              treatment: '#10b981',
+              procedure: '#06b6d4',
+              budget: '#f59e0b',
             };
             return colors[n.type || ''] || '#94a3b8';
           }}
@@ -263,6 +269,11 @@ export function FlowCanvas({
               checklist: '#f3e8ff',
               computed: '#ffedd5',
               review: '#fce7f3',
+              drawing: '#ccfbf1',
+              diagnosis: '#e0e7ff',
+              treatment: '#d1fae5',
+              procedure: '#cffafe',
+              budget: '#fef3c7',
             };
             return colors[n.type || ''] || '#f1f5f9';
           }}

@@ -8,30 +8,43 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import Image from "next/image";
-import { useEffect, useState } from "react";
-import { ShoppingCart, X } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { Package, X, ShoppingCart } from "lucide-react";
+import Link from "next/link";
+import { Inventario } from "@/types/stock";
 
-export default function ProductDetailModal({ product, open, onOpenChange }: any) {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-  if (!mounted) return null;
+interface ProductDetailModalProps {
+  inventario: Inventario | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
 
-  if (!product) return null;
+export default function ProductDetailModal({
+  inventario,
+  open,
+  onOpenChange,
+}: ProductDetailModalProps) {
+  if (!inventario) return null;
+
+  const producto = inventario.producto;
+  const precio = Number(inventario.precioActual) || Number(producto.precioSugerido) || 0;
+  const proveedor = producto.proveedores?.[0]?.proveedor?.nombre ?? null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl p-0 overflow-hidden">
         <div className="flex flex-col md:flex-row">
           {/* Imagen */}
-          <div className="relative w-full md:w-1/2 h-64 md:h-auto bg-gray-100">
-            <Image
-              src={product.imagen}
-              alt={product.nombre}
-              fill
-              className="object-contain"
-            />
+          <div className="relative w-full md:w-1/2 h-64 md:h-auto bg-gradient-to-br from-indigo-50 to-purple-50 flex items-center justify-center min-h-[250px]">
+            {producto.imagenUrl ? (
+              <img
+                src={producto.imagenUrl}
+                alt={producto.nombre}
+                className="object-contain w-full h-full"
+              />
+            ) : (
+              <Package className="w-24 h-24 text-indigo-200" />
+            )}
           </div>
 
           {/* Info */}
@@ -39,32 +52,39 @@ export default function ProductDetailModal({ product, open, onOpenChange }: any)
             <div>
               <DialogHeader className="p-0">
                 <DialogTitle className="text-2xl font-semibold text-gray-900">
-                  {product.nombre}
+                  {producto.nombre}
                 </DialogTitle>
                 <DialogDescription className="text-gray-500">
-                  {product.descripcion}
+                  {producto.descripcion ?? "Sin descripción"}
                 </DialogDescription>
               </DialogHeader>
 
-              <div className="mt-4">
-                <Badge variant="outline" className="capitalize">
-                  {product.categoria}
-                </Badge>
+              <div className="mt-4 flex gap-2 flex-wrap">
+                {producto.categoria && (
+                  <Badge variant="outline" className="capitalize">
+                    {producto.categoria}
+                  </Badge>
+                )}
+                {producto.sku && (
+                  <Badge variant="secondary">SKU: {producto.sku}</Badge>
+                )}
               </div>
 
               <Separator className="my-4" />
 
               <div className="space-y-2">
                 <p className="text-sm text-gray-600">
-                  <strong>Stock disponible:</strong> {product.stock}
+                  <strong>Stock disponible:</strong> {inventario.stockActual} {producto.unidadMedida ?? "unidades"}
                 </p>
-                <p className="text-sm text-gray-600">
-                  <strong>Proveedor:</strong> {product.proveedor ?? "—"}
-                </p>
+                {proveedor && (
+                  <p className="text-sm text-gray-600">
+                    <strong>Proveedor:</strong> {proveedor}
+                  </p>
+                )}
               </div>
 
               <p className="text-3xl font-semibold text-indigo-600 mt-6">
-                ${product.precio.toLocaleString("es-AR")}
+                ${precio.toLocaleString("es-AR")}
               </p>
             </div>
 
@@ -73,9 +93,11 @@ export default function ProductDetailModal({ product, open, onOpenChange }: any)
               <Button variant="outline" onClick={() => onOpenChange(false)}>
                 <X className="w-4 h-4 mr-1" /> Cerrar
               </Button>
-              <Button className="bg-indigo-600 text-white hover:bg-indigo-700 flex items-center gap-2">
-                <ShoppingCart className="w-4 h-4" /> Agregar al carrito
-              </Button>
+              <Link href="/dashboard/stock/ventas">
+                <Button className="bg-indigo-600 text-white hover:bg-indigo-700 flex items-center gap-2">
+                  <ShoppingCart className="w-4 h-4" /> Ir a ventas
+                </Button>
+              </Link>
             </div>
           </div>
         </div>

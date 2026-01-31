@@ -361,7 +361,14 @@ export class HCTemplatesService {
       throw new BadRequestException('Esta entrada ya está finalizada');
     }
 
-    // TODO: Validar que todas las respuestas requeridas están completas
+    // Process special nodes
+    await this.processSpecialNodes(
+      pacienteId,
+      entry.historiaClinica.profesionalId,
+      entry.templateVersion?.schema as any,
+      entry.answers as Record<string, unknown>,
+      entry.computed as Record<string, unknown>,
+    );
 
     return this.prisma.historiaClinicaEntrada.update({
       where: { id: entryId },
@@ -373,6 +380,101 @@ export class HCTemplatesService {
         template: { select: { nombre: true } },
       },
     });
+  }
+
+  /**
+   * Process special nodes when finalizing an entry
+   * - diagnosis → update Paciente.diagnostico
+   * - treatment → update Paciente.tratamiento
+   * - budget (with createPresupuesto) → create Presupuesto + PresupuestoItem[]
+   */
+  private async processSpecialNodes(
+    pacienteId: string,
+    profesionalId: string,
+    schema: { nodes: Array<{ type: string; key: string; syncToPaciente?: boolean; createPresupuesto?: boolean; sourceNodeKey?: string }> } | null,
+    answers: Record<string, unknown>,
+    computed: Record<string, unknown>,
+  ) {
+    if (!schema?.nodes) return;
+
+    const updates: { diagnostico?: string; tratamiento?: string } = {};
+
+    for (const node of schema.nodes) {
+      // Process diagnosis node
+      if (node.type === 'diagnosis' && node.syncToPaciente !== false) {
+        const diagnosisAnswer = answers[node.key];
+        if (diagnosisAnswer) {
+          if (typeof diagnosisAnswer === 'string') {
+            updates.diagnostico = diagnosisAnswer;
+          } else if (
+            typeof diagnosisAnswer === 'object' &&
+            diagnosisAnswer !== null &&
+            'value' in diagnosisAnswer
+          ) {
+            updates.diagnostico = String((diagnosisAnswer as { value: string }).value);
+          }
+        }
+      }
+
+      // Process treatment node
+      if (node.type === 'treatment' && node.syncToPaciente !== false) {
+        const treatmentAnswer = answers[node.key] as
+          | Array<{ tratamientoId: string; nombre: string }>
+          | undefined;
+        if (treatmentAnswer && Array.isArray(treatmentAnswer)) {
+          updates.tratamiento = treatmentAnswer
+            .map((t) => t.nombre)
+            .join(', ');
+        }
+      }
+
+      // Process budget node with createPresupuesto flag
+      if (node.type === 'budget' && node.createPresupuesto) {
+        const budgetData = computed[node.key] as
+          | {
+              items: Array<{
+                descripcion: string;
+                cantidad: number;
+                precioUnitario: number;
+                total: number;
+              }>;
+              subtotal: number;
+              descuentos: number;
+              total: number;
+            }
+          | undefined;
+
+        if (budgetData && budgetData.items?.length > 0) {
+          await this.prisma.presupuesto.create({
+            data: {
+              pacienteId,
+              profesionalId,
+              subtotal: budgetData.subtotal,
+              descuentos: budgetData.descuentos || 0,
+              total: budgetData.total,
+              estado: 'BORRADOR',
+              items: {
+                create: budgetData.items.map((item, index) => ({
+                  descripcion: item.descripcion,
+                  cantidad: item.cantidad,
+                  precioUnitario: item.precioUnitario,
+                  total: item.total,
+                  orden: index,
+                })),
+              },
+            },
+          });
+        }
+      }
+    }
+
+    // Update patient if there are changes
+    if (Object.keys(updates).length > 0) {
+      await this.prisma.paciente.update({
+        where: { id: pacienteId },
+        data: updates,
+      });
+    }
   }
 
   async findDraftEntries(pacienteId: string) {

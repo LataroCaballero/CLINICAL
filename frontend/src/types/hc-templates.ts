@@ -6,7 +6,12 @@ export type NodeType =
   | 'text'
   | 'computed'
   | 'checklist'
-  | 'review';
+  | 'review'
+  | 'drawing'
+  | 'diagnosis'
+  | 'treatment'
+  | 'procedure'
+  | 'budget';
 
 export interface TemplateNodeBase {
   id: string;
@@ -97,13 +102,78 @@ export interface ReviewNode extends TemplateNodeBase {
   };
 }
 
+// ===== NEW NODE TYPES =====
+
+export interface DrawingNode extends TemplateNodeBase {
+  type: 'drawing';
+  key: string;
+  ui?: {
+    width?: number;
+    height?: number;
+    strokeWidth?: number;
+    colors?: string[];
+  };
+}
+
+export interface DiagnosisNode extends TemplateNodeBase {
+  type: 'diagnosis';
+  key: string;
+  options: NodeOption[];
+  ui?: {
+    control?: 'radio-cards' | 'select';
+    allowOther?: boolean;
+  };
+  syncToPaciente?: boolean;
+}
+
+export interface TreatmentNode extends TemplateNodeBase {
+  type: 'treatment';
+  key: string;
+  treatmentIds?: string[];
+  ui?: {
+    multiSelect?: boolean;
+    showPrice?: boolean;
+    showDescription?: boolean;
+  };
+  syncToPaciente?: boolean;
+}
+
+export interface ProcedureNode extends TemplateNodeBase {
+  type: 'procedure';
+  key: string;
+  sourceNodeKey: string;
+  ui?: {
+    showIndicaciones?: boolean;
+    showProcedimiento?: boolean;
+    allowComments?: boolean;
+  };
+}
+
+export interface BudgetNode extends TemplateNodeBase {
+  type: 'budget';
+  key: string;
+  sourceNodeKey: string;
+  ui?: {
+    allowQuantityEdit?: boolean;
+    allowPriceEdit?: boolean;
+    allowAdditionalItems?: boolean;
+    allowDiscount?: boolean;
+  };
+  createPresupuesto?: boolean;
+}
+
 export type TemplateNode =
   | DecisionNode
   | StepNode
   | TextNode
   | ChecklistNode
   | ComputedNode
-  | ReviewNode;
+  | ReviewNode
+  | DrawingNode
+  | DiagnosisNode
+  | TreatmentNode
+  | ProcedureNode
+  | BudgetNode;
 
 export interface EdgeCondition {
   eq?: [string, string];

@@ -1,10 +1,12 @@
 import { Module } from '@nestjs/common';
 import { TratamientosController } from './tratamientos.controller';
 import { TratamientosService } from './tratamientos.service';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaModule } from 'src/prisma/prisma.module';
 
 @Module({
+  imports: [PrismaModule],
   controllers: [TratamientosController],
-  providers: [TratamientosService, PrismaService],
+  providers: [TratamientosService],
+  exports: [TratamientosService],
 })
 export class TratamientosModule {}

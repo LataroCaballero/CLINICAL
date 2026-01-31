@@ -3,42 +3,51 @@
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Table, TableHeader, TableRow, TableHead, TableCell, TableBody } from "@/components/ui/table";
-import { Package, AlertTriangle, PlusCircle, MinusCircle } from "lucide-react";
+import {
+  Table,
+  TableHeader,
+  TableRow,
+  TableHead,
+  TableCell,
+  TableBody,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Loader2, PlusCircle, MinusCircle, RefreshCw } from "lucide-react";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
+import { useMovimientosStock } from "@/hooks/useInventario";
+import { Inventario, TipoMovimientoStock } from "@/types/stock";
 
-export default function ProductDetailModal({ open, onOpenChange, product }: any) {
-  if (!product) return null;
+interface ProductDetailModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  inventario: Inventario | null;
+}
 
-  const movimientosMock = [
-    {
-      id: 1,
-      tipo: "Ingreso",
-      cantidad: 20,
-      fecha: "02/11/2025",
-      motivo: "Compra a proveedor",
-    },
-    {
-      id: 2,
-      tipo: "Egreso",
-      cantidad: 5,
-      fecha: "05/11/2025",
-      motivo: "Uso en procedimiento quirúrgico",
-    },
-  ];
+export default function ProductDetailModal({
+  open,
+  onOpenChange,
+  inventario,
+}: ProductDetailModalProps) {
+  const { data: movimientos, isLoading } = useMovimientosStock(
+    inventario?.productoId ?? null
+  );
+
+  if (!inventario) return null;
+
+  const producto = inventario.producto;
+  const proveedor = producto.proveedores?.[0]?.proveedor?.nombre ?? "-";
 
   const estado =
-    product.stockActual === 0
+    inventario.stockActual === 0
       ? "Sin stock"
-      : product.stockActual < product.stockMinimo
+      : inventario.stockActual < inventario.stockMinimo
       ? "Bajo stock"
       : "Stock OK";
 
@@ -51,91 +60,113 @@ export default function ProductDetailModal({ open, onOpenChange, product }: any)
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl">
+      <DialogContent className="max-w-2xl w-[95vw] overflow-hidden">
         <DialogHeader>
-          <DialogTitle>Detalle del Producto</DialogTitle>
-          <DialogDescription>
-            Información completa, movimientos y estado del inventario.
-          </DialogDescription>
+          <DialogTitle>{producto.nombre}</DialogTitle>
         </DialogHeader>
 
-        <ScrollArea className="max-h-[70vh] pr-3">
-          {/* --- Información del producto --- */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <div>
-              <Label>Nombre del producto</Label>
-              <Input value={product.nombre} readOnly />
-            </div>
-            <div>
-              <Label>Categoría</Label>
-              <Input value={product.categoria} readOnly />
-            </div>
+        <ScrollArea className="max-h-[65vh] pr-4 overflow-x-hidden">
+          {/* Información del producto */}
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+            <InfoItem label="Categoría" value={producto.categoria ?? "-"} />
+            <InfoItem label="SKU" value={producto.sku ?? "-"} />
+            <InfoItem label="Proveedor" value={proveedor} />
+            <InfoItem
+              label="Tipo"
+              value={getTipoProductoLabel(producto.tipo)}
+            />
+            <InfoItem
+              label="Precio"
+              value={
+                inventario.precioActual
+                  ? `$${Number(inventario.precioActual).toLocaleString("es-AR")}`
+                  : "-"
+              }
+            />
+            <InfoItem
+              label="Unidad"
+              value={producto.unidadMedida ?? "-"}
+            />
+          </div>
 
-            <div>
-              <Label>Proveedor</Label>
-              <Input value={product.proveedor} readOnly />
+          {/* Stock */}
+          <div className="grid grid-cols-3 gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
+            <div className="text-center">
+              <p className="text-sm text-gray-500">Stock actual</p>
+              <p className="text-2xl font-bold text-gray-800">
+                {inventario.stockActual}
+              </p>
             </div>
-            <div>
-              <Label>Fecha de vencimiento</Label>
-              <Input
-                value={new Date(product.vencimiento).toLocaleDateString("es-AR")}
-                readOnly
-              />
+            <div className="text-center">
+              <p className="text-sm text-gray-500">Stock mínimo</p>
+              <p className="text-2xl font-bold text-gray-800">
+                {inventario.stockMinimo}
+              </p>
             </div>
-
-            <div>
-              <Label>Stock actual</Label>
-              <Input value={product.stockActual} readOnly />
-            </div>
-            <div>
-              <Label>Stock mínimo</Label>
-              <Input value={product.stockMinimo} readOnly />
-            </div>
-
-            <div className="col-span-2">
-              <Label>Estado</Label>
-              <div
-                className={`mt-1 w-fit px-3 py-1 rounded text-sm font-medium ${color}`}
-              >
+            <div className="text-center">
+              <p className="text-sm text-gray-500">Estado</p>
+              <div className={`mt-1 px-3 py-1 rounded text-sm font-medium ${color} inline-block`}>
                 {estado}
               </div>
             </div>
           </div>
 
-          {/* --- Historial de movimientos --- */}
+          {/* Historial de movimientos */}
           <div className="mt-4 border-t pt-4">
             <h4 className="font-medium text-gray-800 mb-3">
               Historial de movimientos
             </h4>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>Cantidad</TableHead>
-                  <TableHead>Fecha</TableHead>
-                  <TableHead>Motivo</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {movimientosMock.map((m) => (
-                  <TableRow key={m.id}>
-                    <TableCell className="flex items-center gap-2">
-                      {m.tipo === "Ingreso" ? (
-                        <PlusCircle className="w-4 h-4 text-green-500" />
-                      ) : (
-                        <MinusCircle className="w-4 h-4 text-red-500" />
-                      )}
-                      {m.tipo}
-                    </TableCell>
-                    <TableCell>{m.cantidad}</TableCell>
-                    <TableCell>{m.fecha}</TableCell>
-                    <TableCell>{m.motivo}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
 
-            {movimientosMock.length === 0 && (
+            {isLoading ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+              </div>
+            ) : movimientos && movimientos.length > 0 ? (
+              <div className="overflow-x-auto -mx-2">
+                <Table className="min-w-full">
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="whitespace-nowrap">Tipo</TableHead>
+                      <TableHead className="whitespace-nowrap text-right">Cantidad</TableHead>
+                      <TableHead className="whitespace-nowrap">Fecha</TableHead>
+                      <TableHead className="whitespace-nowrap">Motivo</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {movimientos.map((m) => (
+                      <TableRow key={m.id}>
+                        <TableCell className="whitespace-nowrap">
+                          <div className="flex items-center gap-2">
+                            {getMovimientoIcon(m.tipo)}
+                            <span>{getTipoMovimientoLabel(m.tipo)}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell
+                          className={`text-right whitespace-nowrap ${
+                            m.tipo === "ENTRADA"
+                              ? "text-green-600 font-medium"
+                              : m.tipo === "SALIDA"
+                              ? "text-red-600 font-medium"
+                              : "font-medium"
+                          }`}
+                        >
+                          {m.tipo === "ENTRADA" ? "+" : m.tipo === "SALIDA" ? "-" : ""}
+                          {m.cantidad}
+                        </TableCell>
+                        <TableCell className="whitespace-nowrap text-sm">
+                          {format(new Date(m.fecha), "dd/MM/yy HH:mm", {
+                            locale: es,
+                          })}
+                        </TableCell>
+                        <TableCell className="max-w-[150px] truncate text-sm text-gray-600">
+                          {m.motivo ?? "-"}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            ) : (
               <p className="text-sm text-gray-500 italic py-4 text-center">
                 No hay movimientos registrados para este producto.
               </p>
@@ -143,8 +174,7 @@ export default function ProductDetailModal({ open, onOpenChange, product }: any)
           </div>
         </ScrollArea>
 
-        {/* --- Footer con acciones --- */}
-        <DialogFooter className="flex justify-between items-center border-t pt-3 mt-3 mr-8">
+        <DialogFooter className="border-t pt-3 mt-3">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cerrar
           </Button>
@@ -152,4 +182,52 @@ export default function ProductDetailModal({ open, onOpenChange, product }: any)
       </DialogContent>
     </Dialog>
   );
+}
+
+function InfoItem({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p className="text-sm text-gray-500">{label}</p>
+      <p className="font-medium text-gray-800">{value}</p>
+    </div>
+  );
+}
+
+function getTipoProductoLabel(tipo: string): string {
+  switch (tipo) {
+    case "INSUMO":
+      return "Insumo";
+    case "PRODUCTO_VENTA":
+      return "Producto de venta";
+    case "USO_INTERNO":
+      return "Uso interno";
+    default:
+      return tipo;
+  }
+}
+
+function getTipoMovimientoLabel(tipo: TipoMovimientoStock): string {
+  switch (tipo) {
+    case "ENTRADA":
+      return "Ingreso";
+    case "SALIDA":
+      return "Egreso";
+    case "AJUSTE":
+      return "Ajuste";
+    default:
+      return tipo;
+  }
+}
+
+function getMovimientoIcon(tipo: TipoMovimientoStock) {
+  switch (tipo) {
+    case "ENTRADA":
+      return <PlusCircle className="w-4 h-4 text-green-500" />;
+    case "SALIDA":
+      return <MinusCircle className="w-4 h-4 text-red-500" />;
+    case "AJUSTE":
+      return <RefreshCw className="w-4 h-4 text-blue-500" />;
+    default:
+      return null;
+  }
 }

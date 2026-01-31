@@ -6,7 +6,7 @@ import {
   IsString,
   IsUUID,
 } from 'class-validator';
-import { TipoMovimiento } from '@prisma/client';
+import { TipoMovimiento, MedioPago } from '@prisma/client';
 
 export class CreateMovimientoDto {
   @IsNumber()
@@ -17,8 +17,16 @@ export class CreateMovimientoDto {
   tipo: TipoMovimiento;
 
   @IsOptional()
+  @IsEnum(MedioPago)
+  medioPago?: MedioPago;
+
+  @IsOptional()
   @IsString()
   descripcion?: string;
+
+  @IsOptional()
+  @IsString()
+  referencia?: string;
 
   @IsOptional()
   @IsUUID()
@@ -27,4 +35,8 @@ export class CreateMovimientoDto {
   @IsOptional()
   @IsUUID()
   presupuestoId?: string;
+
+  @IsOptional()
+  @IsUUID()
+  usuarioId?: string;
 }

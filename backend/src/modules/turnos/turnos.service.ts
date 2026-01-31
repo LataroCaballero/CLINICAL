@@ -15,6 +15,8 @@ import {
 } from '@prisma/client';
 import { getDayRange } from '@/src/common/utils/date-range';
 import { ReprogramarTurnoDto } from './dto/reprogramar-turno.dto';
+import { IniciarSesionDto } from './dto/iniciar-sesion.dto';
+import { CerrarSesionDto } from './dto/cerrar-sesion.dto';
 import { CuentasCorrientesService } from '../cuentas-corrientes/cuentas-corrientes.service';
 
 @Injectable()
@@ -549,6 +551,122 @@ export class TurnosService {
       });
 
       return turno;
+    });
+  }
+
+  // ==================== LiveTurno Session Methods ====================
+
+  async iniciarSesion(turnoId: string, dto?: IniciarSesionDto) {
+    const turno = await this.prisma.turno.findUnique({
+      where: { id: turnoId },
+      select: { id: true, estado: true, inicioReal: true, profesionalId: true },
+    });
+
+    if (!turno) {
+      throw new NotFoundException('Turno no encontrado.');
+    }
+
+    if (turno.inicioReal) {
+      throw new BadRequestException('Este turno ya tiene una sesion iniciada.');
+    }
+
+    if (
+      turno.estado === EstadoTurno.CANCELADO ||
+      turno.estado === EstadoTurno.FINALIZADO
+    ) {
+      throw new BadRequestException(
+        `No se puede iniciar sesion en turno ${turno.estado}.`,
+      );
+    }
+
+    // Check if professional already has an active session
+    const sesionActiva = await this.prisma.turno.findFirst({
+      where: {
+        profesionalId: turno.profesionalId,
+        inicioReal: { not: null },
+        finReal: null,
+        id: { not: turnoId },
+      },
+      select: { id: true },
+    });
+
+    if (sesionActiva) {
+      throw new BadRequestException(
+        'Ya existe una sesion activa. Finalicela antes de iniciar otra.',
+      );
+    }
+
+    const inicioReal = dto?.inicioReal ? new Date(dto.inicioReal) : new Date();
+
+    return this.prisma.turno.update({
+      where: { id: turnoId },
+      data: {
+        inicioReal,
+        estado: EstadoTurno.CONFIRMADO,
+      },
+      include: {
+        paciente: {
+          include: {
+            obraSocial: true,
+          },
+        },
+        profesional: {
+          include: { usuario: true },
+        },
+        tipoTurno: true,
+      },
+    });
+  }
+
+  async cerrarSesion(turnoId: string, dto?: CerrarSesionDto) {
+    const turno = await this.prisma.turno.findUnique({
+      where: { id: turnoId },
+      select: { id: true, estado: true, inicioReal: true },
+    });
+
+    if (!turno) {
+      throw new NotFoundException('Turno no encontrado.');
+    }
+
+    if (!turno.inicioReal) {
+      throw new BadRequestException('No hay sesion activa para cerrar.');
+    }
+
+    if (turno.estado === EstadoTurno.FINALIZADO) {
+      throw new BadRequestException('La sesion ya fue finalizada.');
+    }
+
+    const finReal = dto?.finReal ? new Date(dto.finReal) : new Date();
+    const duracionMs = finReal.getTime() - new Date(turno.inicioReal).getTime();
+    const duracionRealMinutos = Math.round(duracionMs / 60000);
+
+    return this.prisma.turno.update({
+      where: { id: turnoId },
+      data: {
+        finReal,
+        duracionRealMinutos,
+        estado: EstadoTurno.FINALIZADO,
+        entradaHCId: dto?.entradaHCId ?? undefined,
+      },
+    });
+  }
+
+  async obtenerSesionActiva(profesionalId: string) {
+    return this.prisma.turno.findFirst({
+      where: {
+        profesionalId,
+        inicioReal: { not: null },
+        finReal: null,
+        estado: { not: EstadoTurno.CANCELADO },
+      },
+      include: {
+        paciente: {
+          include: {
+            obraSocial: true,
+          },
+        },
+        tipoTurno: true,
+      },
     });
   }
 }

@@ -1,10 +1,14 @@
 "use client";
 
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { Play, Loader2 } from "lucide-react";
+import { useLiveTurnoActions } from "@/hooks/useLiveTurnoActions";
+import { useLiveTurnoStore } from "@/store/live-turno.store";
 
 type Props = {
   profesionalId?: string;
@@ -64,6 +68,9 @@ function estadoUi(estado: TurnoAgenda["estado"]) {
 }
 
 export default function UpcomingAppointments({ profesionalId }: Props) {
+  const { iniciarSesion } = useLiveTurnoActions();
+  const session = useLiveTurnoStore((state) => state.session);
+
   const { data, isLoading } = useQuery({
     queryKey: ["turnos", "upcoming", profesionalId],
     queryFn: async () => {
@@ -160,6 +167,7 @@ export default function UpcomingAppointments({ profesionalId }: Props) {
                   <th className="px-4 py-2 font-medium">Paciente</th>
                   <th className="px-4 py-2 font-medium">Tipo de Turno</th>
                   <th className="px-4 py-2 font-medium">Estado</th>
+                  <th className="px-4 py-2 font-medium">Acciones</th>
                 </tr>
               </thead>
               <tbody>
@@ -194,6 +202,26 @@ export default function UpcomingAppointments({ profesionalId }: Props) {
                             {e.label}
                           </span>
                         </div>
+                      </td>
+                      <td className="px-4 py-2">
+                        {t.estado !== "CANCELADO" && t.estado !== "FINALIZADO" && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => iniciarSesion.mutate(t.id)}
+                            disabled={iniciarSesion.isPending || !!session}
+                            className="h-7 px-2 text-xs"
+                          >
+                            {iniciarSesion.isPending && iniciarSesion.variables === t.id ? (
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                            ) : (
+                              <>
+                                <Play className="w-3 h-3 mr-1" />
+                                Iniciar
+                              </>
+                            )}
+                          </Button>
+                        )}
                       </td>
                     </tr>
                   );

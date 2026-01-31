@@ -1,40 +1,40 @@
-20:25:14.565 Running build in Washington, D.C., USA (East) – iad1
-20:25:14.567 Build machine configuration: 2 cores, 8 GB
-20:25:14.702 Cloning github.com/LataroCaballero/CLINICAL (Branch: main, Commit: 0fb1167)
-20:25:15.065 Cloning completed: 363.000ms
-20:25:17.136 Restored build cache from previous deployment (95dQEd25YWGmWJHohH3by7UX1WkP)
-20:25:18.378 Running "vercel build"
-20:25:18.802 Vercel CLI 50.1.6
-20:25:19.163 Installing dependencies...
-20:25:21.339 
-20:25:21.340 added 45 packages in 2s
-20:25:21.341 
-20:25:21.341 192 packages are looking for funding
-20:25:21.342   run `npm fund` for details
-20:25:21.371 Detected Next.js version: 16.0.7
-20:25:21.373 Running "npm run build"
-20:25:21.485 
-20:25:21.485 > frontend@0.1.0 build
-20:25:21.486 > next build
-20:25:21.486 
-20:25:22.486  ⚠ `images.domains` is deprecated in favor of `images.remotePatterns`. Please update next.config.ts to protect your application from malicious users.
-20:25:22.511    ▲ Next.js 16.0.7 (Turbopack)
-20:25:22.512 
-20:25:22.577    Creating an optimized production build ...
-20:26:07.734  ✓ Compiled successfully in 45s
-20:26:07.735    Running TypeScript ...
-20:26:21.693 Failed to compile.
-20:26:21.694 
-20:26:21.694 ./src/app/dashboard/turnos/page.tsx:327:56
-20:26:21.694 Type error: Argument of type 'AgendaConfig | null | undefined' is not assignable to parameter of type 'AgendaConfig | null'.
-20:26:21.695   Type 'undefined' is not assignable to type 'AgendaConfig | null'.
-20:26:21.695 
-20:26:21.695 [0m [90m 325 |[39m   [90m// Para día y semana, usar el rango más extenso de la semana para no cortar eventos[39m
-20:26:21.695  [90m 326 |[39m   [36mconst[39m timeRange [33m=[39m useMemo(() [33m=>[39m {
-20:26:21.695 [31m[1m>[22m[39m[90m 327 |[39m     [36mconst[39m weekRange [33m=[39m getWeekTimeRange(normalizedDate[33m,[39m agenda)[33m;[39m
-20:26:21.695  [90m     |[39m                                                        [31m[1m^[22m[39m
-20:26:21.695  [90m 328 |[39m
-20:26:21.695  [90m 329 |[39m     [90m// Si es vista diaria, podemos mostrar el rango específico del día[39m
-20:26:21.695  [90m 330 |[39m     [90m// pero con margen para no cortar eventos[39m[0m
-20:26:21.743 Next.js build worker exited with code: 1 and signal: null
-20:26:21.799 Error: Command "npm run build" exited with 1
+npx prisma migrate dev
+warn The configuration property `package.json#prisma` is deprecated and will be removed in Prisma 7. Please migrate to a Prisma config file (e.g., `prisma.config.ts`).
+For more information, see: https://pris.ly/prisma-config
+
+Environment variables loaded from .env
+Prisma schema loaded from src/prisma/schema.prisma
+Datasource "db": PostgreSQL database "postgres", schema "public" at "aws-1-sa-east-1.pooler.supabase.com:5432"
+
+- The migration `20260109_mensajes_internos_v2` was modified after it was applied.
+- Drift detected: Your database schema is not in sync with your migration history.
+
+The following is a summary of the differences between the expected database schema given your migrations files, and the actual schema of the database.
+
+It should be understood as the set of changes to get from the expected schema to the actual schema.
+
+[+] Added tables
+  - Tratamiento
+
+[*] Changed the `Inventario` table
+  [*] Altered column `profesionalId` (changed from Nullable to Required)
+
+[*] Changed the `Lote` table
+  [*] Altered column `profesionalId` (changed from Nullable to Required)
+
+[*] Changed the `OrdenCompra` table
+  [*] Altered column `profesionalId` (changed from Nullable to Required)
+
+[*] Changed the `Tratamiento` table
+  [+] Added unique index on columns (nombre, profesionalId)
+  [+] Added index on columns (profesionalId, activo)
+  [+] Added foreign key on columns (profesionalId)
+
+[*] Changed the `VentaProducto` table
+  [*] Altered column `profesionalId` (changed from Nullable to Required)
+
+
+We need to reset the "public" schema at "aws-1-sa-east-1.pooler.supabase.com:5432"
+
+You may use prisma migrate reset to drop the development database.
+All data will be lost.

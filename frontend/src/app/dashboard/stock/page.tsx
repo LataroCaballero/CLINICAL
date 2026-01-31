@@ -28,6 +28,7 @@ import NewProductModal from "./components/NewProductModal";
 import Link from "next/link";
 import { useInventario, useAlertasStock, useProximosVencer } from "@/hooks/useInventario";
 import { Inventario, Lote } from "@/types/stock";
+import { TablePagination } from "@/components/ui/table-pagination";
 
 export default function StockPage() {
   const [search, setSearch] = useState("");
@@ -35,6 +36,8 @@ export default function StockPage() {
   const [openModal, setOpenModal] = useState(false);
   const [openMovement, setOpenMovement] = useState(false);
   const [openNewProduct, setOpenNewProduct] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   // Hooks de datos reales
   const { data: inventario, isLoading, error } = useInventario();
@@ -52,6 +55,10 @@ export default function StockPage() {
     inv.producto.sku?.toLowerCase().includes(search.toLowerCase()) ||
     inv.producto.categoria?.toLowerCase().includes(search.toLowerCase())
   ) ?? [];
+
+  // Paginación
+  const totalPages = Math.ceil(filtrados.length / pageSize);
+  const paginatedItems = filtrados.slice((page - 1) * pageSize, page * pageSize);
 
   const handleViewDetail = (inv: Inventario) => {
     setSelectedInventario(inv);
@@ -116,7 +123,10 @@ export default function StockPage() {
           placeholder="Buscar producto..."
           className="w-full md:w-1/3"
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setPage(1);
+          }}
         />
 
         <div className="flex flex-wrap gap-2 justify-end">
@@ -156,7 +166,7 @@ export default function StockPage() {
         <CardHeader>
           <CardTitle className="text-base font-medium">Inventario general</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           <Table>
             <TableHeader>
               <TableRow>
@@ -171,7 +181,7 @@ export default function StockPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtrados.map((inv) => {
+              {paginatedItems.map((inv) => {
                 const estado = getEstadoStock(inv);
                 const color = getColorEstado(estado);
                 const proveedor = inv.producto.proveedores?.[0]?.proveedor?.nombre ?? "-";
@@ -229,6 +239,19 @@ export default function StockPage() {
                 ? "No se encontraron productos con ese criterio."
                 : "No hay productos en el inventario. Agrega uno para comenzar."}
             </p>
+          )}
+          {filtrados.length > 0 && (
+            <TablePagination
+              currentPage={page}
+              totalPages={totalPages}
+              pageSize={pageSize}
+              totalItems={filtrados.length}
+              onPageChange={setPage}
+              onPageSizeChange={(size) => {
+                setPageSize(size);
+                setPage(1);
+              }}
+            />
           )}
         </CardContent>
       </Card>

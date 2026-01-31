@@ -411,7 +411,13 @@ export class HCTemplatesService {
             diagnosisAnswer !== null &&
             'value' in diagnosisAnswer
           ) {
-            updates.diagnostico = String((diagnosisAnswer as { value: string }).value);
+            const answerObj = diagnosisAnswer as { value: string; otherText?: string };
+            // Si el valor es '__other__', usar el texto personalizado
+            if (answerObj.value === '__other__' && answerObj.otherText) {
+              updates.diagnostico = answerObj.otherText;
+            } else if (answerObj.value !== '__other__') {
+              updates.diagnostico = answerObj.value;
+            }
           }
         }
       }

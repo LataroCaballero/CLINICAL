@@ -8,7 +8,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { LogOut, Settings, User, Bell, CreditCard } from "lucide-react";
+import { LogOut, Settings, Bell, CreditCard } from "lucide-react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
@@ -47,6 +47,12 @@ export default function UserMenu({ collapsed }: { collapsed: boolean }) {
     });
   };
 
+  const handleSubscription = () => {
+    toast.info("Suscripción y facturación en construcción", {
+      description: "Esta funcionalidad estará disponible próximamente.",
+    });
+  };
+
   if (!user) return null;
 
   return (
@@ -81,16 +87,8 @@ export default function UserMenu({ collapsed }: { collapsed: boolean }) {
           className="flex items-center gap-2 cursor-pointer"
           onClick={handleGoToConfig}
         >
-          <User className="w-4 h-4 text-gray-500" />
-          Mi perfil
-        </DropdownMenuItem>
-
-        <DropdownMenuItem
-          className="flex items-center gap-2 cursor-pointer"
-          onClick={handleGoToConfig}
-        >
           <Settings className="w-4 h-4 text-gray-500" />
-          Configuración del sistema
+          Configuración
         </DropdownMenuItem>
 
         <DropdownMenuItem
@@ -103,7 +101,7 @@ export default function UserMenu({ collapsed }: { collapsed: boolean }) {
 
         <DropdownMenuItem
           className="flex items-center gap-2 cursor-pointer"
-          onClick={handleGoToConfig}
+          onClick={handleSubscription}
         >
           <CreditCard className="w-4 h-4 text-gray-500" />
           Suscripción y facturación

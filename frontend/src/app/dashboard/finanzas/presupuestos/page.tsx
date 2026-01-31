@@ -43,6 +43,7 @@ import { usePresupuestosFinanzas, useUpdatePresupuestoEstado } from "@/hooks/use
 import { EstadoPresupuesto, PresupuestosFilters } from "@/types/finanzas";
 import { toast } from "sonner";
 import PresupuestoDetailModal from "./components/PresupuestoDetailModal";
+import { TablePagination } from "@/components/ui/table-pagination";
 
 function formatMoney(value: number): string {
   return new Intl.NumberFormat("es-AR", {
@@ -92,6 +93,8 @@ export default function PresupuestosPage() {
   const [search, setSearch] = useState("");
   const [selectedPresupuesto, setSelectedPresupuesto] = useState<string | null>(null);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const { data: presupuestos, isLoading, error, refetch } = usePresupuestosFinanzas(filters);
   const updateEstado = useUpdatePresupuestoEstado();
@@ -106,6 +109,13 @@ export default function PresupuestosPage() {
     }
     return true;
   });
+
+  // Paginación
+  const totalPages = Math.ceil(filteredPresupuestos.length / pageSize);
+  const paginatedPresupuestos = filteredPresupuestos.slice(
+    (page - 1) * pageSize,
+    page * pageSize
+  );
 
   const handleAceptar = async (presupuestoId: string) => {
     try {
@@ -164,17 +174,21 @@ export default function PresupuestosPage() {
                 placeholder="Buscar por paciente..."
                 className="pl-10"
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(1);
+                }}
               />
             </div>
             <Select
               value={filters.estado || "TODOS"}
-              onValueChange={(v) =>
+              onValueChange={(v) => {
                 setFilters({
                   ...filters,
                   estado: v === "TODOS" ? undefined : (v as EstadoPresupuesto),
-                })
-              }
+                });
+                setPage(1);
+              }}
             >
               <SelectTrigger className="w-full md:w-[180px]">
                 <Filter className="w-4 h-4 mr-2" />
@@ -220,6 +234,7 @@ export default function PresupuestosPage() {
               </Button>
             </div>
           ) : (
+            <>
             <Table>
               <TableHeader>
                 <TableRow>
@@ -232,7 +247,7 @@ export default function PresupuestosPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredPresupuestos.map((presupuesto) => (
+                {paginatedPresupuestos.map((presupuesto) => (
                   <TableRow key={presupuesto.id} className="hover:bg-gray-50">
                     <TableCell className="text-gray-500">
                       {formatDate(presupuesto.createdAt)}
@@ -316,6 +331,20 @@ export default function PresupuestosPage() {
                 ))}
               </TableBody>
             </Table>
+            {filteredPresupuestos.length > 0 && (
+              <TablePagination
+                currentPage={page}
+                totalPages={totalPages}
+                pageSize={pageSize}
+                totalItems={filteredPresupuestos.length}
+                onPageChange={setPage}
+                onPageSizeChange={(size) => {
+                  setPageSize(size);
+                  setPage(1);
+                }}
+              />
+            )}
+            </>
           )}
         </CardContent>
       </Card>

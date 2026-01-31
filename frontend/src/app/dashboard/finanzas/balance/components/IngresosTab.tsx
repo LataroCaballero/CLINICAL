@@ -173,6 +173,13 @@ export default function IngresosTab() {
 
   const ingresosHoy = pagosPorDia[new Date().toISOString().split("T")[0]]?.total || 0;
 
+  // Paginación para ingresos por día
+  const [diaPage, setDiaPage] = useState(1);
+  const [diaPageSize, setDiaPageSize] = useState(10);
+  const sortedDias = Object.values(pagosPorDia).sort((a, b) => b.fecha.localeCompare(a.fecha));
+  const totalDiaPages = Math.ceil(sortedDias.length / diaPageSize);
+  const paginatedDias = sortedDias.slice((diaPage - 1) * diaPageSize, diaPage * diaPageSize);
+
   return (
     <div className="flex flex-col gap-6">
       {/* Actions */}
@@ -233,29 +240,32 @@ export default function IngresosTab() {
                 type="date"
                 className="w-[150px]"
                 value={filters.fechaDesde || ""}
-                onChange={(e) =>
-                  setFilters({ ...filters, fechaDesde: e.target.value || undefined })
-                }
+                onChange={(e) => {
+                  setFilters({ ...filters, fechaDesde: e.target.value || undefined });
+                  setDiaPage(1);
+                }}
                 placeholder="Desde"
               />
               <Input
                 type="date"
                 className="w-[150px]"
                 value={filters.fechaHasta || ""}
-                onChange={(e) =>
-                  setFilters({ ...filters, fechaHasta: e.target.value || undefined })
-                }
+                onChange={(e) => {
+                  setFilters({ ...filters, fechaHasta: e.target.value || undefined });
+                  setDiaPage(1);
+                }}
                 placeholder="Hasta"
               />
             </div>
             <Select
               value={filters.medioPago || "TODOS"}
-              onValueChange={(v) =>
+              onValueChange={(v) => {
                 setFilters({
                   ...filters,
                   medioPago: v === "TODOS" ? undefined : (v as MedioPago),
-                })
-              }
+                });
+                setDiaPage(1);
+              }}
             >
               <SelectTrigger className="w-full md:w-[180px]">
                 <Filter className="w-4 h-4 mr-2" />
@@ -424,7 +434,7 @@ export default function IngresosTab() {
               Ingresos por Día
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -434,20 +444,30 @@ export default function IngresosTab() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {Object.values(pagosPorDia)
-                  .sort((a, b) => b.fecha.localeCompare(a.fecha))
-                  .slice(0, 7)
-                  .map((dia) => (
-                    <TableRow key={dia.fecha}>
-                      <TableCell>{formatDate(dia.fecha)}</TableCell>
-                      <TableCell className="text-center">{dia.cantidad}</TableCell>
-                      <TableCell className="text-right font-semibold">
-                        {formatMoney(dia.total)}
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                {paginatedDias.map((dia) => (
+                  <TableRow key={dia.fecha}>
+                    <TableCell>{formatDate(dia.fecha)}</TableCell>
+                    <TableCell className="text-center">{dia.cantidad}</TableCell>
+                    <TableCell className="text-right font-semibold">
+                      {formatMoney(dia.total)}
+                    </TableCell>
+                  </TableRow>
+                ))}
               </TableBody>
             </Table>
+            {sortedDias.length > 0 && (
+              <TablePagination
+                currentPage={diaPage}
+                totalPages={totalDiaPages}
+                pageSize={diaPageSize}
+                totalItems={sortedDias.length}
+                onPageChange={setDiaPage}
+                onPageSizeChange={(size) => {
+                  setDiaPageSize(size);
+                  setDiaPage(1);
+                }}
+              />
+            )}
           </CardContent>
         </Card>
       )}

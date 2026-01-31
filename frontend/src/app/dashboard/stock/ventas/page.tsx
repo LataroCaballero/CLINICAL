@@ -35,6 +35,7 @@ import { Inventario, VentaProducto } from "@/types/stock";
 import { toast } from "sonner";
 import { format, startOfDay, endOfDay, subDays, startOfMonth } from "date-fns";
 import { es } from "date-fns/locale";
+import { TablePagination } from "@/components/ui/table-pagination";
 
 interface VentaItem {
   productoId: string;
@@ -495,6 +496,8 @@ function HistorialVentasTab() {
     format(new Date(), "yyyy-MM-dd")
   );
   const [filtroPaciente, setFiltroPaciente] = useState<string>("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const { data: ventas, isLoading } = useVentasProducto({
     desde: filtroDesde ? new Date(filtroDesde).toISOString() : undefined,
@@ -506,6 +509,10 @@ function HistorialVentasTab() {
     filtroDesde ? new Date(filtroDesde).toISOString() : undefined,
     filtroHasta ? new Date(filtroHasta + "T23:59:59").toISOString() : undefined
   );
+
+  // Paginación
+  const totalPages = Math.ceil((ventas?.length ?? 0) / pageSize);
+  const paginatedVentas = ventas?.slice((page - 1) * pageSize, page * pageSize) ?? [];
 
   const getMedioPagoLabel = (medio: string) => {
     return MEDIOS_PAGO.find(m => m.value === medio)?.label ?? medio;
@@ -529,7 +536,10 @@ function HistorialVentasTab() {
               <Input
                 type="date"
                 value={filtroDesde}
-                onChange={(e) => setFiltroDesde(e.target.value)}
+                onChange={(e) => {
+                  setFiltroDesde(e.target.value);
+                  setPage(1);
+                }}
                 className="mt-1"
               />
             </div>
@@ -540,7 +550,10 @@ function HistorialVentasTab() {
               <Input
                 type="date"
                 value={filtroHasta}
-                onChange={(e) => setFiltroHasta(e.target.value)}
+                onChange={(e) => {
+                  setFiltroHasta(e.target.value);
+                  setPage(1);
+                }}
                 className="mt-1"
               />
             </div>
@@ -550,7 +563,10 @@ function HistorialVentasTab() {
               </Label>
               <Select
                 value={filtroPaciente || "_all"}
-                onValueChange={(v) => setFiltroPaciente(v === "_all" ? "" : v)}
+                onValueChange={(v) => {
+                  setFiltroPaciente(v === "_all" ? "" : v);
+                  setPage(1);
+                }}
               >
                 <SelectTrigger className="mt-1">
                   <SelectValue placeholder="Todos los pacientes" />
@@ -625,12 +641,13 @@ function HistorialVentasTab() {
         <CardHeader>
           <CardTitle className="text-base font-medium">Historial de ventas</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           {isLoading ? (
             <div className="flex justify-center py-8">
               <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
             </div>
           ) : ventas && ventas.length > 0 ? (
+            <>
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
@@ -643,7 +660,7 @@ function HistorialVentasTab() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {ventas.map((venta) => (
+                  {paginatedVentas.map((venta) => (
                     <TableRow key={venta.id}>
                       <TableCell className="whitespace-nowrap">
                         {format(new Date(venta.fecha), "dd/MM/yyyy HH:mm", { locale: es })}
@@ -681,6 +698,18 @@ function HistorialVentasTab() {
                 </TableBody>
               </Table>
             </div>
+            <TablePagination
+              currentPage={page}
+              totalPages={totalPages}
+              pageSize={pageSize}
+              totalItems={ventas?.length ?? 0}
+              onPageChange={setPage}
+              onPageSizeChange={(size) => {
+                setPageSize(size);
+                setPage(1);
+              }}
+            />
+            </>
           ) : (
             <div className="text-center py-8 text-gray-500">
               <History className="w-12 h-12 mx-auto mb-2 text-gray-300" />

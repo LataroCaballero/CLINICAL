@@ -500,7 +500,10 @@ export default function NewPacienteModal({
 
                                 <div className="grid gap-1.5">
                                     <label className="text-sm font-medium text-muted-foreground">Teléfono emergencia</label>
-                                    <Input {...form.register("contactoEmergenciaTelefono")} />
+                                    <PhoneInput
+                                        value={form.watch("contactoEmergenciaTelefono") || ""}
+                                        onChange={(v: string) => form.setValue("contactoEmergenciaTelefono", v)}
+                                    />
                                 </div>
 
                                 <div className="grid gap-1.5">

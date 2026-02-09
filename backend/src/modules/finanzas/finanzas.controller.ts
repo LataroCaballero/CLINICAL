@@ -5,7 +5,6 @@ import {
   Body,
   Param,
   Query,
-  UseGuards,
   Request,
 } from '@nestjs/common';
 import { FinanzasService } from './finanzas.service';
@@ -18,11 +17,11 @@ import {
   MarcarPracticasPagadasDto,
   ReporteFiltersDto,
 } from './dto/finanzas.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { Auth } from '../auth/decorators/auth.decorator';
 import { MedioPago, TipoFactura, EstadoLiquidacion } from '@prisma/client';
 
 @Controller('finanzas')
-@UseGuards(JwtAuthGuard)
+@Auth('ADMIN', 'PROFESIONAL', 'FACTURADOR')
 export class FinanzasController {
   constructor(private readonly service: FinanzasService) {}
 

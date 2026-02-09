@@ -6,10 +6,9 @@ import {
   Body,
   Param,
   Query,
-  UseGuards,
   Req,
 } from '@nestjs/common';
-import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
+import { Auth } from 'src/modules/auth/decorators/auth.decorator';
 import { InventarioService } from '../services/inventario.service';
 import {
   CreateMovimientoStockDto,
@@ -18,7 +17,7 @@ import {
 } from '../dto';
 import { resolveScope } from 'src/common/scope/resolve-scope';
 
-@UseGuards(JwtAuthGuard)
+@Auth('ADMIN', 'PROFESIONAL', 'SECRETARIA', 'FACTURADOR')
 @Controller('inventario')
 export class InventarioController {
   constructor(private readonly inventarioService: InventarioService) {}

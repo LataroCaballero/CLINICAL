@@ -2,7 +2,6 @@
 
 import { JSX, useEffect, useMemo, useState } from "react";
 import QuickAppointment from "../components/QuickAppointment";
-import UpcomingAppointments from "../components/UpcomingAppointments";
 
 import { Calendar, momentLocalizer } from "react-big-calendar";
 import moment from "moment";
@@ -20,7 +19,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, CalendarPlus, X } from "lucide-react";
 
 import NewAppointmentModal from "./NewAppointmentModal";
 import AppointmentDetailModal from "./AppointmentDetailModal";
@@ -38,6 +37,8 @@ import { useReprogramarTurno } from "@/hooks/useReprogramarTurnos";
 import { useEffectiveProfessionalId } from "@/hooks/useEffectiveProfessionalId";
 import { useAgenda } from "@/hooks/useAgenda";
 import { AgendaConfig } from "@/hooks/useProfesionalMe";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { motion, AnimatePresence } from "framer-motion";
 
 moment.locale("es");
 const localizer = momentLocalizer(moment);
@@ -254,13 +255,20 @@ function getAvailableSlotsCount(
 }
 
 export default function TurnosPage() {
-  const [view, setView] = useState<ViewType>("week");
+  const { data: user } = useCurrentUser();
+
+  // Vista derivada: el usuario puede cambiar manualmente, sino se usa la default por rol
+  const [viewOverride, setViewOverride] = useState<ViewType | null>(null);
+  const view: ViewType = viewOverride ?? (user?.rol === "PROFESIONAL" ? "month" : "week");
+  const setView = (v: ViewType) => setViewOverride(v);
+
   const [date, setDate] = useState(() => {
-    // Inicializar con la fecha a mediodía para evitar problemas de timezone
     const d = new Date();
     d.setHours(12, 0, 0, 0);
     return d;
   });
+
+  const [quickAppointmentOpen, setQuickAppointmentOpen] = useState(false);
 
   const [openNewModal, setOpenNewModal] = useState(false);
   const [openDetailModal, setOpenDetailModal] = useState(false);
@@ -455,13 +463,7 @@ export default function TurnosPage() {
 
   return (
     <div className="flex flex-col gap-6 p-6 max-w-[100vw]">
-      {/* PRIMERA FILA */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <QuickAppointment profesionalId={effectiveProfessionalId} />
-        <UpcomingAppointments profesionalId={effectiveProfessionalId} />
-      </div>
-
-      {/* SEGUNDA FILA: CALENDARIO */}
+      {/* CALENDARIO - Contenido principal */}
       <Card className="p-4 shadow-sm">
         <CardHeader className="flex justify-between items-center">
           <CardTitle className="text-base font-medium text-gray-800">
@@ -788,6 +790,67 @@ export default function TurnosPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Pestaña flotante + Panel deslizable de QuickAppointment */}
+      <AnimatePresence>
+        {!quickAppointmentOpen && (
+          <motion.button
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 20 }}
+            onClick={() => setQuickAppointmentOpen(true)}
+            className="fixed right-0 top-1/2 -translate-y-1/2 z-40 bg-indigo-500 hover:bg-indigo-600 text-white shadow-lg rounded-l-lg px-2 py-4 flex flex-col items-center gap-1 transition-colors"
+            title="Turno rápido"
+          >
+            <CalendarPlus className="w-5 h-5" />
+            <span className="text-xs font-medium [writing-mode:vertical-lr] rotate-180">
+              Turno rápido
+            </span>
+          </motion.button>
+        )}
+      </AnimatePresence>
+
+      {/* Backdrop */}
+      <AnimatePresence>
+        {quickAppointmentOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setQuickAppointmentOpen(false)}
+            className="fixed inset-0 bg-black/20 z-40"
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Panel deslizable */}
+      <AnimatePresence>
+        {quickAppointmentOpen && (
+          <motion.div
+            initial={{ x: "100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "100%" }}
+            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            className="fixed right-0 top-0 h-full w-full max-w-md bg-white shadow-2xl z-50 flex flex-col overflow-y-auto"
+          >
+            <div className="flex items-center justify-between p-4 border-b">
+              <h3 className="text-base font-semibold text-gray-800">
+                Turno rápido
+              </h3>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setQuickAppointmentOpen(false)}
+              >
+                <X className="w-5 h-5" />
+              </Button>
+            </div>
+            <div className="flex-1 overflow-y-auto">
+              <QuickAppointment profesionalId={effectiveProfessionalId} />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

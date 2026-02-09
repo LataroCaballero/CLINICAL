@@ -9,7 +9,6 @@ import {
   Query,
   Header,
   UsePipes,
-  UseGuards,
   Req,
 } from '@nestjs/common';
 import { SanitizeEmptyValuesPipe } from '../../common/pipes/sanitize-empty-values.pipe';
@@ -19,10 +18,10 @@ import { UpdatePacienteDto } from './dto/update-paciente.dto';
 import { PacienteListaDto } from './dto/paciente-lista.dto';
 import { PrismaService } from '@/src/prisma/prisma.service';
 import { UpdatePacienteSectionDto } from './dto/update-paciente-section.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { Auth } from '../auth/decorators/auth.decorator';
 import { resolveScope } from '@/src/common/scope/resolve-scope';
 
-@UseGuards(JwtAuthGuard)
+@Auth('ADMIN', 'PROFESIONAL', 'SECRETARIA', 'FACTURADOR')
 @Controller('pacientes')
 export class PacientesController {
   constructor(
@@ -61,7 +60,6 @@ export class PacientesController {
     return results ?? [];
   }
 
-  @UseGuards(JwtAuthGuard)
   @Get()
   findAll(@Req() req: any, @Query('profesionalId') profesionalId?: string) {
     const scope = resolveScope({

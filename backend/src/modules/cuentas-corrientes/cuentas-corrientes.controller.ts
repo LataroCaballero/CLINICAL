@@ -5,15 +5,14 @@ import {
   Body,
   Param,
   Query,
-  UseGuards,
   Request,
 } from '@nestjs/common';
 import { CuentasCorrientesService } from './cuentas-corrientes.service';
 import { CreateMovimientoDto } from './dto/create-movimiento.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { Auth } from '../auth/decorators/auth.decorator';
 
 @Controller('cuentas-corrientes')
-@UseGuards(JwtAuthGuard)
+@Auth('ADMIN', 'PROFESIONAL', 'FACTURADOR')
 export class CuentasCorrientesController {
   constructor(private readonly service: CuentasCorrientesService) {}
 

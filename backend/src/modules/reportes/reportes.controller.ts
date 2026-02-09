@@ -7,12 +7,11 @@ import {
   Body,
   Query,
   Param,
-  UseGuards,
   Res,
   Req,
 } from '@nestjs/common';
 import { Response, Request } from 'express';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { Auth } from '../auth/decorators/auth.decorator';
 import {
   DashboardFiltersDto,
   ReporteTurnosFiltersDto,
@@ -37,7 +36,7 @@ import { ReportesSuscripcionesService } from './services/reportes-suscripciones.
 import { ReportesSchedulerService } from './services/reportes-scheduler.service';
 
 @Controller('reportes')
-@UseGuards(JwtAuthGuard)
+@Auth('ADMIN', 'PROFESIONAL')
 export class ReportesController {
   constructor(
     private readonly dashboardService: ReportesDashboardService,

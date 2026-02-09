@@ -672,10 +672,12 @@ export class TurnosService {
         id: true,
         inicio: true,
         estado: true,
+        observaciones: true,
         paciente: {
           select: {
             id: true,
             nombreCompleto: true,
+            diagnostico: true,
           },
         },
         tipoTurno: {

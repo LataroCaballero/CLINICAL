@@ -6,7 +6,6 @@ import {
   Param,
   Body,
   Req,
-  UseGuards,
   ForbiddenException,
 } from '@nestjs/common';
 import { HCTemplatesService } from './hc-templates.service';
@@ -15,12 +14,12 @@ import {
   UpdateTemplateDto,
   UpdateVersionSchemaDto,
 } from './dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { Auth } from '../auth/decorators/auth.decorator';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RolUsuario } from '@prisma/client';
 
 @Controller('config/hc-templates')
-@UseGuards(JwtAuthGuard)
+@Auth('ADMIN', 'PROFESIONAL')
 export class HCTemplatesController {
   constructor(
     private readonly hcTemplatesService: HCTemplatesService,

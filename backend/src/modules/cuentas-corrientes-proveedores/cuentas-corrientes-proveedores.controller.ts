@@ -5,16 +5,15 @@ import {
   Body,
   Param,
   Query,
-  UseGuards,
   Request,
 } from '@nestjs/common';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { Auth } from '../auth/decorators/auth.decorator';
 import { CuentasCorrientesProveedoresService } from './cuentas-corrientes-proveedores.service';
 import { RegistrarPagoProveedorDto, PagarCuotaDto } from './dto';
 import { EstadoCuota } from '@prisma/client';
 
 @Controller('cuentas-corrientes-proveedores')
-@UseGuards(JwtAuthGuard)
+@Auth('ADMIN', 'PROFESIONAL', 'FACTURADOR')
 export class CuentasCorrientesProveedoresController {
   constructor(private readonly service: CuentasCorrientesProveedoresService) {}
 

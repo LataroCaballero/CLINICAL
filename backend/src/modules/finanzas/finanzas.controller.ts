@@ -42,7 +42,10 @@ export class FinanzasController {
     @Query('profesionalId') profesionalId?: string,
     @Query('dias') dias?: string,
   ) {
-    return this.service.getIngresosPorDia(profesionalId, dias ? parseInt(dias) : 30);
+    return this.service.getIngresosPorDia(
+      profesionalId,
+      dias ? parseInt(dias) : 30,
+    );
   }
 
   /**

@@ -272,11 +272,7 @@ export class VentasProductoService {
   /**
    * Obtiene resumen de ventas por período
    */
-  async getResumen(
-    profesionalId: string,
-    desde: Date,
-    hasta: Date,
-  ) {
+  async getResumen(profesionalId: string, desde: Date, hasta: Date) {
     const ventas = await this.prisma.ventaProducto.findMany({
       where: {
         profesionalId,
@@ -313,8 +309,9 @@ export class VentasProductoService {
           };
         }
         ventasPorProducto[item.productoId].cantidad += item.cantidad;
-        ventasPorProducto[item.productoId].total =
-          ventasPorProducto[item.productoId].total.add(item.subtotal);
+        ventasPorProducto[item.productoId].total = ventasPorProducto[
+          item.productoId
+        ].total.add(item.subtotal);
       }
     }
 

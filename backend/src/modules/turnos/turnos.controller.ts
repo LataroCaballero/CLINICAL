@@ -83,6 +83,20 @@ export class TurnosController {
     return this.turnosService.obtenerAgendaDiaria(profesionalId, fecha);
   }
 
+  @Get('proximos')
+  proximosTurnos(
+    @Query('profesionalId') profesionalId: string,
+    @Query('dias') dias?: string,
+  ) {
+    if (!profesionalId) {
+      throw new BadRequestException('Debe especificar profesionalId.');
+    }
+    return this.turnosService.obtenerProximosTurnos(
+      profesionalId,
+      dias ? parseInt(dias, 10) : 30,
+    );
+  }
+
   @Get('rango')
   obtenerPorRango(
     @Query('profesionalId') profesionalId: string,

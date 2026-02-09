@@ -76,27 +76,23 @@ export default function UpcomingAppointments({ profesionalId }: Props) {
     queryFn: async () => {
       if (!profesionalId) return { fecha: yyyyMmDd(new Date()), turnos: [] as TurnoAgenda[] };
 
-      const hoy = new Date();
-      for (let i = 0; i <= 30; i++) {
-        const d = new Date(hoy);
-        d.setDate(hoy.getDate() + i);
-        const fecha = yyyyMmDd(d);
+      const res = await api.get<TurnoAgenda[]>("/turnos/proximos", {
+        params: { profesionalId, dias: 30 },
+      });
 
-        const res = await api.get<TurnoAgenda[]>("/turnos/agenda", {
-          params: { profesionalId, fecha },
-        });
-
-        const turnos = res.data ?? [];
-        if (turnos.length > 0) {
-          return { fecha, turnos };
-        }
+      const turnos = res.data ?? [];
+      if (turnos.length > 0) {
+        // Group by the date of the first turno (earliest upcoming day with turnos)
+        const firstDate = yyyyMmDd(new Date(turnos[0].inicio));
+        const turnosDelDia = turnos.filter(
+          (t) => yyyyMmDd(new Date(t.inicio)) === firstDate
+        );
+        return { fecha: firstDate, turnos: turnosDelDia };
       }
 
-      // No se encontraron turnos en el rango
       return { fecha: yyyyMmDd(new Date()), turnos: [] as TurnoAgenda[] };
     },
     enabled: !!profesionalId,
-    staleTime: 10_000,
   });
 
   if (!profesionalId) {

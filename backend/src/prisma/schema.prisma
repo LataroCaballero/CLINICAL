@@ -2,6 +2,8 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// NOTE: connection_limit=1 & pool_timeout=30 are enforced in PrismaService
+// to avoid MaxClientsInSessionMode errors with pgBouncer (session mode).
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
@@ -35,6 +37,37 @@ model Usuario {
   secretaria            Secretaria?
   mensajesEnviados      MensajeInterno[]        @relation("MensajesEnviados")
   mensajesLeidos        MensajeLectura[]        @relation("MensajesLeidos")
+  reportesSuscripciones ReporteSuscripcion[]
+}
+
+model ReporteSuscripcion {
+  id              String              @id @default(uuid())
+  usuarioId       String
+  tipoReporte     TipoReporteEmail
+  frecuencia      FrecuenciaReporte
+  emailDestino    String?             // Si es null, se usa el email del usuario
+  activo          Boolean             @default(true)
+  ultimoEnvio     DateTime?
+  proximoEnvio    DateTime?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  usuario         Usuario             @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@unique([usuarioId, tipoReporte])
+  @@index([proximoEnvio, activo])
+}
+
+enum TipoReporteEmail {
+  RESUMEN_SEMANAL
+  RESUMEN_MENSUAL
+  INGRESOS
+  TURNOS
+  MOROSIDAD
+}
+
+enum FrecuenciaReporte {
+  SEMANAL
+  MENSUAL
 }
 
 model RefreshToken {
@@ -543,14 +576,67 @@ model Lote {
 }
 
 model Proveedor {
-  id          String              @id @default(uuid())
-  nombre      String
-  cuit        String?
-  direccion   String?
-  telefono    String?
-  email       String?
-  OrdenCompra OrdenCompra[]
-  productos   ProductoProveedor[]
+  id              String                     @id @default(uuid())
+  nombre          String
+  cuit            String?
+  direccion       String?
+  telefono        String?
+  email           String?
+  OrdenCompra     OrdenCompra[]
+  productos       ProductoProveedor[]
+  cuentaCorriente CuentaCorrienteProveedor?
+}
+
+model CuentaCorrienteProveedor {
+  id                   String                  @id @default(uuid())
+  proveedorId          String                  @unique
+  profesionalId        String
+  saldoActual          Decimal                 @default(0.0) @db.Decimal(10, 2)
+  totalPagadoHistorico Decimal                 @default(0.0) @db.Decimal(10, 2)
+  createdAt            DateTime                @default(now())
+  updatedAt            DateTime                @updatedAt
+  proveedor            Proveedor               @relation(fields: [proveedorId], references: [id])
+  movimientos          MovimientoCCProveedor[]
+
+  @@index([profesionalId])
+}
+
+model MovimientoCCProveedor {
+  id                         String                    @id @default(uuid())
+  cuentaCorrienteProveedorId String
+  monto                      Decimal                   @db.Decimal(10, 2)
+  tipo                       TipoMovimiento
+  medioPago                  MedioPago?
+  descripcion                String?
+  referencia                 String?
+  fecha                      DateTime                  @default(now())
+  anulado                    Boolean                   @default(false)
+  fechaAnulacion             DateTime?
+  ordenCompraId              String?
+  cuotaId                    String?                   @unique
+  usuarioId                  String?
+  cuentaCorriente            CuentaCorrienteProveedor  @relation(fields: [cuentaCorrienteProveedorId], references: [id])
+  ordenCompra                OrdenCompra?              @relation(fields: [ordenCompraId], references: [id])
+  cuota                      CuotaOrdenCompra?         @relation(fields: [cuotaId], references: [id])
+
+  @@index([cuentaCorrienteProveedorId, fecha])
+  @@index([tipo, fecha])
+}
+
+model CuotaOrdenCompra {
+  id               String                 @id @default(uuid())
+  ordenCompraId    String
+  numeroCuota      Int
+  monto            Decimal                @db.Decimal(10, 2)
+  fechaVencimiento DateTime
+  estado           EstadoCuota            @default(PENDIENTE)
+  fechaPago        DateTime?
+  createdAt        DateTime               @default(now())
+  ordenCompra      OrdenCompra            @relation(fields: [ordenCompraId], references: [id])
+  movimientoPago   MovimientoCCProveedor?
+
+  @@unique([ordenCompraId, numeroCuota])
+  @@index([estado, fechaVencimiento])
 }
 
 model ProductoProveedor {
@@ -563,16 +649,22 @@ model ProductoProveedor {
 }
 
 model OrdenCompra {
-  id             String            @id @default(uuid())
-  proveedorId    String
-  profesionalId  String
-  fechaCreacion  DateTime          @default(now())
-  fechaRecepcion DateTime?
-  estado         EstadoOrdenCompra @default(PENDIENTE)
-  movimientos    MovimientoStock[]
-  profesional    Profesional       @relation(fields: [profesionalId], references: [id])
-  proveedor      Proveedor         @relation(fields: [proveedorId], references: [id])
-  items          OrdenCompraItem[]
+  id                     String                  @id @default(uuid())
+  proveedorId            String
+  profesionalId          String
+  fechaCreacion          DateTime                @default(now())
+  fechaRecepcion         DateTime?
+  estado                 EstadoOrdenCompra       @default(PENDIENTE)
+  total                  Decimal?                @db.Decimal(10, 2)
+  condicionPago          CondicionPagoProveedor  @default(CONTADO)
+  cantidadCuotas         Int                     @default(1)
+  fechaPrimerVencimiento DateTime?
+  movimientos            MovimientoStock[]
+  profesional            Profesional             @relation(fields: [profesionalId], references: [id])
+  proveedor              Proveedor               @relation(fields: [proveedorId], references: [id])
+  items                  OrdenCompraItem[]
+  cuotas                 CuotaOrdenCompra[]
+  movimientosCC          MovimientoCCProveedor[]
 }
 
 model OrdenCompraItem {
@@ -784,6 +876,21 @@ enum EstadoOrdenCompra {
   ENVIADA
   RECIBIDA
   CANCELADA
+}
+
+enum CondicionPagoProveedor {
+  CONTADO
+  DIAS_30
+  DIAS_60
+  DIAS_90
+  PERSONALIZADO
+}
+
+enum EstadoCuota {
+  PENDIENTE
+  PAGADA
+  VENCIDA
+  ANULADA
 }
 
 enum EstadoTurno {

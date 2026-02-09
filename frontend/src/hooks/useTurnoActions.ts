@@ -6,6 +6,7 @@ export function useTurnoActions(pacienteId: string) {
 
     const onSuccess = () => {
         qc.invalidateQueries({ queryKey: ["turnos", "paciente", pacienteId] });
+        qc.invalidateQueries({ queryKey: ["alertas-resumen"] });
     };
 
     const cancelar = useMutation({

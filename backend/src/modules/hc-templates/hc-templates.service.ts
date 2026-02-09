@@ -391,7 +391,15 @@ export class HCTemplatesService {
   private async processSpecialNodes(
     pacienteId: string,
     profesionalId: string,
-    schema: { nodes: Array<{ type: string; key: string; syncToPaciente?: boolean; createPresupuesto?: boolean; sourceNodeKey?: string }> } | null,
+    schema: {
+      nodes: Array<{
+        type: string;
+        key: string;
+        syncToPaciente?: boolean;
+        createPresupuesto?: boolean;
+        sourceNodeKey?: string;
+      }>;
+    } | null,
     answers: Record<string, unknown>,
     computed: Record<string, unknown>,
   ) {
@@ -411,7 +419,10 @@ export class HCTemplatesService {
             diagnosisAnswer !== null &&
             'value' in diagnosisAnswer
           ) {
-            const answerObj = diagnosisAnswer as { value: string; otherText?: string };
+            const answerObj = diagnosisAnswer as {
+              value: string;
+              otherText?: string;
+            };
             // Si el valor es '__other__', usar el texto personalizado
             if (answerObj.value === '__other__' && answerObj.otherText) {
               updates.diagnostico = answerObj.otherText;
@@ -428,9 +439,7 @@ export class HCTemplatesService {
           | Array<{ tratamientoId: string; nombre: string }>
           | undefined;
         if (treatmentAnswer && Array.isArray(treatmentAnswer)) {
-          updates.tratamiento = treatmentAnswer
-            .map((t) => t.nombre)
-            .join(', ');
+          updates.tratamiento = treatmentAnswer.map((t) => t.nombre).join(', ');
         }
       }
 

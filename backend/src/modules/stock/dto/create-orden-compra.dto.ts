@@ -5,8 +5,13 @@ import {
   IsNumber,
   IsPositive,
   Min,
+  Max,
+  IsOptional,
+  IsEnum,
+  IsDateString,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { CondicionPagoProveedor } from '@prisma/client';
 
 export class OrdenCompraItemDto {
   @IsUUID()
@@ -29,4 +34,18 @@ export class CreateOrdenCompraDto {
   @ValidateNested({ each: true })
   @Type(() => OrdenCompraItemDto)
   items: OrdenCompraItemDto[];
+
+  @IsOptional()
+  @IsEnum(CondicionPagoProveedor)
+  condicionPago?: CondicionPagoProveedor;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  @Max(12)
+  cantidadCuotas?: number;
+
+  @IsOptional()
+  @IsDateString()
+  fechaPrimerVencimiento?: string;
 }

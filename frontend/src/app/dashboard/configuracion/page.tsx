@@ -10,6 +10,7 @@ import HorariosSemana from "./components/HorariosSemana";
 import CalendarioDisponibilidad from "./components/CalendarioDisponibilidad";
 import GestionUsuarios from "./components/GestionUsuarios";
 import GestionTratamientos from "./components/GestionTratamientos";
+import SuscripcionesReportes from "./components/SuscripcionesReportes";
 import { GestionPlantillasHC } from "@/components/hc-templates/builder";
 
 export default function ConfiguracionPage() {
@@ -35,10 +36,15 @@ export default function ConfiguracionPage() {
         <Tabs defaultValue="usuarios" className="w-full">
           <TabsList className="max-w-md">
             <TabsTrigger value="usuarios">Usuarios</TabsTrigger>
+            <TabsTrigger value="reportes">Reportes</TabsTrigger>
           </TabsList>
 
           <TabsContent value="usuarios" className="mt-6">
             <GestionUsuarios />
+          </TabsContent>
+
+          <TabsContent value="reportes" className="mt-6">
+            <SuscripcionesReportes />
           </TabsContent>
         </Tabs>
       </div>
@@ -73,12 +79,13 @@ export default function ConfiguracionPage() {
         <h1 className="text-2xl font-semibold">Configuración</h1>
 
         <Tabs defaultValue="datos" className="w-full">
-          <TabsList className="grid w-full grid-cols-5 max-w-2xl">
+          <TabsList className="grid w-full grid-cols-6 max-w-3xl">
             <TabsTrigger value="datos">Datos</TabsTrigger>
             <TabsTrigger value="horarios">Horarios</TabsTrigger>
             <TabsTrigger value="calendario">Calendario</TabsTrigger>
             <TabsTrigger value="tratamientos">Tratamientos</TabsTrigger>
             <TabsTrigger value="plantillas">Plantillas HC</TabsTrigger>
+            <TabsTrigger value="reportes">Reportes</TabsTrigger>
           </TabsList>
 
           <TabsContent value="datos" className="mt-6">
@@ -99,6 +106,10 @@ export default function ConfiguracionPage() {
 
           <TabsContent value="plantillas" className="mt-6">
             <GestionPlantillasHC />
+          </TabsContent>
+
+          <TabsContent value="reportes" className="mt-6">
+            <SuscripcionesReportes />
           </TabsContent>
         </Tabs>
       </div>

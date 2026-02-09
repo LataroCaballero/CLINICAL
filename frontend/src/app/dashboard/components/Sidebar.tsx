@@ -98,6 +98,7 @@ export default function Sidebar() {
         { href: "/dashboard/finanzas/balance", label: "Balance" },
         { href: "/dashboard/finanzas/presupuestos", label: "Presupuestos" },
         { href: "/dashboard/finanzas/facturacion", label: "Facturación" },
+        { href: "/dashboard/finanzas/proveedores", label: "Proveedores" },
       ],
     },
     {
@@ -108,13 +109,14 @@ export default function Sidebar() {
         { href: "/dashboard/stock", label: "Inventario" },
         { href: "/dashboard/stock/ventas", label: "Ventas" },
         { href: "/dashboard/stock/catalogo", label: "Catálogo" },
+        { href: "/dashboard/stock/ordenes", label: "Órdenes de Compra" },
+        { href: "/dashboard/stock/proveedores", label: "Proveedores" },
       ],
     },
     {
       href: "/dashboard/reportes",
       label: "Reportes",
       icon: <BarChart2 className="w-5 h-5" />,
-      disabled: true,
     },
     {
       href: "/dashboard/configuracion",

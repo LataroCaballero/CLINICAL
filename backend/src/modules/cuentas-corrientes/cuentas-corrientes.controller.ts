@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
 import { CuentasCorrientesService } from './cuentas-corrientes.service';
 import { CreateMovimientoDto } from './dto/create-movimiento.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';

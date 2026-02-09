@@ -5,11 +5,19 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateOrdenCompraDto, RecibirOrdenCompraDto } from '../dto';
-import { EstadoOrdenCompra, TipoMovimientoStock } from '@prisma/client';
+import {
+  EstadoOrdenCompra,
+  TipoMovimientoStock,
+  CondicionPagoProveedor,
+} from '@prisma/client';
+import { CuentasCorrientesProveedoresService } from '../../cuentas-corrientes-proveedores/cuentas-corrientes-proveedores.service';
 
 @Injectable()
 export class OrdenesCompraService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private cuentasCorrientesProveedores: CuentasCorrientesProveedoresService,
+  ) {}
 
   async findAll(profesionalId: string, estado?: EstadoOrdenCompra) {
     return this.prisma.ordenCompra.findMany({
@@ -76,10 +84,22 @@ export class OrdenesCompraService {
       throw new BadRequestException('Uno o más productos no encontrados');
     }
 
+    // Calcular el total de la orden
+    const total = dto.items.reduce(
+      (sum, item) => sum + item.cantidad * item.precioUnitario,
+      0,
+    );
+
     return this.prisma.ordenCompra.create({
       data: {
         proveedorId: dto.proveedorId,
         profesionalId,
+        total,
+        condicionPago: dto.condicionPago || CondicionPagoProveedor.CONTADO,
+        cantidadCuotas: dto.cantidadCuotas || 1,
+        fechaPrimerVencimiento: dto.fechaPrimerVencimiento
+          ? new Date(dto.fechaPrimerVencimiento)
+          : null,
         items: {
           create: dto.items.map((item) => ({
             productoId: item.productoId,
@@ -137,7 +157,35 @@ export class OrdenesCompraService {
     usuarioId: string,
     dto?: RecibirOrdenCompraDto,
   ) {
-    return this.prisma.$transaction(async (tx) => {
+    // First, get the order to access proveedorId outside the transaction
+    const ordenPrevia = await this.prisma.ordenCompra.findFirst({
+      where: { id, profesionalId },
+      select: {
+        id: true,
+        proveedorId: true,
+        condicionPago: true,
+        cantidadCuotas: true,
+        fechaPrimerVencimiento: true,
+        items: {
+          select: {
+            cantidad: true,
+            precioUnitario: true,
+          },
+        },
+      },
+    });
+
+    if (!ordenPrevia) {
+      throw new NotFoundException('Orden de compra no encontrada');
+    }
+
+    // Calculate total
+    const total = ordenPrevia.items.reduce(
+      (sum, item) => sum + item.cantidad * Number(item.precioUnitario),
+      0,
+    );
+
+    const result = await this.prisma.$transaction(async (tx) => {
       const orden = await tx.ordenCompra.findFirst({
         where: { id, profesionalId },
         include: {
@@ -158,7 +206,9 @@ export class OrdenesCompraService {
       }
 
       if (orden.estado === EstadoOrdenCompra.CANCELADA) {
-        throw new BadRequestException('No se puede recibir una orden cancelada');
+        throw new BadRequestException(
+          'No se puede recibir una orden cancelada',
+        );
       }
 
       const fechaRecepcion = dto?.fechaRecepcion
@@ -171,7 +221,8 @@ export class OrdenesCompraService {
         const itemRecepcion = dto?.items?.find(
           (i) => i.productoId === item.productoId,
         );
-        const cantidadRecibida = itemRecepcion?.cantidadRecibida ?? item.cantidad;
+        const cantidadRecibida =
+          itemRecepcion?.cantidadRecibida ?? item.cantidad;
 
         // Obtener o crear inventario
         let inventario = await tx.inventario.findUnique({
@@ -235,12 +286,13 @@ export class OrdenesCompraService {
         });
       }
 
-      // Actualizar estado de la orden
+      // Actualizar estado de la orden y guardar el total
       return tx.ordenCompra.update({
         where: { id },
         data: {
           estado: EstadoOrdenCompra.RECIBIDA,
           fechaRecepcion,
+          total,
         },
         include: {
           proveedor: { select: { nombre: true } },
@@ -252,6 +304,26 @@ export class OrdenesCompraService {
         },
       });
     });
+
+    // After successful transaction, register charge and generate installments
+    await this.cuentasCorrientesProveedores.registrarCargo(
+      ordenPrevia.proveedorId,
+      profesionalId,
+      total,
+      id,
+      `Recepción orden de compra #${id.slice(0, 8)}`,
+    );
+
+    // Generate installments based on payment condition
+    await this.cuentasCorrientesProveedores.generarCuotas(
+      id,
+      total,
+      ordenPrevia.condicionPago,
+      ordenPrevia.cantidadCuotas,
+      ordenPrevia.fechaPrimerVencimiento || undefined,
+    );
+
+    return result;
   }
 
   async cancelar(id: string, profesionalId: string) {

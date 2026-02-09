@@ -51,6 +51,7 @@ export function useAceptarPresupuesto() {
       queryClient.invalidateQueries({
         queryKey: ["cuenta-corriente", variables.pacienteId],
       });
+      queryClient.invalidateQueries({ queryKey: ["alertas-resumen"] });
     },
   });
 }

@@ -3,12 +3,10 @@
 import { JSX, useEffect, useMemo, useState } from "react";
 import QuickAppointment from "../components/QuickAppointment";
 
-import { Calendar, momentLocalizer } from "react-big-calendar";
 import moment from "moment";
 import "moment/locale/es";
-import "react-big-calendar/lib/css/react-big-calendar.css";
-import withDragAndDrop from "react-big-calendar/lib/addons/dragAndDrop";
-import "react-big-calendar/lib/addons/dragAndDrop/styles.css";
+
+import CalendarGrid from "./CalendarGrid";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,13 +22,6 @@ import { ChevronLeft, ChevronRight, CalendarPlus, X } from "lucide-react";
 import NewAppointmentModal from "./NewAppointmentModal";
 import AppointmentDetailModal from "./AppointmentDetailModal";
 import SurgeryAppointmentModal from "./SurgeryAppointmentModal";
-import {
-  Tooltip,
-  TooltipProvider,
-  TooltipTrigger,
-  TooltipContent,
-} from "@/components/ui/tooltip";
-
 import { toast } from "sonner";
 import { useTurnosRango } from "@/hooks/useTurnosRangos";
 import { useReprogramarTurno } from "@/hooks/useReprogramarTurnos";
@@ -41,7 +32,6 @@ import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { motion, AnimatePresence } from "framer-motion";
 
 moment.locale("es");
-const localizer = momentLocalizer(moment);
 
 type ViewType = "day" | "week" | "month";
 
@@ -55,8 +45,6 @@ interface CalendarEvent {
   estado: "PENDIENTE" | "CONFIRMADO" | "CANCELADO" | "AUSENTE" | "FINALIZADO";
   observaciones?: string;
 }
-
-const DnDCalendar = withDragAndDrop<CalendarEvent>(Calendar);
 
 // Helper para formatear fecha local (sin problemas de timezone)
 function formatLocalDate(date: Date): string {
@@ -149,86 +137,29 @@ function getDayTimeRange(
   return { min, max };
 }
 
-// Calcular rango horario más extenso de la semana
-function getWeekTimeRange(
-  date: Date,
-  agenda: AgendaConfig | null
-): { min: Date; max: Date } {
-  const defaultMin = new Date(date);
-  defaultMin.setHours(8, 0, 0, 0);
-  const defaultMax = new Date(date);
-  defaultMax.setHours(20, 0, 0, 0);
-
-  if (!agenda?.horariosTrabajo) return { min: defaultMin, max: defaultMax };
-
-  let globalEarliestStart = "23:59";
-  let globalLatestEnd = "00:00";
-
-  // Revisar todos los días de la semana
-  for (let i = 0; i < 7; i++) {
-    const dayConfig = agenda.horariosTrabajo[i];
-    if (!dayConfig?.activo || !dayConfig.bloques?.length) continue;
-
-    for (const bloque of dayConfig.bloques) {
-      if (bloque.inicio < globalEarliestStart) globalEarliestStart = bloque.inicio;
-      if (bloque.fin > globalLatestEnd) globalLatestEnd = bloque.fin;
-    }
-  }
-
-  // También considerar días de cirugía en la semana actual
-  const weekStart = moment(date).startOf("week");
-  const weekEnd = moment(date).endOf("week");
-
-  agenda.diasCirugia?.forEach((d) => {
-    const surgeryDate = moment(d.fecha);
-    if (surgeryDate.isBetween(weekStart, weekEnd, "day", "[]")) {
-      if (d.inicio < globalEarliestStart) globalEarliestStart = d.inicio;
-      if (d.fin > globalLatestEnd) globalLatestEnd = d.fin;
-    }
-  });
-
-  if (globalEarliestStart === "23:59" || globalLatestEnd === "00:00") {
-    return { min: defaultMin, max: defaultMax };
-  }
-
-  const [startH, startM] = globalEarliestStart.split(":").map(Number);
-  const [endH, endM] = globalLatestEnd.split(":").map(Number);
-
-  const min = new Date(date);
-  min.setHours(startH, startM, 0, 0);
-  const max = new Date(date);
-  max.setHours(endH, endM, 0, 0);
-
-  return { min, max };
-}
-
 // Calcular slots disponibles para un día
-function getAvailableSlotsCount(
+function getDaySlotStats(
   date: Date,
   agenda: AgendaConfig | null,
   existingEvents: CalendarEvent[],
   slotDuration: number = 30
-): { total: number; reserved: number; available: number } {
-  if (!agenda) return { total: 0, reserved: 0, available: 0 };
+): { total: number; confirmed: number; pending: number; available: number; occupancy: number } {
+  const empty = { total: 0, confirmed: 0, pending: 0, available: 0, occupancy: 0 };
+  if (!agenda) return empty;
 
   const dateStr = formatLocalDate(date);
   const dayOfWeek = date.getDay();
 
-  // Si está bloqueado, no hay slots
-  if (isDayBlocked(date, agenda)) {
-    return { total: 0, reserved: 0, available: 0 };
-  }
+  if (isDayBlocked(date, agenda)) return empty;
 
   let totalMinutes = 0;
 
-  // Si es día de cirugía
   const surgeryConfig = agenda.diasCirugia?.find((d) => d.fecha === dateStr);
   if (surgeryConfig) {
     const [startH, startM] = surgeryConfig.inicio.split(":").map(Number);
     const [endH, endM] = surgeryConfig.fin.split(":").map(Number);
     totalMinutes = (endH * 60 + endM) - (startH * 60 + startM);
   } else {
-    // Día normal de trabajo
     const dayConfig = agenda.horariosTrabajo?.[dayOfWeek];
     if (dayConfig?.activo && dayConfig.bloques?.length) {
       for (const bloque of dayConfig.bloques) {
@@ -240,18 +171,29 @@ function getAvailableSlotsCount(
   }
 
   const total = Math.floor(totalMinutes / slotDuration);
+  if (total === 0) return empty;
 
-  // Contar turnos reservados (no cancelados ni ausentes)
-  const reserved = existingEvents.filter((e) => {
+  const dayEvents = existingEvents.filter((e) => {
     const eventDateStr = formatLocalDate(e.start);
-    return (
-      eventDateStr === dateStr &&
-      e.estado !== "CANCELADO" &&
-      e.estado !== "AUSENTE"
-    );
-  }).length;
+    return eventDateStr === dateStr && e.estado !== "CANCELADO" && e.estado !== "AUSENTE";
+  });
 
-  return { total, reserved, available: Math.max(0, total - reserved) };
+  const confirmed = dayEvents.filter((e) => e.estado === "CONFIRMADO" || e.estado === "FINALIZADO").length;
+  const pending = dayEvents.filter((e) => e.estado === "PENDIENTE").length;
+  const reserved = confirmed + pending;
+  const available = Math.max(0, total - reserved);
+  const occupancy = Math.min(1, reserved / total);
+
+  return { total, confirmed, pending, available, occupancy };
+}
+
+/** Interpolate red(0%) → yellow(50%) → green(100%) as HSLA */
+function occupancyColor(occupancy: number, alpha: number = 1): string {
+  // 0 → hue 0 (red), 0.5 → hue 45 (amber/yellow), 1.0 → hue 130 (green)
+  const hue = occupancy <= 0.5
+    ? occupancy * 2 * 45          // 0..45
+    : 45 + (occupancy - 0.5) * 2 * 85; // 45..130
+  return `hsla(${hue}, 75%, 50%, ${alpha})`;
 }
 
 export default function TurnosPage() {
@@ -275,6 +217,7 @@ export default function TurnosPage() {
   const [openSurgeryModal, setOpenSurgeryModal] = useState(false);
   const [surgeryDate, setSurgeryDate] = useState<Date | undefined>(undefined);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  const [newSlotDate, setNewSlotDate] = useState<Date | null>(null);
 
   const [events, setEvents] = useState<CalendarEvent[]>([]);
 
@@ -329,26 +272,57 @@ export default function TurnosPage() {
     setEvents(mapped);
   }, [turnosRango]);
 
-  // Calcular rango horario según la vista
-  // Para día y semana, usar el rango más extenso de la semana para no cortar eventos
+  // Calcular rango horario según los días visibles
+  // Se toma el inicio más temprano y fin más tardío de los días activos mostrados
   const timeRange = useMemo(() => {
-    const weekRange = getWeekTimeRange(normalizedDate, agenda ?? null);
+    const defaultMin = new Date(normalizedDate);
+    defaultMin.setHours(8, 0, 0, 0);
+    const defaultMax = new Date(normalizedDate);
+    defaultMax.setHours(20, 0, 0, 0);
 
-    // Si es vista diaria, podemos mostrar el rango específico del día
-    // pero con margen para no cortar eventos
-    if (view === "day") {
-      const dayRange = getDayTimeRange(normalizedDate, agenda ?? null);
-      if (dayRange) {
-        // Agregar 1 hora de margen antes y después
-        const min = new Date(dayRange.min);
-        min.setHours(min.getHours() - 1);
-        const max = new Date(dayRange.max);
-        max.setHours(max.getHours() + 1);
-        return { min, max };
+    if (!agenda) return { min: defaultMin, max: defaultMax };
+
+    // Obtener los días realmente visibles
+    const visibleDays: Date[] = [];
+    if (view === "day" || view === "month") {
+      visibleDays.push(new Date(normalizedDate));
+    } else {
+      const start = moment(normalizedDate).startOf("week");
+      for (let i = 0; i < 7; i++) {
+        visibleDays.push(start.clone().add(i, "day").hour(12).toDate());
       }
     }
 
-    return weekRange;
+    let earliestStart = "23:59";
+    let latestEnd = "00:00";
+
+    for (const day of visibleDays) {
+      // Saltear días bloqueados
+      if (isDayBlocked(day, agenda)) continue;
+
+      const range = getDayTimeRange(day, agenda);
+      if (!range) continue;
+
+      const startStr = `${String(range.min.getHours()).padStart(2, "0")}:${String(range.min.getMinutes()).padStart(2, "0")}`;
+      const endStr = `${String(range.max.getHours()).padStart(2, "0")}:${String(range.max.getMinutes()).padStart(2, "0")}`;
+
+      if (startStr < earliestStart) earliestStart = startStr;
+      if (endStr > latestEnd) latestEnd = endStr;
+    }
+
+    if (earliestStart === "23:59" || latestEnd === "00:00") {
+      return { min: defaultMin, max: defaultMax };
+    }
+
+    const [startH, startM] = earliestStart.split(":").map(Number);
+    const [endH, endM] = latestEnd.split(":").map(Number);
+
+    const min = new Date(normalizedDate);
+    min.setHours(startH, startM, 0, 0);
+    const max = new Date(normalizedDate);
+    max.setHours(endH, endM, 0, 0);
+
+    return { min, max };
   }, [view, normalizedDate, agenda]);
 
   // Formato de fecha/rango para mostrar en header
@@ -441,11 +415,11 @@ export default function TurnosPage() {
       return;
     }
     if (isSurgeryDay(start, agenda ?? null)) {
-      // En día de cirugía, abrir modal de cirugía
       setSurgeryDate(start);
       setOpenSurgeryModal(true);
       return;
     }
+    setNewSlotDate(start);
     setOpenNewModal(true);
   };
 
@@ -462,9 +436,9 @@ export default function TurnosPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6 p-6 max-w-[100vw]">
+    <div className="flex flex-col gap-4 p-6 max-w-[100vw] h-[calc(100dvh-3.5rem)]">
       {/* CALENDARIO - Contenido principal */}
-      <Card className="p-4 shadow-sm">
+      <Card className="p-4 shadow-sm flex-1 flex flex-col min-h-0">
         <CardHeader className="flex justify-between items-center">
           <CardTitle className="text-base font-medium text-gray-800">
             Agenda
@@ -490,10 +464,17 @@ export default function TurnosPage() {
 
         <NewAppointmentModal
           open={openNewModal}
-          onOpenChange={setOpenNewModal}
+          onOpenChange={(v) => {
+            setOpenNewModal(v);
+            if (!v) setNewSlotDate(null);
+          }}
           onSwitchToSurgery={() => {
             setOpenSurgeryModal(true);
           }}
+          selectedEvent={newSlotDate ? {
+            fecha: newSlotDate.toISOString(),
+            hora: `${String(newSlotDate.getHours()).padStart(2, "0")}:${String(newSlotDate.getMinutes()).padStart(2, "0")}`,
+          } : null}
         />
 
         <AppointmentDetailModal
@@ -508,7 +489,7 @@ export default function TurnosPage() {
           defaultDate={surgeryDate}
         />
 
-        <CardContent>
+        <CardContent className="flex-1 flex flex-col min-h-0">
           {/* Navegación */}
           <div className="flex items-center justify-between mb-3">
             <div className="flex gap-2">
@@ -552,10 +533,10 @@ export default function TurnosPage() {
 
           {/* CALENDARIO */}
           {view === "month" ? (
-            // Vista mensual personalizada con conteo de slots
-            // En español, la semana empieza en Lunes
-            <div className="rounded-md border border-gray-200 overflow-hidden">
-              <div className="grid grid-cols-7 bg-gray-50 border-b">
+            // Vista mensual personalizada
+            <div className="flex-1 min-h-0 flex flex-col rounded-md border border-gray-200 overflow-hidden">
+              {/* Header días de la semana */}
+              <div className="grid grid-cols-7 bg-gray-50 border-b shrink-0">
                 {["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"].map((d) => (
                   <div
                     key={d}
@@ -565,7 +546,8 @@ export default function TurnosPage() {
                   </div>
                 ))}
               </div>
-              <div className="grid grid-cols-7">
+              {/* Grid de días - ocupa todo el alto restante */}
+              <div className="flex-1 min-h-0 grid grid-cols-7 overflow-y-auto auto-rows-fr">
                 {(() => {
                   const startOfMonth = moment(normalizedDate).startOf("month");
                   const endOfMonth = moment(normalizedDate).endOf("month");
@@ -575,63 +557,84 @@ export default function TurnosPage() {
 
                   let currentDay = startDate.clone();
                   while (currentDay.isSameOrBefore(endDate, "day")) {
-                    // Crear fecha normalizada a mediodía para evitar problemas de timezone
                     const dayDate = currentDay.clone().hour(12).minute(0).second(0).toDate();
                     const isCurrentMonth = currentDay.month() === moment(normalizedDate).month();
                     const isToday = currentDay.isSame(moment(), "day");
                     const blocked = isDayBlocked(dayDate, agenda ?? null);
                     const surgery = isSurgeryDay(dayDate, agenda ?? null);
-                    const slots = getAvailableSlotsCount(dayDate, agenda ?? null, events);
+                    const stats = getDaySlotStats(dayDate, agenda ?? null, events);
+                    const isWorkDay = isCurrentMonth && !blocked && stats.total > 0;
 
                     let bgColor = "bg-white";
-                    if (!isCurrentMonth) bgColor = "bg-gray-50";
+                    if (!isCurrentMonth) bgColor = "bg-gray-50/80";
                     else if (blocked) bgColor = "bg-gray-100";
                     else if (surgery) bgColor = "bg-yellow-50";
 
                     days.push(
                       <div
                         key={currentDay.format("YYYY-MM-DD")}
-                        className={`min-h-[80px] p-2 border-b border-r ${bgColor} ${isToday ? "ring-2 ring-inset ring-indigo-500" : ""
-                          } cursor-pointer hover:bg-gray-50 transition-colors`}
+                        className={`relative p-2 border-b border-r ${bgColor} ${
+                          isToday ? "ring-2 ring-inset ring-indigo-500" : ""
+                        } cursor-pointer hover:brightness-[0.97] transition-all flex flex-col`}
+                        style={isWorkDay ? {
+                          boxShadow: `inset 0 -6px 12px -2px ${occupancyColor(stats.occupancy, 0.25)}`,
+                          borderBottom: `2px solid ${occupancyColor(stats.occupancy, 0.4)}`,
+                        } : undefined}
                         onClick={() => {
                           setDate(dayDate);
                           setView("day");
                         }}
                       >
+                        {/* Número del día */}
                         <div
-                          className={`text-sm font-medium ${!isCurrentMonth
-                            ? "text-gray-400"
-                            : isToday
-                              ? "text-indigo-600"
-                              : "text-gray-700"
-                            }`}
+                          className={`text-sm font-medium ${
+                            !isCurrentMonth
+                              ? "text-gray-300"
+                              : isToday
+                                ? "text-indigo-600 font-bold"
+                                : "text-gray-700"
+                          }`}
                         >
                           {currentDay.format("D")}
                         </div>
 
-                        {isCurrentMonth && !blocked && slots.total > 0 && (
-                          <div className="mt-1 space-y-0.5">
-                            <div className="text-xs text-gray-600">
-                              <span className="font-medium text-green-600">
-                                {slots.available}
-                              </span>{" "}
-                              disponibles
-                            </div>
-                            <div className="text-xs text-gray-500">
-                              <span className="font-medium">{slots.reserved}</span>{" "}
-                              reservados
-                            </div>
+                        {/* Stats del día laboral */}
+                        {isWorkDay && (
+                          <div className="mt-auto space-y-0.5">
+                            {stats.available > 0 && (
+                              <div className="flex items-center gap-1 text-[11px]">
+                                <span className="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0" />
+                                <span className="text-red-500 font-medium">{stats.available}</span>
+                                <span className="text-red-400">libres</span>
+                              </div>
+                            )}
+                            {stats.pending > 0 && (
+                              <div className="flex items-center gap-1 text-[11px]">
+                                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
+                                <span className="text-amber-500 font-medium">{stats.pending}</span>
+                                <span className="text-amber-400">sin confirmar</span>
+                              </div>
+                            )}
+                            {stats.confirmed > 0 && (
+                              <div className="flex items-center gap-1 text-[11px]">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+                                <span className="text-emerald-500 font-medium">{stats.confirmed}</span>
+                                <span className="text-emerald-400">confirmados</span>
+                              </div>
+                            )}
                           </div>
                         )}
 
+                        {/* Bloqueado */}
                         {isCurrentMonth && blocked && (
-                          <div className="mt-1 text-xs text-gray-400">
+                          <div className="mt-auto text-[11px] text-gray-400">
                             No disponible
                           </div>
                         )}
 
+                        {/* Cirugía */}
                         {isCurrentMonth && surgery && (
-                          <div className="mt-1 text-xs text-yellow-700 font-medium">
+                          <div className="mt-1 text-[11px] text-yellow-700 font-medium">
                             Cirugía
                           </div>
                         )}
@@ -646,147 +649,19 @@ export default function TurnosPage() {
               </div>
             </div>
           ) : (
-            // Vista diaria y semanal con react-big-calendar
-            <div className="rounded-md border border-gray-200 overflow-hidden">
-              <DnDCalendar
-                localizer={localizer}
-                events={events}
-                startAccessor="start"
-                endAccessor="end"
-                selectable
-                resizable
-                view={view}
-                date={normalizedDate}
-                min={timeRange.min}
-                max={timeRange.max}
-                style={{ height: 600 }}
-                onView={(v) => setView(v as ViewType)}
-                onNavigate={(newDate) => {
-                  const d = new Date(newDate);
-                  d.setHours(12, 0, 0, 0);
-                  setDate(d);
-                }}
-                onSelectEvent={handleSelectEvent}
-                onSelectSlot={handleSelectSlot}
-                onEventDrop={handleEventMove}
-                onEventResize={handleEventResize}
-                draggableAccessor={(event: any) =>
-                  event?.estado !== "CANCELADO" && event?.estado !== "FINALIZADO"
-                }
-                resizableAccessor={(event: any) =>
-                  event?.estado !== "CANCELADO" && event?.estado !== "FINALIZADO"
-                }
-                toolbar={false}
-                formats={{
-                  // Ocultar la hora en los eventos
-                  eventTimeRangeFormat: () => "",
-                  eventTimeRangeStartFormat: () => "",
-                  eventTimeRangeEndFormat: () => "",
-                }}
-                messages={{
-                  today: "Hoy",
-                  previous: "Anterior",
-                  next: "Siguiente",
-                  month: "Mes",
-                  week: "Semana",
-                  day: "Día",
-                }}
-                components={{
-                  event: ({ event }: any) => (
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <div className="cursor-pointer px-1 py-0.5 text-xs font-medium truncate leading-tight">
-                            <div className="font-semibold truncate">{event.tipo}</div>
-                            <div className="truncate text-gray-600">{event.paciente}</div>
-                          </div>
-                        </TooltipTrigger>
-
-                        <TooltipContent className="bg-white border text-gray-700 shadow-md text-xs p-2">
-                          <p>
-                            <strong>Paciente:</strong> {event.paciente}
-                          </p>
-                          <p>
-                            <strong>Tipo:</strong> {event.tipo}
-                          </p>
-                          <p>
-                            <strong>Hora:</strong>{" "}
-                            {moment(event.start).format("HH:mm")} -{" "}
-                            {moment(event.end).format("HH:mm")} hs
-                          </p>
-                          <p>
-                            <strong>Estado:</strong> {event.estado}
-                          </p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  ),
-                }}
-                // SOMBREADO POR DÍA (usando agenda real con fecha local)
-                dayPropGetter={(d: Date) => {
-                  const style: React.CSSProperties = {};
-
-                  // Día de cirugía (amarillo)
-                  if (isSurgeryDay(d, agenda ?? null)) {
-                    style.backgroundColor = "#FEF9C3";
-                    return { style };
-                  }
-
-                  // Día bloqueado o no laboral (gris)
-                  if (isDayBlocked(d, agenda ?? null)) {
-                    style.backgroundColor = "#E5E7EB";
-                    style.opacity = 0.6;
-                    return { style };
-                  }
-
-                  return { style };
-                }}
-                // SOMBREADO POR HORAS (usando fecha local)
-                slotPropGetter={(d: Date) => {
-                  // Día de cirugía
-                  if (isSurgeryDay(d, agenda ?? null)) {
-                    return { style: { backgroundColor: "#FEF9C3" } };
-                  }
-
-                  // Día bloqueado
-                  if (isDayBlocked(d, agenda ?? null)) {
-                    return {
-                      style: { backgroundColor: "#F3F4F6", opacity: 0.5 },
-                    };
-                  }
-
-                  return {};
-                }}
-                // COLORES DE EVENTOS
-                eventPropGetter={(event: any) => {
-                  const tipo = (event as CalendarEvent).tipo || "";
-                  const estado = (event as CalendarEvent).estado;
-
-                  let backgroundColor = tipo.toLowerCase().includes("consulta")
-                    ? "#E0E7FF"
-                    : tipo.toLowerCase().includes("cirug")
-                      ? "#FEE2E2"
-                      : "#DCFCE7";
-
-                  // estados del backend
-                  if (estado === "CONFIRMADO") backgroundColor = "#BBF7D0";
-                  if (estado === "CANCELADO") backgroundColor = "#E5E7EB";
-                  if (estado === "AUSENTE") backgroundColor = "#E5E7EB";
-                  if (estado === "FINALIZADO") backgroundColor = "#DBEAFE";
-
-                  return {
-                    style: {
-                      backgroundColor,
-                      borderRadius: "4px",
-                      color: "#1E1E1E",
-                      border: "none",
-                      padding: "2px 4px",
-                      fontSize: "11px",
-                    },
-                  };
-                }}
-              />
-            </div>
+            // Vista diaria y semanal con grid custom
+            <CalendarGrid
+              className="flex-1 min-h-0"
+              view={view as "day" | "week"}
+              date={normalizedDate}
+              events={events}
+              agenda={agenda ?? null}
+              timeRange={timeRange}
+              onSelectEvent={handleSelectEvent}
+              onSelectSlot={handleSelectSlot}
+              onEventMove={handleEventMove}
+              onEventResize={handleEventResize}
+            />
           )}
         </CardContent>
       </Card>

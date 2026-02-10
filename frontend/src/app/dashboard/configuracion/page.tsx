@@ -12,6 +12,7 @@ import GestionUsuarios from "./components/GestionUsuarios";
 import GestionTratamientos from "./components/GestionTratamientos";
 import SuscripcionesReportes from "./components/SuscripcionesReportes";
 import { GestionPlantillasHC } from "@/components/hc-templates/builder";
+import GestionProveedores from "./components/GestionProveedores";
 
 export default function ConfiguracionPage() {
   const { data: user, isLoading: loadingUser } = useCurrentUser();
@@ -36,11 +37,16 @@ export default function ConfiguracionPage() {
         <Tabs defaultValue="usuarios" className="w-full">
           <TabsList className="max-w-md">
             <TabsTrigger value="usuarios">Usuarios</TabsTrigger>
+            <TabsTrigger value="proveedores">Proveedores</TabsTrigger>
             <TabsTrigger value="reportes">Reportes</TabsTrigger>
           </TabsList>
 
           <TabsContent value="usuarios" className="mt-6">
             <GestionUsuarios />
+          </TabsContent>
+
+          <TabsContent value="proveedores" className="mt-6">
+            <GestionProveedores />
           </TabsContent>
 
           <TabsContent value="reportes" className="mt-6">
@@ -79,12 +85,13 @@ export default function ConfiguracionPage() {
         <h1 className="text-2xl font-semibold">Configuración</h1>
 
         <Tabs defaultValue="datos" className="w-full">
-          <TabsList className="grid w-full grid-cols-6 max-w-3xl">
+          <TabsList className="grid w-full grid-cols-7 max-w-4xl">
             <TabsTrigger value="datos">Datos</TabsTrigger>
             <TabsTrigger value="horarios">Horarios</TabsTrigger>
             <TabsTrigger value="calendario">Calendario</TabsTrigger>
             <TabsTrigger value="tratamientos">Tratamientos</TabsTrigger>
             <TabsTrigger value="plantillas">Plantillas HC</TabsTrigger>
+            <TabsTrigger value="proveedores">Proveedores</TabsTrigger>
             <TabsTrigger value="reportes">Reportes</TabsTrigger>
           </TabsList>
 
@@ -106,6 +113,10 @@ export default function ConfiguracionPage() {
 
           <TabsContent value="plantillas" className="mt-6">
             <GestionPlantillasHC />
+          </TabsContent>
+
+          <TabsContent value="proveedores" className="mt-6">
+            <GestionProveedores />
           </TabsContent>
 
           <TabsContent value="reportes" className="mt-6">

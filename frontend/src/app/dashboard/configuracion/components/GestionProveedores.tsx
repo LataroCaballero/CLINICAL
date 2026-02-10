@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -23,8 +23,8 @@ import {
 } from "lucide-react";
 import { useProveedores, useDeleteProveedor } from "@/hooks/useProveedores";
 import { Proveedor } from "@/types/stock";
-import NewProveedorModal from "./components/NewProveedorModal";
-import EditProveedorModal from "./components/EditProveedorModal";
+import NewProveedorModal from "./NewProveedorModal";
+import EditProveedorModal from "./EditProveedorModal";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -37,7 +37,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-export default function ProveedoresPage() {
+export default function GestionProveedores() {
   const [searchTerm, setSearchTerm] = useState("");
   const [newModalOpen, setNewModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -81,15 +81,12 @@ export default function ProveedoresPage() {
   });
 
   return (
-    <div className="flex flex-col gap-6 p-6">
+    <div className="flex flex-col gap-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-gray-800">Proveedores</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Gestiona los proveedores de productos e insumos
-          </p>
-        </div>
+        <p className="text-sm text-gray-500">
+          Gestiona los proveedores de productos e insumos
+        </p>
         <Button
           className="bg-indigo-600 text-white hover:bg-indigo-700"
           onClick={() => setNewModalOpen(true)}
@@ -241,8 +238,8 @@ export default function ProveedoresPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>¿Eliminar proveedor?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción no se puede deshacer. Se eliminará el proveedor "
-              {selectedProveedor?.nombre}" permanentemente.
+              Esta acción no se puede deshacer. Se eliminará el proveedor &quot;
+              {selectedProveedor?.nombre}&quot; permanentemente.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

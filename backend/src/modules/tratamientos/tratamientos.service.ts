@@ -106,9 +106,7 @@ export class TratamientosService {
     });
 
     if (existing) {
-      throw new ConflictException(
-        'Ya existe un tratamiento con este nombre',
-      );
+      throw new ConflictException('Ya existe un tratamiento con este nombre');
     }
 
     return this.prisma.tratamiento.create({
@@ -124,11 +122,7 @@ export class TratamientosService {
     });
   }
 
-  async update(
-    id: string,
-    profesionalId: string,
-    dto: UpdateTratamientoDto,
-  ) {
+  async update(id: string, profesionalId: string, dto: UpdateTratamientoDto) {
     const tratamiento = await this.findById(id, profesionalId);
 
     // Check for name conflict if name is being updated
@@ -142,9 +136,7 @@ export class TratamientosService {
       });
 
       if (existing) {
-        throw new ConflictException(
-          'Ya existe un tratamiento con este nombre',
-        );
+        throw new ConflictException('Ya existe un tratamiento con este nombre');
       }
     }
 
@@ -154,9 +146,15 @@ export class TratamientosService {
         ...(dto.nombre !== undefined && { nombre: dto.nombre.trim() }),
         ...(dto.descripcion !== undefined && { descripcion: dto.descripcion }),
         ...(dto.precio !== undefined && { precio: dto.precio }),
-        ...(dto.indicaciones !== undefined && { indicaciones: dto.indicaciones }),
-        ...(dto.procedimiento !== undefined && { procedimiento: dto.procedimiento }),
-        ...(dto.duracionMinutos !== undefined && { duracionMinutos: dto.duracionMinutos }),
+        ...(dto.indicaciones !== undefined && {
+          indicaciones: dto.indicaciones,
+        }),
+        ...(dto.procedimiento !== undefined && {
+          procedimiento: dto.procedimiento,
+        }),
+        ...(dto.duracionMinutos !== undefined && {
+          duracionMinutos: dto.duracionMinutos,
+        }),
       },
     });
   }

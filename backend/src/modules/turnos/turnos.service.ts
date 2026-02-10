@@ -651,6 +651,47 @@ export class TurnosService {
     });
   }
 
+  async obtenerProximosTurnos(profesionalId: string, dias: number = 30) {
+    const ahora = new Date();
+    const hasta = new Date(ahora);
+    hasta.setDate(hasta.getDate() + dias);
+    // Set end of that day
+    hasta.setHours(23, 59, 59, 999);
+
+    const turnos = await this.prisma.turno.findMany({
+      where: {
+        profesionalId,
+        inicio: {
+          gte: ahora,
+          lte: hasta,
+        },
+        estado: { not: EstadoTurno.CANCELADO },
+      },
+      orderBy: { inicio: 'asc' },
+      select: {
+        id: true,
+        inicio: true,
+        estado: true,
+        observaciones: true,
+        paciente: {
+          select: {
+            id: true,
+            nombreCompleto: true,
+            diagnostico: true,
+          },
+        },
+        tipoTurno: {
+          select: {
+            id: true,
+            nombre: true,
+          },
+        },
+      },
+    });
+
+    return turnos;
+  }
+
   async obtenerSesionActiva(profesionalId: string) {
     return this.prisma.turno.findFirst({
       where: {

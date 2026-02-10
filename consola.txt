@@ -1,0 +1,307 @@
+[Nest] 85590  - 02/09/2026, 10:03:49 AM   ERROR [ExceptionsHandler]
+Invalid `this.prisma.cuentaCorrienteProveedor.findMany()` invocation in
+/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/src/modules/cuentas-corrientes-proveedores/cuentas-corrientes-proveedores.service.ts:478:64
+
+  475  * Resumen de deudas con proveedores
+  476  */
+  477 async getResumenDeudas(profesionalId: string) {
+→ 478   const cuentas = await this.prisma.cuentaCorrienteProveedor.findMany(
+Error in connector: Error querying the database: FATAL: MaxClientsInSessionMode: max clients reached - in Session mode max clients are limited to pool_size
+PrismaClientUnknownRequestError:
+Invalid `this.prisma.cuentaCorrienteProveedor.findMany()` invocation in
+/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/src/modules/cuentas-corrientes-proveedores/cuentas-corrientes-proveedores.service.ts:478:64
+
+  475  * Resumen de deudas con proveedores
+  476  */
+  477 async getResumenDeudas(profesionalId: string) {
+→ 478   const cuentas = await this.prisma.cuentaCorrienteProveedor.findMany(
+Error in connector: Error querying the database: FATAL: MaxClientsInSessionMode: max clients reached - in Session mode max clients are limited to pool_size
+    at ei.handleRequestError (/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@prisma/client/src/runtime/RequestHandler.ts:237:13)
+    at ei.handleAndLogRequestError (/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@prisma/client/src/runtime/RequestHandler.ts:174:12)
+    at ei.request (/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@prisma/client/src/runtime/RequestHandler.ts:143:12)
+    at a (/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@prisma/client/src/runtime/getPrismaClient.ts:833:24)
+    at CuentasCorrientesProveedoresService.getResumenDeudas (/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/src/modules/cuentas-corrientes-proveedores/cuentas-corrientes-proveedores.service.ts:478:21)
+    at async /Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@nestjs/core/router/router-execution-context.js:46:28
+    at async /Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@nestjs/core/router/router-proxy.js:9:17
+[Nest] 85590  - 02/09/2026, 10:03:49 AM   ERROR [ExceptionsHandler]
+Invalid `this.prisma.cuotaOrdenCompra.findMany()` invocation in
+/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/src/modules/cuentas-corrientes-proveedores/cuentas-corrientes-proveedores.service.ts:578:55
+
+  575 const fechaLimite = new Date();
+  576 fechaLimite.setDate(fechaLimite.getDate() + dias);
+  577
+→ 578 const cuotas = await this.prisma.cuotaOrdenCompra.findMany(
+Error in connector: Error querying the database: FATAL: MaxClientsInSessionMode: max clients reached - in Session mode max clients are limited to pool_size
+PrismaClientUnknownRequestError:
+Invalid `this.prisma.cuotaOrdenCompra.findMany()` invocation in
+/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/src/modules/cuentas-corrientes-proveedores/cuentas-corrientes-proveedores.service.ts:578:55
+
+  575 const fechaLimite = new Date();
+  576 fechaLimite.setDate(fechaLimite.getDate() + dias);
+  577
+→ 578 const cuotas = await this.prisma.cuotaOrdenCompra.findMany(
+Error in connector: Error querying the database: FATAL: MaxClientsInSessionMode: max clients reached - in Session mode max clients are limited to pool_size
+    at ei.handleRequestError (/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@prisma/client/src/runtime/RequestHandler.ts:237:13)
+    at ei.handleAndLogRequestError (/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@prisma/client/src/runtime/RequestHandler.ts:174:12)
+    at ei.request (/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@prisma/client/src/runtime/RequestHandler.ts:143:12)
+    at a (/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@prisma/client/src/runtime/getPrismaClient.ts:833:24)
+    at CuentasCorrientesProveedoresService.getCuotasProximas (/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/src/modules/cuentas-corrientes-proveedores/cuentas-corrientes-proveedores.service.ts:578:20)
+    at async /Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@nestjs/core/router/router-execution-context.js:46:28
+    at async /Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@nestjs/core/router/router-proxy.js:9:17
+[Nest] 85590  - 02/09/2026, 10:03:49 AM   ERROR [ExceptionsHandler]
+Invalid `this.prisma.cuotaOrdenCompra.updateMany()` invocation in
+/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/src/modules/cuentas-corrientes-proveedores/cuentas-corrientes-proveedores.service.ts:531:40
+
+  528 const ahora = new Date();
+  529
+  530 // Actualizar estado de cuotas vencidas
+→ 531 await this.prisma.cuotaOrdenCompra.updateMany(
+Error in connector: Error querying the database: FATAL: MaxClientsInSessionMode: max clients reached - in Session mode max clients are limited to pool_size
+PrismaClientUnknownRequestError:
+Invalid `this.prisma.cuotaOrdenCompra.updateMany()` invocation in
+/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/src/modules/cuentas-corrientes-proveedores/cuentas-corrientes-proveedores.service.ts:531:40
+
+  528 const ahora = new Date();
+  529
+  530 // Actualizar estado de cuotas vencidas
+→ 531 await this.prisma.cuotaOrdenCompra.updateMany(
+Error in connector: Error querying the database: FATAL: MaxClientsInSessionMode: max clients reached - in Session mode max clients are limited to pool_size
+    at ei.handleRequestError (/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@prisma/client/src/runtime/RequestHandler.ts:237:13)
+    at ei.handleAndLogRequestError (/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@prisma/client/src/runtime/RequestHandler.ts:174:12)
+    at ei.request (/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@prisma/client/src/runtime/RequestHandler.ts:143:12)
+    at a (/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@prisma/client/src/runtime/getPrismaClient.ts:833:24)
+    at CuentasCorrientesProveedoresService.getCuotasVencidas (/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/src/modules/cuentas-corrientes-proveedores/cuentas-corrientes-proveedores.service.ts:531:5)
+    at async /Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@nestjs/core/router/router-execution-context.js:46:28
+    at async /Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@nestjs/core/router/router-proxy.js:9:17
+
+
+[Nest] 85590  - 02/09/2026, 10:03:52 AM   ERROR [ExceptionsHandler]
+Invalid `this.prisma.cuotaOrdenCompra.updateMany()` invocation in
+/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/src/modules/cuentas-corrientes-proveedores/cuentas-corrientes-proveedores.service.ts:531:40
+
+  528 const ahora = new Date();
+  529
+  530 // Actualizar estado de cuotas vencidas
+→ 531 await this.prisma.cuotaOrdenCompra.updateMany(
+Error in connector: Error querying the database: FATAL: MaxClientsInSessionMode: max clients reached - in Session mode max clients are limited to pool_size
+PrismaClientUnknownRequestError:
+Invalid `this.prisma.cuotaOrdenCompra.updateMany()` invocation in
+/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/src/modules/cuentas-corrientes-proveedores/cuentas-corrientes-proveedores.service.ts:531:40
+
+  528 const ahora = new Date();
+  529
+  530 // Actualizar estado de cuotas vencidas
+→ 531 await this.prisma.cuotaOrdenCompra.updateMany(
+Error in connector: Error querying the database: FATAL: MaxClientsInSessionMode: max clients reached - in Session mode max clients are limited to pool_size
+    at ei.handleRequestError (/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@prisma/client/src/runtime/RequestHandler.ts:237:13)
+    at ei.handleAndLogRequestError (/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@prisma/client/src/runtime/RequestHandler.ts:174:12)
+    at ei.request (/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@prisma/client/src/runtime/RequestHandler.ts:143:12)
+    at a (/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@prisma/client/src/runtime/getPrismaClient.ts:833:24)
+    at CuentasCorrientesProveedoresService.getCuotasVencidas (/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/src/modules/cuentas-corrientes-proveedores/cuentas-corrientes-proveedores.service.ts:531:5)
+    at async /Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@nestjs/core/router/router-execution-context.js:46:28
+    at async /Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@nestjs/core/router/router-proxy.js:9:17
+[Nest] 85590  - 02/09/2026, 10:03:52 AM   ERROR [ExceptionsHandler]
+Invalid `this.prisma.cuotaOrdenCompra.findMany()` invocation in
+/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/src/modules/cuentas-corrientes-proveedores/cuentas-corrientes-proveedores.service.ts:578:55
+
+  575 const fechaLimite = new Date();
+  576 fechaLimite.setDate(fechaLimite.getDate() + dias);
+  577
+→ 578 const cuotas = await this.prisma.cuotaOrdenCompra.findMany(
+Error in connector: Error querying the database: FATAL: MaxClientsInSessionMode: max clients reached - in Session mode max clients are limited to pool_size
+PrismaClientUnknownRequestError:
+Invalid `this.prisma.cuotaOrdenCompra.findMany()` invocation in
+/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/src/modules/cuentas-corrientes-proveedores/cuentas-corrientes-proveedores.service.ts:578:55
+
+  575 const fechaLimite = new Date();
+  576 fechaLimite.setDate(fechaLimite.getDate() + dias);
+  577
+→ 578 const cuotas = await this.prisma.cuotaOrdenCompra.findMany(
+Error in connector: Error querying the database: FATAL: MaxClientsInSessionMode: max clients reached - in Session mode max clients are limited to pool_size
+    at ei.handleRequestError (/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@prisma/client/src/runtime/RequestHandler.ts:237:13)
+    at ei.handleAndLogRequestError (/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@prisma/client/src/runtime/RequestHandler.ts:174:12)
+    at ei.request (/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@prisma/client/src/runtime/RequestHandler.ts:143:12)
+    at a (/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@prisma/client/src/runtime/getPrismaClient.ts:833:24)
+    at CuentasCorrientesProveedoresService.getCuotasProximas (/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/src/modules/cuentas-corrientes-proveedores/cuentas-corrientes-proveedores.service.ts:578:20)
+    at async /Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@nestjs/core/router/router-execution-context.js:46:28
+    at async /Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@nestjs/core/router/router-proxy.js:9:17
+
+[Nest] 85590  - 02/09/2026, 10:04:21 AM   ERROR [ExceptionsHandler]
+Invalid `this.prisma.inventario.findMany()` invocation in
+/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/src/modules/stock/services/inventario.service.ts:24:54
+
+  21 async findAll(profesionalId: string, filters?: { bajoStock?: boolean }) {
+  22   const where: any = { profesionalId };
+  23
+→ 24   const inventarios = await this.prisma.inventario.findMany(
+Error in connector: Error querying the database: FATAL: MaxClientsInSessionMode: max clients reached - in Session mode max clients are limited to pool_size
+PrismaClientUnknownRequestError:
+Invalid `this.prisma.inventario.findMany()` invocation in
+/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/src/modules/stock/services/inventario.service.ts:24:54
+
+  21 async findAll(profesionalId: string, filters?: { bajoStock?: boolean }) {
+  22   const where: any = { profesionalId };
+  23
+→ 24   const inventarios = await this.prisma.inventario.findMany(
+Error in connector: Error querying the database: FATAL: MaxClientsInSessionMode: max clients reached - in Session mode max clients are limited to pool_size
+    at ei.handleRequestError (/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@prisma/client/src/runtime/RequestHandler.ts:237:13)
+    at ei.handleAndLogRequestError (/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@prisma/client/src/runtime/RequestHandler.ts:174:12)
+    at ei.request (/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@prisma/client/src/runtime/RequestHandler.ts:143:12)
+    at a (/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@prisma/client/src/runtime/getPrismaClient.ts:833:24)
+    at InventarioService.findAll (/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/src/modules/stock/services/inventario.service.ts:24:25)
+    at async /Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@nestjs/core/router/router-execution-context.js:46:28
+    at async /Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@nestjs/core/router/router-proxy.js:9:17
+[Nest] 85590  - 02/09/2026, 10:04:21 AM   ERROR [ExceptionsHandler]
+Invalid `this.prisma.inventario.findMany()` invocation in
+/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/src/modules/stock/services/inventario.service.ts:115:54
+
+  112  * Obtiene productos con stock bajo el mínimo
+  113  */
+  114 async getAlertas(profesionalId: string) {
+→ 115   const inventarios = await this.prisma.inventario.findMany(
+Error in connector: Error querying the database: FATAL: MaxClientsInSessionMode: max clients reached - in Session mode max clients are limited to pool_size
+PrismaClientUnknownRequestError:
+Invalid `this.prisma.inventario.findMany()` invocation in
+/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/src/modules/stock/services/inventario.service.ts:115:54
+
+  112  * Obtiene productos con stock bajo el mínimo
+  113  */
+  114 async getAlertas(profesionalId: string) {
+→ 115   const inventarios = await this.prisma.inventario.findMany(
+Error in connector: Error querying the database: FATAL: MaxClientsInSessionMode: max clients reached - in Session mode max clients are limited to pool_size
+    at ei.handleRequestError (/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@prisma/client/src/runtime/RequestHandler.ts:237:13)
+    at ei.handleAndLogRequestError (/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@prisma/client/src/runtime/RequestHandler.ts:174:12)
+    at ei.request (/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@prisma/client/src/runtime/RequestHandler.ts:143:12)
+    at a (/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@prisma/client/src/runtime/getPrismaClient.ts:833:24)
+    at InventarioService.getAlertas (/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/src/modules/stock/services/inventario.service.ts:115:25)
+    at async /Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@nestjs/core/router/router-execution-context.js:46:28
+    at async /Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@nestjs/core/router/router-proxy.js:9:17
+
+    [Nest] 85590  - 02/09/2026, 10:04:24 AM   ERROR [ExceptionsHandler]
+Invalid `this.prisma.inventario.findMany()` invocation in
+/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/src/modules/stock/services/inventario.service.ts:115:54
+
+  112  * Obtiene productos con stock bajo el mínimo
+  113  */
+  114 async getAlertas(profesionalId: string) {
+→ 115   const inventarios = await this.prisma.inventario.findMany(
+Error in connector: Error querying the database: FATAL: MaxClientsInSessionMode: max clients reached - in Session mode max clients are limited to pool_size
+PrismaClientUnknownRequestError:
+Invalid `this.prisma.inventario.findMany()` invocation in
+/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/src/modules/stock/services/inventario.service.ts:115:54
+
+  112  * Obtiene productos con stock bajo el mínimo
+  113  */
+  114 async getAlertas(profesionalId: string) {
+→ 115   const inventarios = await this.prisma.inventario.findMany(
+Error in connector: Error querying the database: FATAL: MaxClientsInSessionMode: max clients reached - in Session mode max clients are limited to pool_size
+    at ei.handleRequestError (/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@prisma/client/src/runtime/RequestHandler.ts:237:13)
+    at ei.handleAndLogRequestError (/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@prisma/client/src/runtime/RequestHandler.ts:174:12)
+    at ei.request (/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@prisma/client/src/runtime/RequestHandler.ts:143:12)
+    at a (/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@prisma/client/src/runtime/getPrismaClient.ts:833:24)
+    at InventarioService.getAlertas (/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/src/modules/stock/services/inventario.service.ts:115:25)
+    at async /Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@nestjs/core/router/router-execution-context.js:46:28
+    at async /Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@nestjs/core/router/router-proxy.js:9:17
+
+
+    [Nest] 85590  - 02/09/2026, 10:05:33 AM   ERROR [ExceptionsHandler]
+Invalid `this.prisma.ventaProducto.findMany()` invocation in
+/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/src/modules/stock/services/ventas-producto.service.ts:276:52
+
+  273  * Obtiene resumen de ventas por período
+  274  */
+  275 async getResumen(profesionalId: string, desde: Date, hasta: Date) {
+→ 276   const ventas = await this.prisma.ventaProducto.findMany(
+Error in connector: Error querying the database: FATAL: MaxClientsInSessionMode: max clients reached - in Session mode max clients are limited to pool_size
+PrismaClientUnknownRequestError:
+Invalid `this.prisma.ventaProducto.findMany()` invocation in
+/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/src/modules/stock/services/ventas-producto.service.ts:276:52
+
+  273  * Obtiene resumen de ventas por período
+  274  */
+  275 async getResumen(profesionalId: string, desde: Date, hasta: Date) {
+→ 276   const ventas = await this.prisma.ventaProducto.findMany(
+Error in connector: Error querying the database: FATAL: MaxClientsInSessionMode: max clients reached - in Session mode max clients are limited to pool_size
+    at ei.handleRequestError (/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@prisma/client/src/runtime/RequestHandler.ts:237:13)
+    at ei.handleAndLogRequestError (/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@prisma/client/src/runtime/RequestHandler.ts:174:12)
+    at ei.request (/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@prisma/client/src/runtime/RequestHandler.ts:143:12)
+    at a (/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@prisma/client/src/runtime/getPrismaClient.ts:833:24)
+    at VentasProductoService.getResumen (/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/src/modules/stock/services/ventas-producto.service.ts:276:20)
+    at async /Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@nestjs/core/router/router-execution-context.js:46:28
+    at async /Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@nestjs/core/router/router-proxy.js:9:17
+[Nest] 85590  - 02/09/2026, 10:05:34 AM   ERROR [ExceptionsHandler]
+Invalid `this.prisma.ventaProducto.findMany()` invocation in
+/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/src/modules/stock/services/ventas-producto.service.ts:276:52
+
+  273  * Obtiene resumen de ventas por período
+  274  */
+  275 async getResumen(profesionalId: string, desde: Date, hasta: Date) {
+→ 276   const ventas = await this.prisma.ventaProducto.findMany(
+Error in connector: Error querying the database: FATAL: MaxClientsInSessionMode: max clients reached - in Session mode max clients are limited to pool_size
+PrismaClientUnknownRequestError:
+Invalid `this.prisma.ventaProducto.findMany()` invocation in
+/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/src/modules/stock/services/ventas-producto.service.ts:276:52
+
+  273  * Obtiene resumen de ventas por período
+  274  */
+  275 async getResumen(profesionalId: string, desde: Date, hasta: Date) {
+→ 276   const ventas = await this.prisma.ventaProducto.findMany(
+Error in connector: Error querying the database: FATAL: MaxClientsInSessionMode: max clients reached - in Session mode max clients are limited to pool_size
+    at ei.handleRequestError (/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@prisma/client/src/runtime/RequestHandler.ts:237:13)
+    at ei.handleAndLogRequestError (/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@prisma/client/src/runtime/RequestHandler.ts:174:12)
+    at ei.request (/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@prisma/client/src/runtime/RequestHandler.ts:143:12)
+    at a (/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@prisma/client/src/runtime/getPrismaClient.ts:833:24)
+    at VentasProductoService.getResumen (/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/src/modules/stock/services/ventas-producto.service.ts:276:20)
+    at async /Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@nestjs/core/router/router-execution-context.js:46:28
+    at async /Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@nestjs/core/router/router-proxy.js:9:17
+
+
+[Nest] 85590  - 02/09/2026, 10:06:06 AM   ERROR [ExceptionsHandler]
+Invalid `this.prisma.ordenCompra.findMany()` invocation in
+/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/src/modules/stock/services/ordenes-compra.service.ts:23:36
+
+  20 ) {}
+  21
+  22 async findAll(profesionalId: string, estado?: EstadoOrdenCompra) {
+→ 23   return this.prisma.ordenCompra.findMany(
+Error in connector: Error querying the database: FATAL: MaxClientsInSessionMode: max clients reached - in Session mode max clients are limited to pool_size
+PrismaClientUnknownRequestError:
+Invalid `this.prisma.ordenCompra.findMany()` invocation in
+/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/src/modules/stock/services/ordenes-compra.service.ts:23:36
+
+  20 ) {}
+  21
+  22 async findAll(profesionalId: string, estado?: EstadoOrdenCompra) {
+→ 23   return this.prisma.ordenCompra.findMany(
+Error in connector: Error querying the database: FATAL: MaxClientsInSessionMode: max clients reached - in Session mode max clients are limited to pool_size
+    at ei.handleRequestError (/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@prisma/client/src/runtime/RequestHandler.ts:237:13)
+    at ei.handleAndLogRequestError (/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@prisma/client/src/runtime/RequestHandler.ts:174:12)
+    at ei.request (/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@prisma/client/src/runtime/RequestHandler.ts:143:12)
+    at a (/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@prisma/client/src/runtime/getPrismaClient.ts:833:24)
+    at async /Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@nestjs/core/router/router-execution-context.js:46:28
+    at async /Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@nestjs/core/router/router-proxy.js:9:17
+
+[Nest] 85590  - 02/09/2026, 10:06:09 AM   ERROR [ExceptionsHandler]
+Invalid `this.prisma.ordenCompra.findMany()` invocation in
+/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/src/modules/stock/services/ordenes-compra.service.ts:23:36
+
+  20 ) {}
+  21
+  22 async findAll(profesionalId: string, estado?: EstadoOrdenCompra) {
+→ 23   return this.prisma.ordenCompra.findMany(
+Error in connector: Error querying the database: FATAL: MaxClientsInSessionMode: max clients reached - in Session mode max clients are limited to pool_size
+PrismaClientUnknownRequestError:
+Invalid `this.prisma.ordenCompra.findMany()` invocation in
+/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/src/modules/stock/services/ordenes-compra.service.ts:23:36
+
+  20 ) {}
+  21
+  22 async findAll(profesionalId: string, estado?: EstadoOrdenCompra) {
+→ 23   return this.prisma.ordenCompra.findMany(
+Error in connector: Error querying the database: FATAL: MaxClientsInSessionMode: max clients reached - in Session mode max clients are limited to pool_size
+    at ei.handleRequestError (/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@prisma/client/src/runtime/RequestHandler.ts:237:13)
+    at ei.handleAndLogRequestError (/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@prisma/client/src/runtime/RequestHandler.ts:174:12)
+    at ei.request (/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@prisma/client/src/runtime/RequestHandler.ts:143:12)
+    at a (/Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@prisma/client/src/runtime/getPrismaClient.ts:833:24)
+    at async /Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@nestjs/core/router/router-execution-context.js:46:28
+    at async /Users/laucaballero/Desktop/Lautaro/AndesCode/CLINICAL/backend/node_modules/@nestjs/core/router/router-proxy.js:9:17

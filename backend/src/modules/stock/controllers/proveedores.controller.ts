@@ -7,13 +7,12 @@ import {
   Body,
   Param,
   Query,
-  UseGuards,
 } from '@nestjs/common';
-import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
+import { Auth } from 'src/modules/auth/decorators/auth.decorator';
 import { ProveedoresService } from '../services/proveedores.service';
 import { CreateProveedorDto, UpdateProveedorDto } from '../dto';
 
-@UseGuards(JwtAuthGuard)
+@Auth('ADMIN', 'PROFESIONAL', 'SECRETARIA', 'FACTURADOR')
 @Controller('proveedores')
 export class ProveedoresController {
   constructor(private readonly proveedoresService: ProveedoresService) {}

@@ -137,3 +137,16 @@
   box-shadow: inset 41px 41px 38px #d0d0d0,
     inset -41px -41px 38px #f0f0f0;
 }
+
+/* ── Focus mode (Modo Consulta) CSS variables ── */
+:root {
+  --fc-bg-primary: #0f172a;
+  --fc-bg-surface: #1e293b;
+  --fc-bg-hover: #334155;
+  --fc-text-primary: #e2e8f0;
+  --fc-text-secondary: #94a3b8;
+  --fc-accent: #8b5cf6;
+  --fc-accent-hover: #7c3aed;
+  --fc-border: #334155;
+  --fc-session-active: #22c55e;
+}

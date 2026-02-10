@@ -22,8 +22,7 @@ export function useMensajesNoLeidos() {
       });
       return data;
     },
-    refetchInterval: 20000, // Polling cada 20 segundos
-    staleTime: 5000,
+    refetchInterval: 60_000, // Polling cada 60 segundos
   });
 
   // Sincronizar con el store de Zustand

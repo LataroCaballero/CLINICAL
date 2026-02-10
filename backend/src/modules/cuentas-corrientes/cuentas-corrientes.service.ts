@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateMovimientoDto } from './dto/create-movimiento.dto';
 import { TipoMovimiento, MedioPago } from '@prisma/client';
@@ -162,10 +166,7 @@ export class CuentasCorrientesService {
   /**
    * Lista todas las cuentas corrientes con filtros
    */
-  async findAll(filters?: {
-    profesionalId?: string;
-    soloConDeuda?: boolean;
-  }) {
+  async findAll(filters?: { profesionalId?: string; soloConDeuda?: boolean }) {
     const whereClause: any = {};
 
     if (filters?.profesionalId) {
@@ -238,7 +239,7 @@ export class CuentasCorrientesService {
 
     for (const mov of movimientos) {
       const diffDays = Math.floor(
-        (now.getTime() - new Date(mov.fecha).getTime()) / (1000 * 60 * 60 * 24)
+        (now.getTime() - new Date(mov.fecha).getTime()) / (1000 * 60 * 60 * 24),
       );
       const monto = Number(mov.monto);
 

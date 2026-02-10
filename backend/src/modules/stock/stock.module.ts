@@ -15,7 +15,11 @@ import { ProveedoresService } from './services/proveedores.service';
 import { OrdenesCompraService } from './services/ordenes-compra.service';
 import { VentasProductoService } from './services/ventas-producto.service';
 
+// External modules
+import { CuentasCorrientesProveedoresModule } from '../cuentas-corrientes-proveedores/cuentas-corrientes-proveedores.module';
+
 @Module({
+  imports: [CuentasCorrientesProveedoresModule],
   controllers: [
     ProductosController,
     InventarioController,

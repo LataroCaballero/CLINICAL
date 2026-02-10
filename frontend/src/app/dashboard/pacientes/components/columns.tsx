@@ -13,6 +13,23 @@ const formatDate = (dateString?: string | null) => {
   return new Date(dateString).toLocaleDateString("es-AR");
 };
 
+// Prioridad de estado para ordenamiento (menor = más importante)
+const ESTADO_PRIORITY: Record<string, number> = {
+  QUIRURGICO: 0,
+  PRESUPUESTO: 1,
+  PRIMERA: 2,
+  PRACTICA_CONSULTORIO: 3,
+  ACTIVO: 4,
+  ARCHIVADO: 5,
+};
+
+// Determina si un paciente tiene alertas pendientes
+export function getPatientAlerts(paciente: any): string[] {
+  const alerts: string[] = [];
+  if (!paciente.consentimientoFirmado) alerts.push("Consentimiento no firmado");
+  if (!paciente.indicacionesEnviadas) alerts.push("Indicaciones no enviadas");
+  return alerts;
+}
 
 export const pacienteColumns: ColumnDef<any>[] = [
   // NOMBRE COMPLETO
@@ -22,33 +39,38 @@ export const pacienteColumns: ColumnDef<any>[] = [
     cell: ({ row }) => {
       const nombre = row.original.nombreCompleto;
       const foto = row.original.fotoUrl;
+      const hasAlerts = getPatientAlerts(row.original).length > 0;
 
       const getInitial = (name?: string) =>
         name ? name.charAt(0).toUpperCase() : "?";
-      console.log(
-        row.original.indicacionesEnviadas,
-        typeof row.original.indicacionesEnviadas
-      );
 
       return (
         <div className="flex items-center gap-3">
-          {foto ? (
-            <img
-              src={foto}
-              alt={nombre}
-              className="h-9 w-9 rounded-full object-cover border"
-            />
-          ) : (
-            <div
-              className="
-              h-9 w-9 rounded-full bg-indigo-600 text-white
-              flex items-center justify-center
-              text-sm font-semibold
-            "
-            >
-              {getInitial(nombre)}
-            </div>
-          )}
+          <div className="relative shrink-0">
+            {foto ? (
+              <img
+                src={foto}
+                alt={nombre}
+                className={`h-9 w-9 rounded-full object-cover border ${
+                  hasAlerts ? "ring-2 ring-red-500 ring-offset-1" : ""
+                }`}
+              />
+            ) : (
+              <div
+                className={`
+                  h-9 w-9 rounded-full bg-indigo-600 text-white
+                  flex items-center justify-center
+                  text-sm font-semibold
+                  ${hasAlerts ? "ring-2 ring-red-500 ring-offset-1" : ""}
+                `}
+              >
+                {getInitial(nombre)}
+              </div>
+            )}
+            {hasAlerts && (
+              <span className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full bg-red-500 border-2 border-white" />
+            )}
+          </div>
 
           <span className="font-medium text-gray-900">{nombre}</span>
         </div>
@@ -96,6 +118,11 @@ export const pacienteColumns: ColumnDef<any>[] = [
     accessorKey: "estado",
     header: "Estado",
     filterFn: "equals",
+    sortingFn: (rowA, rowB) => {
+      const a = ESTADO_PRIORITY[rowA.original.estado] ?? 99;
+      const b = ESTADO_PRIORITY[rowB.original.estado] ?? 99;
+      return a - b;
+    },
     cell: ({ row }) => {
       const estado = row.original.estado;
 

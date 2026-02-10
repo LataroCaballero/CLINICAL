@@ -240,10 +240,10 @@ export default function QuickAppointment({ profesionalId }: Props) {
   return (
     <>
       {/* Tarjeta principal */}
-      <Card className="bg-white border border-gray-200 shadow-sm rounded-xl overflow-hidden mt-8">
-        <CardContent className="flex flex-col md:flex-row gap-4 p-4 md:p-6">
+      <Card className="bg-white border-0 shadow-none rounded-none overflow-hidden">
+        <CardContent className="flex flex-col gap-4 p-4">
           {/* Calendario */}
-          <div className="w-full md:w-[60%] flex justify-center">
+          <div className="w-full flex justify-center">
             <Calendar
               mode="single"
               selected={date}
@@ -284,7 +284,7 @@ export default function QuickAppointment({ profesionalId }: Props) {
           </div>
 
           {/* Horarios */}
-          <div className="w-full md:w-[40%] flex flex-col gap-2 overflow-y-auto max-h-[293px] pr-2">
+          <div className="w-full grid grid-cols-3 gap-2 overflow-y-auto max-h-[200px] pr-2">
             {loadingTurnos ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="h-6 w-6 animate-spin text-gray-400" />

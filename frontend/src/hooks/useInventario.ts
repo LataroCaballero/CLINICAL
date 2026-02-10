@@ -131,6 +131,7 @@ export function useCreateMovimiento() {
       });
       queryClient.invalidateQueries({ queryKey: ["alertas-stock"] });
       queryClient.invalidateQueries({ queryKey: ["lotes", variables.productoId] });
+      queryClient.invalidateQueries({ queryKey: ["alertas-resumen"] });
     },
   });
 }
@@ -152,6 +153,7 @@ export function useUpdateInventario() {
         queryKey: ["inventario", variables.productoId],
       });
       queryClient.invalidateQueries({ queryKey: ["alertas-stock"] });
+      queryClient.invalidateQueries({ queryKey: ["alertas-resumen"] });
     },
   });
 }

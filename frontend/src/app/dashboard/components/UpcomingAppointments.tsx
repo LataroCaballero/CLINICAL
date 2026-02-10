@@ -2,11 +2,17 @@
 
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { Play, Loader2 } from "lucide-react";
+import { Play, Loader2, MessageSquareText } from "lucide-react";
 import { useLiveTurnoActions } from "@/hooks/useLiveTurnoActions";
 import { useLiveTurnoStore } from "@/store/live-turno.store";
 
@@ -18,7 +24,8 @@ type TurnoAgenda = {
   id: string;
   inicio: string;
   estado: "PENDIENTE" | "CONFIRMADO" | "CANCELADO" | "AUSENTE" | "FINALIZADO";
-  paciente: { id: string; nombreCompleto: string };
+  observaciones?: string | null;
+  paciente: { id: string; nombreCompleto: string; diagnostico?: string | null };
   tipoTurno: { id: string; nombre: string };
 };
 
@@ -76,32 +83,28 @@ export default function UpcomingAppointments({ profesionalId }: Props) {
     queryFn: async () => {
       if (!profesionalId) return { fecha: yyyyMmDd(new Date()), turnos: [] as TurnoAgenda[] };
 
-      const hoy = new Date();
-      for (let i = 0; i <= 30; i++) {
-        const d = new Date(hoy);
-        d.setDate(hoy.getDate() + i);
-        const fecha = yyyyMmDd(d);
+      const res = await api.get<TurnoAgenda[]>("/turnos/proximos", {
+        params: { profesionalId, dias: 30 },
+      });
 
-        const res = await api.get<TurnoAgenda[]>("/turnos/agenda", {
-          params: { profesionalId, fecha },
-        });
-
-        const turnos = res.data ?? [];
-        if (turnos.length > 0) {
-          return { fecha, turnos };
-        }
+      const turnos = res.data ?? [];
+      if (turnos.length > 0) {
+        // Group by the date of the first turno (earliest upcoming day with turnos)
+        const firstDate = yyyyMmDd(new Date(turnos[0].inicio));
+        const turnosDelDia = turnos.filter(
+          (t) => yyyyMmDd(new Date(t.inicio)) === firstDate
+        );
+        return { fecha: firstDate, turnos: turnosDelDia };
       }
 
-      // No se encontraron turnos en el rango
       return { fecha: yyyyMmDd(new Date()), turnos: [] as TurnoAgenda[] };
     },
     enabled: !!profesionalId,
-    staleTime: 10_000,
   });
 
   if (!profesionalId) {
     return (
-      <Card className="bg-white border border-gray-200 shadow-sm rounded-xl overflow-hidden max-h-[492px] mt-8">
+      <Card className="bg-white border border-gray-200 shadow-sm rounded-xl overflow-hidden">
         <CardHeader className="pb-3">
           <CardTitle className="text-base font-semibold text-gray-800">
             Próximos turnos del día
@@ -142,15 +145,15 @@ export default function UpcomingAppointments({ profesionalId }: Props) {
       : "Próximos turnos";
 
   return (
-    <Card className="bg-white border border-gray-200 shadow-sm rounded-xl overflow-hidden max-h-[492px] mt-8">
+    <Card className="bg-white border border-gray-200 shadow-sm rounded-xl overflow-hidden">
       <CardHeader className="pb-3">
         <CardTitle className="text-base font-semibold text-gray-800">
           {header}
         </CardTitle>
       </CardHeader>
 
-      <CardContent className="overflow-scroll p-0">
-        <div className="overflow-y-auto max-h-[492px]">
+      <CardContent className="overflow-hidden p-0">
+        <div className="overflow-y-auto max-h-[calc(100vh-320px)]">
           {isLoading ? (
             <div className="p-4">
               <p className="text-sm text-gray-600">Cargando turnos...</p>
@@ -160,74 +163,100 @@ export default function UpcomingAppointments({ profesionalId }: Props) {
               <p className="text-sm text-gray-600">No hay turnos próximos.</p>
             </div>
           ) : (
-            <table className="w-full text-sm text-left border-t border-gray-100">
-              <thead className="bg-gray-50 text-gray-600">
-                <tr>
-                  <th className="px-4 py-2 font-medium">Horario</th>
-                  <th className="px-4 py-2 font-medium">Paciente</th>
-                  <th className="px-4 py-2 font-medium">Tipo de Turno</th>
-                  <th className="px-4 py-2 font-medium">Estado</th>
-                  <th className="px-4 py-2 font-medium">Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {turnos.map((t) => {
-                  const e = estadoUi(t.estado);
-                  const tipo = t.tipoTurno?.nombre ?? "Turno";
+            <TooltipProvider delayDuration={300}>
+              <table className="w-full text-sm text-left border-t border-gray-100">
+                <thead className="bg-gray-50 text-gray-600">
+                  <tr>
+                    <th className="px-4 py-2 font-medium">Horario</th>
+                    <th className="px-4 py-2 font-medium">Paciente</th>
+                    <th className="px-4 py-2 font-medium">Diagnóstico</th>
+                    <th className="px-4 py-2 font-medium">Tipo de Turno</th>
+                    <th className="px-4 py-2 font-medium">Estado</th>
+                    <th className="px-4 py-2 font-medium">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {turnos.map((t) => {
+                    const e = estadoUi(t.estado);
+                    const tipo = t.tipoTurno?.nombre ?? "Turno";
+                    const hasObs = !!t.observaciones;
 
-                  return (
-                    <tr
-                      key={t.id}
-                      className="border-b border-gray-100 hover:bg-gray-50 transition"
-                    >
-                      <td className="px-4 py-2 font-medium text-gray-800">
-                        {hhmm(t.inicio)}
-                      </td>
-                      <td className="px-4 py-2 text-gray-700">
-                        {t.paciente?.nombreCompleto ?? "-"}
-                      </td>
-                      <td>
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs font-medium ${tipoTurnoClass(
-                            tipo
-                          )}`}
-                        >
-                          {tipo}
-                        </span>
-                      </td>
-                      <td className="px-4 py-2">
-                        <div className="flex items-center gap-2">
-                          <span className={`h-2.5 w-2.5 rounded-full ${e.dot}`} />
-                          <span className={`text-xs font-medium ${e.text}`}>
-                            {e.label}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-2">
-                        {t.estado !== "CANCELADO" && t.estado !== "FINALIZADO" && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => iniciarSesion.mutate(t.id)}
-                            disabled={iniciarSesion.isPending || !!session}
-                            className="h-7 px-2 text-xs"
-                          >
-                            {iniciarSesion.isPending && iniciarSesion.variables === t.id ? (
-                              <Loader2 className="w-3 h-3 animate-spin" />
-                            ) : (
-                              <>
-                                <Play className="w-3 h-3 mr-1" />
-                                Iniciar
-                              </>
+                    const row = (
+                      <tr
+                        key={t.id}
+                        className="border-b border-gray-100 hover:bg-gray-50 transition group"
+                      >
+                        <td className="px-4 py-2 font-medium text-gray-800">
+                          {hhmm(t.inicio)}
+                        </td>
+                        <td className="px-4 py-2 text-gray-700">
+                          <div className="flex items-center gap-1.5">
+                            {t.paciente?.nombreCompleto ?? "-"}
+                            {hasObs && (
+                              <MessageSquareText className="w-3.5 h-3.5 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                             )}
-                          </Button>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                          </div>
+                        </td>
+                        <td className="px-4 py-2 text-gray-500 text-xs max-w-[160px] truncate">
+                          {t.paciente?.diagnostico || "-"}
+                        </td>
+                        <td>
+                          <span
+                            className={`px-2 py-1 rounded-full text-xs font-medium ${tipoTurnoClass(
+                              tipo
+                            )}`}
+                          >
+                            {tipo}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2">
+                          <div className="flex items-center gap-2">
+                            <span className={`h-2.5 w-2.5 rounded-full ${e.dot}`} />
+                            <span className={`text-xs font-medium ${e.text}`}>
+                              {e.label}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-2">
+                          {t.estado !== "CANCELADO" && t.estado !== "FINALIZADO" && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => iniciarSesion.mutate(t.id)}
+                              disabled={iniciarSesion.isPending || !!session}
+                              className="h-7 px-2 text-xs"
+                            >
+                              {iniciarSesion.isPending && iniciarSesion.variables === t.id ? (
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                              ) : (
+                                <>
+                                  <Play className="w-3 h-3 mr-1" />
+                                  Iniciar
+                                </>
+                              )}
+                            </Button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+
+                    if (!hasObs) return row;
+
+                    return (
+                      <Tooltip key={t.id}>
+                        <TooltipTrigger asChild>
+                          {row}
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom" className="max-w-xs text-xs">
+                          <p className="font-medium mb-1">Observaciones</p>
+                          <p>{t.observaciones}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </TooltipProvider>
           )}
         </div>
       </CardContent>

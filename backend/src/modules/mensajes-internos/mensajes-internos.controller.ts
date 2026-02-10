@@ -7,15 +7,14 @@ import {
   Query,
   Body,
   Req,
-  UseGuards,
   BadRequestException,
 } from '@nestjs/common';
 import { MensajesInternosService } from './mensajes-internos.service';
 import { CreateMensajeDto } from './dto/create-mensaje.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { Auth } from '../auth/decorators/auth.decorator';
 import { resolveScope } from '@/src/common/scope/resolve-scope';
 
-@UseGuards(JwtAuthGuard)
+@Auth('ADMIN', 'PROFESIONAL', 'SECRETARIA', 'FACTURADOR')
 @Controller('mensajes-internos')
 export class MensajesInternosController {
   constructor(private readonly mensajesService: MensajesInternosService) {}

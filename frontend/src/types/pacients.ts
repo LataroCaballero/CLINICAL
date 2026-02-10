@@ -18,6 +18,7 @@ export interface PacienteListItem {
   | "PRIMERA"
   | "PRACTICA_CONSULTORIO";
   consentimientoFirmado: boolean;
+  indicacionesEnviadas?: boolean;
   estudiosPendientes: number;
   presupuestosActivos: number;
 }

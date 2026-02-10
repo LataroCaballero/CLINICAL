@@ -6,15 +6,15 @@ import {
   Param,
   Body,
   Req,
-  UseGuards,
   ForbiddenException,
 } from '@nestjs/common';
 import { ProfesionalesService } from './profesionales.service';
 import { UpdateProfesionalDto } from './dto/update-profesional.dto';
 import { UpdateAgendaDto } from './dto/update-agenda.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { Auth } from '../auth/decorators/auth.decorator';
 import { RolUsuario } from '@prisma/client';
 
+@Auth('ADMIN', 'PROFESIONAL', 'SECRETARIA', 'FACTURADOR')
 @Controller('profesionales')
 export class ProfesionalesController {
   constructor(private readonly profesionalesService: ProfesionalesService) {}
@@ -24,7 +24,6 @@ export class ProfesionalesController {
     return this.profesionalesService.findAll();
   }
 
-  @UseGuards(JwtAuthGuard)
   @Get('me')
   async getMe(@Req() req: any) {
     const user = req.user;
@@ -36,13 +35,11 @@ export class ProfesionalesController {
     return this.profesionalesService.findByUserId(user.userId);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.profesionalesService.findOne(id);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Patch(':id')
   async update(
     @Param('id') id: string,
@@ -68,13 +65,11 @@ export class ProfesionalesController {
     return this.profesionalesService.update(id, dto);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Get(':id/agenda')
   getAgenda(@Param('id') id: string) {
     return this.profesionalesService.getAgenda(id);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Put(':id/agenda')
   async updateAgenda(
     @Param('id') id: string,

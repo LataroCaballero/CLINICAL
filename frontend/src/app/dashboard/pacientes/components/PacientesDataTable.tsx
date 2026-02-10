@@ -18,5 +18,11 @@ export function PacientesDataTable() {
     );
   }
 
-  return <DataTable columns={pacienteColumns} data={data || []} />;
+  return (
+    <DataTable
+      columns={pacienteColumns}
+      data={data || []}
+      initialSorting={[{ id: "estado", desc: false }]}
+    />
+  );
 }

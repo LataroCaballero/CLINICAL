@@ -7,15 +7,14 @@ import {
   Body,
   Param,
   Query,
-  UseGuards,
   Req,
 } from '@nestjs/common';
-import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
+import { Auth } from 'src/modules/auth/decorators/auth.decorator';
 import { ProductosService } from '../services/productos.service';
 import { CreateProductoDto, UpdateProductoDto } from '../dto';
 import { TipoProducto } from '@prisma/client';
 
-@UseGuards(JwtAuthGuard)
+@Auth('ADMIN', 'PROFESIONAL', 'SECRETARIA', 'FACTURADOR')
 @Controller('productos')
 export class ProductosController {
   constructor(private readonly productosService: ProductosService) {}

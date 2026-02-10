@@ -166,6 +166,7 @@ export function useCreatePago() {
       queryClient.invalidateQueries({
         queryKey: ["finanzas", "cuentas-corrientes", profesionalId],
       });
+      queryClient.invalidateQueries({ queryKey: ["alertas-resumen"] });
     },
   });
 }
@@ -188,6 +189,7 @@ export function useAnularPago() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["finanzas"] });
       queryClient.invalidateQueries({ queryKey: ["cuenta-corriente"] });
+      queryClient.invalidateQueries({ queryKey: ["alertas-resumen"] });
     },
   });
 }
@@ -271,6 +273,7 @@ export function useUpdatePresupuestoEstado() {
       });
       queryClient.invalidateQueries({ queryKey: ["presupuestos"] });
       queryClient.invalidateQueries({ queryKey: ["cuenta-corriente"] });
+      queryClient.invalidateQueries({ queryKey: ["alertas-resumen"] });
     },
   });
 }
@@ -389,6 +392,7 @@ export function useMarcarPracticasPagadas() {
         queryKey: ["finanzas", "practicas-pendientes"],
       });
       queryClient.invalidateQueries({ queryKey: ["finanzas", "dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["alertas-resumen"] });
     },
   });
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import Topbar from "./components/Topbar";
 import DockNav from "./components/DockNav";
 import { useUIStore } from "@/lib/stores/useUIStore";
@@ -14,6 +14,8 @@ import {
   LiveTurnoSyncChecker,
 } from "@/components/live-turno";
 import { MensajesProvider } from "@/providers/MensajesProvider";
+import { cn } from "@/lib/utils";
+import { hasRouteAccess } from "@/lib/permissions";
 
 const Sidebar = dynamic(() => import("./components/Sidebar"), { ssr: false });
 
@@ -22,8 +24,9 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { sidebarCollapsed } = useUIStore();
+  const { sidebarCollapsed, focusModeEnabled } = useUIStore();
   const router = useRouter();
+  const pathname = usePathname();
   const { data: user, isLoading, isError } = useCurrentUser();
 
   useEffect(() => {
@@ -37,6 +40,15 @@ export default function DashboardLayout({
       router.replace("/login");
     }
   }, [isLoading, isError, user, router]);
+
+  // Redirect si el usuario no tiene permiso para la ruta actual
+  useEffect(() => {
+    if (!isLoading && user && pathname) {
+      if (!hasRouteAccess(pathname, user.rol)) {
+        router.replace("/dashboard");
+      }
+    }
+  }, [isLoading, user, pathname, router]);
 
   if (isLoading) {
     return (
@@ -52,7 +64,10 @@ export default function DashboardLayout({
 
   return (
     <MensajesProvider>
-      <div className="flex">
+      <div
+        className="flex min-h-screen transition-colors duration-300"
+        data-mode={focusModeEnabled ? "consulta" : undefined}
+      >
         {/* Sidebar solo desktop */}
         <div className="hidden md:flex">
           <Sidebar />
@@ -61,17 +76,27 @@ export default function DashboardLayout({
         {/* Contenedor principal */}
         <div className="flex-1 flex flex-col">
           {/* Contenedor que controla el espacio vertical */}
-          <div className="bg-gray-50">
-            <div className="bg-white border shadow-sm">
+          <div className={cn(
+            "transition-colors duration-300",
+            focusModeEnabled ? "bg-[var(--fc-bg-primary)]" : "bg-gray-50"
+          )}>
+            <div className={cn(
+              "border shadow-sm transition-colors duration-300",
+              focusModeEnabled
+                ? "bg-[var(--fc-bg-surface)] border-[var(--fc-border)]"
+                : "bg-white"
+            )}>
               <Topbar />
             </div>
           </div>
 
           {/* Contenido principal del dashboard */}
           <main
-            className={`flex-1 overflow-y-auto transition-all duration-300 ${
-              sidebarCollapsed ? "md:ml-20" : "md:ml-64"
-            }`}
+            className={cn(
+              "flex-1 overflow-y-auto transition-all duration-300",
+              sidebarCollapsed ? "md:ml-20" : "md:ml-64",
+              focusModeEnabled && "bg-[var(--fc-bg-primary)]"
+            )}
           >
             {children}
           </main>

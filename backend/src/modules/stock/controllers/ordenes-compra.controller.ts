@@ -6,16 +6,15 @@ import {
   Body,
   Param,
   Query,
-  UseGuards,
   Req,
 } from '@nestjs/common';
-import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
+import { Auth } from 'src/modules/auth/decorators/auth.decorator';
 import { OrdenesCompraService } from '../services/ordenes-compra.service';
 import { CreateOrdenCompraDto, RecibirOrdenCompraDto } from '../dto';
 import { resolveScope } from 'src/common/scope/resolve-scope';
 import { EstadoOrdenCompra } from '@prisma/client';
 
-@UseGuards(JwtAuthGuard)
+@Auth('ADMIN', 'PROFESIONAL', 'SECRETARIA', 'FACTURADOR')
 @Controller('ordenes-compra')
 export class OrdenesCompraController {
   constructor(private readonly ordenesCompraService: OrdenesCompraService) {}

@@ -7,14 +7,13 @@ import {
   Body,
   Param,
   Query,
-  UseGuards,
 } from '@nestjs/common';
 import { PresupuestosService } from './presupuestos.service';
 import { CreatePresupuestoDto } from './dto/create-presupuesto.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { Auth } from '../auth/decorators/auth.decorator';
 
 @Controller('presupuestos')
-@UseGuards(JwtAuthGuard)
+@Auth('ADMIN', 'PROFESIONAL', 'SECRETARIA', 'FACTURADOR')
 export class PresupuestosController {
   constructor(private readonly service: PresupuestosService) {}
 

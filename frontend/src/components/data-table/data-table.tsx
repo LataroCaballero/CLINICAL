@@ -2,11 +2,13 @@
 
 import {
   ColumnDef,
+  SortingState,
   VisibilityState,
   flexRender,
   getCoreRowModel,
   getPaginationRowModel,
   getFilteredRowModel,
+  getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
 
@@ -34,6 +36,7 @@ interface DataTableProps<TData, TValue> {
   showToolbar?: boolean;
   showPagination?: boolean;
   headerActions?: React.ReactNode;
+  initialSorting?: SortingState;
 }
 
 function loadColumnVisibility(key: string): VisibilityState | null {
@@ -63,6 +66,7 @@ export function DataTable<TData, TValue>({
   showToolbar = true,
   showPagination = true,
   headerActions,
+  initialSorting = [],
 }: DataTableProps<TData, TValue>) {
   // 1) ESTADO LOCAL — copia editable de los datos originales
   const [tableData, setTableData] = useState<TData[]>(data);
@@ -84,6 +88,7 @@ export function DataTable<TData, TValue>({
     }
   }, [columnVisibility, storageKey]);
 
+  const [sorting, setSorting] = useState<SortingState>(initialSorting);
   const [globalFilter, setGlobalFilter] = useState("");
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(
@@ -94,9 +99,11 @@ export function DataTable<TData, TValue>({
     data: tableData, // ← usamos la copia local editable
     columns,
     state: {
+      sorting,
       globalFilter,
       columnVisibility,
     },
+    onSortingChange: setSorting,
     onGlobalFilterChange: setGlobalFilter,
     onColumnVisibilityChange: setColumnVisibility,
 
@@ -113,6 +120,7 @@ export function DataTable<TData, TValue>({
     },
 
     getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
 

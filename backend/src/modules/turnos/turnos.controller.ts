@@ -8,7 +8,6 @@ import {
   Patch,
   BadRequestException,
   Req,
-  UseGuards,
 } from '@nestjs/common';
 import { TurnosService } from './turnos.service';
 import { CreateTurnoDto } from './dto/create-turno.dto';
@@ -18,9 +17,9 @@ import { CreateCirugiaTurnoDto } from './dto/create-cirugia-turno.dto';
 import { IniciarSesionDto } from './dto/iniciar-sesion.dto';
 import { CerrarSesionDto } from './dto/cerrar-sesion.dto';
 import { resolveScope } from '@/src/common/scope/resolve-scope';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { Auth } from '../auth/decorators/auth.decorator';
 
-@UseGuards(JwtAuthGuard)
+@Auth('ADMIN', 'PROFESIONAL', 'SECRETARIA')
 @Controller('turnos')
 export class TurnosController {
   constructor(private readonly turnosService: TurnosService) {}
@@ -81,6 +80,20 @@ export class TurnosController {
     }
 
     return this.turnosService.obtenerAgendaDiaria(profesionalId, fecha);
+  }
+
+  @Get('proximos')
+  proximosTurnos(
+    @Query('profesionalId') profesionalId: string,
+    @Query('dias') dias?: string,
+  ) {
+    if (!profesionalId) {
+      throw new BadRequestException('Debe especificar profesionalId.');
+    }
+    return this.turnosService.obtenerProximosTurnos(
+      profesionalId,
+      dias ? parseInt(dias, 10) : 30,
+    );
   }
 
   @Get('rango')

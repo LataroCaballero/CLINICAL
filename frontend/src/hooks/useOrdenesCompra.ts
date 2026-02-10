@@ -98,6 +98,11 @@ export function useRecibirOrdenCompra() {
       queryClient.invalidateQueries({ queryKey: ["inventario"] });
       queryClient.invalidateQueries({ queryKey: ["alertas-stock"] });
       queryClient.invalidateQueries({ queryKey: ["lotes"] });
+      // Invalidate provider accounts (new debt from received order)
+      queryClient.invalidateQueries({ queryKey: ["cuentas-corrientes-proveedores"] });
+      queryClient.invalidateQueries({ queryKey: ["resumen-deudas-proveedores"] });
+      queryClient.invalidateQueries({ queryKey: ["cuotas-vencidas"] });
+      queryClient.invalidateQueries({ queryKey: ["cuotas-proximas"] });
     },
   });
 }

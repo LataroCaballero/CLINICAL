@@ -59,6 +59,7 @@ export function useLiveTurnoActions() {
       };
       startSession(sessionData);
       qc.invalidateQueries({ queryKey: ['turnos'] });
+      qc.invalidateQueries({ queryKey: ['alertas-resumen'] });
       toast.success('Sesion iniciada');
     },
     onError: (error: any) => {
@@ -80,6 +81,7 @@ export function useLiveTurnoActions() {
     onSuccess: () => {
       endSession();
       qc.invalidateQueries({ queryKey: ['turnos'] });
+      qc.invalidateQueries({ queryKey: ['alertas-resumen'] });
       toast.success('Sesion finalizada');
     },
     onError: (error: any) => {
@@ -100,6 +102,7 @@ export function useLiveTurnoActions() {
     onSuccess: () => {
       endSession();
       qc.invalidateQueries({ queryKey: ['turnos'] });
+      qc.invalidateQueries({ queryKey: ['alertas-resumen'] });
       toast.success('Sesion anterior finalizada');
     },
     onError: (error: any) => {
@@ -123,6 +126,6 @@ export function useSesionActiva(profesionalId: string | null) {
       return data;
     },
     enabled: !!profesionalId,
-    staleTime: 30000, // 30 seconds
+    staleTime: 60_000, // 60 seconds
   });
 }

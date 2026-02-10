@@ -6,18 +6,20 @@ import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import Link from "next/link";
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
   const { register, handleSubmit } = useForm();
 
   const onSubmit = async (data: any) => {
-    setErrorMsg(""); // limpio errores
+    setErrorMsg("");
+    setIsLoading(true);
 
     try {
       const api = process.env.NEXT_PUBLIC_API_URL;
@@ -54,6 +56,8 @@ export default function LoginPage() {
     } catch (error: any) {
       setErrorMsg("Error de conexión con el servidor");
       console.error(error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -113,9 +117,17 @@ export default function LoginPage() {
 
             <Button
               type="submit"
+              disabled={isLoading}
               className="w-full bg-[#6366f1] hover:bg-[#4f46e5] text-white font-medium"
             >
-              Ingresar
+              {isLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Ingresando...
+                </>
+              ) : (
+                "Ingresar"
+              )}
             </Button>
           </form>
 

@@ -26,8 +26,7 @@ export function useMensajesNotifications() {
       });
       return data;
     },
-    refetchInterval: 15000, // Polling cada 15 segundos
-    staleTime: 5000,
+    refetchInterval: 60_000, // Polling cada 60 segundos
   });
 
   // Sincronizar con el store de Zustand

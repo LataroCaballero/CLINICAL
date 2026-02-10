@@ -8,18 +8,17 @@ import {
   Query,
   Body,
   Req,
-  UseGuards,
   ForbiddenException,
 } from '@nestjs/common';
 import { TratamientosService } from './tratamientos.service';
 import { CreateTratamientoDto } from './dto/create-tratamiento.dto';
 import { UpdateTratamientoDto } from './dto/update-tratamiento.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { Auth } from '../auth/decorators/auth.decorator';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { RolUsuario } from '@prisma/client';
 
 @Controller('tratamientos')
-@UseGuards(JwtAuthGuard)
+@Auth('ADMIN', 'PROFESIONAL', 'SECRETARIA')
 export class TratamientosController {
   constructor(
     private readonly tratamientosService: TratamientosService,

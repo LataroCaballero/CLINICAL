@@ -1,7 +1,9 @@
 import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
 import { ObrasSocialesService } from './obras-sociales.service';
 import { CreatePlanDto } from './dto/plan.dto';
+import { Auth } from '../auth/decorators/auth.decorator';
 
+@Auth('ADMIN', 'PROFESIONAL', 'SECRETARIA', 'FACTURADOR')
 @Controller('obras-sociales')
 export class ObrasSocialesController {
   constructor(private readonly obrasSocialesService: ObrasSocialesService) {}

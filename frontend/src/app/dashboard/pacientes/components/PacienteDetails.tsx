@@ -1,5 +1,6 @@
 import Image from "next/image";
 import {
+  AlertTriangle,
   Check,
   XCircle,
   Mail,
@@ -17,6 +18,7 @@ import {
   Receipt,
 } from "lucide-react";
 import { MedicalChips } from "@/components/ui/MedicalChips";
+import { getPatientAlerts } from "./columns";
 
 export default function PacienteDetails({ paciente, onAction }: { paciente: any; onAction?: (view: "default" | "datos" | "historia" | "turnos" | "mensajes" | "cuenta" | "presupuestos") => void }) {
   if (!paciente) return null;
@@ -29,9 +31,31 @@ export default function PacienteDetails({ paciente, onAction }: { paciente: any;
 
   const edad = calcularEdad(paciente.fechaNacimiento);
   const obraSocialNombre = paciente.obraSocial?.nombre ?? "Sin obra social";
+  const alertas = getPatientAlerts(paciente);
 
   return (
     <div className="space-y-6 px-2 pb-6 max-w-3xl mx-auto">
+      {/* =======================
+          ALERTAS
+      ======================== */}
+      {alertas.length > 0 && (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-3">
+          <div className="flex items-center gap-2 mb-1.5">
+            <AlertTriangle className="w-4 h-4 text-red-600" />
+            <span className="text-sm font-semibold text-red-700">
+              {alertas.length === 1 ? "Alerta pendiente" : "Alertas pendientes"}
+            </span>
+          </div>
+          <ul className="space-y-1 pl-6">
+            {alertas.map((alerta) => (
+              <li key={alerta} className="text-sm text-red-600 list-disc">
+                {alerta}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {/* =======================
           HEADER
       ======================== */}
@@ -39,7 +63,9 @@ export default function PacienteDetails({ paciente, onAction }: { paciente: any;
         {/* BLOQUE IZQUIERDO */}
         <div className="flex items-start gap-4">
           {/* Foto */}
-          <div className="w-20 h-20 rounded-full overflow-hidden border bg-gray-200 shrink-0">
+          <div className={`w-20 h-20 rounded-full overflow-hidden border bg-gray-200 shrink-0 ${
+            alertas.length > 0 ? "ring-3 ring-red-500 ring-offset-2" : ""
+          }`}>
             {paciente.fotoUrl ? (
               <Image
                 src={paciente.fotoUrl}

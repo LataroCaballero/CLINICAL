@@ -132,20 +132,22 @@ export class InventarioService {
     });
 
     // Prisma no soporta comparar campos directamente en where, así que filtramos
-    return this.prisma.inventario.findMany({
-      where: { profesionalId },
-      include: {
-        producto: {
-          include: {
-            proveedores: {
-              include: {
-                proveedor: { select: { id: true, nombre: true } },
+    return this.prisma.inventario
+      .findMany({
+        where: { profesionalId },
+        include: {
+          producto: {
+            include: {
+              proveedores: {
+                include: {
+                  proveedor: { select: { id: true, nombre: true } },
+                },
               },
             },
           },
         },
-      },
-    }).then((invs) => invs.filter((inv) => inv.stockActual < inv.stockMinimo));
+      })
+      .then((invs) => invs.filter((inv) => inv.stockActual < inv.stockMinimo));
   }
 
   /**
@@ -328,7 +330,10 @@ export class InventarioService {
 
       // Actualizar stock (y precio si se proporciona en entradas)
       const updateData: any = { stockActual: nuevoStock };
-      if (dto.tipo === TipoMovimientoStock.ENTRADA && dto.nuevoPrecio !== undefined) {
+      if (
+        dto.tipo === TipoMovimientoStock.ENTRADA &&
+        dto.nuevoPrecio !== undefined
+      ) {
         updateData.precioActual = dto.nuevoPrecio;
       }
 
@@ -409,9 +414,7 @@ export class InventarioService {
     }
 
     if (cantidadRestante > 0) {
-      throw new BadRequestException(
-        'Stock insuficiente en lotes disponibles',
-      );
+      throw new BadRequestException('Stock insuficiente en lotes disponibles');
     }
 
     return ultimoLoteId;

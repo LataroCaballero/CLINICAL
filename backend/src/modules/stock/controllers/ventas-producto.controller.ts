@@ -5,15 +5,14 @@ import {
   Body,
   Param,
   Query,
-  UseGuards,
   Req,
 } from '@nestjs/common';
-import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
+import { Auth } from 'src/modules/auth/decorators/auth.decorator';
 import { VentasProductoService } from '../services/ventas-producto.service';
 import { CreateVentaProductoDto } from '../dto';
 import { resolveScope } from 'src/common/scope/resolve-scope';
 
-@UseGuards(JwtAuthGuard)
+@Auth('ADMIN', 'PROFESIONAL', 'SECRETARIA', 'FACTURADOR')
 @Controller('ventas-producto')
 export class VentasProductoController {
   constructor(private readonly ventasProductoService: VentasProductoService) {}

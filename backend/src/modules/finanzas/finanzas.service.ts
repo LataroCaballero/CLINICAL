@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CuentasCorrientesService } from '../cuentas-corrientes/cuentas-corrientes.service';
 import {
@@ -9,7 +13,11 @@ import {
   LiquidacionesFiltersDto,
   ReporteFiltersDto,
 } from './dto/finanzas.dto';
-import { TipoMovimiento, EstadoLiquidacion, EstadoFactura } from '@prisma/client';
+import {
+  TipoMovimiento,
+  EstadoLiquidacion,
+  EstadoFactura,
+} from '@prisma/client';
 
 @Injectable()
 export class FinanzasService {
@@ -24,7 +32,11 @@ export class FinanzasService {
   async getDashboard(profesionalId?: string) {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const startOfDay = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+    );
 
     const whereClause: any = {
       tipo: TipoMovimiento.PAGO,
@@ -126,7 +138,10 @@ export class FinanzasService {
     });
 
     // Agrupar por día
-    const porDia: Record<string, { fecha: string; total: number; cantidad: number }> = {};
+    const porDia: Record<
+      string,
+      { fecha: string; total: number; cantidad: number }
+    > = {};
 
     for (const pago of pagos) {
       const fecha = pago.fecha.toISOString().split('T')[0];
@@ -176,7 +191,10 @@ export class FinanzasService {
     });
 
     // Agrupar por obra social
-    const porOS: Record<string, { obraSocialId: string | null; nombre: string; total: number }> = {};
+    const porOS: Record<
+      string,
+      { obraSocialId: string | null; nombre: string; total: number }
+    > = {};
 
     for (const pago of pagos) {
       const os = pago.cuentaCorriente.paciente.obraSocial;
@@ -201,10 +219,16 @@ export class FinanzasService {
     };
 
     if (filters.fechaDesde) {
-      whereClause.fecha = { ...whereClause.fecha, gte: new Date(filters.fechaDesde) };
+      whereClause.fecha = {
+        ...whereClause.fecha,
+        gte: new Date(filters.fechaDesde),
+      };
     }
     if (filters.fechaHasta) {
-      whereClause.fecha = { ...whereClause.fecha, lte: new Date(filters.fechaHasta + 'T23:59:59') };
+      whereClause.fecha = {
+        ...whereClause.fecha,
+        lte: new Date(filters.fechaHasta + 'T23:59:59'),
+      };
     }
     if (filters.medioPago) {
       whereClause.medioPago = filters.medioPago;
@@ -266,10 +290,16 @@ export class FinanzasService {
     const whereClause: any = {};
 
     if (filters.fechaDesde) {
-      whereClause.fecha = { ...whereClause.fecha, gte: new Date(filters.fechaDesde) };
+      whereClause.fecha = {
+        ...whereClause.fecha,
+        gte: new Date(filters.fechaDesde),
+      };
     }
     if (filters.fechaHasta) {
-      whereClause.fecha = { ...whereClause.fecha, lte: new Date(filters.fechaHasta + 'T23:59:59') };
+      whereClause.fecha = {
+        ...whereClause.fecha,
+        lte: new Date(filters.fechaHasta + 'T23:59:59'),
+      };
     }
     if (filters.tipo) {
       whereClause.tipo = filters.tipo;
@@ -319,7 +349,10 @@ export class FinanzasService {
     });
 
     const nextNumber = lastFactura
-      ? String(parseInt(lastFactura.numero.replace(/\D/g, '')) + 1).padStart(8, '0')
+      ? String(parseInt(lastFactura.numero.replace(/\D/g, '')) + 1).padStart(
+          8,
+          '0',
+        )
       : '00000001';
 
     const prefix = dto.tipo === 'FACTURA' ? 'FAC-' : 'REC-';
@@ -430,7 +463,7 @@ export class FinanzasService {
           paciente,
           obraSocial: paciente?.obraSocial || null,
         };
-      })
+      }),
     );
 
     return practicasWithPatients;
@@ -473,23 +506,26 @@ export class FinanzasService {
     });
 
     // Get all unique pacienteIds and fetch their data
-    const pacienteIds = [...new Set(practicas.map(p => p.pacienteId))];
+    const pacienteIds = [...new Set(practicas.map((p) => p.pacienteId))];
     const pacientes = await this.prisma.paciente.findMany({
       where: { id: { in: pacienteIds } },
       include: {
         obraSocial: { select: { id: true, nombre: true } },
       },
     });
-    const pacienteMap = new Map(pacientes.map(p => [p.id, p]));
+    const pacienteMap = new Map(pacientes.map((p) => [p.id, p]));
 
     // Agrupar por obra social
-    const porObraSocial: Record<string, {
-      obraSocialId: string | null;
-      nombre: string;
-      total: number;
-      facturado: number;
-      pendiente: number;
-    }> = {};
+    const porObraSocial: Record<
+      string,
+      {
+        obraSocialId: string | null;
+        nombre: string;
+        total: number;
+        facturado: number;
+        pendiente: number;
+      }
+    > = {};
 
     let totalParticulares = 0;
     let totalObrasSociales = 0;
@@ -502,7 +538,13 @@ export class FinanzasService {
       const monto = Number(p.monto);
 
       if (!porObraSocial[key]) {
-        porObraSocial[key] = { obraSocialId: os?.id || null, nombre, total: 0, facturado: 0, pendiente: 0 };
+        porObraSocial[key] = {
+          obraSocialId: os?.id || null,
+          nombre,
+          total: 0,
+          facturado: 0,
+          pendiente: 0,
+        };
       }
       porObraSocial[key].total += monto;
 
@@ -543,7 +585,9 @@ export class FinanzasService {
       totalParticulares,
       totalClinica: Number(totalClinica._sum.monto || 0),
       totalGlobal: totalObrasSociales + totalParticulares,
-      detalleObrasSociales: Object.values(porObraSocial).filter(os => os.obraSocialId !== null),
+      detalleObrasSociales: Object.values(porObraSocial).filter(
+        (os) => os.obraSocialId !== null,
+      ),
     };
   }
 
@@ -557,10 +601,16 @@ export class FinanzasService {
     };
 
     if (filters.fechaDesde) {
-      whereClause.fecha = { ...whereClause.fecha, gte: new Date(filters.fechaDesde) };
+      whereClause.fecha = {
+        ...whereClause.fecha,
+        gte: new Date(filters.fechaDesde),
+      };
     }
     if (filters.fechaHasta) {
-      whereClause.fecha = { ...whereClause.fecha, lte: new Date(filters.fechaHasta + 'T23:59:59') };
+      whereClause.fecha = {
+        ...whereClause.fecha,
+        lte: new Date(filters.fechaHasta + 'T23:59:59'),
+      };
     }
     if (filters.profesionalId) {
       whereClause.cuentaCorriente = {
@@ -617,7 +667,10 @@ export class FinanzasService {
     return {
       total,
       cantidad: pagos.length,
-      porMedioPago: Object.entries(porMedioPago).map(([medio, total]) => ({ medio, total })),
+      porMedioPago: Object.entries(porMedioPago).map(([medio, total]) => ({
+        medio,
+        total,
+      })),
       porObraSocial: Object.entries(porObraSocial).map(([id, data]) => ({
         obraSocialId: id === 'particular' ? null : id,
         nombre: data.nombre,

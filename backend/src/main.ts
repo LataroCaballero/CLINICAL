@@ -1,3 +1,10 @@
+import * as crypto from 'crypto';
+
+// Polyfill for crypto (required by @nestjs/schedule in some environments)
+if (!globalThis.crypto) {
+  (globalThis as any).crypto = crypto;
+}
+
 import { NestFactory, HttpAdapterHost } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { PrismaClientExceptionFilter } from './prisma-client-exception/prisma-client-exception.filter';

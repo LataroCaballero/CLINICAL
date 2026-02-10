@@ -160,6 +160,14 @@ export interface UpdateProveedorInput {
   email?: string;
 }
 
+// Condicion de pago para proveedores
+export type CondicionPagoProveedor =
+  | 'CONTADO'
+  | 'DIAS_30'
+  | 'DIAS_60'
+  | 'DIAS_90'
+  | 'PERSONALIZADO';
+
 // Orden de Compra
 export interface OrdenCompra {
   id: string;
@@ -168,6 +176,10 @@ export interface OrdenCompra {
   fechaCreacion: string;
   fechaRecepcion?: string | null;
   estado: EstadoOrdenCompra;
+  total?: number | null;
+  condicionPago?: CondicionPagoProveedor;
+  cantidadCuotas?: number;
+  fechaPrimerVencimiento?: string | null;
   proveedor?: { id: string; nombre: string };
   items: OrdenCompraItem[];
   _count?: { movimientos: number };
@@ -189,6 +201,9 @@ export interface CreateOrdenCompraInput {
     cantidad: number;
     precioUnitario: number;
   }[];
+  condicionPago?: CondicionPagoProveedor;
+  cantidadCuotas?: number;
+  fechaPrimerVencimiento?: string;
 }
 
 export interface RecibirOrdenCompraInput {

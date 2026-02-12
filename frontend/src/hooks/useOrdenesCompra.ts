@@ -7,6 +7,7 @@ import {
   OrdenCompra,
   CreateOrdenCompraInput,
   RecibirOrdenCompraInput,
+  CargaFacturaInput,
   EstadoOrdenCompra,
 } from "@/types/stock";
 
@@ -123,6 +124,31 @@ export function useCancelarOrdenCompra() {
     onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: ["ordenes-compra"] });
       queryClient.invalidateQueries({ queryKey: ["orden-compra", id] });
+    },
+  });
+}
+
+export function useCargaFactura() {
+  const queryClient = useQueryClient();
+  const professionalId = useEffectiveProfessionalId();
+
+  return useMutation<OrdenCompra, Error, CargaFacturaInput>({
+    mutationFn: async (data) => {
+      const response = await api.post("/ordenes-compra/cargar-factura", data, {
+        params: { profesionalId: professionalId },
+      });
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["ordenes-compra"] });
+      queryClient.invalidateQueries({ queryKey: ["inventario"] });
+      queryClient.invalidateQueries({ queryKey: ["alertas-stock"] });
+      queryClient.invalidateQueries({ queryKey: ["productos"] });
+      queryClient.invalidateQueries({ queryKey: ["proveedores"] });
+      queryClient.invalidateQueries({ queryKey: ["cuentas-corrientes-proveedores"] });
+      queryClient.invalidateQueries({ queryKey: ["resumen-deudas-proveedores"] });
+      queryClient.invalidateQueries({ queryKey: ["cuotas-vencidas"] });
+      queryClient.invalidateQueries({ queryKey: ["cuotas-proximas"] });
     },
   });
 }

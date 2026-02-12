@@ -4,10 +4,16 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { CreateOrdenCompraDto, RecibirOrdenCompraDto } from '../dto';
+import {
+  CreateOrdenCompraDto,
+  RecibirOrdenCompraDto,
+  CargaFacturaDto,
+  TipoHonorario,
+} from '../dto';
 import {
   EstadoOrdenCompra,
   TipoMovimientoStock,
+  TipoProducto,
   CondicionPagoProveedor,
 } from '@prisma/client';
 import { CuentasCorrientesProveedoresService } from '../../cuentas-corrientes-proveedores/cuentas-corrientes-proveedores.service';
@@ -324,6 +330,204 @@ export class OrdenesCompraService {
     );
 
     return result;
+  }
+
+  async cargarFactura(
+    dto: CargaFacturaDto,
+    profesionalId: string,
+    usuarioId: string,
+  ) {
+    if (!dto.proveedorId && !dto.proveedorNombre) {
+      throw new BadRequestException(
+        'Debe proporcionar un proveedor existente o un nombre para crear uno nuevo',
+      );
+    }
+
+    if (dto.items.length === 0) {
+      throw new BadRequestException('Debe incluir al menos un ítem');
+    }
+
+    for (const item of dto.items) {
+      if (!item.productoId && !item.productoNombre) {
+        throw new BadRequestException(
+          'Cada ítem debe tener un producto existente o un nombre para crear uno nuevo',
+        );
+      }
+    }
+
+    const fechaFactura = dto.fechaFactura
+      ? new Date(dto.fechaFactura)
+      : new Date();
+    const condicionPago = dto.condicionPago || CondicionPagoProveedor.CONTADO;
+    const cantidadCuotas = dto.cantidadCuotas || 1;
+
+    const result = await this.prisma.$transaction(async (tx) => {
+      // 1. Resolver proveedor
+      let proveedorId = dto.proveedorId;
+      if (!proveedorId) {
+        const nuevoProveedor = await tx.proveedor.create({
+          data: { nombre: dto.proveedorNombre! },
+        });
+        proveedorId = nuevoProveedor.id;
+      } else {
+        const existe = await tx.proveedor.findUnique({
+          where: { id: proveedorId },
+        });
+        if (!existe) {
+          throw new NotFoundException('Proveedor no encontrado');
+        }
+      }
+
+      // 2. Procesar ítems: resolver productos y calcular precios
+      const itemsData: {
+        productoId: string;
+        cantidad: number;
+        precioUnitario: number;
+        costoUnitario: number;
+        precioVenta: number;
+      }[] = [];
+
+      for (const item of dto.items) {
+        let productoId = item.productoId;
+
+        if (!productoId) {
+          const nuevoProducto = await tx.producto.create({
+            data: {
+              nombre: item.productoNombre!,
+              tipo: TipoProducto.INSUMO,
+            },
+          });
+          productoId = nuevoProducto.id;
+        }
+
+        const costoUnitario = item.precioFactura / item.cantidad;
+        const honorario = item.honorario ?? 0;
+        const tipoHonorario = item.tipoHonorario ?? TipoHonorario.FIJO;
+
+        const precioVenta =
+          tipoHonorario === TipoHonorario.PORCENTAJE
+            ? costoUnitario * (1 + honorario / 100)
+            : costoUnitario + honorario;
+
+        // Actualizar costoBase y precioSugerido del producto
+        await tx.producto.update({
+          where: { id: productoId },
+          data: {
+            costoBase: costoUnitario,
+            precioSugerido: precioVenta,
+          },
+        });
+
+        itemsData.push({
+          productoId,
+          cantidad: item.cantidad,
+          precioUnitario: costoUnitario,
+          costoUnitario,
+          precioVenta,
+        });
+      }
+
+      const total = dto.items.reduce((sum, item) => sum + item.precioFactura, 0);
+
+      // 3. Crear OrdenCompra con estado RECIBIDA
+      const orden = await tx.ordenCompra.create({
+        data: {
+          proveedorId,
+          profesionalId,
+          numeroFactura: dto.numeroFactura,
+          estado: EstadoOrdenCompra.RECIBIDA,
+          fechaCreacion: fechaFactura,
+          fechaRecepcion: fechaFactura,
+          total,
+          condicionPago,
+          cantidadCuotas: condicionPago === CondicionPagoProveedor.CONTADO ? 1 : cantidadCuotas,
+          fechaPrimerVencimiento: dto.fechaPrimerVencimiento
+            ? new Date(dto.fechaPrimerVencimiento)
+            : null,
+          items: {
+            create: itemsData.map((item) => ({
+              productoId: item.productoId,
+              cantidad: item.cantidad,
+              precioUnitario: item.costoUnitario,
+            })),
+          },
+        },
+        include: {
+          proveedor: { select: { id: true, nombre: true } },
+          items: {
+            include: {
+              producto: { select: { id: true, nombre: true } },
+            },
+          },
+        },
+      });
+
+      // 4. Actualizar stock por cada ítem
+      for (const item of itemsData) {
+        let inventario = await tx.inventario.findUnique({
+          where: {
+            productoId_profesionalId: {
+              productoId: item.productoId,
+              profesionalId,
+            },
+          },
+        });
+
+        if (!inventario) {
+          inventario = await tx.inventario.create({
+            data: {
+              productoId: item.productoId,
+              profesionalId,
+              stockActual: 0,
+              stockMinimo: 0,
+            },
+          });
+        }
+
+        await tx.inventario.update({
+          where: { id: inventario.id },
+          data: {
+            stockActual: { increment: item.cantidad },
+            precioActual: item.precioVenta,
+          },
+        });
+
+        await tx.movimientoStock.create({
+          data: {
+            inventarioId: inventario.id,
+            tipo: TipoMovimientoStock.ENTRADA,
+            cantidad: item.cantidad,
+            motivo: `Factura proveedor${dto.numeroFactura ? ` #${dto.numeroFactura}` : ''} - ${orden.id.slice(0, 8)}`,
+            fecha: fechaFactura,
+            usuarioId,
+            ordenCompraId: orden.id,
+          },
+        });
+      }
+
+      return { orden, proveedorId, total };
+    });
+
+    // 5. Post-transacción: registrar deuda y generar cuotas
+    await this.cuentasCorrientesProveedores.registrarCargo(
+      result.proveedorId,
+      profesionalId,
+      result.total,
+      result.orden.id,
+      `Factura proveedor${dto.numeroFactura ? ` #${dto.numeroFactura}` : ''} - ${result.orden.id.slice(0, 8)}`,
+    );
+
+    await this.cuentasCorrientesProveedores.generarCuotas(
+      result.orden.id,
+      result.total,
+      condicionPago,
+      condicionPago === CondicionPagoProveedor.CONTADO ? 1 : cantidadCuotas,
+      dto.fechaPrimerVencimiento
+        ? new Date(dto.fechaPrimerVencimiento)
+        : undefined,
+    );
+
+    return result.orden;
   }
 
   async cancelar(id: string, profesionalId: string) {

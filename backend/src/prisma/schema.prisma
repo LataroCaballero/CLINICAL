@@ -118,6 +118,7 @@ model Profesional {
   turnos          Turno[]
   tratamientos    Tratamiento[]
   ventasProducto  VentaProducto[]
+  configTiposTurno TipoTurnoProfesional[]
 }
 
 model Secretaria {
@@ -652,6 +653,7 @@ model OrdenCompra {
   id                     String                  @id @default(uuid())
   proveedorId            String
   profesionalId          String
+  numeroFactura          String?
   fechaCreacion          DateTime                @default(now())
   fechaRecepcion         DateTime?
   estado                 EstadoOrdenCompra       @default(PENDIENTE)
@@ -678,14 +680,31 @@ model OrdenCompraItem {
 }
 
 model TipoTurno {
-  id              String  @id @default(uuid())
-  nombre          String  @unique
+  id              String                  @id @default(uuid())
+  nombre          String                  @unique
   descripcion     String?
   mensajeBase     String?
   instrucciones   String?
   duracionDefault Int?
-  esCirugia       Boolean @default(false)
+  esCirugia       Boolean                 @default(false)
   turnos          Turno[]
+  configProfesionales TipoTurnoProfesional[]
+}
+
+model TipoTurnoProfesional {
+  id              String      @id @default(uuid())
+  profesionalId   String
+  tipoTurnoId     String
+  duracionMinutos Int?
+  colorHex        String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  profesional     Profesional @relation(fields: [profesionalId], references: [id])
+  tipoTurno       TipoTurno   @relation(fields: [tipoTurnoId], references: [id])
+
+  @@unique([profesionalId, tipoTurnoId])
+  @@index([profesionalId])
 }
 
 model Turno {

@@ -29,6 +29,7 @@ import { useEffectiveProfessionalId } from "@/hooks/useEffectiveProfessionalId";
 import { useAgenda } from "@/hooks/useAgenda";
 import { AgendaConfig } from "@/hooks/useProfesionalMe";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useConfigTiposTurno } from "@/hooks/useConfigTiposTurno";
 import { motion, AnimatePresence } from "framer-motion";
 
 moment.locale("es");
@@ -42,6 +43,7 @@ interface CalendarEvent {
   start: Date;
   end: Date;
   tipo: string;
+  tipoTurnoId: string;
   estado: "PENDIENTE" | "CONFIRMADO" | "CANCELADO" | "AUSENTE" | "FINALIZADO";
   observaciones?: string;
 }
@@ -223,6 +225,18 @@ export default function TurnosPage() {
 
   const effectiveProfessionalId = useEffectiveProfessionalId();
   const { data: agenda } = useAgenda(effectiveProfessionalId);
+  const { data: configTiposTurno } = useConfigTiposTurno(effectiveProfessionalId);
+
+  // Build color map: tipoTurnoId -> colorHex
+  const colorMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    if (configTiposTurno) {
+      for (const c of configTiposTurno) {
+        if (c.colorHex) map[c.tipoTurnoId] = c.colorHex;
+      }
+    }
+    return map;
+  }, [configTiposTurno]);
 
   // Normalizar la fecha para evitar problemas
   const normalizedDate = useMemo(() => {
@@ -265,6 +279,7 @@ export default function TurnosPage() {
       start: new Date(t.inicio),
       end: new Date(t.fin),
       tipo: t.tipoTurno?.nombre ?? "Turno",
+      tipoTurnoId: t.tipoTurnoId ?? "",
       estado: t.estado,
       observaciones: t.observaciones ?? "",
     }));
@@ -657,6 +672,7 @@ export default function TurnosPage() {
               events={events}
               agenda={agenda ?? null}
               timeRange={timeRange}
+              colorMap={colorMap}
               onSelectEvent={handleSelectEvent}
               onSelectSlot={handleSelectSlot}
               onEventMove={handleEventMove}

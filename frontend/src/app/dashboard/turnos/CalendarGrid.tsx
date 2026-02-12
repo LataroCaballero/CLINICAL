@@ -19,6 +19,7 @@ interface CalendarEvent {
   start: Date;
   end: Date;
   tipo: string;
+  tipoTurnoId: string;
   estado: "PENDIENTE" | "CONFIRMADO" | "CANCELADO" | "AUSENTE" | "FINALIZADO";
   observaciones?: string;
 }
@@ -29,6 +30,7 @@ interface CalendarGridProps {
   events: CalendarEvent[];
   agenda: AgendaConfig | null;
   timeRange: { min: Date; max: Date };
+  colorMap?: Record<string, string>;
   onSelectEvent: (event: CalendarEvent) => void;
   onSelectSlot: (info: { start: Date }) => void;
   onEventMove: (info: { event: CalendarEvent; start: Date; end: Date }) => void;
@@ -78,7 +80,17 @@ function isDayBlocked(date: Date, agenda: AgendaConfig | null): boolean {
 }
 
 /** Color scheme by appointment type (bg + left border accent) */
-function getEventStyle(event: CalendarEvent): { bg: string; border: string; text: string } {
+function getEventStyle(
+  event: CalendarEvent,
+  colorMap?: Record<string, string>
+): { bg: string; border: string; text: string } {
+  // Check per-professional custom color first
+  const customColor = colorMap?.[event.tipoTurnoId];
+  if (customColor) {
+    return { bg: customColor + "1A", border: customColor, text: customColor };
+  }
+
+  // Fallback to hardcoded color scheme
   const tipo = event.tipo.toLowerCase();
 
   if (tipo.includes("consulta inicial"))
@@ -176,6 +188,7 @@ export default function CalendarGrid({
   events,
   agenda,
   timeRange,
+  colorMap,
   onSelectEvent,
   onSelectSlot,
   onEventMove,
@@ -504,7 +517,7 @@ export default function CalendarGrid({
 
                   {/* Events */}
                   {laidOut.map((item) => {
-                    const style = getEventStyle(item.event);
+                    const style = getEventStyle(item.event, colorMap);
                     const dotColor = getStatusDotColor(item.event.estado);
                     const isDragging = dragState?.eventId === item.event.id;
                     const isDraggable =
@@ -658,7 +671,7 @@ export default function CalendarGrid({
                     const evtMinEnd = draggedEvt.end.getHours() * 60 + draggedEvt.end.getMinutes();
                     const origTop = ((evtMinStart - gridStartMinutes) / 60) * HOUR_HEIGHT;
                     const origHeight = Math.max(MIN_EVENT_HEIGHT, ((evtMinEnd - evtMinStart) / 60) * HOUR_HEIGHT);
-                    const ghostStyle = getEventStyle(draggedEvt);
+                    const ghostStyle = getEventStyle(draggedEvt, colorMap);
 
                     return (
                       <div

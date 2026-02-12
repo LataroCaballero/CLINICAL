@@ -173,6 +173,7 @@ export interface OrdenCompra {
   id: string;
   proveedorId: string;
   profesionalId: string;
+  numeroFactura?: string | null;
   fechaCreacion: string;
   fechaRecepcion?: string | null;
   estado: EstadoOrdenCompra;
@@ -214,6 +215,29 @@ export interface RecibirOrdenCompraInput {
     loteNumero?: string;
     loteFechaVencimiento?: string;
   }[];
+}
+
+// Carga de Factura (flujo simplificado)
+export type TipoHonorario = 'FIJO' | 'PORCENTAJE';
+
+export interface CargaFacturaItemInput {
+  productoId?: string;
+  productoNombre?: string;
+  cantidad: number;
+  precioFactura: number;
+  tipoHonorario?: TipoHonorario;
+  honorario?: number;
+}
+
+export interface CargaFacturaInput {
+  proveedorId?: string;
+  proveedorNombre?: string;
+  numeroFactura?: string;
+  fechaFactura?: string;
+  condicionPago?: CondicionPagoProveedor;
+  cantidadCuotas?: number;
+  fechaPrimerVencimiento?: string;
+  items: CargaFacturaItemInput[];
 }
 
 // Venta de Producto

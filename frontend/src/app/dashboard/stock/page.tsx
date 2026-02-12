@@ -49,6 +49,12 @@ export default function StockPage() {
   const bajosStock = alertas?.length ?? 0;
   const proximosAVencer = proximosVencer?.length ?? 0;
 
+  // Productos con datos incompletos (creados rápidamente sin categoría, SKU ni descripción)
+  const productosIncompletos = inventario?.filter(
+    (inv) =>
+      !inv.producto.categoria && !inv.producto.sku && !inv.producto.descripcion
+  ).length ?? 0;
+
   // Filtrado por búsqueda
   const filtrados = inventario?.filter((inv) =>
     inv.producto.nombre.toLowerCase().includes(search.toLowerCase()) ||
@@ -157,6 +163,16 @@ export default function StockPage() {
           <AlertTriangle className="w-5 h-5 text-orange-500" />
           <span className="text-orange-700">
             Hay <strong>{bajosStock}</strong> producto(s) con stock bajo el mínimo configurado.
+          </span>
+        </div>
+      )}
+
+      {/* Alerta de productos incompletos */}
+      {productosIncompletos > 0 && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center gap-3">
+          <Package className="w-5 h-5 text-blue-500" />
+          <span className="text-blue-700">
+            Hay <strong>{productosIncompletos}</strong> producto(s) con datos incompletos (sin categoría, SKU o descripción). Completá sus datos desde el detalle.
           </span>
         </div>
       )}

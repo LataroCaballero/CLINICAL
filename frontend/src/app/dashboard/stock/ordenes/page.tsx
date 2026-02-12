@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Plus,
+  FileText,
   Package,
   AlertTriangle,
   Check,
@@ -37,7 +37,7 @@ import {
   useActualizarEstadoOrden,
 } from "@/hooks/useOrdenesCompra";
 import { EstadoOrdenCompra, OrdenCompra } from "@/types/stock";
-import NewOrdenCompraModal from "./components/NewOrdenCompraModal";
+import CargaFacturaModal from "./components/CargaFacturaModal";
 import OrdenCompraDetailModal from "./components/OrdenCompraDetailModal";
 import { toast } from "sonner";
 
@@ -177,8 +177,8 @@ export default function OrdenesCompraPage() {
           className="bg-indigo-600 text-white hover:bg-indigo-700"
           onClick={() => setNewModalOpen(true)}
         >
-          <Plus className="w-4 h-4 mr-2" />
-          Nueva Orden
+          <FileText className="w-4 h-4 mr-2" />
+          Cargar Factura
         </Button>
       </div>
 
@@ -239,8 +239,8 @@ export default function OrdenesCompraPage() {
                 className="mt-4"
                 onClick={() => setNewModalOpen(true)}
               >
-                <Plus className="w-4 h-4 mr-2" />
-                Crear primera orden
+                <FileText className="w-4 h-4 mr-2" />
+                Cargar primera factura
               </Button>
             </div>
           ) : (
@@ -261,7 +261,7 @@ export default function OrdenesCompraPage() {
                 {ordenes?.map((orden) => (
                   <TableRow key={orden.id}>
                     <TableCell className="font-mono text-xs">
-                      #{orden.id.slice(0, 8)}
+                      {orden.numeroFactura || `#${orden.id.slice(0, 8)}`}
                     </TableCell>
                     <TableCell className="font-medium">
                       {orden.proveedor?.nombre}
@@ -326,7 +326,7 @@ export default function OrdenesCompraPage() {
       </Card>
 
       {/* Modals */}
-      <NewOrdenCompraModal
+      <CargaFacturaModal
         open={newModalOpen}
         onOpenChange={setNewModalOpen}
         onSuccess={() => {

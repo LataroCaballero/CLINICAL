@@ -52,8 +52,20 @@ export class TurnosService {
     if (!profesional) throw new NotFoundException('Profesional no encontrado.');
     if (!tipoTurno) throw new NotFoundException('Tipo de turno no encontrado.');
 
-    // 2) Calcular fin (MVP) - usa duración del DTO o la default del tipo de turno
-    const duracionMin = dto.duracionMinutos ?? tipoTurno.duracionDefault ?? 30;
+    // 2) Calcular fin - prioridad: DTO > config por profesional > default del tipo > 30
+    let duracionMin = dto.duracionMinutos;
+    if (duracionMin == null) {
+      const configProf = await this.prisma.tipoTurnoProfesional.findUnique({
+        where: {
+          profesionalId_tipoTurnoId: {
+            profesionalId: dto.profesionalId,
+            tipoTurnoId: dto.tipoTurnoId,
+          },
+        },
+        select: { duracionMinutos: true },
+      });
+      duracionMin = configProf?.duracionMinutos ?? tipoTurno.duracionDefault ?? 30;
+    }
     if (duracionMin <= 0) {
       throw new BadRequestException('La duración del turno es inválida.');
     }

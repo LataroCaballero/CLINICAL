@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common';
 import { Auth } from 'src/modules/auth/decorators/auth.decorator';
 import { OrdenesCompraService } from '../services/ordenes-compra.service';
-import { CreateOrdenCompraDto, RecibirOrdenCompraDto } from '../dto';
+import { CreateOrdenCompraDto, RecibirOrdenCompraDto, CargaFacturaDto } from '../dto';
 import { resolveScope } from 'src/common/scope/resolve-scope';
 import { EstadoOrdenCompra } from '@prisma/client';
 
@@ -35,6 +35,28 @@ export class OrdenesCompraController {
     }
 
     return this.ordenesCompraService.findAll(scope.profesionalId, estado);
+  }
+
+  @Post('cargar-factura')
+  cargarFactura(
+    @Body() dto: CargaFacturaDto,
+    @Req() req: any,
+    @Query('profesionalId') profesionalId?: string,
+  ) {
+    const scope = resolveScope({
+      user: req.user,
+      requestedProfesionalId: profesionalId,
+    });
+
+    if (!scope.profesionalId) {
+      throw new Error('Se requiere un profesional para cargar facturas');
+    }
+
+    return this.ordenesCompraService.cargarFactura(
+      dto,
+      scope.profesionalId,
+      req.user.userId,
+    );
   }
 
   @Get(':id')

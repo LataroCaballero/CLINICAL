@@ -8,3 +8,4 @@ export * from './create-orden-compra.dto';
 export * from './recibir-orden-compra.dto';
 export * from './create-venta-producto.dto';
 export * from './update-inventario.dto';
+export * from './carga-factura.dto';

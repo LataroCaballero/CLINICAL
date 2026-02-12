@@ -17,7 +17,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import { ChevronLeft, ChevronRight, CalendarPlus, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, CalendarPlus, X, Loader2 } from "lucide-react";
 
 import NewAppointmentModal from "./NewAppointmentModal";
 import AppointmentDetailModal from "./AppointmentDetailModal";
@@ -263,7 +263,7 @@ export default function TurnosPage() {
     return moment(normalizedDate).endOf(view).format("YYYY-MM-DD");
   }, [normalizedDate, view]);
 
-  const { data: turnosRango = [] } = useTurnosRango(
+  const { data: turnosRango = [], isFetching: loadingTurnos } = useTurnosRango(
     effectiveProfessionalId ?? undefined,
     desde,
     hasta
@@ -279,7 +279,7 @@ export default function TurnosPage() {
       start: new Date(t.inicio),
       end: new Date(t.fin),
       tipo: t.tipoTurno?.nombre ?? "Turno",
-      tipoTurnoId: t.tipoTurnoId ?? "",
+      tipoTurnoId: t.tipoTurno?.id ?? "",
       estado: t.estado,
       observaciones: t.observaciones ?? "",
     }));
@@ -549,7 +549,13 @@ export default function TurnosPage() {
           {/* CALENDARIO */}
           {view === "month" ? (
             // Vista mensual personalizada
-            <div className="flex-1 min-h-0 flex flex-col rounded-md border border-gray-200 overflow-hidden">
+            <div className="relative flex-1 min-h-0 flex flex-col rounded-md border border-gray-200 overflow-hidden">
+              {/* Loading overlay */}
+              {loadingTurnos && (
+                <div className="absolute inset-0 z-30 flex items-center justify-center bg-white/40 backdrop-blur-[2px]">
+                  <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
+                </div>
+              )}
               {/* Header días de la semana */}
               <div className="grid grid-cols-7 bg-gray-50 border-b shrink-0">
                 {["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"].map((d) => (
@@ -665,19 +671,26 @@ export default function TurnosPage() {
             </div>
           ) : (
             // Vista diaria y semanal con grid custom
-            <CalendarGrid
-              className="flex-1 min-h-0"
-              view={view as "day" | "week"}
-              date={normalizedDate}
-              events={events}
-              agenda={agenda ?? null}
-              timeRange={timeRange}
-              colorMap={colorMap}
-              onSelectEvent={handleSelectEvent}
-              onSelectSlot={handleSelectSlot}
-              onEventMove={handleEventMove}
-              onEventResize={handleEventResize}
-            />
+            <div className="relative flex-1 min-h-0 flex flex-col">
+              {loadingTurnos && (
+                <div className="absolute inset-0 z-30 flex items-center justify-center bg-white/40 backdrop-blur-[2px]">
+                  <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
+                </div>
+              )}
+              <CalendarGrid
+                className="flex-1 min-h-0"
+                view={view as "day" | "week"}
+                date={normalizedDate}
+                events={events}
+                agenda={agenda ?? null}
+                timeRange={timeRange}
+                colorMap={colorMap}
+                onSelectEvent={handleSelectEvent}
+                onSelectSlot={handleSelectSlot}
+                onEventMove={handleEventMove}
+                onEventResize={handleEventResize}
+              />
+            </div>
           )}
         </CardContent>
       </Card>

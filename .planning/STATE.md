@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-23)
 
 **Core value:** Que un cirujano plástico cierre más cirugías — el sistema hace visible qué pacientes seguir, cuándo y cómo, de la manera más automatizada posible
-**Current focus:** Phase 1 — Infraestructura Async
+**Current focus:** Phase 2 — Log de Contactos + Lista de Accion
 
 ## Current Position
 
-Phase: 1 of 5 (Infraestructura Async)
-Plan: 3 of 3 in current phase
-Status: Phase complete
-Last activity: 2026-02-23 — Plan 01-03 completado: WhatsApp frontend UI (Settings tab + patient opt-in toggle) — human-verify APPROVED
+Phase: 2 of 5 (Log de Contactos + Lista de Accion)
+Plan: 1 of 3 in current phase
+Status: In progress
+Last activity: 2026-02-23 — Plan 02-01 completado: ContactoLog API (Prisma model + 3 endpoints + service methods)
 
-Progress: [███░░░░░░░] 20%
+Progress: [████░░░░░░] 24%
 
 ## Performance Metrics
 
@@ -28,6 +28,7 @@ Progress: [███░░░░░░░] 20%
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-infraestructura-async | 3/3 | 55min | 18min |
+| 02-log-de-contactos-lista-de-accion | 1/3 | 2min | 2min |
 
 **Recent Trend:**
 - Last 5 plans: 01-01 (15min), 01-02 (25min), 01-03 (15min)
@@ -58,6 +59,9 @@ Recent decisions affecting current work:
 - [01-03]: PROFESIONAL tabs grid changed from grid-cols-7 to grid-cols-8 to accommodate WhatsApp tab
 - [01-03]: useUpdateWhatsappOptIn invalidates with partial key ['paciente', pacienteId] to cover all effectiveProfessionalId variants
 - [01-03]: whatsappOptIn and whatsappOptInAt read as (paciente as any) pending Prisma client regeneration and type update
+- [02-01]: EtapaCRM scoring map uses TURNO_AGENDADO/CONSULTADO (actual enum values) — plan had incorrect CONSULTA_AGENDADA/CONSULTA_REALIZADA
+- [02-01]: calcularScore() caps diasSinContacto at 30 to prevent score explosion for very old leads
+- [02-01]: contactadosHoy counter included in lista-accion response to enable frontend counter widget
 
 ### Pending Todos
 
@@ -73,5 +77,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-23
-Stopped at: Plan 01-03 COMPLETADO. Phase 1 (Infraestructura Async) COMPLETADA. All 3 plans done. Next: Phase 2 — Log de Contactos + Lista de Accion.
+Stopped at: Plan 02-01 COMPLETADO. ContactoLog API (Prisma model + migration + 3 endpoints). Next: Plan 02-02 — Log de Contactos frontend panel.
 Resume file: None

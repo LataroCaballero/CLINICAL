@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { MedicalChips } from "@/components/ui/MedicalChips";
 import { getPatientAlerts } from "./columns";
+import { WhatsappOptInToggle } from "./WhatsappOptInToggle";
 
 export default function PacienteDetails({ paciente, onAction }: { paciente: any; onAction?: (view: "default" | "datos" | "historia" | "turnos" | "mensajes" | "cuenta" | "presupuestos") => void }) {
   if (!paciente) return null;
@@ -117,13 +118,21 @@ export default function PacienteDetails({ paciente, onAction }: { paciente: any;
         {/* DATOS DE CONTACTO */}
         <section>
           <h3 className="text-sm font-semibold mb-2">Datos de contacto</h3>
-          <div className="space-y-1 text-gray-700 pl-2">
+          <div className="space-y-2 text-gray-700 pl-2">
             <p className="flex items-center gap-2">
               <Mail className="w-4 h-4" /> {paciente.email || "Sin email"}
             </p>
             <p className="flex items-center gap-2">
               <Phone className="w-4 h-4" /> {paciente.telefono || "-"}
             </p>
+            {/* TODO: actualizar tipo Paciente tras regenerar Prisma client */}
+            <div className="pt-1">
+              <WhatsappOptInToggle
+                pacienteId={paciente.id}
+                optIn={(paciente as any).whatsappOptIn ?? false}
+                optInAt={(paciente as any).whatsappOptInAt}
+              />
+            </div>
           </div>
         </section>
 

@@ -5,7 +5,7 @@ import { AuditMiddleware } from './common/middleware/audit.middleware';
 import { UsuariosModule } from './modules/usuarios/usuarios.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { PacientesModule } from './modules/pacientes/pacientes.module';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ObrasSocialesModule } from './modules/obras-sociales/obras-sociales.module';
 import { ProfesionalesModule } from './modules/profesionales/profesionales.module';
 import { DiagnosticosModule } from './diagnosticos/diagnosticos.module';
@@ -22,12 +22,31 @@ import { FinanzasModule } from './modules/finanzas/finanzas.module';
 import { AlertasModule } from './modules/alertas/alertas.module';
 import { CuentasCorrientesProveedoresModule } from './modules/cuentas-corrientes-proveedores/cuentas-corrientes-proveedores.module';
 import { ReportesModule } from './modules/reportes/reportes.module';
+import { BullModule } from '@nestjs/bullmq';
+import { WhatsappModule } from './modules/whatsapp/whatsapp.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env', // <- carga el .env desde ./backend/.env
+    }),
+    // BullMQ global Redis connection — must come before WhatsappModule
+    BullModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        connection: {
+          host: config.get('REDIS_HOST', 'localhost'),
+          port: config.get<number>('REDIS_PORT', 6379),
+          maxRetriesPerRequest: null, // CRÍTICO para workers — previene timeout en long-running jobs
+        },
+        defaultJobOptions: {
+          attempts: 3,
+          backoff: { type: 'exponential', delay: 2000 },
+          removeOnComplete: 1000,
+          removeOnFail: 5000,
+        },
+      }),
     }),
     PrismaModule,
     AuthModule,
@@ -49,6 +68,7 @@ import { ReportesModule } from './modules/reportes/reportes.module';
     FinanzasModule,
     AlertasModule,
     ReportesModule,
+    WhatsappModule,
   ],
 })
 export class AppModule implements NestModule {

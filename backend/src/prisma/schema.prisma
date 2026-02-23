@@ -119,6 +119,9 @@ model Profesional {
   tratamientos    Tratamiento[]
   ventasProducto  VentaProducto[]
   configTiposTurno TipoTurnoProfesional[]
+  tareasSeguimiento TareaSeguimiento[]
+  configuracionWABA ConfiguracionWABA?
+  mensajesWhatsApp  MensajeWhatsApp[]
 }
 
 model Secretaria {
@@ -176,9 +179,20 @@ model Paciente {
   VentaProducto              VentaProducto[]
   objecionId                 String?
   objecion                   Objection?        @relation(fields: [objecionId], references: [id])
+  etapaCRM                   EtapaCRM?
+  temperatura                TemperaturaPaciente?
+  scoreConversion            Int               @default(0)
+  motivoPerdida              MotivoPerdidaCRM?
+  notasComerciales           String?
+  tareasSeguimiento          TareaSeguimiento[]
+  whatsappOptIn              Boolean           @default(false)
+  whatsappOptInAt            DateTime?
+  mensajesWhatsApp           MensajeWhatsApp[]
 
   @@index([dni(ops: raw("gin_trgm_ops"))], map: "idx_paciente_dni_trgm", type: Gin)
   @@index([telefono(ops: raw("gin_trgm_ops"))], map: "idx_paciente_telefono_trgm", type: Gin)
+  @@index([etapaCRM])
+  @@index([profesionalId, etapaCRM])
 }
 
 model MensajeInterno {
@@ -929,4 +943,109 @@ enum EstadoPlantillaHC {
 enum EstadoEntradaHC {
   DRAFT
   FINALIZED
+}
+
+// ── CRM de Conversión ────────────────────────────────────────────────────────
+
+enum EtapaCRM {
+  NUEVO_LEAD
+  TURNO_AGENDADO
+  CONSULTADO
+  PRESUPUESTO_ENVIADO
+  SEGUIMIENTO_ACTIVO
+  CALIENTE
+  CONFIRMADO
+  PERDIDO
+}
+
+enum TemperaturaPaciente {
+  CALIENTE
+  TIBIO
+  FRIO
+}
+
+enum MotivoPerdidaCRM {
+  PRECIO
+  TIEMPO
+  MIEDO_CIRUGIA
+  PREFIERE_OTRO_PROFESIONAL
+  NO_CANDIDATO_MEDICO
+  NO_RESPONDIO
+  OTRO
+}
+
+enum TipoTareaSeguimiento {
+  SEGUIMIENTO_DIA_3
+  SEGUIMIENTO_DIA_7
+  SEGUIMIENTO_DIA_14
+  PERSONALIZADA
+}
+
+model TareaSeguimiento {
+  id              String               @id @default(uuid())
+  pacienteId      String
+  profesionalId   String
+  tipo            TipoTareaSeguimiento
+  fechaProgramada DateTime
+  completada      Boolean              @default(false)
+  completadaEn    DateTime?
+  createdAt       DateTime             @default(now())
+  paciente        Paciente             @relation(fields: [pacienteId], references: [id])
+  profesional     Profesional          @relation(fields: [profesionalId], references: [id])
+
+  @@index([pacienteId])
+  @@index([profesionalId, completada, fechaProgramada])
+}
+
+// ── WhatsApp / WABA Infrastructure ──────────────────────────────────────────
+
+enum EstadoMensajeWA {
+  PENDIENTE
+  ENVIADO
+  ENTREGADO
+  LEIDO
+  FALLIDO
+}
+
+enum TipoMensajeWA {
+  PRESUPUESTO
+  RECORDATORIO_TURNO
+  SEGUIMIENTO
+  CUSTOM
+}
+
+model ConfiguracionWABA {
+  id                   String      @id @default(uuid())
+  profesionalId        String      @unique
+  phoneNumberId        String
+  wabaId               String?
+  accessTokenEncrypted String      // AES-256-GCM cifrado — NUNCA retornar en respuestas API
+  displayPhone         String      // Número formateado (ej: "+54 9 11 1234-5678") — retornado por Meta en validación
+  verifiedName         String?     // Nombre del negocio desde Meta
+  activo               Boolean     @default(true)
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+  profesional          Profesional @relation(fields: [profesionalId], references: [id])
+}
+
+model MensajeWhatsApp {
+  id            String          @id @default(uuid())
+  waMessageId   String?         // ID de Meta (nullable hasta que se envíe)
+  pacienteId    String
+  profesionalId String
+  tipo          TipoMensajeWA
+  contenido     String?         // Nombre del template o cuerpo del mensaje
+  estado        EstadoMensajeWA @default(PENDIENTE)
+  errorMsg      String?
+  sentAt        DateTime?
+  deliveredAt   DateTime?
+  readAt        DateTime?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  paciente      Paciente        @relation(fields: [pacienteId], references: [id])
+  profesional   Profesional     @relation(fields: [profesionalId], references: [id])
+
+  @@index([pacienteId, createdAt])
+  @@index([estado])
+  @@index([waMessageId])
 }

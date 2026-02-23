@@ -29,12 +29,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. Cada paciente tiene campo `whatsappOptIn` visible y editable en su perfil, con timestamp de aceptación registrado
   3. La configuración de WABA (número, API key) se almacena por profesional/clínica, no compartida entre tenants
   4. Cada mensaje WhatsApp enviado queda registrado en base de datos con estado inicial "pendiente"
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 01-01: BullMQ + Redis setup en NestJS (módulo, queues, Bull Board admin UI)
-- [ ] 01-02: Migracion Prisma — whatsappOptIn en Paciente + credenciales WABA en Profesional/Clinica + MensajeWhatsApp model
-- [ ] 01-03: UI de consentimiento WhatsApp en perfil del paciente
+- [ ] 01-01-PLAN.md — BullMQ + Redis setup en NestJS: módulo WhatsApp, queue whatsapp-messages, WorkerHost processor, smoke test compatibilidad NestJS v10
+- [ ] 01-02-PLAN.md — Prisma migration: ConfiguracionWABA, MensajeWhatsApp, enums WA, whatsappOptIn en Paciente; endpoints opt-in y WABA config con validación Meta + cifrado AES-256-GCM
+- [ ] 01-03-PLAN.md — Frontend: tab WhatsApp en Configuración (ADMIN/PROFESIONAL), formulario WABA con validación en vivo, toggle opt-in en perfil paciente
 
 ### Phase 2: Log de Contactos + Lista de Accion
 **Goal**: El coordinador tiene un registro completo de toda interacción con cada paciente y una lista diaria priorizada que le dice con quién hablar hoy

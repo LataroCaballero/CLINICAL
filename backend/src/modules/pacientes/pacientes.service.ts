@@ -19,10 +19,12 @@ import {
   TemperaturaPaciente,
   MotivoPerdidaCRM,
   TipoTareaSeguimiento,
+  TipoContacto,
 } from '@prisma/client';
 import { EstadoPresupuesto } from '@prisma/client';
 import { BadRequestException } from '@nestjs/common';
 import { UpdatePacienteSectionDto } from './dto/update-paciente-section.dto';
+import { CreateContactoDto } from './dto/create-contacto.dto';
 
 @Injectable()
 export class PacientesService {
@@ -646,6 +648,150 @@ export class PacientesService {
         whatsappOptIn: true,
         whatsappOptInAt: true,
       },
+    });
+  }
+
+  // ── Log de Contactos ────────────────────────────────────────────────────────
+
+  // Helper privado — calcular score de prioridad
+  private calcularScore(
+    diasSinContacto: number,
+    temperatura: TemperaturaPaciente | null,
+    etapa: EtapaCRM | null,
+  ): number {
+    const diasScore = Math.min(diasSinContacto, 30);
+    const tempWeight: Record<string, number> = { CALIENTE: 3, TIBIO: 2, FRIO: 1 };
+    const etapaWeight: Record<string, number> = {
+      SEGUIMIENTO_ACTIVO: 3,
+      CALIENTE: 3,
+      PRESUPUESTO_ENVIADO: 2,
+      CONSULTADO: 2,
+      TURNO_AGENDADO: 1,
+      NUEVO_LEAD: 1,
+    };
+    const tw = tempWeight[temperatura ?? 'TIBIO'] ?? 1;
+    const ew = etapaWeight[etapa ?? 'NUEVO_LEAD'] ?? 1;
+    return diasScore * tw * ew;
+  }
+
+  // Helper privado — calcular días sin contacto
+  private calcularDiasSinContacto(
+    ultimoContacto: Date | null,
+    createdAt: Date,
+  ): number {
+    const base = ultimoContacto ?? createdAt;
+    const diff = Date.now() - base.getTime();
+    return Math.floor(diff / (1000 * 60 * 60 * 24));
+  }
+
+  async getListaAccion(profesionalId: string) {
+    // Calcular inicio del día en UTC-3 (Argentina)
+    const offset = -3 * 60;
+    const hoyInicio = new Date(Date.now() + offset * 60 * 1000);
+    hoyInicio.setUTCHours(0, 0, 0, 0);
+    hoyInicio.setTime(hoyInicio.getTime() - offset * 60 * 1000);
+
+    // Contar contactados hoy (para el widget contador)
+    const contactadosHoy = await this.prisma.contactoLog.count({
+      where: { profesionalId, fecha: { gte: hoyInicio } },
+    });
+
+    // Pacientes activos del profesional, excluyendo los contactados hoy, CONFIRMADO y PERDIDO
+    const pacientes = await this.prisma.paciente.findMany({
+      where: {
+        profesionalId,
+        etapaCRM: { notIn: ['CONFIRMADO', 'PERDIDO'] as EtapaCRM[] },
+        NOT: {
+          contactos: { some: { fecha: { gte: hoyInicio } } },
+        },
+      },
+      include: {
+        contactos: {
+          orderBy: { fecha: 'desc' },
+          take: 1,
+        },
+      },
+    });
+
+    // Mapear con score de prioridad
+    const items = pacientes.map((p) => {
+      const ultimoContacto = p.contactos[0]?.fecha ?? null;
+      const diasSinContacto = this.calcularDiasSinContacto(ultimoContacto, p.createdAt);
+      const score = this.calcularScore(diasSinContacto, p.temperatura, p.etapaCRM);
+      return {
+        id: p.id,
+        nombreCompleto: p.nombreCompleto,
+        telefono: p.telefono,
+        etapaCRM: p.etapaCRM,
+        temperatura: p.temperatura,
+        diasSinContacto,
+        score,
+        ultimoContactoFecha: ultimoContacto,
+      };
+    });
+
+    // Ordenar por score desc; secundario: nombreCompleto asc (estable)
+    items.sort(
+      (a, b) =>
+        b.score - a.score ||
+        a.nombreCompleto.localeCompare(b.nombreCompleto, 'es'),
+    );
+
+    return { items, contactadosHoy, total: items.length };
+  }
+
+  async getContactosByPaciente(pacienteId: string, limit?: number) {
+    const contactos = await this.prisma.contactoLog.findMany({
+      where: { pacienteId },
+      orderBy: { fecha: 'desc' },
+      take: limit,
+    });
+
+    const paciente = await this.prisma.paciente.findUnique({
+      where: { id: pacienteId },
+      select: { createdAt: true },
+    });
+    const ultimoContacto = contactos[0]?.fecha ?? null;
+    const diasSinContacto = this.calcularDiasSinContacto(
+      ultimoContacto,
+      paciente?.createdAt ?? new Date(),
+    );
+
+    return { contactos, diasSinContacto, total: contactos.length };
+  }
+
+  async createContacto(
+    pacienteId: string,
+    profesionalId: string,
+    dto: CreateContactoDto,
+  ) {
+    return this.prisma.$transaction(async (tx) => {
+      const contacto = await tx.contactoLog.create({
+        data: {
+          pacienteId,
+          profesionalId,
+          tipo: dto.tipo,
+          nota: dto.nota,
+          fecha: dto.fecha ? new Date(dto.fecha) : new Date(),
+          etapaCRMPost: dto.etapaCRM ?? null,
+          temperaturaPost: dto.temperatura ?? null,
+          proximaAccionFecha: dto.proximaAccionFecha
+            ? new Date(dto.proximaAccionFecha)
+            : null,
+        },
+      });
+
+      if (dto.etapaCRM || dto.temperatura) {
+        await tx.paciente.update({
+          where: { id: pacienteId },
+          data: {
+            ...(dto.etapaCRM && { etapaCRM: dto.etapaCRM }),
+            ...(dto.temperatura && { temperatura: dto.temperatura }),
+          },
+        });
+      }
+
+      return contacto;
     });
   }
 

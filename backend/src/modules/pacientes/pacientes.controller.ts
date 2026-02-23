@@ -22,6 +22,7 @@ import { Auth } from '../auth/decorators/auth.decorator';
 import { resolveScope } from '@/src/common/scope/resolve-scope';
 import { EtapaCRM, TemperaturaPaciente, MotivoPerdidaCRM } from '@prisma/client';
 import { UpdateWhatsappOptInDto } from './dto/update-whatsapp-opt-in.dto';
+import { CreateContactoDto } from './dto/create-contacto.dto';
 
 @Auth('ADMIN', 'PROFESIONAL', 'SECRETARIA', 'FACTURADOR')
 @Controller('pacientes')
@@ -76,6 +77,37 @@ export class PacientesController {
     });
 
     return this.pacientesService.findAll(scope);
+  }
+
+  // Log de Contactos — Lista de acción priorizada
+  @Get('lista-accion')
+  getListaAccion(
+    @Query('profesionalId') profesionalId: string,
+  ) {
+    return this.pacientesService.getListaAccion(profesionalId);
+  }
+
+  // Log de Contactos — Historial de interacciones de un paciente
+  @Get(':id/contactos')
+  getContactosByPaciente(
+    @Param('id') pacienteId: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.pacientesService.getContactosByPaciente(
+      pacienteId,
+      limit ? parseInt(limit, 10) : undefined,
+    );
+  }
+
+  // Log de Contactos — Registrar una nueva interacción
+  @Post(':id/contactos')
+  createContacto(
+    @Param('id') pacienteId: string,
+    @Body() dto: CreateContactoDto,
+    @Req() req: any,
+  ) {
+    const profesionalId = req.user?.profesionalId as string;
+    return this.pacientesService.createContacto(pacienteId, profesionalId, dto);
   }
 
   // Obtener por ID

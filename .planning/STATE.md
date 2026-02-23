@@ -69,5 +69,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-23
-Stopped at: Plan 01-02 completado. Prisma schema migrado con ConfiguracionWABA/MensajeWhatsApp. WABA config endpoints operativos con cifrado AES-256-GCM. Listo para 01-03.
+Stopped at: Plan 01-03 pausado en Task 3 (human-verify checkpoint). Tasks 1-2 completos. WhatsApp UI (hooks + WhatsappConfigTab + WhatsappOptInToggle) construida y compilando sin errores.
 Resume file: None

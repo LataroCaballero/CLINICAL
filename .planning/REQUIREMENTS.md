@@ -90,51 +90,49 @@
 
 ## Traceability
 
-*Se completa durante la creación del roadmap.*
-
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| INFRA-01 | TBD | Pending |
-| INFRA-02 | TBD | Pending |
-| INFRA-03 | TBD | Pending |
-| INFRA-04 | TBD | Pending |
-| LOG-01 | TBD | Pending |
-| LOG-02 | TBD | Pending |
-| LOG-03 | TBD | Pending |
-| LOG-04 | TBD | Pending |
-| ACCION-01 | TBD | Pending |
-| ACCION-02 | TBD | Pending |
-| ACCION-03 | TBD | Pending |
-| ACCION-04 | TBD | Pending |
-| PRES-01 | TBD | Pending |
-| PRES-02 | TBD | Pending |
-| PRES-03 | TBD | Pending |
-| PRES-04 | TBD | Pending |
-| PRES-05 | TBD | Pending |
-| PRES-06 | TBD | Pending |
-| PRES-07 | TBD | Pending |
-| PRES-08 | TBD | Pending |
-| WA-01 | TBD | Pending |
-| WA-02 | TBD | Pending |
-| WA-03 | TBD | Pending |
-| WA-04 | TBD | Pending |
-| WA-05 | TBD | Pending |
-| CRM-01 | TBD | Pending |
-| CRM-02 | TBD | Pending |
-| CRM-03 | TBD | Pending |
-| CRM-04 | TBD | Pending |
-| CRM-05 | TBD | Pending |
-| DASH-01 | TBD | Pending |
-| DASH-02 | TBD | Pending |
-| DASH-03 | TBD | Pending |
-| DASH-04 | TBD | Pending |
-| DASH-05 | TBD | Pending |
+| INFRA-01 | Phase 1 | Pending |
+| INFRA-02 | Phase 1 | Pending |
+| INFRA-03 | Phase 1 | Pending |
+| INFRA-04 | Phase 1 | Pending |
+| LOG-01 | Phase 2 | Pending |
+| LOG-02 | Phase 2 | Pending |
+| LOG-03 | Phase 2 | Pending |
+| LOG-04 | Phase 2 | Pending |
+| ACCION-01 | Phase 2 | Pending |
+| ACCION-02 | Phase 2 | Pending |
+| ACCION-03 | Phase 2 | Pending |
+| ACCION-04 | Phase 2 | Pending |
+| PRES-01 | Phase 3 | Pending |
+| PRES-02 | Phase 3 | Pending |
+| PRES-03 | Phase 3 | Pending |
+| PRES-04 | Phase 3 | Pending |
+| PRES-05 | Phase 3 | Pending |
+| PRES-06 | Phase 3 | Pending |
+| PRES-07 | Phase 3 | Pending |
+| PRES-08 | Phase 3 | Pending |
+| CRM-03 | Phase 3 | Pending |
+| CRM-04 | Phase 3 | Pending |
+| WA-01 | Phase 4 | Pending |
+| WA-02 | Phase 4 | Pending |
+| WA-03 | Phase 4 | Pending |
+| WA-04 | Phase 4 | Pending |
+| WA-05 | Phase 4 | Pending |
+| CRM-01 | Phase 4 | Pending |
+| CRM-02 | Phase 4 | Pending |
+| CRM-05 | Phase 4 | Pending |
+| DASH-01 | Phase 5 | Pending |
+| DASH-02 | Phase 5 | Pending |
+| DASH-03 | Phase 5 | Pending |
+| DASH-04 | Phase 5 | Pending |
+| DASH-05 | Phase 5 | Pending |
 
 **Coverage:**
 - v1 requirements: 35 total
-- Mapped to phases: 0 (TBD — se actualiza en roadmap)
-- Unmapped: 35 ⚠️
+- Mapped to phases: 35
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-23*
-*Last updated: 2026-02-23 after initial definition*
+*Last updated: 2026-02-23 — traceability completed after roadmap creation*

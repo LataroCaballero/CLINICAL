@@ -1,6 +1,7 @@
-import { Controller, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req } from '@nestjs/common';
 import { WhatsappService } from './whatsapp.service';
 import { Auth } from '../auth/decorators/auth.decorator';
+import { SaveWabaConfigDto } from './dto/save-waba-config.dto';
 
 @Controller('whatsapp')
 export class WhatsappController {
@@ -16,5 +17,30 @@ export class WhatsappController {
   @Auth('ADMIN')
   async testQueue(): Promise<{ queued: boolean; jobId: string }> {
     return this.whatsappService.enqueueTestJob();
+  }
+
+  /**
+   * GET /whatsapp/config
+   * Returns WABA configuration for the current professional (safe fields only).
+   * SECURITY: accessTokenEncrypted is never included in the response.
+   */
+  @Get('config')
+  @Auth('ADMIN', 'PROFESIONAL')
+  async getConfig(@Req() req: any) {
+    const profesionalId = req.user.profesionalId as string;
+    return this.whatsappService.getWabaConfig(profesionalId);
+  }
+
+  /**
+   * POST /whatsapp/config
+   * Saves WABA credentials for the current professional.
+   * Validates against Meta Graph API before encrypting and persisting.
+   * SECURITY: accessToken is never stored in plaintext.
+   */
+  @Post('config')
+  @Auth('ADMIN', 'PROFESIONAL')
+  async saveConfig(@Req() req: any, @Body() dto: SaveWabaConfigDto) {
+    const profesionalId = req.user.profesionalId as string;
+    return this.whatsappService.saveWabaConfig(profesionalId, dto);
   }
 }

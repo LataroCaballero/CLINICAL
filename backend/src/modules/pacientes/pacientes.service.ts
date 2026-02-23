@@ -12,7 +12,14 @@ import { SearchPacienteDto } from './dto/search-paciente.dto';
 import { PacienteSuggest } from 'src/common/types/paciente-suggest.type';
 import { PacienteListaDto } from './dto/paciente-lista.dto';
 import { ESTADO_PRIORITY } from '../../common/constants/pacientes.constants';
-import { EstadoPaciente, RolUsuario } from '@prisma/client';
+import {
+  EstadoPaciente,
+  RolUsuario,
+  EtapaCRM,
+  TemperaturaPaciente,
+  MotivoPerdidaCRM,
+  TipoTareaSeguimiento,
+} from '@prisma/client';
 import { EstadoPresupuesto } from '@prisma/client';
 import { BadRequestException } from '@nestjs/common';
 import { UpdatePacienteSectionDto } from './dto/update-paciente-section.dto';
@@ -454,6 +461,190 @@ export class PacientesService {
           ? new Date(data.fechaNacimiento)
           : null,
         direccion: data.direccion ?? null,
+      },
+    });
+  }
+
+  async updateEtapaCRM(
+    id: string,
+    dto: { etapaCRM: EtapaCRM; motivoPerdida?: MotivoPerdidaCRM },
+  ) {
+    const paciente = await this.prisma.paciente.findUnique({
+      where: { id },
+      select: { id: true, profesionalId: true, presupuestos: { select: { estado: true } } },
+    });
+    if (!paciente) throw new NotFoundException('Paciente no encontrado');
+
+    if (dto.etapaCRM === EtapaCRM.PERDIDO && !dto.motivoPerdida) {
+      throw new BadRequestException(
+        'Se requiere motivoPerdida al mover a etapa PERDIDO',
+      );
+    }
+
+    if (dto.etapaCRM === EtapaCRM.CONFIRMADO) {
+      const tienePresupuestoAceptado = paciente.presupuestos.some(
+        (p) => p.estado === EstadoPresupuesto.ACEPTADO,
+      );
+      if (!tienePresupuestoAceptado) {
+        throw new BadRequestException(
+          'El paciente debe tener al menos un presupuesto ACEPTADO para pasar a CONFIRMADO',
+        );
+      }
+    }
+
+    const updated = await this.prisma.paciente.update({
+      where: { id },
+      data: {
+        etapaCRM: dto.etapaCRM,
+        motivoPerdida: dto.motivoPerdida ?? null,
+      },
+    });
+
+    // Crear tareas de seguimiento al enviar presupuesto
+    if (
+      dto.etapaCRM === EtapaCRM.PRESUPUESTO_ENVIADO &&
+      paciente.profesionalId
+    ) {
+      const now = new Date();
+      await this.prisma.tareaSeguimiento.createMany({
+        data: [
+          {
+            pacienteId: id,
+            profesionalId: paciente.profesionalId,
+            tipo: TipoTareaSeguimiento.SEGUIMIENTO_DIA_3,
+            fechaProgramada: new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000),
+          },
+          {
+            pacienteId: id,
+            profesionalId: paciente.profesionalId,
+            tipo: TipoTareaSeguimiento.SEGUIMIENTO_DIA_7,
+            fechaProgramada: new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000),
+          },
+          {
+            pacienteId: id,
+            profesionalId: paciente.profesionalId,
+            tipo: TipoTareaSeguimiento.SEGUIMIENTO_DIA_14,
+            fechaProgramada: new Date(
+              now.getTime() + 14 * 24 * 60 * 60 * 1000,
+            ),
+          },
+        ],
+      });
+    }
+
+    return updated;
+  }
+
+  async updateTemperatura(id: string, temperatura: TemperaturaPaciente) {
+    const exists = await this.prisma.paciente.findUnique({
+      where: { id },
+      select: { id: true },
+    });
+    if (!exists) throw new NotFoundException('Paciente no encontrado');
+
+    return this.prisma.paciente.update({
+      where: { id },
+      data: { temperatura },
+    });
+  }
+
+  async getKanban(profesionalId: string) {
+    const pacientes = await this.prisma.paciente.findMany({
+      where: { profesionalId },
+      select: {
+        id: true,
+        nombreCompleto: true,
+        fotoUrl: true,
+        etapaCRM: true,
+        temperatura: true,
+        scoreConversion: true,
+        diagnostico: true,
+        lugarIntervencion: true,
+        updatedAt: true,
+        presupuestos: {
+          select: { total: true, estado: true, fechaEnviado: true },
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+        },
+        turnos: {
+          select: { inicio: true },
+          orderBy: { inicio: 'desc' },
+          take: 1,
+        },
+      },
+      orderBy: { updatedAt: 'desc' },
+    });
+
+    // Agrupar por etapaCRM
+    const columnas: Record<string, typeof pacientes> = {
+      SIN_CLASIFICAR: [],
+      NUEVO_LEAD: [],
+      TURNO_AGENDADO: [],
+      CONSULTADO: [],
+      PRESUPUESTO_ENVIADO: [],
+      SEGUIMIENTO_ACTIVO: [],
+      CALIENTE: [],
+      CONFIRMADO: [],
+      PERDIDO: [],
+    };
+
+    for (const p of pacientes) {
+      const col = p.etapaCRM ?? 'SIN_CLASIFICAR';
+      if (columnas[col]) {
+        columnas[col].push(p);
+      } else {
+        columnas['SIN_CLASIFICAR'].push(p);
+      }
+    }
+
+    return Object.entries(columnas).map(([etapa, items]) => ({
+      etapa,
+      total: items.length,
+      pacientes: items.map((p) => ({
+        id: p.id,
+        nombreCompleto: p.nombreCompleto,
+        fotoUrl: p.fotoUrl,
+        etapaCRM: p.etapaCRM,
+        temperatura: p.temperatura,
+        scoreConversion: p.scoreConversion,
+        procedimiento: p.diagnostico ?? p.lugarIntervencion ?? null,
+        ultimoTurno: p.turnos[0]?.inicio ?? null,
+        presupuesto: p.presupuestos[0]
+          ? {
+              total: Number(p.presupuestos[0].total),
+              estado: p.presupuestos[0].estado,
+              fechaEnviado: p.presupuestos[0].fechaEnviado,
+            }
+          : null,
+        diasDesdePresupuesto: p.presupuestos[0]?.fechaEnviado
+          ? Math.floor(
+              (Date.now() -
+                new Date(p.presupuestos[0].fechaEnviado).getTime()) /
+                (1000 * 60 * 60 * 24),
+            )
+          : null,
+      })),
+    }));
+  }
+
+  async updateWhatsappOptIn(id: string, optIn: boolean) {
+    const exists = await this.prisma.paciente.findUnique({
+      where: { id },
+      select: { id: true },
+    });
+    if (!exists) throw new NotFoundException('Paciente no encontrado');
+
+    return this.prisma.paciente.update({
+      where: { id },
+      data: {
+        whatsappOptIn: optIn,
+        whatsappOptInAt: optIn ? new Date() : null,
+      },
+      select: {
+        id: true,
+        nombreCompleto: true,
+        whatsappOptIn: true,
+        whatsappOptInAt: true,
       },
     });
   }

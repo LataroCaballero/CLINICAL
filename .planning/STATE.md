@@ -10,27 +10,27 @@ See: .planning/PROJECT.md (updated 2026-02-23)
 ## Current Position
 
 Phase: 1 of 5 (Infraestructura Async)
-Plan: 2 of 3 in current phase
-Status: In progress
-Last activity: 2026-02-23 — Plan 01-02 completado: WhatsApp Prisma schema + WABA config endpoints
+Plan: 3 of 3 in current phase
+Status: Phase complete
+Last activity: 2026-02-23 — Plan 01-03 completado: WhatsApp frontend UI (Settings tab + patient opt-in toggle) — human-verify APPROVED
 
-Progress: [██░░░░░░░░] 13%
+Progress: [███░░░░░░░] 20%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 2
-- Average duration: 20min
-- Total execution time: 40min
+- Total plans completed: 3
+- Average duration: 18min
+- Total execution time: 55min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 01-infraestructura-async | 2/3 | 40min | 20min |
+| 01-infraestructura-async | 3/3 | 55min | 18min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (15min), 01-02 (25min)
+- Last 5 plans: 01-01 (15min), 01-02 (25min), 01-03 (15min)
 - Trend: stable
 
 *Updated after each plan completion*
@@ -54,6 +54,10 @@ Recent decisions affecting current work:
 - [01-02]: WabaConfigResponseDto excluye explícitamente accessTokenEncrypted — zero token leakage por diseño
 - [01-02]: validateWABACredentials llamado ANTES de encrypt() — evita persistir basura cifrada si Meta rechaza credenciales
 - [01-02]: whatsappOptInAt = null (no sin cambio) cuando optIn=false — audit trail explícito de opt-out
+- [01-03]: WhatsApp tab added to ADMIN (flex TabsList) and PROFESIONAL (grid-cols-8) — NOT added to SECRETARIA/FACTURADOR
+- [01-03]: PROFESIONAL tabs grid changed from grid-cols-7 to grid-cols-8 to accommodate WhatsApp tab
+- [01-03]: useUpdateWhatsappOptIn invalidates with partial key ['paciente', pacienteId] to cover all effectiveProfessionalId variants
+- [01-03]: whatsappOptIn and whatsappOptInAt read as (paciente as any) pending Prisma client regeneration and type update
 
 ### Pending Todos
 
@@ -69,5 +73,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-23
-Stopped at: Plan 01-03 pausado en Task 3 (human-verify checkpoint). Tasks 1-2 completos. WhatsApp UI (hooks + WhatsappConfigTab + WhatsappOptInToggle) construida y compilando sin errores.
+Stopped at: Plan 01-03 COMPLETADO. Phase 1 (Infraestructura Async) COMPLETADA. All 3 plans done. Next: Phase 2 — Log de Contactos + Lista de Accion.
 Resume file: None

@@ -12,7 +12,7 @@ Este milestone transforma el CRM base existente (Kanban, temperatura, scheduler)
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Infraestructura Async** - BullMQ + Redis + schema de consentimiento y credenciales multi-tenant
+- [x] **Phase 1: Infraestructura Async** - BullMQ + Redis + schema de consentimiento y credenciales multi-tenant
 - [ ] **Phase 2: Log de Contactos + Lista de Accion** - Registro de interacciones y workflow diario del coordinador
 - [ ] **Phase 3: Presupuestos Completos** - PDF con branding, entrega por email, estados y transiciones CRM automáticas
 - [ ] **Phase 4: WhatsApp + Etapas CRM Automaticas** - Integración mensajeria module y wiring completo de eventos CRM
@@ -34,7 +34,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 Plans:
 - [x] 01-01-PLAN.md — BullMQ + Redis setup en NestJS: módulo WhatsApp, queue whatsapp-messages, WorkerHost processor, smoke test compatibilidad NestJS v10
 - [x] 01-02-PLAN.md — Prisma migration: ConfiguracionWABA, MensajeWhatsApp, enums WA, whatsappOptIn en Paciente; endpoints opt-in y WABA config con validación Meta + cifrado AES-256-GCM
-- [ ] 01-03-PLAN.md — Frontend: tab WhatsApp en Configuración (ADMIN/PROFESIONAL), formulario WABA con validación en vivo, toggle opt-in en perfil paciente
+- [x] 01-03-PLAN.md — Frontend: tab WhatsApp en Configuración (ADMIN/PROFESIONAL), formulario WABA con validación en vivo, toggle opt-in en perfil paciente
 
 ### Phase 2: Log de Contactos + Lista de Accion
 **Goal**: El coordinador tiene un registro completo de toda interacción con cada paciente y una lista diaria priorizada que le dice con quién hablar hoy
@@ -110,7 +110,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Infraestructura Async | 2/3 | In progress | - |
+| 1. Infraestructura Async | 3/3 | Complete | 2026-02-23 |
 | 2. Log de Contactos + Lista de Accion | 0/3 | Not started | - |
 | 3. Presupuestos Completos | 0/3 | Not started | - |
 | 4. WhatsApp + Etapas CRM Automaticas | 0/3 | Not started | - |

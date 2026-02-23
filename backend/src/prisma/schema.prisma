@@ -122,6 +122,7 @@ model Profesional {
   tareasSeguimiento TareaSeguimiento[]
   configuracionWABA ConfiguracionWABA?
   mensajesWhatsApp  MensajeWhatsApp[]
+  contactos         ContactoLog[]
 }
 
 model Secretaria {
@@ -188,6 +189,7 @@ model Paciente {
   whatsappOptIn              Boolean           @default(false)
   whatsappOptInAt            DateTime?
   mensajesWhatsApp           MensajeWhatsApp[]
+  contactos                  ContactoLog[]
 
   @@index([dni(ops: raw("gin_trgm_ops"))], map: "idx_paciente_dni_trgm", type: Gin)
   @@index([telefono(ops: raw("gin_trgm_ops"))], map: "idx_paciente_telefono_trgm", type: Gin)
@@ -995,6 +997,33 @@ model TareaSeguimiento {
 
   @@index([pacienteId])
   @@index([profesionalId, completada, fechaProgramada])
+}
+
+// ── Log de Contactos ─────────────────────────────────────────────────────────
+
+enum TipoContacto {
+  LLAMADA
+  MENSAJE
+  PRESENCIAL
+}
+
+model ContactoLog {
+  id                  String               @id @default(uuid())
+  pacienteId          String
+  profesionalId       String
+  tipo                TipoContacto
+  nota                String?
+  fecha               DateTime             @default(now())
+  etapaCRMPost        EtapaCRM?
+  temperaturaPost     TemperaturaPaciente?
+  proximaAccionFecha  DateTime?
+  createdAt           DateTime             @default(now())
+
+  paciente    Paciente    @relation(fields: [pacienteId], references: [id], onDelete: Cascade)
+  profesional Profesional @relation(fields: [profesionalId], references: [id])
+
+  @@index([pacienteId, fecha])
+  @@index([profesionalId, fecha])
 }
 
 // ── WhatsApp / WABA Infrastructure ──────────────────────────────────────────

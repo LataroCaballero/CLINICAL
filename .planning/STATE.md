@@ -10,28 +10,28 @@ See: .planning/PROJECT.md (updated 2026-02-23)
 ## Current Position
 
 Phase: 1 of 5 (Infraestructura Async)
-Plan: 1 of 3 in current phase
+Plan: 2 of 3 in current phase
 Status: In progress
-Last activity: 2026-02-23 — Plan 01-01 completado: BullMQ + WhatsApp Module Infrastructure
+Last activity: 2026-02-23 — Plan 01-02 completado: WhatsApp Prisma schema + WABA config endpoints
 
-Progress: [█░░░░░░░░░] 7%
+Progress: [██░░░░░░░░] 13%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 1
-- Average duration: 15min
-- Total execution time: 15min
+- Total plans completed: 2
+- Average duration: 20min
+- Total execution time: 40min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 01-infraestructura-async | 1/3 | 15min | 15min |
+| 01-infraestructura-async | 2/3 | 40min | 20min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (15min)
-- Trend: -
+- Last 5 plans: 01-01 (15min), 01-02 (25min)
+- Trend: stable
 
 *Updated after each plan completion*
 
@@ -50,6 +50,10 @@ Recent decisions affecting current work:
 - [01-01]: maxRetriesPerRequest: null configurado en BullModule.forRootAsync — critico para workers long-running que no deben hacer timeout
 - [01-01]: EncryptionService usa fallback de dev si falta ENCRYPTION_KEY (warning, no error fatal) — facilita onboarding dev
 - [01-01]: BullModule exportado desde WhatsappModule para que Phase 4 inyecte la queue sin re-registrarla
+- [01-02]: META_API_VERSION = 'v21.0' como constante nombrada en WhatsappService — punto único de actualización cuando Meta depreca versiones
+- [01-02]: WabaConfigResponseDto excluye explícitamente accessTokenEncrypted — zero token leakage por diseño
+- [01-02]: validateWABACredentials llamado ANTES de encrypt() — evita persistir basura cifrada si Meta rechaza credenciales
+- [01-02]: whatsappOptInAt = null (no sin cambio) cuando optIn=false — audit trail explícito de opt-out
 
 ### Pending Todos
 
@@ -65,5 +69,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-23
-Stopped at: Plan 01-01 completado. WhatsappModule con BullMQ operativo. Listo para 01-02 (WABA config storage).
+Stopped at: Plan 01-02 completado. Prisma schema migrado con ConfiguracionWABA/MensajeWhatsApp. WABA config endpoints operativos con cifrado AES-256-GCM. Listo para 01-03.
 Resume file: None

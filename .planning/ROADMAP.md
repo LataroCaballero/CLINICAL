@@ -46,12 +46,12 @@ Plans:
   3. Al registrar una interacción, el coordinador puede cambiar la etapa CRM y temperatura del paciente en el mismo formulario
   4. La vista "Lista de Accion" muestra los pacientes ordenados por prioridad calculada (días sin contacto + temperatura + etapa)
   5. Los pacientes contactados hoy desaparecen de la lista hasta el próximo período de seguimiento
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 02-01: Backend — modelo ContactoLog + endpoints CRUD + lógica de prioridad
-- [ ] 02-02: Frontend — historial de contactos en drawer del paciente + indicador días sin contacto
-- [ ] 02-03: Frontend — vista Lista de Accion con registro inline de interacción
+- [ ] 02-01-PLAN.md — Backend: Prisma ContactoLog model + migration + 3 endpoints (lista-accion, GET/POST contactos) + servicio con lógica de prioridad y exclusión UTC-3
+- [ ] 02-02-PLAN.md — Frontend: shadcn Sheet + ContactoSheet reutilizable + hooks useContactos/useCreateContacto + ContactosSection en drawer del paciente
+- [ ] 02-03-PLAN.md — Frontend: página /dashboard/accion con cards + animación framer-motion + ListaAccionWidget en dashboard + nav sidebar + permisos
 
 ### Phase 3: Presupuestos Completos
 **Goal**: El coordinador puede crear un presupuesto, generar su PDF con branding de la clínica, enviarlo por email y la plataforma actualiza automáticamente la etapa CRM del paciente al enviarlo, aceptarlo o rechazarlo
@@ -111,7 +111,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Infraestructura Async | 3/3 | Complete | 2026-02-23 |
-| 2. Log de Contactos + Lista de Accion | 0/3 | Not started | - |
+| 2. Log de Contactos + Lista de Accion | 0/3 | Planned | - |
 | 3. Presupuestos Completos | 0/3 | Not started | - |
 | 4. WhatsApp + Etapas CRM Automaticas | 0/3 | Not started | - |
 | 5. Dashboard de Conversion | 0/2 | Not started | - |

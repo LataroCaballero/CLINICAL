@@ -32,7 +32,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 3 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — BullMQ + Redis setup en NestJS: módulo WhatsApp, queue whatsapp-messages, WorkerHost processor, smoke test compatibilidad NestJS v10
+- [x] 01-01-PLAN.md — BullMQ + Redis setup en NestJS: módulo WhatsApp, queue whatsapp-messages, WorkerHost processor, smoke test compatibilidad NestJS v10
 - [ ] 01-02-PLAN.md — Prisma migration: ConfiguracionWABA, MensajeWhatsApp, enums WA, whatsappOptIn en Paciente; endpoints opt-in y WABA config con validación Meta + cifrado AES-256-GCM
 - [ ] 01-03-PLAN.md — Frontend: tab WhatsApp en Configuración (ADMIN/PROFESIONAL), formulario WABA con validación en vivo, toggle opt-in en perfil paciente
 
@@ -110,7 +110,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Infraestructura Async | 0/3 | Not started | - |
+| 1. Infraestructura Async | 1/3 | In progress | - |
 | 2. Log de Contactos + Lista de Accion | 0/3 | Not started | - |
 | 3. Presupuestos Completos | 0/3 | Not started | - |
 | 4. WhatsApp + Etapas CRM Automaticas | 0/3 | Not started | - |

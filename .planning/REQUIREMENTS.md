@@ -7,7 +7,7 @@
 
 ### Infraestructura Async (INFRA)
 
-- [ ] **INFRA-01**: El sistema soporta jobs asincrónicos persistentes con reintentos (BullMQ sobre Redis)
+- [x] **INFRA-01**: El sistema soporta jobs asincrónicos persistentes con reintentos (BullMQ sobre Redis)
 - [ ] **INFRA-02**: Cada clínica (tenant) puede conectar su propio número de WhatsApp (credenciales WABA separadas por tenant en base de datos)
 - [ ] **INFRA-03**: Cada paciente tiene campo de consentimiento explícito para recibir mensajes de WhatsApp (`whatsappOptIn` + timestamp de aceptación)
 - [ ] **INFRA-04**: El sistema registra cada mensaje WhatsApp enviado con su estado de entrega (pendiente, enviado, entregado, leído, fallido)
@@ -92,7 +92,7 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| INFRA-01 | Phase 1 | Pending |
+| INFRA-01 | Phase 1 | Complete (01-01) |
 | INFRA-02 | Phase 1 | Pending |
 | INFRA-03 | Phase 1 | Pending |
 | INFRA-04 | Phase 1 | Pending |

@@ -9,10 +9,10 @@ See: .planning/PROJECT.md (updated 2026-02-23)
 
 ## Current Position
 
-Phase: 2 of 5 (Log de Contactos + Lista de Accion) — COMPLETE
-Plan: 3 of 3 in current phase — COMPLETE
-Status: Phase 2 complete, ready for Phase 3
-Last activity: 2026-02-23 — Plan 02-03 completado: useListaAccion hook + /dashboard/accion page + ContactoSheet fixes + EtapaCRM enum corrections
+Phase: 2.1 of 5 (Fix SECRETARIA Contact Logging) — COMPLETE
+Plan: 1 of 1 in current phase — COMPLETE
+Status: Phase 2.1 complete, ready for Phase 3
+Last activity: 2026-02-24 — Plan 02.1-01 completado: async createContacto handler with null-guard + profesionalId fallback for SECRETARIA role
 
 Progress: [██████░░░░] 40%
 
@@ -29,9 +29,10 @@ Progress: [██████░░░░] 40%
 |-------|-------|-------|----------|
 | 01-infraestructura-async | 3/3 | 55min | 18min |
 | 02-log-de-contactos-lista-de-accion | 3/3 | 35min | 12min |
+| 02.1-fix-secretaria-contact-logging | 1/1 | 8min | 8min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (15min), 01-02 (25min), 01-03 (15min), 02-02 (18min), 02-03 (35min)
+- Last 5 plans: 01-01 (15min), 01-02 (25min), 01-03 (15min), 02-02 (18min), 02-03 (35min), 02.1-01 (8min)
 - Trend: stable
 
 *Updated after each plan completion*
@@ -67,6 +68,7 @@ Recent decisions affecting current work:
 - [02-02]: useCreateContacto invalidates 4 query keys: contactos, lista-accion, crm-kanban, paciente for full consistency
 - [Phase 02-log-de-contactos-lista-de-accion]: ListaAccionWidget removed from dashboard home — sidebar-only access avoids overloading already-dense dashboard with CRM widgets
 - [Phase 02-log-de-contactos-lista-de-accion]: EtapaCRM enum values confirmed: TURNO_AGENDADO and CONSULTADO (plan had wrong CONSULTA_AGENDADA/CONSULTA_REALIZADA) — all CRM frontend code must use schema-accurate values
+- [Phase 02.1-fix-secretaria-contact-logging]: profesionalId fallback lookup done in controller not service — keeps service signature clean (string never null)
 
 ### Pending Todos
 
@@ -81,6 +83,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-02-23
-Stopped at: Completed 02-03-PLAN.md — Phase 2 (Log de Contactos + Lista de Accion) complete
+Last session: 2026-02-24
+Stopped at: Completed 02.1-01-PLAN.md — Phase 2.1 (Fix SECRETARIA Contact Logging) complete
 Resume file: None

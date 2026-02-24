@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Infraestructura Async** - BullMQ + Redis + schema de consentimiento y credenciales multi-tenant
 - [x] **Phase 2: Log de Contactos + Lista de Accion** - Registro de interacciones y workflow diario del coordinador (completed 2026-02-24)
-- [ ] **Phase 2.1: Fix SECRETARIA Contact Logging** [INSERTED] — Gap closure: null profesionalId FK para rol SECRETARIA
+- [x] **Phase 2.1: Fix SECRETARIA Contact Logging** [INSERTED] — Gap closure: null profesionalId FK para rol SECRETARIA (completed 2026-02-24)
 - [ ] **Phase 3: Presupuestos Completos** - PDF con branding, entrega por email, estados y transiciones CRM automáticas
 - [ ] **Phase 4: WhatsApp + Etapas CRM Automaticas** - Integración mensajeria module y wiring completo de eventos CRM
 - [ ] **Phase 5: Dashboard de Conversion** - Embudo, ingresos potenciales, motivos de pérdida y performance del coordinador
@@ -65,7 +65,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 02.1-01-PLAN.md — Backend: fix `createContacto` handler in `pacientes.controller.ts` — async + null-guard + fallback DB lookup of `paciente.profesionalId` for SECRETARIA role
+- [x] 02.1-01-PLAN.md — Backend: fix `createContacto` handler in `pacientes.controller.ts` — async + null-guard + fallback DB lookup of `paciente.profesionalId` for SECRETARIA role
 
 ### Phase 3: Presupuestos Completos
 **Goal**: El coordinador puede crear un presupuesto, generar su PDF con branding de la clínica, enviarlo por email y la plataforma actualiza automáticamente la etapa CRM del paciente al enviarlo, aceptarlo o rechazarlo
@@ -126,7 +126,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 |-------|----------------|--------|-----------|
 | 1. Infraestructura Async | 3/3 | Complete | 2026-02-23 |
 | 2. Log de Contactos + Lista de Accion | 3/3 | Complete   | 2026-02-24 |
-| 2.1. Fix SECRETARIA Contact Logging | 0/1 | Not started | - |
+| 2.1. Fix SECRETARIA Contact Logging | 1/1 | Complete | 2026-02-24 |
 | 3. Presupuestos Completos | 0/3 | Not started | - |
 | 4. WhatsApp + Etapas CRM Automaticas | 0/3 | Not started | - |
 | 5. Dashboard de Conversion | 0/2 | Not started | - |

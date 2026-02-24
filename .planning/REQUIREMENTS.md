@@ -14,7 +14,7 @@
 
 ### Log de Contactos (LOG)
 
-- [ ] **LOG-01**: El coordinador puede registrar una interacción con un paciente (llamada, mensaje, consulta presencial) con fecha, tipo y nota
+- [x] **LOG-01**: El coordinador puede registrar una interacción con un paciente (llamada, mensaje, consulta presencial) con fecha, tipo y nota
 - [x] **LOG-02**: El perfil del paciente muestra el historial completo de interacciones ordenado cronológicamente
 - [x] **LOG-03**: Al registrar una interacción, el coordinador puede actualizar la etapa CRM y temperatura del paciente en el mismo paso
 - [x] **LOG-04**: El sistema muestra cuántos días hace que no hay interacción con cada paciente
@@ -23,7 +23,7 @@
 
 - [x] **ACCION-01**: El coordinador ve una lista diaria de pacientes que requieren seguimiento, ordenada por prioridad
 - [x] **ACCION-02**: La prioridad se calcula automáticamente según: días sin contacto, temperatura del paciente y etapa CRM
-- [ ] **ACCION-03**: Desde la lista de acción, el coordinador puede registrar la interacción realizada sin salir de la vista
+- [x] **ACCION-03**: Desde la lista de acción, el coordinador puede registrar la interacción realizada sin salir de la vista
 - [x] **ACCION-04**: Los pacientes contactados hoy desaparecen de la lista hasta el próximo período de seguimiento
 
 ### Presupuestos (PRES)
@@ -96,13 +96,13 @@
 | INFRA-02 | Phase 1 | Complete |
 | INFRA-03 | Phase 1 | Complete |
 | INFRA-04 | Phase 1 | Pending |
-| LOG-01 | Phase 2.1 | Pending |
+| LOG-01 | Phase 2.1 | Complete |
 | LOG-02 | Phase 2 | Complete |
 | LOG-03 | Phase 2 | Complete |
 | LOG-04 | Phase 2 | Complete |
 | ACCION-01 | Phase 2 | Complete |
 | ACCION-02 | Phase 2 | Complete |
-| ACCION-03 | Phase 2.1 | Pending |
+| ACCION-03 | Phase 2.1 | Complete |
 | ACCION-04 | Phase 2 | Complete |
 | PRES-01 | Phase 3 | Pending |
 | PRES-02 | Phase 3 | Pending |

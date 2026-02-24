@@ -70,7 +70,7 @@ Plans:
 ### Phase 3: Presupuestos Completos
 **Goal**: El coordinador puede crear un presupuesto, generar su PDF con branding de la clínica, enviarlo por email y la plataforma actualiza automáticamente la etapa CRM del paciente al enviarlo, aceptarlo o rechazarlo
 **Depends on**: Phase 2
-**Requirements**: PRES-01, PRES-02, PRES-03, PRES-04, PRES-05, PRES-06, PRES-07, PRES-08, CRM-03, CRM-04
+**Requirements**: PRES-01, PRES-02, PRES-03, PRES-05, PRES-06, PRES-07, PRES-08, CRM-03, CRM-04
 **Success Criteria** (what must be TRUE):
   1. El coordinador puede crear un presupuesto con ítems, montos y fecha de validez vinculado a un paciente
   2. El sistema genera un PDF del presupuesto con logo de la clínica, datos del profesional y desglose de procedimientos

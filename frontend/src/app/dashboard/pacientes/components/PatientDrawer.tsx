@@ -19,6 +19,7 @@ import PacienteTurnos from "@/components/patient/PatientDrawer/views/TurnosPacie
 import CuentaCorrienteView from "@/components/patient/PatientDrawer/views/CuentaCorrienteView";
 import PresupuestosView from "@/components/patient/PatientDrawer/views/PresupuestosView";
 import MensajesView from "@/components/patient/PatientDrawer/views/MensajesView";
+import { ContactosSection } from "./ContactosSection";
 
 export default function PatientDrawer({
   open,
@@ -56,10 +57,18 @@ export default function PatientDrawer({
             )}
 
             {paciente && !isLoading && view === "default" && (
-              <PacienteDetails
-                paciente={paciente}
-                onAction={setView}
-              />
+              <>
+                <PacienteDetails
+                  paciente={paciente}
+                  onAction={setView}
+                />
+                <div className="mt-6 pt-5 border-t">
+                  <ContactosSection
+                    pacienteId={paciente.id}
+                    pacienteNombre={paciente.nombreCompleto}
+                  />
+                </div>
+              </>
             )}
             {view === "datos" && paciente &&
               <DatosCompletos

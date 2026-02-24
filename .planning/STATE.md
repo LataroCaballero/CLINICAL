@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-23)
 ## Current Position
 
 Phase: 2 of 5 (Log de Contactos + Lista de Accion)
-Plan: 1 of 3 in current phase
+Plan: 2 of 3 in current phase
 Status: In progress
-Last activity: 2026-02-23 — Plan 02-01 completado: ContactoLog API (Prisma model + 3 endpoints + service methods)
+Last activity: 2026-02-23 — Plan 02-02 completado: ContactoSheet + useContactos/useCreateContacto hooks + ContactosSection en drawer
 
-Progress: [████░░░░░░] 24%
+Progress: [█████░░░░░] 30%
 
 ## Performance Metrics
 
@@ -28,10 +28,10 @@ Progress: [████░░░░░░] 24%
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-infraestructura-async | 3/3 | 55min | 18min |
-| 02-log-de-contactos-lista-de-accion | 1/3 | 2min | 2min |
+| 02-log-de-contactos-lista-de-accion | 2/3 | 20min | 10min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (15min), 01-02 (25min), 01-03 (15min)
+- Last 5 plans: 01-01 (15min), 01-02 (25min), 01-03 (15min), 02-02 (18min)
 - Trend: stable
 
 *Updated after each plan completion*
@@ -62,6 +62,9 @@ Recent decisions affecting current work:
 - [02-01]: EtapaCRM scoring map uses TURNO_AGENDADO/CONSULTADO (actual enum values) — plan had incorrect CONSULTA_AGENDADA/CONSULTA_REALIZADA
 - [02-01]: calcularScore() caps diasSinContacto at 30 to prevent score explosion for very old leads
 - [02-01]: contactadosHoy counter included in lista-accion response to enable frontend counter widget
+- [02-02]: ContactoSheet uses modalMode=false inside PatientDrawer to prevent Radix portal z-index conflict between Sheet and Drawer
+- [02-02]: ContactosSection integrated inline in PatientDrawer default view (not as a tab) so contact history is always visible
+- [02-02]: useCreateContacto invalidates 4 query keys: contactos, lista-accion, crm-kanban, paciente for full consistency
 
 ### Pending Todos
 
@@ -77,5 +80,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-23
-Stopped at: Plan 02-01 COMPLETADO. ContactoLog API (Prisma model + migration + 3 endpoints). Next: Plan 02-02 — Log de Contactos frontend panel.
+Stopped at: Plan 02-02 COMPLETADO. ContactoSheet + hooks + ContactosSection en drawer. Next: Plan 02-03 — Lista de Accion.
 Resume file: None

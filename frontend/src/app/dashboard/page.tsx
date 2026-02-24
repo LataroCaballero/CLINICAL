@@ -8,6 +8,9 @@ import MensajesDashboard from "./components/MensajesDashboard";
 import NextPatientCard from "./components/NextPatientCard";
 import ActiveSessionBanner from "./components/ActiveSessionBanner";
 import QuickActionsWidget from "./components/QuickActionsWidget";
+import CRMKpiCards from "./components/CRMKpiCards";
+import CRMFunnelWidget from "./components/CRMFunnelWidget";
+import { ListaAccionWidget } from "./components/ListaAccionWidget";
 import { useEffectiveProfessionalId } from "@/hooks/useEffectiveProfessionalId";
 import { useUIStore } from "@/lib/stores/useUIStore";
 import { useLiveTurnoStore } from "@/store/live-turno.store";
@@ -86,7 +89,15 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
             {/* Left column: KPIs + Appointments */}
             <div className="md:col-span-8 space-y-6">
-              {/* KPIs */}
+              {/* KPIs de conversión CRM — primera fila, prioridad */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <CRMKpiCards isLoading={kpisLoading} />
+              </div>
+
+              {/* Mini-embudo del mes */}
+              <CRMFunnelWidget />
+
+              {/* KPIs financieros — segunda fila */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <KpiCard
                   title="Fact. mensual"
@@ -134,6 +145,7 @@ export default function DashboardPage() {
             <div className="md:col-span-4 space-y-6">
               <QuickActionsWidget />
               <AlertsWidget />
+              <ListaAccionWidget />
               <MensajesDashboard />
             </div>
           </div>

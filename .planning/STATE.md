@@ -5,33 +5,33 @@
 See: .planning/PROJECT.md (updated 2026-02-23)
 
 **Core value:** Que un cirujano plástico cierre más cirugías — el sistema hace visible qué pacientes seguir, cuándo y cómo, de la manera más automatizada posible
-**Current focus:** Phase 2 — Log de Contactos + Lista de Accion
+**Current focus:** Phase 3 — (next phase)
 
 ## Current Position
 
-Phase: 2 of 5 (Log de Contactos + Lista de Accion)
-Plan: 2 of 3 in current phase
-Status: In progress
-Last activity: 2026-02-23 — Plan 02-02 completado: ContactoSheet + useContactos/useCreateContacto hooks + ContactosSection en drawer
+Phase: 2 of 5 (Log de Contactos + Lista de Accion) — COMPLETE
+Plan: 3 of 3 in current phase — COMPLETE
+Status: Phase 2 complete, ready for Phase 3
+Last activity: 2026-02-23 — Plan 02-03 completado: useListaAccion hook + /dashboard/accion page + ContactoSheet fixes + EtapaCRM enum corrections
 
-Progress: [█████░░░░░] 30%
+Progress: [██████░░░░] 40%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 3
-- Average duration: 18min
-- Total execution time: 55min
+- Total plans completed: 4
+- Average duration: 21min
+- Total execution time: 90min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-infraestructura-async | 3/3 | 55min | 18min |
-| 02-log-de-contactos-lista-de-accion | 2/3 | 20min | 10min |
+| 02-log-de-contactos-lista-de-accion | 3/3 | 35min | 12min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (15min), 01-02 (25min), 01-03 (15min), 02-02 (18min)
+- Last 5 plans: 01-01 (15min), 01-02 (25min), 01-03 (15min), 02-02 (18min), 02-03 (35min)
 - Trend: stable
 
 *Updated after each plan completion*
@@ -65,6 +65,8 @@ Recent decisions affecting current work:
 - [02-02]: ContactoSheet uses modalMode=false inside PatientDrawer to prevent Radix portal z-index conflict between Sheet and Drawer
 - [02-02]: ContactosSection integrated inline in PatientDrawer default view (not as a tab) so contact history is always visible
 - [02-02]: useCreateContacto invalidates 4 query keys: contactos, lista-accion, crm-kanban, paciente for full consistency
+- [Phase 02-log-de-contactos-lista-de-accion]: ListaAccionWidget removed from dashboard home — sidebar-only access avoids overloading already-dense dashboard with CRM widgets
+- [Phase 02-log-de-contactos-lista-de-accion]: EtapaCRM enum values confirmed: TURNO_AGENDADO and CONSULTADO (plan had wrong CONSULTA_AGENDADA/CONSULTA_REALIZADA) — all CRM frontend code must use schema-accurate values
 
 ### Pending Todos
 
@@ -80,5 +82,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-23
-Stopped at: Plan 02-03 — Tasks 1-2 complete (hook, permisos, sidebar, pagina accion, widget, dashboard). Paused at Task 3 checkpoint:human-verify.
+Stopped at: Completed 02-03-PLAN.md — Phase 2 (Log de Contactos + Lista de Accion) complete
 Resume file: None

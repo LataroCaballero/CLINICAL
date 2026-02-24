@@ -1,5 +1,7 @@
 import {
   IsArray,
+  IsDateString,
+  IsIn,
   IsNumber,
   IsOptional,
   IsPositive,
@@ -15,12 +17,8 @@ export class PresupuestoItemDto {
   descripcion: string;
 
   @IsNumber()
-  @Min(1)
-  cantidad: number;
-
-  @IsNumber()
   @IsPositive()
-  precioUnitario: number;
+  precioTotal: number;
 }
 
 export class CreatePresupuestoDto {
@@ -39,4 +37,12 @@ export class CreatePresupuestoDto {
   @IsNumber()
   @Min(0)
   descuentos?: number;
+
+  @IsOptional()
+  @IsIn(['ARS', 'USD'])
+  moneda?: string;
+
+  @IsOptional()
+  @IsDateString()
+  fechaValidez?: string;
 }

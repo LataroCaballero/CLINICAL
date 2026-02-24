@@ -6,7 +6,7 @@ import {
 import { PrismaService } from '../../prisma/prisma.service';
 import { CuentasCorrientesService } from '../cuentas-corrientes/cuentas-corrientes.service';
 import { CreatePresupuestoDto } from './dto/create-presupuesto.dto';
-import { EstadoPresupuesto, TipoMovimiento } from '@prisma/client';
+import { EstadoPresupuesto, TipoMovimiento, EtapaCRM } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 
 @Injectable()
@@ -44,13 +44,11 @@ export class PresupuestosService {
     // Calcular totales
     const itemsConTotal = dto.items.map((item, index) => ({
       descripcion: item.descripcion,
-      cantidad: item.cantidad,
-      precioUnitario: item.precioUnitario,
-      total: item.cantidad * item.precioUnitario,
+      precioTotal: item.precioTotal,
       orden: index,
     }));
 
-    const subtotal = itemsConTotal.reduce((acc, item) => acc + item.total, 0);
+    const subtotal = itemsConTotal.reduce((acc, item) => acc + item.precioTotal, 0);
     const descuentos = dto.descuentos || 0;
     const total = subtotal - descuentos;
 
@@ -62,6 +60,8 @@ export class PresupuestosService {
         subtotal,
         descuentos,
         total,
+        moneda: dto.moneda ?? 'ARS',
+        fechaValidez: dto.fechaValidez ? new Date(dto.fechaValidez) : null,
         estado: EstadoPresupuesto.BORRADOR,
         items: {
           create: itemsConTotal,
@@ -158,19 +158,105 @@ export class PresupuestosService {
       },
     );
 
-    // Actualizar estado del presupuesto
-    const updated = await this.prisma.presupuesto.update({
+    // Actualizar estado del presupuesto y etapaCRM del paciente
+    const [updated] = await this.prisma.$transaction([
+      this.prisma.presupuesto.update({
+        where: { id },
+        data: {
+          estado: EstadoPresupuesto.ACEPTADO,
+          fechaAceptado: new Date(),
+          cargoMovimientoId: movimiento.id,
+        },
+        include: {
+          items: { orderBy: { orden: 'asc' } },
+          paciente: { select: { id: true, nombreCompleto: true } },
+        },
+      }),
+      this.prisma.paciente.update({
+        where: { id: presupuesto.pacienteId },
+        data: { etapaCRM: EtapaCRM.CONFIRMADO },
+      }),
+    ]);
+
+    return this.formatPresupuesto(updated);
+  }
+
+  /**
+   * Marca un presupuesto como ENVIADO y actualiza etapaCRM del paciente
+   */
+  async marcarEnviado(id: string) {
+    const presupuesto = await this.prisma.presupuesto.findUnique({
       where: { id },
-      data: {
-        estado: EstadoPresupuesto.ACEPTADO,
-        fechaAceptado: new Date(),
-        cargoMovimientoId: movimiento.id,
-      },
-      include: {
-        items: { orderBy: { orden: 'asc' } },
-        paciente: { select: { id: true, nombreCompleto: true } },
-      },
+      select: { id: true, pacienteId: true, estado: true },
     });
+
+    if (!presupuesto) throw new NotFoundException('Presupuesto no encontrado');
+
+    if (presupuesto.estado !== EstadoPresupuesto.BORRADOR) {
+      throw new BadRequestException(
+        'Solo se puede marcar como enviado un presupuesto en estado BORRADOR',
+      );
+    }
+
+    const [updated] = await this.prisma.$transaction([
+      this.prisma.presupuesto.update({
+        where: { id },
+        data: {
+          estado: EstadoPresupuesto.ENVIADO,
+          fechaEnviado: new Date(),
+        },
+        include: {
+          items: { orderBy: { orden: 'asc' } },
+          paciente: { select: { id: true, nombreCompleto: true } },
+        },
+      }),
+      this.prisma.paciente.update({
+        where: { id: presupuesto.pacienteId },
+        data: { etapaCRM: EtapaCRM.PRESUPUESTO_ENVIADO },
+      }),
+    ]);
+
+    return this.formatPresupuesto(updated);
+  }
+
+  /**
+   * Rechaza un presupuesto y puede mover al paciente a PERDIDO
+   */
+  async rechazar(id: string, dto: { motivoRechazo?: string }) {
+    const presupuesto = await this.prisma.presupuesto.findUnique({
+      where: { id },
+      select: { id: true, pacienteId: true, estado: true },
+    });
+
+    if (!presupuesto) throw new NotFoundException('Presupuesto no encontrado');
+
+    if (
+      presupuesto.estado !== EstadoPresupuesto.BORRADOR &&
+      presupuesto.estado !== EstadoPresupuesto.ENVIADO
+    ) {
+      throw new BadRequestException(
+        `No se puede rechazar un presupuesto en estado ${presupuesto.estado}`,
+      );
+    }
+
+    const [updated] = await this.prisma.$transaction([
+      this.prisma.presupuesto.update({
+        where: { id },
+        data: {
+          estado: EstadoPresupuesto.RECHAZADO,
+          fechaRechazado: new Date(),
+          motivoRechazo: dto.motivoRechazo ?? null,
+        },
+        include: {
+          items: { orderBy: { orden: 'asc' } },
+          paciente: { select: { id: true, nombreCompleto: true } },
+        },
+      }),
+      this.prisma.paciente.update({
+        where: { id: presupuesto.pacienteId },
+        data: { etapaCRM: EtapaCRM.PERDIDO },
+      }),
+    ]);
 
     return this.formatPresupuesto(updated);
   }
@@ -217,15 +303,15 @@ export class PresupuestosService {
       subtotal: Number(presupuesto.subtotal),
       descuentos: Number(presupuesto.descuentos),
       total: Number(presupuesto.total),
+      moneda: presupuesto.moneda,
+      fechaValidez: presupuesto.fechaValidez,
       estado: presupuesto.estado,
       fechaAceptado: presupuesto.fechaAceptado,
       createdAt: presupuesto.createdAt,
       items: presupuesto.items?.map((item: any) => ({
         id: item.id,
         descripcion: item.descripcion,
-        cantidad: item.cantidad,
-        precioUnitario: Number(item.precioUnitario),
-        total: Number(item.total),
+        precioTotal: Number(item.precioTotal),
       })),
       paciente: presupuesto.paciente,
       profesional: presupuesto.profesional

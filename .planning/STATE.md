@@ -38,6 +38,7 @@ Progress: [████████░░] 48%
 *Updated after each plan completion*
 
 | Phase 03-presupuestos-completos | P02 | 5min | 3 tasks | 7 files |
+| Phase 03-presupuestos-completos P03 | 11 | 2 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -76,6 +77,7 @@ Recent decisions affecting current work:
 - [03-01]: MotivoPerdidaCRM enum values confirmed: PRECIO/TIEMPO/MIEDO_CIRUGIA/PREFIERE_OTRO_PROFESIONAL/NO_CANDIDATO_MEDICO/NO_RESPONDIO/OTRO
 - [Phase 03-presupuestos-completos]: Auth guard is controller-scoped — no global APP_GUARD — PresupuestoPublicController without @Auth() is sufficient for public access
 - [Phase 03-presupuestos-completos]: SMTP fallback: ConfigClinica.smtp* > env vars; missing SMTP logs WARN and returns silently — presupuesto still marked ENVIADO
+- [Phase 03-presupuestos-completos]: pacienteEmail passed from PatientDrawer via paciente.email to PresupuestosView for email prefill in EnviarPresupuestoModal
 
 ### Pending Todos
 

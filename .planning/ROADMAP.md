@@ -62,10 +62,10 @@ Plans:
   1. A SECRETARIA user can POST to `/pacientes/:id/contactos` and the ContactoLog is created successfully
   2. The `ContactoLog.profesionalId` FK is populated with the patient's assigned professional when the caller has no `profesionalId`
   3. PROFESIONAL users are unaffected — their own `profesionalId` from JWT is still used
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 02.1-01: Backend — fix `createContacto` in `pacientes.controller.ts` to fall back to `paciente.profesionalId` when `req.user.profesionalId` is null
+- [ ] 02.1-01-PLAN.md — Backend: fix `createContacto` handler in `pacientes.controller.ts` — async + null-guard + fallback DB lookup of `paciente.profesionalId` for SECRETARIA role
 
 ### Phase 3: Presupuestos Completos
 **Goal**: El coordinador puede crear un presupuesto, generar su PDF con branding de la clínica, enviarlo por email y la plataforma actualiza automáticamente la etapa CRM del paciente al enviarlo, aceptarlo o rechazarlo

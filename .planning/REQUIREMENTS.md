@@ -28,14 +28,14 @@
 
 ### Presupuestos (PRES)
 
-- [ ] **PRES-01**: El coordinador puede crear un presupuesto vinculado a un paciente con ítems, montos y fecha de validez
+- [x] **PRES-01**: El coordinador puede crear un presupuesto vinculado a un paciente con ítems, montos y fecha de validez
 - [ ] **PRES-02**: El sistema genera un PDF del presupuesto con el branding de la clínica (logo, datos, firma del profesional)
 - [ ] **PRES-03**: El coordinador puede enviar el presupuesto por email directamente desde la plataforma
 - [ ] **PRES-04**: El coordinador puede enviar el presupuesto por WhatsApp (como documento PDF) directamente desde la plataforma
-- [ ] **PRES-05**: El presupuesto tiene estados: borrador, enviado, aceptado, rechazado, vencido
-- [ ] **PRES-06**: Al enviar el presupuesto, la etapa CRM del paciente sube automáticamente a "Presupuesto enviado"
-- [ ] **PRES-07**: Al marcar un presupuesto como aceptado y recibir pago, la etapa CRM cierra automáticamente como "Cirugía confirmada"
-- [ ] **PRES-08**: Al rechazar un presupuesto, el sistema solicita el motivo de pérdida (precio, timing, eligió otra clínica, etc.)
+- [x] **PRES-05**: El presupuesto tiene estados: borrador, enviado, aceptado, rechazado, vencido
+- [x] **PRES-06**: Al enviar el presupuesto, la etapa CRM del paciente sube automáticamente a "Presupuesto enviado"
+- [x] **PRES-07**: Al marcar un presupuesto como aceptado y recibir pago, la etapa CRM cierra automáticamente como "Cirugía confirmada"
+- [x] **PRES-08**: Al rechazar un presupuesto, el sistema solicita el motivo de pérdida (precio, timing, eligió otra clínica, etc.)
 
 ### WhatsApp (WA)
 
@@ -49,8 +49,8 @@
 
 - [ ] **CRM-01**: Al crear un turno para un paciente sin etapa CRM, se asigna automáticamente la etapa "Consulta agendada"
 - [ ] **CRM-02**: Al registrar que un turno fue atendido (LiveTurno completado), la etapa CRM sube automáticamente a "Consulta realizada"
-- [ ] **CRM-03**: Al enviar un presupuesto, la etapa CRM sube automáticamente a "Presupuesto enviado" (ver PRES-06)
-- [ ] **CRM-04**: Al registrar un pago de cirugía, la etapa CRM cierra automáticamente como "Cirugía confirmada"
+- [x] **CRM-03**: Al enviar un presupuesto, la etapa CRM sube automáticamente a "Presupuesto enviado" (ver PRES-06)
+- [x] **CRM-04**: Al registrar un pago de cirugía, la etapa CRM cierra automáticamente como "Cirugía confirmada"
 - [ ] **CRM-05**: Cuando un paciente responde un mensaje de WhatsApp, su temperatura sube automáticamente a "Caliente"
 
 ### Dashboard de Conversión (DASH)
@@ -104,16 +104,16 @@
 | ACCION-02 | Phase 2 | Complete |
 | ACCION-03 | Phase 2.1 | Complete |
 | ACCION-04 | Phase 2 | Complete |
-| PRES-01 | Phase 3 | Pending |
+| PRES-01 | Phase 3 | Complete |
 | PRES-02 | Phase 3 | Pending |
 | PRES-03 | Phase 3 | Pending |
 | PRES-04 | Phase 3 | Pending |
-| PRES-05 | Phase 3 | Pending |
-| PRES-06 | Phase 3 | Pending |
-| PRES-07 | Phase 3 | Pending |
-| PRES-08 | Phase 3 | Pending |
-| CRM-03 | Phase 3 | Pending |
-| CRM-04 | Phase 3 | Pending |
+| PRES-05 | Phase 3 | Complete |
+| PRES-06 | Phase 3 | Complete |
+| PRES-07 | Phase 3 | Complete |
+| PRES-08 | Phase 3 | Complete |
+| CRM-03 | Phase 3 | Complete |
+| CRM-04 | Phase 3 | Complete |
 | WA-01 | Phase 4 | Pending |
 | WA-02 | Phase 4 | Pending |
 | WA-03 | Phase 4 | Pending |

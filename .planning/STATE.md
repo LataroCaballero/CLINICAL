@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-02-23)
 
 ## Current Position
 
-Phase: 2.1 of 5 (Fix SECRETARIA Contact Logging) — COMPLETE
-Plan: 1 of 1 in current phase — COMPLETE
-Status: Phase 2.1 complete, ready for Phase 3
-Last activity: 2026-02-24 — Plan 02.1-01 completado: async createContacto handler with null-guard + profesionalId fallback for SECRETARIA role
+Phase: 3 of 5 (Presupuestos Completos) — IN PROGRESS
+Plan: 1 of 5 in current phase — COMPLETE
+Status: Plan 03-01 complete — schema migrated, DTO updated, rechazar() with CRM propagation
+Last activity: 2026-02-24 — Plan 03-01 completado: Prisma migration (ConfigClinica, precioTotal, tokenAceptacion, VENCIDO), DTO refactor, rechazar() $transaction with etapaCRM=PERDIDO
 
-Progress: [██████░░░░] 40%
+Progress: [███████░░░] 42%
 
 ## Performance Metrics
 
@@ -69,6 +69,9 @@ Recent decisions affecting current work:
 - [Phase 02-log-de-contactos-lista-de-accion]: ListaAccionWidget removed from dashboard home — sidebar-only access avoids overloading already-dense dashboard with CRM widgets
 - [Phase 02-log-de-contactos-lista-de-accion]: EtapaCRM enum values confirmed: TURNO_AGENDADO and CONSULTADO (plan had wrong CONSULTA_AGENDADA/CONSULTA_REALIZADA) — all CRM frontend code must use schema-accurate values
 - [Phase 02.1-fix-secretaria-contact-logging]: profesionalId fallback lookup done in controller not service — keeps service signature clean (string never null)
+- [03-01]: Custom migration SQL for PresupuestoItem rename: ADD nullable → UPDATE (copy) → DROP old → SET NOT NULL — required due to 1719 existing rows
+- [03-01]: motivoPerdida left as null in rechazar() — free-text motivoRechazo goes to presupuesto.motivoRechazo; public endpoint (03-02) sets enum motivoPerdida directly on paciente
+- [03-01]: MotivoPerdidaCRM enum values confirmed: PRECIO/TIEMPO/MIEDO_CIRUGIA/PREFIERE_OTRO_PROFESIONAL/NO_CANDIDATO_MEDICO/NO_RESPONDIO/OTRO
 
 ### Pending Todos
 
@@ -84,5 +87,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed 02.1-01-PLAN.md — Phase 2.1 (Fix SECRETARIA Contact Logging) complete
+Stopped at: Completed 03-01-PLAN.md — Phase 3 Plan 1 (Presupuestos Completos Schema Migration) complete
 Resume file: None

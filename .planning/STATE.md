@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-23)
 ## Current Position
 
 Phase: 3 of 5 (Presupuestos Completos) — IN PROGRESS
-Plan: 1 of 5 in current phase — COMPLETE
-Status: Plan 03-01 complete — schema migrated, DTO updated, rechazar() with CRM propagation
-Last activity: 2026-02-24 — Plan 03-01 completado: Prisma migration (ConfigClinica, precioTotal, tokenAceptacion, VENCIDO), DTO refactor, rechazar() $transaction with etapaCRM=PERDIDO
+Plan: 2 of 5 in current phase — COMPLETE
+Status: Plan 03-02 complete — PDFKit, Nodemailer email service, public controller for patient acceptance/rejection
+Last activity: 2026-02-24 — Plan 03-02 completado: PresupuestoPdfService (PDFKit A4), PresupuestoEmailService (Nodemailer + token), PresupuestoPublicController (sin auth), 4 service methods, 2 controller endpoints
 
-Progress: [███████░░░] 42%
+Progress: [████████░░] 48%
 
 ## Performance Metrics
 
@@ -36,6 +36,8 @@ Progress: [███████░░░] 42%
 - Trend: stable
 
 *Updated after each plan completion*
+
+| Phase 03-presupuestos-completos | P02 | 5min | 3 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -72,6 +74,8 @@ Recent decisions affecting current work:
 - [03-01]: Custom migration SQL for PresupuestoItem rename: ADD nullable → UPDATE (copy) → DROP old → SET NOT NULL — required due to 1719 existing rows
 - [03-01]: motivoPerdida left as null in rechazar() — free-text motivoRechazo goes to presupuesto.motivoRechazo; public endpoint (03-02) sets enum motivoPerdida directly on paciente
 - [03-01]: MotivoPerdidaCRM enum values confirmed: PRECIO/TIEMPO/MIEDO_CIRUGIA/PREFIERE_OTRO_PROFESIONAL/NO_CANDIDATO_MEDICO/NO_RESPONDIO/OTRO
+- [Phase 03-presupuestos-completos]: Auth guard is controller-scoped — no global APP_GUARD — PresupuestoPublicController without @Auth() is sufficient for public access
+- [Phase 03-presupuestos-completos]: SMTP fallback: ConfigClinica.smtp* > env vars; missing SMTP logs WARN and returns silently — presupuesto still marked ENVIADO
 
 ### Pending Todos
 
@@ -87,5 +91,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed 03-01-PLAN.md — Phase 3 Plan 1 (Presupuestos Completos Schema Migration) complete
+Stopped at: Completed 03-02-PLAN.md — Phase 3 Plan 2 (PDF Generation, Email Delivery, Public Controller) complete
 Resume file: None

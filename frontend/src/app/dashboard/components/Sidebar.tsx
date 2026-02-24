@@ -9,6 +9,7 @@ import {
   Boxes,
   BarChart2,
   ChevronDown,
+  ListChecks,
 } from "lucide-react";
 import Link from "next/link";
 import { useUIStore } from "@/lib/stores/useUIStore";
@@ -104,6 +105,11 @@ export default function Sidebar() {
       href: "/dashboard/pacientes",
       label: "Pacientes",
       icon: <Users className="w-5 h-5" />,
+    },
+    {
+      href: "/dashboard/accion",
+      label: "Acción",
+      icon: <ListChecks className="w-5 h-5" />,
     },
     {
       href: "/dashboard/finanzas",

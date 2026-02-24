@@ -25,6 +25,9 @@ const ROUTE_PERMISSIONS: { prefix: string; roles: RolUsuario[] }[] = [
   // Pacientes
   { prefix: '/dashboard/pacientes', roles: ['ADMIN', 'PROFESIONAL', 'SECRETARIA', 'FACTURADOR'] },
 
+  // Accion - lista de seguimiento diario
+  { prefix: '/dashboard/accion', roles: ['ADMIN', 'PROFESIONAL', 'SECRETARIA'] },
+
   // Dashboard home - todos
   { prefix: '/dashboard', roles: ['ADMIN', 'PROFESIONAL', 'SECRETARIA', 'FACTURADOR'] },
 ];

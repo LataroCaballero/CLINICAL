@@ -14,6 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Infraestructura Async** - BullMQ + Redis + schema de consentimiento y credenciales multi-tenant
 - [x] **Phase 2: Log de Contactos + Lista de Accion** - Registro de interacciones y workflow diario del coordinador (completed 2026-02-24)
+- [ ] **Phase 2.1: Fix SECRETARIA Contact Logging** [INSERTED] — Gap closure: null profesionalId FK para rol SECRETARIA
 - [ ] **Phase 3: Presupuestos Completos** - PDF con branding, entrega por email, estados y transiciones CRM automáticas
 - [ ] **Phase 4: WhatsApp + Etapas CRM Automaticas** - Integración mensajeria module y wiring completo de eventos CRM
 - [ ] **Phase 5: Dashboard de Conversion** - Embudo, ingresos potenciales, motivos de pérdida y performance del coordinador
@@ -52,6 +53,19 @@ Plans:
 - [ ] 02-01-PLAN.md — Backend: Prisma ContactoLog model + migration + 3 endpoints (lista-accion, GET/POST contactos) + servicio con lógica de prioridad y exclusión UTC-3
 - [ ] 02-02-PLAN.md — Frontend: shadcn Sheet + ContactoSheet reutilizable + hooks useContactos/useCreateContacto + ContactosSection en drawer del paciente
 - [ ] 02-03-PLAN.md — Frontend: página /dashboard/accion con cards + animación framer-motion + ListaAccionWidget en dashboard + nav sidebar + permisos
+
+### Phase 2.1: Fix SECRETARIA Contact Logging [INSERTED]
+**Goal**: SECRETARIA users can log contacts without a Prisma FK error — the controller resolves `profesionalId` from the patient record when the caller's JWT contains no `profesionalId`
+**Gap Closure:** Closes gaps from v1.0 audit — LOG-01 (partial), ACCION-03 (partial)
+**Requirements**: LOG-01, ACCION-03
+**Success Criteria** (what must be TRUE):
+  1. A SECRETARIA user can POST to `/pacientes/:id/contactos` and the ContactoLog is created successfully
+  2. The `ContactoLog.profesionalId` FK is populated with the patient's assigned professional when the caller has no `profesionalId`
+  3. PROFESIONAL users are unaffected — their own `profesionalId` from JWT is still used
+**Plans**: TBD
+
+Plans:
+- [ ] 02.1-01: Backend — fix `createContacto` in `pacientes.controller.ts` to fall back to `paciente.profesionalId` when `req.user.profesionalId` is null
 
 ### Phase 3: Presupuestos Completos
 **Goal**: El coordinador puede crear un presupuesto, generar su PDF con branding de la clínica, enviarlo por email y la plataforma actualiza automáticamente la etapa CRM del paciente al enviarlo, aceptarlo o rechazarlo
@@ -112,6 +126,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 |-------|----------------|--------|-----------|
 | 1. Infraestructura Async | 3/3 | Complete | 2026-02-23 |
 | 2. Log de Contactos + Lista de Accion | 3/3 | Complete   | 2026-02-24 |
+| 2.1. Fix SECRETARIA Contact Logging | 0/1 | Not started | - |
 | 3. Presupuestos Completos | 0/3 | Not started | - |
 | 4. WhatsApp + Etapas CRM Automaticas | 0/3 | Not started | - |
 | 5. Dashboard de Conversion | 0/2 | Not started | - |

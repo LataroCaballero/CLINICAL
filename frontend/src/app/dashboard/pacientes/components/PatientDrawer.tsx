@@ -97,6 +97,7 @@ export default function PatientDrawer({
             {view === "presupuestos" && paciente &&
               <PresupuestosView
                 pacienteId={paciente.id}
+                pacienteEmail={paciente.email ?? ""}
                 onBack={() => setView("default")}
               />
             }

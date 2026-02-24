@@ -4,9 +4,8 @@ import { api } from "@/lib/api";
 export interface PresupuestoItem {
   id: string;
   descripcion: string;
-  cantidad: number;
-  precioUnitario: number;
-  total: number;
+  precioTotal: number; // replaces cantidad + precioUnitario + total
+  orden: number;
 }
 
 export interface Presupuesto {
@@ -17,7 +16,9 @@ export interface Presupuesto {
   subtotal: number;
   descuentos: number;
   total: number;
-  estado: "BORRADOR" | "ENVIADO" | "ACEPTADO" | "RECHAZADO" | "CANCELADO";
+  moneda: string; // "ARS" | "USD"
+  fechaValidez?: string | null; // ISO date string
+  estado: "BORRADOR" | "ENVIADO" | "ACEPTADO" | "RECHAZADO" | "CANCELADO" | "VENCIDO";
   items: PresupuestoItem[];
 }
 

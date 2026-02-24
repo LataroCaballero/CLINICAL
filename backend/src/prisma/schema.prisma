@@ -123,6 +123,7 @@ model Profesional {
   configuracionWABA ConfiguracionWABA?
   mensajesWhatsApp  MensajeWhatsApp[]
   contactos         ContactoLog[]
+  configClinica     ConfigClinica?
 }
 
 model Secretaria {
@@ -383,6 +384,9 @@ model Presupuesto {
   fechaRechazado    DateTime?
   motivoRechazo     String?
   cargoMovimientoId String?
+  tokenAceptacion   String?           @unique
+  moneda            String            @default("ARS")
+  fechaValidez      DateTime?
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
   Archivo           Archivo[]
@@ -394,14 +398,32 @@ model Presupuesto {
 }
 
 model PresupuestoItem {
-  id             String      @id @default(uuid())
-  presupuestoId  String
-  descripcion    String
-  cantidad       Int         @default(1)
-  precioUnitario Decimal     @db.Decimal(10, 2)
-  total          Decimal     @db.Decimal(10, 2)
-  orden          Int         @default(0)
-  presupuesto    Presupuesto @relation(fields: [presupuestoId], references: [id])
+  id            String      @id @default(uuid())
+  presupuestoId String
+  descripcion   String
+  precioTotal   Decimal     @db.Decimal(10, 2)
+  orden         Int         @default(0)
+  presupuesto   Presupuesto @relation(fields: [presupuestoId], references: [id])
+}
+
+model ConfigClinica {
+  id                String      @id @default(uuid())
+  profesionalId     String      @unique
+  nombreClinica     String?
+  logoUrl           String?
+  direccion         String?
+  telefono          String?
+  emailContacto     String?
+  web               String?
+  piePaginaTexto    String?
+  smtpHost          String?
+  smtpPort          Int?
+  smtpUser          String?
+  smtpPassEncrypted String?
+  smtpFrom          String?
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  profesional       Profesional @relation(fields: [profesionalId], references: [id])
 }
 
 model ObraSocial {
@@ -882,6 +904,7 @@ enum EstadoPresupuesto {
   ACEPTADO
   RECHAZADO
   CANCELADO
+  VENCIDO
 }
 
 enum EstadoLiquidacion {

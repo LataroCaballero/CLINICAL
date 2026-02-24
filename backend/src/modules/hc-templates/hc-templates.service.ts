@@ -449,9 +449,10 @@ export class HCTemplatesService {
           | {
               items: Array<{
                 descripcion: string;
-                cantidad: number;
-                precioUnitario: number;
-                total: number;
+                precioTotal?: number;
+                total?: number;
+                cantidad?: number;
+                precioUnitario?: number;
               }>;
               subtotal: number;
               descuentos: number;
@@ -471,9 +472,7 @@ export class HCTemplatesService {
               items: {
                 create: budgetData.items.map((item, index) => ({
                   descripcion: item.descripcion,
-                  cantidad: item.cantidad,
-                  precioUnitario: item.precioUnitario,
-                  total: item.total,
+                  precioTotal: item.precioTotal ?? item.total ?? (item.cantidad * item.precioUnitario),
                   orden: index,
                 })),
               },

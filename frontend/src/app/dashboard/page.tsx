@@ -10,7 +10,6 @@ import ActiveSessionBanner from "./components/ActiveSessionBanner";
 import QuickActionsWidget from "./components/QuickActionsWidget";
 import CRMKpiCards from "./components/CRMKpiCards";
 import CRMFunnelWidget from "./components/CRMFunnelWidget";
-import { ListaAccionWidget } from "./components/ListaAccionWidget";
 import { useEffectiveProfessionalId } from "@/hooks/useEffectiveProfessionalId";
 import { useUIStore } from "@/lib/stores/useUIStore";
 import { useLiveTurnoStore } from "@/store/live-turno.store";
@@ -145,7 +144,6 @@ export default function DashboardPage() {
             <div className="md:col-span-4 space-y-6">
               <QuickActionsWidget />
               <AlertsWidget />
-              <ListaAccionWidget />
               <MensajesDashboard />
             </div>
           </div>

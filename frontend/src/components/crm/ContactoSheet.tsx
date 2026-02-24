@@ -34,13 +34,14 @@ const TIPO_OPTIONS = [
   { value: "PRESENCIAL", label: "Presencial", icon: MapPin },
 ] as const;
 
-// Etapas CRM disponibles (mismas que usa el Kanban)
+// Etapas CRM disponibles — valores del enum EtapaCRM del schema Prisma
 const ETAPAS_CRM = [
   { value: "NUEVO_LEAD", label: "Nuevo Lead" },
-  { value: "CONSULTA_AGENDADA", label: "Consulta Agendada" },
-  { value: "CONSULTA_REALIZADA", label: "Consulta Realizada" },
+  { value: "TURNO_AGENDADO", label: "Turno Agendado" },
+  { value: "CONSULTADO", label: "Consultado" },
   { value: "PRESUPUESTO_ENVIADO", label: "Presupuesto Enviado" },
   { value: "SEGUIMIENTO_ACTIVO", label: "Seguimiento Activo" },
+  { value: "CALIENTE", label: "Caliente" },
   { value: "CONFIRMADO", label: "Confirmado" },
   { value: "PERDIDO", label: "Perdido" },
 ];
@@ -130,7 +131,7 @@ export function ContactoSheet({
             <p className="text-sm text-muted-foreground">{pacienteNombre}</p>
           </SheetHeader>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 mt-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 mt-4 px-4">
             {/* Tipo de interacción */}
             <div>
               <Label>Tipo de interacción</Label>

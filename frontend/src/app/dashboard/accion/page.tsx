@@ -16,10 +16,11 @@ const TEMPERATURA_CONFIG = {
 
 const ETAPA_LABELS: Record<string, string> = {
   NUEVO_LEAD: "Nuevo Lead",
-  CONSULTA_AGENDADA: "Consulta Agendada",
-  CONSULTA_REALIZADA: "Consulta Realizada",
+  TURNO_AGENDADO: "Turno Agendado",
+  CONSULTADO: "Consultado",
   PRESUPUESTO_ENVIADO: "Presupuesto Enviado",
   SEGUIMIENTO_ACTIVO: "Seguimiento Activo",
+  CALIENTE: "Caliente",
   CONFIRMADO: "Confirmado",
   PERDIDO: "Perdido",
 };

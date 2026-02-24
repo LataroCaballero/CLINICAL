@@ -10,6 +10,8 @@ import {
   Header,
   UsePipes,
   Req,
+  BadRequestException,
+  NotFoundException,
 } from '@nestjs/common';
 import { SanitizeEmptyValuesPipe } from '../../common/pipes/sanitize-empty-values.pipe';
 import { PacientesService } from './pacientes.service';
@@ -101,12 +103,29 @@ export class PacientesController {
 
   // Log de Contactos — Registrar una nueva interacción
   @Post(':id/contactos')
-  createContacto(
+  async createContacto(
     @Param('id') pacienteId: string,
     @Body() dto: CreateContactoDto,
     @Req() req: any,
   ) {
-    const profesionalId = req.user?.profesionalId as string;
+    let profesionalId = req.user?.profesionalId as string | null;
+
+    if (!profesionalId) {
+      // SECRETARIA path: resolve profesionalId from the patient record
+      const paciente = await this.prisma.paciente.findUnique({
+        where: { id: pacienteId },
+        select: { profesionalId: true },
+      });
+      if (!paciente) throw new NotFoundException('Paciente no encontrado');
+      profesionalId = paciente.profesionalId;
+    }
+
+    if (!profesionalId) {
+      throw new BadRequestException(
+        'No se pudo determinar el profesional asociado al paciente',
+      );
+    }
+
     return this.pacientesService.createContacto(pacienteId, profesionalId, dto);
   }
 

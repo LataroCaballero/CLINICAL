@@ -39,6 +39,7 @@ Progress: [████████░░] 48%
 
 | Phase 03-presupuestos-completos | P02 | 5min | 3 tasks | 7 files |
 | Phase 03-presupuestos-completos P03 | 11 | 2 tasks | 9 files |
+| Phase 03-presupuestos-completos P04 | 2 | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -78,6 +79,8 @@ Recent decisions affecting current work:
 - [Phase 03-presupuestos-completos]: Auth guard is controller-scoped — no global APP_GUARD — PresupuestoPublicController without @Auth() is sufficient for public access
 - [Phase 03-presupuestos-completos]: SMTP fallback: ConfigClinica.smtp* > env vars; missing SMTP logs WARN and returns silently — presupuesto still marked ENVIADO
 - [Phase 03-presupuestos-completos]: pacienteEmail passed from PatientDrawer via paciente.email to PresupuestosView for email prefill in EnviarPresupuestoModal
+- [Phase 03-presupuestos-completos]: Controller GET /pacientes calls obtenerListaPacientes() not findAll() — presupuesto column shows real state
+- [Phase 03-04]: tokenAceptacion in marcarEnviado() uses existing token or crypto.randomUUID() — idempotent, enables public URL without email flow
 
 ### Pending Todos
 

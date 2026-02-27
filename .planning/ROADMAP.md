@@ -77,12 +77,13 @@ Plans:
   3. El coordinador puede enviar el presupuesto por email directamente desde la plataforma con un clic
   4. Al enviar el presupuesto, la etapa CRM del paciente sube automáticamente a "Presupuesto enviado" sin acción manual
   5. Al rechazar un presupuesto, el sistema solicita y registra el motivo de pérdida; al registrar pago, cierra la etapa como "Cirugía confirmada"
-**Plans**: 3 plans
+**Plans**: 4 plans
 
 Plans:
-- [ ] 03-01-PLAN.md — Prisma migration (ConfigClinica, PresupuestoItem→precioTotal, tokenAceptacion, VENCIDO) + DTO + rechazar() CRM fix
-- [ ] 03-02-PLAN.md — Backend: PresupuestoPdfService (PDFKit) + PresupuestoEmailService (Nodemailer) + public controller + MensajeInterno notifications
-- [ ] 03-03-PLAN.md — Frontend: PresupuestosView renovado + EnviarPresupuestoModal + hooks nuevos + página pública /presupuesto/[token]
+- [x] 03-01-PLAN.md — Prisma migration (ConfigClinica, PresupuestoItem→precioTotal, tokenAceptacion, VENCIDO) + DTO + rechazar() CRM fix
+- [x] 03-02-PLAN.md — Backend: PresupuestoPdfService (PDFKit) + PresupuestoEmailService (Nodemailer) + public controller + MensajeInterno notifications
+- [x] 03-03-PLAN.md — Frontend: PresupuestosView renovado + EnviarPresupuestoModal + hooks nuevos + página pública /presupuesto/[token]
+- [ ] 03-04-PLAN.md — Gap closure: presupuesto column in patient list + tokenAceptacion in marcarEnviado()
 
 ### Phase 4: WhatsApp + Etapas CRM Automaticas
 **Goal**: El coordinador puede enviar mensajes WhatsApp a pacientes usando templates aprobados, los eventos de turnos actualizan la etapa CRM automáticamente, y las respuestas de pacientes por WhatsApp calientan su temperatura automáticamente
@@ -127,7 +128,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 1. Infraestructura Async | 3/3 | Complete | 2026-02-23 |
 | 2. Log de Contactos + Lista de Accion | 3/3 | Complete   | 2026-02-24 |
 | 2.1. Fix SECRETARIA Contact Logging | 1/1 | Complete | 2026-02-24 |
-| 3. Presupuestos Completos | 3/3 | Complete   | 2026-02-24 |
+| 3. Presupuestos Completos | 3/4 | Gap closure pending | - |
 | 4. WhatsApp + Etapas CRM Automaticas | 0/3 | Not started | - |
 | 5. Dashboard de Conversion | 0/2 | Not started | - |
 

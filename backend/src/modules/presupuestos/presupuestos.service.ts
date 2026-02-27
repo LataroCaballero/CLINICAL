@@ -3,6 +3,7 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
+import * as crypto from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CuentasCorrientesService } from '../cuentas-corrientes/cuentas-corrientes.service';
 import { PresupuestoPdfService } from './presupuesto-pdf.service';
@@ -189,7 +190,7 @@ export class PresupuestosService {
   async marcarEnviado(id: string) {
     const presupuesto = await this.prisma.presupuesto.findUnique({
       where: { id },
-      select: { id: true, pacienteId: true, estado: true },
+      select: { id: true, pacienteId: true, estado: true, tokenAceptacion: true },
     });
 
     if (!presupuesto) throw new NotFoundException('Presupuesto no encontrado');
@@ -206,6 +207,7 @@ export class PresupuestosService {
         data: {
           estado: EstadoPresupuesto.ENVIADO,
           fechaEnviado: new Date(),
+          tokenAceptacion: presupuesto.tokenAceptacion ?? crypto.randomUUID(),
         },
         include: {
           items: { orderBy: { orden: 'asc' } },

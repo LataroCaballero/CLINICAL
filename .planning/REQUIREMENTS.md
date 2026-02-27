@@ -29,8 +29,8 @@
 ### Presupuestos (PRES)
 
 - [x] **PRES-01**: El coordinador puede crear un presupuesto vinculado a un paciente con ítems, montos y fecha de validez
-- [ ] **PRES-02**: El sistema genera un PDF del presupuesto con el branding de la clínica (logo, datos, firma del profesional)
-- [ ] **PRES-03**: El coordinador puede enviar el presupuesto por email directamente desde la plataforma
+- [x] **PRES-02**: El sistema genera un PDF del presupuesto con el branding de la clínica (logo, datos, firma del profesional)
+- [x] **PRES-03**: El coordinador puede enviar el presupuesto por email directamente desde la plataforma
 - [ ] **PRES-04**: El coordinador puede enviar el presupuesto por WhatsApp (como documento PDF) directamente desde la plataforma
 - [x] **PRES-05**: El presupuesto tiene estados: borrador, enviado, aceptado, rechazado, vencido
 - [x] **PRES-06**: Al enviar el presupuesto, la etapa CRM del paciente sube automáticamente a "Presupuesto enviado"
@@ -105,8 +105,8 @@
 | ACCION-03 | Phase 2.1 | Complete |
 | ACCION-04 | Phase 2 | Complete |
 | PRES-01 | Phase 3 | Complete |
-| PRES-02 | Phase 3 | Pending |
-| PRES-03 | Phase 3 | Pending |
+| PRES-02 | Phase 3 | Complete |
+| PRES-03 | Phase 3 | Complete |
 | PRES-04 | Phase 3 | Pending |
 | PRES-05 | Phase 3 | Complete |
 | PRES-06 | Phase 3 | Complete |

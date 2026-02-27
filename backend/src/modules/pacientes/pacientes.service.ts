@@ -95,7 +95,10 @@ export class PacientesService {
         presupuestos: {
           select: {
             estado: true,
+            fechaValidez: true,
           },
+          orderBy: { createdAt: 'desc' },
+          take: 1,
         },
         objecion: true,
       },
@@ -118,9 +121,16 @@ export class PacientesService {
         (e) => e.estado !== true,
       ).length;
 
-      const presupuestosActivos = p.presupuestos.filter((pr) =>
-        ['ENVIADO', 'ACEPTADO'].includes(pr.estado),
-      ).length;
+      const ultimoPresupuesto = p.presupuestos[0] ?? null;
+      let presupuestoEstado: string | null = null;
+      if (ultimoPresupuesto) {
+        const estaVencido =
+          ultimoPresupuesto.fechaValidez &&
+          new Date(ultimoPresupuesto.fechaValidez) < new Date() &&
+          (ultimoPresupuesto.estado === EstadoPresupuesto.BORRADOR ||
+            ultimoPresupuesto.estado === EstadoPresupuesto.ENVIADO);
+        presupuestoEstado = estaVencido ? 'VENCIDO' : ultimoPresupuesto.estado;
+      }
 
       return {
         id: p.id,
@@ -140,11 +150,7 @@ export class PacientesService {
         estado: p.estado,
         consentimientoFirmado: p.consentimientoFirmado,
         estudiosPendientes: p.estudios.filter((e) => e.estado === false).length,
-        presupuestosActivos: p.presupuestos.filter(
-          (pr) =>
-            pr.estado === EstadoPresupuesto.BORRADOR ||
-            pr.estado === EstadoPresupuesto.ENVIADO,
-        ).length,
+        presupuestoEstado,
         objecion: p.objecion
           ? {
               id: p.objecion.id,

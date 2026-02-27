@@ -21,7 +21,6 @@ import { PacienteListaDto } from './dto/paciente-lista.dto';
 import { PrismaService } from '@/src/prisma/prisma.service';
 import { UpdatePacienteSectionDto } from './dto/update-paciente-section.dto';
 import { Auth } from '../auth/decorators/auth.decorator';
-import { resolveScope } from '@/src/common/scope/resolve-scope';
 import { EtapaCRM, TemperaturaPaciente, MotivoPerdidaCRM } from '@prisma/client';
 import { UpdateWhatsappOptInDto } from './dto/update-whatsapp-opt-in.dto';
 import { CreateContactoDto } from './dto/create-contacto.dto';
@@ -72,13 +71,8 @@ export class PacientesController {
   }
 
   @Get()
-  findAll(@Req() req: any, @Query('profesionalId') profesionalId?: string) {
-    const scope = resolveScope({
-      user: req.user,
-      requestedProfesionalId: profesionalId,
-    });
-
-    return this.pacientesService.findAll(scope);
+  findAll() {
+    return this.pacientesService.obtenerListaPacientes();
   }
 
   // Log de Contactos — Lista de acción priorizada

@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-23)
 ## Current Position
 
 Phase: 4 of 5 (WhatsApp + Etapas CRM Automaticas) — IN PROGRESS
-Plan: 2 of 5 in current phase — COMPLETE
-Status: Plan 04-02 complete — WhatsApp Cloud API backend: send/thread/templates endpoints, BullMQ processor (send + webhook), public PDF endpoint
-Last activity: 2026-02-28 — Plan 04-02: WhatsApp service methods, webhook controller, processor with Meta API integration
+Plan: 3 of 5 in current phase — COMPLETE
+Status: Plan 04-03 complete — CRM auto-transitions (crearTurno/cerrarSesion) and kanban 7-stage cleanup
+Last activity: 2026-02-27 — Plan 04-03: CRM auto-transitions wired in TurnosService, kanban columns cleaned to 7
 
-Progress: [█████████░] 52%
+Progress: [██████████] 56%
 
 ## Performance Metrics
 
@@ -42,6 +42,7 @@ Progress: [█████████░] 52%
 | Phase 03-presupuestos-completos P04 | 2 | 2 tasks | 5 files |
 | Phase 04-whatsapp-etapas-crm-automaticas P01 | 3min | 2 tasks | 8 files |
 | Phase 04-whatsapp-etapas-crm-automaticas P02 | 4 | 2 tasks | 7 files |
+| Phase 04-whatsapp-etapas-crm-automaticas P03 | 2 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -90,6 +91,8 @@ Recent decisions affecting current work:
 - [04-01]: DireccionMensajeWA default OUTBOUND — all pre-existing MensajeWhatsApp rows were system-sent messages
 - [Phase 04-whatsapp-etapas-crm-automaticas]: send-whatsapp-message job receives phoneNumberId+accessToken in job.data — decryption happens in service at enqueue time, processor has no crypto dependency
 - [Phase 04-whatsapp-etapas-crm-automaticas]: Inbound phone matching uses last 8 digits (telefono contains last8) — robust against country code prefix format variations
+- [Phase 04-whatsapp-etapas-crm-automaticas]: cerrarSesion fetches turno esCirugia/etapaCRM in separate findUnique before update — avoids changing update return shape
+- [Phase 04-whatsapp-etapas-crm-automaticas]: PROCEDIMIENTO_REALIZADO kept in EtapaCRM type for DB compat — removed from ETAPA_ORDER (kanban display) only; patients in this stage fall to SIN_CLASIFICAR bucket
 
 ### Pending Todos
 
@@ -105,5 +108,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-28
-Stopped at: Completed 04-02-PLAN.md — WhatsApp Cloud API backend: send/thread/templates + webhook controller + BullMQ processor + public PDF endpoint
+Stopped at: Completed 04-03-PLAN.md — CRM auto-transitions (crearTurno/cerrarSesion) and kanban 7-stage cleanup
 Resume file: None

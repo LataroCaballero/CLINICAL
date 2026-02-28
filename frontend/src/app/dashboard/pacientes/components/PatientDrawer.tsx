@@ -98,6 +98,7 @@ export default function PatientDrawer({
               <PresupuestosView
                 pacienteId={paciente.id}
                 pacienteEmail={paciente.email ?? ""}
+                pacienteOptIn={(paciente as any).whatsappOptIn ?? false}
                 onBack={() => setView("default")}
               />
             }

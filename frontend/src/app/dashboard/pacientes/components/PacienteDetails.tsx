@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { useState } from "react";
 import {
   AlertTriangle,
   Check,
@@ -17,11 +18,20 @@ import {
   Wallet,
   Receipt,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { MedicalChips } from "@/components/ui/MedicalChips";
 import { getPatientAlerts } from "./columns";
 import { WhatsappOptInToggle } from "./WhatsappOptInToggle";
+import SendWAMessageModal from "@/components/whatsapp/SendWAMessageModal";
 
 export default function PacienteDetails({ paciente, onAction }: { paciente: any; onAction?: (view: "default" | "datos" | "historia" | "turnos" | "mensajes" | "cuenta" | "presupuestos") => void }) {
+  const [waModalOpen, setWaModalOpen] = useState(false);
+
   if (!paciente) return null;
 
   const calcularEdad = (fechaNac?: string) => {
@@ -248,8 +258,32 @@ export default function PacienteDetails({ paciente, onAction }: { paciente: any;
             label="Mensajes internos"
             onClick={() => onAction?.("mensajes")}
           />
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span>
+                <Button
+                  variant="outline"
+                  className="flex flex-col items-center justify-center p-3 border rounded-md hover:bg-muted transition text-sm min-h-[70px] w-full h-auto"
+                  disabled={!(paciente as any).whatsappOptIn}
+                  onClick={() => setWaModalOpen(true)}
+                >
+                  <MessageSquare className="w-5 h-5 text-green-600 mb-1" />
+                  WhatsApp
+                </Button>
+              </span>
+            </TooltipTrigger>
+            {!(paciente as any).whatsappOptIn && (
+              <TooltipContent>El paciente no tiene opt-in para WhatsApp</TooltipContent>
+            )}
+          </Tooltip>
         </div>
       </div>
+
+      <SendWAMessageModal
+        pacienteId={paciente.id}
+        open={waModalOpen}
+        onClose={() => setWaModalOpen(false)}
+      />
     </div>
   );
 }

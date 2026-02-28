@@ -31,12 +31,19 @@ import { useEffectiveProfessionalId } from "@/hooks/useEffectiveProfessionalId";
 import EnviarPresupuestoModal from "@/components/presupuesto/EnviarPresupuestoModal";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { Trash2, Plus, Send, FileText } from "lucide-react";
+import { Trash2, Plus, Send, FileText, MessageSquare, Loader2 } from "lucide-react";
 import { api } from "@/lib/api";
+import { toast } from "sonner";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 type Props = {
   pacienteId: string;
   pacienteEmail?: string;
+  pacienteOptIn?: boolean;
   onBack: () => void;
 };
 
@@ -49,7 +56,7 @@ const estadoColors: Record<string, string> = {
   VENCIDO: "bg-amber-100 text-amber-700",
 };
 
-export default function PresupuestosView({ pacienteId, pacienteEmail = "", onBack }: Props) {
+export default function PresupuestosView({ pacienteId, pacienteEmail = "", pacienteOptIn = false, onBack }: Props) {
   const { data: presupuestos = [], isLoading } = usePresupuestos(pacienteId);
   const createPresupuesto = useCreatePresupuesto();
   const aceptarPresupuesto = useAceptarPresupuesto();
@@ -66,6 +73,9 @@ export default function PresupuestosView({ pacienteId, pacienteEmail = "", onBac
 
   // Modal de envio
   const [enviarModal, setEnviarModal] = useState<{ open: boolean; presupuestoId: string } | null>(null);
+
+  // WA send state per presupuesto
+  const [sendingWAId, setSendingWAId] = useState<string | null>(null);
 
   // PDF inline preview state (CONTEXT.md: "inline, dentro de la plataforma" - NOT window.open)
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
@@ -201,6 +211,38 @@ export default function PresupuestosView({ pacienteId, pacienteEmail = "", onBac
                     <Send className="w-3 h-3 mr-1" /> Enviar
                   </Button>
                 )}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={!pacienteOptIn || sendingWAId === p.id}
+                        onClick={async () => {
+                          setSendingWAId(p.id);
+                          try {
+                            await api.post(`/whatsapp/presupuesto/${p.id}/send`, { pacienteId });
+                            toast.success('Presupuesto enviado por WhatsApp');
+                          } catch (e: any) {
+                            toast.error(e.response?.data?.message ?? 'Error al enviar por WhatsApp');
+                          } finally {
+                            setSendingWAId(null);
+                          }
+                        }}
+                      >
+                        {sendingWAId === p.id ? (
+                          <Loader2 className="w-3 h-3 animate-spin mr-1" />
+                        ) : (
+                          <MessageSquare className="w-3 h-3 mr-1" />
+                        )}
+                        Enviar por WhatsApp
+                      </Button>
+                    </span>
+                  </TooltipTrigger>
+                  {!pacienteOptIn && (
+                    <TooltipContent>El paciente no tiene opt-in para WhatsApp</TooltipContent>
+                  )}
+                </Tooltip>
                 {puedeBorrar && (
                   <Button
                     size="sm"

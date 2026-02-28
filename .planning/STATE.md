@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-23)
 
 **Core value:** Que un cirujano plástico cierre más cirugías — el sistema hace visible qué pacientes seguir, cuándo y cómo, de la manera más automatizada posible
-**Current focus:** Phase 3 — (next phase)
+**Current focus:** Phase 4 — WhatsApp + CRM Automaticas
 
 ## Current Position
 
-Phase: 3 of 5 (Presupuestos Completos) — IN PROGRESS
-Plan: 2 of 5 in current phase — COMPLETE
-Status: Plan 03-02 complete — PDFKit, Nodemailer email service, public controller for patient acceptance/rejection
-Last activity: 2026-02-24 — Plan 03-02 completado: PresupuestoPdfService (PDFKit A4), PresupuestoEmailService (Nodemailer + token), PresupuestoPublicController (sin auth), 4 service methods, 2 controller endpoints
+Phase: 4 of 5 (WhatsApp + Etapas CRM Automaticas) — IN PROGRESS
+Plan: 1 of 5 in current phase — COMPLETE
+Status: Plan 04-01 complete — EtapaCRM simplified (PROCEDIMIENTO_REALIZADO), DireccionMensajeWA enum, migration applied
+Last activity: 2026-02-28 — Plan 04-01: EtapaCRM enum recreation migration, MensajeWhatsApp.direccion column, all enum references updated
 
-Progress: [████████░░] 48%
+Progress: [█████████░] 52%
 
 ## Performance Metrics
 
@@ -40,6 +40,7 @@ Progress: [████████░░] 48%
 | Phase 03-presupuestos-completos | P02 | 5min | 3 tasks | 7 files |
 | Phase 03-presupuestos-completos P03 | 11 | 2 tasks | 9 files |
 | Phase 03-presupuestos-completos P04 | 2 | 2 tasks | 5 files |
+| Phase 04-whatsapp-etapas-crm-automaticas P01 | 3min | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -81,6 +82,11 @@ Recent decisions affecting current work:
 - [Phase 03-presupuestos-completos]: pacienteEmail passed from PatientDrawer via paciente.email to PresupuestosView for email prefill in EnviarPresupuestoModal
 - [Phase 03-presupuestos-completos]: Controller GET /pacientes calls obtenerListaPacientes() not findAll() — presupuesto column shows real state
 - [Phase 03-04]: tokenAceptacion in marcarEnviado() uses existing token or crypto.randomUUID() — idempotent, enables public URL without email flow
+- [04-01]: SEGUIMIENTO_ACTIVO removed from EtapaCRM — duplicate concept; TemperaturaPaciente handles engagement heat; stages describe what happened clinically
+- [04-01]: CALIENTE removed from EtapaCRM — TemperaturaPaciente already has CALIENTE; having it in both enums was Phase 2 error
+- [04-01]: PROCEDIMIENTO_REALIZADO added to EtapaCRM between PRESUPUESTO_ENVIADO and CONFIRMADO — represents clinical milestone before final conversion
+- [04-01]: SEGUIMIENTO_ACTIVO and CALIENTE (EtapaCRM) rows migrated to CONSULTADO — safest semantic mapping for existing data
+- [04-01]: DireccionMensajeWA default OUTBOUND — all pre-existing MensajeWhatsApp rows were system-sent messages
 
 ### Pending Todos
 
@@ -95,6 +101,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-02-24
-Stopped at: Completed 03-02-PLAN.md — Phase 3 Plan 2 (PDF Generation, Email Delivery, Public Controller) complete
+Last session: 2026-02-28
+Stopped at: Completed 04-01-PLAN.md — Phase 4 Plan 1 (CRM schema migration: EtapaCRM simplification + DireccionMensajeWA)
 Resume file: None

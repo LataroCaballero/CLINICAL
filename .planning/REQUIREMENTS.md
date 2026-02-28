@@ -40,18 +40,18 @@
 ### WhatsApp (WA)
 
 - [ ] **WA-01**: El coordinador puede enviar un mensaje WhatsApp a un paciente desde su perfil usando templates aprobados por Meta
-- [ ] **WA-02**: El sistema muestra el estado de entrega de cada mensaje enviado (enviado, entregado, leído, fallido)
-- [ ] **WA-03**: Los mensajes recibidos de pacientes por WhatsApp se registran en el log de contactos del paciente
+- [x] **WA-02**: El sistema muestra el estado de entrega de cada mensaje enviado (enviado, entregado, leído, fallido)
+- [x] **WA-03**: Los mensajes recibidos de pacientes por WhatsApp se registran en el log de contactos del paciente
 - [ ] **WA-04**: El sistema maneja correctamente los webhooks de Meta para actualizar el estado de mensajes en tiempo real
 - [ ] **WA-05**: Si un mensaje falla por WhatsApp, el sistema notifica al coordinador con opción de reintentar o enviar por email
 
 ### Etapas CRM Automáticas (CRM)
 
-- [ ] **CRM-01**: Al crear un turno para un paciente sin etapa CRM, se asigna automáticamente la etapa "Consulta agendada"
-- [ ] **CRM-02**: Al registrar que un turno fue atendido (LiveTurno completado), la etapa CRM sube automáticamente a "Consulta realizada"
+- [x] **CRM-01**: Al crear un turno para un paciente sin etapa CRM, se asigna automáticamente la etapa "Consulta agendada"
+- [x] **CRM-02**: Al registrar que un turno fue atendido (LiveTurno completado), la etapa CRM sube automáticamente a "Consulta realizada"
 - [x] **CRM-03**: Al enviar un presupuesto, la etapa CRM sube automáticamente a "Presupuesto enviado" (ver PRES-06)
 - [x] **CRM-04**: Al registrar un pago de cirugía, la etapa CRM cierra automáticamente como "Cirugía confirmada"
-- [ ] **CRM-05**: Cuando un paciente responde un mensaje de WhatsApp, su temperatura sube automáticamente a "Caliente"
+- [x] **CRM-05**: Cuando un paciente responde un mensaje de WhatsApp, su temperatura sube automáticamente a "Caliente"
 
 ### Dashboard de Conversión (DASH)
 
@@ -115,13 +115,13 @@
 | CRM-03 | Phase 3 | Complete |
 | CRM-04 | Phase 3 | Complete |
 | WA-01 | Phase 4 | Pending |
-| WA-02 | Phase 4 | Pending |
-| WA-03 | Phase 4 | Pending |
+| WA-02 | Phase 4 | Complete |
+| WA-03 | Phase 4 | Complete |
 | WA-04 | Phase 4 | Pending |
 | WA-05 | Phase 4 | Pending |
-| CRM-01 | Phase 4 | Pending |
-| CRM-02 | Phase 4 | Pending |
-| CRM-05 | Phase 4 | Pending |
+| CRM-01 | Phase 4 | Complete |
+| CRM-02 | Phase 4 | Complete |
+| CRM-05 | Phase 4 | Complete |
 | DASH-01 | Phase 5 | Pending |
 | DASH-02 | Phase 5 | Pending |
 | DASH-03 | Phase 5 | Pending |

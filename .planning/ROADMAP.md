@@ -65,7 +65,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [x] 02.1-01-PLAN.md — Backend: fix `createContacto` handler in `pacientes.controller.ts` — async + null-guard + fallback DB lookup of `paciente.profesionalId` for SECRETARIA role
+- [x] 02.1-01-PLAN.md — Backend: fix `createContacto` handler in `pacientes.controller.ts` — async + null-guard + fallback DB lookup de `paciente.profesionalId` for SECRETARIA role
 
 ### Phase 3: Presupuestos Completos
 **Goal**: El coordinador puede crear un presupuesto, generar su PDF con branding de la clínica, enviarlo por email y la plataforma actualiza automáticamente la etapa CRM del paciente al enviarlo, aceptarlo o rechazarlo
@@ -95,12 +95,14 @@ Plans:
   3. Al crear un turno para un paciente sin etapa CRM, la etapa se asigna automáticamente a "Consulta agendada"
   4. Al completar un turno en LiveTurno, la etapa CRM sube automáticamente a "Consulta realizada"
   5. Cuando un paciente responde un mensaje WhatsApp, su temperatura sube automáticamente a "Caliente" y la interacción queda en el log de contactos
-**Plans**: TBD
+**Plans**: 5 plans
 
 Plans:
-- [ ] 04-01: Backend — módulo mensajeria (WhatsApp Cloud API client + webhook handler + idempotencia + entrega via WA de PDF presupuesto)
-- [ ] 04-02: Backend — wiring CRM-01 y CRM-02 en turnos module (turno creado → CONSULTA_AGENDADA, LiveTurno completado → CONSULTA_REALIZADA)
-- [ ] 04-03: Frontend — UI envío WhatsApp desde perfil paciente + thread de mensajes + estados de entrega + fallback email en fallo
+- [ ] 04-01-PLAN.md — Schema migration: EtapaCRM simplification (remove SEGUIMIENTO_ACTIVO + CALIENTE, add PROCEDIMIENTO_REALIZADO) + DireccionMensajeWA enum + MensajeWhatsApp.direccion field
+- [ ] 04-02-PLAN.md — Backend: WhatsApp Cloud API client (sendTemplate, sendFreeText, sendPresupuestoPdf, listTemplates, getThread) + webhook controller (GET verify + POST handler) + BullMQ processor implementation
+- [ ] 04-03-PLAN.md — Backend: CRM auto-transitions in TurnosService (crearTurno → TURNO_AGENDADO, cerrarSesion → CONSULTADO/PROCEDIMIENTO_REALIZADO) + kanban cleanup (remove SEGUIMIENTO_ACTIVO/CALIENTE columns)
+- [ ] 04-04-PLAN.md — Frontend: WAThreadView (chat bubbles + delivery icons + free-text reply) + SendWAMessageModal (template preview + channel toggle) + MensajesView update
+- [ ] 04-05-PLAN.md — Frontend: unread WA indicators on patient list + Kanban cards + WA send shortcut in PacienteDetails + presupuesto WA button
 
 ### Phase 5: Dashboard de Conversion
 **Goal**: El profesional y el coordinador ven en el dashboard todas las métricas de conversión que necesitan para tomar decisiones: embudo con tasas, ingresos potenciales del pipeline, motivos de pérdida y performance de seguimiento del equipo
@@ -129,7 +131,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 2. Log de Contactos + Lista de Accion | 3/3 | Complete   | 2026-02-24 |
 | 2.1. Fix SECRETARIA Contact Logging | 1/1 | Complete | 2026-02-24 |
 | 3. Presupuestos Completos | 4/4 | Complete   | 2026-02-27 |
-| 4. WhatsApp + Etapas CRM Automaticas | 0/3 | Not started | - |
+| 4. WhatsApp + Etapas CRM Automaticas | 0/5 | Not started | - |
 | 5. Dashboard de Conversion | 0/2 | Not started | - |
 
 ---

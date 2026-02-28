@@ -105,6 +105,7 @@ export default function PatientDrawer({
               <MensajesView
                 pacienteId={paciente.id}
                 pacienteNombre={paciente.nombreCompleto}
+                whatsappOptIn={(paciente as any).whatsappOptIn ?? false}
                 onBack={() => setView("default")}
               />
             }

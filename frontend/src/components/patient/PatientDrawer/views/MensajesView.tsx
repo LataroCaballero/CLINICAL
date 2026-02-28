@@ -1,20 +1,21 @@
 'use client';
 
-import { ChatView } from '@/components/mensajes';
+import WAThreadView from '@/components/whatsapp/WAThreadView';
 
 type Props = {
   pacienteId: string;
   pacienteNombre?: string;
+  whatsappOptIn?: boolean;
   onBack: () => void;
 };
 
-export default function MensajesView({ pacienteId, pacienteNombre, onBack }: Props) {
+export default function MensajesView({ pacienteId, pacienteNombre, whatsappOptIn = false, onBack }: Props) {
   return (
     <div className="h-[60vh] -mx-6 -mb-4">
-      <ChatView
+      <WAThreadView
         pacienteId={pacienteId}
         pacienteNombre={pacienteNombre}
-        embedded
+        whatsappOptIn={whatsappOptIn}
         onBack={onBack}
       />
     </div>

@@ -382,6 +382,46 @@ export class WhatsappService {
   }
 
   /**
+   * Returns a map of {pacienteId: unreadCount} for inbound messages that have
+   * arrived after the last outbound message per patient.
+   * "Unread" = patient replied and coordinator has not yet responded.
+   */
+  async getUnreadCounts(
+    profesionalId: string,
+  ): Promise<Record<string, number>> {
+    // All inbound messages for this profesional (not failed)
+    const inbound = await this.prisma.mensajeWhatsApp.findMany({
+      where: {
+        profesionalId,
+        direccion: 'INBOUND',
+        estado: { not: 'FALLIDO' },
+      },
+      select: { pacienteId: true, createdAt: true },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    // Latest outbound message timestamp per patient
+    const lastOutbound = await this.prisma.mensajeWhatsApp.groupBy({
+      by: ['pacienteId'],
+      where: { profesionalId, direccion: 'OUTBOUND' },
+      _max: { createdAt: true },
+    });
+
+    const outboundMap = Object.fromEntries(
+      lastOutbound.map((o) => [o.pacienteId, o._max.createdAt]),
+    );
+
+    const counts: Record<string, number> = {};
+    for (const msg of inbound) {
+      const lastOut = outboundMap[msg.pacienteId];
+      if (!lastOut || msg.createdAt > lastOut) {
+        counts[msg.pacienteId] = (counts[msg.pacienteId] ?? 0) + 1;
+      }
+    }
+    return counts;
+  }
+
+  /**
    * Resets a failed message to PENDIENTE and re-enqueues the send job.
    * Verifies ownership before re-queuing.
    */

@@ -94,6 +94,18 @@ export class WhatsappController {
   }
 
   /**
+   * GET /whatsapp/unread
+   * Returns {pacienteId: unreadCount} map for the authenticated profesional.
+   * Unread = inbound messages received after the last outbound message per patient.
+   */
+  @Get('unread')
+  @Auth('ADMIN', 'PROFESIONAL', 'SECRETARIA')
+  async getUnreadCounts(@Req() req: any): Promise<Record<string, number>> {
+    const profesionalId = req.user.profesionalId as string;
+    return this.whatsappService.getUnreadCounts(profesionalId);
+  }
+
+  /**
    * POST /whatsapp/mensajes/:id/retry
    * Resets a failed message to PENDIENTE and re-enqueues the send job.
    */

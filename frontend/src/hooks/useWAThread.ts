@@ -2,6 +2,20 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 
+// Query: unread WA count per patient — polled every 30s for near-real-time feedback
+// Returns {pacienteId: unreadCount} map — only patients with unread > 0 are included
+export function useWAUnread() {
+  return useQuery<Record<string, number>>({
+    queryKey: ['wa-unread'],
+    queryFn: async () => {
+      const res = await api.get('/whatsapp/unread');
+      return res.data ?? {};
+    },
+    refetchInterval: 30 * 1000, // 30s polling — no WebSocket this phase
+    staleTime: 10 * 1000,
+  });
+}
+
 // Types matching MensajeWhatsApp Prisma model fields + DireccionMensajeWA
 export type EstadoMensajeWA = 'PENDIENTE' | 'ENVIADO' | 'ENTREGADO' | 'LEIDO' | 'FALLIDO';
 export type DireccionMensajeWA = 'OUTBOUND' | 'INBOUND';

@@ -25,9 +25,10 @@ import { toast } from "sonner";
 
 interface Props {
   columns: KanbanColumnType[];
+  unreadMap?: Record<string, number>;
 }
 
-export function KanbanBoard({ columns }: Props) {
+export function KanbanBoard({ columns, unreadMap }: Props) {
   const [activePatient, setActivePatient] = useState<KanbanPatient | null>(null);
   const [activeColumn, setActiveColumn] = useState<string | null>(null);
 
@@ -119,7 +120,7 @@ export function KanbanBoard({ columns }: Props) {
         <div className="w-full max-w-full min-w-0 overflow-x-auto pb-2">
           <div className="flex gap-3 min-h-[500px] pb-2" style={{ width: "max-content" }}>
             {sortedColumns.map((col) => (
-              <KanbanColumn key={col.etapa} column={col} />
+              <KanbanColumn key={col.etapa} column={col} unreadMap={unreadMap} />
             ))}
           </div>
         </div>

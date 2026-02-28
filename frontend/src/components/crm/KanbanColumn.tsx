@@ -18,9 +18,10 @@ const ETAPA_COLORS: Partial<Record<EtapaCRM, string>> = {
 
 interface Props {
   column: KanbanColumnType;
+  unreadMap?: Record<string, number>;
 }
 
-export function KanbanColumn({ column }: Props) {
+export function KanbanColumn({ column, unreadMap }: Props) {
   const { setNodeRef, isOver } = useDroppable({ id: column.etapa });
 
   const borderColor = ETAPA_COLORS[column.etapa as EtapaCRM] ?? "border-t-gray-300";
@@ -58,6 +59,7 @@ export function KanbanColumn({ column }: Props) {
             key={patient.id}
             patient={patient}
             columnId={column.etapa}
+            unreadWA={unreadMap?.[patient.id] ?? 0}
           />
         ))}
         {column.pacientes.length === 0 && (

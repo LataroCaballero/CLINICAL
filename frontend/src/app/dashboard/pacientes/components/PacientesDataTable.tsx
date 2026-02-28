@@ -1,11 +1,15 @@
 "use client";
 
 import { usePacientes } from "@/hooks/usePacientes";
-import { pacienteColumns } from "./columns";
+import { createPacienteColumns } from "./columns";
 import { DataTable } from "@/components/data-table/data-table";
 import { Skeleton } from "@/components/ui/skeleton";
 
-export function PacientesDataTable() {
+interface PacientesDataTableProps {
+  unreadMap?: Record<string, number>;
+}
+
+export function PacientesDataTable({ unreadMap }: PacientesDataTableProps) {
   const { data, isLoading } = usePacientes();
 
   if (isLoading) {
@@ -18,9 +22,11 @@ export function PacientesDataTable() {
     );
   }
 
+  const columns = createPacienteColumns(unreadMap);
+
   return (
     <DataTable
-      columns={pacienteColumns}
+      columns={columns}
       data={data || []}
       initialSorting={[{ id: "estado", desc: false }]}
     />

@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import axios from 'axios';
@@ -7,11 +11,13 @@ import { EncryptionService } from './crypto/encryption.service';
 import { WHATSAPP_QUEUE } from './processors/whatsapp-message.processor';
 import { SaveWabaConfigDto } from './dto/save-waba-config.dto';
 import { WabaConfigResponseDto } from './dto/waba-config-response.dto';
+import { SendWaMessageDto } from './dto/send-wa-message.dto';
 
 @Injectable()
 export class WhatsappService {
   // Parameterized Meta API version — update here when Meta deprecates older versions
   private readonly META_API_VERSION = 'v21.0';
+  private readonly META_GRAPH_URL = 'https://graph.facebook.com';
 
   constructor(
     @InjectQueue(WHATSAPP_QUEUE) private readonly whatsappQueue: Queue,
@@ -45,7 +51,7 @@ export class WhatsappService {
     phoneNumberId: string,
     accessToken: string,
   ): Promise<{ displayPhone: string; verifiedName: string | undefined }> {
-    const url = `https://graph.facebook.com/${this.META_API_VERSION}/${phoneNumberId}`;
+    const url = `${this.META_GRAPH_URL}/${this.META_API_VERSION}/${phoneNumberId}`;
     try {
       const response = await axios.get(url, {
         params: { fields: 'display_phone_number,verified_name' },
@@ -144,5 +150,277 @@ export class WhatsappService {
       verifiedName: config.verifiedName ?? undefined,
       activo: config.activo,
     };
+  }
+
+  /**
+   * Fetches and decrypts WABA config for a professional.
+   * Throws NotFoundException if not configured.
+   */
+  private async getDecryptedConfig(profesionalId: string): Promise<{
+    phoneNumberId: string;
+    accessToken: string;
+    wabaId: string | null;
+    displayPhone: string;
+  }> {
+    const config = await this.prisma.configuracionWABA.findUnique({
+      where: { profesionalId },
+    });
+    if (!config) {
+      throw new NotFoundException(
+        'WABA no configurado para este profesional. Configure las credenciales en Ajustes > WhatsApp.',
+      );
+    }
+    const accessToken = this.encryptionService.decrypt(
+      config.accessTokenEncrypted,
+    );
+    return {
+      phoneNumberId: config.phoneNumberId,
+      accessToken,
+      wabaId: config.wabaId ?? null,
+      displayPhone: config.displayPhone,
+    };
+  }
+
+  /**
+   * Sends a WhatsApp template message.
+   * Creates MensajeWhatsApp DB record, enqueues the send job.
+   * Returns the DB record id (not waMessageId which is set after Meta response).
+   */
+  async sendTemplateMessage(
+    profesionalId: string,
+    dto: SendWaMessageDto,
+  ): Promise<{ mensajeId: string; enqueued: boolean }> {
+    const config = await this.getDecryptedConfig(profesionalId);
+
+    // Check opt-in
+    const paciente = await this.prisma.paciente.findUnique({
+      where: { id: dto.pacienteId },
+      select: { telefono: true, whatsappOptIn: true },
+    });
+    if (!paciente) {
+      throw new NotFoundException('Paciente no encontrado');
+    }
+    if (!paciente.whatsappOptIn) {
+      throw new BadRequestException(
+        'El paciente no ha dado su consentimiento para recibir mensajes de WhatsApp.',
+      );
+    }
+
+    // Create pending DB record
+    const mensaje = await this.prisma.mensajeWhatsApp.create({
+      data: {
+        pacienteId: dto.pacienteId,
+        profesionalId,
+        tipo: dto.tipo,
+        contenido: dto.templateName,
+        estado: 'PENDIENTE',
+        direccion: 'OUTBOUND',
+      },
+    });
+
+    // Enqueue send job — processor will call Meta API and update estado
+    await this.whatsappQueue.add(
+      'send-whatsapp-message',
+      {
+        mensajeId: mensaje.id,
+        templateName: dto.templateName,
+        languageCode: dto.languageCode ?? 'es',
+        components: dto.components ?? [],
+        phoneNumberId: config.phoneNumberId,
+        accessToken: config.accessToken,
+        telefono: paciente.telefono,
+      },
+      { attempts: 3, backoff: { type: 'exponential', delay: 1000 } },
+    );
+
+    return { mensajeId: mensaje.id, enqueued: true };
+  }
+
+  /**
+   * Sends a free-text WhatsApp message (requires 24h conversation window to be open).
+   * tipo=CUSTOM. Meta will reject if no open window.
+   */
+  async sendFreeText(
+    profesionalId: string,
+    pacienteId: string,
+    texto: string,
+  ): Promise<{ mensajeId: string; enqueued: boolean }> {
+    const config = await this.getDecryptedConfig(profesionalId);
+
+    const paciente = await this.prisma.paciente.findUnique({
+      where: { id: pacienteId },
+      select: { telefono: true, whatsappOptIn: true },
+    });
+    if (!paciente) {
+      throw new NotFoundException('Paciente no encontrado');
+    }
+    if (!paciente.whatsappOptIn) {
+      throw new BadRequestException(
+        'El paciente no ha dado su consentimiento para recibir mensajes de WhatsApp.',
+      );
+    }
+
+    const mensaje = await this.prisma.mensajeWhatsApp.create({
+      data: {
+        pacienteId,
+        profesionalId,
+        tipo: 'CUSTOM',
+        contenido: texto,
+        estado: 'PENDIENTE',
+        direccion: 'OUTBOUND',
+      },
+    });
+
+    await this.whatsappQueue.add(
+      'send-whatsapp-message',
+      {
+        mensajeId: mensaje.id,
+        freeText: texto,
+        phoneNumberId: config.phoneNumberId,
+        accessToken: config.accessToken,
+        telefono: paciente.telefono,
+      },
+      { attempts: 3, backoff: { type: 'exponential', delay: 1000 } },
+    );
+
+    return { mensajeId: mensaje.id, enqueued: true };
+  }
+
+  /**
+   * Sends a presupuesto PDF as a WhatsApp document message.
+   * tipo=PRESUPUESTO. Uses the public PDF URL so Meta can fetch it.
+   */
+  async sendPresupuestoPdf(
+    profesionalId: string,
+    pacienteId: string,
+    presupuestoId: string,
+    pdfPublicUrl: string,
+  ): Promise<{ mensajeId: string; enqueued: boolean }> {
+    const config = await this.getDecryptedConfig(profesionalId);
+
+    const paciente = await this.prisma.paciente.findUnique({
+      where: { id: pacienteId },
+      select: { telefono: true, whatsappOptIn: true },
+    });
+    if (!paciente) {
+      throw new NotFoundException('Paciente no encontrado');
+    }
+    if (!paciente.whatsappOptIn) {
+      throw new BadRequestException(
+        'El paciente no ha dado su consentimiento para recibir mensajes de WhatsApp.',
+      );
+    }
+
+    const mensaje = await this.prisma.mensajeWhatsApp.create({
+      data: {
+        pacienteId,
+        profesionalId,
+        tipo: 'PRESUPUESTO',
+        contenido: `Presupuesto PDF: ${presupuestoId}`,
+        estado: 'PENDIENTE',
+        direccion: 'OUTBOUND',
+      },
+    });
+
+    await this.whatsappQueue.add(
+      'send-whatsapp-message',
+      {
+        mensajeId: mensaje.id,
+        documentUrl: pdfPublicUrl,
+        documentFilename: `presupuesto-${presupuestoId}.pdf`,
+        phoneNumberId: config.phoneNumberId,
+        accessToken: config.accessToken,
+        telefono: paciente.telefono,
+      },
+      { attempts: 3, backoff: { type: 'exponential', delay: 1000 } },
+    );
+
+    return { mensajeId: mensaje.id, enqueued: true };
+  }
+
+  /**
+   * Lists approved WhatsApp templates from Meta Business API.
+   * Requires wabaId to be configured.
+   */
+  async listApprovedTemplates(profesionalId: string): Promise<any[]> {
+    const config = await this.getDecryptedConfig(profesionalId);
+    if (!config.wabaId) {
+      throw new BadRequestException(
+        'WABA ID no configurado. Complete la configuración de WhatsApp para listar templates.',
+      );
+    }
+
+    const url = `${this.META_GRAPH_URL}/${this.META_API_VERSION}/${config.wabaId}/message_templates`;
+    try {
+      const response = await axios.get(url, {
+        params: {
+          status: 'APPROVED',
+          fields: 'name,language,status,components',
+        },
+        headers: { Authorization: `Bearer ${config.accessToken}` },
+      });
+      return (response.data.data as any[]) ?? [];
+    } catch (err: any) {
+      const metaMsg =
+        err.response?.data?.error?.message ?? 'Error al obtener templates';
+      throw new BadRequestException(`Meta API: ${metaMsg}`);
+    }
+  }
+
+  /**
+   * Returns the full message thread for a patient (ordered by createdAt asc).
+   * Includes direccion field for frontend bubble direction rendering.
+   */
+  async getMessageThread(
+    profesionalId: string,
+    pacienteId: string,
+  ): Promise<any[]> {
+    return this.prisma.mensajeWhatsApp.findMany({
+      where: { pacienteId, profesionalId },
+      orderBy: { createdAt: 'asc' },
+    });
+  }
+
+  /**
+   * Resets a failed message to PENDIENTE and re-enqueues the send job.
+   * Verifies ownership before re-queuing.
+   */
+  async retryMessage(
+    profesionalId: string,
+    mensajeId: string,
+  ): Promise<{ mensajeId: string; enqueued: boolean }> {
+    const config = await this.getDecryptedConfig(profesionalId);
+
+    // Verify ownership
+    const mensaje = await this.prisma.mensajeWhatsApp.findUnique({
+      where: { id: mensajeId },
+      include: {
+        paciente: { select: { telefono: true } },
+      },
+    });
+    if (!mensaje || mensaje.profesionalId !== profesionalId) {
+      throw new NotFoundException('Mensaje no encontrado');
+    }
+
+    // Reset to PENDIENTE
+    await this.prisma.mensajeWhatsApp.update({
+      where: { id: mensajeId },
+      data: { estado: 'PENDIENTE', errorMsg: null },
+    });
+
+    // Re-enqueue — processor will read contenido for templateName or freeText
+    await this.whatsappQueue.add(
+      'send-whatsapp-message',
+      {
+        mensajeId,
+        phoneNumberId: config.phoneNumberId,
+        accessToken: config.accessToken,
+        telefono: mensaje.paciente.telefono,
+        // Processor will determine message type from DB record
+      },
+      { attempts: 3, backoff: { type: 'exponential', delay: 1000 } },
+    );
+
+    return { mensajeId, enqueued: true };
   }
 }

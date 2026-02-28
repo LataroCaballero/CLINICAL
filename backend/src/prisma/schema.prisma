@@ -977,8 +977,7 @@ enum EtapaCRM {
   TURNO_AGENDADO
   CONSULTADO
   PRESUPUESTO_ENVIADO
-  SEGUIMIENTO_ACTIVO
-  CALIENTE
+  PROCEDIMIENTO_REALIZADO
   CONFIRMADO
   PERDIDO
 }
@@ -1059,6 +1058,11 @@ enum EstadoMensajeWA {
   FALLIDO
 }
 
+enum DireccionMensajeWA {
+  OUTBOUND
+  INBOUND
+}
+
 enum TipoMensajeWA {
   PRESUPUESTO
   RECORDATORIO_TURNO
@@ -1086,6 +1090,7 @@ model MensajeWhatsApp {
   pacienteId    String
   profesionalId String
   tipo          TipoMensajeWA
+  direccion     DireccionMensajeWA @default(OUTBOUND)
   contenido     String?         // Nombre del template o cuerpo del mensaje
   estado        EstadoMensajeWA @default(PENDIENTE)
   errorMsg      String?

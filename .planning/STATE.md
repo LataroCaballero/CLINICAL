@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-23)
 ## Current Position
 
 Phase: 4 of 5 (WhatsApp + Etapas CRM Automaticas) — IN PROGRESS
-Plan: 4 of 5 in current phase — COMPLETE
-Status: Plan 04-04 complete — WhatsApp chat thread UI with delivery icons, template modal, and opt-in gate
-Last activity: 2026-02-28 — Plan 04-04: WAThreadView + DeliveryIcon + SendWAMessageModal + useWAThread hooks
+Plan: 5 of 5 in current phase — COMPLETE
+Status: Plan 04-05 complete — WA unread indicators across patient list, Kanban cards, and global layout badge
+Last activity: 2026-02-28 — Plan 04-05: GET /whatsapp/unread + useWAUnread hook + unread badges on list, kanban, layout
 
-Progress: [████████████] 64%
+Progress: [██████████████] 72%
 
 ## Performance Metrics
 
@@ -44,6 +44,7 @@ Progress: [████████████] 64%
 | Phase 04-whatsapp-etapas-crm-automaticas P02 | 4 | 2 tasks | 7 files |
 | Phase 04-whatsapp-etapas-crm-automaticas P03 | 2 | 2 tasks | 4 files |
 | Phase 04-whatsapp-etapas-crm-automaticas P04 | 2 | 2 tasks | 6 files |
+| Phase 04-whatsapp-etapas-crm-automaticas P05 | 8 | 1 task | 10 files |
 
 ## Accumulated Context
 
@@ -97,6 +98,9 @@ Recent decisions affecting current work:
 - [Phase 04-04]: RadioGroup avoided for channel toggle — plain button-based toggle used; shadcn RadioGroup only exports RadioGroupItem so wrapping plain inputs caused type mismatch
 - [Phase 04-04]: Email 404 in SendWAMessageModal handled gracefully — toast.error shown, WA path unaffected; no generic email endpoint exists yet
 - [Phase 04-04]: Free-text 24h window enforced client-side from last INBOUND message createdAt — avoids backend call, matches Meta customer service window rule
+- [04-05]: createPacienteColumns(unreadMap) factory chosen over per-cell useWAUnread() calls — avoids N hooks for N table rows, single query at page level
+- [04-05]: unreadMap threaded as props (KanbanBoard->KanbanColumn->PatientCard) rather than React context — simpler, fully typed, no extra provider
+- [04-05]: Global WA badge placed at bottom-20 right-4 with pointer-events-none — clears DockNav, does not block interactions
 
 ### Pending Todos
 
@@ -112,5 +116,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-28
-Stopped at: Completed 04-04-PLAN.md — WhatsApp chat thread UI with delivery icons, template modal, and opt-in gate
+Stopped at: Completed 04-05-PLAN.md — WA unread indicators across patient list, Kanban, and global layout
 Resume file: None

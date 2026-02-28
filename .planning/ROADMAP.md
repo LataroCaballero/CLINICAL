@@ -131,7 +131,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 2. Log de Contactos + Lista de Accion | 3/3 | Complete   | 2026-02-24 |
 | 2.1. Fix SECRETARIA Contact Logging | 1/1 | Complete | 2026-02-24 |
 | 3. Presupuestos Completos | 4/4 | Complete   | 2026-02-27 |
-| 4. WhatsApp + Etapas CRM Automaticas | 4/6 | In Progress|  |
+| 4. WhatsApp + Etapas CRM Automaticas | 5/6 | In Progress|  |
 | 5. Dashboard de Conversion | 0/2 | Not started | - |
 
 ---

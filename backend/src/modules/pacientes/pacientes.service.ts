@@ -583,14 +583,13 @@ export class PacientesService {
       orderBy: { updatedAt: 'desc' },
     });
 
-    // Agrupar por etapaCRM
+    // Agrupar por etapaCRM — PROCEDIMIENTO_REALIZADO excluido de columnas kanban (cae a SIN_CLASIFICAR)
     const columnas: Record<string, typeof pacientes> = {
       SIN_CLASIFICAR: [],
       NUEVO_LEAD: [],
       TURNO_AGENDADO: [],
       CONSULTADO: [],
       PRESUPUESTO_ENVIADO: [],
-      PROCEDIMIENTO_REALIZADO: [],
       CONFIRMADO: [],
       PERDIDO: [],
     };

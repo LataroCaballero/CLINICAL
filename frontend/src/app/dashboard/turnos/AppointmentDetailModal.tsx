@@ -29,7 +29,14 @@ import {
   X,
   CheckCircle,
   XCircle,
+  MessageSquare,
 } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import SendWAMessageModal from "@/components/whatsapp/SendWAMessageModal";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -42,6 +49,8 @@ interface CalendarEvent {
   id: string;
   title: string;
   paciente: string;
+  pacienteId?: string;
+  whatsappOptIn?: boolean;
   start: Date;
   end: Date;
   tipo: string;
@@ -82,6 +91,7 @@ export default function AppointmentDetailModal({
   const [isRescheduling, setIsRescheduling] = useState(false);
   const [newDate, setNewDate] = useState<Date | undefined>(undefined);
   const [newTime, setNewTime] = useState("");
+  const [waModalOpen, setWaModalOpen] = useState(false);
 
   const queryClient = useQueryClient();
   const reprogramar = useReprogramarTurno();
@@ -165,6 +175,7 @@ export default function AppointmentDetailModal({
   };
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
@@ -272,6 +283,28 @@ export default function AppointmentDetailModal({
                 <CalendarClock className="w-4 h-4 mr-2" />
                 Reagendar turno
               </Button>
+
+              {/* WhatsApp send shortcut — only shown when pacienteId is available */}
+              {event.pacienteId && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span>
+                      <Button
+                        variant="outline"
+                        className="w-full"
+                        disabled={!event.whatsappOptIn}
+                        onClick={() => setWaModalOpen(true)}
+                      >
+                        <MessageSquare className="w-4 h-4 mr-2" />
+                        WhatsApp
+                      </Button>
+                    </span>
+                  </TooltipTrigger>
+                  {!event.whatsappOptIn && (
+                    <TooltipContent>El paciente no tiene opt-in para WhatsApp</TooltipContent>
+                  )}
+                </Tooltip>
+              )}
             </div>
           )}
 
@@ -353,5 +386,15 @@ export default function AppointmentDetailModal({
         </div>
       </DialogContent>
     </Dialog>
+
+    {/* WA Modal */}
+    {event.pacienteId && (
+      <SendWAMessageModal
+        pacienteId={event.pacienteId}
+        open={waModalOpen}
+        onClose={() => setWaModalOpen(false)}
+      />
+    )}
+  </>
   );
 }

@@ -48,21 +48,21 @@ export interface KanbanColumn {
 export const ETAPA_LABELS: Record<EtapaCRM, string> = {
   SIN_CLASIFICAR: "Sin clasificar",
   NUEVO_LEAD: "Nuevo Lead",
-  TURNO_AGENDADO: "Turno Agendado",
-  CONSULTADO: "Consultado",
+  TURNO_AGENDADO: "Consulta Agendada",
+  CONSULTADO: "Consulta Realizada",
   PRESUPUESTO_ENVIADO: "Presupuesto Enviado",
   PROCEDIMIENTO_REALIZADO: "Procedimiento Realizado",
   CONFIRMADO: "Confirmado",
   PERDIDO: "Perdido",
 };
 
+// PROCEDIMIENTO_REALIZADO intentionally excluded — hidden from kanban per user decision
 export const ETAPA_ORDER: EtapaCRM[] = [
   "SIN_CLASIFICAR",
   "NUEVO_LEAD",
   "TURNO_AGENDADO",
   "CONSULTADO",
   "PRESUPUESTO_ENVIADO",
-  "PROCEDIMIENTO_REALIZADO",
   "CONFIRMADO",
   "PERDIDO",
 ];

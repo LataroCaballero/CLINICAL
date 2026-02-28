@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-23)
 ## Current Position
 
 Phase: 4 of 5 (WhatsApp + Etapas CRM Automaticas) — IN PROGRESS
-Plan: 3 of 5 in current phase — COMPLETE
-Status: Plan 04-03 complete — CRM auto-transitions (crearTurno/cerrarSesion) and kanban 7-stage cleanup
-Last activity: 2026-02-27 — Plan 04-03: CRM auto-transitions wired in TurnosService, kanban columns cleaned to 7
+Plan: 4 of 5 in current phase — COMPLETE
+Status: Plan 04-04 complete — WhatsApp chat thread UI with delivery icons, template modal, and opt-in gate
+Last activity: 2026-02-28 — Plan 04-04: WAThreadView + DeliveryIcon + SendWAMessageModal + useWAThread hooks
 
-Progress: [██████████] 56%
+Progress: [████████████] 64%
 
 ## Performance Metrics
 
@@ -43,6 +43,7 @@ Progress: [██████████] 56%
 | Phase 04-whatsapp-etapas-crm-automaticas P01 | 3min | 2 tasks | 8 files |
 | Phase 04-whatsapp-etapas-crm-automaticas P02 | 4 | 2 tasks | 7 files |
 | Phase 04-whatsapp-etapas-crm-automaticas P03 | 2 | 2 tasks | 4 files |
+| Phase 04-whatsapp-etapas-crm-automaticas P04 | 2 | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -93,6 +94,9 @@ Recent decisions affecting current work:
 - [Phase 04-whatsapp-etapas-crm-automaticas]: Inbound phone matching uses last 8 digits (telefono contains last8) — robust against country code prefix format variations
 - [Phase 04-whatsapp-etapas-crm-automaticas]: cerrarSesion fetches turno esCirugia/etapaCRM in separate findUnique before update — avoids changing update return shape
 - [Phase 04-whatsapp-etapas-crm-automaticas]: PROCEDIMIENTO_REALIZADO kept in EtapaCRM type for DB compat — removed from ETAPA_ORDER (kanban display) only; patients in this stage fall to SIN_CLASIFICAR bucket
+- [Phase 04-04]: RadioGroup avoided for channel toggle — plain button-based toggle used; shadcn RadioGroup only exports RadioGroupItem so wrapping plain inputs caused type mismatch
+- [Phase 04-04]: Email 404 in SendWAMessageModal handled gracefully — toast.error shown, WA path unaffected; no generic email endpoint exists yet
+- [Phase 04-04]: Free-text 24h window enforced client-side from last INBOUND message createdAt — avoids backend call, matches Meta customer service window rule
 
 ### Pending Todos
 
@@ -108,5 +112,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-28
-Stopped at: Completed 04-03-PLAN.md — CRM auto-transitions (crearTurno/cerrarSesion) and kanban 7-stage cleanup
+Stopped at: Completed 04-04-PLAN.md — WhatsApp chat thread UI with delivery icons, template modal, and opt-in gate
 Resume file: None

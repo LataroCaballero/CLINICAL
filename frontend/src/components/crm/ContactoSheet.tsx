@@ -40,8 +40,7 @@ const ETAPAS_CRM = [
   { value: "TURNO_AGENDADO", label: "Turno Agendado" },
   { value: "CONSULTADO", label: "Consultado" },
   { value: "PRESUPUESTO_ENVIADO", label: "Presupuesto Enviado" },
-  { value: "SEGUIMIENTO_ACTIVO", label: "Seguimiento Activo" },
-  { value: "CALIENTE", label: "Caliente" },
+  { value: "PROCEDIMIENTO_REALIZADO", label: "Procedimiento Realizado" },
   { value: "CONFIRMADO", label: "Confirmado" },
   { value: "PERDIDO", label: "Perdido" },
 ];

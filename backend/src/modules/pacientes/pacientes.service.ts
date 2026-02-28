@@ -590,8 +590,7 @@ export class PacientesService {
       TURNO_AGENDADO: [],
       CONSULTADO: [],
       PRESUPUESTO_ENVIADO: [],
-      SEGUIMIENTO_ACTIVO: [],
-      CALIENTE: [],
+      PROCEDIMIENTO_REALIZADO: [],
       CONFIRMADO: [],
       PERDIDO: [],
     };
@@ -668,8 +667,7 @@ export class PacientesService {
     const diasScore = Math.min(diasSinContacto, 30);
     const tempWeight: Record<string, number> = { CALIENTE: 3, TIBIO: 2, FRIO: 1 };
     const etapaWeight: Record<string, number> = {
-      SEGUIMIENTO_ACTIVO: 3,
-      CALIENTE: 3,
+      PROCEDIMIENTO_REALIZADO: 3,
       PRESUPUESTO_ENVIADO: 2,
       CONSULTADO: 2,
       TURNO_AGENDADO: 1,

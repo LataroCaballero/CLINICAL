@@ -19,8 +19,7 @@ const ETAPA_LABELS: Record<string, string> = {
   TURNO_AGENDADO: "Turno Agendado",
   CONSULTADO: "Consultado",
   PRESUPUESTO_ENVIADO: "Presupuesto Enviado",
-  SEGUIMIENTO_ACTIVO: "Seguimiento Activo",
-  CALIENTE: "Caliente",
+  PROCEDIMIENTO_REALIZADO: "Procedimiento Realizado",
   CONFIRMADO: "Confirmado",
   PERDIDO: "Perdido",
 };

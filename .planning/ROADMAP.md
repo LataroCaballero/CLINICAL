@@ -16,7 +16,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Log de Contactos + Lista de Accion** - Registro de interacciones y workflow diario del coordinador (completed 2026-02-24)
 - [x] **Phase 2.1: Fix SECRETARIA Contact Logging** [INSERTED] — Gap closure: null profesionalId FK para rol SECRETARIA (completed 2026-02-24)
 - [x] **Phase 3: Presupuestos Completos** - PDF con branding, entrega por email, estados y transiciones CRM automáticas (completed 2026-02-24)
-- [ ] **Phase 4: WhatsApp + Etapas CRM Automaticas** - Integración mensajeria module y wiring completo de eventos CRM
+- [x] **Phase 4: WhatsApp + Etapas CRM Automaticas** - Integración mensajeria module y wiring completo de eventos CRM
+- [ ] **Phase 4.1: WA Critical Fixes** [INSERTED] — Gap closure: email channel 404, SECRETARIA null-guard en WhatsappController, BACKEND_URL documentado
 - [ ] **Phase 5: Dashboard de Conversion** - Embudo, ingresos potenciales, motivos de pérdida y performance del coordinador
 
 ## Phase Details
@@ -104,6 +105,19 @@ Plans:
 - [ ] 04-04-PLAN.md — Frontend: WAThreadView (chat bubbles + delivery icons + free-text reply) + SendWAMessageModal (template preview + channel toggle) + MensajesView update
 - [ ] 04-05-PLAN.md — Frontend: unread WA indicators on patient list + Kanban cards + WA send shortcut in PacienteDetails + presupuesto WA button
 
+### Phase 4.1: WA Critical Fixes [INSERTED]
+**Goal**: Los tres gaps críticos de integración WhatsApp identificados en el audit v1.0 quedan cerrados: el canal email de SendWAMessageModal deja de dar 404, el rol SECRETARIA puede usar todos los endpoints de WhatsApp sin NotFoundException, y BACKEND_URL está documentado para que el envío de presupuestos por WA funcione en producción
+**Gap Closure:** Closes MISSING-1, MISSING-2, MISSING-3 from v1.0 audit
+**Requirements**: WA-01, WA-05, PRES-04
+**Success Criteria** (what must be TRUE):
+  1. El canal email en SendWAMessageModal no genera 404 — o se elimina el tab (redirigiendo a EnviarPresupuestoModal) o existe un endpoint real `POST /pacientes/:id/enviar-email`
+  2. Una SECRETARIA puede enviar WA, ver thread, ver unread counts y hacer retry sin NotFoundException
+  3. `BACKEND_URL` está documentado en CLAUDE.md y en `.env.example`; el PDF URL generado en producción apunta al dominio real, no a localhost
+**Plans**: 1 plan
+
+Plans:
+- [ ] 04.1-01-PLAN.md — Fix email channel (remove or create endpoint) + SECRETARIA null-guard in WhatsappController + BACKEND_URL documentation
+
 ### Phase 5: Dashboard de Conversion
 **Goal**: El profesional y el coordinador ven en el dashboard todas las métricas de conversión que necesitan para tomar decisiones: embudo con tasas, ingresos potenciales del pipeline, motivos de pérdida y performance de seguimiento del equipo
 **Depends on**: Phase 4
@@ -132,6 +146,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 2.1. Fix SECRETARIA Contact Logging | 1/1 | Complete | 2026-02-24 |
 | 3. Presupuestos Completos | 4/4 | Complete   | 2026-02-27 |
 | 4. WhatsApp + Etapas CRM Automaticas | 6/6 | Complete | 2026-02-28 |
+| 4.1. WA Critical Fixes | 0/1 | Not started | - |
 | 5. Dashboard de Conversion | 0/2 | Not started | - |
 
 ---

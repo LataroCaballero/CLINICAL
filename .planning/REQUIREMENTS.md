@@ -31,7 +31,7 @@
 - [x] **PRES-01**: El coordinador puede crear un presupuesto vinculado a un paciente con ítems, montos y fecha de validez
 - [x] **PRES-02**: El sistema genera un PDF del presupuesto con el branding de la clínica (logo, datos, firma del profesional)
 - [x] **PRES-03**: El coordinador puede enviar el presupuesto por email directamente desde la plataforma
-- [ ] **PRES-04**: El coordinador puede enviar el presupuesto por WhatsApp (como documento PDF) directamente desde la plataforma
+- [ ] **PRES-04**: El coordinador puede enviar el presupuesto por WhatsApp (como documento PDF) directamente desde la plataforma *(partial — BACKEND_URL fix pending, Phase 4.1)*
 - [x] **PRES-05**: El presupuesto tiene estados: borrador, enviado, aceptado, rechazado, vencido
 - [x] **PRES-06**: Al enviar el presupuesto, la etapa CRM del paciente sube automáticamente a "Presupuesto enviado"
 - [x] **PRES-07**: Al marcar un presupuesto como aceptado y recibir pago, la etapa CRM cierra automáticamente como "Cirugía confirmada"
@@ -39,11 +39,11 @@
 
 ### WhatsApp (WA)
 
-- [ ] **WA-01**: El coordinador puede enviar un mensaje WhatsApp a un paciente desde su perfil usando templates aprobados por Meta
+- [ ] **WA-01**: El coordinador puede enviar un mensaje WhatsApp a un paciente desde su perfil usando templates aprobados por Meta *(partial — email channel 404, Phase 4.1)*
 - [x] **WA-02**: El sistema muestra el estado de entrega de cada mensaje enviado (enviado, entregado, leído, fallido)
 - [x] **WA-03**: Los mensajes recibidos de pacientes por WhatsApp se registran en el log de contactos del paciente
-- [ ] **WA-04**: El sistema maneja correctamente los webhooks de Meta para actualizar el estado de mensajes en tiempo real
-- [ ] **WA-05**: Si un mensaje falla por WhatsApp, el sistema notifica al coordinador con opción de reintentar o enviar por email
+- [x] **WA-04**: El sistema maneja correctamente los webhooks de Meta para actualizar el estado de mensajes en tiempo real
+- [ ] **WA-05**: Si un mensaje falla por WhatsApp, el sistema notifica al coordinador con opción de reintentar o enviar por email *(partial — SECRETARIA role broken, Phase 4.1)*
 
 ### Etapas CRM Automáticas (CRM)
 
@@ -107,18 +107,18 @@
 | PRES-01 | Phase 3 | Complete |
 | PRES-02 | Phase 3 | Complete |
 | PRES-03 | Phase 3 | Complete |
-| PRES-04 | Phase 3 | Pending |
+| PRES-04 | Phase 4.1 | Pending |
 | PRES-05 | Phase 3 | Complete |
 | PRES-06 | Phase 3 | Complete |
 | PRES-07 | Phase 3 | Complete |
 | PRES-08 | Phase 3 | Complete |
 | CRM-03 | Phase 3 | Complete |
 | CRM-04 | Phase 3 | Complete |
-| WA-01 | Phase 4 | Pending |
+| WA-01 | Phase 4.1 | Pending |
 | WA-02 | Phase 4 | Complete |
 | WA-03 | Phase 4 | Complete |
-| WA-04 | Phase 4 | Pending |
-| WA-05 | Phase 4 | Pending |
+| WA-04 | Phase 4 | Complete |
+| WA-05 | Phase 4.1 | Pending |
 | CRM-01 | Phase 4 | Complete |
 | CRM-02 | Phase 4 | Complete |
 | CRM-05 | Phase 4 | Complete |

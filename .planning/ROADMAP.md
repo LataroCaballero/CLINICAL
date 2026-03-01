@@ -116,7 +116,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 04.1-01-PLAN.md — Fix email channel (remove or create endpoint) + SECRETARIA null-guard in WhatsappController + BACKEND_URL documentation
+- [ ] 04.1-01-PLAN.md — Remove email channel from SendWAMessageModal (MISSING-1) + PrismaService injection + null-guard on all 8 WA endpoints for SECRETARIA (MISSING-2) + BACKEND_URL in CLAUDE.md + backend/.env.example (MISSING-3)
 
 ### Phase 5: Dashboard de Conversion
 **Goal**: El profesional y el coordinador ven en el dashboard todas las métricas de conversión que necesitan para tomar decisiones: embudo con tasas, ingresos potenciales del pipeline, motivos de pérdida y performance de seguimiento del equipo

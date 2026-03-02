@@ -8,6 +8,7 @@ const ETAPAS_LABELS: Record<string, string> = {
   TURNO_AGENDADO: "Turno agendado",
   CONSULTADO: "Consultado",
   PRESUPUESTO_ENVIADO: "Presupuesto enviado",
+  PROCEDIMIENTO_REALIZADO: "Procedimiento realizado",
   CONFIRMADO: "Confirmado",
 };
 

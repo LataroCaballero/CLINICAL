@@ -9,6 +9,8 @@ import { ReportesExportService } from './services/reportes-export.service';
 import { ReportesSuscripcionesService } from './services/reportes-suscripciones.service';
 import { ReportesSchedulerService } from './services/reportes-scheduler.service';
 import { EmailService } from './services/email.service';
+import { CrmMetricsService } from './services/crm-metrics.service';
+import { CrmDashboardService } from './services/crm-dashboard.service';
 import { PrismaService } from '../../prisma/prisma.service';
 
 @Module({
@@ -22,6 +24,8 @@ import { PrismaService } from '../../prisma/prisma.service';
     ReportesSuscripcionesService,
     ReportesSchedulerService,
     EmailService,
+    CrmMetricsService,
+    CrmDashboardService,
     PrismaService,
   ],
   exports: [
@@ -30,6 +34,8 @@ import { PrismaService } from '../../prisma/prisma.service';
     ReportesFinancierosService,
     ReportesExportService,
     ReportesSuscripcionesService,
+    CrmMetricsService,
+    CrmDashboardService,
   ],
 })
 export class ReportesModule {}

@@ -1,33 +1,41 @@
 "use client";
-
 import KpiCard from "./KpiCard";
-import { useCRMMetrics } from "@/hooks/useCRMMetrics";
+import { useCRMKpis } from "@/hooks/useCRMKpis";
 import { useEffectiveProfessionalId } from "@/hooks/useEffectiveProfessionalId";
-
-function formatMoney(n: number) {
-  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `$${(n / 1_000).toFixed(0)}K`;
-  return "$" + Math.round(n).toLocaleString("es-AR");
-}
+import { Periodo } from "@/hooks/usePeriodoFilter";
 
 interface Props {
   isLoading?: boolean;
+  periodo: Periodo;
 }
 
-export default function CRMKpiCards({ isLoading: parentLoading }: Props) {
+export default function CRMKpiCards({ isLoading: parentLoading, periodo }: Props) {
   const profId = useEffectiveProfessionalId();
-  const { data, isLoading } = useCRMMetrics(profId);
+  const { data, isLoading } = useCRMKpis(profId, periodo);
 
   const loading = parentLoading || isLoading;
 
   return (
     <>
       <KpiCard
-        title="Conversión del mes"
+        title="Nuevos pacientes"
+        value={data ? String(data.nuevos) : "—"}
+        subtitle={`${periodo === "semana" ? "esta semana" : periodo === "mes" ? "este mes" : "este trimestre"}`}
+        isLoading={loading}
+      />
+      <KpiCard
+        title="Cirugías confirmadas"
+        value={data ? String(data.confirmados) : "—"}
+        subtitle="en el período"
+        trend="up"
+        isLoading={loading}
+      />
+      <KpiCard
+        title="Tasa de conversión"
         value={data ? `${data.tasaConversion}%` : "—"}
         subtitle={
           data
-            ? `${data.confirmados} de ${data.presupuestosEnviados} presupuestos`
+            ? `${data.confirmados} de ${data.totalActivos} activos`
             : "sin datos"
         }
         trend={
@@ -40,35 +48,9 @@ export default function CRMKpiCards({ isLoading: parentLoading }: Props) {
         isLoading={loading}
       />
       <KpiCard
-        title="Presupuestos activos"
-        value={
-          data
-            ? String(
-                (data.distribucionEtapas["PRESUPUESTO_ENVIADO"] ?? 0) +
-                  (data.distribucionEtapas["PROCEDIMIENTO_REALIZADO"] ?? 0)
-              )
-            : "—"
-        }
-        subtitle="en seguimiento"
-        isLoading={loading}
-      />
-      <KpiCard
-        title="Pacientes calientes"
-        value={data ? String(data.calientes) : "—"}
-        subtitle={data ? `${data.tibios} tibios · ${data.frios} fríos` : ""}
-        trend="neutral"
-        isLoading={loading}
-      />
-      <KpiCard
-        title="Cirugías confirmadas"
-        value={data ? String(data.confirmados) : "—"}
-        subtitle="este mes"
-        change={
-          data?.ingresoProyectado
-            ? `${formatMoney(data.ingresoProyectado)} proyectado`
-            : undefined
-        }
-        trend="up"
+        title="Pacientes activos"
+        value={data ? String(data.totalActivos) : "—"}
+        subtitle="excluye perdidos"
         isLoading={loading}
       />
     </>

@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-23)
 ## Current Position
 
 Phase: 5 of 5 (Dashboard de Conversión) — In Progress
-Plan: 1 of 3 in current phase — COMPLETE
-Status: Plan 05-01 complete — CrmDashboardService with 5 endpoints, registradoPorId on ContactoLog
-Last activity: 2026-03-02 — Plan 05-01: CRM Dashboard Backend API — 5 conversion metric endpoints
+Plan: 2 of 3 in current phase — COMPLETE
+Status: Plan 05-02 complete — 7 frontend data layer files: usePeriodoFilter, PeriodoSelector, 5 TanStack Query CRM hooks
+Last activity: 2026-03-02 — Plan 05-02: CRM Dashboard Frontend Data Layer — periodo filter hook + 5 data hooks
 
-Progress: [█████████████████] 85%
+Progress: [██████████████████] 90%
 
 ## Performance Metrics
 
@@ -47,6 +47,7 @@ Progress: [█████████████████] 85%
 | Phase 04-whatsapp-etapas-crm-automaticas P05 | 8 | 1 task | 10 files |
 | Phase 04-whatsapp-etapas-crm-automaticas P06 | 3 | 2 tasks | 6 files |
 | Phase 05-dashboard-de-conversion P01 | 15 | 3 tasks | 5 files |
+| Phase 05-dashboard-de-conversion P02 | 2 | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -108,6 +109,8 @@ Recent decisions affecting current work:
 - [04-05]: Global WA badge placed at bottom-20 right-4 with pointer-events-none — clears DockNav, does not block interactions
 - [Phase 05-dashboard-de-conversion]: registradoPorId uses onDelete: SetNull — retrocompatible, old ContactoLogs appear as Sin asignar in coordinator table
 - [Phase 05-dashboard-de-conversion]: Manual migration SQL chosen over prisma migrate dev — avoids interactive prompt in CI/automation
+- [05-02]: Named import { api } used in all CRM hooks (not default) — api.ts uses export const api, no default export
+- [05-02]: axios params object pattern used in CRM hooks (not string interpolation) — consistent with useCRMMetrics.ts pattern, handles null/undefined safely
 
 ### Pending Todos
 
@@ -122,6 +125,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-02-28
-Stopped at: Completed 04-06-PLAN.md — WA send shortcuts in patient profile, turno modal, and presupuesto view
+Last session: 2026-03-02
+Stopped at: Completed 05-02-PLAN.md — CRM Dashboard Frontend Data Layer — usePeriodoFilter, PeriodoSelector, 5 TanStack Query hooks
 Resume file: None

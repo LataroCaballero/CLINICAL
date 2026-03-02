@@ -14,7 +14,7 @@
 
 ### Log de Contactos (LOG)
 
-- [ ] **LOG-01**: El coordinador puede registrar una interacción con un paciente (llamada, mensaje, consulta presencial) con fecha, tipo y nota
+- [x] **LOG-01**: El coordinador puede registrar una interacción con un paciente (llamada, mensaje, consulta presencial) con fecha, tipo y nota
 - [ ] **LOG-02**: El perfil del paciente muestra el historial completo de interacciones ordenado cronológicamente
 - [x] **LOG-03**: Al registrar una interacción, el coordinador puede actualizar la etapa CRM y temperatura del paciente en el mismo paso
 - [x] **LOG-04**: El sistema muestra cuántos días hace que no hay interacción con cada paciente
@@ -55,11 +55,11 @@
 
 ### Dashboard de Conversión (DASH)
 
-- [ ] **DASH-01**: El profesional ve el embudo de conversión con cantidad de pacientes por etapa CRM y tasa de paso entre etapas
+- [x] **DASH-01**: El profesional ve el embudo de conversión con cantidad de pacientes por etapa CRM y tasa de paso entre etapas
 - [x] **DASH-02**: El profesional ve el ingreso potencial del pipeline (suma de presupuestos activos por etapa)
 - [x] **DASH-03**: El profesional ve los principales motivos de pérdida de pacientes con porcentajes
 - [x] **DASH-04**: El profesional ve métricas del período: nuevos pacientes, cirugías cerradas, tasa de conversión general
-- [ ] **DASH-05**: El coordinador ve su performance de seguimiento: interacciones registradas, pacientes contactados esta semana
+- [x] **DASH-05**: El coordinador ve su performance de seguimiento: interacciones registradas, pacientes contactados esta semana
 
 ## v2 Requirements
 
@@ -96,7 +96,7 @@
 | INFRA-02 | Phase 1 | Complete |
 | INFRA-03 | Phase 1 | Complete |
 | INFRA-04 | Phase 1 | Pending |
-| LOG-01 | Phase 6 | Pending |
+| LOG-01 | Phase 6 | Complete |
 | LOG-02 | Phase 7 | Pending |
 | LOG-03 | Phase 2 | Complete |
 | LOG-04 | Phase 2 | Complete |
@@ -122,16 +122,17 @@
 | CRM-01 | Phase 4 | Complete |
 | CRM-02 | Phase 4 | Complete |
 | CRM-05 | Phase 4 | Complete |
-| DASH-01 | Phase 6 | Pending |
+| DASH-01 | Phase 6 | Complete |
 | DASH-02 | Phase 5 | Complete |
 | DASH-03 | Phase 5 | Complete |
 | DASH-04 | Phase 5 | Complete |
-| DASH-05 | Phase 6 | Pending |
+| DASH-05 | Phase 6 | Complete |
 
 **Coverage:**
 - v1 requirements: 35 total
 - Mapped to phases: 35
-- Pending (gap closure phases 6-7): 5 (LOG-01, LOG-02, WA-04, DASH-01, DASH-05)
+- Pending (gap closure phase 7): 2 (LOG-02, WA-04)
+- Completed (phase 6): LOG-01, DASH-01, DASH-05
 - Unmapped: 0
 
 ---

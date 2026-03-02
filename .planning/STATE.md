@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-23)
 
 **Core value:** Que un cirujano plástico cierre más cirugías — el sistema hace visible qué pacientes seguir, cuándo y cómo, de la manera más automatizada posible
-**Current focus:** Phase 5 — Dashboard de Conversión — In Progress
+**Current focus:** Phase 6 — CRM Data Wiring Fixes — In Progress
 
 ## Current Position
 
-Phase: 5 of 5 (Dashboard de Conversión) — In Progress
-Plan: 3 of 3 in current phase — COMPLETE
-Status: Plan 05-03 complete — 5 CRM dashboard widgets integrados en dashboard/page.tsx, checkpoint visual aprobado
-Last activity: 2026-03-02 — Plan 05-03: Dashboard Widgets + Page Integration — trapecio, KPIs, motivos pérdida, pipeline income, coordinator performance
+Phase: 6 of 7 (CRM Data Wiring Fixes) — In Progress
+Plan: 1 of 1 in current phase — COMPLETE
+Status: Plan 06-01 complete — registradoPorId wired to ContactoLog, PROCEDIMIENTO_REALIZADO added to ETAPAS_FUNNEL and CRMFunnelWidget
+Last activity: 2026-03-02 — Plan 06-01: CRM Data Wiring Fixes — coordinator attribution + clinical stage funnel gap closed
 
-Progress: [██████████████████] 90%
+Progress: [████████████████████] 95%
 
 ## Performance Metrics
 
@@ -48,6 +48,7 @@ Progress: [██████████████████] 90%
 | Phase 04-whatsapp-etapas-crm-automaticas P06 | 3 | 2 tasks | 6 files |
 | Phase 05-dashboard-de-conversion P01 | 15 | 3 tasks | 5 files |
 | Phase 05-dashboard-de-conversion P02 | 2 | 2 tasks | 7 files |
+| Phase 06-crm-data-wiring-fixes P01 | 8 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -111,6 +112,8 @@ Recent decisions affecting current work:
 - [Phase 05-dashboard-de-conversion]: Manual migration SQL chosen over prisma migrate dev — avoids interactive prompt in CI/automation
 - [05-02]: Named import { api } used in all CRM hooks (not default) — api.ts uses export const api, no default export
 - [05-02]: axios params object pattern used in CRM hooks (not string interpolation) — consistent with useCRMMetrics.ts pattern, handles null/undefined safely
+- [06-01]: registradoPorId extracted at controller layer as primitive string, passed as 4th arg to createContacto() — service never receives req object, consistent with Phase 2.1 pattern
+- [06-01]: PROCEDIMIENTO_REALIZADO inserted between PRESUPUESTO_ENVIADO and CONFIRMADO in ETAPAS_FUNNEL — matches clinical sequence and Phase 4 decision already in STATE.md
 
 ### Pending Todos
 
@@ -126,5 +129,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-02
-Stopped at: Completed 05-03-PLAN.md — Dashboard Widgets + Page Integration — todos los planes de Phase 05 completos
+Stopped at: Completed 06-01-PLAN.md — CRM Data Wiring Fixes — registradoPorId attribution + PROCEDIMIENTO_REALIZADO funnel stage
 Resume file: None

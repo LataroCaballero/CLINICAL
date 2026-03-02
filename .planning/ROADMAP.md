@@ -19,7 +19,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 4: WhatsApp + Etapas CRM Automaticas** - Integración mensajeria module y wiring completo de eventos CRM
 - [ ] **Phase 4.1: WA Critical Fixes** [INSERTED] — Gap closure: email channel 404, SECRETARIA null-guard en WhatsappController, BACKEND_URL documentado
 - [ ] **Phase 5: Dashboard de Conversion** - Embudo, ingresos potenciales, motivos de pérdida y performance del coordinador
-- [ ] **Phase 6: CRM Data Wiring Fixes** [INSERTED] — Gap closure: registradoPorId attribution, PROCEDIMIENTO_REALIZADO en embudo
+- [x] **Phase 6: CRM Data Wiring Fixes** [INSERTED] — Gap closure: registradoPorId attribution, PROCEDIMIENTO_REALIZADO en embudo
 - [ ] **Phase 7: UX + Security Hardening** [INSERTED] — Gap closure: Ver todos contactos, HMAC webhook verification
 
 ## Phase Details
@@ -150,7 +150,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 06-01-PLAN.md — Backend: wire `userId` en `createContacto()` (controller → service → Prisma); add `PROCEDIMIENTO_REALIZADO` a `ETAPAS_FUNNEL`; Frontend: add `PROCEDIMIENTO_REALIZADO` a label map de `CRMFunnelWidget`
+- [x] 06-01-PLAN.md — Backend: wire `userId` en `createContacto()` (controller → service → Prisma); add `PROCEDIMIENTO_REALIZADO` a `ETAPAS_FUNNEL`; Frontend: add `PROCEDIMIENTO_REALIZADO` a label map de `CRMFunnelWidget`
 
 ### Phase 7: UX + Security Hardening [INSERTED]
 **Goal**: El historial completo de contactos es accesible para pacientes con más de 5 entradas, y el webhook de WhatsApp verifica la firma HMAC para rechazar payloads no firmados por Meta

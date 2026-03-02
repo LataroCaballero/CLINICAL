@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-02-23)
 ## Current Position
 
 Phase: 5 of 5 (Dashboard de Conversión) — In Progress
-Plan: 2 of 3 in current phase — COMPLETE
-Status: Plan 05-02 complete — 7 frontend data layer files: usePeriodoFilter, PeriodoSelector, 5 TanStack Query CRM hooks
-Last activity: 2026-03-02 — Plan 05-02: CRM Dashboard Frontend Data Layer — periodo filter hook + 5 data hooks
+Plan: 3 of 3 in current phase — COMPLETE
+Status: Plan 05-03 complete — 5 CRM dashboard widgets integrados en dashboard/page.tsx, checkpoint visual aprobado
+Last activity: 2026-03-02 — Plan 05-03: Dashboard Widgets + Page Integration — trapecio, KPIs, motivos pérdida, pipeline income, coordinator performance
 
 Progress: [██████████████████] 90%
 
@@ -126,5 +126,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-02
-Stopped at: Completed 05-02-PLAN.md — CRM Dashboard Frontend Data Layer — usePeriodoFilter, PeriodoSelector, 5 TanStack Query hooks
+Stopped at: Completed 05-03-PLAN.md — Dashboard Widgets + Page Integration — todos los planes de Phase 05 completos
 Resume file: None

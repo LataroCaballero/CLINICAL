@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-23)
 
 **Core value:** Que un cirujano plástico cierre más cirugías — el sistema hace visible qué pacientes seguir, cuándo y cómo, de la manera más automatizada posible
-**Current focus:** Phase 4.1 — WA Critical Fixes — COMPLETE
+**Current focus:** Phase 5 — Dashboard de Conversión — In Progress
 
 ## Current Position
 
-Phase: 4.1 of 5 (WA Critical Fixes gap closure) — COMPLETE
-Plan: 1 of 1 in current phase — COMPLETE
-Status: Plan 04.1-01 complete — SECRETARIA null-guards, email channel removed from modal, BACKEND_URL documented
-Last activity: 2026-03-02 — Plan 04.1-01: WA critical fixes — SECRETARIA role, modal cleanup, env docs
+Phase: 5 of 5 (Dashboard de Conversión) — In Progress
+Plan: 1 of 3 in current phase — COMPLETE
+Status: Plan 05-01 complete — CrmDashboardService with 5 endpoints, registradoPorId on ContactoLog
+Last activity: 2026-03-02 — Plan 05-01: CRM Dashboard Backend API — 5 conversion metric endpoints
 
-Progress: [████████████████] 80%
+Progress: [█████████████████] 85%
 
 ## Performance Metrics
 
@@ -46,6 +46,7 @@ Progress: [████████████████] 80%
 | Phase 04-whatsapp-etapas-crm-automaticas P04 | 2 | 2 tasks | 6 files |
 | Phase 04-whatsapp-etapas-crm-automaticas P05 | 8 | 1 task | 10 files |
 | Phase 04-whatsapp-etapas-crm-automaticas P06 | 3 | 2 tasks | 6 files |
+| Phase 05-dashboard-de-conversion P01 | 15 | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -105,6 +106,8 @@ Recent decisions affecting current work:
 - [04-06]: ActionButton kept for existing shortcuts; WhatsApp button uses shadcn Button for proper disabled prop + tooltip pattern
 - [04-06]: CalendarEvent interface updated in both CalendarGrid.tsx and page.tsx separately — two local declarations, no shared type file
 - [04-05]: Global WA badge placed at bottom-20 right-4 with pointer-events-none — clears DockNav, does not block interactions
+- [Phase 05-dashboard-de-conversion]: registradoPorId uses onDelete: SetNull — retrocompatible, old ContactoLogs appear as Sin asignar in coordinator table
+- [Phase 05-dashboard-de-conversion]: Manual migration SQL chosen over prisma migrate dev — avoids interactive prompt in CI/automation
 
 ### Pending Todos
 

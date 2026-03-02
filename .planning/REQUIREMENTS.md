@@ -55,11 +55,11 @@
 
 ### Dashboard de Conversión (DASH)
 
-- [ ] **DASH-01**: El profesional ve el embudo de conversión con cantidad de pacientes por etapa CRM y tasa de paso entre etapas
-- [ ] **DASH-02**: El profesional ve el ingreso potencial del pipeline (suma de presupuestos activos por etapa)
-- [ ] **DASH-03**: El profesional ve los principales motivos de pérdida de pacientes con porcentajes
-- [ ] **DASH-04**: El profesional ve métricas del período: nuevos pacientes, cirugías cerradas, tasa de conversión general
-- [ ] **DASH-05**: El coordinador ve su performance de seguimiento: interacciones registradas, pacientes contactados esta semana
+- [x] **DASH-01**: El profesional ve el embudo de conversión con cantidad de pacientes por etapa CRM y tasa de paso entre etapas
+- [x] **DASH-02**: El profesional ve el ingreso potencial del pipeline (suma de presupuestos activos por etapa)
+- [x] **DASH-03**: El profesional ve los principales motivos de pérdida de pacientes con porcentajes
+- [x] **DASH-04**: El profesional ve métricas del período: nuevos pacientes, cirugías cerradas, tasa de conversión general
+- [x] **DASH-05**: El coordinador ve su performance de seguimiento: interacciones registradas, pacientes contactados esta semana
 
 ## v2 Requirements
 
@@ -122,11 +122,11 @@
 | CRM-01 | Phase 4 | Complete |
 | CRM-02 | Phase 4 | Complete |
 | CRM-05 | Phase 4 | Complete |
-| DASH-01 | Phase 5 | Pending |
-| DASH-02 | Phase 5 | Pending |
-| DASH-03 | Phase 5 | Pending |
-| DASH-04 | Phase 5 | Pending |
-| DASH-05 | Phase 5 | Pending |
+| DASH-01 | Phase 5 | Complete |
+| DASH-02 | Phase 5 | Complete |
+| DASH-03 | Phase 5 | Complete |
+| DASH-04 | Phase 5 | Complete |
+| DASH-05 | Phase 5 | Complete |
 
 **Coverage:**
 - v1 requirements: 35 total

@@ -14,8 +14,8 @@
 
 ### Log de Contactos (LOG)
 
-- [x] **LOG-01**: El coordinador puede registrar una interacción con un paciente (llamada, mensaje, consulta presencial) con fecha, tipo y nota
-- [x] **LOG-02**: El perfil del paciente muestra el historial completo de interacciones ordenado cronológicamente
+- [ ] **LOG-01**: El coordinador puede registrar una interacción con un paciente (llamada, mensaje, consulta presencial) con fecha, tipo y nota
+- [ ] **LOG-02**: El perfil del paciente muestra el historial completo de interacciones ordenado cronológicamente
 - [x] **LOG-03**: Al registrar una interacción, el coordinador puede actualizar la etapa CRM y temperatura del paciente en el mismo paso
 - [x] **LOG-04**: El sistema muestra cuántos días hace que no hay interacción con cada paciente
 
@@ -42,7 +42,7 @@
 - [ ] **WA-01**: El coordinador puede enviar un mensaje WhatsApp a un paciente desde su perfil usando templates aprobados por Meta *(partial — email channel 404, Phase 4.1)*
 - [x] **WA-02**: El sistema muestra el estado de entrega de cada mensaje enviado (enviado, entregado, leído, fallido)
 - [x] **WA-03**: Los mensajes recibidos de pacientes por WhatsApp se registran en el log de contactos del paciente
-- [x] **WA-04**: El sistema maneja correctamente los webhooks de Meta para actualizar el estado de mensajes en tiempo real
+- [ ] **WA-04**: El sistema maneja correctamente los webhooks de Meta para actualizar el estado de mensajes en tiempo real
 - [ ] **WA-05**: Si un mensaje falla por WhatsApp, el sistema notifica al coordinador con opción de reintentar o enviar por email *(partial — SECRETARIA role broken, Phase 4.1)*
 
 ### Etapas CRM Automáticas (CRM)
@@ -55,11 +55,11 @@
 
 ### Dashboard de Conversión (DASH)
 
-- [x] **DASH-01**: El profesional ve el embudo de conversión con cantidad de pacientes por etapa CRM y tasa de paso entre etapas
+- [ ] **DASH-01**: El profesional ve el embudo de conversión con cantidad de pacientes por etapa CRM y tasa de paso entre etapas
 - [x] **DASH-02**: El profesional ve el ingreso potencial del pipeline (suma de presupuestos activos por etapa)
 - [x] **DASH-03**: El profesional ve los principales motivos de pérdida de pacientes con porcentajes
 - [x] **DASH-04**: El profesional ve métricas del período: nuevos pacientes, cirugías cerradas, tasa de conversión general
-- [x] **DASH-05**: El coordinador ve su performance de seguimiento: interacciones registradas, pacientes contactados esta semana
+- [ ] **DASH-05**: El coordinador ve su performance de seguimiento: interacciones registradas, pacientes contactados esta semana
 
 ## v2 Requirements
 
@@ -96,8 +96,8 @@
 | INFRA-02 | Phase 1 | Complete |
 | INFRA-03 | Phase 1 | Complete |
 | INFRA-04 | Phase 1 | Pending |
-| LOG-01 | Phase 2.1 | Complete |
-| LOG-02 | Phase 2 | Complete |
+| LOG-01 | Phase 6 | Pending |
+| LOG-02 | Phase 7 | Pending |
 | LOG-03 | Phase 2 | Complete |
 | LOG-04 | Phase 2 | Complete |
 | ACCION-01 | Phase 2 | Complete |
@@ -117,20 +117,21 @@
 | WA-01 | Phase 4.1 | Pending |
 | WA-02 | Phase 4 | Complete |
 | WA-03 | Phase 4 | Complete |
-| WA-04 | Phase 4 | Complete |
+| WA-04 | Phase 7 | Pending |
 | WA-05 | Phase 4.1 | Pending |
 | CRM-01 | Phase 4 | Complete |
 | CRM-02 | Phase 4 | Complete |
 | CRM-05 | Phase 4 | Complete |
-| DASH-01 | Phase 5 | Complete |
+| DASH-01 | Phase 6 | Pending |
 | DASH-02 | Phase 5 | Complete |
 | DASH-03 | Phase 5 | Complete |
 | DASH-04 | Phase 5 | Complete |
-| DASH-05 | Phase 5 | Complete |
+| DASH-05 | Phase 6 | Pending |
 
 **Coverage:**
 - v1 requirements: 35 total
 - Mapped to phases: 35
+- Pending (gap closure phases 6-7): 5 (LOG-01, LOG-02, WA-04, DASH-01, DASH-05)
 - Unmapped: 0
 
 ---

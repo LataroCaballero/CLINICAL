@@ -19,6 +19,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 4: WhatsApp + Etapas CRM Automaticas** - Integración mensajeria module y wiring completo de eventos CRM
 - [ ] **Phase 4.1: WA Critical Fixes** [INSERTED] — Gap closure: email channel 404, SECRETARIA null-guard en WhatsappController, BACKEND_URL documentado
 - [ ] **Phase 5: Dashboard de Conversion** - Embudo, ingresos potenciales, motivos de pérdida y performance del coordinador
+- [ ] **Phase 6: CRM Data Wiring Fixes** [INSERTED] — Gap closure: registradoPorId attribution, PROCEDIMIENTO_REALIZADO en embudo
+- [ ] **Phase 7: UX + Security Hardening** [INSERTED] — Gap closure: Ver todos contactos, HMAC webhook verification
 
 ## Phase Details
 
@@ -135,6 +137,34 @@ Plans:
 - [ ] 05-02-PLAN.md — Frontend: usePeriodoFilter + PeriodoSelector + 5 hooks TanStack Query para los nuevos endpoints
 - [ ] 05-03-PLAN.md — Frontend: 5 widgets del dashboard (CRMFunnelWidget trapecio, CRMKpiCards con período, LossReasonsWidget, PipelineIncomeWidget, CoordinatorPerformanceWidget) + integración en page.tsx
 
+### Phase 6: CRM Data Wiring Fixes [INSERTED]
+**Goal**: Los tres gaps de datos críticos del audit v1.0 quedan cerrados: `registradoPorId` se escribe en cada `ContactoLog` para habilitar atribución real por coordinador, y `PROCEDIMIENTO_REALIZADO` aparece en el embudo de conversión del dashboard
+**Gap Closure:** Closes MISSING-NEW-1, MISSING-NEW-2 from v1.0 re-audit
+**Requirements**: LOG-01, DASH-05, DASH-01
+**Success Criteria** (what must be TRUE):
+  1. Al crear un `ContactoLog` vía `POST /pacientes/:id/contactos`, el campo `registradoPorId` queda persistido con el `userId` del llamante
+  2. `getCoordinatorPerformance()` retorna filas reales por coordinador — no una sola fila "Sin asignar"
+  3. `CoordinatorPerformanceWidget` muestra breakdown por coordinador con interacciones y pacientes contactados
+  4. El embudo de conversión incluye la etapa `PROCEDIMIENTO_REALIZADO` entre `PRESUPUESTO_ENVIADO` y `CONFIRMADO`
+  5. `CRMFunnelWidget` muestra label correcto para `PROCEDIMIENTO_REALIZADO`
+**Plans**: 1 plan
+
+Plans:
+- [ ] 06-01-PLAN.md — Backend: wire `userId` en `createContacto()` (controller → service → Prisma); add `PROCEDIMIENTO_REALIZADO` a `ETAPAS_FUNNEL`; Frontend: add `PROCEDIMIENTO_REALIZADO` a label map de `CRMFunnelWidget`
+
+### Phase 7: UX + Security Hardening [INSERTED]
+**Goal**: El historial completo de contactos es accesible para pacientes con más de 5 entradas, y el webhook de WhatsApp verifica la firma HMAC para rechazar payloads no firmados por Meta
+**Gap Closure:** Closes LOG-02, WA-04 from v1.0 re-audit
+**Requirements**: LOG-02, WA-04
+**Success Criteria** (what must be TRUE):
+  1. El botón "Ver todos (N)" en `ContactosSection` abre una vista completa con todos los contactos del paciente (no solo los primeros 5)
+  2. `POST /webhook/whatsapp` rechaza con 403 cualquier request cuya firma `x-hub-signature-256` no coincida con el HMAC-SHA256 del body usando el App Secret de Meta
+  3. Los webhooks legítimos de Meta siguen procesándose correctamente
+**Plans**: 1 plan
+
+Plans:
+- [ ] 07-01-PLAN.md — Frontend: implementar `onClick` en "Ver todos" en `ContactosSection.tsx` (modal/Sheet con historial completo paginado); Backend: añadir verificación HMAC `x-hub-signature-256` en `whatsapp-webhook.controller.ts`
+
 ## Progress
 
 **Execution Order:**
@@ -149,6 +179,8 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 4. WhatsApp + Etapas CRM Automaticas | 6/6 | Complete | 2026-02-28 |
 | 4.1. WA Critical Fixes | 0/1 | Not started | - |
 | 5. Dashboard de Conversion | 2/3 | In Progress|  |
+| 6. CRM Data Wiring Fixes | 0/1 | Not started | - |
+| 7. UX + Security Hardening | 0/1 | Not started | - |
 
 ---
 

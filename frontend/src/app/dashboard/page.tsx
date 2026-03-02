@@ -10,11 +10,16 @@ import ActiveSessionBanner from "./components/ActiveSessionBanner";
 import QuickActionsWidget from "./components/QuickActionsWidget";
 import CRMKpiCards from "./components/CRMKpiCards";
 import CRMFunnelWidget from "./components/CRMFunnelWidget";
+import LossReasonsWidget from "./components/LossReasonsWidget";
+import PipelineIncomeWidget from "./components/PipelineIncomeWidget";
+import CoordinatorPerformanceWidget from "./components/CoordinatorPerformanceWidget";
 import { useEffectiveProfessionalId } from "@/hooks/useEffectiveProfessionalId";
 import { useUIStore } from "@/lib/stores/useUIStore";
 import { useLiveTurnoStore } from "@/store/live-turno.store";
 import { useReportesDashboard } from "@/hooks/useReportesDashboard";
 import { useFinanzasDashboard } from "@/hooks/useFinanzas";
+import { usePeriodoFilter } from "@/hooks/usePeriodoFilter";
+import { PeriodoSelector } from "@/components/crm/PeriodoSelector";
 import { toast } from "sonner";
 
 function formatARS(n: number): string {
@@ -29,6 +34,7 @@ export default function DashboardPage() {
   const { focusModeEnabled, setFocusMode } = useUIStore();
   const session = useLiveTurnoStore((state) => state.session);
   const isMinimized = useLiveTurnoStore((state) => state.isMinimized);
+  const [kpiPeriodo, setKpiPeriodo] = usePeriodoFilter("crm-kpis-periodo", "mes");
 
   // Track whether focus mode was auto-activated by a LiveTurno session
   const autoActivatedRef = useRef(false);
@@ -88,15 +94,32 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
             {/* Left column: KPIs + Appointments */}
             <div className="md:col-span-8 space-y-6">
-              {/* KPIs de conversión CRM — primera fila, prioridad */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <CRMKpiCards isLoading={kpisLoading} />
+              {/* Bloque KPIs CRM con su selector de período propio */}
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-semibold text-gray-600">
+                    Métricas de conversión
+                  </h3>
+                  <PeriodoSelector value={kpiPeriodo} onChange={setKpiPeriodo} />
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <CRMKpiCards isLoading={kpisLoading} periodo={kpiPeriodo} />
+                </div>
               </div>
 
-              {/* Mini-embudo del mes */}
+              {/* Mini-embudo del mes — trapecio */}
               <CRMFunnelWidget />
 
-              {/* KPIs financieros — segunda fila */}
+              {/* Dashboard de conversión — segunda fila */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <LossReasonsWidget />
+                <PipelineIncomeWidget />
+              </div>
+
+              {/* Performance del coordinador */}
+              <CoordinatorPerformanceWidget />
+
+              {/* KPIs financieros — tercera fila */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <KpiCard
                   title="Fact. mensual"

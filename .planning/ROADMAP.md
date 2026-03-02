@@ -128,11 +128,12 @@ Plans:
   3. El profesional ve los principales motivos de pérdida con porcentajes sobre el total de perdidos en el período seleccionado
   4. El profesional ve métricas del período: nuevos pacientes, cirugías cerradas y tasa de conversión general
   5. El coordinador ve su performance de seguimiento: interacciones registradas y pacientes contactados en la semana
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 05-01: Backend — endpoints de métricas de conversión (embudo, ingresos potenciales, motivos pérdida, performance coordinador)
-- [ ] 05-02: Frontend — dashboard de conversión completo (widgets embudo, KPIs, motivos pérdida, tabla performance)
+- [ ] 05-01-PLAN.md — Backend: CrmDashboardService + 5 endpoints /reportes/crm/* (funnel, kpis, motivos-perdida, pipeline-income, coordinator-performance)
+- [ ] 05-02-PLAN.md — Frontend: usePeriodoFilter + PeriodoSelector + 5 hooks TanStack Query para los nuevos endpoints
+- [ ] 05-03-PLAN.md — Frontend: 5 widgets del dashboard (CRMFunnelWidget trapecio, CRMKpiCards con período, LossReasonsWidget, PipelineIncomeWidget, CoordinatorPerformanceWidget) + integración en page.tsx
 
 ## Progress
 

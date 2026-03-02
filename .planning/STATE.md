@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-02-23)
 
 **Core value:** Que un cirujano plástico cierre más cirugías — el sistema hace visible qué pacientes seguir, cuándo y cómo, de la manera más automatizada posible
-**Current focus:** Phase 4 — WhatsApp + CRM Automaticas
+**Current focus:** Phase 4.1 — WA Critical Fixes — COMPLETE
 
 ## Current Position
 
-Phase: 4 of 5 (WhatsApp + Etapas CRM Automaticas) — COMPLETE
-Plan: 6 of 6 in current phase — COMPLETE
-Status: Plan 04-06 complete — WA send shortcuts in PacienteDetails, PresupuestosView, AppointmentDetailModal; CalendarGrid + page.tsx mapping updated
-Last activity: 2026-02-28 — Plan 04-06: WA entry points — patient profile + turno + presupuesto send shortcuts
+Phase: 4.1 of 5 (WA Critical Fixes gap closure) — COMPLETE
+Plan: 1 of 1 in current phase — COMPLETE
+Status: Plan 04.1-01 complete — SECRETARIA null-guards, email channel removed from modal, BACKEND_URL documented
+Last activity: 2026-03-02 — Plan 04.1-01: WA critical fixes — SECRETARIA role, modal cleanup, env docs
 
 Progress: [████████████████] 80%
 

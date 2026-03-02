@@ -1,12 +1,28 @@
-import { Body, Controller, Get, Param, Post, Req } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  Logger,
+  NotFoundException,
+  Param,
+  Post,
+  Req,
+} from '@nestjs/common';
 import { WhatsappService } from './whatsapp.service';
 import { Auth } from '../auth/decorators/auth.decorator';
 import { SaveWabaConfigDto } from './dto/save-waba-config.dto';
 import { SendWaMessageDto, SendWaFreeTextDto } from './dto/send-wa-message.dto';
+import { PrismaService } from '../../prisma/prisma.service';
 
 @Controller('whatsapp')
 export class WhatsappController {
-  constructor(private readonly whatsappService: WhatsappService) {}
+  private readonly logger = new Logger(WhatsappController.name);
+
+  constructor(
+    private readonly whatsappService: WhatsappService,
+    private readonly prisma: PrismaService,
+  ) {}
 
   /**
    * POST /whatsapp/test-queue
@@ -48,11 +64,17 @@ export class WhatsappController {
   /**
    * GET /whatsapp/templates
    * Returns approved WhatsApp message templates from Meta Business API.
+   * SECRETARIA: returns 400 — no profesionalId in token, must use patient-scoped endpoints.
    */
   @Get('templates')
   @Auth('ADMIN', 'PROFESIONAL', 'SECRETARIA')
   async getTemplates(@Req() req: any) {
-    const profesionalId = req.user.profesionalId as string;
+    let profesionalId = req.user?.profesionalId as string | null;
+    if (!profesionalId) {
+      throw new BadRequestException(
+        'SECRETARIA debe estar asociada a un profesional para listar templates',
+      );
+    }
     return this.whatsappService.listApprovedTemplates(profesionalId);
   }
 
@@ -63,7 +85,20 @@ export class WhatsappController {
   @Get('mensajes/:pacienteId')
   @Auth('ADMIN', 'PROFESIONAL', 'SECRETARIA')
   async getThread(@Req() req: any, @Param('pacienteId') pacienteId: string) {
-    const profesionalId = req.user.profesionalId as string;
+    let profesionalId = req.user?.profesionalId as string | null;
+    if (!profesionalId) {
+      const paciente = await this.prisma.paciente.findUnique({
+        where: { id: pacienteId },
+        select: { profesionalId: true },
+      });
+      if (!paciente) throw new NotFoundException('Paciente no encontrado');
+      profesionalId = paciente.profesionalId;
+    }
+    if (!profesionalId) {
+      throw new BadRequestException(
+        'No se pudo determinar el profesional asociado al paciente',
+      );
+    }
     return this.whatsappService.getMessageThread(profesionalId, pacienteId);
   }
 
@@ -74,7 +109,20 @@ export class WhatsappController {
   @Post('mensajes')
   @Auth('ADMIN', 'PROFESIONAL', 'SECRETARIA')
   async sendMessage(@Req() req: any, @Body() dto: SendWaMessageDto) {
-    const profesionalId = req.user.profesionalId as string;
+    let profesionalId = req.user?.profesionalId as string | null;
+    if (!profesionalId) {
+      const paciente = await this.prisma.paciente.findUnique({
+        where: { id: dto.pacienteId },
+        select: { profesionalId: true },
+      });
+      if (!paciente) throw new NotFoundException('Paciente no encontrado');
+      profesionalId = paciente.profesionalId;
+    }
+    if (!profesionalId) {
+      throw new BadRequestException(
+        'No se pudo determinar el profesional asociado al paciente',
+      );
+    }
     return this.whatsappService.sendTemplateMessage(profesionalId, dto);
   }
 
@@ -85,7 +133,20 @@ export class WhatsappController {
   @Post('mensajes/free-text')
   @Auth('ADMIN', 'PROFESIONAL', 'SECRETARIA')
   async sendFreeText(@Req() req: any, @Body() dto: SendWaFreeTextDto) {
-    const profesionalId = req.user.profesionalId as string;
+    let profesionalId = req.user?.profesionalId as string | null;
+    if (!profesionalId) {
+      const paciente = await this.prisma.paciente.findUnique({
+        where: { id: dto.pacienteId },
+        select: { profesionalId: true },
+      });
+      if (!paciente) throw new NotFoundException('Paciente no encontrado');
+      profesionalId = paciente.profesionalId;
+    }
+    if (!profesionalId) {
+      throw new BadRequestException(
+        'No se pudo determinar el profesional asociado al paciente',
+      );
+    }
     return this.whatsappService.sendFreeText(
       profesionalId,
       dto.pacienteId,
@@ -97,11 +158,15 @@ export class WhatsappController {
    * GET /whatsapp/unread
    * Returns {pacienteId: unreadCount} map for the authenticated profesional.
    * Unread = inbound messages received after the last outbound message per patient.
+   * SECRETARIA: returns {} immediately — no crash, no NotFoundException.
    */
   @Get('unread')
   @Auth('ADMIN', 'PROFESIONAL', 'SECRETARIA')
   async getUnreadCounts(@Req() req: any): Promise<Record<string, number>> {
-    const profesionalId = req.user.profesionalId as string;
+    const profesionalId = req.user?.profesionalId as string | null;
+    if (!profesionalId) {
+      return {};
+    }
     return this.whatsappService.getUnreadCounts(profesionalId);
   }
 
@@ -112,7 +177,20 @@ export class WhatsappController {
   @Post('mensajes/:id/retry')
   @Auth('ADMIN', 'PROFESIONAL', 'SECRETARIA')
   async retryMessage(@Req() req: any, @Param('id') mensajeId: string) {
-    const profesionalId = req.user.profesionalId as string;
+    let profesionalId = req.user?.profesionalId as string | null;
+    if (!profesionalId) {
+      const mensaje = await this.prisma.mensajeWhatsApp.findUnique({
+        where: { id: mensajeId },
+        select: { profesionalId: true },
+      });
+      if (!mensaje) throw new NotFoundException('Mensaje no encontrado');
+      profesionalId = mensaje.profesionalId;
+    }
+    if (!profesionalId) {
+      throw new BadRequestException(
+        'No se pudo determinar el profesional asociado al mensaje',
+      );
+    }
     return this.whatsappService.retryMessage(profesionalId, mensajeId);
   }
 
@@ -127,11 +205,26 @@ export class WhatsappController {
     @Param('presupuestoId') presupuestoId: string,
     @Body() body: { pacienteId: string },
   ) {
-    const profesionalId = req.user.profesionalId as string;
-    const backendUrl =
-      process.env.BACKEND_URL ??
-      process.env.NEXT_PUBLIC_API_URL ??
-      'http://localhost:3001';
+    let profesionalId = req.user?.profesionalId as string | null;
+    if (!profesionalId) {
+      const paciente = await this.prisma.paciente.findUnique({
+        where: { id: body.pacienteId },
+        select: { profesionalId: true },
+      });
+      if (!paciente) throw new NotFoundException('Paciente no encontrado');
+      profesionalId = paciente.profesionalId;
+    }
+    if (!profesionalId) {
+      throw new BadRequestException(
+        'No se pudo determinar el profesional asociado al paciente',
+      );
+    }
+    const backendUrl = process.env.BACKEND_URL ?? 'http://localhost:3001';
+    if (!process.env.BACKEND_URL) {
+      this.logger.warn(
+        'BACKEND_URL is not set — using http://localhost:3001. Meta cannot fetch PDFs from localhost in production.',
+      );
+    }
     const pdfPublicUrl = `${backendUrl}/presupuestos/public/${presupuestoId}/pdf`;
     return this.whatsappService.sendPresupuestoPdf(
       profesionalId,

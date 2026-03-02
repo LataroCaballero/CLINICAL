@@ -120,7 +120,8 @@ export class PacientesController {
       );
     }
 
-    return this.pacientesService.createContacto(pacienteId, profesionalId, dto);
+    const registradoPorId = req.user?.userId as string | undefined;
+    return this.pacientesService.createContacto(pacienteId, profesionalId, dto, registradoPorId);
   }
 
   // Obtener por ID

@@ -767,6 +767,7 @@ export class PacientesService {
     pacienteId: string,
     profesionalId: string,
     dto: CreateContactoDto,
+    registradoPorId?: string,
   ) {
     return this.prisma.$transaction(async (tx) => {
       const contacto = await tx.contactoLog.create({
@@ -781,6 +782,7 @@ export class PacientesService {
           proximaAccionFecha: dto.proximaAccionFecha
             ? new Date(dto.proximaAccionFecha)
             : null,
+          registradoPorId: registradoPorId ?? null,
         },
       });
 

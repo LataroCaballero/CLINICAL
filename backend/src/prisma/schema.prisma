@@ -38,6 +38,7 @@ model Usuario {
   mensajesEnviados      MensajeInterno[]        @relation("MensajesEnviados")
   mensajesLeidos        MensajeLectura[]        @relation("MensajesLeidos")
   reportesSuscripciones ReporteSuscripcion[]
+  contactosRegistrados  ContactoLog[]       @relation("ContactoLogRegistradoPor")
 }
 
 model ReporteSuscripcion {
@@ -1040,6 +1041,9 @@ model ContactoLog {
   temperaturaPost     TemperaturaPaciente?
   proximaAccionFecha  DateTime?
   createdAt           DateTime             @default(now())
+
+  registradoPorId     String?
+  registradoPor       Usuario?   @relation("ContactoLogRegistradoPor", fields: [registradoPorId], references: [id], onDelete: SetNull)
 
   paciente    Paciente    @relation(fields: [pacienteId], references: [id], onDelete: Cascade)
   profesional Profesional @relation(fields: [profesionalId], references: [id])

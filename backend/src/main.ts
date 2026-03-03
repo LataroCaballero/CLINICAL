@@ -12,7 +12,7 @@ import { PrismaClientExceptionFilter } from './prisma-client-exception/prisma-cl
 async function bootstrap() {
   console.log('DATABASE_URL desde Nest:', process.env.DATABASE_URL);
 
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { rawBody: true });
 
   const allowedOrigins = [
     'http://localhost:3000',

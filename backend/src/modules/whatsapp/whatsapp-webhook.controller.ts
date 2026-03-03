@@ -1,8 +1,9 @@
-import { Controller, Get, Post, Query, Body, Res, HttpCode, Logger } from '@nestjs/common';
+import { Controller, Get, Post, Query, Body, Res, HttpCode, Logger, UseGuards } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { Response } from 'express';
 import { WHATSAPP_QUEUE } from './processors/whatsapp-message.processor';
+import { WhatsappHmacGuard } from './guards/whatsapp-hmac.guard';
 
 // No @Auth() decorator — public endpoints required by Meta webhook verification
 @Controller()
@@ -46,6 +47,7 @@ export class WhatsappWebhookController {
    */
   @Post('webhook/whatsapp')
   @HttpCode(200)
+  @UseGuards(WhatsappHmacGuard)
   async handleWebhook(@Body() body: any): Promise<string> {
     // Enqueue async — NEVER block here; Meta requires 200 within 20s
     await this.whatsappQueue.add('process-webhook', body, {

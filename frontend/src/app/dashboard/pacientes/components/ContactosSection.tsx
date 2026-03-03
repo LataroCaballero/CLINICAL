@@ -1,4 +1,5 @@
 "use client";
+import { useState } from "react";
 import { Phone, MessageSquare, MapPin, Clock } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
@@ -27,7 +28,8 @@ export function ContactosSection({
   pacienteId,
   pacienteNombre,
 }: ContactosSectionProps) {
-  const { data, isLoading } = useContactos(pacienteId, 5);
+  const [showAll, setShowAll] = useState(false);
+  const { data, isLoading } = useContactos(pacienteId, showAll ? undefined : 5);
 
   if (isLoading) {
     return (
@@ -106,7 +108,7 @@ export function ContactosSection({
                     </span>
                   </div>
                   {c.nota && (
-                    <p className="text-xs text-muted-foreground truncate mt-0.5">
+                    <p className={`text-xs text-muted-foreground mt-0.5 ${showAll ? "whitespace-pre-wrap break-words" : "truncate"}`}>
                       {c.nota}
                     </p>
                   )}
@@ -115,15 +117,22 @@ export function ContactosSection({
             );
           })}
 
-          {total > 5 && (
+          {total > 5 && !showAll && (
             <button
               type="button"
               className="w-full text-xs text-primary hover:underline py-1"
-              onClick={() => {
-                /* future: expand or open full-page view */
-              }}
+              onClick={() => setShowAll(true)}
             >
               Ver todos ({total})
+            </button>
+          )}
+          {showAll && total > 5 && (
+            <button
+              type="button"
+              className="w-full text-xs text-muted-foreground hover:underline py-1"
+              onClick={() => setShowAll(false)}
+            >
+              Mostrar menos
             </button>
           )}
         </div>

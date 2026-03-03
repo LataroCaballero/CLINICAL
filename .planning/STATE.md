@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-23)
 
 **Core value:** Que un cirujano plástico cierre más cirugías — el sistema hace visible qué pacientes seguir, cuándo y cómo, de la manera más automatizada posible
-**Current focus:** Phase 6 — CRM Data Wiring Fixes — In Progress
+**Current focus:** Phase 7 — UX + Security Hardening — COMPLETE (Milestone CRM Conversión v1 complete)
 
 ## Current Position
 
-Phase: 6 of 7 (CRM Data Wiring Fixes) — In Progress
+Phase: 7 of 7 (UX + Security Hardening) — COMPLETE
 Plan: 1 of 1 in current phase — COMPLETE
-Status: Plan 06-01 complete — registradoPorId wired to ContactoLog, PROCEDIMIENTO_REALIZADO added to ETAPAS_FUNNEL and CRMFunnelWidget
-Last activity: 2026-03-02 — Plan 06-01: CRM Data Wiring Fixes — coordinator attribution + clinical stage funnel gap closed
+Status: Plan 07-01 complete — ContactosSection expand toggle + WhatsApp HMAC-SHA256 guard. All 35 v1 requirements fulfilled.
+Last activity: 2026-03-03 — Plan 07-01: UX + Security Hardening — LOG-02 ContactosSection expand + WA-04 HMAC guard
 
-Progress: [████████████████████] 95%
+Progress: [████████████████████] 100%
 
 ## Performance Metrics
 
@@ -49,6 +49,7 @@ Progress: [████████████████████] 95%
 | Phase 05-dashboard-de-conversion P01 | 15 | 3 tasks | 5 files |
 | Phase 05-dashboard-de-conversion P02 | 2 | 2 tasks | 7 files |
 | Phase 06-crm-data-wiring-fixes P01 | 8 | 2 tasks | 4 files |
+| Phase 07-ux-security-hardening P01 | 2 | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -114,6 +115,9 @@ Recent decisions affecting current work:
 - [05-02]: axios params object pattern used in CRM hooks (not string interpolation) — consistent with useCRMMetrics.ts pattern, handles null/undefined safely
 - [06-01]: registradoPorId extracted at controller layer as primitive string, passed as 4th arg to createContacto() — service never receives req object, consistent with Phase 2.1 pattern
 - [06-01]: PROCEDIMIENTO_REALIZADO inserted between PRESUPUESTO_ENVIADO and CONFIRMADO in ETAPAS_FUNNEL — matches clinical sequence and Phase 4 decision already in STATE.md
+- [Phase 07-01]: WhatsappHmacGuard applied to @Post only — Meta GET challenge does not carry HMAC, unguarded by design
+- [Phase 07-01]: timingSafeEqual with length pre-check — prevents RangeError and timing-based signature oracle attacks
+- [Phase 07-01]: ContactosSection in-place expand (showAll state) avoids Dialog/Sheet z-index conflict documented in STATE.md [02-02]
 
 ### Pending Todos
 
@@ -128,6 +132,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-02
-Stopped at: Completed 06-01-PLAN.md — CRM Data Wiring Fixes — registradoPorId attribution + PROCEDIMIENTO_REALIZADO funnel stage
+Last session: 2026-03-03
+Stopped at: Completed 07-01-PLAN.md — UX + Security Hardening — ContactosSection expand toggle + WhatsApp HMAC guard — Milestone CRM Conversión v1 complete (all 35 requirements)
 Resume file: None

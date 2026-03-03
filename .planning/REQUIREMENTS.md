@@ -15,7 +15,7 @@
 ### Log de Contactos (LOG)
 
 - [x] **LOG-01**: El coordinador puede registrar una interacción con un paciente (llamada, mensaje, consulta presencial) con fecha, tipo y nota
-- [ ] **LOG-02**: El perfil del paciente muestra el historial completo de interacciones ordenado cronológicamente
+- [x] **LOG-02**: El perfil del paciente muestra el historial completo de interacciones ordenado cronológicamente
 - [x] **LOG-03**: Al registrar una interacción, el coordinador puede actualizar la etapa CRM y temperatura del paciente en el mismo paso
 - [x] **LOG-04**: El sistema muestra cuántos días hace que no hay interacción con cada paciente
 
@@ -42,7 +42,7 @@
 - [ ] **WA-01**: El coordinador puede enviar un mensaje WhatsApp a un paciente desde su perfil usando templates aprobados por Meta *(partial — email channel 404, Phase 4.1)*
 - [x] **WA-02**: El sistema muestra el estado de entrega de cada mensaje enviado (enviado, entregado, leído, fallido)
 - [x] **WA-03**: Los mensajes recibidos de pacientes por WhatsApp se registran en el log de contactos del paciente
-- [ ] **WA-04**: El sistema maneja correctamente los webhooks de Meta para actualizar el estado de mensajes en tiempo real
+- [x] **WA-04**: El sistema maneja correctamente los webhooks de Meta para actualizar el estado de mensajes en tiempo real
 - [ ] **WA-05**: Si un mensaje falla por WhatsApp, el sistema notifica al coordinador con opción de reintentar o enviar por email *(partial — SECRETARIA role broken, Phase 4.1)*
 
 ### Etapas CRM Automáticas (CRM)
@@ -97,7 +97,7 @@
 | INFRA-03 | Phase 1 | Complete |
 | INFRA-04 | Phase 1 | Pending |
 | LOG-01 | Phase 6 | Complete |
-| LOG-02 | Phase 7 | Pending |
+| LOG-02 | Phase 7 | Complete |
 | LOG-03 | Phase 2 | Complete |
 | LOG-04 | Phase 2 | Complete |
 | ACCION-01 | Phase 2 | Complete |
@@ -117,7 +117,7 @@
 | WA-01 | Phase 4.1 | Pending |
 | WA-02 | Phase 4 | Complete |
 | WA-03 | Phase 4 | Complete |
-| WA-04 | Phase 7 | Pending |
+| WA-04 | Phase 7 | Complete |
 | WA-05 | Phase 4.1 | Pending |
 | CRM-01 | Phase 4 | Complete |
 | CRM-02 | Phase 4 | Complete |

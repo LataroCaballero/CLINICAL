@@ -20,7 +20,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 4.1: WA Critical Fixes** [INSERTED] — Gap closure: email channel 404, SECRETARIA null-guard en WhatsappController, BACKEND_URL documentado
 - [ ] **Phase 5: Dashboard de Conversion** - Embudo, ingresos potenciales, motivos de pérdida y performance del coordinador
 - [x] **Phase 6: CRM Data Wiring Fixes** [INSERTED] — Gap closure: registradoPorId attribution, PROCEDIMIENTO_REALIZADO en embudo
-- [ ] **Phase 7: UX + Security Hardening** [INSERTED] — Gap closure: Ver todos contactos, HMAC webhook verification
+- [x] **Phase 7: UX + Security Hardening** [INSERTED] — Gap closure: Ver todos contactos, HMAC webhook verification (completed 2026-03-03)
 
 ## Phase Details
 
@@ -180,7 +180,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 4.1. WA Critical Fixes | 0/1 | Not started | - |
 | 5. Dashboard de Conversion | 2/3 | In Progress|  |
 | 6. CRM Data Wiring Fixes | 1/1 | Complete | 2026-03-02 |
-| 7. UX + Security Hardening | 0/1 | Not started | - |
+| 7. UX + Security Hardening | 1/1 | Complete   | 2026-03-03 |
 
 ---
 

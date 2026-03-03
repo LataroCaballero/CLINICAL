@@ -157,13 +157,13 @@ Plans:
 **Gap Closure:** Closes LOG-02, WA-04 from v1.0 re-audit
 **Requirements**: LOG-02, WA-04
 **Success Criteria** (what must be TRUE):
-  1. El botón "Ver todos (N)" en `ContactosSection` abre una vista completa con todos los contactos del paciente (no solo los primeros 5)
+  1. El botón "Ver todos (N)" en `ContactosSection` expande la lista en el lugar mostrando todos los contactos del paciente (no solo los primeros 5)
   2. `POST /webhook/whatsapp` rechaza con 403 cualquier request cuya firma `x-hub-signature-256` no coincida con el HMAC-SHA256 del body usando el App Secret de Meta
   3. Los webhooks legítimos de Meta siguen procesándose correctamente
 **Plans**: 1 plan
 
 Plans:
-- [ ] 07-01-PLAN.md — Frontend: implementar `onClick` en "Ver todos" en `ContactosSection.tsx` (modal/Sheet con historial completo paginado); Backend: añadir verificación HMAC `x-hub-signature-256` en `whatsapp-webhook.controller.ts`
+- [ ] 07-01-PLAN.md — Frontend: showAll toggle in-place en ContactosSection (LOG-02) + Backend: WhatsappHmacGuard + rawBody:true en main.ts (WA-04)
 
 ## Progress
 
@@ -179,7 +179,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 4. WhatsApp + Etapas CRM Automaticas | 6/6 | Complete | 2026-02-28 |
 | 4.1. WA Critical Fixes | 0/1 | Not started | - |
 | 5. Dashboard de Conversion | 2/3 | In Progress|  |
-| 6. CRM Data Wiring Fixes | 0/1 | Not started | - |
+| 6. CRM Data Wiring Fixes | 1/1 | Complete | 2026-03-02 |
 | 7. UX + Security Hardening | 0/1 | Not started | - |
 
 ---

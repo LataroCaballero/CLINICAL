@@ -20,7 +20,7 @@ export interface ContactosResponse {
 
 export function useContactos(pacienteId: string, limit?: number) {
   return useQuery<ContactosResponse>({
-    queryKey: ["contactos", pacienteId],
+    queryKey: ["contactos", pacienteId, limit ?? "all"],
     queryFn: async () => {
       const params = limit ? `?limit=${limit}` : "";
       const { data } = await api.get(`/pacientes/${pacienteId}/contactos${params}`);

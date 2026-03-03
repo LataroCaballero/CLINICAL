@@ -1,5 +1,5 @@
 ---
-status: complete
+status: diagnosed
 phase: 03-presupuestos-completos
 source: [03-01-SUMMARY.md, 03-02-SUMMARY.md, 03-03-SUMMARY.md]
 started: 2026-02-27T00:00:00Z
@@ -73,9 +73,17 @@ skipped: 2
   reason: "User reported: en la lista de pacientes en /pacientes la columna presupuesto dice siempre 'sin presupuesto'"
   severity: major
   test: 2
-  root_cause: ""
-  artifacts: []
-  missing: []
+  root_cause: "Triple mismatch: (1) GET /pacientes controller llama findAll() que no incluye presupuestos en la query Prisma; (2) obtenerListaPacientes() que sí incluye presupuestos devuelve presupuestosActivos (count) no presupuestoEstado; (3) frontend column lee row.original.presupuestoEstado que nunca existe — EstadoPresupuestoChip devuelve 'Sin presupuesto' cuando el campo es undefined"
+  artifacts:
+    - path: "backend/src/modules/pacientes/pacientes.controller.ts"
+      issue: "GET / llama findAll() en vez de obtenerListaPacientes()"
+    - path: "backend/src/modules/pacientes/pacientes.service.ts"
+      issue: "findAll() no incluye presupuestos en Prisma query; obtenerListaPacientes() devuelve presupuestosActivos (count) en vez de presupuestoEstado"
+    - path: "frontend/src/types/pacients.ts"
+      issue: "PacienteListItem no tiene campo presupuestoEstado"
+  missing:
+    - "Backend debe retornar presupuestoEstado (estado del último presupuesto activo) en la lista de pacientes"
+    - "Frontend type PacienteListItem debe incluir presupuestoEstado?: EstadoPresupuesto | null"
   debug_session: ""
 
 - truth: "Al enviar un presupuesto por email, el campo tokenAceptacion queda guardado en la BD en el registro del presupuesto"
@@ -83,7 +91,10 @@ skipped: 2
   reason: "User reported: no tengo ningun token de aceptacion cargado en la bd"
   severity: major
   test: 8
-  root_cause: ""
-  artifacts: []
-  missing: []
+  root_cause: "marcarEnviado() en presupuestos.service.ts no genera ni persiste tokenAceptacion en su data block. El endpoint PATCH /presupuestos/:id/marcar-enviado transiciona el presupuesto a ENVIADO sin token. Solo enviarPresupuestoPorEmail() (POST /enviar-email) genera el token — si el usuario marcó manualmente como enviado sin pasar por el email, tokenAceptacion queda null."
+  artifacts:
+    - path: "backend/src/modules/presupuestos/presupuestos.service.ts"
+      issue: "marcarEnviado() data block no incluye tokenAceptacion — no genera UUID ni persiste token"
+  missing:
+    - "marcarEnviado() debe generar tokenAceptacion con uuid() si el presupuesto no lo tiene ya"
   debug_session: ""

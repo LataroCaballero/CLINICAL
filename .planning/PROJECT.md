@@ -61,6 +61,14 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 
 ### Active
 
+- [ ] Dashboard dedicado para el rol FACTURADOR con KPIs de facturación mensual
+- [ ] Límite mensual de facturación configurable por el facturador
+- [ ] Liquidación de prácticas de obra social con corrección de monto por práctica
+- [ ] Flujo de cierre de lote de liquidación (LiquidacionObraSocial correctamente creada)
+- [ ] Research e informe de integración AFIP para emisión de comprobantes desde la plataforma
+
+### Deferred
+
 - [ ] Automatizaciones de seguimiento: triggers basados en tiempo/etapa (ej. "30 días sin respuesta → mensaje automático")
 - [ ] Módulos financieros optimizados e interconectados con CRM
 - [ ] Página pública del paciente: historial, presupuestos, documentos
@@ -111,5 +119,16 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 | Email channel removido de SendWAMessageModal | 404 persistente, mejor UX con modal dedicado (EnviarPresupuestoModal) | ✓ Correcto — modal WA-only es más claro |
 | HMAC-SHA256 en webhook Meta (Phase 7) | Seguridad contra replay attacks y payloads falsificados | ✓ Correcto — dev fallback para testing local preservado |
 
+## Current Milestone: v1.1 Vista del Facturador
+
+**Goal:** Darle al rol FACTURADOR una vista propia y un flujo completo de liquidación de obras sociales con control de límite mensual de facturación.
+
+**Target features:**
+- Dashboard propio del FACTURADOR con KPIs de límite mensual y prácticas pendientes
+- Límite mensual de facturación configurable (proviene del contador)
+- Liquidación de prácticas con edición de monto real pagado por la OS por práctica
+- Cierre de lote de liquidación (crea LiquidacionObraSocial correctamente)
+- Research de integración AFIP (documentar para milestone futuro)
+
 ---
-*Last updated: 2026-03-03 after v1.0 milestone — CRM Conversión*
+*Last updated: 2026-03-12 after v1.1 milestone start — Vista del Facturador*

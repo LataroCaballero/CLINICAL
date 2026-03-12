@@ -5,13 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-03-03)
 
 **Core value:** Que un cirujano plástico cierre más cirugías — el sistema hace visible qué pacientes seguir, cuándo y cómo, de la manera más automatizada posible
-**Current focus:** Planificando v1.1 — milestone v1.0 CRM Conversión SHIPPED 2026-03-03
+**Current focus:** v1.1 — Vista del Facturador
 
 ## Current Position
 
-Phase: MILESTONE COMPLETE — v1.0 CRM Conversión shipped 2026-03-03
-Status: 32/32 requisitos satisfechos, 9 fases, 23 planes. Tech debt documentado en milestones/v1.0-MILESTONE-AUDIT.md.
-Last activity: 2026-03-03 — complete-milestone v1.0
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-03-12 — Milestone v1.1 started
 
 Progress: [████████████████████] 100% — SHIPPED ✅
 

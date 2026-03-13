@@ -12,7 +12,9 @@ import {
   FacturasFiltersDto,
   LiquidacionesFiltersDto,
   ReporteFiltersDto,
+  CreateLoteDto,
 } from './dto/finanzas.dto';
+import { getMonthBoundariesART } from './utils/month-boundaries';
 import {
   TipoMovimiento,
   EstadoLiquidacion,
@@ -471,6 +473,8 @@ export class FinanzasService {
 
   /**
    * Marcar prácticas como pagadas
+   * @deprecated Use crearLoteLiquidacion for atomic settlement with LiquidacionObraSocial.
+   * Kept for backward compatibility with existing callers.
    */
   async marcarPracticasPagadas(practicaIds: string[]) {
     await this.prisma.practicaRealizada.updateMany({
@@ -680,5 +684,220 @@ export class FinanzasService {
         .map(([fecha, total]) => ({ fecha, total }))
         .sort((a, b) => a.fecha.localeCompare(b.fecha)),
     };
+  }
+
+  /**
+   * Returns the available billing limit for a professional in a given month.
+   * Uses ART (UTC-3, no DST) boundaries to compute the emitido total.
+   *
+   * @param profesionalId - The professional's ID
+   * @param mes - Month in 'YYYY-MM' format
+   */
+  async getLimiteDisponible(
+    profesionalId: string,
+    mes: string,
+  ): Promise<{ limite: number | null; emitido: number; disponible: number | null }> {
+    const { start, end } = getMonthBoundariesART(mes);
+
+    const [limiteRecord, facturaAggregate] = await Promise.all([
+      this.prisma.limiteFacturacionMensual.findUnique({
+        where: { profesionalId_mes: { profesionalId, mes } },
+      }),
+      this.prisma.factura.aggregate({
+        where: {
+          profesionalId,
+          fecha: { gte: start, lte: end },
+          estado: EstadoFactura.EMITIDA,
+        },
+        _sum: { total: true },
+      }),
+    ]);
+
+    const limite = limiteRecord?.limite != null ? Number(limiteRecord.limite) : null;
+    const emitido = Number(facturaAggregate._sum.total ?? 0);
+    const disponible = limite !== null ? limite - emitido : null;
+
+    return { limite, emitido, disponible };
+  }
+
+  /**
+   * Upserts the monthly billing limit for a professional.
+   *
+   * @param profesionalId - The professional's ID
+   * @param mes - Month in 'YYYY-MM' format
+   * @param limite - The limit amount (null to clear it)
+   */
+  async setLimiteMensual(
+    profesionalId: string,
+    mes: string,
+    limite: number | null,
+  ) {
+    return this.prisma.limiteFacturacionMensual.upsert({
+      where: { profesionalId_mes: { profesionalId, mes } },
+      update: { limite },
+      create: { profesionalId, mes, limite },
+    });
+  }
+
+  /**
+   * Returns pending practices grouped by obra social (no N+1 queries).
+   * Single findMany to fetch practices + a batched patient lookup.
+   *
+   * @param profesionalId - The professional's ID
+   */
+  async getPracticasPendientesAgrupadas(profesionalId: string): Promise<
+    Array<{
+      obraSocialId: string | null;
+      nombre: string;
+      count: number;
+      total: number;
+    }>
+  > {
+    const practicas = await this.prisma.practicaRealizada.findMany({
+      where: {
+        profesionalId,
+        estadoLiquidacion: EstadoLiquidacion.PENDIENTE,
+        obraSocialId: { not: null },
+      },
+      select: {
+        id: true,
+        obraSocialId: true,
+        monto: true,
+        montoPagado: true,
+      },
+    });
+
+    // Collect unique obra social IDs
+    const obraSocialIds = [
+      ...new Set(practicas.map((p) => p.obraSocialId).filter(Boolean) as string[]),
+    ];
+
+    // Batch fetch obras sociales
+    const obrasSociales = await this.prisma.obraSocial.findMany({
+      where: { id: { in: obraSocialIds } },
+      select: { id: true, nombre: true },
+    });
+    const osMap = new Map(obrasSociales.map((os) => [os.id, os.nombre]));
+
+    // Group by obraSocialId
+    const groups: Record<
+      string,
+      { obraSocialId: string; nombre: string; count: number; total: number }
+    > = {};
+
+    for (const p of practicas) {
+      const osId = p.obraSocialId!;
+      if (!groups[osId]) {
+        groups[osId] = {
+          obraSocialId: osId,
+          nombre: osMap.get(osId) || 'Desconocida',
+          count: 0,
+          total: 0,
+        };
+      }
+      groups[osId].count += 1;
+      groups[osId].total += Number(p.montoPagado ?? p.monto);
+    }
+
+    return Object.values(groups).sort((a, b) => b.total - a.total);
+  }
+
+  /**
+   * Returns the list of pending practices for a specific professional + obra social.
+   * Used for lote preparation (selecting which practices to settle).
+   *
+   * @param profesionalId - The professional's ID
+   * @param obraSocialId - The obra social's ID
+   */
+  async getPracticasPendientesPorOS(
+    profesionalId: string,
+    obraSocialId: string,
+  ) {
+    const practicas = await this.prisma.practicaRealizada.findMany({
+      where: {
+        profesionalId,
+        obraSocialId,
+        estadoLiquidacion: EstadoLiquidacion.PENDIENTE,
+      },
+      select: {
+        id: true,
+        codigo: true,
+        descripcion: true,
+        monto: true,
+        coseguro: true,
+        montoPagado: true,
+        fecha: true,
+        estadoLiquidacion: true,
+        pacienteId: true,
+      },
+      orderBy: { fecha: 'desc' },
+    });
+
+    // Batch fetch patient data
+    const pacienteIds = [...new Set(practicas.map((p) => p.pacienteId))];
+    const pacientes = await this.prisma.paciente.findMany({
+      where: { id: { in: pacienteIds } },
+      select: { id: true, nombreCompleto: true, dni: true },
+    });
+    const pacienteMap = new Map(pacientes.map((p) => [p.id, p]));
+
+    return practicas.map((p) => ({
+      id: p.id,
+      codigo: p.codigo,
+      descripcion: p.descripcion,
+      monto: Number(p.monto),
+      coseguro: Number(p.coseguro),
+      montoPagado: p.montoPagado != null ? Number(p.montoPagado) : null,
+      fecha: p.fecha,
+      estadoLiquidacion: p.estadoLiquidacion,
+      paciente: pacienteMap.get(p.pacienteId) || null,
+    }));
+  }
+
+  /**
+   * Atomically creates a LiquidacionObraSocial and marks all included practices
+   * as PAGADO, setting their liquidacionId FK. Server-side computes montoTotal
+   * from actual practice data — never trusts client-provided totals.
+   *
+   * Uses interactive callback form of $transaction to ensure the FK reference
+   * from PracticaRealizada.liquidacionId → LiquidacionObraSocial.id is valid.
+   *
+   * @param dto - CreateLoteDto with profesionalId, obraSocialId, periodo, practicaIds
+   * @param usuarioId - Optional ID of the user performing the operation
+   */
+  async crearLoteLiquidacion(dto: CreateLoteDto, usuarioId?: string) {
+    return this.prisma.$transaction(async (tx) => {
+      // Fetch practices inside the transaction to compute montoTotal server-side
+      const practicas = await tx.practicaRealizada.findMany({
+        where: { id: { in: dto.practicaIds } },
+        select: { id: true, monto: true, montoPagado: true },
+      });
+
+      // Sum montoPagado ?? monto (do NOT trust client-provided totals)
+      const montoTotal = practicas.reduce((sum, p) => {
+        return sum + Number(p.montoPagado ?? p.monto);
+      }, 0);
+
+      // Create the liquidacion record
+      const liquidacion = await tx.liquidacionObraSocial.create({
+        data: {
+          obraSocialId: dto.obraSocialId,
+          periodo: dto.periodo,
+          montoTotal,
+          usuarioId: usuarioId ?? null,
+        },
+      });
+
+      // Atomically mark all practices as PAGADO with the new liquidacionId FK
+      await tx.practicaRealizada.updateMany({
+        where: { id: { in: dto.practicaIds } },
+        data: {
+          estadoLiquidacion: EstadoLiquidacion.PAGADO,
+          liquidacionId: liquidacion.id,
+        },
+      });
+
+      return liquidacion;
+    });
   }
 }

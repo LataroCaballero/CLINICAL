@@ -7,6 +7,7 @@ import {
   IsPositive,
   IsString,
   IsUUID,
+  Matches,
 } from 'class-validator';
 import { MedioPago, TipoFactura, EstadoLiquidacion, CondicionIVA } from '@prisma/client';
 
@@ -147,4 +148,20 @@ export class ReporteFiltersDto {
   @IsOptional()
   @IsUUID()
   profesionalId?: string;
+}
+
+export class CreateLoteDto {
+  @IsUUID()
+  profesionalId: string;
+
+  @IsUUID()
+  obraSocialId: string;
+
+  @IsString()
+  @Matches(/^\d{4}-\d{2}$/)
+  periodo: string;
+
+  @IsArray()
+  @IsUUID('4', { each: true })
+  practicaIds: string[];
 }

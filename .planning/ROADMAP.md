@@ -48,7 +48,7 @@ Full details: `.planning/milestones/v1.0-ROADMAP.md`
 
 Plans:
 - [ ] 08-01-PLAN.md — Prisma schema additions + migration `facturador_v1` (SCHEMA-01, SCHEMA-02, SCHEMA-03)
-- [ ] 08-02-PLAN.md — AFIP/ARCA integration research document (AFIP-01)
+- [x] 08-02-PLAN.md — AFIP/ARCA integration research document (AFIP-01) — completed 2026-03-13
 
 ### Phase 9: Backend API Layer
 **Goal**: El backend expone todos los endpoints que necesita el flujo del FACTURADOR, con lógica atómica y cálculos de timezone correctos

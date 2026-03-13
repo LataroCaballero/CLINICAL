@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Vista del Facturador
-status: planning
-stopped_at: Phase 8 context gathered
-last_updated: "2026-03-13T12:35:43.940Z"
-last_activity: 2026-03-13 — Roadmap v1.1 creado (fases 8–11, 13 requisitos mapeados)
+status: completed
+stopped_at: Completed 08-02-PLAN.md
+last_updated: "2026-03-13T18:34:09.648Z"
+last_activity: 2026-03-13 — Phase 8 Plan 02 complete — AFIP-INTEGRATION.md written (6 sections, EmitirComprobante interface)
 progress:
   total_phases: 4
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
-  percent: 0
+  completed_phases: 1
+  total_plans: 2
+  completed_plans: 2
+  percent: 22
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-03-13)
 ## Current Position
 
 Phase: 8 of 11 (Schema Foundation + AFIP Research)
-Plan: 0 of 2 in current phase
-Status: Ready to plan
-Last activity: 2026-03-13 — Roadmap v1.1 creado (fases 8–11, 13 requisitos mapeados)
+Plan: 2 of 2 in current phase
+Status: Phase 8 complete
+Last activity: 2026-03-13 — Phase 8 Plan 02 complete — AFIP-INTEGRATION.md written (6 sections, EmitirComprobante interface)
 
-Progress: [░░░░░░░░░░] 0% (v1.1)
+Progress: [██░░░░░░░░] 22% (v1.1)
 
 ## Performance Metrics
 
@@ -43,7 +43,7 @@ Progress: [░░░░░░░░░░] 0% (v1.1)
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 08-schema-afip-research | 0/2 | - | - |
+| 08-schema-afip-research | 2/2 | 3min (plan 02) | ~2min |
 | 09-backend-api-layer | 0/3 | - | - |
 | 10-facturador-dashboard | 0/2 | - | - |
 | 11-settlement-workflow | 0/2 | - | - |
@@ -54,6 +54,11 @@ Progress: [░░░░░░░░░░] 0% (v1.1)
 
 ### Decisions
 
+- [08-02]: Raw SOAP/XML for AFIP — no third-party library (afipjs/afip-apis/afip.js unmaintained, no TS types)
+- [08-02]: CMS signing decision deferred to v1.2 — openssl smime (no dep) vs node-forge (in-process) both documented
+- [08-02]: Certificate storage via EncryptionService AES-256-GCM pattern; ConfiguracionAFIP model preferred over Profesional fields
+- [08-02]: BNA rate for MonCotiz — manual entry recommended for v1.2 (robust, audit-friendly)
+- [08-02]: CAEA contingency-only from June 2026 (RG 5782/2025) — CAE always primary; verify against BOLETIN OFICIAL before v1.2
 - [Roadmap v1.1]: AFIP-01 (doc) va en Phase 8 junto al schema — tarea de escritura, sin dependencia de código
 - [Roadmap v1.1]: LMIT-02 (cálculo disponible) va en Phase 9 (backend), no en Phase 10 (frontend) — es lógica de servicio
 - [Roadmap v1.1]: LIQ-03 (transacción atómica) va en Phase 9 — el endpoint backend precede al modal frontend de Phase 11
@@ -72,6 +77,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-13T12:35:43.938Z
-Stopped at: Phase 8 context gathered
-Resume file: .planning/phases/08-schema-foundation-afip-research/08-CONTEXT.md
+Last session: 2026-03-13T13:01:49Z
+Stopped at: Completed 08-02-PLAN.md
+Resume file: .planning/phases/08-schema-foundation-afip-research/08-02-SUMMARY.md

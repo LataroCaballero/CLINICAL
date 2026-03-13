@@ -67,30 +67,28 @@
 
 ## Traceability
 
-Actualizar durante creación del roadmap.
-
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SCHEMA-01 | — | Pending |
-| SCHEMA-02 | — | Pending |
-| SCHEMA-03 | — | Pending |
-| DASH-01 | — | Pending |
-| DASH-02 | — | Pending |
-| DASH-03 | — | Pending |
-| DASH-04 | — | Pending |
-| LMIT-01 | — | Pending |
-| LMIT-02 | — | Pending |
-| LIQ-01 | — | Pending |
-| LIQ-02 | — | Pending |
-| LIQ-03 | — | Pending |
-| AFIP-01 | — | Pending |
-| AFIP-02 | — | Pending |
+| SCHEMA-01 | Phase 8 | Pending |
+| SCHEMA-02 | Phase 8 | Pending |
+| SCHEMA-03 | Phase 8 | Pending |
+| AFIP-01 | Phase 8 | Pending |
+| LMIT-02 | Phase 9 | Pending |
+| LIQ-03 | Phase 9 | Pending |
+| AFIP-02 | Phase 9 | Pending |
+| DASH-01 | Phase 10 | Pending |
+| DASH-02 | Phase 10 | Pending |
+| DASH-03 | Phase 10 | Pending |
+| DASH-04 | Phase 10 | Pending |
+| LMIT-01 | Phase 10 | Pending |
+| LIQ-01 | Phase 11 | Pending |
+| LIQ-02 | Phase 11 | Pending |
 
 **Coverage:**
 - v1.1 requirements: 13 total
-- Mapped to phases: 0
-- Unmapped: 13 ⚠️
+- Mapped to phases: 13
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-03-13*
-*Last updated: 2026-03-13 after initial definition*
+*Last updated: 2026-03-13 — traceability complete after roadmap creation*

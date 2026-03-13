@@ -1,3 +1,19 @@
+---
+gsd_state_version: 1.0
+milestone: v1.1
+milestone_name: Vista del Facturador
+status: planning
+stopped_at: Phase 8 context gathered
+last_updated: "2026-03-13T12:35:43.940Z"
+last_activity: 2026-03-13 — Roadmap v1.1 creado (fases 8–11, 13 requisitos mapeados)
+progress:
+  total_phases: 4
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
+---
+
 # Project State
 
 ## Project Reference
@@ -56,6 +72,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-13
-Stopped at: Roadmap v1.1 creado — fases 8–11 definidas, 13/13 requisitos mapeados
-Resume file: None
+Last session: 2026-03-13T12:35:43.938Z
+Stopped at: Phase 8 context gathered
+Resume file: .planning/phases/08-schema-foundation-afip-research/08-CONTEXT.md

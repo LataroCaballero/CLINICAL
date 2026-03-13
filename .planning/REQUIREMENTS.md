@@ -21,13 +21,13 @@
 ### Límite Mensual
 
 - [ ] **LMIT-01**: El FACTURADOR puede configurar el límite de facturación del mes actual (valor que le provee el contador del médico)
-- [ ] **LMIT-02**: El sistema calcula automáticamente el disponible: límite − suma de comprobantes emitidos en el período
+- [x] **LMIT-02**: El sistema calcula automáticamente el disponible: límite − suma de comprobantes emitidos en el período
 
 ### Liquidación
 
 - [ ] **LIQ-01**: El FACTURADOR puede filtrar prácticas pendientes por obra social para trabajar un lote por OS a la vez
 - [ ] **LIQ-02**: Al marcar una práctica como pagada, el FACTURADOR puede ingresar el monto real cobrado por la OS (puede diferir del autorizado)
-- [ ] **LIQ-03**: El cierre de un lote de liquidación crea `LiquidacionObraSocial` y marca todas las prácticas seleccionadas como PAGADO en una única transacción atómica
+- [x] **LIQ-03**: El cierre de un lote de liquidación crea `LiquidacionObraSocial` y marca todas las prácticas seleccionadas como PAGADO en una única transacción atómica
 
 ### AFIP (Research)
 
@@ -73,8 +73,8 @@
 | SCHEMA-02 | Phase 8 | Pending |
 | SCHEMA-03 | Phase 8 | Pending |
 | AFIP-01 | Phase 8 | Pending |
-| LMIT-02 | Phase 9 | Pending |
-| LIQ-03 | Phase 9 | Pending |
+| LMIT-02 | Phase 9 | Complete |
+| LIQ-03 | Phase 9 | Complete |
 | AFIP-02 | Phase 9 | Pending |
 | DASH-01 | Phase 10 | Pending |
 | DASH-02 | Phase 10 | Pending |

@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Vista del Facturador
-status: completed
-stopped_at: Completed 08-02-PLAN.md
-last_updated: "2026-03-13T18:34:09.648Z"
-last_activity: 2026-03-13 — Phase 8 Plan 02 complete — AFIP-INTEGRATION.md written (6 sections, EmitirComprobante interface)
+status: in_progress
+stopped_at: Completed 09-01-PLAN.md
+last_updated: "2026-03-13T18:45:00.000Z"
+last_activity: 2026-03-13 — Phase 9 Plan 01 complete — getMonthBoundariesART + five FinanzasService methods (9 TDD tests green)
 progress:
   total_phases: 4
   completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
-  percent: 22
+  total_plans: 9
+  completed_plans: 3
+  percent: 33
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-13)
 
 **Core value:** Que un cirujano plástico cierre más cirugías — el sistema hace visible qué pacientes seguir, cuándo y cómo, de la manera más automatizada posible
-**Current focus:** v1.1 — Phase 8: Schema Foundation + AFIP Research
+**Current focus:** v1.1 — Phase 9: Backend API Layer
 
 ## Current Position
 
-Phase: 8 of 11 (Schema Foundation + AFIP Research)
-Plan: 2 of 2 in current phase
-Status: Phase 8 complete
-Last activity: 2026-03-13 — Phase 8 Plan 02 complete — AFIP-INTEGRATION.md written (6 sections, EmitirComprobante interface)
+Phase: 9 of 11 (Backend API Layer)
+Plan: 1 of 3 in current phase
+Status: Plan 1 complete, continuing with Plan 2
+Last activity: 2026-03-13 — Phase 9 Plan 01 complete — getMonthBoundariesART + five FinanzasService methods (9 TDD tests green)
 
-Progress: [██░░░░░░░░] 22% (v1.1)
+Progress: [███░░░░░░░] 33% (v1.1)
 
 ## Performance Metrics
 
@@ -44,7 +44,7 @@ Progress: [██░░░░░░░░] 22% (v1.1)
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 08-schema-afip-research | 2/2 | 3min (plan 02) | ~2min |
-| 09-backend-api-layer | 0/3 | - | - |
+| 09-backend-api-layer | 1/3 | 8min (plan 01) | ~8min |
 | 10-facturador-dashboard | 0/2 | - | - |
 | 11-settlement-workflow | 0/2 | - | - |
 
@@ -65,6 +65,10 @@ Progress: [██░░░░░░░░] 22% (v1.1)
 - [Roadmap v1.1]: Todo backend nuevo va en FinanzasModule existente — no crear módulo NestJS nuevo
 - [Roadmap v1.1]: FACTURADOR no tiene registro Profesional — profesionalId siempre parámetro explícito, nunca del JWT
 - [Roadmap v1.1]: getMonthBoundariesART() obligatorio desde el primer commit de Phase 9 — timezone UTC-3 sin DST
+- [09-01]: ART offset hardcoded as 3*60*60*1000ms — Argentina has no DST, fixed offset correct and simpler than timezone libraries
+- [09-01]: Date.UTC(year,month-1,1,3,0,0,0) used for month boundaries — avoids new Date(year,month-1,1) midnight UTC pitfall
+- [09-01]: crearLoteLiquidacion uses interactive callback form of $transaction — array form cannot reference newly-created liquidacionId FK
+- [09-01]: Server-side montoTotal computation inside transaction — never accept client-provided totals for financial records
 
 ### Pending Todos
 
@@ -73,10 +77,10 @@ None yet.
 ### Blockers/Concerns
 
 - [Phase 8 gate]: IVA treatment matrix para cirugía estética en obras sociales debe validarse con contador antes de v1.2 (no bloquea v1.1)
-- [Phase 9]: N+1 query en getPracticasPendientes documentado en research — evaluar impacto en KPI endpoint antes de buildear sobre él
+- [Phase 9 resolved]: N+1 query en getPracticasPendientes resuelto — getPracticasPendientesAgrupadas usa batch OS lookup sin N+1
 
 ## Session Continuity
 
-Last session: 2026-03-13T13:01:49Z
-Stopped at: Completed 08-02-PLAN.md
-Resume file: .planning/phases/08-schema-foundation-afip-research/08-02-SUMMARY.md
+Last session: 2026-03-13T18:45:00Z
+Stopped at: Completed 09-01-PLAN.md
+Resume file: .planning/phases/09-backend-api-layer/09-01-SUMMARY.md

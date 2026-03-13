@@ -44,11 +44,11 @@ Full details: `.planning/milestones/v1.0-ROADMAP.md`
   2. El modelo `LimiteFacturacionMensual` existe con `@@unique([profesionalId, mes])` y es accesible desde el ORM
   3. `Factura` tiene `condicionIVAReceptor` (non-nullable) y `tipoCambio` para cumplimiento RG 5616/2024
   4. El documento AFIP/ARCA cubre certificados, WSAA, WSFEv1, CAEA, RG 5616/2024 y biblioteca recomendada, y está escrito en `.planning/research/AFIP-INTEGRATION.md`
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 08-01: Prisma schema additions + migration `facturador_v1` (SCHEMA-01, SCHEMA-02, SCHEMA-03)
-- [ ] 08-02: AFIP/ARCA integration research document (AFIP-01)
+- [ ] 08-01-PLAN.md — Prisma schema additions + migration `facturador_v1` (SCHEMA-01, SCHEMA-02, SCHEMA-03)
+- [ ] 08-02-PLAN.md — AFIP/ARCA integration research document (AFIP-01)
 
 ### Phase 9: Backend API Layer
 **Goal**: El backend expone todos los endpoints que necesita el flujo del FACTURADOR, con lógica atómica y cálculos de timezone correctos

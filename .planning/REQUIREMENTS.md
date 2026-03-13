@@ -32,7 +32,7 @@
 ### AFIP (Research)
 
 - [ ] **AFIP-01**: El equipo dispone de un documento de integración AFIP/ARCA con certificados, WSAA, WSFEv1, CAEA, RG 5616/2024 y biblioteca recomendada
-- [ ] **AFIP-02**: El backend expone un `AfipStubService` con la interfaz `emitirComprobante()` y respuesta mock (fija el contrato para v1.2)
+- [x] **AFIP-02**: El backend expone un `AfipStubService` con la interfaz `emitirComprobante()` y respuesta mock (fija el contrato para v1.2)
 
 ## v2 Requirements
 
@@ -75,7 +75,7 @@
 | AFIP-01 | Phase 8 | Pending |
 | LMIT-02 | Phase 9 | Complete |
 | LIQ-03 | Phase 9 | Complete |
-| AFIP-02 | Phase 9 | Pending |
+| AFIP-02 | Phase 9 | Complete |
 | DASH-01 | Phase 10 | Pending |
 | DASH-02 | Phase 10 | Pending |
 | DASH-03 | Phase 10 | Pending |

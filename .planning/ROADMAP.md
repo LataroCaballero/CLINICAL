@@ -29,7 +29,7 @@ Full details: `.planning/milestones/v1.0-ROADMAP.md`
 **Milestone Goal:** Darle al rol FACTURADOR una vista propia y un flujo completo de liquidación de obras sociales con control de límite mensual de facturación.
 
 - [ ] **Phase 8: Schema Foundation + AFIP Research** - Migraciones DB prerequisito + documento de integración AFIP escrito
-- [ ] **Phase 9: Backend API Layer** - Extensión de FinanzasService/Controller + AfipStubService
+- [x] **Phase 9: Backend API Layer** - Extensión de FinanzasService/Controller + AfipStubService (completed 2026-03-13)
 - [ ] **Phase 10: FACTURADOR Home Dashboard** - Routing, permisos, KPIs y configuración de límite mensual
 - [ ] **Phase 11: Settlement Workflow** - Flujo de liquidación mejorado con filtro por OS y edición de montoPagado
 
@@ -111,7 +111,7 @@ Plans:
 | 6. CRM Data Wiring Fixes | v1.0 | 1/1 | Complete | 2026-03-02 |
 | 7. UX + Security Hardening | v1.0 | 1/1 | Complete | 2026-03-03 |
 | 8. Schema Foundation + AFIP Research | v1.1 | 0/2 | Not started | - |
-| 9. Backend API Layer | 2/3 | In Progress|  | - |
+| 9. Backend API Layer | 3/3 | Complete   | 2026-03-13 | - |
 | 10. FACTURADOR Home Dashboard | v1.1 | 0/2 | Not started | - |
 | 11. Settlement Workflow | v1.1 | 0/2 | Not started | - |
 

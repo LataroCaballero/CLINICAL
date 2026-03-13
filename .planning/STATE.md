@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Vista del Facturador
 status: completed
-stopped_at: Completed 09-02-PLAN.md
-last_updated: "2026-03-13T19:03:22.487Z"
+stopped_at: Completed 09-03-PLAN.md
+last_updated: "2026-03-13T19:06:24.799Z"
 last_activity: 2026-03-13 — Phase 9 Plan 01 complete — getMonthBoundariesART + five FinanzasService methods (9 TDD tests green)
 progress:
   total_phases: 4
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 5
-  completed_plans: 4
+  completed_plans: 5
   percent: 33
 ---
 
@@ -50,6 +50,7 @@ Progress: [███░░░░░░░] 33% (v1.1)
 
 *Updated after each plan completion*
 | Phase 09-backend-api-layer P02 | 8min | 2 tasks | 3 files |
+| Phase 09-backend-api-layer P03 | 1m 27s | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -72,6 +73,8 @@ Progress: [███░░░░░░░] 33% (v1.1)
 - [09-01]: Server-side montoTotal computation inside transaction — never accept client-provided totals for financial records
 - [Phase 09-02]: Method-level @Auth('ADMIN', 'FACTURADOR') overrides class-level for all 7 new endpoints — PROFESIONAL role excluded from billing/settlement
 - [Phase 09-02]: getLiquidaciones + getLiquidacionById added to service in this plan (simple findMany/findUnique pass-throughs required by the 2 new GET /liquidaciones routes)
+- [Phase 09-03]: MOCK_CAE and MOCK_CAE_VENCIMIENTO defined as named constants — makes mock nature explicit, avoids inline magic strings
+- [Phase 09-03]: AfipStubService registered in both providers+exports of FinanzasModule — allows other modules to inject it for v1.2 swap-out
 
 ### Pending Todos
 
@@ -84,6 +87,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-13T19:03:22.486Z
-Stopped at: Completed 09-02-PLAN.md
+Last session: 2026-03-13T19:06:24.798Z
+Stopped at: Completed 09-03-PLAN.md
 Resume file: None

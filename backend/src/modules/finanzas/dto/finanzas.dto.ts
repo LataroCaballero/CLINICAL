@@ -165,3 +165,16 @@ export class CreateLoteDto {
   @IsUUID('4', { each: true })
   practicaIds: string[];
 }
+
+export class SetLimiteMensualDto {
+  @IsUUID()
+  profesionalId: string;
+
+  @IsString()
+  @Matches(/^\d{4}-\d{2}$/, { message: 'mes must be YYYY-MM' })
+  mes: string;
+
+  @IsNumber()
+  @IsPositive()
+  limite: number;
+}

@@ -855,6 +855,47 @@ export class FinanzasService {
   }
 
   /**
+   * Returns liquidaciones with optional filters for profesionalId and periodo.
+   * Ordered by createdAt desc. Includes _count of associated practicas.
+   */
+  async getLiquidaciones(filters: { profesionalId?: string; periodo?: string }) {
+    return this.prisma.liquidacionObraSocial.findMany({
+      where: {
+        ...(filters.profesionalId
+          ? { practicas: { some: { profesionalId: filters.profesionalId } } }
+          : {}),
+        ...(filters.periodo ? { periodo: filters.periodo } : {}),
+      },
+      orderBy: { createdAt: 'desc' },
+      include: { _count: { select: { practicas: true } } },
+    });
+  }
+
+  /**
+   * Returns a single liquidacion by ID, including its associated practices.
+   * Throws NotFoundException if not found.
+   */
+  async getLiquidacionById(id: string) {
+    const liq = await this.prisma.liquidacionObraSocial.findUnique({
+      where: { id },
+      include: {
+        practicas: {
+          select: {
+            id: true,
+            codigo: true,
+            descripcion: true,
+            monto: true,
+            montoPagado: true,
+            pacienteId: true,
+          },
+        },
+      },
+    });
+    if (!liq) throw new NotFoundException('Liquidacion no encontrada');
+    return liq;
+  }
+
+  /**
    * Atomically creates a LiquidacionObraSocial and marks all included practices
    * as PAGADO, setting their liquidacionId FK. Server-side computes montoTotal
    * from actual practice data — never trusts client-provided totals.

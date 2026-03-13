@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Vista del Facturador
-status: in_progress
-stopped_at: Completed 09-01-PLAN.md
-last_updated: "2026-03-13T18:45:00.000Z"
+status: completed
+stopped_at: Completed 09-02-PLAN.md
+last_updated: "2026-03-13T19:03:22.487Z"
 last_activity: 2026-03-13 — Phase 9 Plan 01 complete — getMonthBoundariesART + five FinanzasService methods (9 TDD tests green)
 progress:
   total_phases: 4
   completed_phases: 1
-  total_plans: 9
-  completed_plans: 3
+  total_plans: 5
+  completed_plans: 4
   percent: 33
 ---
 
@@ -49,6 +49,7 @@ Progress: [███░░░░░░░] 33% (v1.1)
 | 11-settlement-workflow | 0/2 | - | - |
 
 *Updated after each plan completion*
+| Phase 09-backend-api-layer P02 | 8min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -69,6 +70,8 @@ Progress: [███░░░░░░░] 33% (v1.1)
 - [09-01]: Date.UTC(year,month-1,1,3,0,0,0) used for month boundaries — avoids new Date(year,month-1,1) midnight UTC pitfall
 - [09-01]: crearLoteLiquidacion uses interactive callback form of $transaction — array form cannot reference newly-created liquidacionId FK
 - [09-01]: Server-side montoTotal computation inside transaction — never accept client-provided totals for financial records
+- [Phase 09-02]: Method-level @Auth('ADMIN', 'FACTURADOR') overrides class-level for all 7 new endpoints — PROFESIONAL role excluded from billing/settlement
+- [Phase 09-02]: getLiquidaciones + getLiquidacionById added to service in this plan (simple findMany/findUnique pass-throughs required by the 2 new GET /liquidaciones routes)
 
 ### Pending Todos
 
@@ -81,6 +84,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-13T18:45:00Z
-Stopped at: Completed 09-01-PLAN.md
-Resume file: .planning/phases/09-backend-api-layer/09-01-SUMMARY.md
+Last session: 2026-03-13T19:03:22.486Z
+Stopped at: Completed 09-02-PLAN.md
+Resume file: None

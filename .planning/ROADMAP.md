@@ -111,7 +111,7 @@ Plans:
 | 6. CRM Data Wiring Fixes | v1.0 | 1/1 | Complete | 2026-03-02 |
 | 7. UX + Security Hardening | v1.0 | 1/1 | Complete | 2026-03-03 |
 | 8. Schema Foundation + AFIP Research | v1.1 | 0/2 | Not started | - |
-| 9. Backend API Layer | 1/3 | In Progress|  | - |
+| 9. Backend API Layer | 2/3 | In Progress|  | - |
 | 10. FACTURADOR Home Dashboard | v1.1 | 0/2 | Not started | - |
 | 11. Settlement Workflow | v1.1 | 0/2 | Not started | - |
 

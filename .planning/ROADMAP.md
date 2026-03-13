@@ -59,12 +59,12 @@ Plans:
   2. El cálculo de disponible mensual (límite − emitido en período) usa `getMonthBoundariesART()` con timezone `America/Argentina/Buenos_Aires`, verificable con una práctica al `2026-03-01T02:30:00Z`
   3. `AfipStubService.emitirComprobante()` devuelve una estructura CAE mock tipada y está registrado en `FinanzasModule`
   4. Todos los endpoints nuevos en `FinanzasController` aceptan `profesionalId` como parámetro explícito (nunca derivado del JWT) y están protegidos con `@Auth('ADMIN', 'FACTURADOR')`
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 09-01: FinanzasService — cinco nuevos métodos + utilidad getMonthBoundariesART (LMIT-02, LIQ-03)
-- [ ] 09-02: FinanzasController — siete nuevos endpoints + DTOs (LMIT-02, LIQ-03)
-- [ ] 09-03: AfipStubService + registro en FinanzasModule (AFIP-02)
+- [ ] 09-01-PLAN.md — FinanzasService: timezone utility + cinco nuevos métodos + test scaffolds (LMIT-02, LIQ-03)
+- [ ] 09-02-PLAN.md — FinanzasController: siete nuevos endpoints + DTOs adicionales (LMIT-02, LIQ-03)
+- [ ] 09-03-PLAN.md — AfipStubService: interfaces + stub + registro en FinanzasModule (AFIP-02)
 
 ### Phase 10: FACTURADOR Home Dashboard
 **Goal**: El FACTURADOR llega a su propia página de inicio con KPIs de facturación y puede configurar el límite mensual

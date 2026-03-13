@@ -1,185 +1,255 @@
 # Pitfalls Research
 
-**Domain:** Medical clinic SaaS — WhatsApp Business API integration, automated patient follow-up, presupuesto PDF generation (multi-tenant aesthetic surgery platform)
-**Researched:** 2026-02-21
-**Confidence:** MEDIUM-HIGH (WhatsApp API specifics: HIGH via official docs + multiple verified sources; Argentina/LATAM local law specifics: MEDIUM — limited authoritative sources)
+**Domain:** Argentine medical clinic SaaS — AFIP electronic invoicing (WSFE/WSAA), obra social settlement workflows, FACTURADOR role isolation (multi-tenant aesthetic surgery platform)
+**Researched:** 2026-03-12
+**Confidence:** MEDIUM-HIGH (AFIP WSFE specifics: MEDIUM — verified via official AFIP docs and community sources; billing workflow patterns: MEDIUM — verified via Argentine professional billing instructivos and community sources; role isolation: HIGH — standard patterns)
 
 ---
 
 ## Critical Pitfalls
 
-### Pitfall 1: Starting WhatsApp integration without accounting for WABA registration lead time
+### Pitfall 1: Conflating AFIP homologation certificates with production certificates
 
 **What goes wrong:**
-The roadmap assumes WhatsApp messages can be sent within days of starting development. In reality, Meta Business Manager verification alone takes 2–14 business days. If documents are rejected, the business must wait 30 days before re-applying. Add template approval cycles on top. Teams that build the full integration before WABA approval is confirmed ship a non-functional feature.
+The team builds and tests the entire WSFE integration using a homologation certificate obtained via WSASS (the testing environment self-service portal). Everything works in staging. At go-live, they swap the URL to production and the service throws authentication errors. The production certificate is an entirely different artifact: it must be generated via the "Administrador de Certificados Digitales" portal on the clinic's fiscal key, then explicitly associated with the WSFE service by the clinic's accountant or authorized representative. This requires the clinic's CUIT, their Clave Fiscal nivel 3, and a separate AFIP administrative step that can take 1–3 business days.
 
 **Why it happens:**
-Developers conflate the Cloud API (can be tested with a Meta sandbox) with production WABA registration (requires business verification). The sandbox works immediately; production requires a separate, manual approval process from Meta.
+Homologation certificates are self-service and instant. Developers assume production is the same process with a different URL. In reality, production certificate management requires the end-user (the clinic) to act — the SaaS developer cannot do it for them.
 
 **How to avoid:**
-- Start the WABA registration process for at least one clinic (either your own test account or a willing early-adopter clinic) in the first sprint — before writing a single line of integration code.
-- Treat WABA approval as a blocking dependency on the WhatsApp phase, not as a parallel task.
-- Plan email as a functional fallback that ships in the same phase. If WhatsApp isn't approved, the feature still delivers value.
-- ISVs (Independent Software Vendors / SaaS builders) must enroll as Tech Providers with Meta. This enrollment must be completed by December 31, 2025 deadline (if not done already) to continue offering WhatsApp as a channel.
+- Document the production certificate provisioning process as a clinic onboarding requirement, not a developer task. Prepare a step-by-step guide for the accountant.
+- Build the system to accept externally-provided certificate files (`.crt` / `.key` pair), stored encrypted per-tenant in the DB. Never bundle a certificate in the codebase.
+- Treat production AFIP access as a per-clinic gate: feature is unavailable until the clinic has uploaded their certificate and it has been validated against WSAA.
+- In the NestJS service, validate the certificate on upload: call WSAA `LoginCms` in production mode and surface a clear error if authentication fails, before any invoice is attempted.
+- Certificates expire (typically 2 years from issuance). Build an expiry alert system that warns 60 days in advance — expired certificates cause silent failures at invoice time.
 
 **Warning signs:**
-- Team is writing WhatsApp webhook handlers before WABA registration is submitted.
-- No Meta Business Manager account exists for the project.
-- "We'll figure out approval while we code" is the plan.
+- "We'll ask the clinic for their certificate later" in planning notes.
+- No per-tenant encrypted certificate storage in the Prisma schema.
+- Test suite only runs against homologation; no smoke test against production WSAA before launch.
 
 **Phase to address:**
-WhatsApp Integration Phase — first task of the phase, before any backend code is written.
+AFIP Research / Architecture Phase — certificate provisioning model must be defined before any WSFE code is written.
 
 ---
 
-### Pitfall 2: Automated messages getting accounts banned due to poor engagement signals
+### Pitfall 2: WSFE comprobante numbering gaps causing permanent sequential corruption
 
 **What goes wrong:**
-Automated follow-up sequences send the same template to many patients in a short window. WhatsApp's quality rating system monitors user engagement signals (block rate, report rate, read rate) over a rolling 7-day window. High block/report rates reduce the messaging limit tier and can result in account suspension. Unlike email, a WhatsApp ban affects the phone number permanently and recovery is not guaranteed.
+AFIP WSFE enforces strict correlative comprobante numbering per punto de venta and tipo de comprobante. If invoice #1043 is attempted and rejected (for any reason — validation error, network timeout, concurrent request), and the system then issues #1044, AFIP permanently rejects #1044 with error 10016 ("El numero o fecha del comprobante no se corresponde con el proximo a autorizar"). All future invoices for that punto de venta are also rejected. Recovery requires AFIP support intervention, which can take days.
 
 **Why it happens:**
-Clinic secretaries and surgeons think of WhatsApp follow-ups like email blasts. The system schedules automated sequences without regard for frequency per patient, opt-out compliance, or message quality. The "30 days without response → send automatic message" trigger fires for every cold patient simultaneously when the scheduler runs.
+Developers implement a naive "get last number + 1" approach without distributed locking. Under concurrent load (two secretaries billing simultaneously) or after a failed request that incremented the local counter but not AFIP's, a gap forms. The system believes it issued #1042 and #1043, but AFIP only recorded #1042. The next request sends #1044, which AFIP sees as a gap.
 
 **How to avoid:**
-- Implement per-patient messaging frequency caps at the application layer (e.g., maximum 1 automated message per patient per 7 days, regardless of how many triggers fire).
-- Stagger automated sends: never fire more than N messages per minute from the scheduler. Use a queue (BullMQ or similar) with rate limiting, not a direct `Promise.all` over all patients.
-- Include a visible, one-tap opt-out in every automated message ("Responde STOP para no recibir más mensajes").
-- Track opt-outs in the Paciente model and honor them immediately.
-- Monitor the WABA quality rating via the Meta webhook `messages.statuses` events and alert clinic admins before reaching suspension threshold.
-- As of October 2025, messaging limits are shared across the entire Meta Business Portfolio — one clinic's bad behavior affects all phone numbers under that account. In a multi-tenant scenario this is critical.
+- Always call `FECompUltimoAutorizado` from AFIP before generating the next number — never rely on a local counter. Use AFIP's authoritative "last authorized" as the source of truth.
+- Implement a database-level advisory lock (PostgreSQL `SELECT pg_advisory_xact_lock(id)`) on the (profesionalId, puntoVenta, tipoComprobante) combination before calling WSFE. Release after CAE is received.
+- If the WSFE call fails without returning a CAE, do NOT increment the local counter. Log the attempt, surface the error to the user, and let them retry — which will resend the same number.
+- Handle error 10016 explicitly: query `FECompUltimoAutorizado`, resync the local counter, and retry once before surfacing to user.
 
 **Warning signs:**
-- Scheduler sends to all `etapaCRM = SEGUIMIENTO` patients at 9am simultaneously without throttling.
-- No opt-out storage column in the Paciente model.
-- No monitoring of WhatsApp quality rating.
-- Block rate rising above 1%.
+- `ultimoComprobante = await db.factura.count(...)` pattern in the invoicing service.
+- No distributed lock around the WSFE call.
+- No explicit handling of error 10016 in the error handler.
 
 **Phase to address:**
-WhatsApp Integration Phase — scheduler and automation design must include rate limiting and opt-out mechanics from the start, not as a post-launch addition.
+AFIP Integration Phase — locking must be in the initial design, not added after the first production numbering incident.
 
 ---
 
-### Pitfall 3: Missing explicit opt-in consent for WhatsApp, violating Meta policy and Argentine data protection law
+### Pitfall 3: WSAA access token (TA) expiration causing silent invoice failures in production
 
 **What goes wrong:**
-The platform sends WhatsApp messages to patients who provided their phone number during clinic registration, but never explicitly consented to receive WhatsApp messages. Meta's policy requires explicit, channel-specific opt-in (a patient who signed a general consent form has not opted in to WhatsApp). Argentina's Ley 25.326 (Protección de Datos Personales) and GDPR-inspired frameworks in LATAM require an auditable consent trail. Meta can suspend the account; the clinic can face regulatory fines.
+The WSAA access token (Ticket de Acceso) is valid for 12 hours. The system obtains a token at startup and caches it in memory. A clinic that invoices only in the morning is fine. A clinic that invoices sporadically throughout a long day hits a 13-hour window where the token is expired. The first invoice attempt of the afternoon fails silently or with an opaque SOAP error. Secretaries think the system is broken. Invoice was not issued.
 
 **Why it happens:**
-Clinics already have patient phone numbers in the system. The implicit assumption is "they gave us their number, so we can contact them." WhatsApp's policy is stricter: consent must be explicit, must clearly state the business name, must state they will receive WhatsApp messages specifically, and must be revocable.
+12 hours feels long. Developers cache the token in an in-memory variable and don't implement expiry checks. After a server restart (deploy, crash) the token is regenerated. The failure mode only appears in specific usage patterns.
 
 **How to avoid:**
-- Add a `whatsappOptIn: Boolean` and `whatsappOptInDate: DateTime` field to the `Paciente` model.
-- Gate all outbound WhatsApp sends (manual and automated) behind an opt-in check. If `whatsappOptIn = false`, fall back to email or flag for manual action.
-- Build an opt-in collection flow: when a secretary registers a patient or sends a first message, the UI must capture explicit consent and store the date/channel.
-- Do not treat existing patients as opted-in by default. Provide a bulk opt-in collection tool (e.g., send an email asking patients to opt in to WhatsApp).
-- For healthcare context specifically: WhatsApp must not be used to transmit clinical information (diagnoses, lab results, post-op reports) that Argentine health regulations require to be handled through secure, auditable channels. Limit WhatsApp to logistics (appointment reminders, budget follow-up, scheduling), not clinical data.
+- Store the TA (`token`, `sign`, `expirationTime`) in Redis or the DB per-tenant, not in application memory.
+- Before every WSFE call, check if `expirationTime - now() < 15 minutes`. If so, request a new TA proactively (do not wait for the call to fail).
+- AFIP will reject a second TA request if the first is still valid — the error is "El CEE ya posee un TA valido". The 15-minute proactive buffer avoids this race condition on simultaneous requests.
+- Wrap every WSFE call in retry logic: on TA-expired errors, force-refresh the token and retry once before surfacing to the user.
+- NB: Each clinic has its own CUIT and certificate — TA management is strictly per-tenant.
 
 **Warning signs:**
-- No `whatsappOptIn` field in the Prisma schema before launch.
-- Automated messages fire for all patients without filtering by consent status.
-- No opt-out/opt-in management screen in the admin UI.
+- `wsfeToken` stored as a module-level variable in the NestJS service.
+- No expiry check before WSFE calls.
+- No per-tenant TA storage in the DB/Redis schema.
 
 **Phase to address:**
-WhatsApp Integration Phase — schema migration must include consent fields before the first send endpoint is built.
+AFIP Integration Phase — TA lifecycle must be designed as part of the WSFE client abstraction, not bolted on after the first expiry-related support ticket.
 
 ---
 
-### Pitfall 4: Multi-tenant architecture with a single WhatsApp number shared across all clinic tenants
+### Pitfall 4: AFIP WSFE offline / CAEA not planned, leaving clinic unable to bill during AFIP outages
 
 **What goes wrong:**
-To save onboarding friction, the SaaS is launched with a single WhatsApp number owned by the platform, shared across all clinic tenants. This creates multiple compounding problems: Meta's messaging limits are shared across all clinics simultaneously; a single clinic's spam behavior bans all clinics; patients receive messages from an unfamiliar business name (not their clinic); and each conversation window (24h user-initiated or template-initiated) is shared across tenants with no isolation.
+AFIP's production WSFE service has scheduled maintenance windows and unplanned outages. When WSFE is unreachable, no CAE can be obtained, and therefore no compliant invoice can be issued. A clinic that needs to close out a month-end billing run is completely blocked if the system has no contingency mode.
 
 **Why it happens:**
-Getting one WABA approved is already complex. Requiring each clinic to get their own feels like a UX problem to solve later. Teams defer per-tenant numbers to avoid onboarding complexity.
+Teams build the "happy path" integration first and defer contingency handling. AFIP outages are infrequent enough that they don't surface during testing.
 
 **How to avoid:**
-- Design the architecture for per-tenant WhatsApp numbers from day one, even if only a subset of clinics initially connect one.
-- Use Meta's **Embedded Signup** flow to let each clinic connect their own WhatsApp Business number through the platform UI, without requiring manual Meta intervention for each tenant. This is the standard ISV/Tech Provider pattern.
-- The `Clinica` / tenant model must store per-tenant WhatsApp credentials (WABA ID, phone number ID, API token). Never store a single global WhatsApp config.
-- Tenants without a connected number should see a clear "Connect your WhatsApp" onboarding screen, with email as the active fallback.
+- For the research milestone: document CAEA (Código de Autorización Electrónico Anticipado) as the official AFIP offline contingency mechanism. CAEA is requested fortnightly (before the 1st and 16th of each month) and allows invoicing without real-time WSFE connectivity.
+- For the implementation milestone: implement a CAEA fallback mode that activates automatically when WSFE is unreachable after 3 retries. Store the current CAEA in the DB per-tenant.
+- Surface a clear UI warning when CAEA mode is active: "Facturando en modo contingencia — los comprobantes serán validados con AFIP automáticamente cuando el servicio esté disponible".
+- CAEA comprobantes must be "informed" to AFIP via `FECAEASolicitar` once connectivity is restored — build this reconciliation step.
 
 **Warning signs:**
-- A single `WHATSAPP_PHONE_NUMBER_ID` in the backend `.env`.
-- No per-tenant credential storage in the database schema.
-- "We'll add multi-number support later" in the planning notes.
+- No AFIP outage handling in the service layer (only `try/catch → throw HttpException`).
+- No CAEA requested or stored in the DB.
+- No UI distinction between CAE and CAEA mode.
 
 **Phase to address:**
-WhatsApp Integration Phase — database schema for per-tenant credentials must be in the initial migration. Retrofitting this later requires migrating all message history and resetting all webhooks.
+AFIP Integration Phase — CAEA is a research deliverable for v1.1 and an implementation requirement for v1.2+.
 
 ---
 
-### Pitfall 5: WhatsApp message templates being rejected, blocking the feature indefinitely
+### Pitfall 5: IVA treatment errors for medical services billing to obras sociales
 
 **What goes wrong:**
-The team builds the full automated flow using placeholder template content, then submits the real templates to Meta. Templates get rejected (47% first-submission rejection rate reported in 2025) for reasons like: promotional language in a Utility category template, variable at the start/end of the body, identical content to an existing template, or vague calls to action. Rejected templates cannot be resubmitted under the same name for 30 days. The feature ships but cannot send messages.
+The system emits Factura A with 21% IVA on all services. Argentine tax law treats medical services differently: services to affiliados obligatorios of obras sociales are IVA-exempt (code 3 — exento); services to voluntary affiliates may be subject to reduced 10.5% IVA; services under ART are IVA-exempt. Emitting the wrong IVA category results in incorrect tax liability for the clinic and a comprobante that the obra social's audit will reject.
 
 **Why it happens:**
-Template content is treated as a copy/UX decision, not a technical dependency. It is written last and submitted just before launch. The approval process is misunderstood as "instant" (it can be, for simple templates) when it can take 48 hours for manual review.
+IVA treatment for medical services is non-obvious. The assumption "professional = Responsable Inscripto = 21% IVA" is wrong for health services. The developer builds a generic invoicing form without consulting a domain-specialist (contador).
 
 **How to avoid:**
-- Draft and submit all required message templates (presupuesto enviado, seguimiento 7 días, seguimiento 30 días, turno recordatorio, opt-in confirmation) at the start of the WhatsApp phase, not at the end.
-- Follow template rules strictly: no variables at start/end, no consecutive variables, sequential numbering `{{1}} {{2}} {{3}}`, no promotional language in Utility templates, no requests for sensitive information.
-- Categorize templates correctly: appointment reminders and budget sends = Utility; promotional messages = Marketing (higher cost, more scrutiny).
-- Prepare sample variable values when submitting — this reduces manual review time.
-- Build the system to work with template IDs stored in configuration, so templates can be swapped without code changes if a template is rejected and renamed.
+- For the research milestone: document the IVA treatment matrix for the specific use case (aesthetic surgery + obras sociales) as a deliverable, with accountant sign-off before implementation.
+- The `Factura` model must support IVA-exempt comprobantes (tipo C for monotributistas, or tipo B with concepto "exento" for RI exempt from IVA on this activity).
+- Do not expose IVA category as a free-form field to the FACTURADOR. Derive it from the clinic's fiscal condition (which is a configuration field) and the patient's coverage type (obra social vs. particular).
+- Build a pre-emission validation that checks the IVA derivation logic against the clinic's contadora before enabling production.
 
 **Warning signs:**
-- Templates are being written alongside the frontend code late in the phase.
-- Template content includes language like "aprovechá esta oportunidad" or "oferta especial" in a Utility template.
-- No template management screen or config — templates hardcoded in the service.
+- Hardcoded `ivaAlicuota: 21` in the invoice creation DTO.
+- No `condicionIVA` field on the clinic/tenant configuration model.
+- No accountant review step in the AFIP integration plan.
 
 **Phase to address:**
-WhatsApp Integration Phase — template submission is a phase gate. Phase cannot complete (and ship to production) until at least the core templates are approved.
+AFIP Research Phase — IVA treatment must be documented and verified with a domain expert before any invoice schema or UI is built.
 
 ---
 
-### Pitfall 6: PDF generation with Puppeteer causing memory leaks and OOM crashes in production
+### Pitfall 6: Monthly billing limit tracked in application memory or without timezone awareness, causing boundary errors
 
 **What goes wrong:**
-PDF generation for presupuestos uses Puppeteer (headless Chromium). Each PDF request launches a browser instance or reuses one incorrectly. Under normal clinic usage (generating 5–20 PDFs per day), it works fine. Over weeks, unclose browser contexts cause memory to accumulate at ~10MB/hour. The NestJS process is eventually OOMKilled by the host. Because the leak is slow, it is not detected in testing and only surfaces in production after several days.
+The facturador's monthly limit is checked by `WHERE fecha >= startOfMonth AND fecha <= endOfMonth`. If `startOfMonth` is computed in UTC (JavaScript's `new Date()` with no timezone handling), an invoice issued at 21:00 UTC on February 28 is actually 18:00 ART on February 28 — correctly within February. But an invoice at 21:30 UTC on February 28 is 18:30 ART — still February 28, but the server running in UTC reports it as March 1 at 00:30. The limit resets a month too early, or a February invoice is counted against March's limit.
 
 **Why it happens:**
-Puppeteer's browser lifecycle management is non-obvious. The common mistake is either: launching a new `browser` per request (expensive but not leaking), or reusing a single browser with pages that are never closed after the PDF is generated. Incognito contexts that are not `.close()`d are a common source.
+Argentina is UTC-3 with no DST. Developers storing `DateTime` as UTC in PostgreSQL and comparing month boundaries without converting to ART timezone produce off-by-one errors on the last/first day of every month.
 
 **How to avoid:**
-- Never launch a new Chromium instance per PDF request in production. Use a singleton browser instance with proper page/context lifecycle management, or use a managed service like `browserless.io`.
-- Alternatively, use `@sparticuz/chromium` (serverless-compatible Chromium) with a browser pool.
-- Always close pages and contexts in `finally` blocks: `await page.close()` then `await context.close()`.
-- Consider replacing Puppeteer entirely with `pdfmake` or `PDFKit` for the presupuesto format — these are pure JS PDF generators with no browser dependency, zero memory leak risk, and streaming support. They are appropriate when the PDF layout is structural (tables, text blocks) rather than pixel-perfect HTML rendering.
-- Add memory monitoring (via NestJS health checks or Prometheus) to detect slow leaks before OOM.
-- If Puppeteer is retained: wrap PDF generation in a queue (BullMQ) to limit concurrency to 1–2 concurrent Chromium pages.
+- All month boundary calculations must use `America/Argentina/Buenos_Aires` timezone explicitly. In NestJS, use `date-fns-tz` or `luxon` with `setZone('America/Argentina/Buenos_Aires')` when computing `startOfMonth` / `endOfMonth`.
+- Store the `periodo` of a LiquidacionObraSocial as a `String` in `YYYY-MM` format (already done in the schema — verify this is computed in ART, not UTC).
+- Add a DB constraint or service-level check: the `periodo` assigned to a `PracticaRealizada` must match the ART month of `fecha`.
+- Write unit tests specifically for the UTC-3 boundary: a practice at `2026-03-01T02:30:00Z` is February 28 in ART — verify the month assignment is "2026-02", not "2026-03".
 
 **Warning signs:**
-- `browser.launch()` is called inside the HTTP request handler with no pooling.
-- No `finally` block around `page.close()`.
-- Memory usage graph trends upward over days without stabilizing.
-- PDF generation is synchronous (blocking the event loop while Chromium renders).
+- `new Date()` used directly for month range queries without timezone conversion.
+- `periodo` string computed on the frontend (which may be in user's local timezone) rather than server-side in a canonical ART timezone.
+- No unit tests for month-boundary dates.
 
 **Phase to address:**
-Presupuesto PDF Phase — architecture decision (Puppeteer vs. pure-JS PDF library) must be made before implementation begins, not after the first memory incident.
+FACTURADOR Dashboard Phase — all date range queries must use ART-aware helpers from the first commit. Add a shared `getMonthBoundariesART(year, month)` utility to prevent this recurring across every query.
 
 ---
 
-### Pitfall 7: Presupuesto "sent via WhatsApp" status not tracked, breaking the CRM conversion funnel
+### Pitfall 7: Settlement amount corrections creating untracked modifications without audit trail
 
 **What goes wrong:**
-A presupuesto is sent via WhatsApp. The system fires the message but does not update the presupuesto status to `ENVIADO` or the patient's `etapaCRM` to the appropriate stage. The CRM kanban still shows the patient as "no contactado". The secretary has to manually update both. This defeats the purpose of the automation and creates data inconsistency in conversion metrics.
+The facturador edits the `monto` of a `PracticaRealizada` record (to reflect what the OS actually paid vs. what was billed). The edit is saved directly to the `monto` field. Three months later, the clinic disputes a payment. There is no record of: the original billed amount, who changed it, when, and what reason was given. The audit trail is the accountant's notebook, not the system.
 
 **Why it happens:**
-The WhatsApp send and the CRM state update are treated as separate, unrelated operations. The WhatsApp service sends the message and returns. Nobody wires the post-send callback to the CRM update logic. The `CONCERNS.md` already documents `useFinanzas.ts:292` — the `sendPresupuesto` endpoint is a stub — meaning this integration was deferred without explicit design.
+Simple `PATCH /practicas/:id` endpoint that updates `monto` in place is the most direct implementation. Audit logging is added "later" and then never prioritized.
 
 **How to avoid:**
-- Design the `sendPresupuesto` flow as a single transactional operation: send WhatsApp message → on success, update `presupuesto.estado = ENVIADO` + update `paciente.etapaCRM` if applicable → on failure, surface error to user with retry option.
-- Use WhatsApp's `messages.statuses` webhook to track delivery and read receipts. Update a `presupuesto.whatsappStatus` field (SENT, DELIVERED, READ) when status events arrive.
-- The kanban board should reflect presupuesto status automatically, not require manual secretary action.
+- Never mutate `PracticaRealizada.monto` in place after the initial billing. Instead, add a `montoReal` field (nullable) that stores the OS-paid amount, preserving `monto` as the originally billed amount.
+- Add `corregidoPor: String?` (usuarioId), `corregidoAt: DateTime?`, and `motivoCorreccion: String?` fields to `PracticaRealizada`.
+- In the service layer, any correction must set all three audit fields atomically in the same Prisma transaction.
+- The FACTURADOR role may only set `montoReal`, never `monto`. Original billed amount is immutable after the practice is created.
+- Surface the correction audit trail in the UI: show "Monto original: $X → Corregido a: $Y por [Usuario] el [Fecha]".
 
 **Warning signs:**
-- `PATCH /presupuestos/:id/marcar-enviado` endpoint exists but is only callable manually.
-- No WhatsApp delivery status webhook handler in the backend.
-- Conversion metrics show patients stuck at "presupuesto created" indefinitely despite WhatsApp sends.
+- `PATCH /practicas/:id` updates the `monto` field directly.
+- No `montoReal`, `corregidoPor`, or `corregidoAt` columns in the schema.
+- Correction history is not visible anywhere in the UI.
 
 **Phase to address:**
-WhatsApp Integration Phase + CRM Automation Phase — the integration point must be explicit in the phase design, not assumed.
+Settlement Workflow Phase — schema must include audit fields from the initial migration. Retrofitting audit trails requires reprocessing historical data.
+
+---
+
+### Pitfall 8: Partial OS payments spanning multiple liquidations causing double-counting
+
+**What goes wrong:**
+An obra social partially pays a liquidation (e.g., 70% of a batch of practices). The facturador marks the liquidation as PAGADO. The remaining 30% is owed but has no tracking. When the OS pays the remainder in the next billing cycle, there is no way to link it back to the original practices or liquidation — it either gets recorded as a duplicate payment or gets lost.
+
+**Why it happens:**
+The `LiquidacionObraSocial.estadoLiquidacion` enum only has PENDIENTE/PAGADO. There is no intermediate state and no partial payment tracking. The data model assumes settlements are either fully unpaid or fully paid.
+
+**How to avoid:**
+- For the research milestone: document this as a known schema gap. Recommend adding a `PAGO_PARCIAL` state to `EstadoLiquidacion` and a `montoPagado` field to `LiquidacionObraSocial`.
+- Add a `PagoLiquidacion` child table that records each payment event: amount, date, usuarioId, reference number. This supports multiple partial payments without losing history.
+- The `montoTotal` stays as billed; `montoPagado` accumulates from `PagoLiquidacion` records; estado transitions: PENDIENTE → PAGO_PARCIAL (when montoPagado > 0 but < montoTotal) → PAGADO (when montoPagado >= montoTotal).
+- Expose a "registrar pago parcial" action in the UI, distinct from "marcar como pagado en su totalidad".
+
+**Warning signs:**
+- `estadoLiquidacion` is a two-state enum with no PAGO_PARCIAL.
+- No `montoPagado` or payment event log on LiquidacionObraSocial.
+- "Registrar pago" UI action only offers binary paid/unpaid.
+
+**Phase to address:**
+Settlement Workflow Phase — schema must support partial payments before any settlement UI is built. Adding this after go-live requires a migration and UI rework.
+
+---
+
+### Pitfall 9: FACTURADOR role leaking clinical data or operating across tenant boundaries
+
+**What goes wrong:**
+The FACTURADOR role is given broad read access to `Paciente`, `Turno`, and `PracticaRealizada` to enable billing workflows. In a multi-professional clinic (multiple `Profesional` records under the same implicit tenant), the facturador sees practices from all professionals — which may include sensitive or commercially sensitive patients of competing professionals sharing the same system. In a multi-tenant scenario, a bug in the profesionalId filter exposes another clinic's data.
+
+**Why it happens:**
+The existing codebase filters by `profesionalId` for PROFESIONAL role but the FACTURADOR role (which spans multiple professionals in a clinic) uses looser filtering. The nuance between "facturador sees all practices in their clinic" vs "facturador sees all practices in the system" is easy to miss.
+
+**How to avoid:**
+- Define the FACTURADOR's data scope precisely: all practices belonging to professionals in the same `clinicaId` (tenant), never practices from other tenants.
+- Until a formal `Clinica`/tenant model exists in the schema: scope FACTURADOR queries to the set of `Profesional.id` values that belong to the same clinic as the facturador's `usuarioId`. This set must be computed server-side, never passed from the frontend.
+- Add an integration test: create a facturador user, create a practice for a different tenant's professional, verify the FACTURADOR endpoint returns 0 results for that practice.
+- The FACTURADOR must never access `HistoriaClinicaEntrada` (clinical notes), `Presupuesto` content, or WhatsApp message logs — these are outside billing scope.
+- Add explicit column-level guards in DTOs: the FACTURADOR response shape for a patient should include only `id`, `nombre`, `apellido`, `obraSocialId`, `nroAfiliado` — not clinical, CRM, or communication data.
+
+**Warning signs:**
+- FACTURADOR controller reuses the same `PacienteService.findAll()` as ADMIN without an additional scope filter.
+- No test asserting cross-tenant isolation for the FACTURADOR role.
+- FACTURADOR API response includes CRM fields (`etapaCRM`, `temperatura`) or clinical fields.
+
+**Phase to address:**
+FACTURADOR Dashboard Phase — role scope must be the first thing defined before any controller is written. Permissions are harder to tighten after the UI has been built around broad access.
+
+---
+
+### Pitfall 10: RG 5616/2024 (ARCA) comprobante changes not accounted for in schema
+
+**What goes wrong:**
+ARCA Resolución General 5616/2024 (effective July 2025 for most contributors, with the manual for developers published January 2025) requires all electronic comprobantes to include: (a) the receptor's IVA condition specifically for the operation being documented, and (b) for foreign currency operations, the exchange rate (tipo de cambio vendedor divisa Banco Nación of the prior business day). The existing `Factura` model has `condicionIVA` as a free-text `String?` and no `tipoCambio` field. If the integration is built without accounting for these fields, every comprobante will be rejected by AFIP once the new schema is enforced.
+
+**Why it happens:**
+The regulation was published in December 2024. Developers building the integration in early 2026 from older tutorials or pre-RG5616 library versions will miss these new mandatory fields.
+
+**How to avoid:**
+- Use `@afipsdk/afip.js` v4+ which already incorporates RG 5616/2024 changes (per library changelog verified 2025). Do not use `facturajs` (last meaningful commit 2020) or unversioned snippets.
+- Add `condicionIVAReceptor: String` (non-nullable, AFIP enum code) and `tipoCambio: Decimal? @db.Decimal(10,6)` to the `Factura` model in the migration for this milestone.
+- For ARS invoices (the common case in OS billing), `tipoCambio` is null and `condicionIVAReceptor` is derived from the OS/patient's fiscal registration.
+- Test all comprobante types (A, B, C) in homologation before production — the ARCA homologation environment has been updated to validate RG 5616 fields.
+
+**Warning signs:**
+- Using `facturajs` npm package (outdated, no RG 5616 support).
+- `Factura.condicionIVA` is a nullable free-text field with no validation.
+- No `tipoCambio` field in the schema.
+- Tests run only on homologation pre-July 2025 schema (old validation rules).
+
+**Phase to address:**
+AFIP Research Phase — identify the correct library version and verify RG 5616 field requirements before designing the migration.
 
 ---
 
@@ -187,13 +257,13 @@ WhatsApp Integration Phase + CRM Automation Phase — the integration point must
 
 | Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
 |----------|-------------------|----------------|-----------------|
-| Single platform WhatsApp number shared by all tenants | Faster launch, no per-tenant onboarding friction | Account suspension affects all clinics simultaneously; no brand identity per clinic | Never — design for per-tenant from start |
-| Opt-in assumed from phone number registration | No UX friction at registration | Meta account suspension + potential LATAM privacy law fines | Never for WhatsApp |
-| Templates hardcoded in service layer | Fast to implement | Rejected templates require code deploys to rename/swap | Never — store template IDs in config or DB |
-| Puppeteer launched per-request | Simple code, no pooling logic | Memory leak OOM in production within weeks | Only for very low-volume internal admin tools |
-| PDF generation blocking the HTTP request | Simple flow | Blocks NestJS event loop during Chromium render (potentially 1-5 seconds) | Never in production |
-| Automated scheduler fires all at once | Simple cron implementation | Rate limit breach, quality rating drop, potential ban | Never — always queue with delay |
-| Skip consent opt-in for existing patients | Faster time to first send | Policy violation, regulatory risk, patient trust damage | Never |
+| Local counter for comprobante numbering instead of querying `FECompUltimoAutorizado` | Faster, fewer AFIP round-trips | One concurrency event creates permanent sequential corruption for the punto de venta | Never — always use AFIP as source of truth |
+| In-memory WSAA token with no expiry management | Simple code, works for days | Token expires silently mid-day; invoice failures no one understands | Never in production |
+| Single WSFE punto de venta across all clinic tenants | No per-tenant AFIP onboarding required | One clinic's numbering gap corrupts all others; regulatory exposure mixing CUITs | Never — WSFE is per-CUIT, multi-CUIT sharing is legally invalid |
+| Updating `monto` in place without audit columns | Simpler schema, fewer fields | No audit trail; disputes unresolvable; potential regulatory issue | Never for financial records |
+| Two-state liquidation (PENDIENTE/PAGADO) | Simple implementation | Partial OS payments cannot be tracked; reconciliation requires external spreadsheets | Only for MVP if documented as known gap with a fix milestone committed |
+| Hardcoded IVA 21% on all invoices | No IVA logic to build | Wrong tax treatment for medical services; OS audit rejection; clinic tax liability | Never — must be derived from fiscal condition |
+| Skipping CAEA contingency mode | Faster integration build | Clinic cannot bill during any AFIP outage; month-end billing blocked | Acceptable for research milestone if documented as v1.2+ requirement |
 
 ---
 
@@ -201,14 +271,14 @@ WhatsApp Integration Phase + CRM Automation Phase — the integration point must
 
 | Integration | Common Mistake | Correct Approach |
 |-------------|----------------|------------------|
-| WhatsApp Cloud API webhooks | Verifying webhook signature optional / skipped | Always verify `X-Hub-Signature-256` on every incoming webhook — unauthenticated webhooks allow spoofed message status events |
-| WhatsApp Cloud API webhooks | Not handling duplicate delivery events | WhatsApp can deliver the same status event multiple times. Use idempotency keys on status updates |
-| Meta Business Manager | Using personal Facebook account for business verification | Must use a dedicated Business Manager account tied to the business legal entity, not a personal profile |
-| Meta Embedded Signup (per-tenant onboarding) | Skipping the Tech Provider enrollment | ISV must be enrolled as a Tech Provider with Meta to use Embedded Signup for tenants. Not doing this blocks the multi-tenant flow entirely |
-| WhatsApp template variables | Putting patient name as `{{1}}` at start of message body | Templates cannot start with a variable. Start with a fixed string: "Hola {{1}}," not "{{1}}, hola" |
-| BSP (Business Solution Provider) | Choosing a BSP without LATAM/Argentina support | Some BSPs don't support Argentine phone number formats (+54) or have latency issues for LATAM. Verify before committing |
-| PDF generation | Using `res.send(buffer)` for large PDFs | Use streaming response (`res.pipe()` with PDFKit stream or `page.pdf()` piped to response) to avoid buffering entire PDF in memory |
-| WhatsApp delivery status | Treating "sent" as "delivered" | WhatsApp status events are: `sent` → `delivered` → `read`. Only update CRM to "patient received" on `delivered`, not `sent` |
+| AFIP WSAA | Requesting a new TA while the previous one is still valid | Check `expirationTime` before requesting; request only when `< 15 minutes remaining` to avoid "ya posee TA valido" rejection |
+| AFIP WSFE | Sending the next comprobante number without querying `FECompUltimoAutorizado` first | Always get the authoritative last number from AFIP before every single invoice emission |
+| AFIP WSFE homologation | Testing with homologation certificate and assuming production works the same way | Homologation uses WSASS self-service cert; production requires Administrador de Certificados Digitales + explicit WSFE service association by clinic accountant |
+| AFIP WSFE | Handling SOAP errors as generic HTTP errors | WSFE returns HTTP 200 even for business rule rejections; must parse the SOAP envelope's `FECompConsultarResult.Errors` array to detect real errors |
+| AFIP WSFE RG 5616 | Using pre-2025 library or tutorial examples | RG 5616/2024 added mandatory fields in July 2025; use `@afipsdk/afip.js` v4+ which already incorporates these changes |
+| Obra social liquidation | Treating OS statement amount as equivalent to invoice amount | OS often pays a different amount than billed (audit deductions, aranceles revision); `monto` (billed) and `montoReal` (paid) must be separate fields |
+| PostgreSQL DateTime vs ART timezone | Storing `fecha` as UTC, computing month ranges in UTC | Month boundary is 21:00 UTC = 18:00 ART; always convert to `America/Argentina/Buenos_Aires` before month range queries |
+| AFIP comprobante date | Setting `fchVtoPago` (payment due date) to far future | WSFE validates that `fchVtoPago >= fechaEmision`; some comprobante types require the due date to be within a regulated window |
 
 ---
 
@@ -216,11 +286,10 @@ WhatsApp Integration Phase + CRM Automation Phase — the integration point must
 
 | Trap | Symptoms | Prevention | When It Breaks |
 |------|----------|------------|----------------|
-| Launching new Chromium browser per PDF request | Memory grows continuously; eventually OOM crash | Singleton browser with context pool; or use pure-JS PDF library | At ~50+ PDF requests per day without restart |
-| `Promise.all` over all patients in scheduler | WhatsApp rate limit hit; 429 errors; potential account quality degradation | BullMQ queue with configurable delay between sends (e.g., 1 msg/500ms per tenant) | At 20+ patients in same scheduler tick |
-| Fetching full patient list for kanban without pagination | Kanban page load time increases linearly with patients | Server-side pagination on `/pacientes/kanban`; load cards on scroll | At 200+ patients per professional |
-| WhatsApp webhook handler doing synchronous DB writes | Webhook response takes >5s; Meta retries webhook; duplicate processing | Respond 200 immediately, process asynchronously in queue | Under any load — Meta has strict webhook response timeouts |
-| PDF attached inline to WhatsApp message | Large media messages fail silently if >16MB; API times out | Generate PDF → upload to S3 → send document URL via WhatsApp Media API | At presupuesto PDFs with many images/tables >5MB |
+| Synchronous WSFE HTTP call in the NestJS request handler | Invoice endpoint times out on slow AFIP connections (>5s); user retries; duplicate invoice attempt | Wrap WSFE calls in a BullMQ job with idempotency key; respond 202 Accepted immediately; webhook/polling for result | Under any AFIP latency spike |
+| Querying all practices for billing totals without date index | KPI dashboard slow to load as practice volume grows | Ensure `@@index([profesionalId, fecha])` on `PracticaRealizada` (add to schema); use monthly aggregate materialized view for KPI queries | At ~5,000+ practices per profesional |
+| Fetching full liquidacion list without pagination | FACTURADOR dashboard loads all OS liquidaciones ever created | Server-side pagination with `cursor` or `offset` on `/liquidaciones`; default to current month | At 12+ months of history (hundreds of records per OS) |
+| Building monthly total by summing all Factura records at query time | Slow KPI card loads; DB load spikes on dashboard open | Pre-compute monthly totals in a `ResumenFacturacion` cache table or use a Prisma aggregate with proper index | At 500+ invoices per month |
 
 ---
 
@@ -228,12 +297,12 @@ WhatsApp Integration Phase + CRM Automation Phase — the integration point must
 
 | Mistake | Risk | Prevention |
 |---------|------|------------|
-| Logging WhatsApp message content in NestJS Logger | Patient names, budget amounts, phone numbers in production logs — potential PII breach | Log only message IDs and status codes, never message body or recipient phone numbers |
-| Storing WhatsApp API access tokens in backend `.env` without per-tenant isolation | One leaked token compromises all tenants if token is shared | Per-tenant encrypted token storage in DB (use `@nestjs/config` + encryption at rest) |
-| WhatsApp webhook endpoint without signature verification | Spoofed webhook events can manipulate CRM states (mark presupuesto as read, change etapaCRM) | Verify `X-Hub-Signature-256` header on every request to the webhook endpoint |
-| Sending patient health information via WhatsApp | Argentine health data law requires secure channels for clinical data; WhatsApp messages are not auditable | Restrict WhatsApp to logistics only (appointment, budget follow-up). Clinical data stays inside the platform |
-| Publicly accessible PDF URLs without authentication | Anyone with the PDF link can access another patient's presupuesto | Generate time-limited signed URLs (S3 presigned URLs, 24h expiry) for PDF downloads; never expose permanent public URLs |
-| Opt-in consent without timestamp and source recording | Cannot prove consent was given if patient disputes receiving messages | Store `whatsappOptInDate`, `whatsappOptInSource` (e.g., "portal_registro", "secretaria_manual") with every consent record |
+| Storing AFIP certificates (`.crt`/`.key` files) in the filesystem or environment variables | Certificate theft = unauthorized invoicing under clinic's CUIT; tax fraud exposure | Store certificate bytes encrypted with AES-256-GCM in the DB (same pattern as WABA tokens already implemented); never on disk |
+| FACTURADOR endpoint not scoped to clinic tenant | Cross-tenant data leakage; a facturador sees another clinic's patients and OS billing | All FACTURADOR queries must include an explicit `clinicaId` (or profesional set) scope derived from the JWT, not from query params |
+| Logging invoice content (CUIT, patient name, amount) at INFO level | PII and financial data in production logs | Log only comprobante number, estado, and CAE code — never CUIT, nombre, or monto in logs |
+| `condicionIVA` accepted as free-text from frontend | Malformed IVA code causes WSFE rejection; or deliberate manipulation of tax category | Validate against AFIP's fixed enum of IVA condition codes server-side; reject anything not in the allowed set |
+| Exposing the AFIP homologation CUIT (20409378472, used for dev testing) in production config | Homologation invoices appear valid to unsuspecting users but have no fiscal validity | Require production CUIT to be explicitly configured; fail fast with a clear error if the homologation CUIT is detected in a production environment |
+| Allowing FACTURADOR to read `HistoriaClinicaEntrada` or CRM fields via the patient endpoint | Clinical and commercial data leakage to a billing role | Create a dedicated `PacienteFacturadorView` DTO with only billing-relevant fields; never reuse the clinical patient response in billing endpoints |
 
 ---
 
@@ -241,26 +310,27 @@ WhatsApp Integration Phase + CRM Automation Phase — the integration point must
 
 | Pitfall | User Impact | Better Approach |
 |---------|-------------|-----------------|
-| Automated message sent without secretary review | Secretary is unaware a message was sent; patient calls clinic confused about content; no accountability | Show "pending automated messages" queue to secretaries before sending; allow editing variables or canceling before fire |
-| WhatsApp send button available for patients without opt-in | Secretary clicks send, nothing happens, no feedback | Disable WhatsApp action for patients without `whatsappOptIn = true`; show tooltip "Paciente no ha dado consentimiento para WhatsApp — enviar email en su lugar" |
-| PDF preview only after generation | Secretary discovers PDF layout issues after sending to patient | Show PDF preview modal before the "Enviar por WhatsApp" action is triggered |
-| Template variable failures shown as blank in messages | Patient receives "Hola ," (empty name) | Validate all required patient fields (nombre, apellido, telefono) are non-null before allowing send; surface validation errors to secretary |
-| No opt-out UI in patient profile | Patient asks clinic to stop WhatsApp messages; secretary cannot find how to do it | Dedicated "Preferencias de contacto" section in patient profile with toggle for WhatsApp opt-out, always visible to secretaries |
-| Automated messages in Spanish only, with no clinic branding | Messages look generic, patients don't recognize the sender | Templates must include clinic name as a variable: "Hola {{1}}, te contactamos desde {{2}} (Clínica {{3}})..." |
+| Showing raw AFIP error codes to the facturador | "Error 10016" is meaningless to a non-technical user | Map all known AFIP error codes to plain-language Spanish messages: "El número de comprobante no coincide con el esperado por AFIP. Contactá al soporte." |
+| No clear distinction between CAE mode and CAEA contingency mode in the UI | User doesn't know if invoices are being validated in real time | Show a persistent banner when CAEA mode is active: "Facturando en modo contingencia — los comprobantes serán validados automáticamente cuando AFIP esté disponible" |
+| Monthly limit progress bar updating only on full page reload | Facturador issues several invoices without knowing they're approaching the limit | Real-time (or optimistic) update of the limit progress bar after each invoice emission; use TanStack Query `invalidateQueries` after mutation |
+| Allowing "close settlement batch" without confirming all practices are assigned to it | Facturador closes a lote prematurely; practices added afterward don't belong to any lote | Require explicit review step: "Estas cerrando este lote con X prácticas por $Y. Confirmar?" with list of included practices before final close |
+| Amount correction field always editable, no visual diff | Facturador makes a typo in the correction; no way to notice the original billed amount | Show original billed amount alongside the editable `montoReal` field; only enable save if `montoReal != monto`; require a `motivoCorreccion` text input |
+| "Liquidación cerrada" state still showing edit controls | Confuses facturador about whether changes are persisted | Locked liquidations render as read-only with a clear lock icon; show who closed it and when |
 
 ---
 
 ## "Looks Done But Isn't" Checklist
 
-- [ ] **WhatsApp send button:** Appears functional in dev with sandbox — verify approved WABA number is connected in production and Meta verification is complete
-- [ ] **Template sending:** Works in sandbox — verify all templates are APPROVED (not PENDING or REJECTED) in the Meta Business Manager before launch
-- [ ] **Automated scheduler:** Sends messages in testing — verify per-patient frequency cap, opt-out filter, and BullMQ rate limiting are active in production config
-- [ ] **PDF generation:** Generates correctly for 1-2 test presupuestos — verify no memory leak under 50 consecutive PDF requests (load test before launch)
-- [ ] **Multi-tenant WhatsApp:** Works for first test clinic — verify each new clinic goes through Embedded Signup and gets own WABA credentials stored per-tenant in DB
-- [ ] **CRM status update on send:** WhatsApp message fires — verify `presupuesto.estado` and `paciente.etapaCRM` are actually updated in the same transaction
-- [ ] **Opt-in consent:** UI shows consent checkbox — verify `whatsappOptIn`, `whatsappOptInDate` are stored in DB and all automated sends filter by this field
-- [ ] **Webhook delivery status:** Messages show "sent" in UI — verify `delivered` and `read` webhook events are processed and update presupuesto status correctly
-- [ ] **PDF attachment in WhatsApp:** Small PDFs work — verify PDFs >5MB are uploaded to S3 and sent as document URL, not inline binary
+- [ ] **AFIP certificate upload:** UI accepts a file — verify the certificate is stored encrypted per-tenant in DB, validated against WSAA on upload, and expiry date is tracked with alert logic
+- [ ] **Invoice emission:** First invoice emits in homologation — verify (a) comprobante number is fetched from `FECompUltimoAutorizado` not from local count, (b) advisory lock prevents concurrent numbering, (c) error 10016 is handled with auto-resync
+- [ ] **WSAA token:** Token obtained at startup — verify per-tenant storage in Redis/DB, expiry check before every WSFE call, and proactive renewal at T-15 minutes
+- [ ] **Monthly limit KPI:** Counter displays correct number — verify all month-boundary queries use ART timezone (`America/Argentina/Buenos_Aires`), not UTC
+- [ ] **Settlement correction:** `montoReal` saves successfully — verify `monto` (original) is preserved, `corregidoPor`/`corregidoAt`/`motivoCorreccion` are written in the same transaction
+- [ ] **Liquidation close:** Lote closes without error — verify partial payment state (`PAGO_PARCIAL`) is handled and remaining balance is surfaced, not silently dropped
+- [ ] **FACTURADOR role scope:** Dashboard shows practices — verify a cross-tenant integration test passes (facturador A cannot see clinic B's data)
+- [ ] **RG 5616/2024 fields:** Comprobante emits in homologation — verify `condicionIVAReceptor` is present and `@afipsdk/afip.js` version is v4+
+- [ ] **IVA treatment:** Invoice shows correct IVA — verify IVA is derived from fiscal condition config, not hardcoded; verify obra social practices use correct exención code
+- [ ] **AFIP outage handling:** Network errors surface to user — verify CAEA is documented as fallback even if not yet implemented; error message is actionable, not "Error 500"
 
 ---
 
@@ -268,11 +338,12 @@ WhatsApp Integration Phase + CRM Automation Phase — the integration point must
 
 | Pitfall | Recovery Cost | Recovery Steps |
 |---------|---------------|----------------|
-| WABA account suspended due to spam | HIGH | 1. Stop all automated sends immediately. 2. Submit appeal through Meta Business Manager. 3. Recovery not guaranteed — may need new phone number + rebuild reputation. 4. Fall back to email for all clinics during recovery. |
-| Template rejected 30-day lockout | MEDIUM | 1. Submit new template with different name immediately. 2. Update template ID in system config. 3. If multiple templates affected, prioritize by which automations are blocked. |
-| Puppeteer OOM crash in production | MEDIUM | 1. Restart NestJS process. 2. Deploy with PDF generation moved to queue with concurrency=1. 3. Replace Puppeteer with PDFKit for long-term fix. |
-| Per-tenant WABA credentials stored globally (single number) | HIGH | 1. Requires schema migration to add per-tenant credential table. 2. All existing webhook configs must be updated. 3. Each tenant must re-authenticate. This is a significant rewrite — avoid by designing correctly upfront. |
-| Patient data sent via WhatsApp without opt-in | HIGH | 1. Immediately disable automated sends. 2. Audit all messages sent without consent. 3. Notify affected patients per Argentine data protection law requirements. 4. Document remediation for potential regulatory inquiry. |
+| Comprobante numbering gap (sequential corruption) | HIGH | 1. Stop all invoice emission immediately. 2. Call `FECompUltimoAutorizado` to get AFIP's authoritative last number. 3. If gap exists, contact AFIP soporte técnico — they can manually authorize the gap or advance the sequence. 4. Re-sync local counter. 5. Add advisory lock to prevent recurrence. |
+| Expired certificate at invoice time | MEDIUM | 1. Surface clear error to facturador: "Certificado AFIP vencido. El contador debe renovarlo en AFIP.". 2. Clinic accountant generates new cert via AFIP portal and re-uploads. 3. Validate new cert against WSAA. Turnaround: 1–3 days. |
+| WSAA token expired mid-invoice | LOW | 1. Catch the SOAP auth error. 2. Force-refresh TA. 3. Retry the WSFE call once. 4. If still failing, surface actionable error. Automation makes this transparent to user. |
+| Wrong IVA emitted on past comprobantes | HIGH | 1. Identify all affected comprobantes. 2. Issue Notas de Crédito to reverse them. 3. Re-emit with correct IVA. Requires accountant involvement. Nota de Crédito is the only AFIP-compliant way to correct a comprobante — there is no edit operation. |
+| FACTURADOR cross-tenant data leak discovered post-deploy | HIGH | 1. Immediately restrict endpoint with emergency hotfix. 2. Audit all queries made by FACTURADOR users since deploy. 3. Notify affected clinic if their data was exposed. 4. Document for potential Ley 25.326 notification requirement. |
+| Partial payment lost (not tracked) | MEDIUM | 1. Reconstruct payment history from bank records / OS statements. 2. Migrate to partial payment model. 3. Backfill `montoPagado` on affected liquidaciones. Manual work per clinic. |
 
 ---
 
@@ -280,37 +351,42 @@ WhatsApp Integration Phase + CRM Automation Phase — the integration point must
 
 | Pitfall | Prevention Phase | Verification |
 |---------|------------------|--------------|
-| WABA registration lead time | WhatsApp Integration Phase — Week 1, Day 1 | Phase gate: WABA approved before webhook code merges to main |
-| Automated messages causing account ban | WhatsApp Integration Phase — scheduler design | Load test with 100 patients: confirm BullMQ throttle is active, confirm no more than 1 msg/patient/7 days |
-| Missing opt-in consent | WhatsApp Integration Phase — schema migration | Audit: every automated send goes through `checkOptIn()` guard; `whatsappOptIn` field exists in Paciente |
-| Single shared WhatsApp number (multi-tenant) | WhatsApp Integration Phase — architecture | Schema review: per-tenant credential table exists; no global `WHATSAPP_PHONE_NUMBER_ID` in application code |
-| Template rejection blocking launch | WhatsApp Integration Phase — template submission | Phase gate: all templates in APPROVED status in Meta Business Manager dashboard |
-| Puppeteer memory leak | Presupuesto PDF Phase — architecture decision | Load test: 50 consecutive PDF generations, memory stable post-test; no Chromium processes orphaned |
-| CRM state not updated on WhatsApp send | WhatsApp Integration Phase + CRM Automation Phase | Integration test: send presupuesto via WhatsApp → assert `presupuesto.estado = ENVIADO` + `paciente.etapaCRM` updated in same request |
+| Homologation vs. production certificate confusion | AFIP Research Phase | Deliverable: documented certificate onboarding guide for clinic accountant; schema includes encrypted per-tenant cert storage |
+| Comprobante numbering gap | AFIP Integration Phase (implementation) | Integration test: two concurrent invoice requests for same punto de venta result in sequential numbers with no gap |
+| WSAA token expiry | AFIP Integration Phase (implementation) | Test: mock token with 10-min expiry, verify auto-renewal before WSFE call; verify per-tenant Redis storage |
+| CAEA contingency mode missing | AFIP Research Phase (document); AFIP Phase v1.2+ (implement) | Research deliverable: CAEA flow documented; implementation deferred with explicit milestone |
+| IVA treatment errors | AFIP Research Phase | Deliverable: IVA matrix for aesthetic surgery + OS, signed off by a contador before any schema design |
+| ART timezone month boundary | FACTURADOR Dashboard Phase | Unit tests: 12 date/time boundary cases including last day of month at 20:00–23:59 UTC |
+| Settlement correction without audit trail | Settlement Workflow Phase | Schema review: `montoReal`, `corregidoPor`, `corregidoAt`, `motivoCorreccion` exist; service test confirms atomicity |
+| Partial payment not tracked | Settlement Workflow Phase | Schema: `PAGO_PARCIAL` enum state + `montoPagado` field + `PagoLiquidacion` table (or documented deferral with explicit milestone) |
+| FACTURADOR role data leakage | FACTURADOR Dashboard Phase | Integration test: facturador from clinic A returns 403/empty for clinic B data; response DTO excludes clinical/CRM fields |
+| RG 5616/2024 missing fields | AFIP Research Phase | Schema review: `condicionIVAReceptor` and `tipoCambio` fields present; library version pinned to v4+ |
 
 ---
 
 ## Sources
 
-- [How to not get banned on WhatsApp Business API](https://sitarzkonrad.medium.com/how-to-not-get-banned-on-whatsapp-business-api-bbdd56be86a5) — MEDIUM confidence (community)
-- [WhatsApp API Rate Limits: How They Work & How to Avoid Blocks (Wati)](https://www.wati.io/en/blog/whatsapp-business-api/whatsapp-api-rate-limits/) — HIGH confidence (verified BSP documentation)
-- [WhatsApp messaging limits — Green API](https://green-api.com/en/blog/2025/wa-buisness-change-its-messaging-limits/) — MEDIUM confidence (BSP blog, 2025 changes)
-- [WhatsApp Business Messaging: Opt-in & user consent best practices — Infobip](https://www.infobip.com/docs/whatsapp/compliance/user-opt-ins) — HIGH confidence (official BSP documentation)
-- [Legal considerations for using the WhatsApp Business API — ChatArchitect](https://www.chatarchitect.com/news/legal-considerations-for-using-the-whatsapp-business-api-what-businesses-need-to-know) — MEDIUM confidence (legal analysis blog)
-- [WhatsApp Template Approval Checklist: 27 Reasons Meta Rejects Messages — WUSeller](https://www.wuseller.com/blog/whatsapp-template-approval-checklist-27-reasons-meta-rejects-messages/) — MEDIUM confidence (community)
-- [WhatsApp Business Messaging: Template Compliance — Infobip](https://www.infobip.com/docs/whatsapp/compliance/template-compliance) — HIGH confidence (official BSP documentation)
-- [Is WhatsApp GDPR Compliant — Chatarmin](https://chatarmin.com/en/blog/is-whatsapp-gdpr-compliant) — MEDIUM confidence (vendor blog)
-- [WhatsApp & Data Privacy in 2025 — heyData](https://heydata.eu/en/magazine/whatsapp-privacy-2025/) — MEDIUM confidence (privacy consulting firm)
-- [Using WhatsApp Business API in Healthcare — ChatArchitect](https://www.chatarchitect.com/news/using-whatsapp-business-api-in-healthcare-improving-patient-communication) — MEDIUM confidence
-- [Compliance Guide: WhatsApp Business API Regulations by Country — TringTring.AI](https://tringtring.ai/blog/whatsapp-ai/compliance-guide-whatsapp-business-api-regulations-by-country/) — MEDIUM confidence (LATAM specifics)
-- [The Hidden Cost of Headless Browsers: A Puppeteer Memory Leak Journey — Medium](https://medium.com/@matveev.dina/the-hidden-cost-of-headless-browsers-a-puppeteer-memory-leak-journey-027e41291367) — MEDIUM confidence (engineering post-mortem)
-- [The NestJS Memory Leak That Only Appeared in Production — Medium, Dec 2025](https://medium.com/@mehran.khanjan/the-nestjs-memory-leak-that-only-appeared-in-production-04a3ca0dfa53) — MEDIUM confidence (engineering post-mortem)
-- [WhatsApp Tech Provider Program Integration Guide — Twilio](https://www.twilio.com/docs/whatsapp/isv/tech-provider-program/integration-guide) — HIGH confidence (official BSP documentation)
-- [WhatsApp API Prerequisites: Phone, Documents, and Verification — Wati](https://www.wati.io/en/blog/whatsapp-api-prerequisites/) — HIGH confidence (BSP documentation)
-- [AI-Resilient WhatsApp Strategies: 2026 Account Ban Wave — AI Journal](https://aijourn.com/ai-resilient-whatsapp-strategies-navigating-the-2026-account-ban-wave/) — LOW confidence (industry blog, 2026)
-- [WhatsApp Business Messaging: Sender Registration Prerequisites — Infobip](https://www.infobip.com/docs/whatsapp/get-started/sender-registration) — HIGH confidence (official BSP documentation)
+- [AFIP WSFE Manual del Desarrollador COMPG v4.0](https://www.afip.gob.ar/fe/documentos/manual-desarrollador-ARCA-COMPG-v4-0.pdf) — HIGH confidence (official AFIP documentation)
+- [AFIP WSAA Manual del Desarrollador](https://www.afip.gob.ar/ws/WSAA/WSAAmanualDev.pdf) — HIGH confidence (official AFIP documentation)
+- [AFIP Certificados Digitales — Producción](https://www.afip.gob.ar/ws/wsaa/wsaa.obtenercertificado.pdf) — HIGH confidence (official AFIP documentation)
+- [AFIP Certificados Digitales — Documentación](https://www.afip.gob.ar/ws/documentacion/certificados.asp) — HIGH confidence (official AFIP portal)
+- [AFIP WSAA WSASS Manual del Usuario](https://www.afip.gob.ar/ws/WSASS/WSASS_manual.pdf) — HIGH confidence (official AFIP documentation)
+- [AfipSDK/afip.js — GitHub](https://github.com/afipsdk/afip.js) — MEDIUM confidence (actively maintained open-source library with RG 5616 support)
+- [Afip SDK — Crear Factura Electrónica en NodeJS](https://afipsdk.com/blog/crear-factura-electronica-de-afip-en-nodejs/) — MEDIUM confidence (official SDK blog, updated February 2025)
+- [AfipSDK — Error 10016 "El número o fecha del comprobante no se corresponde"](https://afipsdk.com/blog/factura-electronica-solucion-a-error-10016/) — MEDIUM confidence (SDK blog post-mortem)
+- [AFIP WSFE — Numeración de Comprobantes (facturaelectronicax.com)](https://sites.google.com/site/facturaelectronicax/wsfev1/wsfev1/wsfev1-numeraci%C3%B3n) — MEDIUM confidence (community documentation, Argentina)
+- [AFIP WSFE — Fallos de Conexión y CAEA](https://sites.google.com/site/facturaelectronicax/wsfev1/wsfev1/wsfev1-fallos-conexi%C3%B3n) — MEDIUM confidence (community documentation)
+- [CAEA — Qué es y cómo emitir comprobantes de contingencia (Facturante)](https://blog.facturante.com/que-es-caea-en-afip/) — MEDIUM confidence (AFIP SaaS provider blog)
+- [ARCA RG 5616/2024 — Normativa oficial](https://www.argentina.gob.ar/normativa/nacional/resoluci%C3%B3n-5616-2024-407369/texto) — HIGH confidence (official Argentine government registry)
+- [RG 5616/2024 — Cambios clave en Facturación Electrónica ARCA](https://radio3cadenapatagonia.com.ar/nueva-rg-5616-2024-cambios-clave-en-la-facturacion-electronica-arca/) — MEDIUM confidence (news article summarizing RG 5616)
+- [Profesionales de la salud: cómo facturar a obras sociales — Calim](https://calim.com.ar/como-facturar-obras-sociales/) — MEDIUM confidence (Argentine accounting practice blog)
+- [IVA en servicios médicos en Argentina — Calim](https://calim.com.ar/cual-iva-servicios-medicos/) — MEDIUM confidence (Argentine accounting practice blog)
+- [Instructivo de Facturación de Obras Sociales — Círculo Médico Paraná](https://www.cmparana.com.ar/2026/03/instructivo-de-facturacion-de-obras-sociales-3/) — MEDIUM confidence (Argentine medical association instructivo, March 2026)
+- [AFIP WSFE — Ticket de Acceso (TA) y expiración](https://sites.google.com/site/facturaelectronicax/wsfev1/wsfev1/wsfev1-m%C3%A9todos/wsfev1-ticket-de-acceso) — MEDIUM confidence (community documentation)
+- [Time in Argentina — UTC-3 no DST — Wikipedia](https://en.wikipedia.org/wiki/Time_in_Argentina) — HIGH confidence (reference)
+- [SaaS Multi-Tenant Isolation Patterns — AWS Blog (ES)](https://aws.amazon.com/es/blogs/aws-spanish/aislamiento-de-datos-multi-usuario-con-seguridad-a-nivel-fila-de-postgresql/) — HIGH confidence (AWS official blog)
 
 ---
 
-*Pitfalls research for: Medical clinic SaaS — WhatsApp Business API + automated follow-up + presupuesto PDF (multi-tenant aesthetic surgery platform)*
-*Researched: 2026-02-21*
+*Pitfalls research for: Argentine medical clinic SaaS — AFIP WSFE electronic invoicing + obra social settlement workflows + FACTURADOR role isolation (multi-tenant aesthetic surgery platform)*
+*Researched: 2026-03-12*

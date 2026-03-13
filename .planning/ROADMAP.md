@@ -76,11 +76,11 @@ Plans:
   3. La página muestra una barra de progreso: límite configurado / facturado en el período / disponible restante
   4. El FACTURADOR puede ingresar o actualizar el límite mensual (valor del contador) y el cálculo se actualiza inmediatamente
   5. Si un lote a cerrar supera el disponible, aparece una advertencia visible antes de confirmar
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 10-01: Routing + permisos — `/dashboard/facturador/page.tsx`, redirect en DashboardLayout, entrada en `permissions.ts` (DASH-01)
-- [ ] 10-02: TanStack Query hooks + componentes de KPIs y límite mensual (DASH-02, DASH-03, DASH-04, LMIT-01)
+- [ ] 10-01-PLAN.md — Routing + permissions: permissions.ts rule, layout redirect, Sidebar Inicio link for FACTURADOR (DASH-01)
+- [ ] 10-02-PLAN.md — TanStack Query hooks + FACTURADOR page: KPI cards, progress bar, limit input (DASH-02, DASH-03, DASH-04, LMIT-01)
 
 ### Phase 11: Settlement Workflow
 **Goal**: El FACTURADOR puede trabajar un lote de prácticas por obra social, corregir montos reales y cerrar la liquidación en un solo paso atómico

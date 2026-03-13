@@ -364,7 +364,7 @@ export class FinanzasService {
         cuit: dto.cuit,
         razonSocial: dto.razonSocial,
         domicilio: dto.domicilio,
-        condicionIVA: dto.condicionIVA,
+        condicionIVAReceptor: dto.condicionIVAReceptor ?? 'CONSUMIDOR_FINAL',
         concepto: dto.concepto,
         subtotal: dto.subtotal,
         impuestos: dto.impuestos,

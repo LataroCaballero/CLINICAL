@@ -8,7 +8,7 @@ import {
   IsString,
   IsUUID,
 } from 'class-validator';
-import { MedioPago, TipoFactura, EstadoLiquidacion } from '@prisma/client';
+import { MedioPago, TipoFactura, EstadoLiquidacion, CondicionIVA } from '@prisma/client';
 
 export class CreatePagoDto {
   @IsUUID()
@@ -65,8 +65,8 @@ export class CreateFacturaDto {
   domicilio?: string;
 
   @IsOptional()
-  @IsString()
-  condicionIVA?: string;
+  @IsEnum(CondicionIVA)
+  condicionIVAReceptor?: CondicionIVA;
 
   @IsOptional()
   @IsString()

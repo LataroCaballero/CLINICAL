@@ -91,11 +91,11 @@ Plans:
   2. Cada práctica tiene una celda editable donde se ingresa el monto real pagado por la OS (distinto del autorizado); el cambio se guarda al perder el foco
   3. Al cerrar el lote, un modal de confirmación muestra la cantidad de prácticas y el total antes de ejecutar
   4. Tras confirmar, las prácticas quedan en estado PAGADO y existe un registro `LiquidacionObraSocial` que las agrupa
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 11-01: LiquidacionesPage mejorada — filtro por OS + columna montoPagado editable + hooks (LIQ-01, LIQ-02)
-- [ ] 11-02: CerrarLoteModal + integración de cierre atómico (LIQ-03)
+- [ ] 11-01-PLAN.md — Backend PATCH endpoint + test cases + frontend hooks + OS card navigation (LIQ-01, LIQ-02)
+- [ ] 11-02-PLAN.md — Lote page with inline editing + CerrarLoteModal + useCerrarLote hook (LIQ-01, LIQ-02, LIQ-03)
 
 ## Progress
 

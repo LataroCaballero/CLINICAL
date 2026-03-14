@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Vista del Facturador
 status: completed
-stopped_at: Completed 09-03-PLAN.md
-last_updated: "2026-03-13T19:10:18.158Z"
+stopped_at: Completed 10-01-PLAN.md
+last_updated: "2026-03-14T15:09:12.846Z"
 last_activity: 2026-03-13 — Phase 9 Plan 01 complete — getMonthBoundariesART + five FinanzasService methods (9 TDD tests green)
 progress:
   total_phases: 4
   completed_phases: 2
-  total_plans: 5
-  completed_plans: 5
+  total_plans: 7
+  completed_plans: 6
   percent: 33
 ---
 
@@ -51,6 +51,7 @@ Progress: [███░░░░░░░] 33% (v1.1)
 *Updated after each plan completion*
 | Phase 09-backend-api-layer P02 | 8min | 2 tasks | 3 files |
 | Phase 09-backend-api-layer P03 | 1m 27s | 2 tasks | 4 files |
+| Phase 10-facturador-home-dashboard P01 | 8min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -75,6 +76,7 @@ Progress: [███░░░░░░░] 33% (v1.1)
 - [Phase 09-02]: getLiquidaciones + getLiquidacionById added to service in this plan (simple findMany/findUnique pass-throughs required by the 2 new GET /liquidaciones routes)
 - [Phase 09-03]: MOCK_CAE and MOCK_CAE_VENCIMIENTO defined as named constants — makes mock nature explicit, avoids inline magic strings
 - [Phase 09-03]: AfipStubService registered in both providers+exports of FinanzasModule — allows other modules to inject it for v1.2 swap-out
+- [Phase 10-01]: FACTURADOR redirect placed in third useEffect after route-guard to avoid ordering conflict; pathname === '/dashboard' exact match prevents firing on sub-routes; ADMIN excluded from redirect
 
 ### Pending Todos
 
@@ -87,6 +89,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-13T19:06:24.798Z
-Stopped at: Completed 09-03-PLAN.md
+Last session: 2026-03-14T15:09:12.844Z
+Stopped at: Completed 10-01-PLAN.md
 Resume file: None

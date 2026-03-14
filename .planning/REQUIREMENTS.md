@@ -13,7 +13,7 @@
 
 ### Dashboard FACTURADOR
 
-- [ ] **DASH-01**: El FACTURADOR ve su propia página al entrar al sistema (`/dashboard/facturador`) con redirect automático desde el layout
+- [x] **DASH-01**: El FACTURADOR ve su propia página al entrar al sistema (`/dashboard/facturador`) con redirect automático desde el layout
 - [ ] **DASH-02**: El FACTURADOR puede ver la cantidad y monto total de prácticas pendientes de liquidación, agrupadas por obra social
 - [ ] **DASH-03**: El FACTURADOR puede ver el progreso del límite mensual: configurado / facturado / disponible
 - [ ] **DASH-04**: El sistema advierte al FACTURADOR cuando un lote a cerrar supera el límite mensual disponible
@@ -76,7 +76,7 @@
 | LMIT-02 | Phase 9 | Complete |
 | LIQ-03 | Phase 9 | Complete |
 | AFIP-02 | Phase 9 | Complete |
-| DASH-01 | Phase 10 | Pending |
+| DASH-01 | Phase 10 | Complete |
 | DASH-02 | Phase 10 | Pending |
 | DASH-03 | Phase 10 | Pending |
 | DASH-04 | Phase 10 | Pending |

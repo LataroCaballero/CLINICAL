@@ -92,7 +92,7 @@ export default function Sidebar() {
 
   const allLinks: LinkItem[] = [
     {
-      href: "/dashboard",
+      href: user.rol === 'FACTURADOR' ? '/dashboard/facturador' : '/dashboard',
       label: "Inicio",
       icon: <LayoutDashboard className="w-5 h-5" />,
     },

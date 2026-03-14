@@ -58,6 +58,15 @@ export default function DashboardLayout({
     }
   }, [isLoading, user, pathname, router]);
 
+  // Redirect FACTURADOR to their dedicated landing page
+  useEffect(() => {
+    if (!isLoading && user && pathname === '/dashboard') {
+      if (user.rol === 'FACTURADOR') {
+        router.replace('/dashboard/facturador');
+      }
+    }
+  }, [isLoading, user, pathname, router]);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
@@ -73,7 +82,10 @@ export default function DashboardLayout({
   return (
     <MensajesProvider>
       <div
-        className="flex min-h-screen transition-colors duration-300"
+        className={cn(
+          "flex min-h-screen transition-colors duration-300",
+          focusModeEnabled ? "bg-[var(--fc-bg-primary)]" : "bg-gray-50"
+        )}
         data-mode={focusModeEnabled ? "consulta" : undefined}
       >
         {/* Sidebar solo desktop */}
@@ -82,7 +94,7 @@ export default function DashboardLayout({
         </div>
 
         {/* Contenedor principal */}
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 min-w-0 flex flex-col">
           {/* Contenedor que controla el espacio vertical */}
           <div className={cn(
             "transition-colors duration-300",
@@ -101,7 +113,7 @@ export default function DashboardLayout({
           {/* Contenido principal del dashboard */}
           <main
             className={cn(
-              "flex-1 overflow-y-auto overflow-x-hidden transition-all duration-300",
+              "flex-1 min-w-0 overflow-y-auto overflow-x-hidden transition-all duration-[250ms]",
               sidebarCollapsed ? "md:ml-20" : "md:ml-64",
               focusModeEnabled && "bg-[var(--fc-bg-primary)]"
             )}

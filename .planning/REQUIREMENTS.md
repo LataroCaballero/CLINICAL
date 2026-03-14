@@ -14,13 +14,13 @@
 ### Dashboard FACTURADOR
 
 - [x] **DASH-01**: El FACTURADOR ve su propia página al entrar al sistema (`/dashboard/facturador`) con redirect automático desde el layout
-- [ ] **DASH-02**: El FACTURADOR puede ver la cantidad y monto total de prácticas pendientes de liquidación, agrupadas por obra social
-- [ ] **DASH-03**: El FACTURADOR puede ver el progreso del límite mensual: configurado / facturado / disponible
-- [ ] **DASH-04**: El sistema advierte al FACTURADOR cuando un lote a cerrar supera el límite mensual disponible
+- [x] **DASH-02**: El FACTURADOR puede ver la cantidad y monto total de prácticas pendientes de liquidación, agrupadas por obra social
+- [x] **DASH-03**: El FACTURADOR puede ver el progreso del límite mensual: configurado / facturado / disponible
+- [x] **DASH-04**: El sistema advierte al FACTURADOR cuando un lote a cerrar supera el límite mensual disponible
 
 ### Límite Mensual
 
-- [ ] **LMIT-01**: El FACTURADOR puede configurar el límite de facturación del mes actual (valor que le provee el contador del médico)
+- [x] **LMIT-01**: El FACTURADOR puede configurar el límite de facturación del mes actual (valor que le provee el contador del médico)
 - [x] **LMIT-02**: El sistema calcula automáticamente el disponible: límite − suma de comprobantes emitidos en el período
 
 ### Liquidación
@@ -77,10 +77,10 @@
 | LIQ-03 | Phase 9 | Complete |
 | AFIP-02 | Phase 9 | Complete |
 | DASH-01 | Phase 10 | Complete |
-| DASH-02 | Phase 10 | Pending |
-| DASH-03 | Phase 10 | Pending |
-| DASH-04 | Phase 10 | Pending |
-| LMIT-01 | Phase 10 | Pending |
+| DASH-02 | Phase 10 | Complete |
+| DASH-03 | Phase 10 | Complete |
+| DASH-04 | Phase 10 | Complete |
+| LMIT-01 | Phase 10 | Complete |
 | LIQ-01 | Phase 11 | Pending |
 | LIQ-02 | Phase 11 | Pending |
 

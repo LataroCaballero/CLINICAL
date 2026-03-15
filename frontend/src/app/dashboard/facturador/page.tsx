@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Building2, AlertTriangle, TrendingUp } from "lucide-react";
+import Link from "next/link";
 
 function formatMoney(value: number): string {
   return new Intl.NumberFormat("es-AR", {
@@ -83,17 +84,22 @@ export default function FacturadorPage() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {agrupadas.map((grupo: PracticaPendienteAgrupada) => (
-              <Card key={grupo.obraSocialId} className="hover:shadow-md transition-shadow">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-gray-600 flex items-center justify-between">
-                    <span className="truncate">{grupo.nombre}</span>
-                    <Badge variant="secondary">{grupo.count} práct.</Badge>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-xl font-bold text-gray-900">{formatMoney(grupo.total)}</p>
-                </CardContent>
-              </Card>
+              <Link
+                key={grupo.obraSocialId}
+                href={`/dashboard/facturador/liquidar/${grupo.obraSocialId}?nombre=${encodeURIComponent(grupo.nombre)}`}
+              >
+                <Card className="hover:shadow-md transition-shadow cursor-pointer">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-gray-600 flex items-center justify-between">
+                      <span className="truncate">{grupo.nombre}</span>
+                      <Badge variant="secondary">{grupo.count} práct.</Badge>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-xl font-bold text-gray-900">{formatMoney(grupo.total)}</p>
+                  </CardContent>
+                </Card>
+              </Link>
             ))}
           </div>
         )}

@@ -113,7 +113,7 @@ Plans:
 | 8. Schema Foundation + AFIP Research | v1.1 | 0/2 | Not started | - |
 | 9. Backend API Layer | 3/3 | Complete   | 2026-03-13 | - |
 | 10. FACTURADOR Home Dashboard | 2/2 | Complete    | 2026-03-14 | - |
-| 11. Settlement Workflow | v1.1 | 0/2 | Not started | - |
+| 11. Settlement Workflow | 1/2 | In Progress|  | - |
 
 ---
 *Roadmap initialized: 2026-02-23 | v1.0 shipped: 2026-03-03 | v1.1 started: 2026-03-13*

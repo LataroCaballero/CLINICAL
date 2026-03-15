@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Vista del Facturador
 status: completed
-stopped_at: Phase 11 context gathered
-last_updated: "2026-03-14T23:24:41.258Z"
+stopped_at: Completed 11-settlement-workflow 11-01-PLAN.md
+last_updated: "2026-03-15T15:39:53.109Z"
 last_activity: 2026-03-13 — Phase 9 Plan 01 complete — getMonthBoundariesART + five FinanzasService methods (9 TDD tests green)
 progress:
   total_phases: 4
   completed_phases: 3
-  total_plans: 7
-  completed_plans: 7
+  total_plans: 9
+  completed_plans: 8
   percent: 33
 ---
 
@@ -53,6 +53,7 @@ Progress: [███░░░░░░░] 33% (v1.1)
 | Phase 09-backend-api-layer P03 | 1m 27s | 2 tasks | 4 files |
 | Phase 10-facturador-home-dashboard P01 | 8min | 2 tasks | 3 files |
 | Phase 10-facturador-home-dashboard P02 | 1min | 2 tasks | 2 files |
+| Phase 11-settlement-workflow P01 | 12min | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -79,6 +80,9 @@ Progress: [███░░░░░░░] 33% (v1.1)
 - [Phase 09-03]: AfipStubService registered in both providers+exports of FinanzasModule — allows other modules to inject it for v1.2 swap-out
 - [Phase 10-01]: FACTURADOR redirect placed in third useEffect after route-guard to avoid ordering conflict; pathname === '/dashboard' exact match prevents firing on sub-routes; ADMIN excluded from redirect
 - [Phase 10-02]: queryKey arrays in useLimiteDisponible and useSetLimiteMensual.onSuccess.invalidateQueries are identical — ensures cache refresh fires on limit save
+- [Phase 11-01]: usuarioId ?? null in update data — explicit null (not undefined) ensures corregidoPor is cleared when no user context
+- [Phase 11-01]: No onSuccess/onError in useActualizarMontoPagado — each lote-page cell manages its own optimistic revert state
+- [Phase 11-01]: ?nombre=encodeURIComponent on Link href — lote page can show OS name without cache dependency on agrupadas query
 
 ### Pending Todos
 
@@ -91,6 +95,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-14T23:24:41.256Z
-Stopped at: Phase 11 context gathered
-Resume file: .planning/phases/11-settlement-workflow/11-CONTEXT.md
+Last session: 2026-03-15T15:39:53.108Z
+Stopped at: Completed 11-settlement-workflow 11-01-PLAN.md
+Resume file: None

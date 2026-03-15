@@ -25,8 +25,8 @@
 
 ### Liquidación
 
-- [ ] **LIQ-01**: El FACTURADOR puede filtrar prácticas pendientes por obra social para trabajar un lote por OS a la vez
-- [ ] **LIQ-02**: Al marcar una práctica como pagada, el FACTURADOR puede ingresar el monto real cobrado por la OS (puede diferir del autorizado)
+- [x] **LIQ-01**: El FACTURADOR puede filtrar prácticas pendientes por obra social para trabajar un lote por OS a la vez
+- [x] **LIQ-02**: Al marcar una práctica como pagada, el FACTURADOR puede ingresar el monto real cobrado por la OS (puede diferir del autorizado)
 - [x] **LIQ-03**: El cierre de un lote de liquidación crea `LiquidacionObraSocial` y marca todas las prácticas seleccionadas como PAGADO en una única transacción atómica
 
 ### AFIP (Research)
@@ -81,8 +81,8 @@
 | DASH-03 | Phase 10 | Complete |
 | DASH-04 | Phase 10 | Complete |
 | LMIT-01 | Phase 10 | Complete |
-| LIQ-01 | Phase 11 | Pending |
-| LIQ-02 | Phase 11 | Pending |
+| LIQ-01 | Phase 11 | Complete |
+| LIQ-02 | Phase 11 | Complete |
 
 **Coverage:**
 - v1.1 requirements: 13 total

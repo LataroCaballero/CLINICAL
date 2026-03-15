@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Patch,
   Body,
   Param,
   Query,
@@ -18,6 +19,7 @@ import {
   ReporteFiltersDto,
   CreateLoteDto,
   SetLimiteMensualDto,
+  ActualizarMontoPagadoDto,
 } from './dto/finanzas.dto';
 import { Auth } from '../auth/decorators/auth.decorator';
 import { MedioPago, TipoFactura, EstadoLiquidacion } from '@prisma/client';
@@ -250,5 +252,19 @@ export class FinanzasController {
   @Auth('ADMIN', 'FACTURADOR')
   getLiquidacionById(@Param('id') id: string) {
     return this.service.getLiquidacionById(id);
+  }
+
+  /**
+   * Updates montoPagado on a PracticaRealizada with audit fields.
+   * Used by FACTURADOR to correct the amount paid by an obra social.
+   */
+  @Patch('practicas/:id/monto-pagado')
+  @Auth('ADMIN', 'FACTURADOR')
+  actualizarMontoPagado(
+    @Param('id') id: string,
+    @Body() dto: ActualizarMontoPagadoDto,
+    @Request() req: any,
+  ) {
+    return this.service.actualizarMontoPagado(id, dto.montoPagado, req.user?.id);
   }
 }

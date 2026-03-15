@@ -896,6 +896,33 @@ export class FinanzasService {
   }
 
   /**
+   * Updates montoPagado on a PracticaRealizada with audit fields corregidoPor and corregidoAt.
+   * Used by FACTURADOR to correct the amount paid by an obra social for a specific practice.
+   *
+   * @param practicaId - The practice's ID
+   * @param montoPagado - The corrected amount paid
+   * @param usuarioId - Optional ID of the user making the correction
+   */
+  async actualizarMontoPagado(
+    practicaId: string,
+    montoPagado: number,
+    usuarioId?: string,
+  ) {
+    const practica = await this.prisma.practicaRealizada.findUnique({
+      where: { id: practicaId },
+    });
+    if (!practica) throw new NotFoundException('Práctica no encontrada');
+    return this.prisma.practicaRealizada.update({
+      where: { id: practicaId },
+      data: {
+        montoPagado,
+        corregidoPor: usuarioId ?? null,
+        corregidoAt: new Date(),
+      },
+    });
+  }
+
+  /**
    * Atomically creates a LiquidacionObraSocial and marks all included practices
    * as PAGADO, setting their liquidacionId FK. Server-side computes montoTotal
    * from actual practice data — never trusts client-provided totals.

@@ -18,7 +18,9 @@ const mockPrismaService = {
   },
   practicaRealizada: {
     findMany: jest.fn(),
+    findUnique: jest.fn(),
     updateMany: jest.fn(),
+    update: jest.fn(),
     count: jest.fn(),
   },
   liquidacionObraSocial: {
@@ -97,6 +99,57 @@ describe('FinanzasService', () => {
       expect(result.limite).toBeNull();
       expect(result.emitido).toBe(0);
       expect(result.disponible).toBeNull();
+    });
+  });
+
+  describe('actualizarMontoPagado', () => {
+    it('should update montoPagado, corregidoPor, corregidoAt when practica exists', async () => {
+      const mockPractica = { id: 'practica-uuid', monto: 2000, montoPagado: null };
+      const updatedPractica = {
+        id: 'practica-uuid',
+        montoPagado: 1500,
+        corregidoPor: 'user-uuid',
+        corregidoAt: new Date(),
+      };
+      prisma.practicaRealizada.findUnique.mockResolvedValue(mockPractica);
+      prisma.practicaRealizada.update.mockResolvedValue(updatedPractica);
+
+      const result = await service.actualizarMontoPagado('practica-uuid', 1500, 'user-uuid');
+
+      expect(prisma.practicaRealizada.update).toHaveBeenCalledWith({
+        where: { id: 'practica-uuid' },
+        data: {
+          montoPagado: 1500,
+          corregidoPor: 'user-uuid',
+          corregidoAt: expect.any(Date),
+        },
+      });
+      expect(result).toEqual(updatedPractica);
+    });
+
+    it('should throw NotFoundException when practica does not exist', async () => {
+      prisma.practicaRealizada.findUnique.mockResolvedValue(null);
+
+      await expect(
+        service.actualizarMontoPagado('practica-uuid', 1500, 'user-uuid'),
+      ).rejects.toThrow('Práctica no encontrada');
+    });
+
+    it('should set corregidoPor to null when no usuarioId provided', async () => {
+      const mockPractica = { id: 'practica-uuid', monto: 2000, montoPagado: null };
+      prisma.practicaRealizada.findUnique.mockResolvedValue(mockPractica);
+      prisma.practicaRealizada.update.mockResolvedValue({ id: 'practica-uuid', montoPagado: 1500, corregidoPor: null, corregidoAt: new Date() });
+
+      await service.actualizarMontoPagado('practica-uuid', 1500);
+
+      expect(prisma.practicaRealizada.update).toHaveBeenCalledWith({
+        where: { id: 'practica-uuid' },
+        data: {
+          montoPagado: 1500,
+          corregidoPor: null,
+          corregidoAt: expect.any(Date),
+        },
+      });
     });
   });
 

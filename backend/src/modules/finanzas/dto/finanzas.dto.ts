@@ -178,3 +178,9 @@ export class SetLimiteMensualDto {
   @IsPositive()
   limite: number;
 }
+
+export class ActualizarMontoPagadoDto {
+  @IsNumber()
+  @IsPositive()
+  montoPagado: number;
+}

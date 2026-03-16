@@ -3,7 +3,7 @@
 ## Milestones
 
 - ✅ **v1.0 CRM Conversión** — Fases 1–7 (shipped 2026-03-03)
-- 🚧 **v1.1 Vista del Facturador** — Fases 8–11 (in progress)
+- ✅ **v1.1 Vista del Facturador** — Fases 8–11 (shipped 2026-03-16)
 
 ## Phases
 
@@ -24,78 +24,17 @@ Full details: `.planning/milestones/v1.0-ROADMAP.md`
 
 </details>
 
-### 🚧 v1.1 Vista del Facturador (In Progress)
+<details>
+<summary>✅ v1.1 Vista del Facturador (Fases 8–11) — SHIPPED 2026-03-16</summary>
 
-**Milestone Goal:** Darle al rol FACTURADOR una vista propia y un flujo completo de liquidación de obras sociales con control de límite mensual de facturación.
+- [x] Phase 8: Schema Foundation + AFIP Research (2/2 planes) — completado 2026-03-13
+- [x] Phase 9: Backend API Layer (3/3 planes) — completado 2026-03-13
+- [x] Phase 10: FACTURADOR Home Dashboard (2/2 planes) — completado 2026-03-14
+- [x] Phase 11: Settlement Workflow (2/2 planes) — completado 2026-03-16
 
-- [ ] **Phase 8: Schema Foundation + AFIP Research** - Migraciones DB prerequisito + documento de integración AFIP escrito
-- [x] **Phase 9: Backend API Layer** - Extensión de FinanzasService/Controller + AfipStubService (completed 2026-03-13)
-- [x] **Phase 10: FACTURADOR Home Dashboard** - Routing, permisos, KPIs y configuración de límite mensual (completed 2026-03-14)
-- [x] **Phase 11: Settlement Workflow** - Flujo de liquidación mejorado con filtro por OS y edición de montoPagado (completed 2026-03-16)
+Full details: `.planning/milestones/v1.1-ROADMAP.md`
 
-## Phase Details
-
-### Phase 8: Schema Foundation + AFIP Research
-**Goal**: La base de datos soporta los datos del flujo de facturación y el equipo tiene un documento de integración AFIP accionable
-**Depends on**: Phase 7 (v1.0 complete)
-**Requirements**: SCHEMA-01, SCHEMA-02, SCHEMA-03, AFIP-01
-**Success Criteria** (what must be TRUE):
-  1. `PracticaRealizada` tiene campos `montoPagado`, `corregidoPor`, `corregidoAt`, `motivoCorreccion` y el cliente Prisma fue regenerado
-  2. El modelo `LimiteFacturacionMensual` existe con `@@unique([profesionalId, mes])` y es accesible desde el ORM
-  3. `Factura` tiene `condicionIVAReceptor` (non-nullable) y `tipoCambio` para cumplimiento RG 5616/2024
-  4. El documento AFIP/ARCA cubre certificados, WSAA, WSFEv1, CAEA, RG 5616/2024 y biblioteca recomendada, y está escrito en `.planning/research/AFIP-INTEGRATION.md`
-**Plans**: 2 plans
-
-Plans:
-- [ ] 08-01-PLAN.md — Prisma schema additions + migration `facturador_v1` (SCHEMA-01, SCHEMA-02, SCHEMA-03)
-- [x] 08-02-PLAN.md — AFIP/ARCA integration research document (AFIP-01) — completed 2026-03-13
-
-### Phase 9: Backend API Layer
-**Goal**: El backend expone todos los endpoints que necesita el flujo del FACTURADOR, con lógica atómica y cálculos de timezone correctos
-**Depends on**: Phase 8
-**Requirements**: LMIT-02, LIQ-03, AFIP-02
-**Success Criteria** (what must be TRUE):
-  1. `POST /finanzas/liquidaciones/crear-lote` crea `LiquidacionObraSocial` y marca prácticas como PAGADO en una única transacción Prisma (`$transaction`)
-  2. El cálculo de disponible mensual (límite − emitido en período) usa `getMonthBoundariesART()` con timezone `America/Argentina/Buenos_Aires`, verificable con una práctica al `2026-03-01T02:30:00Z`
-  3. `AfipStubService.emitirComprobante()` devuelve una estructura CAE mock tipada y está registrado en `FinanzasModule`
-  4. Todos los endpoints nuevos en `FinanzasController` aceptan `profesionalId` como parámetro explícito (nunca derivado del JWT) y están protegidos con `@Auth('ADMIN', 'FACTURADOR')`
-**Plans**: 3 plans
-
-Plans:
-- [ ] 09-01-PLAN.md — FinanzasService: timezone utility + cinco nuevos métodos + test scaffolds (LMIT-02, LIQ-03)
-- [ ] 09-02-PLAN.md — FinanzasController: siete nuevos endpoints + DTOs adicionales (LMIT-02, LIQ-03)
-- [ ] 09-03-PLAN.md — AfipStubService: interfaces + stub + registro en FinanzasModule (AFIP-02)
-
-### Phase 10: FACTURADOR Home Dashboard
-**Goal**: El FACTURADOR llega a su propia página de inicio con KPIs de facturación y puede configurar el límite mensual
-**Depends on**: Phase 9
-**Requirements**: DASH-01, DASH-02, DASH-03, DASH-04, LMIT-01
-**Success Criteria** (what must be TRUE):
-  1. Al entrar al sistema, el usuario con rol FACTURADOR es redirigido a `/dashboard/facturador` (no a la home del PROFESIONAL)
-  2. La página muestra cantidad y monto total de prácticas pendientes agrupadas por obra social
-  3. La página muestra una barra de progreso: límite configurado / facturado en el período / disponible restante
-  4. El FACTURADOR puede ingresar o actualizar el límite mensual (valor del contador) y el cálculo se actualiza inmediatamente
-  5. Si un lote a cerrar supera el disponible, aparece una advertencia visible antes de confirmar
-**Plans**: 2 plans
-
-Plans:
-- [ ] 10-01-PLAN.md — Routing + permissions: permissions.ts rule, layout redirect, Sidebar Inicio link for FACTURADOR (DASH-01)
-- [ ] 10-02-PLAN.md — TanStack Query hooks + FACTURADOR page: KPI cards, progress bar, limit input (DASH-02, DASH-03, DASH-04, LMIT-01)
-
-### Phase 11: Settlement Workflow
-**Goal**: El FACTURADOR puede trabajar un lote de prácticas por obra social, corregir montos reales y cerrar la liquidación en un solo paso atómico
-**Depends on**: Phase 10
-**Requirements**: LIQ-01, LIQ-02, LIQ-03
-**Success Criteria** (what must be TRUE):
-  1. El FACTURADOR puede filtrar la tabla de prácticas pendientes por obra social para preparar un lote específico
-  2. Cada práctica tiene una celda editable donde se ingresa el monto real pagado por la OS (distinto del autorizado); el cambio se guarda al perder el foco
-  3. Al cerrar el lote, un modal de confirmación muestra la cantidad de prácticas y el total antes de ejecutar
-  4. Tras confirmar, las prácticas quedan en estado PAGADO y existe un registro `LiquidacionObraSocial` que las agrupa
-**Plans**: 2 plans
-
-Plans:
-- [ ] 11-01-PLAN.md — Backend PATCH endpoint + test cases + frontend hooks + OS card navigation (LIQ-01, LIQ-02)
-- [ ] 11-02-PLAN.md — Lote page with inline editing + CerrarLoteModal + useCerrarLote hook (LIQ-01, LIQ-02, LIQ-03)
+</details>
 
 ## Progress
 
@@ -110,10 +49,10 @@ Plans:
 | 5. Dashboard de Conversión | v1.0 | 3/3 | Complete | 2026-03-02 |
 | 6. CRM Data Wiring Fixes | v1.0 | 1/1 | Complete | 2026-03-02 |
 | 7. UX + Security Hardening | v1.0 | 1/1 | Complete | 2026-03-03 |
-| 8. Schema Foundation + AFIP Research | v1.1 | 0/2 | Not started | - |
-| 9. Backend API Layer | 3/3 | Complete   | 2026-03-13 | - |
-| 10. FACTURADOR Home Dashboard | 2/2 | Complete    | 2026-03-14 | - |
-| 11. Settlement Workflow | 2/2 | Complete   | 2026-03-16 | - |
+| 8. Schema Foundation + AFIP Research | v1.1 | 2/2 | Complete | 2026-03-13 |
+| 9. Backend API Layer | v1.1 | 3/3 | Complete | 2026-03-13 |
+| 10. FACTURADOR Home Dashboard | v1.1 | 2/2 | Complete | 2026-03-14 |
+| 11. Settlement Workflow | v1.1 | 2/2 | Complete | 2026-03-16 |
 
 ---
-*Roadmap initialized: 2026-02-23 | v1.0 shipped: 2026-03-03 | v1.1 started: 2026-03-13*
+*Roadmap initialized: 2026-02-23 | v1.0 shipped: 2026-03-03 | v1.1 shipped: 2026-03-16*

@@ -58,14 +58,19 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 - ✓ Dashboard: motivos de pérdida con porcentajes — v1.0
 - ✓ Dashboard: KPIs por período (nuevos, confirmados, tasa de conversión) — v1.0
 - ✓ Dashboard: performance del coordinador con atribución real por usuario — v1.0
+- ✓ Schema DB AFIP-ready: CondicionIVA/MonedaFactura enums, LimiteFacturacionMensual model, PracticaRealizada audit fields — v1.1
+- ✓ Documento de integración AFIP/ARCA (774 líneas): WSAA, WSFEv1, CAEA, RG 5616/2024, contrato TypeScript EmitirComprobante — v1.1
+- ✓ Capa backend de facturación: getMonthBoundariesART() UTC-3, 5 FinanzasService methods, 7 endpoints (ADMIN+FACTURADOR), AfipStubService — v1.1
+- ✓ Dashboard FACTURADOR: routing exclusivo `/dashboard/facturador`, KPIs por OS, barra progreso límite mensual, configuración de límite — v1.1
+- ✓ Flujo de liquidación: edición inline montoPagado, CerrarLoteModal, transacción atómica LiquidacionObraSocial — v1.1
 
 ### Active
 
-- [ ] Dashboard dedicado para el rol FACTURADOR con KPIs de facturación mensual
-- [ ] Límite mensual de facturación configurable por el facturador
-- [ ] Liquidación de prácticas de obra social con corrección de monto por práctica
-- [ ] Flujo de cierre de lote de liquidación (LiquidacionObraSocial correctamente creada)
-- [ ] Research e informe de integración AFIP para emisión de comprobantes desde la plataforma
+- [ ] Emisión de comprobantes electrónicos AFIP/ARCA reales (CAE real, certificado por tenant) — v1.2
+- [ ] CAEA contingency mode para cuando ARCA no responde — v1.2
+- [ ] QR AFIP en PDF de comprobantes — v1.2
+- [ ] Reportes ejecutivos exportables (comparativas entre períodos) — v2
+- [ ] Historial de liquidaciones por OS con comparativa autorizado vs. pagado — v2
 
 ### Deferred
 
@@ -78,20 +83,23 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 
 - App móvil nativa — web-first, mobile a futuro
 - Chat en tiempo real entre pacientes y clínica — WhatsApp cubre este caso por ahora
-- Facturación electrónica / AFIP — requiere dominio contable específico, fuera de scope actual
+- Facturación electrónica AFIP real en v1.1 — completada la investigación, implementación real planificada para v1.2
 - Tiers de suscripción con feature flags — deferido a cuando haya clientes reales con necesidades diferenciadas
 
 ## Context
 
-**Estado actual (post-v1.0):** El módulo CRM de conversión está completo y funcional. La plataforma puede: registrar interacciones con atribución, priorizar seguimiento, crear y enviar presupuestos (PDF/email/WhatsApp), procesar webhooks Meta con HMAC, y mostrar un dashboard de conversión completo (embudo, KPIs, pérdidas, pipeline income, performance del coordinador). 32/32 requisitos del milestone v1.0 satisfechos en 8 días de desarrollo.
+**Estado actual (post-v1.1):** El módulo FACTURADOR está completo y funcional. Además del CRM de conversión completo (v1.0), el sistema ahora permite al rol FACTURADOR: ver prácticas pendientes agrupadas por obra social, configurar el límite mensual de facturación, editar el monto real cobrado por la OS por práctica, y cerrar lotes de liquidación en transacciones atómicas. El schema DB está preparado para AFIP (CondicionIVA, MonedaFactura, LimiteFacturacionMensual) y existe un documento de referencia técnica completo para la implementación real en v1.2. 13/13 requisitos del milestone v1.1 satisfechos en 3 días de desarrollo.
 
 **Stack:** NestJS + Prisma + PostgreSQL (backend) | Next.js 16 + React 19 + TypeScript (frontend) | BullMQ + Redis (async) | WhatsApp Cloud API.
 
-**Deuda técnica post-v1.0:**
+**Deuda técnica acumulada (post-v1.1):**
 - EncryptionService dev fallback key — configurar `ENCRYPTION_KEY` en .env de producción antes de deploy
 - `console.log('DTO RECIBIDO')` en `pacientes.service.ts:33` — expone PII en logs
 - SMTP password decryption no implementada per-tenant (funcional vía env vars)
 - TypeScript strict mode desactivado, cobertura de tests <6%
+- marcarPracticasPagadas deprecado con cuerpo intacto — limpiar cuando se confirme sin callers externos
+- IVA treatment matrix para cirugía estética en obras sociales debe validarse con contador antes de v1.2
+- RG 5782/2025 (CAEA contingency-only desde junio 2026) — verificar en Boletín Oficial antes de implementar CAEA en v1.2
 
 **Usuarios clave:**
 - **Profesional (cirujano):** ve dashboard de conversión, aprueba acciones. No técnico.
@@ -118,17 +126,26 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 | SECRETARIA null-guard pattern (Phase 2.1) | Resolver profesionalId via DB lookup cuando el JWT no lo trae | ✓ Correcto — patrón replicado exitosamente en Phase 4.1 |
 | Email channel removido de SendWAMessageModal | 404 persistente, mejor UX con modal dedicado (EnviarPresupuestoModal) | ✓ Correcto — modal WA-only es más claro |
 | HMAC-SHA256 en webhook Meta (Phase 7) | Seguridad contra replay attacks y payloads falsificados | ✓ Correcto — dev fallback para testing local preservado |
+| Raw SOAP/XML para AFIP (no library) — v1.1 | afipjs/afip-apis unmaintained, sin tipos TS | ✓ Correcto — 774-line reference doc cubre todo sin dependencia |
+| ART offset UTC-3 hardcoded (no DST) — v1.1 | Argentina sin DST, más simple que librería timezone | ✓ Correcto — Date.UTC() evita midnight UTC pitfall |
+| FACTURADOR no tiene Profesional record — v1.1 | Rol de billing/contabilidad distinto al profesional médico | ✓ Correcto — profesionalId siempre parámetro explícito |
+| Prisma migrate deploy (no migrate dev) — v1.1 | Entorno no interactivo (no TTY), deploy diseñado para CI/prod | ✓ Correcto — migration SQL hand-written con backfill seguro |
+| Montos server-side en transacción (no client totals) — v1.1 | Prevenir manipulación de totales financieros | ✓ Correcto — montoTotal calculado dentro de $transaction |
 
-## Current Milestone: v1.1 Vista del Facturador
+## Shipped: v1.1 Vista del Facturador ✅
 
-**Goal:** Darle al rol FACTURADOR una vista propia y un flujo completo de liquidación de obras sociales con control de límite mensual de facturación.
+13/13 requisitos completados en 3 días (2026-03-13 → 2026-03-16). Ver `.planning/milestones/v1.1-ROADMAP.md` para detalles completos.
 
-**Target features:**
-- Dashboard propio del FACTURADOR con KPIs de límite mensual y prácticas pendientes
-- Límite mensual de facturación configurable (proviene del contador)
-- Liquidación de prácticas con edición de monto real pagado por la OS por práctica
-- Cierre de lote de liquidación (crea LiquidacionObraSocial correctamente)
-- Research de integración AFIP (documentar para milestone futuro)
+## Next Milestone: v1.2 AFIP Real
+
+**Suggested goal:** Emitir comprobantes electrónicos reales desde la plataforma usando AFIP/ARCA (CAE real, certificado por tenant, advisory lock en numeración).
+
+**Foundation ready:**
+- `.planning/research/AFIP-INTEGRATION.md` — referencia técnica completa con 6 secciones
+- `AfipStubService` — interfaz `emitirComprobante()` lista para swap-out con implementación real
+- Schema DB con `CondicionIVA`, `MonedaFactura`, `Factura.condicionIVAReceptor`, `Factura.tipoCambio`
+
+Start with `/gsd:new-milestone` to define requirements and roadmap.
 
 ---
-*Last updated: 2026-03-12 after v1.1 milestone start — Vista del Facturador*
+*Last updated: 2026-03-16 after v1.1 milestone — Vista del Facturador*

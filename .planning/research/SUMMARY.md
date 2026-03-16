@@ -1,195 +1,199 @@
 # Project Research Summary
 
-**Project:** CLINICAL v1.1 — Vista del Facturador
-**Domain:** Argentine medical clinic SaaS — FACTURADOR role dashboard, obra social settlement workflow, AFIP/ARCA electronic invoicing research
-**Researched:** 2026-03-12
-**Confidence:** MEDIUM-HIGH
+**Project:** CLINICAL SaaS — v1.2 AFIP Real CAE Emission
+**Domain:** Argentine electronic invoicing (facturacion electronica) for multi-tenant aesthetic surgery clinic SaaS
+**Researched:** 2026-03-16
+**Confidence:** HIGH (stack locked, architecture derived from direct codebase inspection); MEDIUM (CAEA regulation RG 5782/2025 — community sources only, official Boletin Oficial not directly fetched)
 
 ## Executive Summary
 
-The v1.1 milestone has a clear two-part structure: (1) building a functional, role-specific billing clerk dashboard with obra social settlement workflows, and (2) delivering an AFIP/ARCA integration research document as a written deliverable — not a code deliverable. The first part requires no new libraries and works entirely within the existing NestJS/Prisma/Next.js stack. The key schema gaps are the absence of a `montoPagado` field on `PracticaRealizada` (actual OS payment vs. billed amount) and a `LimiteFacturacionMensual` model for monthly cap tracking. These two migrations unblock every downstream billing feature and must land first.
+This milestone replaces the existing `AfipStubService` (which returns a fake CAE) with a real AFIP/ARCA integration via raw SOAP/XML against WSAA and WSFEv1. The approach is deliberately minimal: four new npm packages (`node-forge`, `qrcode`, `xml2js`, `async-mutex`) plus a new `AfipModule` that slots into the existing `FinanzasModule` via a NestJS DI token swap. No third-party AFIP SDK is used — the dependency trees of `@afipsdk/afip.js` (cloud proxy, mandatory SaaS per-tenant billing) and `@arcasdk/core` both introduce more surface area than the raw approach, with `@afipsdk/afip.js` adding a mandatory dependency on afipsdk.com infrastructure that is incompatible with a self-hosted multi-tenant model.
 
-The research firmly recommends scoping AFIP CAE issuance out of v1.1 entirely. Actual WSFE integration carries 10 documented failure modes: from certificate provisioning requiring manual clinic accountant involvement (1-3 business days per tenant), to comprobante sequential numbering that creates permanent corruption on a single concurrency event, to RG 5616/2024 compliance fields that post-date most community tutorials. The research confirms `@arcasdk/core` v0.3.6 as the correct self-hosted library for a future milestone, but the risk/effort ratio makes it a dedicated v1.2+ project. The v1.1 deliverable is a documented integration path plus an `AfipStubService` that pins the interface shape for future implementation.
+The recommended build order is strict: database migration first (blocks everything), then certificate storage (`ConfiguracionAFIP` per tenant), then WSAA token service with Redis caching, then WSFEv1 emission with `pg_advisory_xact_lock` sequencing, then QR PDF generation, and finally CAEA contingency mode — only after the primary CAE flow is stable in production and RG 5782/2025 is verified against the Boletin Oficial. The entire frontend surface area is small: two new hooks (`useAfipConfig`, `useUploadAfipConfig`), QR rendering in the existing factura detail view, and a new ADMIN-only certificate upload page.
 
-The most consequential architectural decision is keeping all new backend logic inside the existing `FinanzasModule` rather than creating a new NestJS module. All new entities (`LimiteFacturacionMensual`, batch close, `montoPagado`) belong to the financial domain, the `FACTURADOR` role guard is already in place on `FinanzasController`, and a separate module would create cross-module dependencies with no benefit. The only structural addition on the frontend is a dedicated `/dashboard/facturador/page.tsx` with a layout-level redirect — clean role separation without polluting the existing PROFESIONAL CRM home.
-
----
+The dominant risks are operational, not technical. Punto de venta misconfiguration passes silently in homologacion but blocks all production invoicing. The WSAA token cache must live in Redis from commit one — never an in-memory Map — to survive horizontal scaling and rolling deploys. The Prisma advisory lock transaction timeout must be set to 45 seconds (Prisma default is 5s; AFIP can take 30s). BullMQ must classify AFIP business rejections (e.g., error 10242 for missing CondicionIVAReceptorId) as permanent errors that go straight to DLQ, not transient failures to retry. These four properties must be correct from the first real invoice; retrofitting them after production invoices are in flight carries high recovery cost.
 
 ## Key Findings
 
 ### Recommended Stack
 
-The v1.1 dashboard and settlement workflow require zero new npm packages. The existing stack (NestJS 10.x, Prisma 6.x, Node 20.x, Redis 5.9.0, PDFKit 0.17.2, `@nestjs/schedule`) covers all requirements. The only additions documented here are for a future AFIP integration milestone, not for v1.1 implementation.
+The architecture decision from the preceding research cycle (AFIP-INTEGRATION.md) is locked: raw SOAP with `axios` + `node-forge` + `xml2js`. Four new packages are the minimal viable additions to the existing backend — everything else (`pdfkit`, `redis`, `axios`, `@nestjs/schedule`) is already installed.
 
-**Core technologies for v1.1 (no new installs):**
-- `Prisma 6.x` — two schema additions: `montoPagado Decimal?` on `PracticaRealizada`; new `LimiteFacturacionMensual` model with `@@unique([profesionalId, mes])`
-- `TanStack Query` — five new hooks in `useFinanzas.ts` following established per-entity hook patterns
-- `FinanzasModule` (NestJS) — extends existing service and controller; no new module
-- `shadcn/ui Dialog + Progress` — `CerrarLoteModal` and `LimiteFacturacionCard` use existing UI primitives already installed
+**Core technologies (new installs required):**
+- `node-forge` 1.3.3: In-process PKCS#7 CMS signing of WSAA TRA — eliminates OpenSSL subprocess temp files and event-loop blocking. Preferred over `openssl smime` subprocess due to private-key filesystem exposure risk on crash paths. Compatibility with AFIP confirmed transitively via `@arcasdk/core` usage.
+- `qrcode` 1.5.4: Canvas-free PNG buffer generation for AFIP-compliant QR codes on factura PDFs. Compatible with existing PDFKit 0.17.2 `doc.image()` API.
+- `xml2js` 0.6.2: SOAP response parsing — handles SOAP faults and namespace variations robustly. Replaces regex extraction (adequate for stub, fragile for production fault handling).
+- `async-mutex` 0.5.0: Per-CUIT in-process mutex preventing duplicate concurrent WSAA token refreshes within a single NestJS instance.
 
-**Future AFIP milestone additions (not v1.1 — research deliverable only):**
-- `@arcasdk/core` v0.3.6 — self-hosted, TypeScript-native, direct SOAP to ARCA; preferred over `@afipsdk/afip.js` which requires afipsdk.com SaaS ($25-250/mo per tenant in a multi-CUIT deployment)
-- `qrcode` v1.5.4 — CAE verification QR code embedded in PDFKit invoice PDFs
-- Redis (existing) — WSAA token caching with 11-hour TTL per-tenant, no new library required
+**Already installed, extended for v1.2:**
+- `redis` 5.9.0: WSAA token cache keyed `afip_ta:{profesionalId}:{cuit}:{service}`, TTL = expiry minus 5 minutes (11-hour effective window on 12-hour WSAA tickets).
+- `@nestjs/schedule` 6.1.0: CAEA pre-fetch cron (`0 6 27,11,12 * *`) and certificate expiry monitoring.
+- `pdfkit` 0.17.2: Extended in new `FacturaPdfService` to embed QR code image in factura PDF.
+- `EncryptionService` (existing in WhatsappModule): Reused for AES-256-GCM encryption of `certPemEncrypted` and `keyPemEncrypted` in `ConfiguracionAFIP`.
 
-See `.planning/research/STACK.md` for full library comparison, version compatibility matrix, and AFIP-specific environment variable requirements.
+**Critical constraint:** AFIP environment (`HOMOLOGACION` / `PRODUCCION`) is per-tenant in `ConfiguracionAFIP.ambiente`, not a global env var. No global `AFIP_CERT` env var — certificate material lives only in the database.
 
 ### Expected Features
 
-The FACTURADOR role currently sees a generic finanzas overview built for ADMIN/PROFESIONAL. Without these v1.1 features, the dedicated role is effectively a restricted ADMIN view with no operational value for a billing clerk.
+**Must have for v1.2 (table stakes — legally required for real CAE):**
+- Schema migration: `ConfiguracionAFIP` model, `AmbienteAFIP` enum, `CaeaVigente` model, `Factura.cae` + `caeFchVto` + `nroComprobante` + `qrData` + `ptoVta`, `EstadoFactura.CAEA_PENDIENTE_INFORMAR`
+- ADMIN certificate upload endpoint — `POST /afip/config/:profesionalId`, ADMIN-only, encrypts cert+key via `EncryptionService`, parses and stores `certExpiresAt`, validates CUIT against cert CN, calls `FEParamGetPtosVenta` to verify ptoVta is type RECE
+- `WsaaService` — TRA building, `node-forge` CMS signing, Redis token cache with `async-mutex` per-CUIT guard
+- `Wsfev1Service` — `FECompUltimoAutorizado` + `FECAESolicitar` inside `prisma.$transaction` with `pg_advisory_xact_lock`, 45-second timeout, AFIP error code mapping to Spanish messages, `CondicionIVAReceptorId` mapping
+- NestJS DI token swap: `AFIP_SERVICE` token points to `AfipRealService` (stub stays available for local dev via env toggle)
+- QR code in factura PDF (RG 5616/2024 — mandatory from April 2026)
+- Certificate status indicator and ambiente badge on FACTURADOR home
+- Error feedback: AFIP rejection codes mapped to user-readable Spanish in a modal, not generic toasts
+- ADMIN config screen for `ConfiguracionAFIP` (cert upload, ptoVta, ambiente toggle)
+- BNA exchange rate manual entry field for USD invoices (link to bna.com.ar; no scraping)
 
-**Must have for v1.1 (P1 — table stakes):**
-- Dedicated FACTURADOR home at `/dashboard/facturador` showing pending practices count + total grouped by OS, monthly cap progress bar, quick CTA to Nuevo Comprobante
-- `montoPagado` schema migration on `PracticaRealizada` — prerequisite for all downstream correctness; `monto` (originally billed) must be preserved as immutable; `montoPagado` records actual OS payment
-- Per-practice amount editing in the liquidation flow before closing a batch (inline edit on blur with immediate PATCH)
-- Atomic batch close: single `POST /finanzas/liquidaciones/crear-lote` using Prisma `$transaction` creating `LiquidacionObraSocial` and marking practices PAGADO in one operation — eliminates the existing two-call gap
-- `LimiteFacturacionMensual` model with config UI (facturador enters accountant-provided limit per period) and monthly cap progress display
-- AFIP/ARCA integration research document (written deliverable: certificate provisioning guide, WSAA + WSFEv1 architecture, library recommendation, CAEA contingency documentation, RG 5616/2024 requirements)
-
-**Should have after validation (v1.x):**
-- Pre-settlement warning when a batch total would exceed the monthly cap
-- Liquidation history per OS with authorized vs. paid variance tracking (audit trail for OS payment disputes)
-- Filter comprobantes by OS and period
+**Should have after v1.2 is stable in production (v1.2.x):**
+- Certificate expiry warning cron (30/60-day email alert to ADMIN)
+- CAEA contingency mode — only after primary CAE flow is stable AND RG 5782/2025 verified against Boletin Oficial
+- `FECAEAInformar` batch job — ships with CAEA mode, never separately
 
 **Defer to v2+:**
-- Full AFIP/ARCA CAE issuance — dedicated milestone requiring certificate provisioning, WSAA lifecycle management, CAEA contingency mode, RG 5616/2024 compliance, and sequential numbering advisory locks
-- OS nomenclador auto-fill (requires ongoing data maintenance commitment)
-- OS portal submission (Webcred etc.) — requires individual OS business agreements
+- Liquidation history per OS with amount variance tracking
+- Multi-professional certificate management bulk dashboard (SaaS operator tooling)
+- OS portal submission (Webcred integration) — requires individual OS business agreements
+- Async BullMQ emission with 202 Accepted + polling (needed at 50+ concurrent tenants)
 
-See `.planning/research/FEATURES.md` for feature dependency graph, Argentine billing domain notes, and competitor analysis.
+**Anti-features — confirmed do not build:**
+- Auto-fetch BNA exchange rate via scraping (BNA has no official API; silently breaks)
+- CAEA as primary invoicing path (RG 5782/2025 violation from June 2026)
+- FACTURADOR cert upload (ADMIN-only, principle of least privilege)
+- Multi-comprobante batch CAE in a single FECAESolicitar (header-field constraints make this unreliable for OS liquidations with mixed IVA conditions)
 
 ### Architecture Approach
 
-All new backend logic extends the existing `FinanzasModule`. The frontend gains a single new route (`/dashboard/facturador`) with three components plus a `CerrarLoteModal` in the enhanced `LiquidacionesPage`. State management stays entirely in TanStack Query — no new Zustand store needed. Multi-tenant note: FACTURADOR has no `Profesional` record, so `profesionalId` is passed explicitly in all requests (never derived from JWT), consistent with the existing `FinanzasController.getDashboard` pattern.
+The v1.2 change is surgical: one DI binding swaps `AfipStubService` for `AfipRealService` in a new `AfipModule`, imported by the existing `FinanzasModule`. `FinanzasService` calls `this.afipService.emitirComprobante(params)` — unchanged. All AFIP infrastructure is encapsulated within `AfipModule`. The existing `/finanzas/facturas/:id/emitir-afip` endpoint URL and request shape do not change; only the response now contains real data.
 
 **Major components:**
-1. `FacturadorDashboardPage` — KPI display, limit progress, pending practices by OS, quick links; uses `useFacturadorKpis` and `useLimiteFacturacion`
-2. `LiquidacionesPage` (enhanced) — `montoPagado` inline edit column, OS filter, "Cerrar lote" button, `CerrarLoteModal` confirmation dialog
-3. `FinanzasService` (extended) — five new methods: `crearLiquidacion()`, `setLimiteFacturacion()`, `getLimiteFacturacion()`, `getFacturadorKpis()`, `actualizarMontoPagado()`
-4. `FinanzasController` (extended) — seven new route handlers all scoped to `@Auth('ADMIN', 'FACTURADOR')`
-5. `AfipStubService` (new) — mock `emitirComprobante()` returning fake CAE structure; pins the interface shape for when real AFIP integration lands
+1. `AfipConfigService` — per-tenant certificate CRUD; AES-256-GCM encrypt/decrypt via `EncryptionService`; parses `certExpiresAt` from cert X.509 `notAfter`; unique CUIT constraint enforcement; `FEParamGetPtosVenta` validation on upload
+2. `WsaaService` — TRA XML construction; `node-forge` PKCS#7 CMS signing; SOAP POST to WSAA via axios; Redis token cache keyed `afip_ta:{profesionalId}:{cuit}:{service}` with `async-mutex` refresh guard
+3. `Wsfev1Service` — `FECompUltimoAutorizado` + `FECAESolicitar` inside `prisma.$transaction` with `pg_advisory_xact_lock(hashtext(cuit:ptoVta:cbteTipo))`, 45-second timeout; `AfipBusinessError` vs `AfipTransientError` classification; CAEA fallback on `AfipUnavailableException`
+4. `CaeaService` — pre-fetch cron; `CaeaVigente` upsert; contingency fallback assignment; `FECAEAInformar` with 8-day deadline tracking
+5. `FacturaPdfService` — PDFKit extension; QR rendered from stored `qrData` URL string via `qrcode` npm
+6. `AfipRealService` — orchestrator implementing `AfipService` interface; wires Config → WSAA → WSFEv1 → CAEA fallback
 
-**Suggested build order (strict dependency chain):** DB migration → backend DTOs and service methods → controller endpoints → AFIP stub → frontend permissions/routing → TanStack Query hooks → enhanced LiquidacionesPage → Facturador home dashboard.
-
-See `.planning/research/ARCHITECTURE.md` for full data flow diagrams, exact Prisma schema additions, DTO definitions, and anti-pattern documentation.
+**Key data flow decision:** QR data is stored as the AFIP URL string in `Factura.qrData` (not a PNG blob). The frontend renders it via `qrcode.react`; the PDF service renders it via `QRCode.toBuffer()`. This keeps DB rows small and allows re-rendering if the QR spec changes.
 
 ### Critical Pitfalls
 
-1. **Comprobante sequential numbering corruption** — Always call `FECompUltimoAutorizado` from AFIP before each invoice emission; never use a local counter. Add PostgreSQL advisory lock `pg_advisory_xact_lock` on `(profesionalId, puntoVenta, tipoComprobante)`. A single concurrency event creates a permanent gap that requires AFIP support intervention to recover. This pitfall is in scope for the AFIP research document, not v1.1 implementation. (AFIP Integration Phase)
+1. **Punto de venta not registered as type RECE in AFIP production portal** — passes in homologacion, blocks all production invoicing with error 10000/10001. Prevention: call `FEParamGetPtosVenta` during cert upload to validate PtoVta is registered and type RECE before enabling any tenant for production.
 
-2. **ART timezone month boundary errors** — Argentina is UTC-3, no DST. `new Date()` in UTC computes wrong month ranges at the end/beginning of every month. All month boundary queries must use `America/Argentina/Buenos_Aires` via `date-fns-tz` or `luxon`. Add a shared `getMonthBoundariesART()` utility from the first commit. Unit test: a practice at `2026-03-01T02:30:00Z` is February 28 in ART. (FACTURADOR Dashboard Phase — critical)
+2. **In-memory WSAA token cache breaks under horizontal scale and rolling deploys** — concurrent renewal attempts cause AFIP "ya posee TA valido" rejection. Prevention: Redis cache from commit one in `WsaaService`, keyed with `profesionalId` as tenant discriminator. Add `@@unique([cuit])` on `ConfiguracionAFIP` to prevent cache key merging across tenants.
 
-3. **Settlement amount correction without audit trail** — Never mutate `PracticaRealizada.monto` in place. The initial schema migration must include `montoPagado` (actual paid), `corregidoPor`, `corregidoAt`, and `motivoCorreccion`. Original billed amount is immutable. Retrofitting audit fields after go-live requires reprocessing historical financial data. (Schema Migration — critical)
+3. **Prisma transaction default timeout (5s) is shorter than AFIP's 30s SLA** — advisory lock releases mid-call; concurrent requests read the same last-authorized number and submit with the same sequence number. Prevention: explicit `{ timeout: 45000 }` on every `$transaction` wrapping WSFE calls. Verify PostgreSQL server `statement_timeout` does not override at DB level.
 
-4. **Non-atomic batch close** — Two separate API calls (`marcarPracticasPagadas` then `crearLiquidacion`) leave practices in PAGADO state with no parent `LiquidacionObraSocial` if the second call fails. The existing endpoint has this gap. The single `POST /finanzas/liquidaciones/crear-lote` with Prisma `$transaction` closes it. (Backend Phase)
+4. **BullMQ retrying AFIP business rejections (10242, 10016, resultado='R') indefinitely** — burns retry budget; FACTURADOR never notified. Prevention: `AfipBusinessError` class causes immediate DLQ move in `onFailed` hook. Transient errors (timeout, HTTP 5xx) get exponential backoff. Error 10242 (CondicionIVAReceptorId invalid) is never retryable.
 
-5. **FACTURADOR role data leakage** — FACTURADOR must only see practices within their clinic's professional set, never cross-tenant data. Response DTOs must exclude clinical (`HistoriaClinicaEntrada`), CRM (`etapaCRM`, `temperatura`), and communication fields. An integration test confirming cross-tenant isolation must be written before any UI is shipped. (FACTURADOR Dashboard Phase)
+5. **openssl smime subprocess: private key persists in /tmp on crash** — `finally` block skipped under SIGKILL; plaintext `key.pem` remains on disk. Prevention: use `node-forge` for in-process signing (recommended). If subprocess is retained, verify no `.pem` files survive a simulated exception; run container `/tmp` as `tmpfs`.
 
-6. **RG 5616/2024 missing fields on Factura model** — Effective July 2025, ARCA requires `condicionIVAReceptor` and `tipoCambio` on all electronic comprobantes. The existing `Factura.condicionIVA` is a nullable free-text field. The schema must add `condicionIVAReceptor String` (non-nullable) and `tipoCambio Decimal? @db.Decimal(10,6)` before any AFIP integration code is written. This is a research deliverable finding for v1.1. (AFIP Research Phase)
+6. **CondicionIVAReceptorId null or wrong — error 10242 from April 2026** — RG 5616/2024 enforcement; stub never validated this field. Prevention: `CONDICION_IVA_TO_AFIP_ID` lookup throws `BadRequestException` for unmapped values before any WSFE call; validate at invoice creation, not inside the BullMQ job processor.
 
----
+7. **CAEA inform deadline (8 calendar days after period end) missed silently** — AFIP denies future CAEA access for the tenant. Prevention: `CaeaInformJob` in BullMQ with 72 retry attempts across the 8-day window; escalate to admin alert (not silent DLQ) if deadline is exceeded.
 
 ## Implications for Roadmap
 
-The milestone breaks naturally into four phases plus a research deliverable that runs parallel to Phase 1.
+Based on the dependency graph in FEATURES.md and the build order in ARCHITECTURE.md, five phases are recommended. Phases A through D constitute the v1.2 release. Phase E is v1.2.x.
 
-### Phase 1: Schema Foundation + AFIP Research Document
+### Phase v1.2-A: Schema + Certificate Management
 
-**Rationale:** Two schema additions are hard prerequisites for every downstream feature. Schema work first avoids mid-feature migrations. The AFIP research document is a pure writing task with no code dependency — it parallelizes with DB migration work.
-**Delivers:** Migration `facturador_v1` adding `montoPagado Decimal?` + audit fields to `PracticaRealizada`; new `LimiteFacturacionMensual` model; `condicionIVAReceptor`/`tipoCambio` additions to `Factura`; written AFIP/ARCA integration research document
-**Addresses:** All P1 schema requirements from FEATURES.md; PITFALLS Pitfalls 3, 6, and 10
-**Avoids:** Audit trail absence (Pitfall 3 — schema includes correction audit fields from day one); RG 5616 non-compliance (Pitfall 6/10 — fields added before any AFIP code is written)
+**Rationale:** Everything else depends on the database schema and the ability to store/retrieve tenant certificates. Certificate upload must validate PtoVta and CUIT against the cert CN — this is the gate that prevents Pitfall 1 and Pitfall 9 (CUIT cross-contamination) from ever reaching production. Schema must land before any service code references new fields.
+**Delivers:** `ConfiguracionAFIP` model and `AmbienteAFIP` enum, `CaeaVigente` model, nullable CAE fields on `Factura`, `EstadoFactura.CAEA_PENDIENTE_INFORMAR`, ADMIN cert upload endpoint (encrypted storage via `EncryptionService`), `certExpiresAt` parsing from X.509 `notAfter`, CUIT-from-cert-CN validation, `FEParamGetPtosVenta` validation on upload, certificate status indicator and ambiente badge on FACTURADOR home, ADMIN config screen
+**Addresses features:** Schema migration (P1), ADMIN cert upload (P1), certificate status indicator (P1), ADMIN config screen (P1)
+**Avoids pitfalls:** Pitfall 1 (PtoVta not RECE), Pitfall 8 (private key on disk), Pitfall 9 (CUIT cross-contamination), Pitfall 10 (cert expiry surfaced via `certExpiresAt`)
 
-### Phase 2: Backend API Layer
+### Phase v1.2-B: WSAA Service + Redis Token Cache
 
-**Rationale:** Service methods and controller endpoints must exist before frontend hooks can be written. Grouping all backend work makes the API contract explicit before any frontend development begins.
-**Delivers:** Five new service methods in `FinanzasService`, seven new endpoints in `FinanzasController`, three new DTOs (`CrearLiquidacionDto`, `SetLimiteFacturacionDto`, `ActualizarMontoPagadoDto`), `AfipStubService` with mock CAE endpoint
-**Uses:** Prisma `$transaction` for atomic batch close (Pitfall 4 prevention); `getMonthBoundariesART()` utility for KPI date ranges (Pitfall 2 prevention); explicit `profesionalId` parameter pattern in all new endpoints (Pitfall 5 prevention)
-**Implements:** FinanzasService extension, FinanzasController extension, AfipStubService registration in FinanzasModule
+**Rationale:** No WSFEv1 call is possible without a valid WSAA access ticket. Redis caching must be implemented from the first commit — retrofitting an in-memory Map that is already in production creates a dangerous window (Pitfall 2). This phase includes the homologacion validation checkpoint: first real WSAA call against `wsaahomo.afip.gov.ar` confirms `node-forge` CMS output is accepted.
+**Delivers:** `WsaaService` with `node-forge` PKCS#7 CMS signing, Redis token cache (`afip_ta:{profesionalId}:{cuit}:{service}` with TTL = expiry minus 5 minutes), `async-mutex` per-CUIT refresh guard, `xml2js` SOAP response parsing, homologacion integration test checkpoint
+**Uses:** `node-forge` 1.3.3, `xml2js` 0.6.2, `async-mutex` 0.5.0, existing `redis` 5.9.0 client
+**Avoids pitfalls:** Pitfall 2 (in-memory cache race), Pitfall 8 (private key on disk), Pitfall 11 (homologacion false confidence)
 
-### Phase 3: FACTURADOR Home Dashboard
+### Phase v1.2-C: WSFEv1 Real Emission + DI Swap
 
-**Rationale:** Role-specific routing must be established before any FACTURADOR component is built, to avoid the anti-pattern of a middleware-based redirect conflicting with the existing DashboardLayout client-side redirect logic. Permissions entry in `permissions.ts` must be added BEFORE the `/dashboard` catch-all (prefix-matching order is critical).
-**Delivers:** `/dashboard/facturador/page.tsx`, `LimiteFacturacionCard` (progress bar), `PracticasPendientesSummary` (count + total by OS), `AccionesRapidasFacturador` (quick links), `permissions.ts` update, DashboardLayout redirect for FACTURADOR role, `useFacturadorKpis` and `useLimiteFacturacion` TanStack Query hooks
-**Avoids:** Double-redirect anti-pattern (single `useEffect` in DashboardLayout — not a separate `middleware.ts`); N+1 `getPracticasPendientes` query documented as known tech debt with a separate fix task
+**Rationale:** Core of the milestone. Advisory lock, error classification, and BullMQ DI strategy must all be implemented together — they form one correctness unit. The DI swap (`AfipStubService` to `AfipRealService`) is the final step in this phase, after end-to-end homologacion testing. Production readiness smoke test (`FEDummy` + `FEParamGetPtosVenta`) must pass before enabling any production tenant.
+**Delivers:** `Wsfev1Service` with `pg_advisory_xact_lock` (45-second transaction timeout), `AfipBusinessError` vs `AfipTransientError` classification, `CONDICION_IVA_TO_AFIP_ID` lookup with pre-queue validation, `AfipRealService` orchestrator, `AFIP_SERVICE` DI token swap, AFIP rejection code mapping to Spanish messages, real CAE + nroComprobante stored on `Factura`, production readiness smoke test
+**Addresses features:** WsaaService (P1), WsfevService (P1), DI swap (P1), store CAE + nroComprobante (P1), error feedback UI (P1)
+**Avoids pitfalls:** Pitfall 3 (advisory lock transaction timeout), Pitfall 4 (BullMQ business vs transient error), Pitfall 6 (CondicionIVA null), Pitfall 7 (retry classification), Pitfall 11 (production smoke test)
 
-### Phase 4: Settlement Workflow Enhancement
+### Phase v1.2-D: QR PDF + Frontend Display
 
-**Rationale:** The enhanced liquidation flow depends on all backend endpoints from Phase 2 and the `montoPagado` schema from Phase 1. It is the most workflow-critical change for the FACTURADOR role and comes last when all dependencies are stable.
-**Delivers:** Enhanced `LiquidacionesPage` with `montoPagado` inline edit column (saves on blur), OS filter to restrict batch to a single obra social, "Cerrar lote" button, `CerrarLoteModal` confirmation dialog (shows practice count + total before commit), `useCrearLiquidacion` and `useActualizarMontoPagado` hooks
-**Avoids:** Non-atomic batch close (Pitfall 4 — single POST with `$transaction`); correction without audit trail (Pitfall 3 — `corregidoPor`/`corregidoAt` written atomically); confusing editable state on locked liquidations (UX pitfalls from PITFALLS.md)
+**Rationale:** QR cannot precede CAE — the code encodes the CAE number returned by WSFEv1. This phase extends the existing PDF pipeline and adds frontend rendering — both are low-risk, well-understood additions that do not require new backend infrastructure.
+**Delivers:** `FacturaPdfService` with `qrcode` PNG embed in PDFKit, `Factura.qrData` URL stored at emission time in `FinanzasService`, CAE badge and QR display in factura detail view, `qrcode.react` QR rendering in frontend, BNA rate field for USD invoices (link to bna.com.ar), `useAfipConfig` and `useUploadAfipConfig` hooks
+**Uses:** `qrcode` 1.5.4 (backend PDF), `qrcode.react` (frontend), existing `pdfkit` 0.17.2
+**Addresses features:** QR code in PDF (P1), BNA rate field (P1), environment badge (P1), CAE/QR frontend display (P1)
+
+### Phase v1.2-E: CAEA Contingency Mode
+
+**Rationale:** Must come last — CAEA is a fallback path, not a primary. Building it before the CAE path is proven in production creates an untestable dependency. RG 5782/2025 (effective June 2026) must be verified against the official Boletin Oficial before implementation begins. The `FECAEAInformar` inform job and the inform deadline alerting must ship in the same phase — never separately (a CAEA implementation without inform tracking is a regulatory liability).
+**Delivers:** `CaeaService` with pre-fetch cron (`0 6 27,11,12 * *`), `CaeaVigente` upsert per tenant, contingency assignment on `AfipUnavailableException`, `CAEA_PENDIENTE_INFORMAR` estado on Factura, `FECAEAInformar` BullMQ job with 72-retry budget across 8-day window, admin alert on deadline miss, CAEA usage ratio tracking per tenant per fortnight (alert at 3% threshold), certificate expiry warning cron (30/60-day email)
+**Addresses features:** CAEA contingency (P2), FECAEAInformar (P2), certificate expiry cron (P2)
+**Avoids pitfalls:** Pitfall 4 (CAEA inform deadline miss), Pitfall 5 (CAEA as primary path violation)
+**Gate:** Do not start until at least one real production invoice has been emitted via the CAE path (Phase C), and RG 5782/2025 is confirmed via Boletin Oficial.
 
 ### Phase Ordering Rationale
 
-- Schema migrations must land first because every service method, frontend hook, and UI component depends on Prisma client regeneration with the new fields
-- AFIP research document is parallelizable with Phase 1 DB work — it has no code dependency
-- Backend before frontend because TanStack Query hooks depend on endpoint contracts being defined
-- FACTURADOR home before settlement workflow because the home establishes routing and permission patterns that the settlement flow inherits
-- This order allows each phase to be tested independently and deployed incrementally without breaking existing ADMIN/PROFESIONAL workflows
+- Schema migrations must precede all service code — every new service references new Prisma models.
+- WSAA must precede WSFEv1 — a WSAA ticket is a hard prerequisite for every WSFE call.
+- WSFEv1 must precede QR PDF — the QR encodes the CAE number returned by WSFEv1.
+- CAEA must follow a proven CAE path in production — CAEA is a fallback that must never be the only tested path.
+- This order allows each phase to be independently deployed and tested without disrupting existing ADMIN/PROFESIONAL/FACTURADOR workflows. The stub remains available via env toggle through all phases.
 
 ### Research Flags
 
-Phases likely needing deeper research during planning:
-- **Phase 1 (AFIP Research Document):** IVA treatment matrix for aesthetic surgery + obras sociales requires accountant sign-off before any `Factura` schema is designed for AFIP integration. PITFALLS.md Pitfall 5 is explicit: hardcoded 21% IVA is wrong for medical services to OS affiliados obligatorios. The correct IVA treatment must be validated with a contador, not inferred from code.
-- **Phase 2 (Backend):** The N+1 query in `getPracticasPendientes` (uses `Promise.all` for per-patient lookups) documented in ARCHITECTURE.md Scaling section should be assessed before building FACTURADOR KPI endpoints on top of it. If practice volume is already significant, this degrades home dashboard load time from day one.
+Phases needing additional research during planning:
+- **Phase v1.2-E (CAEA):** RG 5782/2025 effective date (June 2026) is MEDIUM confidence — community-sourced only. Must verify against Boletin Oficial before any CAEA work begins. If the regulation changes the inform deadline or the 5% threshold definition, the `CaeaService` design changes.
+- **Phase v1.2-C (WSFEv1 production):** AFIP rebranded to ARCA; some endpoints are now under `wswhomo.arca.gob.ar`. Verify current production and homologacion URLs for WSAA and WSFEv1 at implementation time. Store in env config (`AFIP_WSAA_URL_HOMO`, `AFIP_WSFEV1_URL_HOMO`, etc.) — never hardcoded.
 
 Phases with standard patterns (skip research-phase):
-- **Phase 3 (FACTURADOR Home):** Role-gated routing and TanStack Query hooks follow well-established patterns already in the codebase. ARCHITECTURE.md provides exact code snippets for the DashboardLayout redirect and permissions.ts entry.
-- **Phase 4 (Settlement Workflow):** Prisma `$transaction` for atomic batch close is documented NestJS/Prisma practice. shadcn/ui Dialog for confirmation modal follows the same pattern as `CerrarLoteModal` components already in the dashboard.
-
----
+- **Phase v1.2-A (Schema + Cert):** Direct Prisma migration + NestJS CRUD. `EncryptionService` in WhatsappModule is the exact pattern to reuse for cert encryption.
+- **Phase v1.2-B (WSAA):** Fully documented in AFIP-INTEGRATION.md with concrete TypeScript examples. No new architectural decisions.
+- **Phase v1.2-D (QR PDF + Frontend):** `qrcode` package API is stable; PDFKit integration is already done for presupuesto PDFs. Standard pattern extension.
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | v1.1 requires no new libraries — fully existing stack. Future AFIP library (`@arcasdk/core`) verified as self-hosted and TypeScript-native at v0.3.6 (Dec 2025). MEDIUM on community adoption versus `@afipsdk/afip.js`. |
-| Features | HIGH | Derived primarily from direct codebase analysis of existing `LiquidacionesTab.tsx`, `ComprobantesTab.tsx`, `autorizaciones.service.ts`, and `schema.prisma`. Argentine billing domain specifics (OS liquidation cycle, montoPagado normality) verified via medical association instructivos and Argentine accounting practice blogs. |
-| Architecture | HIGH | Based entirely on direct codebase inspection — all architecture sources rated HIGH confidence. No novel patterns required; all decisions are extensions of existing NestJS module conventions and TanStack Query patterns already in use. |
-| Pitfalls | MEDIUM-HIGH | AFIP-specific pitfalls (numbering gaps, WSAA token expiry, certificate provisioning, CAEA) verified against official AFIP developer documentation (HIGH). Argentine medical billing pitfalls (IVA treatment, partial OS payments) verified via official medical association documents and accounting practice blogs (MEDIUM). Role isolation and timezone pitfalls are HIGH confidence standard patterns. |
+| Stack | HIGH | Four packages locked with version rationale. Raw SOAP decision made and documented in AFIP-INTEGRATION.md. Existing package versions confirmed from backend/package.json inspection. No contested alternatives. |
+| Features | HIGH | P1 features derived from codebase analysis of existing stub + AFIP regulatory requirements (RG 5616/2024 officially published). P2 CAEA features are MEDIUM due to RG 5782/2025 source quality. |
+| Architecture | HIGH | Derived entirely from direct codebase inspection. All file paths, DI patterns, and integration points verified against existing code. Build order reflects hard dependency graph. |
+| Pitfalls | MEDIUM-HIGH | WSAA/WSFEv1 pitfalls verified via AFIP official docs and community sources. CAEA regulation (Pitfalls 4-5) is MEDIUM — community-confirmed but Boletin Oficial not directly accessed. |
 
-**Overall confidence:** MEDIUM-HIGH
+**Overall confidence:** HIGH for Phases A through D (CAE primary path). MEDIUM for Phase E (CAEA) pending regulation verification.
 
 ### Gaps to Address
 
-- **IVA treatment matrix:** PITFALLS.md Pitfall 5 identifies this as a critical pre-implementation gap for the AFIP integration milestone. The correct IVA category for aesthetic surgery services billed to obras sociales obligatorias must be validated with the clinic's contador before any `Factura` schema or invoice emission logic is designed. Not blocking for v1.1, but must be resolved before v1.2 planning begins.
-
-- **Partial payment model decision:** PITFALLS.md Pitfall 8 identifies that a two-state `PENDIENTE/PAGADO` enum on `LiquidacionObraSocial` cannot represent partial OS payments (which are a normal occurrence in Argentine medical billing). The Phase 1 schema work must include a decision: ship with two-state model + committed v1.x fix milestone, or add `PAGO_PARCIAL` state + `PagoLiquidacion` child table in v1.1. Deferring is acceptable but must be documented as a known gap with an explicit timeline.
-
-- **`@arcasdk/core` RG 5616/2024 compliance verification:** STACK.md notes that v0.3.6 should be explicitly verified against RG 5616/2024 mandatory fields before any AFIP integration code is written. If verification fails, the fallback option is `@afipsdk/afip.js` v4+ (which explicitly documents RG 5616 support in its changelog) accepting its cloud proxy cost, or a thin direct SOAP wrapper against the ARCA WSDL.
-
-- **FACTURADOR multi-tenant scope without a formal Clinica model:** Until a `Clinica`/tenant model exists in the schema, FACTURADOR queries must be scoped to the set of `Profesional.id` values belonging to the same implicit clinic. ARCHITECTURE.md notes this as an acceptable v1.1 gap for single-clinic deployment, but the integration test for cross-tenant isolation must be written even in v1.1 to prevent silent data leakage when a second clinic is onboarded.
-
----
+- **RG 5782/2025 Boletin Oficial verification:** Before Phase E begins, fetch the official publication from `boletinoficial.gob.ar` and confirm: (a) June 2026 effective date, (b) the 5% CAEA volume threshold definition, (c) the 8-calendar-day inform window. If any parameter differs from community sources, update `CaeaService` design accordingly.
+- **ARCA endpoint URL migration:** Confirm current production and homologacion URLs for WSAA and WSFEv1 at Phase B/C implementation time. Store all AFIP endpoints in env config — never hardcoded in service files. Provide update path if ARCA renames endpoints again.
+- **IVA treatment per obra social:** Whether each OS is `IVA_SUJETO_EXENTO` or `CONSUMIDOR_FINAL` is a business decision for each clinic's accountant — not a system default. Document this requirement in the ADMIN cert onboarding screen and flag as a required validation gate before enabling production for any tenant.
+- **`node-forge` AFIP homologacion validation checkpoint:** First real WSAA call against `wsaahomo.afip.gov.ar` must confirm `node-forge` PKCS#7 SignedData output is accepted. Confirmed transitively via `@arcasdk/core` usage but not directly tested in this codebase. Flag as explicit end-of-Phase-B checkpoint.
+- **PostgreSQL server timeout settings:** Verify that `statement_timeout` and `lock_timeout` at the DB server level do not override the `{ timeout: 45000 }` set on the Prisma `$transaction` wrapping WSFE calls. Long advisory-lock transactions are unusual; confirm with infrastructure.
 
 ## Sources
 
 ### Primary (HIGH confidence)
-- `backend/src/modules/finanzas/finanzas.service.ts` — direct codebase inspection
-- `backend/src/modules/finanzas/finanzas.controller.ts` — direct codebase inspection
-- `backend/src/prisma/schema.prisma` — direct codebase inspection
-- `frontend/src/lib/permissions.ts` — direct codebase inspection
-- `frontend/src/app/dashboard/layout.tsx` — direct codebase inspection
-- `frontend/src/hooks/useFinanzas.ts` — direct codebase inspection
-- `.planning/PROJECT.md` — authoritative milestone requirements
-- [ARCA/AFIP WSFE official documentation](https://www.afip.gob.ar/ws/documentacion/ws-factura-electronica.asp)
-- [ARCA RG 5616/2024 official text](https://www.argentina.gob.ar/normativa/nacional/resoluci%C3%B3n-5616-2024-407369/texto)
-- [AFIP WSFE Manual del Desarrollador COMPG v4.0](https://www.afip.gob.ar/fe/documentos/manual-desarrollador-ARCA-COMPG-v4-0.pdf)
-- [AFIP WSAA Manual del Desarrollador](https://www.afip.gob.ar/ws/WSAA/WSAAmanualDev.pdf)
-- [AFIP QR code specification](https://www.afip.gob.ar/fe/qr/)
+- `.planning/research/AFIP-INTEGRATION.md` — 774-line canonical reference: WSAA, WSFEv1, CAEA patterns, advisory lock, signing options, QR spec
+- `backend/src/prisma/schema.prisma` — current schema state; `Factura`, `CondicionIVA`, `MonedaFactura`, `EstadoFactura` models
+- `backend/src/modules/finanzas/afip/afip.interfaces.ts` — `AfipService` interface contract
+- `backend/src/modules/finanzas/afip/afip-stub.service.ts` — existing DI baseline
+- `backend/src/modules/whatsapp/crypto/encryption.service.ts` — AES-256-GCM pattern to reuse
+- `backend/package.json` — confirmed installed packages and versions
+- [AFIP QR code spec](https://www.afip.gob.ar/fe/qr/) — official QR URL format
+- [RG 5616/2024 enforcement](https://www.boletinoficial.gob.ar/detalleAviso/primera/318374/20241218) — CondicionIVAReceptorId mandatory from April 1, 2026
+- [node-forge npm](https://www.npmjs.com/package/node-forge) — v1.3.3, December 2025
+- [qrcode npm](https://www.npmjs.com/package/qrcode) — v1.5.4, 9M+ weekly downloads
 
 ### Secondary (MEDIUM confidence)
-- [@arcasdk/core npm](https://www.npmjs.com/package/@arcasdk/core) v0.3.6 — self-hosted AFIP library verification
-- [@afipsdk/afip.js npm](https://www.npmjs.com/~afipsdk) v1.2.3 — cloud dependency and pricing confirmed
-- [DevelopArgentina — guía AFIP/ARCA 2025](https://developargentina.com/blog/facturacion-electronica-arca-guia-completa-2025)
-- [AfipSDK blog — Error 10016 comprobante numbering](https://afipsdk.com/blog/factura-electronica-solucion-a-error-10016/)
-- [Instructivo de Facturación de Obras Sociales — Círculo Médico Paraná](https://www.cmparana.com.ar/2026/03/instructivo-de-facturacion-de-obras-sociales-3/)
-- [IVA en servicios médicos en Argentina — Calim](https://calim.com.ar/cual-iva-servicios-medicos/)
-- [Capacitarte — Liquidación de Prestaciones Médicas](https://www.capacitarte.org/blog/nota/liiquidacion-prestaciones-medicas-ART)
-- [AfipSDK pricing page](https://afipsdk.com/pricing) — $25-250/mo per tier for hosted AFIP proxy
-- [CAEA contingency mode — Facturante blog](https://blog.facturante.com/que-es-caea-en-afip/)
+- [@arcasdk/core GitHub](https://github.com/ralcorta/arcasdk) — confirms `node-forge` + `xml2js` are used against AFIP production; 498 commits, December 2025 release
+- [AFIP QR JSON structure](https://groups.google.com/g/pyafipws/c/fRbtMUsuqDQ) — community-confirmed JSON field list corroborating the official spec
+- AFIP community documentation on homologacion vs production endpoint differences and ARCA rebranding
+
+### Tertiary (LOW confidence — needs official verification before Phase E)
+- RG 5782/2025 CAEA contingency-only restriction (June 2026 effective date) — community sources only; must verify against Boletin Oficial before Phase E implementation begins
 
 ---
-
-*Research completed: 2026-03-12*
+*Research completed: 2026-03-16*
 *Ready for roadmap: yes*

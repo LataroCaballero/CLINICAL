@@ -1,255 +1,309 @@
 # Pitfalls Research
 
-**Domain:** Argentine medical clinic SaaS — AFIP electronic invoicing (WSFE/WSAA), obra social settlement workflows, FACTURADOR role isolation (multi-tenant aesthetic surgery platform)
-**Researched:** 2026-03-12
-**Confidence:** MEDIUM-HIGH (AFIP WSFE specifics: MEDIUM — verified via official AFIP docs and community sources; billing workflow patterns: MEDIUM — verified via Argentine professional billing instructivos and community sources; role isolation: HIGH — standard patterns)
+**Domain:** Argentine medical clinic SaaS — v1.2 AFIP Real: replacing AfipStubService with real WSAA/WSFEv1/CAEA in a multi-tenant NestJS system
+**Researched:** 2026-03-16
+**Confidence:** MEDIUM-HIGH (WSAA/WSFEv1 specifics — verified via official AFIP docs and community sources); MEDIUM (CAEA RG 5782/2025 — community sources confirmed, official Boletín Oficial not directly fetched); MEDIUM (multi-tenant isolation patterns — general SaaS patterns applied to AFIP context)
+
+> **Scope:** This document covers pitfalls specific to ADDING real AFIP integration to an existing system that already has a working AfipStubService. Pitfalls from v1.1 (montoPagado audit trail, non-atomic batch close) are already shipped and are not repeated here. The earlier iteration of this file (researched 2026-03-12) covered general AFIP/WSFE domain pitfalls; this version focuses on v1.2 implementation-phase pitfalls that arise when stub becomes real.
 
 ---
 
 ## Critical Pitfalls
 
-### Pitfall 1: Conflating AFIP homologation certificates with production certificates
+### Pitfall 1: Production punto de venta is not of type RECE/WSFEv1 — FECompUltimoAutorizado returns error silently
 
 **What goes wrong:**
-The team builds and tests the entire WSFE integration using a homologation certificate obtained via WSASS (the testing environment self-service portal). Everything works in staging. At go-live, they swap the URL to production and the service throws authentication errors. The production certificate is an entirely different artifact: it must be generated via the "Administrador de Certificados Digitales" portal on the clinic's fiscal key, then explicitly associated with the WSFE service by the clinic's accountant or authorized representative. This requires the clinic's CUIT, their Clave Fiscal nivel 3, and a separate AFIP administrative step that can take 1–3 business days.
+`FECompUltimoAutorizado` — the call that gets the last authorized number before every invoice — will return an error if the `PtoVta` is not registered, inactive, or not of type `RECE` (the WSFEv1 web service type). In homologation this check is not enforced: you can pass any `PtoVta` integer and get a valid stub response. In production, a misconfigured punto de venta returns AFIP error `10000` or `10001` and the system cannot issue a single invoice. This is not surfaced during all of testing because the homologation environment skips most administrative prerequisites.
 
 **Why it happens:**
-Homologation certificates are self-service and instant. Developers assume production is the same process with a different URL. In reality, production certificate management requires the end-user (the clinic) to act — the SaaS developer cannot do it for them.
+Homologation does not require the tenant to pre-register their punto de venta as type `RECE` in AFIP's "Administración de Puntos de Venta" portal. Production does. Development teams build and test everything in homologation, configure a `ptoVta: 1` constant, then move to production — where `ptoVta: 1` may not exist, or may be registered as `FACTURADOR WEB` (manual type) rather than `RECE`. The FECompUltimoAutorizado call fails before a single invoice is attempted.
 
 **How to avoid:**
-- Document the production certificate provisioning process as a clinic onboarding requirement, not a developer task. Prepare a step-by-step guide for the accountant.
-- Build the system to accept externally-provided certificate files (`.crt` / `.key` pair), stored encrypted per-tenant in the DB. Never bundle a certificate in the codebase.
-- Treat production AFIP access as a per-clinic gate: feature is unavailable until the clinic has uploaded their certificate and it has been validated against WSAA.
-- In the NestJS service, validate the certificate on upload: call WSAA `LoginCms` in production mode and surface a clear error if authentication fails, before any invoice is attempted.
-- Certificates expire (typically 2 years from issuance). Build an expiry alert system that warns 60 days in advance — expired certificates cause silent failures at invoice time.
+- Add a `verificarPuntoDeVenta(ptoVta, cbteTipo)` step to the onboarding flow that calls `FEParamGetPtosVenta` after the certificate is uploaded and validated. Surface a clear error if the configured `ptoVta` is not in the returned list or is not of type `RECE`.
+- Document the administrative steps required of the clinic's accountant before production is enabled: (1) register with RECE regime, (2) create a punto de venta of type `WSFEV1/RECE` in AFIP portal, (3) note the assigned number and provide it during onboarding.
+- Store `ptoVta` per-tenant in `ConfiguracionAFIP` (not hardcoded). Validate it against AFIP on first use in production, fail fast with an actionable error if invalid.
+- Call `FEDummy` to verify reachability, then `FEParamGetPtosVenta` to verify the punto de venta, before attempting any real invoice. Wrap this in the certificate-upload validation flow.
 
 **Warning signs:**
-- "We'll ask the clinic for their certificate later" in planning notes.
-- No per-tenant encrypted certificate storage in the Prisma schema.
-- Test suite only runs against homologation; no smoke test against production WSAA before launch.
+- `ptoVta: 1` is a constant in the service file.
+- No `FEParamGetPtosVenta` call in the onboarding or cert-upload flow.
+- Tests only validate in homologation; no smoke test that verifies punto de venta existence after cert upload.
 
 **Phase to address:**
-AFIP Research / Architecture Phase — certificate provisioning model must be defined before any WSFE code is written.
+Phase v1.2-A (Certificate + WSAA setup) — validate punto de venta during certificate upload flow, before any invoice path is built.
 
 ---
 
-### Pitfall 2: WSFE comprobante numbering gaps causing permanent sequential corruption
+### Pitfall 2: In-memory WSAA token cache is per-instance — multi-tenant tokens are lost on restart or duplicated under horizontal scale
 
 **What goes wrong:**
-AFIP WSFE enforces strict correlative comprobante numbering per punto de venta and tipo de comprobante. If invoice #1043 is attempted and rejected (for any reason — validation error, network timeout, concurrent request), and the system then issues #1044, AFIP permanently rejects #1044 with error 10016 ("El numero o fecha del comprobante no se corresponde con el proximo a autorizar"). All future invoices for that punto de venta are also rejected. Recovery requires AFIP support intervention, which can take days.
+The AFIP-INTEGRATION.md reference spec documents a `Map<string, AccessTicket>` keyed by `${cuit}:${service}`. This works correctly on a single instance with no restarts. In practice: (a) each NestJS process restart after deploy clears the cache — the first invoice after each deploy triggers a WSAA renewal for every active tenant simultaneously, which may trigger AFIP's "ya posee TA valido" rejection if two instances renew concurrently; (b) with two or more NestJS instances behind a load balancer, each instance maintains its own cache — two instances may independently attempt token renewal for the same CUIT within the same 12-hour window, causing the second renewal to fail with "ya posee TA valido" or both to proceed with different tokens where one becomes invalid.
 
 **Why it happens:**
-Developers implement a naive "get last number + 1" approach without distributed locking. Under concurrent load (two secretaries billing simultaneously) or after a failed request that incremented the local counter but not AFIP's, a gap forms. The system believes it issued #1042 and #1043, but AFIP only recorded #1042. The next request sends #1044, which AFIP sees as a gap.
+The `Map` cache is the natural first implementation — simple, works in dev. The multi-instance failure mode only appears in production with a load balancer or after the first rolling deploy.
 
 **How to avoid:**
-- Always call `FECompUltimoAutorizado` from AFIP before generating the next number — never rely on a local counter. Use AFIP's authoritative "last authorized" as the source of truth.
-- Implement a database-level advisory lock (PostgreSQL `SELECT pg_advisory_xact_lock(id)`) on the (profesionalId, puntoVenta, tipoComprobante) combination before calling WSFE. Release after CAE is received.
-- If the WSFE call fails without returning a CAE, do NOT increment the local counter. Log the attempt, surface the error to the user, and let them retry — which will resend the same number.
-- Handle error 10016 explicitly: query `FECompUltimoAutorizado`, resync the local counter, and retry once before surfacing to user.
+- Store the access ticket (`token`, `sign`, `expirationTime`) in Redis, keyed by `afip_ta:{cuit}:{service}`. Redis already exists in the project (BullMQ dependency).
+- Use a Redis distributed lock (`SET NX PX`) to prevent concurrent token renewal for the same CUIT. The lock prevents the "ya posee TA valido" race: the second instance waits, finds the freshly-cached token from the first, and uses it.
+- Set Redis TTL to `expirationTime - now() - 5 minutes` so the cache auto-expires before the token does.
+- If Redis is down (the fallback): allow the in-memory fallback but log a warning. Do not block invoicing for Redis unavailability.
 
 **Warning signs:**
-- `ultimoComprobante = await db.factura.count(...)` pattern in the invoicing service.
-- No distributed lock around the WSFE call.
-- No explicit handling of error 10016 in the error handler.
+- `const ticketCache = new Map<string, AccessTicket>()` is module-level in `wsaa.service.ts`.
+- No Redis key for WSAA tokens in the schema or config.
+- No distributed lock around token renewal.
 
 **Phase to address:**
-AFIP Integration Phase — locking must be in the initial design, not added after the first production numbering incident.
+Phase v1.2-A (WSAA service) — must be designed with Redis cache from the first commit, not retrofitted.
 
 ---
 
-### Pitfall 3: WSAA access token (TA) expiration causing silent invoice failures in production
+### Pitfall 3: Advisory lock released before AFIP responds — the lock window must cover the full WSFE round-trip
 
 **What goes wrong:**
-The WSAA access token (Ticket de Acceso) is valid for 12 hours. The system obtains a token at startup and caches it in memory. A clinic that invoices only in the morning is fine. A clinic that invoices sporadically throughout a long day hits a 13-hour window where the token is expired. The first invoice attempt of the afternoon fails silently or with an opaque SOAP error. Secretaries think the system is broken. Invoice was not issued.
+The advisory lock pattern in AFIP-INTEGRATION.md uses `pg_advisory_xact_lock` inside a Prisma transaction. The lock is designed to serialize `FECompUltimoAutorizado → FECAESolicitar` sequences. A subtle failure: if the transaction is opened, the lock acquired, `FECompUltimoAutorizado` called — and then the WSFE call times out after 30 seconds — the transaction may be rolled back by Prisma's timeout, releasing the lock. A second concurrent request then acquires the lock, calls `FECompUltimoAutorizado` (still gets the same "last" number because the first WSFE call never got a CAE), and submits the same invoice number. If the first WSFE call was actually received by AFIP and is being processed (AFIP is slow but not down), AFIP sees two requests for the same number and rejects one or both.
 
 **Why it happens:**
-12 hours feels long. Developers cache the token in an in-memory variable and don't implement expiry checks. After a server restart (deploy, crash) the token is regenerated. The failure mode only appears in specific usage patterns.
+Prisma transaction timeouts interact with `pg_advisory_xact_lock` in a way that is not obvious: the lock is held for the duration of the transaction, but a long-running AFIP call inside the transaction may trigger Prisma's default transaction timeout (5 seconds by default in Prisma). This causes the transaction to abort, the lock to release, and a dangling AFIP call that may or may not have been received.
 
 **How to avoid:**
-- Store the TA (`token`, `sign`, `expirationTime`) in Redis or the DB per-tenant, not in application memory.
-- Before every WSFE call, check if `expirationTime - now() < 15 minutes`. If so, request a new TA proactively (do not wait for the call to fail).
-- AFIP will reject a second TA request if the first is still valid — the error is "El CEE ya posee un TA valido". The 15-minute proactive buffer avoids this race condition on simultaneous requests.
-- Wrap every WSFE call in retry logic: on TA-expired errors, force-refresh the token and retry once before surfacing to the user.
-- NB: Each clinic has its own CUIT and certificate — TA management is strictly per-tenant.
+- Set an explicit `timeout` on the Prisma `$transaction` that is longer than the maximum expected AFIP response time. AFIP's documented SLA is 30 seconds; set the transaction timeout to at least 45 seconds: `prisma.$transaction([...], { timeout: 45000 })`.
+- Track "in-flight" WSFE calls in a separate DB table (`AfipCaePendiente`) keyed by `(profesionalId, ptoVta, cbteTipo, cbteDesde)`. Before acquiring the advisory lock, check if a pending call exists for this exact number. If it does: (a) wait for it to resolve, or (b) surface "comprobante being processed, try again in 60 seconds".
+- On WSFE timeout: do NOT increment the local comprobante state. Log the attempt as `PENDIENTE_AFIP`. A background BullMQ job re-queries `FECompultimAutorizado` every 60 seconds for up to 15 minutes. If AFIP registered the invoice, the background job updates the DB and returns the CAE. If AFIP did not register it, the job marks the attempt as failed and allows retry.
+- Never retry a timed-out WSFE call with the same `cbteDesde` automatically — always re-query `FECompUltimoAutorizado` first to confirm whether AFIP recorded the previous attempt.
 
 **Warning signs:**
-- `wsfeToken` stored as a module-level variable in the NestJS service.
-- No expiry check before WSFE calls.
-- No per-tenant TA storage in the DB/Redis schema.
+- No `AfipCaePendiente` table or equivalent "in-flight tracker" in the schema.
+- Prisma `$transaction` with no explicit timeout for the WSFE path.
+- BullMQ retry for WSFE failures immediately re-sends with the same comprobante number without re-querying `FECompUltimoAutorizado`.
 
 **Phase to address:**
-AFIP Integration Phase — TA lifecycle must be designed as part of the WSFE client abstraction, not bolted on after the first expiry-related support ticket.
+Phase v1.2-B (WSFEv1 real implementation) — the in-flight tracking and timeout handling must be designed before the first real invoice is attempted.
 
 ---
 
-### Pitfall 4: AFIP WSFE offline / CAEA not planned, leaving clinic unable to bill during AFIP outages
+### Pitfall 4: CAEA inform deadline is 8 calendar days after period end — missed deadline causes CAEA disqualification
 
 **What goes wrong:**
-AFIP's production WSFE service has scheduled maintenance windows and unplanned outages. When WSFE is unreachable, no CAE can be obtained, and therefore no compliant invoice can be issued. A clinic that needs to close out a month-end billing run is completely blocked if the system has no contingency mode.
+Under RG 5782/2025, invoices issued under CAEA during a contingency period must be reported to AFIP via `FECAEAInformar` within 8 calendar days after the period ends. A period ends on the 15th (first period) or last day of the month (second period). If the inform step fails silently or is never retried — for example, BullMQ job fails without alerting and is not monitored — AFIP detects the omission and may deny future CAEA requests for that CUIT. Worse: AFIP can determine that the contingency condition is exceeded (more than 5% of invoicing volume over 2 consecutive months or 3 alternating months), which permanently disqualifies the tenant from using CAEA.
 
 **Why it happens:**
-Teams build the "happy path" integration first and defer contingency handling. AFIP outages are infrequent enough that they don't surface during testing.
+The "inform" step is an async cleanup concern that is easy to treat as a low-priority background job. Teams build the CAEA issuance path (which users see) and deprioritize the inform path (which is invisible). BullMQ jobs that fail with no alerting create silent gaps.
 
 **How to avoid:**
-- For the research milestone: document CAEA (Código de Autorización Electrónico Anticipado) as the official AFIP offline contingency mechanism. CAEA is requested fortnightly (before the 1st and 16th of each month) and allows invoicing without real-time WSFE connectivity.
-- For the implementation milestone: implement a CAEA fallback mode that activates automatically when WSFE is unreachable after 3 retries. Store the current CAEA in the DB per-tenant.
-- Surface a clear UI warning when CAEA mode is active: "Facturando en modo contingencia — los comprobantes serán validados con AFIP automáticamente cuando el servicio esté disponible".
-- CAEA comprobantes must be "informed" to AFIP via `FECAEASolicitar` once connectivity is restored — build this reconciliation step.
+- Create a dedicated `CaeaInformJob` in BullMQ for each CAEA period end. Schedule it to run on the 8th calendar day after the period close (e.g., the 23rd for the first period, the 8th of the following month for the second period). Retry up to 72 times with 1-hour intervals to cover transient AFIP unavailability within the 8-day window.
+- Store per-tenant CAEA inform status in the DB: `{ caea, periodo, orden, informadoAt, estado: PENDIENTE | INFORMADO | FALLIDO }`. If `estado = FALLIDO` and `informadoAt` exceeds the deadline, trigger a high-priority admin alert.
+- Implement a `FECAEAInformar` health check in the FACTURADOR dashboard: show a banner if any uninformed CAEA period is within 3 days of the deadline.
+- Also inform unused CAEA periods (even if no invoices were issued under that CAEA — AFIP requires informing that zero comprobantes were emitted too).
 
 **Warning signs:**
-- No AFIP outage handling in the service layer (only `try/catch → throw HttpException`).
-- No CAEA requested or stored in the DB.
-- No UI distinction between CAE and CAEA mode.
+- No `CaeaInformacion` table in the schema tracking inform status per period per CUIT.
+- BullMQ job for CAEA inform has no DLQ (Dead Letter Queue) or admin alert on failure.
+- No monitoring on the 8-day window.
 
 **Phase to address:**
-AFIP Integration Phase — CAEA is a research deliverable for v1.1 and an implementation requirement for v1.2+.
+Phase v1.2-C (CAEA contingency) — the inform tracking and alerting must ship with the CAEA feature, not as a later enhancement.
 
 ---
 
-### Pitfall 5: IVA treatment errors for medical services billing to obras sociales
+### Pitfall 5: CAEA used as primary path after June 2026 — RG 5782/2025 contingency-only restriction
 
 **What goes wrong:**
-The system emits Factura A with 21% IVA on all services. Argentine tax law treats medical services differently: services to affiliados obligatorios of obras sociales are IVA-exempt (code 3 — exento); services to voluntary affiliates may be subject to reduced 10.5% IVA; services under ART are IVA-exempt. Emitting the wrong IVA category results in incorrect tax liability for the clinic and a comprobante that the obra social's audit will reject.
+A common design shortcut is to pre-request a CAEA at the start of each fortnight and use it as the primary invoice path — avoiding the real-time WSFE call altogether. This was a common pattern before RG 5782/2025. From June 1, 2026, CAEA is strictly contingency-only. Using CAEA as primary triggers the 5% volume threshold check: if CAEA invoices exceed 5% of total monthly volume (or the AFIP connection is unavailable less than 5% of the month measured by sucursal), the contingency condition is considered not met, and the tenant is disqualified from future CAEA use.
 
 **Why it happens:**
-IVA treatment for medical services is non-obvious. The assumption "professional = Responsable Inscripto = 21% IVA" is wrong for health services. The developer builds a generic invoicing form without consulting a domain-specialist (contador).
+CAEA pre-request is easier to implement than a robust CAE-first + CAEA-fallback architecture. The "always use CAEA" pattern worked legally before 2026 and some reference implementations still show it.
 
 **How to avoid:**
-- For the research milestone: document the IVA treatment matrix for the specific use case (aesthetic surgery + obras sociales) as a deliverable, with accountant sign-off before implementation.
-- The `Factura` model must support IVA-exempt comprobantes (tipo C for monotributistas, or tipo B with concepto "exento" for RI exempt from IVA on this activity).
-- Do not expose IVA category as a free-form field to the FACTURADOR. Derive it from the clinic's fiscal condition (which is a configuration field) and the patient's coverage type (obra social vs. particular).
-- Build a pre-emission validation that checks the IVA derivation logic against the clinic's contadora before enabling production.
+- Design strictly: CAE online via `FECAESolicitar` is the always-attempted first path. CAEA is only activated when `FECAESolicitar` fails with a network timeout or HTTP 5xx after the configured retry budget (recommendation: 3 attempts with 10-second exponential backoff).
+- Track CAEA usage ratio per CUIT per fortnight in the DB. If it exceeds 3% (set threshold below the 5% regulatory limit), alert the admin: "Advertencia: alto porcentaje de comprobantes emitidos en contingencia. Revisar conectividad con AFIP."
+- The CAEA pre-fetch cron still runs (you need the code available for contingency), but invoices only use it when the CAE path is unavailable.
+- Verify RG 5782/2025 against the official Boletín Oficial before shipping CAEA functionality — the June 2026 effective date was confirmed via community sources (MEDIUM confidence).
 
 **Warning signs:**
-- Hardcoded `ivaAlicuota: 21` in the invoice creation DTO.
-- No `condicionIVA` field on the clinic/tenant configuration model.
-- No accountant review step in the AFIP integration plan.
+- `useCaea: true` as a default configuration flag.
+- CAEA pre-fetch cron is the only path in the invoice queue processor.
+- No tracking of CAEA vs CAE invoice ratio per period.
 
 **Phase to address:**
-AFIP Research Phase — IVA treatment must be documented and verified with a domain expert before any invoice schema or UI is built.
+Phase v1.2-C (CAEA contingency) — the CAE-first architecture must be enforced from the first design. Verifying the regulation against Boletín Oficial is a pre-implementation gate.
 
 ---
 
-### Pitfall 6: Monthly billing limit tracked in application memory or without timezone awareness, causing boundary errors
+### Pitfall 6: CondicionIVAReceptorId omitted or wrong — error 10242 causes full invoice rejection from April 2026
 
 **What goes wrong:**
-The facturador's monthly limit is checked by `WHERE fecha >= startOfMonth AND fecha <= endOfMonth`. If `startOfMonth` is computed in UTC (JavaScript's `new Date()` with no timezone handling), an invoice issued at 21:00 UTC on February 28 is actually 18:00 ART on February 28 — correctly within February. But an invoice at 21:30 UTC on February 28 is 18:30 ART — still February 28, but the server running in UTC reports it as March 1 at 00:30. The limit resets a month too early, or a February invoice is counted against March's limit.
+`CondicionIVAReceptorId` is a mandatory field in `FECAESolicitar` as of April 15, 2025 (RG 5616/2024). From April 1, 2026, AFIP began rejecting all invoices that omit it (AFIP error 10242: "El campo Condicion IVA receptor no es un valor valido / es obligatorio"). In the existing codebase, `AfipStubService.emitirComprobante()` accepts `condicionIVAReceptorId` in the interface but returns a fake CAE regardless of its value. If the real WSFEv1 service is wired up with a misconfigured or null `condicionIVAReceptorId`, every invoice fails at the AFIP level — not at the validation level — meaning the BullMQ job will retry indefinitely without resolving.
 
 **Why it happens:**
-Argentina is UTC-3 with no DST. Developers storing `DateTime` as UTC in PostgreSQL and comparing month boundaries without converting to ART timezone produce off-by-one errors on the last/first day of every month.
+The stub accepts any value, so integration tests pass. The mismatch between the Prisma enum (`CondicionIVA`) and the AFIP integer IDs requires a mapping lookup that is easy to skip. Clinics whose accountant hasn't configured the fiscal condition for the obras sociales they bill will have `null` or a default that maps incorrectly.
 
 **How to avoid:**
-- All month boundary calculations must use `America/Argentina/Buenos_Aires` timezone explicitly. In NestJS, use `date-fns-tz` or `luxon` with `setZone('America/Argentina/Buenos_Aires')` when computing `startOfMonth` / `endOfMonth`.
-- Store the `periodo` of a LiquidacionObraSocial as a `String` in `YYYY-MM` format (already done in the schema — verify this is computed in ART, not UTC).
-- Add a DB constraint or service-level check: the `periodo` assigned to a `PracticaRealizada` must match the ART month of `fecha`.
-- Write unit tests specifically for the UTC-3 boundary: a practice at `2026-03-01T02:30:00Z` is February 28 in ART — verify the month assignment is "2026-02", not "2026-03".
+- Implement `CONDICION_IVA_TO_AFIP_ID` mapping table (defined in AFIP-INTEGRATION.md Section 3) in the real `AfipService`. Throw a `BadRequestException` if the Prisma enum value has no mapping, before any WSFE call is made.
+- Add a validation step in the invoice creation flow: check that `condicionIVAReceptor` is set on the `Factura` before enqueuing the BullMQ job. Surface the validation error to the FACTURADOR immediately — do not silently enqueue and fail later.
+- Use `FEParamGetCondicionIvaReceptor` in the onboarding flow to fetch and cache the current list of valid AFIP IDs. Compare against the local mapping to detect if AFIP adds new values the system doesn't know about.
+- For bulk invoicing (obras sociales): validate `condicionIVAReceptorId` for all records in the batch before starting the queue. Do not process 50 invoices and find out on the 1st that the condition is wrong.
 
 **Warning signs:**
-- `new Date()` used directly for month range queries without timezone conversion.
-- `periodo` string computed on the frontend (which may be in user's local timezone) rather than server-side in a canonical ART timezone.
-- No unit tests for month-boundary dates.
+- `condicionIVAReceptorId` is passed through from the request without validation in the service.
+- No `CONDICION_IVA_TO_AFIP_ID` lookup object exists in the codebase.
+- BullMQ job retries WSFE calls that failed with error 10242 (this will never succeed — 10242 is a data error, not a transient failure).
 
 **Phase to address:**
-FACTURADOR Dashboard Phase — all date range queries must use ART-aware helpers from the first commit. Add a shared `getMonthBoundariesART(year, month)` utility to prevent this recurring across every query.
+Phase v1.2-B (WSFEv1) — implement mapping and pre-queue validation before the first real invoice. Add AFIP error 10242 to the "do not retry" error class list in BullMQ.
 
 ---
 
-### Pitfall 7: Settlement amount corrections creating untracked modifications without audit trail
+### Pitfall 7: BullMQ retries AFIP business-rule rejections indefinitely — conflating transient failures with permanent rejections
 
 **What goes wrong:**
-The facturador edits the `monto` of a `PracticaRealizada` record (to reflect what the OS actually paid vs. what was billed). The edit is saved directly to the `monto` field. Three months later, the clinic disputes a payment. There is no record of: the original billed amount, who changed it, when, and what reason was given. The audit trail is the accountant's notebook, not the system.
+BullMQ exponential backoff is designed for transient failures (network timeouts, HTTP 503). AFIP WSFEv1 returns HTTP 200 for business-rule rejections — errors like 10016 (wrong comprobante number), 10242 (invalid CondicionIVA), and rejection (`resultado: 'R'`) are embedded in the SOAP response body, not the HTTP status code. If the BullMQ job fails on any exception (including a parsed AFIP business rejection), it will retry up to N times — burning through the retry budget on errors that will never succeed, while locking up the queue and delaying the notification to the FACTURADOR.
 
 **Why it happens:**
-Simple `PATCH /practicas/:id` endpoint that updates `monto` in place is the most direct implementation. Audit logging is added "later" and then never prioritized.
+The natural pattern is `try { callAfip() } catch (e) { throw e }` which causes BullMQ to retry on any exception. Teams don't initially distinguish between "AFIP is down" (transient, retry) and "AFIP rejected the data" (permanent, do not retry).
 
 **How to avoid:**
-- Never mutate `PracticaRealizada.monto` in place after the initial billing. Instead, add a `montoReal` field (nullable) that stores the OS-paid amount, preserving `monto` as the originally billed amount.
-- Add `corregidoPor: String?` (usuarioId), `corregidoAt: DateTime?`, and `motivoCorreccion: String?` fields to `PracticaRealizada`.
-- In the service layer, any correction must set all three audit fields atomically in the same Prisma transaction.
-- The FACTURADOR role may only set `montoReal`, never `monto`. Original billed amount is immutable after the practice is created.
-- Surface the correction audit trail in the UI: show "Monto original: $X → Corregido a: $Y por [Usuario] el [Fecha]".
+- Create an `AfipBusinessError` class that extends `Error` with a `code: number` field. Throw it for all AFIP application-level errors (parsed from the SOAP response, not from HTTP status).
+- In BullMQ's `onFailed` hook or a custom backoff function: if `error instanceof AfipBusinessError`, set `attempts = maxAttempts` to move the job to DLQ immediately. Do not retry.
+- Create an exhaustive "do not retry" error code list: `[10016, 10242, 10243, 10044]` (sequencing errors and data validation errors). These should always go straight to DLQ with an actionable error message stored in the DB.
+- Create a "retry" error class for: network timeouts, HTTP 5xx from AFIP, WSAA token expired (which is auto-recovered), and SOAP infrastructure errors.
+- Store the AFIP error code and message on the `Factura` record when a job is moved to DLQ, so the FACTURADOR sees an actionable Spanish-language error in the UI.
 
 **Warning signs:**
-- `PATCH /practicas/:id` updates the `monto` field directly.
-- No `montoReal`, `corregidoPor`, or `corregidoAt` columns in the schema.
-- Correction history is not visible anywhere in the UI.
+- Single `catch (e) { throw e }` with no error type discrimination in the WSFE job processor.
+- No DLQ configured for the invoice queue in BullMQ.
+- `resultado: 'R'` from AFIP is logged but the job does not throw — the invoice is silently marked as "processed" with a rejected CAE.
 
 **Phase to address:**
-Settlement Workflow Phase — schema must include audit fields from the initial migration. Retrofitting audit trails requires reprocessing historical data.
+Phase v1.2-B (WSFEv1) — error classification must be implemented alongside the first real WSFE call. The DLQ and FACTURADOR error UI must ship in the same phase.
 
 ---
 
-### Pitfall 8: Partial OS payments spanning multiple liquidations causing double-counting
+### Pitfall 8: openssl smime subprocess leaks private key material on filesystem during TRA signing
 
 **What goes wrong:**
-An obra social partially pays a liquidation (e.g., 70% of a batch of practices). The facturador marks the liquidation as PAGADO. The remaining 30% is owed but has no tracking. When the OS pays the remainder in the next billing cycle, there is no way to link it back to the original practices or liquidation — it either gets recorded as a duplicate payment or gets lost.
+The AFIP-INTEGRATION.md Section 2 documents the `openssl smime -sign` subprocess approach for PKCS#7 signing. The implementation writes the decrypted private key to a temp file (`/tmp/afip-XXXXXX/key.pem`) before calling `execSync`. If the process crashes, is killed with SIGKILL, or the `finally` block is skipped for any reason (including an uncaught exception in the `try` block before cleanup), the plaintext private key persists on disk. In a containerized environment, the `/tmp` directory may be shared across processes or persist between container restarts.
 
 **Why it happens:**
-The `LiquidacionObraSocial.estadoLiquidacion` enum only has PENDIENTE/PAGADO. There is no intermediate state and no partial payment tracking. The data model assumes settlements are either fully unpaid or fully paid.
+`execSync` requires filesystem access. The reference implementation includes a `finally { fs.rmSync(...) }` block, but this protection is not sufficient in all crash scenarios (SIGKILL bypasses `finally`; filesystem errors in `rmSync` can prevent cleanup).
 
 **How to avoid:**
-- For the research milestone: document this as a known schema gap. Recommend adding a `PAGO_PARCIAL` state to `EstadoLiquidacion` and a `montoPagado` field to `LiquidacionObraSocial`.
-- Add a `PagoLiquidacion` child table that records each payment event: amount, date, usuarioId, reference number. This supports multiple partial payments without losing history.
-- The `montoTotal` stays as billed; `montoPagado` accumulates from `PagoLiquidacion` records; estado transitions: PENDIENTE → PAGO_PARCIAL (when montoPagado > 0 but < montoTotal) → PAGADO (when montoPagado >= montoTotal).
-- Expose a "registrar pago parcial" action in the UI, distinct from "marcar como pagado en su totalidad".
+- Prefer `node-forge` over the `openssl smime` subprocess approach for the AFIP TRA signing. `node-forge` keeps the private key fully in-process memory — no temp files, no filesystem exposure. The risk of `node-forge` not producing AFIP-compatible CMS was flagged in AFIP-INTEGRATION.md as MEDIUM confidence; test this in homologation before committing.
+- If `openssl smime` is retained: use `mkdtemp` in a directory with `chmod 700`, process-private temp paths (include PID in the path), and add a signal handler for `SIGTERM` that triggers cleanup. Additionally, run the container's `/tmp` as a `tmpfs` mount (in-memory filesystem that is not persisted).
+- Never log the `keyPem` string — ensure the decrypted key only flows through the signing function and is not accessible via `console.log`, `Logger.debug`, or error messages.
+- Add a test: after `signTRA()` completes (including simulated exception), verify no `*.pem` files remain in `/tmp`.
 
 **Warning signs:**
-- `estadoLiquidacion` is a two-state enum with no PAGO_PARCIAL.
-- No `montoPagado` or payment event log on LiquidacionObraSocial.
-- "Registrar pago" UI action only offers binary paid/unpaid.
+- `openssl smime` subprocess is implemented without a SIGTERM cleanup handler.
+- Decrypted `keyPem` value appears in any log output.
+- No test for temp file cleanup after exception.
 
 **Phase to address:**
-Settlement Workflow Phase — schema must support partial payments before any settlement UI is built. Adding this after go-live requires a migration and UI rework.
+Phase v1.2-A (WSAA service) — the signing approach decision must be made and security properties verified before the service handles real private keys.
 
 ---
 
-### Pitfall 9: FACTURADOR role leaking clinical data or operating across tenant boundaries
+### Pitfall 9: Multi-tenant CUIT cross-contamination in the WSAA token cache key
 
 **What goes wrong:**
-The FACTURADOR role is given broad read access to `Paciente`, `Turno`, and `PracticaRealizada` to enable billing workflows. In a multi-professional clinic (multiple `Profesional` records under the same implicit tenant), the facturador sees practices from all professionals — which may include sensitive or commercially sensitive patients of competing professionals sharing the same system. In a multi-tenant scenario, a bug in the profesionalId filter exposes another clinic's data.
+The token cache key in AFIP-INTEGRATION.md is `${cuit}:${service}`. If the CUIT stored in `ConfiguracionAFIP.cuit` does not exactly match the CUIT embedded in the X.509 certificate's Common Name (CN) or Subject, WSAA will authenticate the certificate but reject the Auth object in subsequent WSFEv1 calls with "CUITs distintos" or similar. Worse: if two tenants share the same CUIT (which should not happen but can occur during misconfigured onboarding — e.g., a clinic configured twice), their tokens are merged under the same cache key. Tenant A's token may be used to sign Tenant B's invoices under Tenant B's CUIT — producing invoices on Tenant A's certificate but Tenant B's CUIT, which AFIP will reject or, if AFIP somehow accepts them, creates a regulatory violation.
 
 **Why it happens:**
-The existing codebase filters by `profesionalId` for PROFESIONAL role but the FACTURADOR role (which spans multiple professionals in a clinic) uses looser filtering. The nuance between "facturador sees all practices in their clinic" vs "facturador sees all practices in the system" is easy to miss.
+CUIT is entered manually during onboarding. A typo, a copied-and-pasted wrong CUIT, or a test CUIT (20409378472, used for homologation) accidentally deployed to production creates a mismatch. The cache key uses the stored CUIT, but the Auth object in WSFEv1 uses the same stored CUIT — both will be consistently wrong, causing all invoices for that tenant to fail. The more dangerous scenario is the shared-CUIT case, which is a data integrity problem.
 
 **How to avoid:**
-- Define the FACTURADOR's data scope precisely: all practices belonging to professionals in the same `clinicaId` (tenant), never practices from other tenants.
-- Until a formal `Clinica`/tenant model exists in the schema: scope FACTURADOR queries to the set of `Profesional.id` values that belong to the same clinic as the facturador's `usuarioId`. This set must be computed server-side, never passed from the frontend.
-- Add an integration test: create a facturador user, create a practice for a different tenant's professional, verify the FACTURADOR endpoint returns 0 results for that practice.
-- The FACTURADOR must never access `HistoriaClinicaEntrada` (clinical notes), `Presupuesto` content, or WhatsApp message logs — these are outside billing scope.
-- Add explicit column-level guards in DTOs: the FACTURADOR response shape for a patient should include only `id`, `nombre`, `apellido`, `obraSocialId`, `nroAfiliado` — not clinical, CRM, or communication data.
+- On certificate upload: parse the `certPem` with `node-forge` or `openssl x509 -subject` to extract the CN/SERIALNUMBER field, which AFIP encodes as `CUIT {11-digit-cuit}`. Compare the extracted CUIT against the CUIT entered during onboarding. Reject the upload if they differ.
+- Add a DB constraint: `cuit` in `ConfiguracionAFIP` must be unique across all tenants in the system (`@@unique([cuit])`). This prevents two tenants sharing the same CUIT.
+- In the WSAA cache key, use `profesionalId` as an additional discriminator: `afip_ta:{profesionalId}:{cuit}:{service}`. This ensures that even if a CUIT is misconfigured the same on two records (before the constraint catches it), the cache doesn't merge them.
+- Add an integration test: create two `ConfiguracionAFIP` records with different `profesionalId` but verify that a CUIT collision triggers a DB constraint error before it reaches the WSAA layer.
 
 **Warning signs:**
-- FACTURADOR controller reuses the same `PacienteService.findAll()` as ADMIN without an additional scope filter.
-- No test asserting cross-tenant isolation for the FACTURADOR role.
-- FACTURADOR API response includes CRM fields (`etapaCRM`, `temperatura`) or clinical fields.
+- No CUIT validation against the certificate's CN field during upload.
+- No unique constraint on `ConfiguracionAFIP.cuit`.
+- WSAA cache key is only `${cuit}:${service}` without the tenant identifier.
 
 **Phase to address:**
-FACTURADOR Dashboard Phase — role scope must be the first thing defined before any controller is written. Permissions are harder to tighten after the UI has been built around broad access.
+Phase v1.2-A (certificate upload and onboarding) — CUIT validation must be part of the upload handler, before any token request.
 
 ---
 
-### Pitfall 10: RG 5616/2024 (ARCA) comprobante changes not accounted for in schema
+### Pitfall 10: Certificate expiry causes all pending invoices to fail with no recovery path
 
 **What goes wrong:**
-ARCA Resolución General 5616/2024 (effective July 2025 for most contributors, with the manual for developers published January 2025) requires all electronic comprobantes to include: (a) the receptor's IVA condition specifically for the operation being documented, and (b) for foreign currency operations, the exchange rate (tipo de cambio vendedor divisa Banco Nación of the prior business day). The existing `Factura` model has `condicionIVA` as a free-text `String?` and no `tipoCambio` field. If the integration is built without accounting for these fields, every comprobante will be rejected by AFIP once the new schema is enforced.
+AFIP X.509 certificates expire (production certificates typically have a 2-year validity). When a certificate expires, `WSAA LoginCms` rejects the TRA with `"CMS: Error verificando firma"` or `"Certificado vencido"`. All subsequent invoice attempts for that tenant fail immediately. If BullMQ jobs for that tenant are queued (e.g., end-of-month billing run), every job fails and moves to DLQ. Invoices that were queued before expiry but processed after are permanently lost unless manually recovered. The FACTURADOR sees a generic error and does not know why — there is no UI surface for "your certificate is expired."
 
 **Why it happens:**
-The regulation was published in December 2024. Developers building the integration in early 2026 from older tutorials or pre-RG5616 library versions will miss these new mandatory fields.
+Certificate expiry is a slow-moving emergency. The `certExpiresAt` field was defined in AFIP-INTEGRATION.md as a recommended storage field but without specifying what the system should do as that date approaches. The failure mode feels like a bug (the service stopped working) rather than an expected lifecycle event.
 
 **How to avoid:**
-- Use `@afipsdk/afip.js` v4+ which already incorporates RG 5616/2024 changes (per library changelog verified 2025). Do not use `facturajs` (last meaningful commit 2020) or unversioned snippets.
-- Add `condicionIVAReceptor: String` (non-nullable, AFIP enum code) and `tipoCambio: Decimal? @db.Decimal(10,6)` to the `Factura` model in the migration for this milestone.
-- For ARS invoices (the common case in OS billing), `tipoCambio` is null and `condicionIVAReceptor` is derived from the OS/patient's fiscal registration.
-- Test all comprobante types (A, B, C) in homologation before production — the ARCA homologation environment has been updated to validate RG 5616 fields.
+- Implement a scheduled job (NestJS `@nestjs/schedule`, daily cron) that queries all `ConfiguracionAFIP` records and emits an alert for any where `certExpiresAt < now + 60 days`. Escalate to a critical alert at `< 14 days`.
+- Surface the certificate expiry date in the FACTURADOR configuration panel: "Certificado AFIP: válido hasta {fecha}. Contactá a tu contador para renovarlo."
+- On every WSAA call: if the WSAA error is certificate-expired, mark the `ConfiguracionAFIP.estado` as `CERTIFICADO_VENCIDO` and immediately stop all invoice processing for that tenant. Surface a dashboard banner: "Certificado AFIP vencido. La facturación electrónica está suspendida. Contactá a tu contador."
+- Before the DLQ strategy: any invoice job that fails due to `CERTIFICADO_VENCIDO` should be parked in a `ESPERANDO_CERTIFICADO` status (not retried, not discarded) so it can be reprocessed once the new certificate is uploaded.
+- Provide a "reprocess parked invoices" admin action that triggers after a new valid certificate is uploaded and verified.
 
 **Warning signs:**
-- Using `facturajs` npm package (outdated, no RG 5616 support).
-- `Factura.condicionIVA` is a nullable free-text field with no validation.
-- No `tipoCambio` field in the schema.
-- Tests run only on homologation pre-July 2025 schema (old validation rules).
+- No scheduled job checking `certExpiresAt`.
+- No `estado` field on `ConfiguracionAFIP` to distinguish `ACTIVO` vs `VENCIDO`.
+- Certificate-expired WSAA errors are treated identically to transient network errors (BullMQ retries indefinitely).
 
 **Phase to address:**
-AFIP Research Phase — identify the correct library version and verify RG 5616 field requirements before designing the migration.
+Phase v1.2-A (certificate management) — the expiry alert and the "parked invoice" recovery path must be implemented before production certificates are issued. This is a lifecycle that will materialize in production on a predictable schedule.
+
+---
+
+### Pitfall 11: Homologation environment differences cause false confidence in test coverage
+
+**What goes wrong:**
+The homologation environment (`wswhomo.afip.gov.ar`) differs from production in several ways that create false confidence:
+
+1. **Punto de venta not required**: homologation accepts any `PtoVta` integer; production requires the PtoVta to be registered as type `RECE`.
+2. **RECE regime adhesion not required**: production requires the clinic to have joined the electronic invoicing regime; homologation skips this check.
+3. **CAEs are fake**: homologation CAEs have no fiscal validity and never appear in AFIP's public voucher verification service. A test suite that only validates "CAE was received" in homologation does not confirm the invoice is valid.
+4. **CondicionIVAReceptorId enforcement timeline**: homologation may accept invoices without the field longer than production does — the enforcement schedule differs.
+5. **CAEA in homologation**: homologation CAEA testing uses different period dates; a CAEA requested for the current fortnight in homologation may not match the expected period in integration tests if the test date logic is wrong.
+6. **ARCA URL change**: AFIP rebranded to ARCA; some homologation endpoints are now under `wswhomo.arca.gob.ar` instead of `wswhomo.afip.gov.ar`. Both may work transiently during the transition, creating environment-specific URLs that break depending on which one is hardcoded.
+
+**Why it happens:**
+Teams test only in homologation (the correct practice during development) but assume the environment is a perfect mirror of production. The differences listed above are documented in AFIP developer manuals but easy to miss.
+
+**How to avoid:**
+- Create a pre-production smoke test suite that runs against a production CUIT in a "dry run" mode: (a) call `FEDummy` to verify reachability, (b) call `FEParamGetPtosVenta` to verify punto de venta exists and is type `RECE`, (c) call `FECompUltimoAutorizado` to verify the sequence returns a valid number. Do not emit a real invoice during the smoke test.
+- Use the AFIP's public voucher verification (`https://serviciosweb.afip.gob.ar/genericos/comprobantes/`) to verify at least one production invoice after go-live.
+- Store AFIP endpoint URLs in environment configuration, never hardcoded. Provide a migration guide if ARCA URL changes require updating.
+- Add a test that explicitly validates the `CondicionIVAReceptorId` mapping for all enum values before any production invoice is attempted.
+
+**Warning signs:**
+- Production AFIP URLs hardcoded in service files.
+- Test suite only runs against homologation; no smoke test checklist for production readiness.
+- No verification of punto de venta type in the onboarding flow.
+
+**Phase to address:**
+Phase v1.2-B (WSFEv1) — define and run the production readiness smoke test before enabling real invoicing for any tenant.
+
+---
+
+### Pitfall 12: USD invoice MonCotiz is stale or zero — causes AFIP rejection or incorrect tax records
+
+**What goes wrong:**
+For USD invoices, `MonCotiz` must be the BNA selling exchange rate (`tipo vendedor divisa`) of the business day prior to the invoice date. If `MonCotiz` is `0`, `null`, or `1` (the ARS default), AFIP will reject the invoice or accept it with an incorrect tax base. This creates an audit problem: the IVA is calculated on the wrong amount. AFIP has no correction mechanism — a rejected invoice must be re-submitted with the correct rate, and an accepted-but-incorrect invoice requires a Nota de Crédito to reverse.
+
+**Why it happens:**
+The BNA does not have an official API. AFIP-INTEGRATION.md recommends manual entry as the safest approach. If the FACTURADOR creates a USD invoice without entering the rate (or enters it incorrectly), the invoice proceeds with a wrong value. The stub never validates this because it returns a fake CAE regardless.
+
+**How to avoid:**
+- `tipoCambio` must be non-nullable and greater than zero for any `Factura.moneda = USD`. Enforce this with a Prisma constraint or Zod validation before the record is created — not at WSFE submission time.
+- In the invoice creation UI: when `moneda = USD` is selected, show a mandatory `tipoCambio` field with a link to `https://www.bna.com.ar/Personas` (BNA exchange rates) and today's date pre-filled. Do not allow form submission without a value.
+- Add a service-layer guard in the real `AfipService`: if `monId = 'DOL'` and `monCotiz <= 0`, throw a `BadRequestException` before calling WSFE.
+- If automated BNA rate fetching is added as an enhancement: cache the fetched rate for the business day, but always allow the FACTURADOR to override it. Store both the fetched rate and the user-confirmed rate with timestamps.
+
+**Warning signs:**
+- `tipoCambio` is nullable in the `Factura` schema with no constraint for USD invoices.
+- No UI validation that requires `tipoCambio` when `moneda = USD`.
+- `monCotiz` defaults to `1.0` for all currencies in the WSFE request builder.
+
+**Phase to address:**
+Phase v1.2-B (WSFEv1) — add the currency+rate guard in the service before the BullMQ job is enqueued, not inside the job processor.
 
 ---
 
@@ -257,13 +311,13 @@ AFIP Research Phase — identify the correct library version and verify RG 5616 
 
 | Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
 |----------|-------------------|----------------|-----------------|
-| Local counter for comprobante numbering instead of querying `FECompUltimoAutorizado` | Faster, fewer AFIP round-trips | One concurrency event creates permanent sequential corruption for the punto de venta | Never — always use AFIP as source of truth |
-| In-memory WSAA token with no expiry management | Simple code, works for days | Token expires silently mid-day; invoice failures no one understands | Never in production |
-| Single WSFE punto de venta across all clinic tenants | No per-tenant AFIP onboarding required | One clinic's numbering gap corrupts all others; regulatory exposure mixing CUITs | Never — WSFE is per-CUIT, multi-CUIT sharing is legally invalid |
-| Updating `monto` in place without audit columns | Simpler schema, fewer fields | No audit trail; disputes unresolvable; potential regulatory issue | Never for financial records |
-| Two-state liquidation (PENDIENTE/PAGADO) | Simple implementation | Partial OS payments cannot be tracked; reconciliation requires external spreadsheets | Only for MVP if documented as known gap with a fix milestone committed |
-| Hardcoded IVA 21% on all invoices | No IVA logic to build | Wrong tax treatment for medical services; OS audit rejection; clinic tax liability | Never — must be derived from fiscal condition |
-| Skipping CAEA contingency mode | Faster integration build | Clinic cannot bill during any AFIP outage; month-end billing blocked | Acceptable for research milestone if documented as v1.2+ requirement |
+| In-memory WSAA token cache (Map) | Simple, works in dev | Lost on restart; race condition under horizontal scale; "ya posee TA valido" errors in production | Only in single-instance dev; never in production |
+| Hardcoded `ptoVta: 1` for all tenants | No per-tenant config needed | Every tenant needs a distinct punto de venta in AFIP; shared PtoVta causes AFIP rejection or sequence number collision across CUITs | Never — PtoVta is per-CUIT, per-tenant |
+| Single BullMQ retry policy for all AFIP errors | One retry config to maintain | Business-rule rejections (10016, 10242) are retried forever wasting jobs; transient failures get same treatment as permanent ones | Never — error classification is a first-class requirement |
+| CAEA as primary invoice path | Avoids real-time WSFE dependency | Violates RG 5782/2025 from June 2026; tenant loses CAEA access if 5% threshold exceeded | Never after June 2026 |
+| Skip openssl temp file cleanup on exception path | Simpler error handling | Private key persists on disk after crash | Never — use node-forge or ensure cleanup on all exit paths |
+| MonCotiz default to 1.0 for all currencies | No BNA API needed | USD invoices submitted with wrong rate — Nota de Crédito required to correct; audit exposure | Never — must validate before submission |
+| No CAEA inform job monitoring | Simpler background infrastructure | Silent inform deadline miss → tenant disqualified from CAEA → no contingency option during outages | Never — inform is a regulatory obligation |
 
 ---
 
@@ -271,14 +325,14 @@ AFIP Research Phase — identify the correct library version and verify RG 5616 
 
 | Integration | Common Mistake | Correct Approach |
 |-------------|----------------|------------------|
-| AFIP WSAA | Requesting a new TA while the previous one is still valid | Check `expirationTime` before requesting; request only when `< 15 minutes remaining` to avoid "ya posee TA valido" rejection |
-| AFIP WSFE | Sending the next comprobante number without querying `FECompUltimoAutorizado` first | Always get the authoritative last number from AFIP before every single invoice emission |
-| AFIP WSFE homologation | Testing with homologation certificate and assuming production works the same way | Homologation uses WSASS self-service cert; production requires Administrador de Certificados Digitales + explicit WSFE service association by clinic accountant |
-| AFIP WSFE | Handling SOAP errors as generic HTTP errors | WSFE returns HTTP 200 even for business rule rejections; must parse the SOAP envelope's `FECompConsultarResult.Errors` array to detect real errors |
-| AFIP WSFE RG 5616 | Using pre-2025 library or tutorial examples | RG 5616/2024 added mandatory fields in July 2025; use `@afipsdk/afip.js` v4+ which already incorporates these changes |
-| Obra social liquidation | Treating OS statement amount as equivalent to invoice amount | OS often pays a different amount than billed (audit deductions, aranceles revision); `monto` (billed) and `montoReal` (paid) must be separate fields |
-| PostgreSQL DateTime vs ART timezone | Storing `fecha` as UTC, computing month ranges in UTC | Month boundary is 21:00 UTC = 18:00 ART; always convert to `America/Argentina/Buenos_Aires` before month range queries |
-| AFIP comprobante date | Setting `fchVtoPago` (payment due date) to far future | WSFE validates that `fchVtoPago >= fechaEmision`; some comprobante types require the due date to be within a regulated window |
+| WSAA (PKCS#7 signing) | Using Node's `crypto.createSign()` directly | `createSign()` produces a raw PKCS#1 signature, not a CMS SignedData structure. Use `node-forge` `pkcs7.createSignedData()` or `openssl smime -sign` subprocess |
+| WSAA (clock skew) | Server running without NTP sync | WSAA validates `generationTime` within a few seconds of its own clock. Server clock drift > 5 seconds causes "Fecha de generación inválida" rejection. Verify NTP is configured in container/host |
+| WSFEv1 (SOAP response) | Treating HTTP 200 as success | WSFE returns HTTP 200 for both success and business rejections. Must parse `FECAESolicitarResult.Errors` and check `Resultado` field (`A` = approved, `R` = rejected) |
+| WSFEv1 (error 10016) | Incrementing local comprobante counter after any failure | Error 10016 means the sequence number submitted doesn't match AFIP's expected next number. Recovery: call `FECompUltimoAutorizado` to get AFIP's authoritative last number, resync, retry once |
+| WSFEv1 (error 10242) | Retrying the same call after error 10242 | Error 10242 (CondicionIVAReceptor invalid/missing) is a permanent data error. Retrying will fail every time. Move to DLQ immediately; surface actionable error to FACTURADOR |
+| WSAA + WSFEv1 (production only) | Using homologation certificate in production URL | WSAA homologation certificate is rejected by production WSAA. Each environment requires its own certificate obtained via the corresponding portal |
+| CAEA inform | Informing used comprobantes only | AFIP requires informing that zero comprobantes were issued under a CAEA even if the period had no contingency events. Missing this triggers the same "omission" penalty |
+| AFIP SOAP namespace | Using wrong namespace for WSFEv1 vs WSAA | WSAA uses `http://wsaa.view.sua.dvadac.desein.afip.gov`; WSFEv1 uses `http://ar.gov.afip.dif.FEV1/`. Mixing them causes hard-to-debug "invalid namespace" SOAP faults |
 
 ---
 
@@ -286,10 +340,10 @@ AFIP Research Phase — identify the correct library version and verify RG 5616 
 
 | Trap | Symptoms | Prevention | When It Breaks |
 |------|----------|------------|----------------|
-| Synchronous WSFE HTTP call in the NestJS request handler | Invoice endpoint times out on slow AFIP connections (>5s); user retries; duplicate invoice attempt | Wrap WSFE calls in a BullMQ job with idempotency key; respond 202 Accepted immediately; webhook/polling for result | Under any AFIP latency spike |
-| Querying all practices for billing totals without date index | KPI dashboard slow to load as practice volume grows | Ensure `@@index([profesionalId, fecha])` on `PracticaRealizada` (add to schema); use monthly aggregate materialized view for KPI queries | At ~5,000+ practices per profesional |
-| Fetching full liquidacion list without pagination | FACTURADOR dashboard loads all OS liquidaciones ever created | Server-side pagination with `cursor` or `offset` on `/liquidaciones`; default to current month | At 12+ months of history (hundreds of records per OS) |
-| Building monthly total by summing all Factura records at query time | Slow KPI card loads; DB load spikes on dashboard open | Pre-compute monthly totals in a `ResumenFacturacion` cache table or use a Prisma aggregate with proper index | At 500+ invoices per month |
+| Synchronous WSFE HTTP call in NestJS request handler | Invoice endpoint hangs up to 30s; user retries; duplicate attempt | Use BullMQ job with idempotency key; return 202 Accepted; poll for result | On any AFIP latency spike (month-end congestion is known) |
+| Acquiring advisory lock outside the Prisma `$transaction` | Lock released early; concurrent requests see same "last authorized" number | Always acquire `pg_advisory_xact_lock` inside the same `$transaction` that covers the WSFE call; set `timeout: 45000` on the transaction | First concurrent invoice attempt |
+| WSAA token renewal on every invoice | 12-hour token refreshed once per call; rate-limited by AFIP | Cache token in Redis with TTL = expiry − 5 min; acquire Redis lock before renewal to prevent concurrent renewal for same CUIT | At any concurrent billing run |
+| Calling `FEParamGetCondicionIvaReceptor` on every invoice | Extra round-trip per invoice; AFIP rate limits on paramGetters | Cache the result in Redis with a 24-hour TTL; only refresh if a 10242 error is received with an unknown code | At any invoicing rate above 1/minute |
 
 ---
 
@@ -297,12 +351,11 @@ AFIP Research Phase — identify the correct library version and verify RG 5616 
 
 | Mistake | Risk | Prevention |
 |---------|------|------------|
-| Storing AFIP certificates (`.crt`/`.key` files) in the filesystem or environment variables | Certificate theft = unauthorized invoicing under clinic's CUIT; tax fraud exposure | Store certificate bytes encrypted with AES-256-GCM in the DB (same pattern as WABA tokens already implemented); never on disk |
-| FACTURADOR endpoint not scoped to clinic tenant | Cross-tenant data leakage; a facturador sees another clinic's patients and OS billing | All FACTURADOR queries must include an explicit `clinicaId` (or profesional set) scope derived from the JWT, not from query params |
-| Logging invoice content (CUIT, patient name, amount) at INFO level | PII and financial data in production logs | Log only comprobante number, estado, and CAE code — never CUIT, nombre, or monto in logs |
-| `condicionIVA` accepted as free-text from frontend | Malformed IVA code causes WSFE rejection; or deliberate manipulation of tax category | Validate against AFIP's fixed enum of IVA condition codes server-side; reject anything not in the allowed set |
-| Exposing the AFIP homologation CUIT (20409378472, used for dev testing) in production config | Homologation invoices appear valid to unsuspecting users but have no fiscal validity | Require production CUIT to be explicitly configured; fail fast with a clear error if the homologation CUIT is detected in a production environment |
-| Allowing FACTURADOR to read `HistoriaClinicaEntrada` or CRM fields via the patient endpoint | Clinical and commercial data leakage to a billing role | Create a dedicated `PacienteFacturadorView` DTO with only billing-relevant fields; never reuse the clinical patient response in billing endpoints |
+| Decrypted `keyPem` appearing in any log output | Private key exfiltration via log aggregation (Datadog, CloudWatch, etc.) | Treat `keyPem` as a secret; never pass it to `Logger`, `console.log`, or error messages; add a log scrubber test |
+| Storing `certPemEncrypted` / `keyPemEncrypted` in API responses | Client-side certificate exposure | Never include these fields in any DTO or API response. Use `select: { certPemEncrypted: false }` in all Prisma queries that might be serialized to JSON |
+| Using the homologation test CUIT (20409378472) in production config | Invoices pass local validation but AFIP rejects them; if they somehow pass, they are under a non-clinic CUIT | Add a guard in `AfipService` that throws if the configured CUIT matches the known test CUITs in a non-homologation environment |
+| Per-tenant `ConfiguracionAFIP` accessible via FACTURADOR role | Certificate upload/download exposed to billing role | Certificate management must be ADMIN-only. FACTURADOR role should never receive certificate-related endpoints |
+| No unique constraint on `ConfiguracionAFIP.cuit` | Two tenants configured with the same CUIT; token cache merges them; invoices emitted under wrong CUIT | Add `@@unique([cuit])` constraint to `ConfiguracionAFIP`; validate CUIT extracted from cert CN against stored CUIT on upload |
 
 ---
 
@@ -310,27 +363,26 @@ AFIP Research Phase — identify the correct library version and verify RG 5616 
 
 | Pitfall | User Impact | Better Approach |
 |---------|-------------|-----------------|
-| Showing raw AFIP error codes to the facturador | "Error 10016" is meaningless to a non-technical user | Map all known AFIP error codes to plain-language Spanish messages: "El número de comprobante no coincide con el esperado por AFIP. Contactá al soporte." |
-| No clear distinction between CAE mode and CAEA contingency mode in the UI | User doesn't know if invoices are being validated in real time | Show a persistent banner when CAEA mode is active: "Facturando en modo contingencia — los comprobantes serán validados automáticamente cuando AFIP esté disponible" |
-| Monthly limit progress bar updating only on full page reload | Facturador issues several invoices without knowing they're approaching the limit | Real-time (or optimistic) update of the limit progress bar after each invoice emission; use TanStack Query `invalidateQueries` after mutation |
-| Allowing "close settlement batch" without confirming all practices are assigned to it | Facturador closes a lote prematurely; practices added afterward don't belong to any lote | Require explicit review step: "Estas cerrando este lote con X prácticas por $Y. Confirmar?" with list of included practices before final close |
-| Amount correction field always editable, no visual diff | Facturador makes a typo in the correction; no way to notice the original billed amount | Show original billed amount alongside the editable `montoReal` field; only enable save if `montoReal != monto`; require a `motivoCorreccion` text input |
-| "Liquidación cerrada" state still showing edit controls | Confuses facturador about whether changes are persisted | Locked liquidations render as read-only with a clear lock icon; show who closed it and when |
+| WSFE SOAP error codes surfaced as-is to FACTURADOR | "Error 10242" is meaningless; FACTURADOR escalates to developer unnecessarily | Map all known AFIP error codes to plain Spanish: "El campo condición IVA del receptor es obligatorio. Verificá la configuración fiscal de esta obra social." |
+| No distinction between "queued" and "emitted" invoice state | FACTURADOR assumes invoice is done when it enters the queue; does not follow up if BullMQ job fails | Three visible states in the UI: `EN PROCESO` (queued/processing), `EMITIDO` (CAE received), `ERROR` (job failed with actionable message) |
+| Certificate expiry surfaced only when an invoice fails | FACTURADOR discovers expired cert during month-end billing run; accountant needs days to renew | Show certificate expiry date in FACTURADOR config panel; send email alert 60 days and 14 days before expiry |
+| CAEA mode activated with no user notification | Invoices are issued under contingency without FACTURADOR knowing; they don't monitor the inform deadline | Show persistent dashboard banner when CAEA is active; include inform deadline countdown |
+| Bulk re-process of parked invoices with no confirmation | FACTURADOR re-submits parked invoices after new cert upload without verifying the data is still current | Require FACTURADOR to review parked invoices list before re-processing; highlight any that are past their intended billing period |
 
 ---
 
 ## "Looks Done But Isn't" Checklist
 
-- [ ] **AFIP certificate upload:** UI accepts a file — verify the certificate is stored encrypted per-tenant in DB, validated against WSAA on upload, and expiry date is tracked with alert logic
-- [ ] **Invoice emission:** First invoice emits in homologation — verify (a) comprobante number is fetched from `FECompUltimoAutorizado` not from local count, (b) advisory lock prevents concurrent numbering, (c) error 10016 is handled with auto-resync
-- [ ] **WSAA token:** Token obtained at startup — verify per-tenant storage in Redis/DB, expiry check before every WSFE call, and proactive renewal at T-15 minutes
-- [ ] **Monthly limit KPI:** Counter displays correct number — verify all month-boundary queries use ART timezone (`America/Argentina/Buenos_Aires`), not UTC
-- [ ] **Settlement correction:** `montoReal` saves successfully — verify `monto` (original) is preserved, `corregidoPor`/`corregidoAt`/`motivoCorreccion` are written in the same transaction
-- [ ] **Liquidation close:** Lote closes without error — verify partial payment state (`PAGO_PARCIAL`) is handled and remaining balance is surfaced, not silently dropped
-- [ ] **FACTURADOR role scope:** Dashboard shows practices — verify a cross-tenant integration test passes (facturador A cannot see clinic B's data)
-- [ ] **RG 5616/2024 fields:** Comprobante emits in homologation — verify `condicionIVAReceptor` is present and `@afipsdk/afip.js` version is v4+
-- [ ] **IVA treatment:** Invoice shows correct IVA — verify IVA is derived from fiscal condition config, not hardcoded; verify obra social practices use correct exención code
-- [ ] **AFIP outage handling:** Network errors surface to user — verify CAEA is documented as fallback even if not yet implemented; error message is actionable, not "Error 500"
+- [ ] **WSAA token caching:** Token is obtained and cached — verify it is stored in Redis (not in-memory Map), keyed by `{profesionalId}:{cuit}:{service}`, with TTL set to expiry minus 5 minutes, and a distributed lock preventing concurrent renewal for same CUIT
+- [ ] **Certificate upload:** Certificate file accepted — verify (a) CUIT extracted from cert CN matches stored CUIT, (b) `FEDummy` called against production WSAA to validate cert, (c) `FEParamGetPtosVenta` called to verify `ptoVta` exists and is type `RECE`, (d) `certExpiresAt` parsed from cert `notAfter` field and stored
+- [ ] **CondicionIVAReceptorId mapping:** Invoice submits in homologation — verify `CONDICION_IVA_TO_AFIP_ID` lookup is present and throws `BadRequestException` for unmapped values, not silently passes null to WSFE
+- [ ] **Advisory lock scope:** Invoice emits without error — verify the `pg_advisory_xact_lock` is acquired inside the same `prisma.$transaction` that covers the WSFE call, and the transaction `timeout` is >= 45 seconds
+- [ ] **BullMQ error classification:** Invoice job fails — verify AFIP business errors (10016, 10242, `resultado: 'R'`) move to DLQ immediately without retrying; verify transient errors (timeout, 5xx) are retried with exponential backoff
+- [ ] **CAEA inform job:** CAEA issued in contingency — verify a `CaeaInformJob` is scheduled for the period-end + 8 days, with retry up to the deadline, and moves to admin alert (not silent DLQ) if it fails past the deadline
+- [ ] **CAEA usage ratio tracking:** Contingency mode activated — verify the CAEA vs CAE ratio is tracked per-tenant per-fortnight and alerts at 3% threshold
+- [ ] **USD invoice MonCotiz:** USD invoice created — verify `tipoCambio > 0` is enforced before the BullMQ job is enqueued, not inside the job
+- [ ] **Certificate expiry monitoring:** System has `ConfiguracionAFIP` records — verify a daily cron checks all expiry dates and sends alerts at 60 days and 14 days
+- [ ] **Private key cleanup:** `signTRA()` called — verify no `*.pem` files remain in `/tmp` after function returns normally or throws
 
 ---
 
@@ -338,12 +390,13 @@ AFIP Research Phase — identify the correct library version and verify RG 5616 
 
 | Pitfall | Recovery Cost | Recovery Steps |
 |---------|---------------|----------------|
-| Comprobante numbering gap (sequential corruption) | HIGH | 1. Stop all invoice emission immediately. 2. Call `FECompUltimoAutorizado` to get AFIP's authoritative last number. 3. If gap exists, contact AFIP soporte técnico — they can manually authorize the gap or advance the sequence. 4. Re-sync local counter. 5. Add advisory lock to prevent recurrence. |
-| Expired certificate at invoice time | MEDIUM | 1. Surface clear error to facturador: "Certificado AFIP vencido. El contador debe renovarlo en AFIP.". 2. Clinic accountant generates new cert via AFIP portal and re-uploads. 3. Validate new cert against WSAA. Turnaround: 1–3 days. |
-| WSAA token expired mid-invoice | LOW | 1. Catch the SOAP auth error. 2. Force-refresh TA. 3. Retry the WSFE call once. 4. If still failing, surface actionable error. Automation makes this transparent to user. |
-| Wrong IVA emitted on past comprobantes | HIGH | 1. Identify all affected comprobantes. 2. Issue Notas de Crédito to reverse them. 3. Re-emit with correct IVA. Requires accountant involvement. Nota de Crédito is the only AFIP-compliant way to correct a comprobante — there is no edit operation. |
-| FACTURADOR cross-tenant data leak discovered post-deploy | HIGH | 1. Immediately restrict endpoint with emergency hotfix. 2. Audit all queries made by FACTURADOR users since deploy. 3. Notify affected clinic if their data was exposed. 4. Document for potential Ley 25.326 notification requirement. |
-| Partial payment lost (not tracked) | MEDIUM | 1. Reconstruct payment history from bank records / OS statements. 2. Migrate to partial payment model. 3. Backfill `montoPagado` on affected liquidaciones. Manual work per clinic. |
+| Punto de venta not registered as RECE in production | MEDIUM (1–3 business days) | 1. Clinic accountant registers a new PtoVta as type `WSFEV1/RECE` in AFIP portal. 2. Admin updates `ConfiguracionAFIP.ptoVta`. 3. Run smoke test to confirm. 4. Re-process any failed invoices. |
+| Comprobante numbering gap (concurrent advisory lock failure) | HIGH | 1. Stop all invoice emission for affected tenant immediately. 2. Call `FECompUltimoAutorizado` to get AFIP's authoritative last number. 3. If gap: contact AFIP soporte técnico (sri@arca.gov.ar). 4. Re-sync `ConfiguracionAFIP.ultimoComprobanteLocal` (if tracked). 5. Add/fix advisory lock to prevent recurrence. |
+| CAEA inform deadline missed | HIGH | 1. Attempt to inform via `FECAEAInformar` even after the 8-day window — AFIP may accept late submissions with a penalty. 2. If AFIP denies future CAEA: notify clinic that contingency mode is unavailable. 3. Implement stronger monitoring to prevent recurrence. |
+| WSAA token "ya posee TA valido" under horizontal scale | LOW | 1. Implement Redis distributed lock around token renewal. 2. Stagger deployment restarts to avoid simultaneous renewal. 3. In the short term, reduce instance count during cert renewal window. |
+| Certificate expires mid-billing-run | MEDIUM (1–3 business days) | 1. Mark `ConfiguracionAFIP.estado = CERTIFICADO_VENCIDO`. 2. Park all queued invoice jobs in `ESPERANDO_CERTIFICADO` status. 3. Clinic accountant renews cert via AFIP portal. 4. Admin uploads new cert; system validates against WSAA. 5. Trigger "reprocess parked invoices" action. |
+| Private key leaked via log (openssl temp file) | CRITICAL | 1. Revoke the certificate immediately via AFIP "Administrador de Certificados Digitales". 2. Generate a new key pair. 3. Obtain and upload a new certificate. 4. Purge affected log files from all aggregators. 5. Assess whether unauthorized invoices were emitted under the compromised key. |
+| Wrong MonCotiz on accepted USD invoice | HIGH | 1. Issue a Nota de Crédito (`CbteTipo = 3` for FC-A, `8` for FC-B, `13` for FC-C) to reverse the original invoice. 2. Re-emit the invoice with the correct exchange rate. 3. Nota de Crédito must reference the original comprobante via `CbteAsoc`. Requires accountant sign-off. |
 
 ---
 
@@ -351,16 +404,18 @@ AFIP Research Phase — identify the correct library version and verify RG 5616 
 
 | Pitfall | Prevention Phase | Verification |
 |---------|------------------|--------------|
-| Homologation vs. production certificate confusion | AFIP Research Phase | Deliverable: documented certificate onboarding guide for clinic accountant; schema includes encrypted per-tenant cert storage |
-| Comprobante numbering gap | AFIP Integration Phase (implementation) | Integration test: two concurrent invoice requests for same punto de venta result in sequential numbers with no gap |
-| WSAA token expiry | AFIP Integration Phase (implementation) | Test: mock token with 10-min expiry, verify auto-renewal before WSFE call; verify per-tenant Redis storage |
-| CAEA contingency mode missing | AFIP Research Phase (document); AFIP Phase v1.2+ (implement) | Research deliverable: CAEA flow documented; implementation deferred with explicit milestone |
-| IVA treatment errors | AFIP Research Phase | Deliverable: IVA matrix for aesthetic surgery + OS, signed off by a contador before any schema design |
-| ART timezone month boundary | FACTURADOR Dashboard Phase | Unit tests: 12 date/time boundary cases including last day of month at 20:00–23:59 UTC |
-| Settlement correction without audit trail | Settlement Workflow Phase | Schema review: `montoReal`, `corregidoPor`, `corregidoAt`, `motivoCorreccion` exist; service test confirms atomicity |
-| Partial payment not tracked | Settlement Workflow Phase | Schema: `PAGO_PARCIAL` enum state + `montoPagado` field + `PagoLiquidacion` table (or documented deferral with explicit milestone) |
-| FACTURADOR role data leakage | FACTURADOR Dashboard Phase | Integration test: facturador from clinic A returns 403/empty for clinic B data; response DTO excludes clinical/CRM fields |
-| RG 5616/2024 missing fields | AFIP Research Phase | Schema review: `condicionIVAReceptor` and `tipoCambio` fields present; library version pinned to v4+ |
+| Punto de venta not type RECE in production | Phase v1.2-A (cert upload flow) | Smoke test: `FEParamGetPtosVenta` returns the configured PtoVta as type `RECE` after cert upload |
+| In-memory WSAA token cache — multi-instance race | Phase v1.2-A (WSAA service) | Integration test: two concurrent token requests for same CUIT result in one WSAA call, one Redis-cached token |
+| Advisory lock released before WSFE responds | Phase v1.2-B (WSFEv1 service) | Load test: 10 concurrent invoice requests for same PtoVta result in sequential comprobante numbers with no gaps |
+| CAEA inform deadline miss | Phase v1.2-C (CAEA service) | Integration test: CAEA issued in contingency period → `CaeaInformJob` scheduled → inform job calls `FECAEAInformar` before day 8 |
+| CAEA used as primary path (RG 5782/2025) | Phase v1.2-C (CAEA service) | Code review: `FECAESolicitar` is always attempted first; CAEA only activated on WSFE failure |
+| CondicionIVAReceptorId omitted (error 10242) | Phase v1.2-B (WSFEv1 service) | Unit test: null/unmapped `condicionIVAReceptor` throws `BadRequestException` before any BullMQ job is enqueued |
+| BullMQ retries permanent AFIP rejections | Phase v1.2-B (WSFEv1 job processor) | Integration test: job with error 10242 moves to DLQ on first failure; job with timeout error retries up to N times |
+| openssl temp file leaks private key | Phase v1.2-A (WSAA PKCS#7 signing) | Test: `signTRA()` called, exception thrown mid-execution → no `*.pem` files in `/tmp`; use node-forge if subprocess risk unacceptable |
+| Multi-tenant CUIT cross-contamination | Phase v1.2-A (cert upload + DB schema) | DB constraint test: inserting two `ConfiguracionAFIP` rows with same `cuit` fails; cert upload validates CUIT against cert CN |
+| Certificate expiry silent failure | Phase v1.2-A (cert management) | Cron test: `ConfiguracionAFIP` row with `certExpiresAt = now + 30 days` triggers alert; WSAA cert-expired error sets status to `CERTIFICADO_VENCIDO` |
+| Homologation false confidence | Phase v1.2-B (pre-production checklist) | Production readiness checklist: `FEDummy`, `FEParamGetPtosVenta`, `FECompUltimoAutorizado` all pass against production before first real invoice |
+| USD MonCotiz stale or zero | Phase v1.2-B (invoice creation service) | Unit test: USD invoice with `tipoCambio = 0` throws before enqueueing; UI field required when `moneda = USD` |
 
 ---
 
@@ -368,25 +423,24 @@ AFIP Research Phase — identify the correct library version and verify RG 5616 
 
 - [AFIP WSFE Manual del Desarrollador COMPG v4.0](https://www.afip.gob.ar/fe/documentos/manual-desarrollador-ARCA-COMPG-v4-0.pdf) — HIGH confidence (official AFIP documentation)
 - [AFIP WSAA Manual del Desarrollador](https://www.afip.gob.ar/ws/WSAA/WSAAmanualDev.pdf) — HIGH confidence (official AFIP documentation)
-- [AFIP Certificados Digitales — Producción](https://www.afip.gob.ar/ws/wsaa/wsaa.obtenercertificado.pdf) — HIGH confidence (official AFIP documentation)
-- [AFIP Certificados Digitales — Documentación](https://www.afip.gob.ar/ws/documentacion/certificados.asp) — HIGH confidence (official AFIP portal)
-- [AFIP WSAA WSASS Manual del Usuario](https://www.afip.gob.ar/ws/WSASS/WSASS_manual.pdf) — HIGH confidence (official AFIP documentation)
-- [AfipSDK/afip.js — GitHub](https://github.com/afipsdk/afip.js) — MEDIUM confidence (actively maintained open-source library with RG 5616 support)
-- [Afip SDK — Crear Factura Electrónica en NodeJS](https://afipsdk.com/blog/crear-factura-electronica-de-afip-en-nodejs/) — MEDIUM confidence (official SDK blog, updated February 2025)
-- [AfipSDK — Error 10016 "El número o fecha del comprobante no se corresponde"](https://afipsdk.com/blog/factura-electronica-solucion-a-error-10016/) — MEDIUM confidence (SDK blog post-mortem)
-- [AFIP WSFE — Numeración de Comprobantes (facturaelectronicax.com)](https://sites.google.com/site/facturaelectronicax/wsfev1/wsfev1/wsfev1-numeraci%C3%B3n) — MEDIUM confidence (community documentation, Argentina)
-- [AFIP WSFE — Fallos de Conexión y CAEA](https://sites.google.com/site/facturaelectronicax/wsfev1/wsfev1/wsfev1-fallos-conexi%C3%B3n) — MEDIUM confidence (community documentation)
-- [CAEA — Qué es y cómo emitir comprobantes de contingencia (Facturante)](https://blog.facturante.com/que-es-caea-en-afip/) — MEDIUM confidence (AFIP SaaS provider blog)
+- [AFIP WSAA Documentación — Certificados](https://www.afip.gob.ar/ws/documentacion/certificados.asp) — HIGH confidence (official AFIP portal)
+- [AFIP — Acciones para consumir un WebService de Factura Electrónica](https://www.afip.gob.ar/fe/documentos/AccionesarealizarparaconsumirunWebservicedeFacturaElectr.pdf) — HIGH confidence (official AFIP prerequisite guide)
+- [AfipSDK — Error 10242: El campo Condicion IVA receptor](https://afipsdk.com/blog/factura-electronica-solucion-a-error-10242/) — MEDIUM-HIGH confidence (SDK blog with AFIP error code reference, verified against RG 5616/2024)
+- [AfipSDK — Error 10016: Número de comprobante](https://afipsdk.com/blog/factura-electronica-solucion-a-error-10016/) — MEDIUM confidence (SDK blog post-mortem)
+- [Contadores en Red — CAEA se limita a contingencias desde junio 2026](https://contadoresenred.com/facturacion-uso-del-caea-se-limita-su-uso-para-contingencias/) — MEDIUM confidence (accounting community, RG 5782/2025 summary)
+- [Estudio Piccinini — CAEA: nuevo procedimiento para su emisión](https://www.estudiopiccinini.com.ar/tributario/comprobantes-c-a-e-a-nuevo-procedimiento-para-su-emision/) — MEDIUM confidence (Argentine accounting firm analysis of RG 5782/2025)
+- [AFIP FAQ — CAEA](https://servicioscf.afip.gob.ar/publico/abc/ABCpaso2.aspx?cat=3222) — HIGH confidence (official AFIP FAQ)
+- [ARCA — Regímenes especiales: procedimientos CAEA](https://www.afip.gob.ar/fe/regimenes-especiales/procedimientos.asp) — HIGH confidence (official AFIP)
+- [SistemasAgiles — FacturaElectronicaCAEAnticipado](https://www.sistemasagiles.com.ar/trac/wiki/FacturaElectronicaCAEAnticipado) — MEDIUM confidence (community AFIP developer wiki)
+- [Blog Facturante — Qué es CAEA en AFIP](https://blog.facturante.com/que-es-caea-en-afip/) — MEDIUM confidence (AFIP SaaS provider blog)
+- [Finnegans KB — Configurar entorno homologación AFIP/ARCA](https://bc.finneg.com/t/como-configurar-el-entorno-de-homologacion-de-afip-arca/4533) — MEDIUM confidence (ERP provider knowledge base)
+- [PostgreSQL — Advisory Locks documentation](https://www.postgresql.org/docs/current/explicit-locking.html) — HIGH confidence (official PostgreSQL docs)
+- [BullMQ — Retrying failing jobs](https://docs.bullmq.io/guide/retrying-failing-jobs) — HIGH confidence (official BullMQ docs)
 - [ARCA RG 5616/2024 — Normativa oficial](https://www.argentina.gob.ar/normativa/nacional/resoluci%C3%B3n-5616-2024-407369/texto) — HIGH confidence (official Argentine government registry)
-- [RG 5616/2024 — Cambios clave en Facturación Electrónica ARCA](https://radio3cadenapatagonia.com.ar/nueva-rg-5616-2024-cambios-clave-en-la-facturacion-electronica-arca/) — MEDIUM confidence (news article summarizing RG 5616)
-- [Profesionales de la salud: cómo facturar a obras sociales — Calim](https://calim.com.ar/como-facturar-obras-sociales/) — MEDIUM confidence (Argentine accounting practice blog)
-- [IVA en servicios médicos en Argentina — Calim](https://calim.com.ar/cual-iva-servicios-medicos/) — MEDIUM confidence (Argentine accounting practice blog)
-- [Instructivo de Facturación de Obras Sociales — Círculo Médico Paraná](https://www.cmparana.com.ar/2026/03/instructivo-de-facturacion-de-obras-sociales-3/) — MEDIUM confidence (Argentine medical association instructivo, March 2026)
-- [AFIP WSFE — Ticket de Acceso (TA) y expiración](https://sites.google.com/site/facturaelectronicax/wsfev1/wsfev1/wsfev1-m%C3%A9todos/wsfev1-ticket-de-acceso) — MEDIUM confidence (community documentation)
-- [Time in Argentina — UTC-3 no DST — Wikipedia](https://en.wikipedia.org/wiki/Time_in_Argentina) — HIGH confidence (reference)
-- [SaaS Multi-Tenant Isolation Patterns — AWS Blog (ES)](https://aws.amazon.com/es/blogs/aws-spanish/aislamiento-de-datos-multi-usuario-con-seguridad-a-nivel-fila-de-postgresql/) — HIGH confidence (AWS official blog)
+- [pyafipws community — Error 10242 CondicionIVAReceptor](https://groups.google.com/g/pyafipws/c/Ts7_jHioBwc/m/mRz7U6zyEAAJ) — MEDIUM confidence (developer community discussion)
 
 ---
 
-*Pitfalls research for: Argentine medical clinic SaaS — AFIP WSFE electronic invoicing + obra social settlement workflows + FACTURADOR role isolation (multi-tenant aesthetic surgery platform)*
-*Researched: 2026-03-12*
+*Pitfalls research for: v1.2 AFIP Real — adding real WSAA/WSFEv1/CAEA to existing multi-tenant NestJS system with AfipStubService*
+*Researched: 2026-03-16*
+*Supersedes: previous PITFALLS.md (2026-03-12) which covered v1.1-era general domain pitfalls*

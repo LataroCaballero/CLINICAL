@@ -57,32 +57,30 @@
 
 ## Traceability
 
-_Vacío — se completa durante creación del roadmap_
-
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| AFIP-01 | — | Pending |
-| CERT-01 | — | Pending |
-| CERT-02 | — | Pending |
-| CERT-03 | — | Pending |
-| CERT-04 | — | Pending |
-| CAE-01 | — | Pending |
-| CAE-02 | — | Pending |
-| CAE-03 | — | Pending |
-| CAE-04 | — | Pending |
-| QR-01 | — | Pending |
-| QR-02 | — | Pending |
-| QR-03 | — | Pending |
-| CAEA-01 | — | Pending |
-| CAEA-02 | — | Pending |
-| CAEA-03 | — | Pending |
-| CAEA-04 | — | Pending |
+| AFIP-01 | Phase 12 | Pending |
+| CERT-01 | Phase 12 | Pending |
+| CERT-02 | Phase 12 | Pending |
+| CERT-03 | Phase 12 | Pending |
+| CERT-04 | Phase 12 | Pending |
+| CAE-01 | Phase 13 | Pending |
+| CAE-02 | Phase 14 | Pending |
+| CAE-03 | Phase 14 | Pending |
+| CAE-04 | Phase 14 | Pending |
+| QR-01 | Phase 15 | Pending |
+| QR-02 | Phase 15 | Pending |
+| QR-03 | Phase 15 | Pending |
+| CAEA-01 | Phase 16 | Pending |
+| CAEA-02 | Phase 16 | Pending |
+| CAEA-03 | Phase 16 | Pending |
+| CAEA-04 | Phase 16 | Pending |
 
 **Coverage:**
 - v1.2 requirements: 16 total
-- Mapped to phases: 0
-- Unmapped: 16 ⚠️
+- Mapped to phases: 16
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-03-16*
-*Last updated: 2026-03-16 after initial definition*
+*Last updated: 2026-03-16 — traceability populated after roadmap creation*

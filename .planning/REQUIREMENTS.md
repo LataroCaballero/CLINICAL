@@ -11,8 +11,8 @@
 
 ### Gestión de Certificados
 
-- [ ] **CERT-01**: Admin puede subir certificado digital y clave privada con validación automática — CUIT del cert CN coincide con el registrado, ptoVta es tipo RECE verificado via `FEParamGetPtosVenta`
-- [ ] **CERT-02**: Admin puede configurar ambiente (HOMO/PROD), punto de venta, y ver estado del certificado en pantalla dedicada
+- [x] **CERT-01**: Admin puede subir certificado digital y clave privada con validación automática — CUIT del cert CN coincide con el registrado, ptoVta es tipo RECE verificado via `FEParamGetPtosVenta`
+- [x] **CERT-02**: Admin puede configurar ambiente (HOMO/PROD), punto de venta, y ver estado del certificado en pantalla dedicada
 - [ ] **CERT-03**: Sistema envía email al Admin 30 y 60 días antes del vencimiento del certificado
 - [ ] **CERT-04**: Facturador ve badge de estado del certificado (OK / venciendo / no configurado) en su home
 
@@ -60,8 +60,8 @@
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | AFIP-01 | Phase 12 | Complete |
-| CERT-01 | Phase 12 | Pending |
-| CERT-02 | Phase 12 | Pending |
+| CERT-01 | Phase 12 | Complete |
+| CERT-02 | Phase 12 | Complete |
 | CERT-03 | Phase 12 | Pending |
 | CERT-04 | Phase 12 | Pending |
 | CAE-01 | Phase 13 | Pending |

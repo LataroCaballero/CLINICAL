@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: AFIP Real
 status: in-progress
-last_updated: "2026-03-16T17:10:00Z"
-last_activity: 2026-03-16 — Phase 12 Plan 01 complete — schema + migration + spec scaffolds
-stopped_at: "Completed 12-01-PLAN.md"
+last_updated: "2026-03-16T17:45:00Z"
+last_activity: 2026-03-16 — Phase 12 Plan 02 complete — AfipConfigService + endpoints + module wiring
+stopped_at: "Completed 12-02-PLAN.md"
 progress:
   total_phases: 5
   completed_phases: 0
   total_plans: 4
-  completed_plans: 1
-  percent: 20
+  completed_plans: 2
+  percent: 40
 ---
 
 # Project State
@@ -27,12 +27,12 @@ See: .planning/PROJECT.md (updated 2026-03-16)
 
 ```
 Phase:    12 — Schema AFIP Extendido + Gestión de Certificados
-Plan:     02 (Plan 01 complete)
+Plan:     03 (Plans 01-02 complete)
 Status:   In Progress
-Progress: [██░░░░░░░░] 20% (1/5 phases partial — Plan 01/N complete)
+Progress: [████░░░░░░] 40% (2/5 phases partial — Plans 01-02/N complete)
 ```
 
-Last activity: 2026-03-16 — Plan 12-01 complete: Prisma schema migration + AFIP spec scaffolds
+Last activity: 2026-03-16 — Plan 12-02 complete: AfipConfigService + REST endpoints + module wiring
 
 ## Milestone Summary
 
@@ -65,6 +65,9 @@ Last activity: 2026-03-16 — Plan 12-01 complete: Prisma schema migration + AFI
 - FECAEAInformar + alertas deadline deben shipper juntos — CAEA sin inform tracking es riesgo regulatorio
 - [Plan 12-01] ConfiguracionAFIP.ptoVta non-nullable — validado via FEParamGetPtosVenta antes de persistir; Factura AFIP fields (cae, caeFchVto, nroComprobante, qrData, ptoVta) nullable hasta Phase 14
 - [Plan 12-01] Placeholder stub files (afip-config.service.ts, cert-expiry.scheduler.ts) para compilar specs — Wave 1 planes 02/03 los reemplazan con implementaciones reales
+- [Plan 12-02] Node.js X509Certificate.subject usa newline-separated key=value — regex maneja serialNumber=CUIT N (lowercase, producción AFIP) y CN=N (11 dígitos)
+- [Plan 12-02] @Auth('ADMIN','PROFESIONAL') decorator usado en AfipConfigController — usa JwtRolesGuard via existing @Auth pattern del repo
+- [Plan 12-02] PrismaModule @Global() — AfipConfigModule no necesita importarlo ni agregar PrismaService a providers
 
 ### Research Flags (for plan-phase to act on)
 - **Phase 13 y 14:** Verificar URLs actuales WSAA y WSFEv1 bajo dominio arca.gob.ar al momento de implementar. Almacenar en env config: AFIP_WSAA_URL_HOMO, AFIP_WSAA_URL_PROD, AFIP_WSFEV1_URL_HOMO, AFIP_WSFEV1_URL_PROD
@@ -91,13 +94,12 @@ Last activity: 2026-03-16 — Plan 12-01 complete: Prisma schema migration + AFI
 
 ## Session Continuity
 
-Next action: Execute Phase 12 Plan 02 (AfipConfigService implementation)
+Next action: Execute Phase 12 Plan 03 (CertExpiryScheduler implementation)
 
 Files to read at session start:
 - `.planning/ROADMAP.md` — phase structure and success criteria
 - `.planning/REQUIREMENTS.md` — requirement details with IDs
-- `.planning/research/AFIP-INTEGRATION.md` — 774-line canonical reference (WSAA, WSFEv1, CAEA, advisory lock, signing)
-- `backend/src/prisma/schema.prisma` — current schema state (updated with AFIP models)
-- `backend/src/modules/afip-config/` — placeholder stubs + spec scaffolds ready for implementation
-- `backend/src/modules/finanzas/afip/` — stub service y interface contract
-- `.planning/phases/12-schema-afip-extendido-gestion-certificados/12-01-SUMMARY.md` — Plan 01 context
+- `backend/src/modules/afip-config/afip-config.service.ts` — AfipConfigService ready (Plans 01-02)
+- `backend/src/modules/afip-config/afip-config.module.ts` — module wiring complete
+- `backend/src/modules/afip-config/cert-expiry.scheduler.ts` — placeholder stub to replace
+- `.planning/phases/12-schema-afip-extendido-gestion-certificados/12-02-SUMMARY.md` — Plan 02 context

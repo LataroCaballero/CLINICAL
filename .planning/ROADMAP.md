@@ -39,7 +39,7 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
 
 ### v1.2 AFIP Real (Fases 12–16)
 
-- [ ] **Phase 12: Schema AFIP Extendido + Gestión de Certificados** — DB migration con modelos AFIP y UI completa de configuración de certificados por tenant
+- [x] **Phase 12: Schema AFIP Extendido + Gestión de Certificados** — DB migration con modelos AFIP y UI completa de configuración de certificados por tenant (completed 2026-03-16)
 - [ ] **Phase 13: WSAA Token Service** — Access tickets reales con firma CMS in-process, cache Redis y mutex por CUIT
 - [ ] **Phase 14: Emisión CAE Real (WSFEv1)** — FECAESolicitar con advisory lock, clasificación de errores y swap del DI token
 - [ ] **Phase 15: QR AFIP + PDF + Frontend de Comprobantes** — QR embebido en PDF, display de CAE en UI, cotización BNA para USD
@@ -130,7 +130,7 @@ Plans:
 | 9. Backend API Layer | v1.1 | 3/3 | Complete | 2026-03-13 |
 | 10. FACTURADOR Home Dashboard | v1.1 | 2/2 | Complete | 2026-03-14 |
 | 11. Settlement Workflow | v1.1 | 2/2 | Complete | 2026-03-16 |
-| 12. Schema AFIP Extendido + Certificados | 3/4 | In Progress|  | - |
+| 12. Schema AFIP Extendido + Certificados | 4/4 | Complete   | 2026-03-16 | - |
 | 13. WSAA Token Service | v1.2 | 0/? | Not started | - |
 | 14. Emisión CAE Real (WSFEv1) | v1.2 | 0/? | Not started | - |
 | 15. QR AFIP + PDF + Frontend | v1.2 | 0/? | Not started | - |

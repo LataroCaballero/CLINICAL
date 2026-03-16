@@ -2,15 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: AFIP Real
-status: in-progress
-last_updated: "2026-03-16T17:13:00Z"
-last_activity: 2026-03-16 — Phase 12 Plan 03 complete — CertExpiryScheduler daily cert-expiry alerts
-stopped_at: "Completed 12-03-PLAN.md"
+status: executing
+last_updated: "2026-03-16T17:14:42.542Z"
+last_activity: "2026-03-16 — Plan 12-03 complete: CertExpiryScheduler daily cert-expiry alerts with TDD (5 unit tests)"
 progress:
   total_phases: 5
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 4
-  completed_plans: 3
+  completed_plans: 4
   percent: 60
 ---
 
@@ -27,12 +26,12 @@ See: .planning/PROJECT.md (updated 2026-03-16)
 
 ```
 Phase:    12 — Schema AFIP Extendido + Gestión de Certificados
-Plan:     04 (Plans 01-03 complete)
-Status:   In Progress
-Progress: [██████░░░░] 60% (3/5 phases partial — Plans 01-03/N complete)
+Plan:     04 (Plans 01-04 code tasks complete — human-verify checkpoint pending)
+Status:   In Progress (checkpoint:human-verify)
+Progress: [████████░░] 80% (Phase 12 all 4 plans done pending human verify)
 ```
 
-Last activity: 2026-03-16 — Plan 12-03 complete: CertExpiryScheduler daily cert-expiry alerts with TDD (5 unit tests)
+Last activity: 2026-03-16 — Plan 12-04 complete: AfipConfigTab frontend (types, hooks, AfipConfigTab, Facturador badge); checkpoint:human-verify pending
 
 ## Milestone Summary
 
@@ -70,6 +69,8 @@ Last activity: 2026-03-16 — Plan 12-03 complete: CertExpiryScheduler daily cer
 - [Plan 12-02] PrismaModule @Global() — AfipConfigModule no necesita importarlo ni agregar PrismaService a providers
 - [Plan 12-03] SMTP_PASS siempre desde env var en CertExpiryScheduler — ConfigClinica smtpPassEncrypted decryption es pre-existing gap (mismo que PresupuestoEmailService); env-var path es el camino seguro
 - [Plan 12-03] daysLeft guard: === 60 || === 30 || <= 5 — exactamente 2 alertas programadas más ventana urgente diaria en los últimos 5 días
+- [Plan 12-04] AfipConfigTab preview modal mostra valores ingresados (ambiente prominent); CUIT/expiry extraídos server-side después de confirmar — no pre-fetch del cert
+- [Plan 12-04] Facturador badge visual-only: useAfipConfig hook, renders solo cuando configured, sin onClick/Link wrapper
 
 ### Research Flags (for plan-phase to act on)
 - **Phase 13 y 14:** Verificar URLs actuales WSAA y WSFEv1 bajo dominio arca.gob.ar al momento de implementar. Almacenar en env config: AFIP_WSAA_URL_HOMO, AFIP_WSAA_URL_PROD, AFIP_WSFEV1_URL_HOMO, AFIP_WSFEV1_URL_PROD
@@ -96,11 +97,10 @@ Last activity: 2026-03-16 — Plan 12-03 complete: CertExpiryScheduler daily cer
 
 ## Session Continuity
 
-Next action: Execute Phase 12 Plan 04 (AfipConfigTab frontend — configuracion page AFIP tab + Facturador badge)
+Next action: Phase 12 complete — pending human-verify of AfipConfigTab UI. After approval, start Phase 13 (WSAA Token Service).
 
-Files to read at session start:
-- `.planning/ROADMAP.md` — phase structure and success criteria
-- `.planning/REQUIREMENTS.md` — requirement details with IDs
-- `backend/src/modules/afip-config/afip-config.service.ts` — AfipConfigService ready (Plans 01-02)
-- `frontend/src/app/dashboard/configuracion/page.tsx` — existing tabs structure
-- `.planning/phases/12-schema-afip-extendido-gestion-certificados/12-03-SUMMARY.md` — Plan 03 context
+Files to read at session start for Phase 13:
+- `.planning/ROADMAP.md` — phase structure
+- `.planning/REQUIREMENTS.md` — CAE-01 requirement details
+- `backend/src/modules/afip-config/afip-config.service.ts` — AfipConfigService (cert/key loading, Plans 01-02)
+- `.planning/phases/12-schema-afip-extendido-gestion-certificados/12-04-SUMMARY.md` — Phase 12 complete context

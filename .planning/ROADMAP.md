@@ -57,7 +57,12 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
   3. Facturador ve en su home un badge que indica el estado del certificado: OK, venciendo pronto, o no configurado
   4. Sistema envía email al Admin 30 y 60 días antes de que venza el certificado
   5. Al consultar la DB, los campos cae, caeFchVto, nroComprobante, qrData, ptoVta existen en Factura, y el modelo CaeaVigente y enum EstadoFactura.CAEA_PENDIENTE_INFORMAR existen en el schema
-**Plans**: TBD
+**Plans**: 4 plans
+Plans:
+- [ ] 12-01-PLAN.md — Prisma schema extension (all AFIP models + fields) + test spec scaffolds
+- [ ] 12-02-PLAN.md — AfipConfigModule backend (service, controller, 3 endpoints, module wiring)
+- [ ] 12-03-PLAN.md — CertExpiryScheduler (@Cron daily, email alerts at 60d/30d, unit tests)
+- [ ] 12-04-PLAN.md — Frontend: AfipConfigTab + hooks + Facturador badge + human verify
 **Research flag**: None — direct Prisma migration + NestJS CRUD, patrón EncryptionService ya existe en WhatsappModule
 
 ### Phase 13: WSAA Token Service
@@ -125,7 +130,7 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
 | 9. Backend API Layer | v1.1 | 3/3 | Complete | 2026-03-13 |
 | 10. FACTURADOR Home Dashboard | v1.1 | 2/2 | Complete | 2026-03-14 |
 | 11. Settlement Workflow | v1.1 | 2/2 | Complete | 2026-03-16 |
-| 12. Schema AFIP Extendido + Certificados | v1.2 | 0/? | Not started | - |
+| 12. Schema AFIP Extendido + Certificados | v1.2 | 0/4 | Not started | - |
 | 13. WSAA Token Service | v1.2 | 0/? | Not started | - |
 | 14. Emisión CAE Real (WSFEv1) | v1.2 | 0/? | Not started | - |
 | 15. QR AFIP + PDF + Frontend | v1.2 | 0/? | Not started | - |

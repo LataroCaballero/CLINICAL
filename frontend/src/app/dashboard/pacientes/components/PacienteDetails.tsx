@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { useState } from "react";
 import {
   AlertTriangle,
   Check,
@@ -17,10 +18,20 @@ import {
   Wallet,
   Receipt,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { MedicalChips } from "@/components/ui/MedicalChips";
 import { getPatientAlerts } from "./columns";
+import { WhatsappOptInToggle } from "./WhatsappOptInToggle";
+import SendWAMessageModal from "@/components/whatsapp/SendWAMessageModal";
 
 export default function PacienteDetails({ paciente, onAction }: { paciente: any; onAction?: (view: "default" | "datos" | "historia" | "turnos" | "mensajes" | "cuenta" | "presupuestos") => void }) {
+  const [waModalOpen, setWaModalOpen] = useState(false);
+
   if (!paciente) return null;
 
   const calcularEdad = (fechaNac?: string) => {
@@ -117,13 +128,21 @@ export default function PacienteDetails({ paciente, onAction }: { paciente: any;
         {/* DATOS DE CONTACTO */}
         <section>
           <h3 className="text-sm font-semibold mb-2">Datos de contacto</h3>
-          <div className="space-y-1 text-gray-700 pl-2">
+          <div className="space-y-2 text-gray-700 pl-2">
             <p className="flex items-center gap-2">
               <Mail className="w-4 h-4" /> {paciente.email || "Sin email"}
             </p>
             <p className="flex items-center gap-2">
               <Phone className="w-4 h-4" /> {paciente.telefono || "-"}
             </p>
+            {/* TODO: actualizar tipo Paciente tras regenerar Prisma client */}
+            <div className="pt-1">
+              <WhatsappOptInToggle
+                pacienteId={paciente.id}
+                optIn={(paciente as any).whatsappOptIn ?? false}
+                optInAt={(paciente as any).whatsappOptInAt}
+              />
+            </div>
           </div>
         </section>
 
@@ -239,8 +258,32 @@ export default function PacienteDetails({ paciente, onAction }: { paciente: any;
             label="Mensajes internos"
             onClick={() => onAction?.("mensajes")}
           />
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span>
+                <Button
+                  variant="outline"
+                  className="flex flex-col items-center justify-center p-3 border rounded-md hover:bg-muted transition text-sm min-h-[70px] w-full h-auto"
+                  disabled={!(paciente as any).whatsappOptIn}
+                  onClick={() => setWaModalOpen(true)}
+                >
+                  <MessageSquare className="w-5 h-5 text-green-600 mb-1" />
+                  WhatsApp
+                </Button>
+              </span>
+            </TooltipTrigger>
+            {!(paciente as any).whatsappOptIn && (
+              <TooltipContent>El paciente no tiene opt-in para WhatsApp</TooltipContent>
+            )}
+          </Tooltip>
         </div>
       </div>
+
+      <SendWAMessageModal
+        pacienteId={paciente.id}
+        open={waModalOpen}
+        onClose={() => setWaModalOpen(false)}
+      />
     </div>
   );
 }

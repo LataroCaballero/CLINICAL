@@ -16,7 +16,7 @@ export class PacienteListaDto {
   estado: string; // "ACTIVO" | "INACTIVO"
   consentimientoFirmado: boolean;
   estudiosPendientes: number;
-  presupuestosActivos: number;
+  presupuestoEstado?: string | null;
   objecion?: {
     id: string;
     nombre: string;

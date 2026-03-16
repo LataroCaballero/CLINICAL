@@ -6,6 +6,9 @@ type RolUsuario = 'ADMIN' | 'PROFESIONAL' | 'SECRETARIA' | 'FACTURADOR' | 'PACIE
  * Si una ruta no está listada, se permite a todos los autenticados.
  */
 const ROUTE_PERMISSIONS: { prefix: string; roles: RolUsuario[] }[] = [
+  // Facturador home - más específico primero, antes del catch-all /dashboard
+  { prefix: '/dashboard/facturador', roles: ['ADMIN', 'FACTURADOR'] },
+
   // Finanzas - sub-rutas primero
   { prefix: '/dashboard/finanzas/presupuestos', roles: ['ADMIN', 'PROFESIONAL', 'SECRETARIA', 'FACTURADOR'] },
   { prefix: '/dashboard/finanzas', roles: ['ADMIN', 'PROFESIONAL', 'FACTURADOR'] },
@@ -17,13 +20,16 @@ const ROUTE_PERMISSIONS: { prefix: string; roles: RolUsuario[] }[] = [
   { prefix: '/dashboard/reportes', roles: ['ADMIN', 'PROFESIONAL'] },
 
   // Configuracion
-  { prefix: '/dashboard/configuracion', roles: ['ADMIN', 'PROFESIONAL'] },
+  { prefix: '/dashboard/configuracion', roles: ['ADMIN', 'PROFESIONAL', 'SECRETARIA'] },
 
   // Stock - acceso total
   { prefix: '/dashboard/stock', roles: ['ADMIN', 'PROFESIONAL', 'SECRETARIA', 'FACTURADOR'] },
 
   // Pacientes
   { prefix: '/dashboard/pacientes', roles: ['ADMIN', 'PROFESIONAL', 'SECRETARIA', 'FACTURADOR'] },
+
+  // Accion - lista de seguimiento diario
+  { prefix: '/dashboard/accion', roles: ['ADMIN', 'PROFESIONAL', 'SECRETARIA'] },
 
   // Dashboard home - todos
   { prefix: '/dashboard', roles: ['ADMIN', 'PROFESIONAL', 'SECRETARIA', 'FACTURADOR'] },

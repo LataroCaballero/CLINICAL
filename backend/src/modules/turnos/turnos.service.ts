@@ -12,6 +12,7 @@ import {
   RolUsuario,
   TipoMovimiento,
   EstadoCirugia,
+  EtapaCRM,
 } from '@prisma/client';
 import { getDayRange } from '@/src/common/utils/date-range';
 import { ReprogramarTurnoDto } from './dto/reprogramar-turno.dto';
@@ -92,7 +93,7 @@ export class TurnosService {
     }
 
     // 4) Crear turno
-    return this.prisma.turno.create({
+    const turno = await this.prisma.turno.create({
       data: {
         pacienteId: dto.pacienteId,
         profesionalId: dto.profesionalId,
@@ -116,6 +117,20 @@ export class TurnosService {
         },
       },
     });
+
+    // 5) CRM auto-transition: si el paciente no tiene etapa asignada → TURNO_AGENDADO
+    const pacienteCRM = await this.prisma.paciente.findUnique({
+      where: { id: dto.pacienteId },
+      select: { etapaCRM: true },
+    });
+    if (!pacienteCRM?.etapaCRM) {
+      await this.prisma.paciente.update({
+        where: { id: dto.pacienteId },
+        data: { etapaCRM: EtapaCRM.TURNO_AGENDADO },
+      });
+    }
+
+    return turno;
   }
 
   async obtenerTurnosPorPaciente(pacienteId: string) {
@@ -268,6 +283,7 @@ export class TurnosService {
           select: {
             id: true,
             nombreCompleto: true,
+            whatsappOptIn: true,
           },
         },
         tipoTurno: {
@@ -321,6 +337,7 @@ export class TurnosService {
           select: {
             id: true,
             nombreCompleto: true,
+            whatsappOptIn: true,
           },
         },
         tipoTurno: {
@@ -652,7 +669,17 @@ export class TurnosService {
     const duracionMs = finReal.getTime() - new Date(turno.inicioReal).getTime();
     const duracionRealMinutos = Math.round(duracionMs / 60000);
 
-    return this.prisma.turno.update({
+    // Fetch turno fields needed for CRM transition before update
+    const turnoInfo = await this.prisma.turno.findUnique({
+      where: { id: turnoId },
+      select: {
+        esCirugia: true,
+        pacienteId: true,
+        paciente: { select: { etapaCRM: true } },
+      },
+    });
+
+    const turnoFinalizado = await this.prisma.turno.update({
       where: { id: turnoId },
       data: {
         finReal,
@@ -661,6 +688,23 @@ export class TurnosService {
         entradaHCId: dto?.entradaHCId ?? undefined,
       },
     });
+
+    // CRM auto-transition on cerrar sesion
+    if (turnoInfo) {
+      if (turnoInfo.esCirugia) {
+        await this.prisma.paciente.update({
+          where: { id: turnoInfo.pacienteId },
+          data: { etapaCRM: EtapaCRM.PROCEDIMIENTO_REALIZADO },
+        });
+      } else if (turnoInfo.paciente.etapaCRM === EtapaCRM.TURNO_AGENDADO) {
+        await this.prisma.paciente.update({
+          where: { id: turnoInfo.pacienteId },
+          data: { etapaCRM: EtapaCRM.CONSULTADO },
+        });
+      }
+    }
+
+    return turnoFinalizado;
   }
 
   async obtenerProximosTurnos(profesionalId: string, dias: number = 30) {

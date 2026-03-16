@@ -31,7 +31,15 @@ export function getPatientAlerts(paciente: any): string[] {
   return alerts;
 }
 
-export const pacienteColumns: ColumnDef<any>[] = [
+/**
+ * Factory that builds column definitions for the pacientes table.
+ * Accepts an optional unreadMap so the nombre column can show WA unread badges
+ * without requiring each cell to independently call useWAUnread().
+ */
+export function createPacienteColumns(
+  unreadMap?: Record<string, number>
+): ColumnDef<any>[] {
+  return [
   // NOMBRE COMPLETO
   {
     accessorKey: "nombreCompleto",
@@ -40,6 +48,7 @@ export const pacienteColumns: ColumnDef<any>[] = [
       const nombre = row.original.nombreCompleto;
       const foto = row.original.fotoUrl;
       const hasAlerts = getPatientAlerts(row.original).length > 0;
+      const waUnread = unreadMap?.[row.original.id] ?? 0;
 
       const getInitial = (name?: string) =>
         name ? name.charAt(0).toUpperCase() : "?";
@@ -73,6 +82,12 @@ export const pacienteColumns: ColumnDef<any>[] = [
           </div>
 
           <span className="font-medium text-gray-900">{nombre}</span>
+
+          {waUnread > 0 && (
+            <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-green-500 px-1 text-[10px] text-white font-bold leading-none">
+              {waUnread}
+            </span>
+          )}
         </div>
       );
     },
@@ -201,4 +216,8 @@ export const pacienteColumns: ColumnDef<any>[] = [
     },
   }
 
-];
+  ]; // end columns array
+} // end createPacienteColumns factory
+
+// Convenience export for callers without unread data
+export const pacienteColumns: ColumnDef<any>[] = createPacienteColumns();

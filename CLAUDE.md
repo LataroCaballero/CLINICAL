@@ -106,6 +106,9 @@ frontend/src/
 Backend requires `.env` with:
 - `DATABASE_URL` - PostgreSQL connection string
 - `JWT_SECRET` - JWT signing secret
+- `ENCRYPTION_KEY` - 32-byte hex string for AES-256-GCM token encryption (WABA access tokens)
+- `BACKEND_URL` - Public URL of the backend API (e.g., `https://api.yourdomain.com`). Required for WhatsApp presupuesto PDF delivery — Meta fetches the PDF from this URL. If not set, defaults to `http://localhost:3001` (Meta cannot reach localhost in production)
+- `REDIS_HOST` / `REDIS_PORT` - Redis connection for BullMQ (default: localhost:6379)
 
 Frontend requires:
 - `NEXT_PUBLIC_API_URL` - Backend API base URL

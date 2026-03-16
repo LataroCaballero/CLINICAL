@@ -16,6 +16,8 @@ import {
 import { MensajesProvider } from "@/providers/MensajesProvider";
 import { cn } from "@/lib/utils";
 import { hasRouteAccess } from "@/lib/permissions";
+import { useWAUnread } from "@/hooks/useWAThread";
+import { MessageSquare } from "lucide-react";
 
 const Sidebar = dynamic(() => import("./components/Sidebar"), { ssr: false });
 
@@ -28,6 +30,12 @@ export default function DashboardLayout({
   const router = useRouter();
   const pathname = usePathname();
   const { data: user, isLoading, isError } = useCurrentUser();
+
+  // Global WA unread indicator — sums all unread counts across all patients
+  const { data: waUnreadMap } = useWAUnread();
+  const totalWAUnread = waUnreadMap
+    ? Object.values(waUnreadMap).reduce((acc, n) => acc + n, 0)
+    : 0;
 
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
@@ -50,6 +58,15 @@ export default function DashboardLayout({
     }
   }, [isLoading, user, pathname, router]);
 
+  // Redirect FACTURADOR to their dedicated landing page
+  useEffect(() => {
+    if (!isLoading && user && pathname === '/dashboard') {
+      if (user.rol === 'FACTURADOR') {
+        router.replace('/dashboard/facturador');
+      }
+    }
+  }, [isLoading, user, pathname, router]);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
@@ -65,7 +82,10 @@ export default function DashboardLayout({
   return (
     <MensajesProvider>
       <div
-        className="flex min-h-screen transition-colors duration-300"
+        className={cn(
+          "flex min-h-screen transition-colors duration-300",
+          focusModeEnabled ? "bg-[var(--fc-bg-primary)]" : "bg-gray-50"
+        )}
         data-mode={focusModeEnabled ? "consulta" : undefined}
       >
         {/* Sidebar solo desktop */}
@@ -74,7 +94,7 @@ export default function DashboardLayout({
         </div>
 
         {/* Contenedor principal */}
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 min-w-0 flex flex-col">
           {/* Contenedor que controla el espacio vertical */}
           <div className={cn(
             "transition-colors duration-300",
@@ -93,7 +113,7 @@ export default function DashboardLayout({
           {/* Contenido principal del dashboard */}
           <main
             className={cn(
-              "flex-1 overflow-y-auto transition-all duration-300",
+              "flex-1 min-w-0 overflow-y-auto overflow-x-hidden transition-all duration-[250ms]",
               sidebarCollapsed ? "md:ml-20" : "md:ml-64",
               focusModeEnabled && "bg-[var(--fc-bg-primary)]"
             )}
@@ -110,6 +130,15 @@ export default function DashboardLayout({
         <LiveTurnoIndicator />
         <LiveTurnoRecoveryDialog />
         <LiveTurnoSyncChecker />
+
+        {/* Global WA unread indicator — fixed badge visible from any page */}
+        {totalWAUnread > 0 && (
+          <div className="fixed bottom-20 right-4 z-50 flex items-center gap-1.5 rounded-full bg-green-500 px-3 py-1.5 text-white text-xs font-semibold shadow-lg pointer-events-none">
+            <MessageSquare className="h-3.5 w-3.5" />
+            {totalWAUnread}{" "}
+            {totalWAUnread === 1 ? "mensaje nuevo" : "mensajes nuevos"}
+          </div>
+        )}
       </div>
     </MensajesProvider>
   );

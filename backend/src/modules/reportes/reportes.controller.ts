@@ -34,6 +34,8 @@ import { ReportesFinancierosService } from './services/reportes-financieros.serv
 import { ReportesExportService } from './services/reportes-export.service';
 import { ReportesSuscripcionesService } from './services/reportes-suscripciones.service';
 import { ReportesSchedulerService } from './services/reportes-scheduler.service';
+import { CrmMetricsService } from './services/crm-metrics.service';
+import { CrmDashboardService } from './services/crm-dashboard.service';
 
 @Controller('reportes')
 @Auth('ADMIN', 'PROFESIONAL')
@@ -45,6 +47,8 @@ export class ReportesController {
     private readonly exportService: ReportesExportService,
     private readonly suscripcionesService: ReportesSuscripcionesService,
     private readonly schedulerService: ReportesSchedulerService,
+    private readonly crmMetricsService: CrmMetricsService,
+    private readonly crmDashboardService: CrmDashboardService,
   ) {}
 
   // ============================================================
@@ -57,6 +61,58 @@ export class ReportesController {
   @Get('dashboard')
   getDashboard(@Query() filters: DashboardFiltersDto) {
     return this.dashboardService.getDashboardKPIs(filters);
+  }
+
+  // ============================================================
+  // CRM: Métricas de Conversión
+  // ============================================================
+
+  /**
+   * Métricas CRM de conversión quirúrgica por período
+   */
+  @Get('crm')
+  getCRMMetrics(
+    @Query('profesionalId') profesionalId: string,
+    @Query('mes') mes?: string,
+  ) {
+    return this.crmMetricsService.getCRMMetrics(profesionalId, mes);
+  }
+
+  @Get('crm/funnel')
+  getCRMFunnel(@Query('profesionalId') profesionalId: string) {
+    return this.crmDashboardService.getFunnelSnapshot(profesionalId);
+  }
+
+  @Get('crm/kpis')
+  getCRMKpis(
+    @Query('profesionalId') profesionalId: string,
+    @Query('periodo') periodo: string = 'mes',
+  ) {
+    return this.crmDashboardService.getKpis(profesionalId, periodo);
+  }
+
+  @Get('crm/motivos-perdida')
+  getCRMMotivosPerdida(
+    @Query('profesionalId') profesionalId: string,
+    @Query('periodo') periodo: string = 'mes',
+  ) {
+    return this.crmDashboardService.getMotivosPerdida(profesionalId, periodo);
+  }
+
+  @Get('crm/pipeline-income')
+  getCRMPipelineIncome(
+    @Query('profesionalId') profesionalId: string,
+    @Query('periodo') periodo: string = 'mes',
+  ) {
+    return this.crmDashboardService.getPipelineIncome(profesionalId, periodo);
+  }
+
+  @Get('crm/coordinator-performance')
+  getCRMCoordinatorPerformance(
+    @Query('profesionalId') profesionalId: string,
+    @Query('periodo') periodo: string = 'semana',
+  ) {
+    return this.crmDashboardService.getCoordinatorPerformance(profesionalId, periodo);
   }
 
   // ============================================================

@@ -20,7 +20,7 @@ export interface PacienteListItem {
   consentimientoFirmado: boolean;
   indicacionesEnviadas?: boolean;
   estudiosPendientes: number;
-  presupuestosActivos: number;
+  presupuestoEstado?: string | null;
 }
 
 export interface ObraSocialRef {

@@ -38,6 +38,8 @@ model Usuario {
   mensajesEnviados      MensajeInterno[]        @relation("MensajesEnviados")
   mensajesLeidos        MensajeLectura[]        @relation("MensajesLeidos")
   reportesSuscripciones ReporteSuscripcion[]
+  contactosRegistrados  ContactoLog[]       @relation("ContactoLogRegistradoPor")
+  autorizacionesAprobadas AutorizacionObraSocial[] @relation("AutorizacionAprobacion")
 }
 
 model ReporteSuscripcion {
@@ -119,6 +121,13 @@ model Profesional {
   tratamientos    Tratamiento[]
   ventasProducto  VentaProducto[]
   configTiposTurno TipoTurnoProfesional[]
+  tareasSeguimiento TareaSeguimiento[]
+  configuracionWABA ConfiguracionWABA?
+  mensajesWhatsApp  MensajeWhatsApp[]
+  contactos         ContactoLog[]
+  configClinica     ConfigClinica?
+  autorizaciones    AutorizacionObraSocial[]
+  limitesFacturacion LimiteFacturacionMensual[]
 }
 
 model Secretaria {
@@ -176,15 +185,33 @@ model Paciente {
   VentaProducto              VentaProducto[]
   objecionId                 String?
   objecion                   Objection?        @relation(fields: [objecionId], references: [id])
+  etapaCRM                   EtapaCRM?
+  temperatura                TemperaturaPaciente?
+  scoreConversion            Int               @default(0)
+  motivoPerdida              MotivoPerdidaCRM?
+  notasComerciales           String?
+  tareasSeguimiento          TareaSeguimiento[]
+  whatsappOptIn              Boolean           @default(false)
+  whatsappOptInAt            DateTime?
+  mensajesWhatsApp           MensajeWhatsApp[]
+  contactos                  ContactoLog[]
+  enListaEspera              Boolean           @default(false)
+  comentarioListaEspera      String?
+  fechaListaEspera           DateTime?
+  autorizaciones             AutorizacionObraSocial[]
 
   @@index([dni(ops: raw("gin_trgm_ops"))], map: "idx_paciente_dni_trgm", type: Gin)
   @@index([telefono(ops: raw("gin_trgm_ops"))], map: "idx_paciente_telefono_trgm", type: Gin)
+  @@index([etapaCRM])
+  @@index([profesionalId, etapaCRM])
+  @@index([profesionalId, enListaEspera])
 }
 
 model MensajeInterno {
   id         String           @id @default(uuid())
   mensaje    String
   prioridad  PrioridadMensaje @default(MEDIA)
+  esSistema  Boolean          @default(false)
   autorId    String
   pacienteId String
   createdAt  DateTime         @default(now())
@@ -367,6 +394,9 @@ model Presupuesto {
   fechaRechazado    DateTime?
   motivoRechazo     String?
   cargoMovimientoId String?
+  tokenAceptacion   String?           @unique
+  moneda            String            @default("ARS")
+  fechaValidez      DateTime?
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
   Archivo           Archivo[]
@@ -378,14 +408,34 @@ model Presupuesto {
 }
 
 model PresupuestoItem {
-  id             String      @id @default(uuid())
-  presupuestoId  String
-  descripcion    String
-  cantidad       Int         @default(1)
-  precioUnitario Decimal     @db.Decimal(10, 2)
-  total          Decimal     @db.Decimal(10, 2)
-  orden          Int         @default(0)
-  presupuesto    Presupuesto @relation(fields: [presupuestoId], references: [id])
+  id            String      @id @default(uuid())
+  presupuestoId String
+  descripcion   String
+  precioTotal   Decimal     @db.Decimal(10, 2)
+  orden         Int         @default(0)
+  presupuesto   Presupuesto @relation(fields: [presupuestoId], references: [id])
+}
+
+model ConfigClinica {
+  id                String      @id @default(uuid())
+  profesionalId     String      @unique
+  nombreClinica     String?
+  logoUrl           String?
+  direccion         String?
+  telefono          String?
+  emailContacto     String?
+  web               String?
+  piePaginaTexto    String?
+  smtpHost          String?
+  smtpPort          Int?
+  smtpUser          String?
+  smtpPassEncrypted String?
+  smtpFrom          String?
+  instruccionesPre  String?     @db.Text
+  instruccionesPost String?     @db.Text
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  profesional       Profesional @relation(fields: [profesionalId], references: [id])
 }
 
 model ObraSocial {
@@ -398,6 +448,7 @@ model ObraSocial {
   Paciente              Paciente[]
   planes                PlanObraSocial[]
   practicas             PracticaObraSocial[]
+  autorizaciones        AutorizacionObraSocial[]
 }
 
 model PlanObraSocial {
@@ -430,6 +481,10 @@ model PracticaRealizada {
   estadoLiquidacion EstadoLiquidacion      @default(PENDIENTE)
   liquidacionId     String?
   facturaId         String?
+  montoPagado       Decimal?               @db.Decimal(10, 2)
+  corregidoPor      String?
+  corregidoAt       DateTime?
+  motivoCorreccion  String?
   MovimientoStock   MovimientoStock[]
   factura           Factura?               @relation(fields: [facturaId], references: [id])
   liquidacion       LiquidacionObraSocial? @relation(fields: [liquidacionId], references: [id])
@@ -451,6 +506,17 @@ model LiquidacionObraSocial {
   practicas    PracticaRealizada[]
 }
 
+model LimiteFacturacionMensual {
+  id            String      @id @default(uuid())
+  profesionalId String
+  mes           String      // 'YYYY-MM', e.g. '2026-03'
+  limite        Decimal?    @db.Decimal(10, 2)
+  createdAt     DateTime    @default(now())
+  profesional   Profesional @relation(fields: [profesionalId], references: [id])
+
+  @@unique([profesionalId, mes])
+}
+
 model Factura {
   id            String                  @id @default(uuid())
   tipo          TipoFactura
@@ -459,9 +525,11 @@ model Factura {
   estado        EstadoFactura           @default(EMITIDA)
   cuit          String?
   razonSocial   String?
-  domicilio     String?
-  condicionIVA  String?
-  concepto      String?
+  domicilio             String?
+  condicionIVAReceptor  CondicionIVA  @default(CONSUMIDOR_FINAL)
+  tipoCambio            Decimal       @default(1.0) @db.Decimal(10, 4)
+  moneda                MonedaFactura @default(ARS)
+  concepto              String?
   subtotal      Decimal                 @db.Decimal(10, 2)
   impuestos     Decimal                 @db.Decimal(10, 2)
   total         Decimal                 @db.Decimal(10, 2)
@@ -719,6 +787,7 @@ model Turno {
   comentarioMensaje   String?
   notificacionEnviada Boolean     @default(false)
   esCirugia           Boolean     @default(false)
+  esSobreturno        Boolean     @default(false)
   cirugiaId           String?
   entradaHCId         String?
 
@@ -866,6 +935,7 @@ enum EstadoPresupuesto {
   ACEPTADO
   RECHAZADO
   CANCELADO
+  VENCIDO
 }
 
 enum EstadoLiquidacion {
@@ -929,4 +999,196 @@ enum EstadoPlantillaHC {
 enum EstadoEntradaHC {
   DRAFT
   FINALIZED
+}
+
+enum CondicionIVA {
+  RESPONSABLE_INSCRIPTO
+  IVA_SUJETO_EXENTO
+  CONSUMIDOR_FINAL
+  MONOTRIBUTO
+  SUJETO_NO_CATEGORIZADO
+  PROVEEDOR_EXTERIOR
+  CLIENTE_EXTERIOR
+  IVA_LIBERADO
+  MONOTRIBUTISTA_SOCIAL
+  IVA_NO_ALCANZADO
+  MONOTRIBUTO_TRABAJADOR_INDEPENDIENTE
+}
+
+enum MonedaFactura {
+  ARS
+  USD
+}
+
+// ── CRM de Conversión ────────────────────────────────────────────────────────
+
+enum EtapaCRM {
+  NUEVO_LEAD
+  TURNO_AGENDADO
+  CONSULTADO
+  PRESUPUESTO_ENVIADO
+  PROCEDIMIENTO_REALIZADO
+  CONFIRMADO
+  PERDIDO
+}
+
+enum TemperaturaPaciente {
+  CALIENTE
+  TIBIO
+  FRIO
+}
+
+enum MotivoPerdidaCRM {
+  PRECIO
+  TIEMPO
+  MIEDO_CIRUGIA
+  PREFIERE_OTRO_PROFESIONAL
+  NO_CANDIDATO_MEDICO
+  NO_RESPONDIO
+  OTRO
+}
+
+enum TipoTareaSeguimiento {
+  SEGUIMIENTO_DIA_3
+  SEGUIMIENTO_DIA_7
+  SEGUIMIENTO_DIA_14
+  PERSONALIZADA
+}
+
+model TareaSeguimiento {
+  id              String               @id @default(uuid())
+  pacienteId      String
+  profesionalId   String
+  tipo            TipoTareaSeguimiento
+  fechaProgramada DateTime
+  completada      Boolean              @default(false)
+  completadaEn    DateTime?
+  nota            String?
+  createdAt       DateTime             @default(now())
+  paciente        Paciente             @relation(fields: [pacienteId], references: [id])
+  profesional     Profesional          @relation(fields: [profesionalId], references: [id])
+
+  @@index([pacienteId])
+  @@index([profesionalId, completada, fechaProgramada])
+}
+
+// ── Log de Contactos ─────────────────────────────────────────────────────────
+
+enum TipoContacto {
+  LLAMADA
+  MENSAJE
+  PRESENCIAL
+  SISTEMA
+}
+
+model ContactoLog {
+  id                  String               @id @default(uuid())
+  pacienteId          String
+  profesionalId       String
+  tipo                TipoContacto
+  nota                String?
+  fecha               DateTime             @default(now())
+  etapaCRMPost        EtapaCRM?
+  temperaturaPost     TemperaturaPaciente?
+  proximaAccionFecha  DateTime?
+  createdAt           DateTime             @default(now())
+
+  registradoPorId     String?
+  registradoPor       Usuario?   @relation("ContactoLogRegistradoPor", fields: [registradoPorId], references: [id], onDelete: SetNull)
+
+  paciente    Paciente    @relation(fields: [pacienteId], references: [id], onDelete: Cascade)
+  profesional Profesional @relation(fields: [profesionalId], references: [id])
+
+  @@index([pacienteId, fecha])
+  @@index([profesionalId, fecha])
+}
+
+// ── WhatsApp / WABA Infrastructure ──────────────────────────────────────────
+
+enum EstadoMensajeWA {
+  PENDIENTE
+  ENVIADO
+  ENTREGADO
+  LEIDO
+  FALLIDO
+}
+
+enum DireccionMensajeWA {
+  OUTBOUND
+  INBOUND
+}
+
+enum TipoMensajeWA {
+  PRESUPUESTO
+  RECORDATORIO_TURNO
+  SEGUIMIENTO
+  CUSTOM
+}
+
+model ConfiguracionWABA {
+  id                   String      @id @default(uuid())
+  profesionalId        String      @unique
+  phoneNumberId        String
+  wabaId               String?
+  accessTokenEncrypted String      // AES-256-GCM cifrado — NUNCA retornar en respuestas API
+  displayPhone         String      // Número formateado (ej: "+54 9 11 1234-5678") — retornado por Meta en validación
+  verifiedName         String?     // Nombre del negocio desde Meta
+  activo               Boolean     @default(true)
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+  profesional          Profesional @relation(fields: [profesionalId], references: [id])
+}
+
+// ── Autorización de Códigos de Práctica ──────────────────────────────────────
+
+enum EstadoAutorizacion {
+  PENDIENTE
+  AUTORIZADO
+  RECHAZADO
+}
+
+model AutorizacionObraSocial {
+  id                String             @id @default(uuid())
+  pacienteId        String
+  obraSocialId      String
+  profesionalId     String
+  codigos           Json               // [{codigo: string, descripcion: string, monto?: number, coseguro?: number}]
+  estado            EstadoAutorizacion @default(PENDIENTE)
+  notaSecretaria    String?
+  fechaAutorizacion DateTime?
+  autorizadoPorId   String?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  paciente      Paciente    @relation(fields: [pacienteId], references: [id], onDelete: Cascade)
+  obraSocial    ObraSocial  @relation(fields: [obraSocialId], references: [id])
+  profesional   Profesional @relation(fields: [profesionalId], references: [id])
+  autorizadoPor Usuario?    @relation("AutorizacionAprobacion", fields: [autorizadoPorId], references: [id], onDelete: SetNull)
+
+  @@index([pacienteId])
+  @@index([estado])
+  @@index([profesionalId, estado])
+}
+
+model MensajeWhatsApp {
+  id            String          @id @default(uuid())
+  waMessageId   String?         // ID de Meta (nullable hasta que se envíe)
+  pacienteId    String
+  profesionalId String
+  tipo          TipoMensajeWA
+  direccion     DireccionMensajeWA @default(OUTBOUND)
+  contenido     String?         // Nombre del template o cuerpo del mensaje
+  estado        EstadoMensajeWA @default(PENDIENTE)
+  errorMsg      String?
+  sentAt        DateTime?
+  deliveredAt   DateTime?
+  readAt        DateTime?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  paciente      Paciente        @relation(fields: [pacienteId], references: [id])
+  profesional   Profesional     @relation(fields: [profesionalId], references: [id])
+
+  @@index([pacienteId, createdAt])
+  @@index([estado])
+  @@index([waMessageId])
 }

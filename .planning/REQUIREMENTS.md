@@ -7,7 +7,7 @@
 
 ### Schema & Infraestructura DB
 
-- [ ] **AFIP-01**: El sistema puede almacenar y recuperar el schema AFIP extendido — `ConfiguracionAFIP` (cert+key AES-256-GCM por tenant, cuit, ptoVta, ambiente, certExpiresAt), campos `cae`/`caeFchVto`/`nroComprobante`/`qrData`/`ptoVta` en `Factura`, modelo `CaeaVigente`, enum `EstadoFactura.CAEA_PENDIENTE_INFORMAR`
+- [x] **AFIP-01**: El sistema puede almacenar y recuperar el schema AFIP extendido — `ConfiguracionAFIP` (cert+key AES-256-GCM por tenant, cuit, ptoVta, ambiente, certExpiresAt), campos `cae`/`caeFchVto`/`nroComprobante`/`qrData`/`ptoVta` en `Factura`, modelo `CaeaVigente`, enum `EstadoFactura.CAEA_PENDIENTE_INFORMAR`
 
 ### Gestión de Certificados
 
@@ -59,7 +59,7 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| AFIP-01 | Phase 12 | Pending |
+| AFIP-01 | Phase 12 | Complete |
 | CERT-01 | Phase 12 | Pending |
 | CERT-02 | Phase 12 | Pending |
 | CERT-03 | Phase 12 | Pending |

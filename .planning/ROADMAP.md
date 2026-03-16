@@ -130,7 +130,7 @@ Plans:
 | 9. Backend API Layer | v1.1 | 3/3 | Complete | 2026-03-13 |
 | 10. FACTURADOR Home Dashboard | v1.1 | 2/2 | Complete | 2026-03-14 |
 | 11. Settlement Workflow | v1.1 | 2/2 | Complete | 2026-03-16 |
-| 12. Schema AFIP Extendido + Certificados | v1.2 | 0/4 | Not started | - |
+| 12. Schema AFIP Extendido + Certificados | 1/4 | In Progress|  | - |
 | 13. WSAA Token Service | v1.2 | 0/? | Not started | - |
 | 14. Emisión CAE Real (WSFEv1) | v1.2 | 0/? | Not started | - |
 | 15. QR AFIP + PDF + Frontend | v1.2 | 0/? | Not started | - |

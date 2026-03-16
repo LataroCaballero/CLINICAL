@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: AFIP Real
-status: executing
-last_updated: "2026-03-16T17:14:42.542Z"
-last_activity: "2026-03-16 — Plan 12-03 complete: CertExpiryScheduler daily cert-expiry alerts with TDD (5 unit tests)"
+status: Ready
+last_updated: "2026-03-16T23:05:09.608Z"
+last_activity: "2026-03-16 — Phase 12 fully closed: Plan 12-04 human-verify APPROVED (all 5 UI checks passed)"
 progress:
   total_phases: 5
   completed_phases: 1
   total_plans: 4
   completed_plans: 4
-  percent: 60
+  percent: 40
 ---
 
 # Project State
@@ -25,13 +25,13 @@ See: .planning/PROJECT.md (updated 2026-03-16)
 ## Current Position
 
 ```
-Phase:    12 — Schema AFIP Extendido + Gestión de Certificados
-Plan:     04 (Plans 01-04 code tasks complete — human-verify checkpoint pending)
-Status:   In Progress (checkpoint:human-verify)
-Progress: [████████░░] 80% (Phase 12 all 4 plans done pending human verify)
+Phase:    13 — WSAA Token Service (next to start)
+Plan:     01 (Phase 12 complete — ready to begin Phase 13)
+Status:   Ready
+Progress: [████████░░] 40% of v1.2 phases (2/5 complete: Phase 12 done)
 ```
 
-Last activity: 2026-03-16 — Plan 12-04 complete: AfipConfigTab frontend (types, hooks, AfipConfigTab, Facturador badge); checkpoint:human-verify pending
+Last activity: 2026-03-16 — Phase 12 fully closed: Plan 12-04 human-verify APPROVED (all 5 UI checks passed)
 
 ## Milestone Summary
 
@@ -97,7 +97,7 @@ Last activity: 2026-03-16 — Plan 12-04 complete: AfipConfigTab frontend (types
 
 ## Session Continuity
 
-Next action: Phase 12 complete — pending human-verify of AfipConfigTab UI. After approval, start Phase 13 (WSAA Token Service).
+Next action: Phase 12 fully closed (human-verify APPROVED). Start Phase 13 (WSAA Token Service) — CAE-01 requirement.
 
 Files to read at session start for Phase 13:
 - `.planning/ROADMAP.md` — phase structure

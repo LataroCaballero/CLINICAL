@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Vista del Facturador
 status: completed
-stopped_at: Completed 11-settlement-workflow 11-01-PLAN.md
-last_updated: "2026-03-15T15:39:53.109Z"
+stopped_at: Completed 11-settlement-workflow 11-02-PLAN.md
+last_updated: "2026-03-16T11:27:46.410Z"
 last_activity: 2026-03-13 — Phase 9 Plan 01 complete — getMonthBoundariesART + five FinanzasService methods (9 TDD tests green)
 progress:
   total_phases: 4
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 9
-  completed_plans: 8
+  completed_plans: 9
   percent: 33
 ---
 
@@ -54,6 +54,7 @@ Progress: [███░░░░░░░] 33% (v1.1)
 | Phase 10-facturador-home-dashboard P01 | 8min | 2 tasks | 3 files |
 | Phase 10-facturador-home-dashboard P02 | 1min | 2 tasks | 2 files |
 | Phase 11-settlement-workflow P01 | 12min | 2 tasks | 7 files |
+| Phase 11-settlement-workflow P02 | 10min | 3 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -83,6 +84,8 @@ Progress: [███░░░░░░░] 33% (v1.1)
 - [Phase 11-01]: usuarioId ?? null in update data — explicit null (not undefined) ensures corregidoPor is cleared when no user context
 - [Phase 11-01]: No onSuccess/onError in useActualizarMontoPagado — each lote-page cell manages its own optimistic revert state
 - [Phase 11-01]: ?nombre=encodeURIComponent on Link href — lote page can show OS name without cache dependency on agrupadas query
+- [Phase 11-02]: Initialize localMonto to empty string — triggers native placeholder display with formatted current value
+- [Phase 11-02]: overrides Map held in page state avoids N+1 PATCH-then-GET round-trips while keeping header total live
 
 ### Pending Todos
 
@@ -95,6 +98,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-15T15:39:53.108Z
-Stopped at: Completed 11-settlement-workflow 11-01-PLAN.md
+Last session: 2026-03-16T11:27:46.408Z
+Stopped at: Completed 11-settlement-workflow 11-02-PLAN.md
 Resume file: None

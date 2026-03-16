@@ -31,7 +31,7 @@ Full details: `.planning/milestones/v1.0-ROADMAP.md`
 - [ ] **Phase 8: Schema Foundation + AFIP Research** - Migraciones DB prerequisito + documento de integración AFIP escrito
 - [x] **Phase 9: Backend API Layer** - Extensión de FinanzasService/Controller + AfipStubService (completed 2026-03-13)
 - [x] **Phase 10: FACTURADOR Home Dashboard** - Routing, permisos, KPIs y configuración de límite mensual (completed 2026-03-14)
-- [ ] **Phase 11: Settlement Workflow** - Flujo de liquidación mejorado con filtro por OS y edición de montoPagado
+- [x] **Phase 11: Settlement Workflow** - Flujo de liquidación mejorado con filtro por OS y edición de montoPagado (completed 2026-03-16)
 
 ## Phase Details
 
@@ -113,7 +113,7 @@ Plans:
 | 8. Schema Foundation + AFIP Research | v1.1 | 0/2 | Not started | - |
 | 9. Backend API Layer | 3/3 | Complete   | 2026-03-13 | - |
 | 10. FACTURADOR Home Dashboard | 2/2 | Complete    | 2026-03-14 | - |
-| 11. Settlement Workflow | 1/2 | In Progress|  | - |
+| 11. Settlement Workflow | 2/2 | Complete   | 2026-03-16 | - |
 
 ---
 *Roadmap initialized: 2026-02-23 | v1.0 shipped: 2026-03-03 | v1.1 started: 2026-03-13*

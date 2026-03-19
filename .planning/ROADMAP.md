@@ -74,7 +74,10 @@ Plans:
   2. Si se hacen dos llamadas concurrentes para el mismo CUIT, solo una llega a WSAA; la segunda usa el ticket cacheado en Redis
   3. El ticket se almacena en Redis con clave afip_ta:{profesionalId}:{cuit}:{service} y TTL = expiry menos 5 minutos; una nueva instancia del servidor puede retomar el ticket sin llamar a WSAA
   4. Si el ticket está vigente y Redis lo devuelve, no se realiza ninguna llamada HTTP a WSAA (verificable en logs de red)
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 13-01-PLAN.md — WsaaModule core: interfaces, WsaaService (CMS signing + Redis cache + mutex), WsaaStubService, unit tests
+- [ ] 13-02-PLAN.md — Integration: rewire AfipConfigService to use WsaaService, eliminate openssl subprocess, register in AppModule
 **Research flag**: Verificar URLs actuales de WSAA bajo dominio arca.gob.ar al momento de implementar (MEDIUM confidence — AFIP rebrandeado a ARCA)
 
 ### Phase 14: Emisión CAE Real (WSFEv1)
@@ -131,7 +134,7 @@ Plans:
 | 10. FACTURADOR Home Dashboard | v1.1 | 2/2 | Complete | 2026-03-14 |
 | 11. Settlement Workflow | v1.1 | 2/2 | Complete | 2026-03-16 |
 | 12. Schema AFIP Extendido + Certificados | v1.2 | Complete    | 2026-03-16 | 2026-03-16 |
-| 13. WSAA Token Service | v1.2 | 0/? | Not started | - |
+| 13. WSAA Token Service | v1.2 | 0/2 | Not started | - |
 | 14. Emisión CAE Real (WSFEv1) | v1.2 | 0/? | Not started | - |
 | 15. QR AFIP + PDF + Frontend | v1.2 | 0/? | Not started | - |
 | 16. CAEA Contingency Mode | v1.2 | 0/? | Not started | - |

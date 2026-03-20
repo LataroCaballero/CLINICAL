@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  Inject,
   Injectable,
   Logger,
   ServiceUnavailableException,
@@ -12,6 +13,8 @@ import { AmbienteAFIP } from '@prisma/client';
 import { SaveCertDto } from './dto/save-cert.dto';
 import { SaveBillingConfigDto } from './dto/save-billing-config.dto';
 import { AfipConfigStatusResponse, CertStatus } from './dto/afip-config-status.dto';
+import { WSAA_SERVICE } from '../wsaa/wsaa.constants';
+import { WsaaServiceInterface } from '../wsaa/wsaa.interfaces';
 
 interface CertInfo {
   cuit: string;
@@ -25,6 +28,7 @@ export class AfipConfigService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly encryption: EncryptionService,
+    @Inject(WSAA_SERVICE) private readonly wsaaService: WsaaServiceInterface,
   ) {}
 
   extractCertInfo(certPem: string): CertInfo {
@@ -107,10 +111,11 @@ export class AfipConfigService {
     const { cuit, expiresAt } = this.extractCertInfo(dto.certPem);
 
     // Obtain access ticket from WSAA using the uploaded cert+key (not yet persisted)
-    const { token, sign } = await this.getWsaaTicketTransient(
+    const { token, sign } = await this.wsaaService.getTicketTransient(
       dto.certPem,
       dto.keyPem,
       dto.ambiente,
+      'wsfe',
     );
 
     // Validate ptoVta type via FEParamGetPtosVenta
@@ -141,6 +146,13 @@ export class AfipConfigService {
       },
     });
 
+    // Warm Redis cache — first invoice emission will hit cache, not WSAA
+    try {
+      await this.wsaaService.getTicket(profesionalId, 'wsfe');
+    } catch (err) {
+      this.logger.warn('Cache warm failed after cert save — non-blocking', err);
+    }
+
     return this.getStatus(profesionalId);
   }
 
@@ -154,7 +166,7 @@ export class AfipConfigService {
     const certPem = this.encryption.decrypt(cfg.certPemEncrypted);
     const keyPem = this.encryption.decrypt(cfg.keyPemEncrypted);
 
-    const { token, sign } = await this.getWsaaTicketTransient(certPem, keyPem, dto.ambiente);
+    const { token, sign } = await this.wsaaService.getTicketTransient(certPem, keyPem, dto.ambiente, 'wsfe');
     await this.validatePtoVta(token, sign, cfg.cuit, dto.ptoVta, dto.ambiente);
 
     await this.prisma.configuracionAFIP.update({
@@ -163,104 +175,6 @@ export class AfipConfigService {
     });
 
     return this.getStatus(profesionalId);
-  }
-
-  private async getWsaaTicketTransient(
-    certPem: string,
-    keyPem: string,
-    ambiente: AmbienteAFIP,
-  ): Promise<{ token: string; sign: string }> {
-    // Phase 12: transient WSAA call at cert-save time only.
-    // Phase 13 introduces the Redis-cached, mutex-protected WsaaService for per-invoice use.
-    // Implementation: build TRA XML, sign with openssl subprocess (acceptable at admin-save
-    // frequency; Phase 13 replaces with node-forge in-process for per-invoice path).
-    const wsaaUrl =
-      ambiente === 'PRODUCCION'
-        ? 'https://wsaa.afip.gov.ar/ws/services/LoginCms'
-        : 'https://wsaahomo.afip.gov.ar/ws/services/LoginCms';
-
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { execSync } = require('child_process') as typeof import('child_process');
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const fs = require('fs') as typeof import('fs');
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const os = require('os') as typeof import('os');
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const path = require('path') as typeof import('path');
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'afip-cert-'));
-    const certPath = path.join(tmpDir, 'cert.pem');
-    const keyPath = path.join(tmpDir, 'key.pem');
-
-    try {
-      fs.writeFileSync(certPath, certPem, { mode: 0o600 });
-      fs.writeFileSync(keyPath, keyPem, { mode: 0o600 });
-
-      const tra = this.buildTra('wsfe');
-      const traPath = path.join(tmpDir, 'tra.xml');
-      const cmsPath = path.join(tmpDir, 'tra.cms');
-      fs.writeFileSync(traPath, tra);
-
-      execSync(
-        `openssl smime -sign -in ${traPath} -signer ${certPath} -inkey ${keyPath} -outform DER -nodetach -out ${cmsPath}`,
-        { timeout: 10_000 },
-      );
-
-      const cms = fs.readFileSync(cmsPath).toString('base64');
-      const soapEnv = `<?xml version="1.0" encoding="UTF-8"?>
-<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:wsaa="http://wsaa.view.sua.dvadac.desein.afip.gov/">
-  <soapenv:Header/><soapenv:Body><wsaa:loginCms><wsaa:in0>${cms}</wsaa:in0></wsaa:loginCms></soapenv:Body>
-</soapenv:Envelope>`;
-
-      const res = await axios.post(wsaaUrl, soapEnv, {
-        headers: { 'Content-Type': 'text/xml; charset=utf-8', SOAPAction: '' },
-        timeout: 15_000,
-      });
-
-      const xml: string = res.data;
-      const tokenMatch = xml.match(/<token>([\s\S]*?)<\/token>/);
-      const signMatch = xml.match(/<sign>([\s\S]*?)<\/sign>/);
-      if (!tokenMatch || !signMatch) {
-        throw new ServiceUnavailableException(
-          'AFIP no respondió correctamente. Intentá guardar nuevamente en unos minutos.',
-        );
-      }
-      return { token: tokenMatch[1], sign: signMatch[1] };
-    } catch (err: unknown) {
-      if (
-        err instanceof ServiceUnavailableException ||
-        err instanceof BadRequestException
-      )
-        throw err;
-      const anyErr = err as { code?: string; response?: { status?: number } };
-      if (
-        anyErr.code === 'ETIMEDOUT' ||
-        anyErr.code === 'ECONNRESET' ||
-        (anyErr.response?.status !== undefined && anyErr.response.status >= 500)
-      ) {
-        throw new ServiceUnavailableException(
-          'AFIP no está disponible. Intentá guardar nuevamente en unos minutos.',
-        );
-      }
-      this.logger.error('WSAA error', err);
-      throw new ServiceUnavailableException(
-        'AFIP no está disponible. Intentá guardar nuevamente en unos minutos.',
-      );
-    } finally {
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const fs = require('fs') as typeof import('fs');
-        fs.rmSync(tmpDir, { recursive: true, force: true });
-      } catch {
-        // cleanup best-effort
-      }
-    }
-  }
-
-  private buildTra(service: string): string {
-    const now = new Date();
-    const expiry = new Date(now.getTime() + 600_000); // 10 minutes
-    const fmt = (d: Date) => d.toISOString().replace('Z', '-03:00');
-    return `<?xml version="1.0" encoding="UTF-8"?><loginTicketRequest version="1.0"><header><uniqueId>${Date.now()}</uniqueId><generationTime>${fmt(now)}</generationTime><expirationTime>${fmt(expiry)}</expirationTime></header><service>${service}</service></loginTicketRequest>`;
   }
 
   private async validatePtoVta(

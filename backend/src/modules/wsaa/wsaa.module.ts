@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
-import { AfipConfigModule } from '../afip-config/afip-config.module';
 import { WhatsappModule } from '../whatsapp/whatsapp.module';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EncryptionService } from '../whatsapp/crypto/encryption.service';
@@ -11,10 +10,12 @@ import { WSAA_REDIS_CLIENT, WSAA_SERVICE } from './wsaa.constants';
 
 @Module({
   imports: [
-    AfipConfigModule,
     WhatsappModule,
     // PrismaModule is @Global() — PrismaService available without explicit import
     // ConfigModule is isGlobal: true — ConfigService available without explicit import
+    // AfipConfigModule NOT imported — WsaaService uses PrismaService directly to load cert+key.
+    // Importing AfipConfigModule here would create a circular dependency since
+    // AfipConfigModule imports WsaaModule.
   ],
   providers: [
     WsaaService,

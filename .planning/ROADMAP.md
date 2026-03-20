@@ -76,7 +76,7 @@ Plans:
   4. Si el ticket está vigente y Redis lo devuelve, no se realiza ninguna llamada HTTP a WSAA (verificable en logs de red)
 **Plans**: 2 plans
 Plans:
-- [ ] 13-01-PLAN.md — WsaaModule core: interfaces, WsaaService (CMS signing + Redis cache + mutex), WsaaStubService, unit tests
+- [x] 13-01-PLAN.md — WsaaModule core: interfaces, WsaaService (CMS signing + Redis cache + mutex), WsaaStubService, unit tests
 - [ ] 13-02-PLAN.md — Integration: rewire AfipConfigService to use WsaaService, eliminate openssl subprocess, register in AppModule
 **Research flag**: Verificar URLs actuales de WSAA bajo dominio arca.gob.ar al momento de implementar (MEDIUM confidence — AFIP rebrandeado a ARCA)
 

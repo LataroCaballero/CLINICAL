@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: AFIP Real
-status: Ready
-last_updated: "2026-03-16T23:05:09.608Z"
-last_activity: "2026-03-16 — Phase 12 fully closed: Plan 12-04 human-verify APPROVED (all 5 UI checks passed)"
+status: In Progress
+last_updated: "2026-03-20T00:35:00.000Z"
+last_activity: "2026-03-20 — Phase 13 Plan 01 complete: WsaaModule with node-forge CMS signing, Redis cache, per-CUIT mutex — all 9 unit tests pass"
 progress:
   total_phases: 5
   completed_phases: 1
-  total_plans: 4
-  completed_plans: 4
+  total_plans: 5
+  completed_plans: 5
   percent: 40
 ---
 
@@ -25,13 +25,13 @@ See: .planning/PROJECT.md (updated 2026-03-16)
 ## Current Position
 
 ```
-Phase:    13 — WSAA Token Service (next to start)
-Plan:     01 (Phase 12 complete — ready to begin Phase 13)
-Status:   Ready
-Progress: [████████░░] 40% of v1.2 phases (2/5 complete: Phase 12 done)
+Phase:    13 — WSAA Token Service (in progress)
+Plan:     02 (Plan 13-01 complete — WsaaModule with node-forge CMS + Redis cache + mutex)
+Status:   In Progress
+Progress: [████████░░] 40% of v1.2 phases (Phase 12 done, Phase 13 Plan 01 done)
 ```
 
-Last activity: 2026-03-16 — Phase 12 fully closed: Plan 12-04 human-verify APPROVED (all 5 UI checks passed)
+Last activity: 2026-03-20 — Phase 13 Plan 01 complete: WsaaModule with node-forge CMS signing, Redis cache, per-CUIT mutex — all 9 unit tests pass
 
 ## Milestone Summary
 
@@ -71,6 +71,11 @@ Last activity: 2026-03-16 — Phase 12 fully closed: Plan 12-04 human-verify APP
 - [Plan 12-03] daysLeft guard: === 60 || === 30 || <= 5 — exactamente 2 alertas programadas más ventana urgente diaria en los últimos 5 días
 - [Plan 12-04] AfipConfigTab preview modal mostra valores ingresados (ambiente prominent); CUIT/expiry extraídos server-side después de confirmar — no pre-fetch del cert
 - [Plan 12-04] Facturador badge visual-only: useAfipConfig hook, renders solo cuando configured, sin onClick/Link wrapper
+- [Plan 13-01] signTra() es public (no private) para permitir jest.spyOn en unit tests — mock evita necesidad de PEM certs reales en fixtures
+- [Plan 13-01] signingTime authenticatedAttribute value usa ISO string (no Date object) — @types/node-forge requiere `value?: string`
+- [Plan 13-01] AFIP_WSAA_URL_HOMO / AFIP_WSAA_URL_PROD env vars soportados en callWsaa() con defaults que siguen dominios actuales (wsaahomo.afip.gov.ar, wsaa.afip.gov.ar) — env configurable per research flag
+- [Plan 13-01] Redis cache key format: afip_ta:{profesionalId}:{cuit}:{service} — TTL = floor((expiresAt-now)/1000 - 300), skip SET si <= 0
+- [Plan 13-01] Mutex key format: {profesionalId}:{cuit} — serializa por identidad de tenant
 
 ### Research Flags (for plan-phase to act on)
 - **Phase 13 y 14:** Verificar URLs actuales WSAA y WSFEv1 bajo dominio arca.gob.ar al momento de implementar. Almacenar en env config: AFIP_WSAA_URL_HOMO, AFIP_WSAA_URL_PROD, AFIP_WSFEV1_URL_HOMO, AFIP_WSFEV1_URL_PROD
@@ -97,10 +102,12 @@ Last activity: 2026-03-16 — Phase 12 fully closed: Plan 12-04 human-verify APP
 
 ## Session Continuity
 
-Next action: Phase 12 fully closed (human-verify APPROVED). Start Phase 13 (WSAA Token Service) — CAE-01 requirement.
+Next action: Phase 13 Plan 01 complete. Execute Phase 13 Plan 02 (AfipConfigModule update — replace openssl subprocess getWsaaTicketTransient with WsaaService.getTicketTransient injection).
+Stopped at: Completed 13-01-PLAN.md
 
-Files to read at session start for Phase 13:
-- `.planning/ROADMAP.md` — phase structure
-- `.planning/REQUIREMENTS.md` — CAE-01 requirement details
-- `backend/src/modules/afip-config/afip-config.service.ts` — AfipConfigService (cert/key loading, Plans 01-02)
-- `.planning/phases/12-schema-afip-extendido-gestion-certificados/12-04-SUMMARY.md` — Phase 12 complete context
+Files to read at session start for Phase 13 Plan 02:
+- `.planning/phases/13-wsaa-token-service/13-02-PLAN.md` — next plan
+- `.planning/phases/13-wsaa-token-service/13-01-SUMMARY.md` — what was built (WsaaModule contracts)
+- `backend/src/modules/wsaa/wsaa.interfaces.ts` — AccessTicket + WsaaServiceInterface
+- `backend/src/modules/wsaa/wsaa.constants.ts` — WSAA_SERVICE token
+- `backend/src/modules/afip-config/afip-config.service.ts` — getWsaaTicketTransient to replace

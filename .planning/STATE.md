@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: AFIP Real
 status: In Progress
-last_updated: "2026-03-20T00:35:00.000Z"
-last_activity: "2026-03-20 — Phase 13 Plan 01 complete: WsaaModule with node-forge CMS signing, Redis cache, per-CUIT mutex — all 9 unit tests pass"
+last_updated: "2026-03-20T23:27:11Z"
+last_activity: "2026-03-20 — Phase 13 Plan 02 complete: AfipConfigService rewired to WsaaService — openssl subprocess eliminated, warm Redis cache after cert save, WsaaModule in AppModule"
 progress:
   total_phases: 5
   completed_phases: 1
   total_plans: 5
-  completed_plans: 5
-  percent: 40
+  completed_plans: 6
+  percent: 48
 ---
 
 # Project State
@@ -25,13 +25,13 @@ See: .planning/PROJECT.md (updated 2026-03-16)
 ## Current Position
 
 ```
-Phase:    13 — WSAA Token Service (in progress)
-Plan:     02 (Plan 13-01 complete — WsaaModule with node-forge CMS + Redis cache + mutex)
-Status:   In Progress
-Progress: [████████░░] 40% of v1.2 phases (Phase 12 done, Phase 13 Plan 01 done)
+Phase:    13 — WSAA Token Service (complete)
+Plan:     Phase 13 done (both plans complete)
+Status:   Phase 13 complete — ready for Phase 14
+Progress: [█████████░] 48% of v1.2 phases (Phase 12 done, Phase 13 done)
 ```
 
-Last activity: 2026-03-20 — Phase 13 Plan 01 complete: WsaaModule with node-forge CMS signing, Redis cache, per-CUIT mutex — all 9 unit tests pass
+Last activity: 2026-03-20 — Phase 13 Plan 02 complete: AfipConfigService rewired to WsaaService — openssl subprocess eliminated, warm Redis cache after cert save, WsaaModule registered in AppModule
 
 ## Milestone Summary
 
@@ -76,6 +76,9 @@ Last activity: 2026-03-20 — Phase 13 Plan 01 complete: WsaaModule with node-fo
 - [Plan 13-01] AFIP_WSAA_URL_HOMO / AFIP_WSAA_URL_PROD env vars soportados en callWsaa() con defaults que siguen dominios actuales (wsaahomo.afip.gov.ar, wsaa.afip.gov.ar) — env configurable per research flag
 - [Plan 13-01] Redis cache key format: afip_ta:{profesionalId}:{cuit}:{service} — TTL = floor((expiresAt-now)/1000 - 300), skip SET si <= 0
 - [Plan 13-01] Mutex key format: {profesionalId}:{cuit} — serializa por identidad de tenant
+- [Plan 13-02] WsaaModule does NOT import AfipConfigModule — WsaaService loads cert+key via PrismaService directly; AfipConfigModule imports WsaaModule. Circular dep broken cleanly.
+- [Plan 13-02] Warm cache call (getTicket) after cert save is non-blocking (try/catch) — Redis failure must not fail the cert upload flow
+- [Plan 13-02] WSAA_SERVICE injection pattern established: any module needing AFIP auth tokens imports WsaaModule and uses @Inject(WSAA_SERVICE) wsaaService: WsaaServiceInterface
 
 ### Research Flags (for plan-phase to act on)
 - **Phase 13 y 14:** Verificar URLs actuales WSAA y WSFEv1 bajo dominio arca.gob.ar al momento de implementar. Almacenar en env config: AFIP_WSAA_URL_HOMO, AFIP_WSAA_URL_PROD, AFIP_WSFEV1_URL_HOMO, AFIP_WSFEV1_URL_PROD
@@ -102,12 +105,11 @@ Last activity: 2026-03-20 — Phase 13 Plan 01 complete: WsaaModule with node-fo
 
 ## Session Continuity
 
-Next action: Phase 13 Plan 01 complete. Execute Phase 13 Plan 02 (AfipConfigModule update — replace openssl subprocess getWsaaTicketTransient with WsaaService.getTicketTransient injection).
-Stopped at: Completed 13-01-PLAN.md
+Next action: Phase 13 complete. Execute Phase 14 (Emisión CAE Real — WSFEv1 integration). Import WsaaModule in FinanzasModule, inject WSAA_SERVICE, call getTicket() per invoice.
+Stopped at: Completed 13-02-PLAN.md
 
-Files to read at session start for Phase 13 Plan 02:
-- `.planning/phases/13-wsaa-token-service/13-02-PLAN.md` — next plan
-- `.planning/phases/13-wsaa-token-service/13-01-SUMMARY.md` — what was built (WsaaModule contracts)
+Files to read at session start for Phase 14:
+- `.planning/phases/13-wsaa-token-service/13-02-SUMMARY.md` — WSAA_SERVICE injection pattern
+- `.planning/phases/13-wsaa-token-service/13-01-SUMMARY.md` — WsaaModule contracts
 - `backend/src/modules/wsaa/wsaa.interfaces.ts` — AccessTicket + WsaaServiceInterface
-- `backend/src/modules/wsaa/wsaa.constants.ts` — WSAA_SERVICE token
-- `backend/src/modules/afip-config/afip-config.service.ts` — getWsaaTicketTransient to replace
+- `backend/src/modules/afip-config/afip-config.service.ts` — validatePtoVta SOAP pattern (reuse for WSFEv1)

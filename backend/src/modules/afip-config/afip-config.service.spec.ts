@@ -3,6 +3,7 @@ import { BadRequestException } from '@nestjs/common';
 import { AfipConfigService } from './afip-config.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EncryptionService } from '../whatsapp/crypto/encryption.service';
+import { WSAA_SERVICE } from '../wsaa/wsaa.constants';
 
 // Real self-signed test certificates generated for unit tests.
 // CN=20123456789 format (AFIP CUIT in CN)
@@ -84,11 +85,17 @@ describe('AfipConfigService', () => {
       decrypt: jest.fn(),
     };
 
+    const mockWsaaService = {
+      getTicket: jest.fn().mockResolvedValue({ token: 'tok', sign: 'sig', expiresAt: new Date() }),
+      getTicketTransient: jest.fn().mockResolvedValue({ token: 'tok', sign: 'sig', expiresAt: new Date() }),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AfipConfigService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: EncryptionService, useValue: mockEncryption },
+        { provide: WSAA_SERVICE, useValue: mockWsaaService },
       ],
     }).compile();
 

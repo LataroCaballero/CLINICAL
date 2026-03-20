@@ -77,7 +77,7 @@ Plans:
 **Plans**: 2 plans
 Plans:
 - [x] 13-01-PLAN.md — WsaaModule core: interfaces, WsaaService (CMS signing + Redis cache + mutex), WsaaStubService, unit tests
-- [ ] 13-02-PLAN.md — Integration: rewire AfipConfigService to use WsaaService, eliminate openssl subprocess, register in AppModule
+- [x] 13-02-PLAN.md — Integration: rewire AfipConfigService to use WsaaService, eliminate openssl subprocess, register in AppModule
 **Research flag**: Verificar URLs actuales de WSAA bajo dominio arca.gob.ar al momento de implementar (MEDIUM confidence — AFIP rebrandeado a ARCA)
 
 ### Phase 14: Emisión CAE Real (WSFEv1)
@@ -90,8 +90,13 @@ Plans:
   3. Si AFIP rechaza por error de negocio (ej. 10242 CondicionIVA inválida), el Facturador ve un modal con el mensaje en español y la factura va a DLQ sin reintentos
   4. Si AFIP falla por timeout o HTTP 5xx, el job reintenta con backoff exponencial y el Facturador no ve error hasta que se agoten los reintentos transitorios
   5. El DI token AFIP_SERVICE apunta a AfipRealService; AfipStubService sigue disponible activable por env var para desarrollo local
-**Plans**: TBD
-**Research flag**: Confirmar endpoint URLs de WSFEv1 bajo arca.gob.ar (produccion y homologacion) al momento de implementar; almacenar en env config, nunca hardcoded
+**Plans**: 4 plans
+Plans:
+- [ ] 14-01-PLAN.md — Wave 0: EMISION_PENDIENTE migration + AFIP_SERVICE constant + test scaffolds
+- [ ] 14-02-PLAN.md — AfipRealService: WSFEv1 SOAP + advisory lock + AfipBusinessError/TransientError (CAE-02, CAE-03)
+- [ ] 14-03-PLAN.md — CaeEmissionProcessor: BullMQ error classification — UnrecoverableError vs backoff (CAE-04)
+- [ ] 14-04-PLAN.md — Module wiring: AFIP_SERVICE DI swap + POST /emitir endpoint + human verify
+**Research flag**: WSFEv1 URLs confirmed non-migrated to arca.gob.ar as of 2026-03-20 — stored in env vars AFIP_WSFEV1_URL_HOMO/PROD with current afip.gov.ar defaults
 
 ### Phase 15: QR AFIP + PDF + Frontend de Comprobantes
 **Goal**: El PDF de cada comprobante emitido incluye el QR obligatorio RG 5616/2024, y el Facturador puede ver el CAE y QR en la vista de detalle de la factura
@@ -135,7 +140,7 @@ Plans:
 | 11. Settlement Workflow | v1.1 | 2/2 | Complete | 2026-03-16 |
 | 12. Schema AFIP Extendido + Certificados | v1.2 | Complete    | 2026-03-16 | 2026-03-16 |
 | 13. WSAA Token Service | 2/2 | Complete    | 2026-03-20 | - |
-| 14. Emisión CAE Real (WSFEv1) | v1.2 | 0/? | Not started | - |
+| 14. Emisión CAE Real (WSFEv1) | v1.2 | 0/4 | Not started | - |
 | 15. QR AFIP + PDF + Frontend | v1.2 | 0/? | Not started | - |
 | 16. CAEA Contingency Mode | v1.2 | 0/? | Not started | - |
 

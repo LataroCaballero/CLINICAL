@@ -933,6 +933,7 @@ enum MedioPago {
 
 enum EstadoFactura {
   EMITIDA
+  EMISION_PENDIENTE  // Transient: BullMQ job enqueued, CAE not yet assigned
   ANULADA
   CAEA_PENDIENTE_INFORMAR  // Issued under CAEA contingency — must be informed to AFIP within 8 days
 }

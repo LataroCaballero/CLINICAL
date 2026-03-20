@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "EstadoFactura" ADD VALUE 'EMISION_PENDIENTE';

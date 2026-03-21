@@ -3,6 +3,8 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CuentasCorrientesService } from '../cuentas-corrientes/cuentas-corrientes.service';
 import {
@@ -20,12 +22,14 @@ import {
   EstadoLiquidacion,
   EstadoFactura,
 } from '@prisma/client';
+import { CAE_QUEUE } from './processors/cae-emission.processor';
 
 @Injectable()
 export class FinanzasService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly cuentasCorrientesService: CuentasCorrientesService,
+    @InjectQueue(CAE_QUEUE) private readonly caeQueue: Queue,
   ) {}
 
   /**
@@ -920,6 +924,66 @@ export class FinanzasService {
         corregidoAt: new Date(),
       },
     });
+  }
+
+  /**
+   * Validates pre-conditions and enqueues a BullMQ job for async CAE emission.
+   * Returns 202 Accepted with jobId. Client polls GET /finanzas/facturas/:id to check estado.
+   *
+   * Pre-conditions (validated BEFORE enqueueing to avoid retrying bad data):
+   * - Factura exists and belongs to profesionalId
+   * - Factura.estado is not EMISION_PENDIENTE (not already in-flight)
+   * - Factura.condicionIVAReceptor is non-null (mandatory AFIP field from April 2026)
+   * - ConfiguracionAFIP exists for the tenant (cert must be uploaded)
+   *
+   * @throws BadRequestException with Spanish message on any pre-condition failure
+   */
+  async emitirFactura(facturaId: string, profesionalId: string): Promise<{ jobId: string; status: string }> {
+    // 1. Load Factura
+    const factura = await this.prisma.factura.findFirst({
+      where: { id: facturaId, profesionalId },
+      select: { id: true, estado: true, condicionIVAReceptor: true },
+    });
+
+    if (!factura) {
+      throw new BadRequestException('Factura no encontrada o no pertenece a este profesional.');
+    }
+
+    if (factura.estado === EstadoFactura.EMISION_PENDIENTE) {
+      throw new BadRequestException('Esta factura ya tiene una emisión en curso. Esperá a que finalice.');
+    }
+
+    if (factura.condicionIVAReceptor === null) {
+      // Guard per STATE.md Pitfall 2 — error 10242 from AFIP if missing
+      throw new BadRequestException('Falta la condición de IVA del receptor. Completá el campo antes de emitir.');
+    }
+
+    // 2. Check AFIP config exists for tenant
+    const afipConfig = await this.prisma.configuracionAFIP.findUnique({
+      where: { profesionalId },
+      select: { id: true },
+    });
+
+    if (!afipConfig) {
+      throw new BadRequestException('No se encontró la configuración AFIP del consultorio. Subí el certificado desde Configuración > AFIP.');
+    }
+
+    // 3. Set transient estado — Facturador sees "en proceso" while job is in-flight
+    await this.prisma.factura.update({
+      where: { id: facturaId },
+      data: { estado: EstadoFactura.EMISION_PENDIENTE },
+    });
+
+    // 4. Enqueue BullMQ job
+    // Passing only identifiers — AfipRealService reads amounts from DB to enforce server-side totals.
+    // attempts: 5 overrides the global default of 3 (AFIP may be slower than Meta API).
+    const job = await this.caeQueue.add(
+      'emit-cae',
+      { facturaId, profesionalId },
+      { attempts: 5, backoff: { type: 'exponential', delay: 2000 } },
+    );
+
+    return { jobId: job.id ?? '', status: 'EMISION_PENDIENTE' };
   }
 
   /**

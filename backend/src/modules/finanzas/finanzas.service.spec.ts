@@ -1,12 +1,17 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { getQueueToken } from '@nestjs/bullmq';
 import { FinanzasService } from './finanzas.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CuentasCorrientesService } from '../cuentas-corrientes/cuentas-corrientes.service';
+import { CAE_QUEUE } from './processors/cae-emission.processor';
 
 const mockPrismaService = {
   limiteFacturacionMensual: {
     findUnique: jest.fn(),
     upsert: jest.fn(),
+  },
+  configuracionAFIP: {
+    findUnique: jest.fn(),
   },
   factura: {
     aggregate: jest.fn(),
@@ -47,6 +52,10 @@ const mockCuentasCorrientesService = {
   createMovimiento: jest.fn(),
 };
 
+const mockCaeQueue = {
+  add: jest.fn().mockResolvedValue({ id: 'job-1' }),
+};
+
 describe('FinanzasService', () => {
   let service: FinanzasService;
   let prisma: typeof mockPrismaService;
@@ -61,6 +70,10 @@ describe('FinanzasService', () => {
         {
           provide: CuentasCorrientesService,
           useValue: mockCuentasCorrientesService,
+        },
+        {
+          provide: getQueueToken(CAE_QUEUE),
+          useValue: mockCaeQueue,
         },
       ],
     }).compile();
@@ -226,6 +239,80 @@ describe('FinanzasService', () => {
       const result = await service.crearLoteLiquidacion(dto, undefined);
 
       expect(result).toEqual(expectedLiquidacion);
+    });
+  });
+
+  describe('emitirFactura', () => {
+    const facturaId = 'factura-uuid';
+    const profesionalId = 'prof-uuid';
+
+    it('should set EMISION_PENDIENTE and enqueue job when pre-conditions pass', async () => {
+      prisma.factura.findFirst.mockResolvedValue({
+        id: facturaId,
+        estado: 'EMITIDA',
+        condicionIVAReceptor: 'CONSUMIDOR_FINAL',
+      });
+      prisma.configuracionAFIP.findUnique.mockResolvedValue({ id: 'cfg-1' });
+      prisma.factura.update.mockResolvedValue({});
+      mockCaeQueue.add.mockResolvedValue({ id: 'job-1' });
+
+      const result = await service.emitirFactura(facturaId, profesionalId);
+
+      expect(prisma.factura.update).toHaveBeenCalledWith({
+        where: { id: facturaId },
+        data: { estado: 'EMISION_PENDIENTE' },
+      });
+      expect(mockCaeQueue.add).toHaveBeenCalledWith(
+        'emit-cae',
+        { facturaId, profesionalId },
+        { attempts: 5, backoff: { type: 'exponential', delay: 2000 } },
+      );
+      expect(result).toEqual({ jobId: 'job-1', status: 'EMISION_PENDIENTE' });
+    });
+
+    it('should throw BadRequestException when factura not found', async () => {
+      prisma.factura.findFirst.mockResolvedValue(null);
+
+      await expect(service.emitirFactura(facturaId, profesionalId)).rejects.toThrow(
+        'Factura no encontrada o no pertenece a este profesional.',
+      );
+    });
+
+    it('should throw BadRequestException when factura already EMISION_PENDIENTE', async () => {
+      prisma.factura.findFirst.mockResolvedValue({
+        id: facturaId,
+        estado: 'EMISION_PENDIENTE',
+        condicionIVAReceptor: 'CONSUMIDOR_FINAL',
+      });
+
+      await expect(service.emitirFactura(facturaId, profesionalId)).rejects.toThrow(
+        'Esta factura ya tiene una emisión en curso.',
+      );
+    });
+
+    it('should throw BadRequestException when condicionIVAReceptor is null', async () => {
+      prisma.factura.findFirst.mockResolvedValue({
+        id: facturaId,
+        estado: 'EMITIDA',
+        condicionIVAReceptor: null,
+      });
+
+      await expect(service.emitirFactura(facturaId, profesionalId)).rejects.toThrow(
+        'Falta la condición de IVA del receptor.',
+      );
+    });
+
+    it('should throw BadRequestException when ConfiguracionAFIP does not exist', async () => {
+      prisma.factura.findFirst.mockResolvedValue({
+        id: facturaId,
+        estado: 'EMITIDA',
+        condicionIVAReceptor: 'CONSUMIDOR_FINAL',
+      });
+      prisma.configuracionAFIP.findUnique.mockResolvedValue(null);
+
+      await expect(service.emitirFactura(facturaId, profesionalId)).rejects.toThrow(
+        'No se encontró la configuración AFIP del consultorio.',
+      );
     });
   });
 });

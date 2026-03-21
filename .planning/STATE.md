@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: AFIP Real
 status: completed
-stopped_at: Completed 14-02-PLAN.md
-last_updated: "2026-03-21T00:08:17.658Z"
-last_activity: "2026-03-21 — Phase 14 Plan 02 complete: AfipRealService WSFEv1 SOAP, AfipBusinessError/AfipTransientError, 6 unit tests passing (CAE-02, CAE-03)"
+stopped_at: Completed 14-03-PLAN.md
+last_updated: "2026-03-21T00:14:00Z"
+last_activity: "2026-03-21 — Phase 14 Plan 03 complete: CaeEmissionProcessor BullMQ processor, AfipBusinessError → UnrecoverableError, 3 unit tests passing (CAE-04)"
 progress:
   total_phases: 5
   completed_phases: 2
   total_plans: 10
-  completed_plans: 8
-  percent: 89
+  completed_plans: 9
+  percent: 90
 ---
 
 # Project State
@@ -27,12 +27,12 @@ See: .planning/PROJECT.md (updated 2026-03-16)
 
 ```
 Phase:    14 — Emisión CAE Real (WSFEv1) — in progress
-Plan:     Plan 02 complete (Wave 1 - AfipRealService done)
-Status:   Phase 14 Plan 02 complete — ready for Plan 03 (CaeEmissionProcessor)
-Progress: [█████████░] 89% of v1.2 plans (Phase 12 done, Phase 13 done, Phase 14 Plans 01+02 done)
+Plan:     Plan 03 complete (Wave 1 - CaeEmissionProcessor done)
+Status:   Phase 14 Plan 03 complete — ready for Plan 04 (FinanzasService enqueue integration)
+Progress: [█████████░] 90% of v1.2 plans (Phase 12 done, Phase 13 done, Phase 14 Plans 01+02+03 done)
 ```
 
-Last activity: 2026-03-21 — Phase 14 Plan 02 complete: AfipRealService WSFEv1 SOAP, AfipBusinessError/AfipTransientError, 6 unit tests passing (CAE-02, CAE-03)
+Last activity: 2026-03-21 — Phase 14 Plan 03 complete: CaeEmissionProcessor BullMQ processor, AfipBusinessError → UnrecoverableError, 3 unit tests passing (CAE-04)
 
 ## Milestone Summary
 
@@ -87,6 +87,9 @@ Last activity: 2026-03-21 — Phase 14 Plan 02 complete: AfipRealService WSFEv1 
 - [Plan 14-02] configuracionAFIP.findUniqueOrThrow called outside $transaction — cfg needed for URL selection and lock key before transaction opens
 - [Plan 14-02] callFECAESolicitar re-throws only AfipTransientError from axios catch; resultado='R' business error thrown from emitirComprobante after successful HTTP response
 - [Plan 14-02] IVA alicuota ID 5 (21%) hard-coded for Phase 14 homologacion — documented tech debt for production IVA matrix
+- [Plan 14-03] CaeJobData carries only facturaId + profesionalId — never monetary amounts — server-side totals rule; AfipRealService reads Factura data from DB
+- [Plan 14-03] instanceof AfipBusinessError check must precede generic re-throw — order is critical so business errors are never accidentally retried with backoff
+- [Plan 14-03] emitirComprobante called as (afipService as any).emitirComprobante() — AfipRealService DB-read signature differs from AfipService interface (identifiers only vs full params)
 
 ### Research Flags (for plan-phase to act on)
 - **Phase 13 y 14:** Verificar URLs actuales WSAA y WSFEv1 bajo dominio arca.gob.ar al momento de implementar. Almacenar en env config: AFIP_WSAA_URL_HOMO, AFIP_WSAA_URL_PROD, AFIP_WSFEV1_URL_HOMO, AFIP_WSFEV1_URL_PROD
@@ -113,8 +116,8 @@ Last activity: 2026-03-21 — Phase 14 Plan 02 complete: AfipRealService WSFEv1 
 
 ## Session Continuity
 
-Next action: Execute Phase 14 Plan 03 — CaeEmissionProcessor (BullMQ processor that uses AfipRealService and AfipBusinessError → UnrecoverableError pattern).
-Stopped at: Completed 14-02-PLAN.md
+Next action: Execute Phase 14 Plan 04 — FinanzasService enqueue integration (enqueue CAE jobs, EMISION_PENDIENTE state update, pg_advisory_xact_lock).
+Stopped at: Completed 14-03-PLAN.md
 
 Files to read at session start for Phase 14 Plan 03:
 - `.planning/phases/14-emision-cae-real-wsfev1/14-02-SUMMARY.md` — AfipRealService artifacts

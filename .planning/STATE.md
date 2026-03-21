@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: AFIP Real
-status: completed
+status: verifying
 stopped_at: Completed 14-04-PLAN.md — Phase 14 complete
-last_updated: "2026-03-21T00:48:19.902Z"
+last_updated: "2026-03-21T00:55:19.585Z"
 last_activity: "2026-03-21 — Phase 14 Plan 04 complete: human verify approved — full async CAE emission pipeline end-to-end in stub mode (202, EMISION_PENDIENTE→EMITIDA, stub CAE value, error path for missing config)"
 progress:
   total_phases: 5
-  completed_phases: 4
-  total_plans: 16
-  completed_plans: 14
+  completed_phases: 3
+  total_plans: 10
+  completed_plans: 10
   percent: 88
 ---
 

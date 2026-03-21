@@ -12,6 +12,7 @@ import { AFIP_SERVICE } from './afip/afip.constants';
 import { WSAA_SERVICE } from '../wsaa/wsaa.constants';
 import { WsaaServiceInterface } from '../wsaa/wsaa.interfaces';
 import { CaeEmissionProcessor, CAE_QUEUE } from './processors/cae-emission.processor';
+import { FacturaPdfService } from './factura-pdf.service';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { CaeEmissionProcessor, CAE_QUEUE } from './processors/cae-emission.proce
     FinanzasService,
     PrismaService,
     CaeEmissionProcessor,
+    FacturaPdfService,
     {
       provide: AFIP_SERVICE,
       useFactory: (

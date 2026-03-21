@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Phone, MessageSquare, MapPin, Clock } from "lucide-react";
+import { Phone, MessageSquare, MapPin, Clock, Zap } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import { useContactos } from "@/hooks/useContactos";
@@ -11,12 +11,14 @@ const TIPO_ICONS = {
   LLAMADA: Phone,
   MENSAJE: MessageSquare,
   PRESENCIAL: MapPin,
+  SISTEMA: Zap,
 };
 
 const TIPO_LABELS = {
   LLAMADA: "Llamada",
   MENSAJE: "Mensaje",
   PRESENCIAL: "Presencial",
+  SISTEMA: "Sistema",
 };
 
 interface ContactosSectionProps {

@@ -2,13 +2,14 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import * as crypto from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CuentasCorrientesService } from '../cuentas-corrientes/cuentas-corrientes.service';
 import { PresupuestoPdfService } from './presupuesto-pdf.service';
 import { CreatePresupuestoDto } from './dto/create-presupuesto.dto';
-import { EstadoPresupuesto, TipoMovimiento, EtapaCRM, PrioridadMensaje } from '@prisma/client';
+import { EstadoPresupuesto, TipoMovimiento, EtapaCRM, PrioridadMensaje, TipoContacto, TemperaturaPaciente, TipoTareaSeguimiento } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 
 @Injectable()
@@ -132,6 +133,7 @@ export class PresupuestosService {
       select: {
         id: true,
         pacienteId: true,
+        profesionalId: true,
         total: true,
         estado: true,
       },
@@ -179,6 +181,14 @@ export class PresupuestosService {
         where: { id: presupuesto.pacienteId },
         data: { etapaCRM: EtapaCRM.CONFIRMADO },
       }),
+      this.prisma.contactoLog.create({
+        data: {
+          pacienteId: presupuesto.pacienteId,
+          profesionalId: presupuesto.profesionalId,
+          tipo: TipoContacto.SISTEMA,
+          nota: 'Esperando turno para cirugia',
+        },
+      }),
     ]);
 
     return this.formatPresupuesto(updated);
@@ -190,7 +200,7 @@ export class PresupuestosService {
   async marcarEnviado(id: string) {
     const presupuesto = await this.prisma.presupuesto.findUnique({
       where: { id },
-      select: { id: true, pacienteId: true, estado: true, tokenAceptacion: true },
+      select: { id: true, pacienteId: true, profesionalId: true, estado: true, tokenAceptacion: true },
     });
 
     if (!presupuesto) throw new NotFoundException('Presupuesto no encontrado');
@@ -218,6 +228,14 @@ export class PresupuestosService {
         where: { id: presupuesto.pacienteId },
         data: { etapaCRM: EtapaCRM.PRESUPUESTO_ENVIADO },
       }),
+      this.prisma.contactoLog.create({
+        data: {
+          pacienteId: presupuesto.pacienteId,
+          profesionalId: presupuesto.profesionalId,
+          tipo: TipoContacto.SISTEMA,
+          nota: 'Presupuesto enviado — esperando respuesta',
+        },
+      }),
     ]);
 
     return this.formatPresupuesto(updated);
@@ -229,7 +247,7 @@ export class PresupuestosService {
   async rechazar(id: string, dto: { motivoRechazo?: string }) {
     const presupuesto = await this.prisma.presupuesto.findUnique({
       where: { id },
-      select: { id: true, pacienteId: true, estado: true },
+      select: { id: true, pacienteId: true, profesionalId: true, estado: true },
     });
 
     if (!presupuesto) throw new NotFoundException('Presupuesto no encontrado');
@@ -259,6 +277,14 @@ export class PresupuestosService {
       this.prisma.paciente.update({
         where: { id: presupuesto.pacienteId },
         data: { etapaCRM: EtapaCRM.PERDIDO },
+      }),
+      this.prisma.contactoLog.create({
+        data: {
+          pacienteId: presupuesto.pacienteId,
+          profesionalId: presupuesto.profesionalId,
+          tipo: TipoContacto.SISTEMA,
+          nota: dto.motivoRechazo ?? 'Sin motivo',
+        },
       }),
     ]);
 
@@ -353,27 +379,161 @@ export class PresupuestosService {
   }
 
   /**
-   * Busca presupuesto por token de aceptación (para página pública)
+   * Valida que el token existe y está en estado ENVIADO (sin datos personales).
+   * Usado como primer check al cargar la página pública.
    */
   async findByToken(token: string) {
     const presupuesto = await this.prisma.presupuesto.findUnique({
       where: { tokenAceptacion: token },
+      select: { id: true, estado: true },
+    });
+    if (!presupuesto) throw new NotFoundException('Presupuesto no encontrado o link expirado');
+    if (
+      presupuesto.estado !== EstadoPresupuesto.ENVIADO &&
+      presupuesto.estado !== EstadoPresupuesto.ACEPTADO
+    ) {
+      throw new BadRequestException('Este presupuesto ya fue procesado');
+    }
+    return { ok: true, estado: presupuesto.estado };
+  }
+
+  /**
+   * Verifica DNI del paciente y retorna el payload completo del portal.
+   * POST /presupuestos/public/:token/verificar
+   */
+  async verificarYCargar(token: string, dni: string) {
+    const presupuesto = await this.prisma.presupuesto.findUnique({
+      where: { tokenAceptacion: token },
       include: {
         items: { orderBy: { orden: 'asc' } },
-        paciente: { select: { nombreCompleto: true } },
+        paciente: { select: { nombreCompleto: true, dni: true } },
         profesional: {
           include: {
-            configClinica: true,
             usuario: { select: { nombre: true, apellido: true } },
+            configClinica: {
+              select: { instruccionesPre: true, instruccionesPost: true },
+            },
           },
         },
       },
     });
     if (!presupuesto) throw new NotFoundException('Presupuesto no encontrado o link expirado');
+    if (
+      presupuesto.estado !== EstadoPresupuesto.ENVIADO &&
+      presupuesto.estado !== EstadoPresupuesto.ACEPTADO
+    ) {
+      throw new BadRequestException('Este presupuesto ya fue procesado');
+    }
+
+    const dniInput = dni.trim().replace(/\s/g, '').replace(/\./g, '');
+    const dniStored = (presupuesto.paciente.dni ?? '').trim().replace(/\s/g, '').replace(/\./g, '');
+    if (dniInput.toLowerCase() !== dniStored.toLowerCase()) {
+      throw new UnauthorizedException('DNI incorrecto');
+    }
+
+    // Próximo turno futuro del paciente
+    const turno = await this.prisma.turno.findFirst({
+      where: {
+        pacienteId: presupuesto.pacienteId,
+        inicio: { gt: new Date() },
+        estado: { in: ['PENDIENTE', 'CONFIRMADO'] },
+      },
+      orderBy: { inicio: 'asc' },
+      select: {
+        inicio: true,
+        fin: true,
+        esCirugia: true,
+        tipoTurno: { select: { nombre: true } },
+      },
+    });
+
+    const config = presupuesto.profesional.configClinica;
+
+    return {
+      id: presupuesto.id,
+      subtotal: Number(presupuesto.subtotal),
+      descuentos: Number(presupuesto.descuentos),
+      total: Number(presupuesto.total),
+      moneda: presupuesto.moneda,
+      fechaValidez: presupuesto.fechaValidez,
+      estado: presupuesto.estado,
+      items: presupuesto.items.map((i) => ({
+        descripcion: i.descripcion,
+        precioTotal: Number(i.precioTotal),
+      })),
+      paciente: { nombreCompleto: presupuesto.paciente.nombreCompleto },
+      profesional: {
+        nombre: `${presupuesto.profesional.usuario.nombre} ${presupuesto.profesional.usuario.apellido}`,
+      },
+      turno: turno ?? undefined,
+      instruccionesPre: config?.instruccionesPre ?? undefined,
+      instruccionesPost: config?.instruccionesPost ?? undefined,
+    };
+  }
+
+  /**
+   * Registra una duda del paciente y crea CRM automático.
+   * POST /presupuestos/public/:token/duda
+   */
+  async registrarDuda(token: string, duda: string) {
+    const presupuesto = await this.prisma.presupuesto.findUnique({
+      where: { tokenAceptacion: token },
+      select: { id: true, pacienteId: true, profesionalId: true, estado: true },
+    });
+    if (!presupuesto) throw new NotFoundException('Presupuesto no encontrado');
     if (presupuesto.estado !== EstadoPresupuesto.ENVIADO) {
       throw new BadRequestException('Este presupuesto ya fue procesado');
     }
-    return this.formatPresupuesto(presupuesto);
+
+    const [profesional, paciente] = await Promise.all([
+      this.prisma.profesional.findUnique({
+        where: { id: presupuesto.profesionalId },
+        select: { usuarioId: true },
+      }),
+      this.prisma.paciente.findUnique({
+        where: { id: presupuesto.pacienteId },
+        select: { nombreCompleto: true },
+      }),
+    ]);
+
+    const dudaSanitizada = duda.trim().slice(0, 500);
+    const now = new Date();
+
+    await this.prisma.$transaction([
+      this.prisma.contactoLog.create({
+        data: {
+          pacienteId: presupuesto.pacienteId,
+          profesionalId: presupuesto.profesionalId,
+          tipo: TipoContacto.SISTEMA,
+          nota: `Duda: '${dudaSanitizada}'`,
+          temperaturaPost: TemperaturaPaciente.CALIENTE,
+        },
+      }),
+      this.prisma.paciente.update({
+        where: { id: presupuesto.pacienteId },
+        data: { temperatura: TemperaturaPaciente.CALIENTE },
+      }),
+      this.prisma.tareaSeguimiento.create({
+        data: {
+          pacienteId: presupuesto.pacienteId,
+          profesionalId: presupuesto.profesionalId,
+          tipo: TipoTareaSeguimiento.PERSONALIZADA,
+          nota: `Responder duda: '${dudaSanitizada}'`,
+          fechaProgramada: now,
+          completada: false,
+        },
+      }),
+      this.prisma.mensajeInterno.create({
+        data: {
+          mensaje: `El paciente ${paciente?.nombreCompleto ?? 'Paciente'} tiene una duda: '${dudaSanitizada}'`,
+          prioridad: PrioridadMensaje.ALTA,
+          autorId: profesional!.usuarioId,
+          pacienteId: presupuesto.pacienteId,
+        },
+      }),
+    ]);
+
+    return { ok: true };
   }
 
   /**
@@ -431,6 +591,14 @@ export class PresupuestosService {
           pacienteId: presupuesto.pacienteId,
         },
       }),
+      this.prisma.contactoLog.create({
+        data: {
+          pacienteId: presupuesto.pacienteId,
+          profesionalId: presupuesto.profesionalId,
+          tipo: TipoContacto.SISTEMA,
+          nota: 'Esperando turno para cirugia',
+        },
+      }),
     ]);
 
     return { message: 'Presupuesto aceptado exitosamente' };
@@ -479,6 +647,14 @@ export class PresupuestosService {
           prioridad: PrioridadMensaje.MEDIA,
           autorId: profesional!.usuarioId,
           pacienteId: presupuesto.pacienteId,
+        },
+      }),
+      this.prisma.contactoLog.create({
+        data: {
+          pacienteId: presupuesto.pacienteId,
+          profesionalId: presupuesto.profesionalId,
+          tipo: TipoContacto.SISTEMA,
+          nota: motivoRechazo ?? 'Sin motivo',
         },
       }),
     ]);

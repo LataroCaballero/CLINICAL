@@ -25,7 +25,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { CalendarIcon, Loader2, Scissors } from "lucide-react";
+import { CalendarIcon, Loader2, Scissors, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -76,6 +76,7 @@ export default function NewAppointmentModal({
 
   const [pacienteFotoUrl, setPacienteFotoUrl] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [esSobreturno, setEsSobreturno] = useState(false);
 
   const {
     register,
@@ -119,6 +120,7 @@ export default function NewAppointmentModal({
       });
       setPacienteFotoUrl(null);
     }
+    setEsSobreturno(false);
   }, [selectedEvent, reset, open]);
 
   const pacienteNombre = watch("pacienteNombre");
@@ -160,6 +162,7 @@ export default function NewAppointmentModal({
         tipoTurnoId: data.tipoTurnoId,
         inicio: inicio.toISOString(),
         observaciones: data.observaciones || undefined,
+        esSobreturno: esSobreturno || undefined,
       });
 
       toast.success("Turno creado correctamente");
@@ -294,6 +297,21 @@ export default function NewAppointmentModal({
               {...register("observaciones")}
             />
           </div>
+
+          {/* Sobreturno */}
+          {!isEditMode && (
+            <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={esSobreturno}
+                onChange={(e) => setEsSobreturno(e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300 accent-orange-500"
+              />
+              <AlertTriangle className="w-4 h-4 text-orange-500" />
+              <span className="font-medium text-orange-700">Sobreturno</span>
+              <span className="text-gray-500">(ignora conflictos de horario)</span>
+            </label>
+          )}
 
           <DialogFooter className="flex justify-between mt-4">
             <Button

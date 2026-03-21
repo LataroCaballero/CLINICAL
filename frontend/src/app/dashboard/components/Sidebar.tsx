@@ -90,9 +90,22 @@ export default function Sidebar() {
     user.rol === 'SECRETARIA' ||
     user.rol === 'FACTURADOR';
 
+  const facturadorLinks: LinkItem[] = [
+    {
+      href: '/dashboard/facturador',
+      label: "Inicio",
+      icon: <LayoutDashboard className="w-5 h-5" />,
+    },
+    {
+      href: "/dashboard/finanzas/facturacion",
+      label: "Facturación",
+      icon: <DollarSign className="w-5 h-5" />,
+    },
+  ];
+
   const allLinks: LinkItem[] = [
     {
-      href: user.rol === 'FACTURADOR' ? '/dashboard/facturador' : '/dashboard',
+      href: '/dashboard',
       label: "Inicio",
       icon: <LayoutDashboard className="w-5 h-5" />,
     },
@@ -146,7 +159,9 @@ export default function Sidebar() {
     },
   ];
 
-  const allowedLinks = filterLinksByRole(allLinks, user.rol);
+  const allowedLinks = user.rol === 'FACTURADOR'
+    ? facturadorLinks
+    : filterLinksByRole(allLinks, user.rol);
 
   const links = focusModeEnabled
     ? allowedLinks.filter((l) => focusModeHrefs.has(l.href))

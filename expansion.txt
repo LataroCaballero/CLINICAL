@@ -1,0 +1,141 @@
+Este documento técnico detalla la evolución del sistema **CLINICAL**  (desarrollado por **AndesCode**) de una plataforma de gestión administrativa a un **Sistema de Conversión Quirúrgica especializado en Cirugía Estética**.
+
+---
+
+## Documento de Expansión Estratégica: CRM de Conversión Quirúrgica
+
+### 1. Visión y Objetivo del Pivot
+
+El sistema debe dejar de priorizar la administración general para enfocarse en **aumentar la tasa de conversión de presupuestos en cirugías**. El diferencial competitivo no es la agenda, sino el acompañamiento estratégico del paciente en su toma de decisión (que suele durar entre 7 y 14 días).
+
+### 2. Módulo Central: Kanban CRM (Ex "Gestión de Pacientes")
+
+La vista actual de lista de pacientes debe evolucionar a un tablero visual de tarjetas arrastrables (Kanban).
+
+* **Columnas Obligatorias del Embudo:**
+* 
+**Nuevos Leads:** Consultas entrantes sin turno.
+
+
+* 
+**Turno Agendado:** Pacientes con cita de primera vez confirmada.
+
+
+* 
+**Consultado:** Pacientes que asistieron pero aún no tienen presupuesto formal.
+
+
+* 
+**Presupuesto Enviado:** El corazón del sistema; pacientes con propuesta económica activa.
+
+
+* 
+**Seguimiento Activo:** Pacientes en proceso de negociación o duda.
+
+
+* 
+**Calientes (Hot):** Pacientes con alta probabilidad de cierre (preguntan por fechas o financiación).
+
+
+* 
+**Confirmados:** Pacientes con cirugía programada o seña pagada.
+
+
+* 
+**Perdidos:** Pacientes que rechazaron la propuesta.
+
+
+
+
+
+### 3. Lógica de "Temperatura" y Score Híbrido
+
+Se debe implementar un sistema de clasificación para priorizar la energía comercial del equipo.
+
+* 
+**Evaluación Humana:** La secretaria marca manualmente el estado emocional (🔥 Caliente, 🌡 Tibio, 🧊 Frío) .
+
+
+* **Score Automático (Puntaje 0-100):** Basado en el comportamiento detectado por el sistema:
+* 
+**Frío:** Más de 5-7 días sin responder mensajes.
+
+
+* 
+**Caliente:** Preguntas frecuentes sobre fechas quirúrgicas, métodos de pago o envío de estudios pre-quirúrgicos.
+
+
+
+
+* 
+**Alertas de Incoherencia:** Notificar si un paciente marcado como "Frío" tiene un score de actividad alto.
+
+
+
+### 4. Automatización y Seguimiento Estratégico (Regla 3-7-14)
+
+El sistema debe reducir el "delay humano" mediante disparadores automáticos al cambiar estados en el Kanban.
+
+* **Secuencia Post-Presupuesto:** Al mover a "Presupuesto Enviado", programar automáticamente:
+* 
+**Día 3:** Mensaje de cortesía consultando dudas sobre la propuesta.
+
+
+* 
+**Día 7:** Envío de información de valor (ej. fotos antes/después o testimonios relacionados).
+
+
+* 
+**Día 14:** Cierre suave o encuesta si no hubo respuesta.
+
+
+
+
+* 
+**Integración de Presupuesto:** Envío vía link de WhatsApp que permita al paciente interactuar con botones de "Acepto", "Tengo dudas" o "Espero descuento obra social" .
+
+
+
+### 5. Rediseño del Dashboard Estratégico
+
+El inicio debe mutar de un resumen contable a un panel de control de crecimiento .
+
+* **KPIs Principales:**
+* Tasa de conversión mensual (%).
+
+
+* Número de presupuestos activos en columna "Calientes".
+
+
+* Ingresos proyectados (Suma de presupuestos × probabilidad de cierre según score).
+
+
+* Capacidad quirúrgica ocupada vs. disponible.
+
+
+
+
+* 
+**Acciones Prioritarias:** Notificaciones directas como "Tienes 3 pacientes calientes sin contacto hace 48hs".
+
+
+
+### 6. Clasificación de Pérdida Obligatoria
+
+Para alimentar los reportes de inteligencia de mercado, al mover a un paciente a "Perdido", el sistema debe exigir el motivo .
+
+* 
+**Categorías de Objeción:** Precio, Falta de tiempo, Miedo a la cirugía, Prefirió otro profesional, No es candidato médico.
+
+
+
+### 7. Agenda como Vista del CRM
+
+La agenda ya no es solo un calendario, es una representación temporal del flujo de ventas.
+
+* 
+**Diferenciación Visual:** Colores por etapa del embudo (ej. Consultas de primera vez vs. Cirugías confirmadas vs. Controles post-operatorios).
+
+
+* 
+**Contexto en Clic:** Al tocar un turno, mostrar temperatura, presupuesto enviado y última objeción detectada.

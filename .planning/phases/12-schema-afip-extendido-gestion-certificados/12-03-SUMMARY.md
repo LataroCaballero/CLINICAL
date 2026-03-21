@@ -103,6 +103,15 @@ None — no external service configuration required beyond existing `SMTP_PASS` 
 - Phase 12 (Plans 01–03) complete. AfipConfigModule is fully wired: schema, service+endpoints, and cert-expiry scheduler all in place.
 - Phase 13 (WSAAService) can proceed: it reads `ConfiguracionAFIP.certPemEncrypted` and `keyPemEncrypted` using the same `AfipConfigModule` imports.
 
+## Self-Check: PASSED
+
+- FOUND: `backend/src/modules/afip-config/cert-expiry.scheduler.ts`
+- FOUND: `backend/src/modules/afip-config/cert-expiry.scheduler.spec.ts`
+- FOUND: `.planning/phases/12-schema-afip-extendido-gestion-certificados/12-03-SUMMARY.md`
+- FOUND: commit `76ac8d5` (test — RED phase)
+- FOUND: commit `b535c98` (feat — GREEN phase)
+- 5 tests pass, build clean, @Cron verified, no ScheduleModule.forRoot() in AfipConfigModule
+
 ---
 *Phase: 12-schema-afip-extendido-gestion-certificados*
 *Completed: 2026-03-16*

@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { useUIStore } from "@/lib/stores/useUIStore";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -27,6 +29,7 @@ interface DataTablePaginationProps<TData> {
 export function DataTablePagination<TData>({
   table,
 }: DataTablePaginationProps<TData>) {
+  const { focusModeEnabled: fm } = useUIStore();
   const initialPageSize = table.getState().pagination.pageSize || 10;
   const [rowsPerPage, setRowsPerPage] = useState(initialPageSize);
 
@@ -53,7 +56,7 @@ export function DataTablePagination<TData>({
               table.setPageIndex(0);
             }}
           >
-            <SelectTrigger className="w-[90px] h-9">
+            <SelectTrigger className={cn("w-[90px] h-9", fm && "bg-[var(--fc-bg-surface)] border-[var(--fc-border)] text-[var(--fc-text-primary)]")}>
               <SelectValue />
             </SelectTrigger>
 
@@ -75,45 +78,22 @@ export function DataTablePagination<TData>({
       </div>
 
       {/* DERECHA — BUTTON GROUP */}
-      <ButtonGroup className="bg-white dark:bg-background border border-input rounded-md">
-        {/* Primera página */}
-        <Button
-          size="sm"
-          onClick={() => table.setPageIndex(0)}
-          disabled={pageIndex === 0}
-          className="bg-white hover:bg-gray-100 dark:bg-background"
-        >
-          <ChevronsLeft className="h-4 w-4 text-black" />
+      <ButtonGroup className={cn("border border-input rounded-md", fm ? "bg-[var(--fc-bg-surface)] border-[var(--fc-border)]" : "bg-white dark:bg-background")}>
+        <Button size="sm" onClick={() => table.setPageIndex(0)} disabled={pageIndex === 0}
+          className={cn(fm ? "bg-[var(--fc-bg-surface)] hover:bg-[var(--fc-bg-hover)]" : "bg-white hover:bg-gray-100 dark:bg-background")}>
+          <ChevronsLeft className={cn("h-4 w-4", fm ? "text-[var(--fc-text-primary)]" : "text-black")} />
         </Button>
-
-        {/* Página anterior */}
-        <Button
-          size="sm"
-          onClick={() => table.previousPage()}
-          disabled={!table.getCanPreviousPage()}
-          className="bg-white hover:bg-gray-100 dark:bg-background"
-        >
-          <ChevronLeft className="h-4 w-4 text-black" />
+        <Button size="sm" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}
+          className={cn(fm ? "bg-[var(--fc-bg-surface)] hover:bg-[var(--fc-bg-hover)]" : "bg-white hover:bg-gray-100 dark:bg-background")}>
+          <ChevronLeft className={cn("h-4 w-4", fm ? "text-[var(--fc-text-primary)]" : "text-black")} />
         </Button>
-
-        {/* Página siguiente */}
-        <Button
-          size="sm"
-          onClick={() => table.nextPage()}
-          disabled={!table.getCanNextPage()}
-          className="bg-white hover:bg-gray-100 dark:bg-background"
-        >
-          <ChevronRight className="h-4 w-4 text-black" />
+        <Button size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}
+          className={cn(fm ? "bg-[var(--fc-bg-surface)] hover:bg-[var(--fc-bg-hover)]" : "bg-white hover:bg-gray-100 dark:bg-background")}>
+          <ChevronRight className={cn("h-4 w-4", fm ? "text-[var(--fc-text-primary)]" : "text-black")} />
         </Button>
-
-        {/* Última página */}
-        <Button
-          size="sm"
-          onClick={() => table.setPageIndex(pageCount - 1)}
-          disabled={pageIndex === pageCount - 1}
-          className="bg-white hover:bg-gray-100 dark:bg-background"
-        >
-          <ChevronsRight className="h-4 w-4 text-black" />
+        <Button size="sm" onClick={() => table.setPageIndex(pageCount - 1)} disabled={pageIndex === pageCount - 1}
+          className={cn(fm ? "bg-[var(--fc-bg-surface)] hover:bg-[var(--fc-bg-hover)]" : "bg-white hover:bg-gray-100 dark:bg-background")}>
+          <ChevronsRight className={cn("h-4 w-4", fm ? "text-[var(--fc-text-primary)]" : "text-black")} />
         </Button>
       </ButtonGroup>
     </div>

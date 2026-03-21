@@ -113,6 +113,7 @@ export class MensajesInternosService {
         id: true,
         mensaje: true,
         prioridad: true,
+        esSistema: true,
         createdAt: true,
         autorId: true,
         autor: {
@@ -134,7 +135,7 @@ export class MensajesInternosService {
     return mensajes.map((m) => ({
       ...m,
       leido: m.lecturas.length > 0,
-      esPropio: m.autorId === userId,
+      esPropio: m.autorId === userId && !m.esSistema,
     }));
   }
 

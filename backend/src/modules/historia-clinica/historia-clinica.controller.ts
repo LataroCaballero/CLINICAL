@@ -1,6 +1,7 @@
 import { Controller, Get, Param, Post, Body, Req } from '@nestjs/common';
 import { HistoriaClinicaService } from './historia-clinica.service';
 import { Auth } from '../auth/decorators/auth.decorator';
+import { CreateEntradaDto } from './dto/crear-entrada.dto';
 
 @Auth('ADMIN', 'PROFESIONAL', 'SECRETARIA')
 @Controller('pacientes/:pacienteId/historia-clinica')
@@ -15,9 +16,10 @@ export class HistoriaClinicaController {
   @Post('entradas')
   async crearEntrada(
     @Param('pacienteId') pacienteId: string,
-    @Body() body: { contenido: string },
+    @Body() body: CreateEntradaDto,
     @Req() req: any,
   ) {
-    return this.service.crearEntrada(pacienteId, body.contenido);
+    const profesionalId: string | undefined = req.user?.profesionalId;
+    return this.service.crearEntrada(pacienteId, body, profesionalId);
   }
 }

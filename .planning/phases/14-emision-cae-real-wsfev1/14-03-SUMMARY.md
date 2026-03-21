@@ -109,7 +109,16 @@ None - no external service configuration required.
 - Plan 14-04 (FinanzasService enqueue integration) can now import CaeEmissionProcessor and CAE_QUEUE
 - BullMQ queue registration for 'cae-emission' needs to happen in FinanzasModule (Plan 14-04 scope)
 
-## Self-Check
+## Self-Check: PASSED
+
+Files verified present:
+- backend/src/modules/finanzas/processors/cae-emission.processor.ts — FOUND
+- backend/src/modules/finanzas/processors/cae-emission.processor.spec.ts — FOUND
+- .planning/phases/14-emision-cae-real-wsfev1/14-03-SUMMARY.md — FOUND
+
+Commits verified:
+- 3c80ce5 (task: CaeEmissionProcessor + spec) — FOUND
+- 5a8e14a (docs: SUMMARY + STATE + ROADMAP) — FOUND
 
 ---
 *Phase: 14-emision-cae-real-wsfev1*

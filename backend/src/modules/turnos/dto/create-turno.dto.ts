@@ -1,4 +1,5 @@
 import {
+  IsBoolean,
   IsISO8601,
   IsNumber,
   IsOptional,
@@ -37,4 +38,8 @@ export class CreateTurnoDto {
   // MVP: opcional. Si no viene, queda PENDIENTE (por default en Prisma)
   @IsOptional()
   estado?: EstadoTurno;
+
+  @IsOptional()
+  @IsBoolean()
+  esSobreturno?: boolean;
 }

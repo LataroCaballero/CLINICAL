@@ -24,6 +24,7 @@ interface CalendarEvent {
   tipoTurnoId: string;
   estado: "PENDIENTE" | "CONFIRMADO" | "CANCELADO" | "AUSENTE" | "FINALIZADO";
   observaciones?: string;
+  esSobreturno?: boolean;
 }
 
 interface CalendarGridProps {
@@ -33,6 +34,7 @@ interface CalendarGridProps {
   agenda: AgendaConfig | null;
   timeRange: { min: Date; max: Date };
   colorMap?: Record<string, string>;
+  focusMode?: boolean;
   onSelectEvent: (event: CalendarEvent) => void;
   onSelectSlot: (info: { start: Date }) => void;
   onEventMove: (info: { event: CalendarEvent; start: Date; end: Date }) => void;
@@ -84,17 +86,33 @@ function isDayBlocked(date: Date, agenda: AgendaConfig | null): boolean {
 /** Color scheme by appointment type (bg + left border accent) */
 function getEventStyle(
   event: CalendarEvent,
-  colorMap?: Record<string, string>
+  colorMap?: Record<string, string>,
+  fm?: boolean
 ): { bg: string; border: string; text: string } {
   // Check per-professional custom color first
   const customColor = colorMap?.[event.tipoTurnoId];
   if (customColor) {
-    return { bg: customColor + "1A", border: customColor, text: customColor };
+    return { bg: customColor + (fm ? "33" : "1A"), border: customColor, text: fm ? customColor : customColor };
   }
 
-  // Fallback to hardcoded color scheme
   const tipo = event.tipo.toLowerCase();
 
+  if (fm) {
+    // Dark theme — saturated variants
+    if (tipo.includes("consulta inicial"))
+      return { bg: "#1e1b4b", border: "#818cf8", text: "#c7d2fe" }; // indigo dark
+    if (tipo.includes("consulta") || tipo.includes("control"))
+      return { bg: "#0c2a4a", border: "#38bdf8", text: "#bae6fd" }; // sky dark
+    if (tipo.includes("cirug"))
+      return { bg: "#4c0519", border: "#fb7185", text: "#fecdd3" }; // rose dark
+    if (tipo.includes("procedimiento") || tipo.includes("tratamiento"))
+      return { bg: "#2e1065", border: "#a78bfa", text: "#ddd6fe" }; // violet dark
+    if (tipo.includes("emergencia") || tipo.includes("urgencia"))
+      return { bg: "#450a0a", border: "#f87171", text: "#fecaca" }; // red dark
+    return { bg: "#052e16", border: "#4ade80", text: "#bbf7d0" }; // green dark
+  }
+
+  // Light theme
   if (tipo.includes("consulta inicial"))
     return { bg: "#EEF2FF", border: "#6366F1", text: "#3730A3" }; // indigo
   if (tipo.includes("consulta") || tipo.includes("control"))
@@ -191,6 +209,7 @@ export default function CalendarGrid({
   agenda,
   timeRange,
   colorMap,
+  focusMode: fm = false,
   onSelectEvent,
   onSelectSlot,
   onEventMove,
@@ -396,12 +415,16 @@ export default function CalendarGrid({
 
   // ── Render ───────────────────────────────────────────────────────
 
+  const borderCls = fm ? "border-[var(--fc-border)]" : "border-gray-200";
+  const bgPrimary = fm ? "bg-[#0f172a]" : "bg-gray-50";
+  const bgSurface = fm ? "bg-[#1e293b]" : "bg-white";
+
   return (
-    <div ref={containerRef} className={`rounded-md border border-gray-200 overflow-hidden select-none flex flex-col ${className ?? ""}`}>
+    <div ref={containerRef} className={`rounded-md border overflow-hidden select-none flex flex-col ${borderCls} ${className ?? ""}`}>
       {/* Header row */}
-      <div className="flex border-b border-gray-200">
+      <div className={`flex border-b ${borderCls}`}>
         <div
-          className="shrink-0 border-r border-gray-200 bg-gray-50"
+          className={`shrink-0 border-r ${borderCls} ${bgPrimary}`}
           style={{ width: TIME_COL_WIDTH }}
         />
         <div className="flex-1 grid" style={{ gridTemplateColumns: `repeat(${days.length}, 1fr)` }}>
@@ -410,25 +433,25 @@ export default function CalendarGrid({
             const blocked = isDayBlocked(day, agenda);
             const isToday = formatLocalDate(day) === formatLocalDate(new Date());
 
-            let bg = "bg-gray-50";
-            if (surgery) bg = "bg-yellow-50";
-            else if (blocked) bg = "bg-gray-200";
+            let bg = bgPrimary;
+            if (surgery) bg = fm ? "bg-yellow-950/40" : "bg-yellow-50";
+            else if (blocked) bg = fm ? "bg-slate-800/60" : "bg-gray-200";
 
             return (
               <div
                 key={i}
-                className={`text-center py-2 text-sm font-medium border-r border-gray-200 last:border-r-0 ${bg}`}
+                className={`text-center py-2 text-sm font-medium border-r last:border-r-0 ${borderCls} ${bg}`}
               >
-                <span className={`${isToday ? "text-indigo-600 font-bold" : "text-gray-700"}`}>
+                <span className={`${isToday ? (fm ? "text-violet-400 font-bold" : "text-indigo-600 font-bold") : (fm ? "text-[#e2e8f0]" : "text-gray-700")}`}>
                   {moment(day).format(view === "day" ? "dddd D [de] MMMM" : "ddd D")}
                 </span>
                 {surgery && (
-                  <span className="ml-1 text-xs text-yellow-700 font-medium">
+                  <span className={`ml-1 text-xs font-medium ${fm ? "text-yellow-400" : "text-yellow-700"}`}>
                     (Cirugía)
                   </span>
                 )}
                 {blocked && (
-                  <span className="ml-1 text-xs text-gray-400">
+                  <span className={`ml-1 text-xs ${fm ? "text-slate-600" : "text-gray-400"}`}>
                     (No disponible)
                   </span>
                 )}
@@ -439,17 +462,17 @@ export default function CalendarGrid({
       </div>
 
       {/* Scrollable body */}
-      <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto">
+      <div ref={scrollRef} className={`flex-1 min-h-0 overflow-y-auto ${bgSurface}`}>
         <div className="flex relative" style={{ height: totalHeight }}>
           {/* Time column */}
           <div
-            className="shrink-0 border-r border-gray-200 relative bg-gray-50"
+            className={`shrink-0 border-r relative ${borderCls} ${bgPrimary}`}
             style={{ width: TIME_COL_WIDTH }}
           >
             {hours.map((h, i) => (
               <div
                 key={i}
-                className="absolute right-2 text-xs text-gray-500 -translate-y-1/2"
+                className={`absolute right-2 text-xs -translate-y-1/2 ${fm ? "text-[#94a3b8]" : "text-gray-500"}`}
                 style={{ top: ((h.hour * 60 + h.minute - gridStartMinutes) / 60) * HOUR_HEIGHT }}
               >
                 {h.label}
@@ -466,8 +489,8 @@ export default function CalendarGrid({
               const dayStr = formatLocalDate(day);
 
               let slotBg = "";
-              if (surgery) slotBg = "bg-yellow-50/50";
-              else if (blocked) slotBg = "bg-gray-100/50";
+              if (surgery) slotBg = fm ? "bg-yellow-950/20" : "bg-yellow-50/50";
+              else if (blocked) slotBg = fm ? "bg-slate-800/30" : "bg-gray-100/50";
 
               // events for this day
               const dayEvents = events.filter(
@@ -488,7 +511,7 @@ export default function CalendarGrid({
               return (
                 <div
                   key={dayIdx}
-                  className={`relative border-r border-gray-200 last:border-r-0 ${slotBg}`}
+                  className={`relative border-r last:border-r-0 ${borderCls} ${slotBg}`}
                   onClick={(e) => {
                     // only fire if clicking on the column background, not on an event
                     if ((e.target as HTMLElement).closest("[data-event]")) return;
@@ -499,7 +522,7 @@ export default function CalendarGrid({
                   {hours.map((h, i) => (
                     <div
                       key={i}
-                      className="absolute w-full border-t border-gray-100"
+                      className={`absolute w-full border-t ${fm ? "border-[#334155]/60" : "border-gray-100"}`}
                       style={{ top: ((h.hour * 60 + h.minute - gridStartMinutes) / 60) * HOUR_HEIGHT }}
                     />
                   ))}
@@ -519,7 +542,7 @@ export default function CalendarGrid({
 
                   {/* Events */}
                   {laidOut.map((item) => {
-                    const style = getEventStyle(item.event, colorMap);
+                    const style = getEventStyle(item.event, colorMap, fm);
                     const dotColor = getStatusDotColor(item.event.estado);
                     const isDragging = dragState?.eventId === item.event.id;
                     const isDraggable =
@@ -556,14 +579,14 @@ export default function CalendarGrid({
                                 isDragging
                                   ? "shadow-lg ring-2 ring-indigo-400 z-30 opacity-90"
                                   : "z-10 hover:shadow-md hover:brightness-[0.97]"
-                              } ${isCancelled ? "opacity-50" : ""}`}
+                              } ${isCancelled ? "opacity-50" : ""} ${item.event.esSobreturno ? "border-dashed border-2 border-orange-400" : ""}`}
                               style={{
                                 top: visualTop,
                                 height: visualHeight,
                                 left: `${(item.col / item.totalCols) * 100}%`,
                                 width: `${(1 / item.totalCols) * 100 - 2}%`,
                                 backgroundColor: style.bg,
-                                borderLeft: `3px solid ${style.border}`,
+                                borderLeft: item.event.esSobreturno ? undefined : `3px solid ${style.border}`,
                                 userSelect: "none",
                                 touchAction: "none",
                               }}
@@ -591,6 +614,13 @@ export default function CalendarGrid({
                                 });
                               }}
                             >
+                              {/* Sobreturno badge */}
+                              {item.event.esSobreturno && (
+                                <div className="absolute top-0 left-0 bg-orange-500 text-white text-[8px] font-bold px-1 rounded-br leading-tight">
+                                  ST
+                                </div>
+                              )}
+
                               {/* Status dot */}
                               <div
                                 className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full ring-1 ring-white"
@@ -604,11 +634,11 @@ export default function CalendarGrid({
                                 >
                                   {item.event.tipo}
                                 </div>
-                                <div className="truncate text-[11px] leading-tight text-gray-600">
+                                <div className={`truncate text-[11px] leading-tight ${fm ? "text-[#94a3b8]" : "text-gray-600"}`}>
                                   {item.event.paciente}
                                 </div>
                                 {visualHeight > 48 && (
-                                  <div className="text-[10px] leading-tight text-gray-400 mt-auto">
+                                  <div className={`text-[10px] leading-tight mt-auto ${fm ? "text-[#64748b]" : "text-gray-400"}`}>
                                     {moment(item.event.start).format("HH:mm")} - {moment(item.event.end).format("HH:mm")}
                                   </div>
                                 )}
@@ -639,11 +669,11 @@ export default function CalendarGrid({
                               )}
                             </div>
                           </TooltipTrigger>
-                          <TooltipContent className="bg-white border border-gray-100 text-gray-700 shadow-lg text-xs p-2.5 rounded-lg space-y-1">
+                          <TooltipContent className={`shadow-lg text-xs p-2.5 rounded-lg space-y-1 ${fm ? "bg-[#1e293b] border border-[#334155] text-[#e2e8f0]" : "bg-white border border-gray-100 text-gray-700"}`}>
                             <p className="font-semibold" style={{ color: style.text }}>{item.event.tipo}</p>
-                            <p><span className="text-gray-400">Paciente:</span> {item.event.paciente}</p>
+                            <p><span className={fm ? "text-[#64748b]" : "text-gray-400"}>Paciente:</span> {item.event.paciente}</p>
                             <p>
-                              <span className="text-gray-400">Hora:</span>{" "}
+                              <span className={fm ? "text-[#64748b]" : "text-gray-400"}>Hora:</span>{" "}
                               {moment(item.event.start).format("HH:mm")} - {moment(item.event.end).format("HH:mm")}
                             </p>
                             <p className="flex items-center gap-1.5">
@@ -654,7 +684,7 @@ export default function CalendarGrid({
                               {item.event.estado}
                             </p>
                             {item.event.observaciones && (
-                              <p className="text-gray-400 italic">{item.event.observaciones}</p>
+                              <p className={`italic ${fm ? "text-[#64748b]" : "text-gray-400"}`}>{item.event.observaciones}</p>
                             )}
                           </TooltipContent>
                         </Tooltip>
@@ -673,7 +703,7 @@ export default function CalendarGrid({
                     const evtMinEnd = draggedEvt.end.getHours() * 60 + draggedEvt.end.getMinutes();
                     const origTop = ((evtMinStart - gridStartMinutes) / 60) * HOUR_HEIGHT;
                     const origHeight = Math.max(MIN_EVENT_HEIGHT, ((evtMinEnd - evtMinStart) / 60) * HOUR_HEIGHT);
-                    const ghostStyle = getEventStyle(draggedEvt, colorMap);
+                    const ghostStyle = getEventStyle(draggedEvt, colorMap, fm);
 
                     return (
                       <div
@@ -693,7 +723,7 @@ export default function CalendarGrid({
                           <div className="font-semibold truncate text-[11px] leading-tight" style={{ color: ghostStyle.text }}>
                             {draggedEvt.tipo}
                           </div>
-                          <div className="truncate text-gray-600 text-[11px] leading-tight">
+                          <div className={`truncate text-[11px] leading-tight ${fm ? "text-[#94a3b8]" : "text-gray-600"}`}>
                             {draggedEvt.paciente}
                           </div>
                         </div>

@@ -16,15 +16,48 @@ import {
 import { useLiveTurnoStore } from '@/store/live-turno.store';
 import { useLiveTurnoActions } from '@/hooks/useLiveTurnoActions';
 import { useLiveTurnoTimer, formatTimer } from '@/hooks/useLiveTurnoTimer';
+import { useCreateHistoriaClinicaEntry } from '@/hooks/useCreateHistoriaClinicaEntry';
 
 export function LiveTurnoFooter() {
   const [showEndDialog, setShowEndDialog] = useState(false);
-  const { minimize, draftData } = useLiveTurnoStore();
+  const { minimize, draftData, session } = useLiveTurnoStore();
   const { cerrarSesion } = useLiveTurnoActions();
   const elapsed = useLiveTurnoTimer();
+  const createEntry = useCreateHistoriaClinicaEntry();
 
   const handleEndSession = async () => {
     try {
+      // Auto-guardar HC si hay borrador sin guardar
+      const draft = draftData.hcFormDraft;
+      if (draft && !draft.saved && session) {
+        try {
+          if (draft.tipo === 'primera_vez') {
+            const hasDiag = (draft.pvDiagnostico?.zonas?.length ?? 0) > 0;
+            const hasTrat = (draft.pvTratamientos?.length ?? 0) > 0;
+            if (hasDiag || hasTrat) {
+              await createEntry.mutateAsync({
+                pacienteId: session.pacienteId,
+                dto: {
+                  tipo: 'primera_vez',
+                  diagnostico: draft.pvDiagnostico ?? { zonas: [], subzonas: [] },
+                  tratamientos: draft.pvTratamientos ?? [],
+                  comentario: draft.pvComentario ?? '',
+                  presupuestoId: draft.pvPresupuestoId,
+                  presupuestoTotal: draft.pvPresupuestoTotal,
+                },
+              });
+            }
+          } else if (draft.textoLibre?.trim()) {
+            await createEntry.mutateAsync({
+              pacienteId: session.pacienteId,
+              dto: { tipo: draft.tipo as any, texto: draft.textoLibre },
+            });
+          }
+        } catch {
+          // No bloquear el cierre si falla el auto-guardado
+        }
+      }
+
       await cerrarSesion.mutateAsync({
         entradaHCId: draftData.hcEntryId,
       });

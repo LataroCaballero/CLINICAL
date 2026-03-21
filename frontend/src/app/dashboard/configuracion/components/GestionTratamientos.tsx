@@ -62,18 +62,18 @@ const emptyFormData: TratamientoFormData = {
   duracionMinutos: '',
 };
 
-export default function GestionTratamientos() {
+export default function GestionTratamientos({ profesionalId }: { profesionalId?: string } = {}) {
   const [showInactive, setShowInactive] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedTratamiento, setSelectedTratamiento] = useState<Tratamiento | null>(null);
   const [formData, setFormData] = useState<TratamientoFormData>(emptyFormData);
 
-  const { data: tratamientos, isLoading, error } = useTratamientosProfesional(showInactive);
-  const createMutation = useCreateTratamiento();
-  const updateMutation = useUpdateTratamiento();
-  const deleteMutation = useDeleteTratamiento();
-  const restoreMutation = useRestoreTratamiento();
+  const { data: tratamientos, isLoading, error } = useTratamientosProfesional(showInactive, profesionalId);
+  const createMutation = useCreateTratamiento(profesionalId);
+  const updateMutation = useUpdateTratamiento(profesionalId);
+  const deleteMutation = useDeleteTratamiento(profesionalId);
+  const restoreMutation = useRestoreTratamiento(profesionalId);
 
   const handleOpenModal = (tratamiento?: Tratamiento) => {
     if (tratamiento) {

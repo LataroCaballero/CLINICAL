@@ -18,6 +18,8 @@ import { ChevronDown } from "lucide-react";
 import { useObjecionSuggest } from "@/hooks/useObjecionSuggest";
 import { api } from "@/lib/axios";
 import { useState } from "react";
+import { useUIStore } from "@/lib/stores/useUIStore";
+import { cn } from "@/lib/utils";
 
 interface Objection {
     id: number | string;
@@ -34,6 +36,7 @@ interface ObjectionDropdownProps {
 export default function ObjectionSelect({ pacienteId, value, onChange }: ObjectionDropdownProps) {
     const [open, setOpen] = useState(false);
     const [query, setQuery] = useState("");
+    const { focusModeEnabled: fm } = useUIStore();
 
     const { data = [] } = useObjecionSuggest(query);
 
@@ -66,7 +69,7 @@ export default function ObjectionSelect({ pacienteId, value, onChange }: Objecti
                 onMouseDown={(e) => e.stopPropagation()}
             >
                 <button
-                    className="w-full flex items-center justify-between border rounded px-2 py-1 bg-white hover:bg-gray-50 text-sm"
+                    className={cn("w-full flex items-center justify-between border rounded px-2 py-1 text-sm", fm ? "bg-[var(--fc-bg-surface)] border-[var(--fc-border)] text-[var(--fc-text-primary)] hover:bg-[var(--fc-bg-hover)]" : "bg-white hover:bg-gray-50")}
                 >
                     {value?.nombre || "Seleccionar..."}
                     <ChevronDown className="h-4 w-4 opacity-60" />

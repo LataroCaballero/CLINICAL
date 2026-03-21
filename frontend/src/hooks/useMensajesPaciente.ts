@@ -5,6 +5,7 @@ export interface Mensaje {
   id: string;
   mensaje: string;
   prioridad: 'ALTA' | 'MEDIA' | 'BAJA';
+  esSistema: boolean;
   createdAt: string;
   autorId: string;
   autor: {

@@ -30,6 +30,8 @@ export interface KanbanPatient {
   temperatura: TemperaturaPaciente | null;
   scoreConversion: number;
   procedimiento: string | null;
+  ultimoContactoNota: string | null;
+  ultimoContactoFecha: string | null;
   ultimoTurno: string | null;
   presupuesto: {
     total: number;
@@ -37,6 +39,9 @@ export interface KanbanPatient {
     fechaEnviado: string | null;
   } | null;
   diasDesdePresupuesto: number | null;
+  enListaEspera: boolean;
+  comentarioListaEspera?: string | null;
+  pendingAutorizaciones?: number;
 }
 
 export interface KanbanColumn {

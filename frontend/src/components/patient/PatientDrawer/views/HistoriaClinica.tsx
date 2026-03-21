@@ -92,7 +92,7 @@ export default function HistoriaClinica({ pacienteId, onBack }: Props) {
   const handleGuardar = async () => {
     if (!contenido.trim()) return;
 
-    await createEntry.mutateAsync({ pacienteId, contenido });
+    await createEntry.mutateAsync({ pacienteId, dto: { tipo: 'libre', texto: contenido } });
     setContenido("");
     setShowForm(false);
   };
@@ -367,16 +367,11 @@ export default function HistoriaClinica({ pacienteId, onBack }: Props) {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               {expandedEntry?.template ? (
-                <>
-                  <FileCode className="w-5 h-5" />
-                  {expandedEntry.template.nombre}
-                </>
+                <FileCode className="w-5 h-5" />
               ) : (
-                <>
-                  <FileText className="w-5 h-5" />
-                  Entrada de texto libre
-                </>
+                <FileText className="w-5 h-5" />
               )}
+              {expandedEntry && getTituloEntrada(expandedEntry)}
             </DialogTitle>
           </DialogHeader>
           {expandedEntry && (
@@ -389,10 +384,26 @@ export default function HistoriaClinica({ pacienteId, onBack }: Props) {
 }
 
 // Types for entries
+interface ContenidoPrimeraVez {
+  tipo: "primera_vez";
+  comentario?: string;
+  diagnostico?: { zonas?: string[]; subzonas?: string[]; otroTexto?: string };
+  tratamientos?: { nombre: string; precio?: number }[];
+  presupuestoTotal?: number;
+  presupuestoId?: string | null;
+}
+
+interface ContenidoLibre {
+  tipo?: "libre" | string;
+  texto?: string;
+}
+
+type ContenidoEntrada = ContenidoPrimeraVez | ContenidoLibre | Record<string, unknown> | null;
+
 interface EntradaType {
   id: string;
   fecha: string;
-  contenido?: { texto?: string };
+  contenido?: ContenidoEntrada;
   templateId?: string;
   template?: { nombre: string };
   templateVersion?: { schema?: TemplateSchema };
@@ -400,6 +411,21 @@ interface EntradaType {
   computed?: Record<string, unknown>;
   status?: string;
   profesionalNombre?: string;
+}
+
+const TIPO_LABELS: Record<string, string> = {
+  primera_vez: "Primera consulta",
+  libre: "Texto libre",
+  control: "Control",
+  evolucion: "Evolución",
+};
+
+function getTituloEntrada(entrada: EntradaType): string {
+  if (entrada.template) return entrada.template.nombre;
+  const tipo = (entrada.contenido as any)?.tipo as string | undefined;
+  if (tipo) return TIPO_LABELS[tipo] ?? tipo;
+  if ((entrada.contenido as any)?.texto) return "Texto libre";
+  return "Entrada sin tipo";
 }
 
 // Entry card component with improved visualization
@@ -428,15 +454,15 @@ function EntryCard({
               year: "numeric",
             })}
           </span>
-          {isTemplateBased && entrada.template ? (
+          {isTemplateBased ? (
             <Badge variant="secondary" className="text-xs flex items-center gap-1">
               <FileCode className="w-3 h-3" />
-              {entrada.template.nombre}
+              {entrada.template?.nombre ?? "Plantilla"}
             </Badge>
           ) : (
             <Badge variant="outline" className="text-xs flex items-center gap-1">
               <FileText className="w-3 h-3" />
-              Texto libre
+              {getTituloEntrada(entrada)}
             </Badge>
           )}
         </div>
@@ -452,9 +478,7 @@ function EntryCard({
         {isTemplateBased ? (
           <TemplateEntryPreview answers={entrada.answers} schema={schema} />
         ) : (
-          <p className="text-sm whitespace-pre-line">
-            {entrada.contenido?.texto || "(sin contenido)"}
-          </p>
+          <FreeEntryPreview contenido={entrada.contenido} />
         )}
       </div>
 
@@ -462,6 +486,152 @@ function EntryCard({
         Click para ver más detalles
       </div>
     </Card>
+  );
+}
+
+// ── Free-entry preview (card) ────────────────────────────────────────────────
+
+function FreeEntryPreview({ contenido }: { contenido?: ContenidoEntrada }) {
+  if (!contenido) return <p className="text-sm text-muted-foreground italic">(sin contenido)</p>;
+
+  const c = contenido as any;
+
+  if (c.tipo === "primera_vez") {
+    const zonas: string[] = c.diagnostico?.zonas ?? [];
+    const subzonas: string[] = c.diagnostico?.subzonas ?? [];
+    const tratamientos: { nombre: string }[] = c.tratamientos ?? [];
+    const parts: string[] = [];
+    if (zonas.length) parts.push(`Zonas: ${zonas.join(", ")}`);
+    if (subzonas.length) parts.push(`Subzonas: ${subzonas.join(", ")}`);
+    if (tratamientos.length) parts.push(`Tratamientos: ${tratamientos.map((t) => t.nombre).join(", ")}`);
+    return <p className="text-sm text-muted-foreground">{parts.join(" · ") || "(sin datos)"}</p>;
+  }
+
+  if (c.texto) return <p className="text-sm whitespace-pre-line">{c.texto}</p>;
+
+  return <p className="text-sm text-muted-foreground italic">(sin contenido)</p>;
+}
+
+// ── Free-entry full content (modal) ─────────────────────────────────────────
+
+function FreeEntryFullContent({ contenido }: { contenido?: ContenidoEntrada }) {
+  if (!contenido) {
+    return (
+      <div className="space-y-2">
+        <h4 className="text-sm font-medium text-muted-foreground">Contenido</h4>
+        <p className="text-sm text-muted-foreground italic">(sin contenido)</p>
+      </div>
+    );
+  }
+
+  const c = contenido as any;
+
+  // ── Primera consulta estructurada ──
+  if (c.tipo === "primera_vez") {
+    const zonas: string[] = c.diagnostico?.zonas ?? [];
+    const subzonas: string[] = c.diagnostico?.subzonas ?? [];
+    const otroTexto: string = c.diagnostico?.otroTexto ?? "";
+    const tratamientos: { nombre: string; precio?: number }[] = c.tratamientos ?? [];
+    const comentario: string = c.comentario ?? "";
+    const presupuestoTotal: number = c.presupuestoTotal ?? 0;
+
+    return (
+      <div className="space-y-5">
+        {/* Diagnóstico */}
+        <div className="space-y-2">
+          <h4 className="text-sm font-semibold">Diagnóstico</h4>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="p-3 bg-muted/40 rounded-lg">
+              <p className="text-xs text-muted-foreground mb-1">Zonas</p>
+              <p className="text-sm font-medium">
+                {zonas.length ? zonas.join(", ") : <span className="text-muted-foreground italic">—</span>}
+              </p>
+            </div>
+            <div className="p-3 bg-muted/40 rounded-lg">
+              <p className="text-xs text-muted-foreground mb-1">Subzonas</p>
+              <p className="text-sm font-medium">
+                {subzonas.length ? subzonas.join(", ") : <span className="text-muted-foreground italic">—</span>}
+              </p>
+            </div>
+          </div>
+          {otroTexto && (
+            <div className="p-3 bg-muted/40 rounded-lg">
+              <p className="text-xs text-muted-foreground mb-1">Observación de zona</p>
+              <p className="text-sm">{otroTexto}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Tratamientos */}
+        {tratamientos.length > 0 && (
+          <div className="space-y-2">
+            <h4 className="text-sm font-semibold">Tratamientos</h4>
+            <div className="space-y-1">
+              {tratamientos.map((t, i) => (
+                <div key={i} className="flex items-center justify-between p-2.5 bg-muted/40 rounded-lg">
+                  <span className="text-sm">{t.nombre}</span>
+                  {!!t.precio && (
+                    <span className="text-sm font-medium text-green-700">
+                      {new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS" }).format(t.precio)}
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+            {presupuestoTotal > 0 && (
+              <div className="flex justify-end pt-1">
+                <span className="text-sm font-semibold text-green-700">
+                  Total: {new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS" }).format(presupuestoTotal)}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Comentario */}
+        {comentario && (
+          <div className="space-y-2">
+            <h4 className="text-sm font-semibold">Comentario</h4>
+            <p className="text-sm whitespace-pre-line p-3 bg-muted/40 rounded-lg">{comentario}</p>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ── Texto libre ──
+  if (c.texto) {
+    return (
+      <div className="space-y-2">
+        <h4 className="text-sm font-medium text-muted-foreground">Contenido</h4>
+        <p className="text-sm whitespace-pre-line">{c.texto}</p>
+      </div>
+    );
+  }
+
+  // ── Fallback: cualquier otro objeto ──
+  const entries = Object.entries(c).filter(([, v]) => v !== null && v !== undefined && v !== "");
+  if (entries.length === 0) {
+    return (
+      <div className="space-y-2">
+        <h4 className="text-sm font-medium text-muted-foreground">Contenido</h4>
+        <p className="text-sm text-muted-foreground italic">(sin contenido)</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      <h4 className="text-sm font-medium text-muted-foreground">Contenido</h4>
+      <div className="space-y-2">
+        {entries.map(([key, value]) => (
+          <div key={key} className="p-2.5 bg-muted/40 rounded-lg">
+            <p className="text-xs text-muted-foreground mb-0.5">{formatKey(key)}</p>
+            <p className="text-sm">{typeof value === "object" ? JSON.stringify(value) : String(value)}</p>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -544,12 +714,7 @@ function ExpandedEntryContent({ entrada }: { entrada: EntradaType }) {
       {isTemplateBased ? (
         <TemplateFullContent answers={entrada.answers} computed={entrada.computed} schema={schema} />
       ) : (
-        <div className="space-y-2">
-          <h4 className="text-sm font-medium text-muted-foreground">Contenido</h4>
-          <p className="text-sm whitespace-pre-line">
-            {entrada.contenido?.texto || "(sin contenido)"}
-          </p>
-        </div>
+        <FreeEntryFullContent contenido={entrada.contenido} />
       )}
     </div>
   );

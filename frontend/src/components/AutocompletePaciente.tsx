@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { usePacienteSuggest } from "@/hooks/usePacienteSuggest";
 import { Input } from "@/components/ui/input";
+import { useUIStore } from "@/lib/stores/useUIStore";
+import { cn } from "@/lib/utils";
 import {
   Popover,
   PopoverContent,
@@ -25,6 +27,7 @@ export default function AutocompletePaciente({
 }: Props) {
   const [query, setQuery] = useState("");
   const { data = [], isFetching } = usePacienteSuggest(query);
+  const { focusModeEnabled: fm } = useUIStore();
 
   const showDropdown =
     !value && query.length > 0 && (data.length > 0 || isFetching);
@@ -72,6 +75,7 @@ export default function AutocompletePaciente({
               placeholder="Buscar paciente por nombre, DNI o teléfono"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
+              className={cn(fm && "bg-[var(--fc-bg-surface)] border-[var(--fc-border)] text-[var(--fc-text-primary)] placeholder:text-slate-500")}
             />
           )}
         </div>

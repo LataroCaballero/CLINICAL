@@ -6,6 +6,38 @@ import { Check, X } from "lucide-react";
 
 import { EstadoPresupuesto } from "@/types/presupuesto";
 import EstadoPresupuestoChip from "../../components/presupuestos/EstadoPresupuestoChip";
+import { useUIStore } from "@/lib/stores/useUIStore";
+import { cn } from "@/lib/utils";
+
+function NameCell({ row, unreadMap }: { row: any; unreadMap?: Record<string, number> }) {
+  const { focusModeEnabled: fm } = useUIStore();
+  const nombre = row.original.nombreCompleto;
+  const foto = row.original.fotoUrl;
+  const hasAlerts = getPatientAlerts(row.original).length > 0;
+  const waUnread = unreadMap?.[row.original.id] ?? 0;
+  const getInitial = (name?: string) => name ? name.charAt(0).toUpperCase() : "?";
+
+  return (
+    <div className="flex items-center gap-3">
+      <div className="relative shrink-0">
+        {foto ? (
+          <img src={foto} alt={nombre} className={`h-9 w-9 rounded-full object-cover border ${hasAlerts ? "ring-2 ring-red-500 ring-offset-1" : ""}`} />
+        ) : (
+          <div className={`h-9 w-9 rounded-full bg-indigo-600 text-white flex items-center justify-center text-sm font-semibold ${hasAlerts ? "ring-2 ring-red-500 ring-offset-1" : ""}`}>
+            {getInitial(nombre)}
+          </div>
+        )}
+        {hasAlerts && <span className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full bg-red-500 border-2 border-white" />}
+      </div>
+      <span className={cn("font-medium", fm ? "text-[var(--fc-text-primary)]" : "text-gray-900")}>{nombre}</span>
+      {waUnread > 0 && (
+        <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-green-500 px-1 text-[10px] text-white font-bold leading-none">
+          {waUnread}
+        </span>
+      )}
+    </div>
+  );
+}
 
 // Utilidad para formatear fecha
 const formatDate = (dateString?: string | null) => {
@@ -44,53 +76,7 @@ export function createPacienteColumns(
   {
     accessorKey: "nombreCompleto",
     header: "Nombre",
-    cell: ({ row }) => {
-      const nombre = row.original.nombreCompleto;
-      const foto = row.original.fotoUrl;
-      const hasAlerts = getPatientAlerts(row.original).length > 0;
-      const waUnread = unreadMap?.[row.original.id] ?? 0;
-
-      const getInitial = (name?: string) =>
-        name ? name.charAt(0).toUpperCase() : "?";
-
-      return (
-        <div className="flex items-center gap-3">
-          <div className="relative shrink-0">
-            {foto ? (
-              <img
-                src={foto}
-                alt={nombre}
-                className={`h-9 w-9 rounded-full object-cover border ${
-                  hasAlerts ? "ring-2 ring-red-500 ring-offset-1" : ""
-                }`}
-              />
-            ) : (
-              <div
-                className={`
-                  h-9 w-9 rounded-full bg-indigo-600 text-white
-                  flex items-center justify-center
-                  text-sm font-semibold
-                  ${hasAlerts ? "ring-2 ring-red-500 ring-offset-1" : ""}
-                `}
-              >
-                {getInitial(nombre)}
-              </div>
-            )}
-            {hasAlerts && (
-              <span className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full bg-red-500 border-2 border-white" />
-            )}
-          </div>
-
-          <span className="font-medium text-gray-900">{nombre}</span>
-
-          {waUnread > 0 && (
-            <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-green-500 px-1 text-[10px] text-white font-bold leading-none">
-              {waUnread}
-            </span>
-          )}
-        </div>
-      );
-    },
+    cell: ({ row }) => <NameCell row={row} unreadMap={unreadMap} />,
   },
 
   // OBRA SOCIAL (resuelta desde backend o incluida en row.original)

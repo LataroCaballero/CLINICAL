@@ -24,6 +24,7 @@ import { Auth } from '../auth/decorators/auth.decorator';
 import { EtapaCRM, TemperaturaPaciente, MotivoPerdidaCRM } from '@prisma/client';
 import { UpdateWhatsappOptInDto } from './dto/update-whatsapp-opt-in.dto';
 import { CreateContactoDto } from './dto/create-contacto.dto';
+import { UpdateListaEsperaDto } from './dto/update-lista-espera.dto';
 
 @Auth('ADMIN', 'PROFESIONAL', 'SECRETARIA', 'FACTURADOR')
 @Controller('pacientes')
@@ -65,14 +66,14 @@ export class PacientesController {
   @Header('Cache-Control', 'no-store')
   @Header('Pragma', 'no-cache')
   @Header('Expires', '0')
-  async suggest(@Query('q') q: string) {
-    const results = await this.pacientesService.suggest(q);
+  async suggest(@Query('q') q: string, @Query('profesionalId') profesionalId?: string) {
+    const results = await this.pacientesService.suggest(q, profesionalId);
     return results ?? [];
   }
 
   @Get()
-  findAll() {
-    return this.pacientesService.obtenerListaPacientes();
+  findAll(@Query('profesionalId') profesionalId?: string) {
+    return this.pacientesService.obtenerListaPacientes(profesionalId);
   }
 
   // Log de Contactos — Lista de acción priorizada
@@ -122,6 +123,12 @@ export class PacientesController {
 
     const registradoPorId = req.user?.userId as string | undefined;
     return this.pacientesService.createContacto(pacienteId, profesionalId, dto, registradoPorId);
+  }
+
+  // CRM — Obtener pacientes en lista de espera
+  @Get('lista-espera')
+  getListaEspera(@Query('profesionalId') profesionalId: string) {
+    return this.pacientesService.getListaEspera(profesionalId);
   }
 
   // Obtener por ID
@@ -179,6 +186,15 @@ export class PacientesController {
     @Body() body: { temperatura: TemperaturaPaciente },
   ) {
     return this.pacientesService.updateTemperatura(id, body.temperatura);
+  }
+
+  // CRM — Lista de espera para adelantar turno
+  @Patch(':id/lista-espera')
+  updateListaEspera(
+    @Param('id') id: string,
+    @Body() dto: UpdateListaEsperaDto,
+  ) {
+    return this.pacientesService.updateListaEspera(id, dto);
   }
 
   // WhatsApp — Opt-in / opt-out del paciente

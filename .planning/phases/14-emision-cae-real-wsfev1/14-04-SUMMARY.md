@@ -18,7 +18,7 @@ provides:
   - BullMQ cae-emission queue registered in FinanzasModule
   - POST /finanzas/facturas/:id/emitir endpoint returning 202 with jobId
   - emitirFactura service method with pre-condition validation (owner, estado, condicionIVA, ConfiguracionAFIP)
-  - Full end-to-end async CAE emission pipeline (pending human verification)
+  - Full end-to-end async CAE emission pipeline verified by human checkpoint (stub mode)
 
 affects:
   - 15-qr-afip-pdf-frontend
@@ -59,14 +59,14 @@ completed: 2026-03-21
 
 # Phase 14 Plan 04: FinanzasModule Wiring — AFIP_SERVICE DI Swap + Emission Endpoint Summary
 
-**FinanzasModule wired with AFIP_SERVICE useFactory (real/stub toggle), BullMQ CAE queue, and POST /finanzas/facturas/:id/emitir returning 202 with pre-condition validation — Phase 14 async CAE emission pipeline complete pending human verification**
+**FinanzasModule wired with AFIP_SERVICE useFactory (real/stub toggle), BullMQ CAE queue, and POST /finanzas/facturas/:id/emitir returning 202 with pre-condition validation — human-verified end-to-end in stub mode, Phase 14 async CAE emission pipeline complete**
 
 ## Performance
 
-- **Duration:** 18 min
+- **Duration:** ~45 min
 - **Started:** 2026-03-21T00:00:00Z
-- **Completed:** 2026-03-21T00:18:37Z
-- **Tasks:** 3 (of 4 — Task 4 is human-verify checkpoint)
+- **Completed:** 2026-03-21T00:45:00Z
+- **Tasks:** 4 (3 auto + 1 human-verify approved)
 - **Files modified:** 4
 
 ## Accomplishments
@@ -75,6 +75,7 @@ completed: 2026-03-21
 - `emitirFactura` service method added with full pre-condition validation: factura ownership, EMISION_PENDIENTE in-flight guard, condicionIVAReceptor null guard, ConfiguracionAFIP existence check
 - POST `/finanzas/facturas/:id/emitir` endpoint added to controller returning HTTP 202 with `{ jobId, status: 'EMISION_PENDIENTE' }`
 - 5 new unit tests for `emitirFactura` + CAE_QUEUE mock injection fix in finanzas.service.spec.ts — all 31 finanzas tests green
+- Human checkpoint approved: stub mode confirmed working end-to-end (202 response, EMISION_PENDIENTE→EMITIDA transition, stub CAE value `74397704790943`, error path for missing ConfiguracionAFIP returning Spanish 400 message)
 
 ## Task Commits
 
@@ -83,8 +84,9 @@ Each task was committed atomically:
 1. **Task 1: Wire FinanzasModule — AFIP_SERVICE swap, CAE queue, WsaaModule import** - `9738b41` (feat)
 2. **Task 2: Add emitirFactura service method and POST /finanzas/facturas/:id/emitir endpoint** - `612bb17` (feat)
 3. **Task 3: Run full test suite to verify no regressions** - `34491ea` (test)
+4. **Task 4: Human verification of end-to-end async CAE emission pipeline** - approved (human checkpoint)
 
-**Plan metadata:** (pending — created after checkpoint approval)
+**Plan metadata:** (docs commit — see final commit hash)
 
 ## Files Created/Modified
 
@@ -109,9 +111,9 @@ None — plan executed exactly as written. The test fixture update (adding CAE_Q
 
 ## Next Phase Readiness
 
-- Full async CAE emission pipeline assembled end-to-end — pending human verify of stub mode flow
-- Phase 15 (QR AFIP + PDF + Frontend) can proceed once checkpoint approved
-- Phase 16 (CAEA Contingency) depends on Phase 14 complete + production invoice verification
+- Full async CAE emission pipeline assembled and human-verified end-to-end in stub mode
+- Phase 15 (QR AFIP + PDF + Frontend) can proceed: GET /finanzas/facturas/:id returns cae, caeFchVto, nroComprobante, estado fields needed for QR generation
+- Phase 16 (CAEA Contingency) blocked by gate: Phase 14 + production invoice validation required before CAEA work begins
 
 ---
 *Phase: 14-emision-cae-real-wsfev1*

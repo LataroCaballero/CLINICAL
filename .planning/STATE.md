@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: AFIP Real
 status: completed
-stopped_at: Completed 14-04 tasks 1-3; awaiting human-verify checkpoint
-last_updated: "2026-03-21T00:19:45.783Z"
-last_activity: "2026-03-21 — Phase 14 Plan 04 tasks 1-3 complete: FinanzasModule wired (AFIP_SERVICE DI swap), emitirFactura endpoint + service method added, 31 finanzas tests passing; awaiting human verify"
+stopped_at: Completed 14-04-PLAN.md — Phase 14 complete
+last_updated: "2026-03-21T00:48:19.902Z"
+last_activity: "2026-03-21 — Phase 14 Plan 04 complete: human verify approved — full async CAE emission pipeline end-to-end in stub mode (202, EMISION_PENDIENTE→EMITIDA, stub CAE value, error path for missing config)"
 progress:
   total_phases: 5
-  completed_phases: 3
-  total_plans: 10
-  completed_plans: 10
-  percent: 90
+  completed_phases: 4
+  total_plans: 16
+  completed_plans: 14
+  percent: 88
 ---
 
 # Project State
@@ -26,13 +26,13 @@ See: .planning/PROJECT.md (updated 2026-03-16)
 ## Current Position
 
 ```
-Phase:    14 — Emisión CAE Real (WSFEv1) — in progress
-Plan:     Plan 04 tasks 1-3 complete — awaiting human verify checkpoint
-Status:   Phase 14 Plan 04 tasks 1-3 complete — full async CAE emission pipeline wired; human verify pending
-Progress: [█████████░] 90% of v1.2 plans (Phase 12 done, Phase 13 done, Phase 14 Plans 01+02+03+04 tasks 1-3 done)
+Phase:    14 — Emisión CAE Real (WSFEv1) — COMPLETE
+Plan:     Plan 04 complete — human verify approved
+Status:   Phase 14 complete — full async CAE emission pipeline wired and human-verified end-to-end in stub mode
+Progress: [████████░░] 88% of v1.2 plans (Phase 12 done, Phase 13 done, Phase 14 done; Phase 15 + 16 remaining)
 ```
 
-Last activity: 2026-03-21 — Phase 14 Plan 04 tasks 1-3 complete: FinanzasModule wired (AFIP_SERVICE DI swap), emitirFactura endpoint + service method added, 31 finanzas tests passing; awaiting human verify
+Last activity: 2026-03-21 — Phase 14 Plan 04 complete: human verify approved — full async CAE emission pipeline end-to-end in stub mode (202, EMISION_PENDIENTE→EMITIDA, stub CAE value, error path for missing config)
 
 ## Milestone Summary
 
@@ -119,12 +119,10 @@ Last activity: 2026-03-21 — Phase 14 Plan 04 tasks 1-3 complete: FinanzasModul
 
 ## Session Continuity
 
-Next action: Execute Phase 14 Plan 04 — FinanzasService enqueue integration (enqueue CAE jobs, EMISION_PENDIENTE state update, pg_advisory_xact_lock).
-Stopped at: Completed 14-04 tasks 1-3; awaiting human-verify checkpoint
+Next action: Execute Phase 15 — QR AFIP + PDF + Frontend (gate satisfied: Phase 14 complete).
+Stopped at: Completed 14-04-PLAN.md — Phase 14 complete
 
-Files to read at session start for Phase 14 Plan 03:
-- `.planning/phases/14-emision-cae-real-wsfev1/14-02-SUMMARY.md` — AfipRealService artifacts
-- `backend/src/modules/finanzas/processors/cae-emission.processor.spec.ts` — xit stubs to convert
-- `backend/src/modules/finanzas/afip/afip.errors.ts` — AfipBusinessError/AfipTransientError
-- `backend/src/modules/finanzas/afip/afip-real.service.ts` — EmitirComprobanteRealParams
-- `backend/src/modules/finanzas/afip/afip.constants.ts` — AFIP_SERVICE token
+Files to read at session start for Phase 15:
+- `.planning/phases/14-emision-cae-real-wsfev1/14-04-SUMMARY.md` — emission endpoint artifacts
+- `backend/src/modules/finanzas/finanzas.controller.ts` — current GET /finanzas/facturas/:id response shape
+- `backend/src/prisma/schema.prisma` — Factura model qrData, cae, caeFchVto fields

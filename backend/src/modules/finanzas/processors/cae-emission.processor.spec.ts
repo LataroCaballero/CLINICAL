@@ -1,30 +1,68 @@
 /**
- * CaeEmissionProcessor unit tests — scaffold (Wave 0)
- * Tests are xit (skipped) until Plan 03 implements CaeEmissionProcessor.
+ * CaeEmissionProcessor unit tests — CAE-04
  *
  * Coverage:
- *   CAE-04: AfipBusinessError → UnrecoverableError (DLQ immediately)
- *   CAE-04: AfipTransientError → re-throw (BullMQ retries with backoff)
- *   CAE-04: Axios timeout → re-throw (BullMQ retries with backoff)
+ *   CAE-04: AfipBusinessError → UnrecoverableError (DLQ immediately, no retries)
+ *   CAE-04: AfipTransientError → re-throw (BullMQ retries with exponential backoff)
+ *   CAE-04: Axios timeout → re-throw (BullMQ retries with exponential backoff)
  */
 
+import { Test, TestingModule } from '@nestjs/testing';
+import { UnrecoverableError } from 'bullmq';
+import { CaeEmissionProcessor, CAE_QUEUE } from './cae-emission.processor';
+import { AfipBusinessError, AfipTransientError } from '../afip/afip.errors';
+import { AFIP_SERVICE } from '../afip/afip.constants';
+
+const makeJob = (data: any) => ({ id: 'job-1', name: 'emit-cae', data } as any);
+
 describe('CaeEmissionProcessor', () => {
+  let processor: CaeEmissionProcessor;
+  let mockAfipService: { emitirComprobante: jest.Mock };
+
+  beforeEach(async () => {
+    mockAfipService = { emitirComprobante: jest.fn() };
+
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        CaeEmissionProcessor,
+        { provide: AFIP_SERVICE, useValue: mockAfipService },
+      ],
+    }).compile();
+
+    processor = module.get<CaeEmissionProcessor>(CaeEmissionProcessor);
+  });
+
   // CAE-04: Business error → permanent failure
-  xit('throws UnrecoverableError when AfipService throws AfipBusinessError', async () => {
-    // TODO Plan 03: mock afipService.emitirComprobante to throw AfipBusinessError
-    // expect processor.process() to throw UnrecoverableError
-    // UnrecoverableError means BullMQ moves job to failed set with no retries
+  it('throws UnrecoverableError when AfipService throws AfipBusinessError', async () => {
+    const rawResult = { cae: '', caeFchVto: '', cbtDesde: 0, cbtHasta: 0, resultado: 'R' as const };
+    mockAfipService.emitirComprobante.mockRejectedValue(
+      new AfipBusinessError(['Obs 10242: condicion IVA'], rawResult),
+    );
+
+    await expect(
+      processor.process(makeJob({ facturaId: 'fac-1', profesionalId: 'pro-1' })),
+    ).rejects.toBeInstanceOf(UnrecoverableError);
   });
 
   // CAE-04: Transient error → BullMQ retry
-  xit('re-throws AfipTransientError so BullMQ applies exponential backoff', async () => {
-    // TODO Plan 03: mock afipService.emitirComprobante to throw AfipTransientError
-    // expect processor.process() to throw (not UnrecoverableError)
+  it('re-throws AfipTransientError so BullMQ applies exponential backoff', async () => {
+    mockAfipService.emitirComprobante.mockRejectedValue(
+      new AfipTransientError('AFIP timeout'),
+    );
+
+    await expect(
+      processor.process(makeJob({ facturaId: 'fac-1', profesionalId: 'pro-1' })),
+    ).rejects.toBeInstanceOf(AfipTransientError);
+    // Must NOT be UnrecoverableError (BullMQ would not retry if it were)
   });
 
   // CAE-04: Axios timeout → BullMQ retry
-  xit('re-throws AxiosError timeout so BullMQ applies exponential backoff', async () => {
-    // TODO Plan 03: mock axios timeout error
-    // expect processor.process() to throw (not UnrecoverableError)
+  it('re-throws AxiosError timeout so BullMQ applies exponential backoff', async () => {
+    const axiosErr = Object.assign(new Error('timeout of 30000ms exceeded'), { code: 'ECONNABORTED' });
+    mockAfipService.emitirComprobante.mockRejectedValue(axiosErr);
+
+    await expect(
+      processor.process(makeJob({ facturaId: 'fac-1', profesionalId: 'pro-1' })),
+    ).rejects.not.toBeInstanceOf(UnrecoverableError);
   });
 });

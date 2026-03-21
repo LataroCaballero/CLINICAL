@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: AFIP Real
 status: completed
-stopped_at: Completed 14-01-PLAN.md
-last_updated: "2026-03-21T00:01:26.882Z"
-last_activity: "2026-03-20 — Phase 14 Plan 01 complete: EMISION_PENDIENTE enum migrated, AFIP_SERVICE DI token created, xit spec scaffolds for Plans 02/03"
+stopped_at: Completed 14-02-PLAN.md
+last_updated: "2026-03-21T00:08:17.658Z"
+last_activity: "2026-03-21 — Phase 14 Plan 02 complete: AfipRealService WSFEv1 SOAP, AfipBusinessError/AfipTransientError, 6 unit tests passing (CAE-02, CAE-03)"
 progress:
   total_phases: 5
   completed_phases: 2
   total_plans: 10
-  completed_plans: 7
-  percent: 48
+  completed_plans: 8
+  percent: 89
 ---
 
 # Project State
@@ -27,12 +27,12 @@ See: .planning/PROJECT.md (updated 2026-03-16)
 
 ```
 Phase:    14 — Emisión CAE Real (WSFEv1) — in progress
-Plan:     Plan 01 complete (Wave 0 foundation done)
-Status:   Phase 14 Plan 01 complete — ready for Plans 02/03 (Wave 1)
-Progress: [████████░░] 48% of v1.2 phases (Phase 12 done, Phase 13 done, Phase 14 in progress)
+Plan:     Plan 02 complete (Wave 1 - AfipRealService done)
+Status:   Phase 14 Plan 02 complete — ready for Plan 03 (CaeEmissionProcessor)
+Progress: [█████████░] 89% of v1.2 plans (Phase 12 done, Phase 13 done, Phase 14 Plans 01+02 done)
 ```
 
-Last activity: 2026-03-20 — Phase 14 Plan 01 complete: EMISION_PENDIENTE enum migrated, AFIP_SERVICE DI token created, xit spec scaffolds for Plans 02/03
+Last activity: 2026-03-21 — Phase 14 Plan 02 complete: AfipRealService WSFEv1 SOAP, AfipBusinessError/AfipTransientError, 6 unit tests passing (CAE-02, CAE-03)
 
 ## Milestone Summary
 
@@ -83,6 +83,10 @@ Last activity: 2026-03-20 — Phase 14 Plan 01 complete: EMISION_PENDIENTE enum 
 - [Plan 14-01] EMISION_PENDIENTE positioned between EMITIDA and ANULADA — transient states logically precede terminal states in enum ordering
 - [Plan 14-01] processors/ directory co-located under finanzas/ module — BullMQ processors belong to the domain they process, not a top-level module
 - [Plan 14-01] AFIP_SERVICE DI token follows same string-constant pattern as WSAA_SERVICE — swap real/stub via useFactory without changing callers
+- [Plan 14-02] SOAP namespace prefix ar: used in FECAESolicitar envelope — test assertions must use <ar:CbteDesde> not bare <CbteDesde>
+- [Plan 14-02] configuracionAFIP.findUniqueOrThrow called outside $transaction — cfg needed for URL selection and lock key before transaction opens
+- [Plan 14-02] callFECAESolicitar re-throws only AfipTransientError from axios catch; resultado='R' business error thrown from emitirComprobante after successful HTTP response
+- [Plan 14-02] IVA alicuota ID 5 (21%) hard-coded for Phase 14 homologacion — documented tech debt for production IVA matrix
 
 ### Research Flags (for plan-phase to act on)
 - **Phase 13 y 14:** Verificar URLs actuales WSAA y WSFEv1 bajo dominio arca.gob.ar al momento de implementar. Almacenar en env config: AFIP_WSAA_URL_HOMO, AFIP_WSAA_URL_PROD, AFIP_WSFEV1_URL_HOMO, AFIP_WSFEV1_URL_PROD
@@ -109,12 +113,12 @@ Last activity: 2026-03-20 — Phase 14 Plan 01 complete: EMISION_PENDIENTE enum 
 
 ## Session Continuity
 
-Next action: Execute Phase 14 Plans 02 and 03 in parallel (Wave 1) — AfipRealService + CaeEmissionProcessor implementations. Convert xit stubs to it.
-Stopped at: Completed 14-01-PLAN.md
+Next action: Execute Phase 14 Plan 03 — CaeEmissionProcessor (BullMQ processor that uses AfipRealService and AfipBusinessError → UnrecoverableError pattern).
+Stopped at: Completed 14-02-PLAN.md
 
-Files to read at session start for Phase 14 Plans 02/03:
-- `.planning/phases/14-emision-cae-real-wsfev1/14-01-SUMMARY.md` — Wave 0 artifacts
-- `backend/src/modules/finanzas/afip/afip-real.service.spec.ts` — xit stubs to convert
+Files to read at session start for Phase 14 Plan 03:
+- `.planning/phases/14-emision-cae-real-wsfev1/14-02-SUMMARY.md` — AfipRealService artifacts
 - `backend/src/modules/finanzas/processors/cae-emission.processor.spec.ts` — xit stubs to convert
+- `backend/src/modules/finanzas/afip/afip.errors.ts` — AfipBusinessError/AfipTransientError
+- `backend/src/modules/finanzas/afip/afip-real.service.ts` — EmitirComprobanteRealParams
 - `backend/src/modules/finanzas/afip/afip.constants.ts` — AFIP_SERVICE token
-- `backend/src/modules/wsaa/wsaa.interfaces.ts` — AccessTicket + WsaaServiceInterface

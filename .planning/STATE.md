@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: AFIP Real
 status: completed
-stopped_at: Completed 13-02-PLAN.md
-last_updated: "2026-03-20T23:35:07.229Z"
-last_activity: "2026-03-20 — Phase 13 Plan 02 complete: AfipConfigService rewired to WsaaService — openssl subprocess eliminated, warm Redis cache after cert save, WsaaModule registered in AppModule"
+stopped_at: Completed 14-01-PLAN.md
+last_updated: "2026-03-21T00:01:26.882Z"
+last_activity: "2026-03-20 — Phase 14 Plan 01 complete: EMISION_PENDIENTE enum migrated, AFIP_SERVICE DI token created, xit spec scaffolds for Plans 02/03"
 progress:
   total_phases: 5
   completed_phases: 2
-  total_plans: 6
-  completed_plans: 6
+  total_plans: 10
+  completed_plans: 7
   percent: 48
 ---
 
@@ -26,13 +26,13 @@ See: .planning/PROJECT.md (updated 2026-03-16)
 ## Current Position
 
 ```
-Phase:    13 — WSAA Token Service (complete)
-Plan:     Phase 13 done (both plans complete)
-Status:   Phase 13 complete — ready for Phase 14
-Progress: [█████████░] 48% of v1.2 phases (Phase 12 done, Phase 13 done)
+Phase:    14 — Emisión CAE Real (WSFEv1) — in progress
+Plan:     Plan 01 complete (Wave 0 foundation done)
+Status:   Phase 14 Plan 01 complete — ready for Plans 02/03 (Wave 1)
+Progress: [████████░░] 48% of v1.2 phases (Phase 12 done, Phase 13 done, Phase 14 in progress)
 ```
 
-Last activity: 2026-03-20 — Phase 13 Plan 02 complete: AfipConfigService rewired to WsaaService — openssl subprocess eliminated, warm Redis cache after cert save, WsaaModule registered in AppModule
+Last activity: 2026-03-20 — Phase 14 Plan 01 complete: EMISION_PENDIENTE enum migrated, AFIP_SERVICE DI token created, xit spec scaffolds for Plans 02/03
 
 ## Milestone Summary
 
@@ -80,6 +80,9 @@ Last activity: 2026-03-20 — Phase 13 Plan 02 complete: AfipConfigService rewir
 - [Plan 13-02] WsaaModule does NOT import AfipConfigModule — WsaaService loads cert+key via PrismaService directly; AfipConfigModule imports WsaaModule. Circular dep broken cleanly.
 - [Plan 13-02] Warm cache call (getTicket) after cert save is non-blocking (try/catch) — Redis failure must not fail the cert upload flow
 - [Plan 13-02] WSAA_SERVICE injection pattern established: any module needing AFIP auth tokens imports WsaaModule and uses @Inject(WSAA_SERVICE) wsaaService: WsaaServiceInterface
+- [Plan 14-01] EMISION_PENDIENTE positioned between EMITIDA and ANULADA — transient states logically precede terminal states in enum ordering
+- [Plan 14-01] processors/ directory co-located under finanzas/ module — BullMQ processors belong to the domain they process, not a top-level module
+- [Plan 14-01] AFIP_SERVICE DI token follows same string-constant pattern as WSAA_SERVICE — swap real/stub via useFactory without changing callers
 
 ### Research Flags (for plan-phase to act on)
 - **Phase 13 y 14:** Verificar URLs actuales WSAA y WSFEv1 bajo dominio arca.gob.ar al momento de implementar. Almacenar en env config: AFIP_WSAA_URL_HOMO, AFIP_WSAA_URL_PROD, AFIP_WSFEV1_URL_HOMO, AFIP_WSFEV1_URL_PROD
@@ -106,11 +109,12 @@ Last activity: 2026-03-20 — Phase 13 Plan 02 complete: AfipConfigService rewir
 
 ## Session Continuity
 
-Next action: Phase 13 complete. Execute Phase 14 (Emisión CAE Real — WSFEv1 integration). Import WsaaModule in FinanzasModule, inject WSAA_SERVICE, call getTicket() per invoice.
-Stopped at: Completed 13-02-PLAN.md
+Next action: Execute Phase 14 Plans 02 and 03 in parallel (Wave 1) — AfipRealService + CaeEmissionProcessor implementations. Convert xit stubs to it.
+Stopped at: Completed 14-01-PLAN.md
 
-Files to read at session start for Phase 14:
-- `.planning/phases/13-wsaa-token-service/13-02-SUMMARY.md` — WSAA_SERVICE injection pattern
-- `.planning/phases/13-wsaa-token-service/13-01-SUMMARY.md` — WsaaModule contracts
+Files to read at session start for Phase 14 Plans 02/03:
+- `.planning/phases/14-emision-cae-real-wsfev1/14-01-SUMMARY.md` — Wave 0 artifacts
+- `backend/src/modules/finanzas/afip/afip-real.service.spec.ts` — xit stubs to convert
+- `backend/src/modules/finanzas/processors/cae-emission.processor.spec.ts` — xit stubs to convert
+- `backend/src/modules/finanzas/afip/afip.constants.ts` — AFIP_SERVICE token
 - `backend/src/modules/wsaa/wsaa.interfaces.ts` — AccessTicket + WsaaServiceInterface
-- `backend/src/modules/afip-config/afip-config.service.ts` — validatePtoVta SOAP pattern (reuse for WSFEv1)

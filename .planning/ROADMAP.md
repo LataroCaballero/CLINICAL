@@ -140,7 +140,7 @@ Plans:
 | 11. Settlement Workflow | v1.1 | 2/2 | Complete | 2026-03-16 |
 | 12. Schema AFIP Extendido + Certificados | v1.2 | Complete    | 2026-03-16 | 2026-03-16 |
 | 13. WSAA Token Service | 2/2 | Complete    | 2026-03-20 | - |
-| 14. Emisión CAE Real (WSFEv1) | v1.2 | 0/4 | Not started | - |
+| 14. Emisión CAE Real (WSFEv1) | 1/4 | In Progress|  | - |
 | 15. QR AFIP + PDF + Frontend | v1.2 | 0/? | Not started | - |
 | 16. CAEA Contingency Mode | v1.2 | 0/? | Not started | - |
 

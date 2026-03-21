@@ -11,6 +11,7 @@ import {
 } from './afip.interfaces';
 import { AfipBusinessError, AfipTransientError } from './afip.errors';
 import { EstadoFactura } from '@prisma/client';
+import { buildAfipQrUrl, toAfipMonedaCodigo } from '../factura-pdf.service';
 
 // Extended params for real service — includes fields not needed by the stub
 export interface EmitirComprobanteRealParams extends EmitirComprobanteParams {
@@ -58,6 +59,12 @@ export class AfipRealService implements AfipService {
 
     const cbteFch = fecha.toISOString().slice(0, 10).replace(/-/g, '');
 
+    // Fetch factura fields needed for QR payload before entering transaction
+    const facturaFields = await this.prisma.factura.findUniqueOrThrow({
+      where: { id: facturaId },
+      select: { moneda: true, tipoCambio: true, total: true, cuit: true },
+    });
+
     return this.prisma.$transaction(
       async (tx) => {
         // Advisory lock — serializes concurrent emissions for same CUIT+ptoVta+cbteTipo
@@ -95,7 +102,24 @@ export class AfipRealService implements AfipService {
           );
         }
 
-        // Persist CAE + nroComprobante
+        // Build QR payload per RG 5616/2024 Anexo II
+        const qrPayload = {
+          ver: 1,
+          fecha: fecha.toISOString().split('T')[0],
+          cuit: parseInt(cfg.cuit, 10),
+          ptoVta: cfg.ptoVta,
+          tipoCmp: params.tipoComprobante,
+          nroCmp: result.cbtDesde,
+          importe: Number(facturaFields.total),
+          moneda: toAfipMonedaCodigo(facturaFields.moneda),
+          ctz: Number(facturaFields.tipoCambio),
+          tipoDocRec: facturaFields.cuit ? 80 : 99,
+          nroDocRec: facturaFields.cuit ? parseInt(facturaFields.cuit, 10) : 0,
+          tipoCodAut: 'E' as const,
+          codAut: parseInt(result.cae, 10),
+        };
+
+        // Persist CAE + nroComprobante + qrData in same transaction
         await tx.factura.update({
           where: { id: facturaId },
           data: {
@@ -104,6 +128,7 @@ export class AfipRealService implements AfipService {
             nroComprobante: result.cbtDesde,
             ptoVta: cfg.ptoVta,
             estado: EstadoFactura.EMITIDA,
+            qrData: buildAfipQrUrl(qrPayload),
           },
         });
 

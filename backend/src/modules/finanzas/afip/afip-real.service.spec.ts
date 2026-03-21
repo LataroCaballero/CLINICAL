@@ -1,9 +1,10 @@
 /**
- * AfipRealService unit tests — Plan 02 implementation
+ * AfipRealService unit tests — Plan 02 implementation + Phase 15 QR extension
  *
  * Coverage:
  *   CAE-02: FECAESolicitar SOAP called correctly, advisory lock acquired, CAE+nroComprobante persisted
  *   CAE-03: Error 10242 → AfipBusinessError → spanishMessage in human-readable Spanish
+ *   QR-01: qrData computed from CAE result + factura fields and persisted in same factura.update
  */
 
 import { Test, TestingModule } from '@nestjs/testing';
@@ -56,26 +57,35 @@ const FECAE_REJECTED_XML = `<?xml version="1.0" encoding="UTF-8"?>
 
 const mockTicket = { token: 'tok', sign: 'sig', expiresAt: new Date() };
 const mockConfig = { cuit: '20123456789', ptoVta: 1, ambiente: 'HOMOLOGACION' };
+const mockFacturaFields = {
+  moneda: 'ARS',
+  tipoCambio: 1.0,
+  total: 1210.00,
+  cuit: null,
+};
 
 function buildMockPrisma(overrides: Record<string, any> = {}) {
   const mockQueryRawUnsafe = jest.fn().mockResolvedValue(undefined);
   const mockFacturaUpdate = jest.fn().mockResolvedValue({});
-  const mockFindUniqueOrThrow = jest.fn().mockResolvedValue(mockConfig);
+  const mockAfipConfigFindUniqueOrThrow = jest.fn().mockResolvedValue(mockConfig);
+  const mockFacturaFindUniqueOrThrow = jest.fn().mockResolvedValue(mockFacturaFields);
 
   const mockTx = {
     $queryRawUnsafe: mockQueryRawUnsafe,
     factura: { update: mockFacturaUpdate },
-    configuracionAFIP: { findUniqueOrThrow: mockFindUniqueOrThrow },
+    configuracionAFIP: { findUniqueOrThrow: mockAfipConfigFindUniqueOrThrow },
   };
 
   const mockTransaction = jest.fn().mockImplementation(async (fn: (tx: any) => Promise<any>) => fn(mockTx));
 
   return {
     $transaction: mockTransaction,
-    configuracionAFIP: { findUniqueOrThrow: mockFindUniqueOrThrow },
+    configuracionAFIP: { findUniqueOrThrow: mockAfipConfigFindUniqueOrThrow },
+    factura: { findUniqueOrThrow: mockFacturaFindUniqueOrThrow },
     mockQueryRawUnsafe,
     mockFacturaUpdate,
-    mockFindUniqueOrThrow,
+    mockAfipConfigFindUniqueOrThrow,
+    mockFacturaFindUniqueOrThrow,
     ...overrides,
   };
 }
@@ -159,8 +169,8 @@ describe('AfipRealService', () => {
     expect(mockPrisma.$transaction).toHaveBeenCalledWith(expect.any(Function), { timeout: 45000 });
   });
 
-  // CAE-02: Persistence
-  it('persists CAE, caeFchVto, nroComprobante, ptoVta, estado=EMITIDA on Factura after successful emission', async () => {
+  // CAE-02: Persistence — now includes qrData
+  it('persists CAE, caeFchVto, nroComprobante, ptoVta, estado=EMITIDA, qrData on Factura after successful emission', async () => {
     const mockPrisma = buildMockPrisma();
     mockAxiosPost
       .mockResolvedValueOnce({ data: ULTIMO_AUTORIZADO_XML })
@@ -169,16 +179,18 @@ describe('AfipRealService', () => {
     const service = await buildService(mockPrisma);
     await service.emitirComprobante(buildBaseParams());
 
-    expect(mockPrisma.mockFacturaUpdate).toHaveBeenCalledWith({
-      where: { id: 'fact-uuid-456' },
-      data: {
-        cae: '74397704790943',
-        caeFchVto: '20260323',
-        nroComprobante: 43,
-        ptoVta: 1,
-        estado: 'EMITIDA',
-      },
-    });
+    expect(mockPrisma.mockFacturaUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'fact-uuid-456' },
+        data: expect.objectContaining({
+          cae: '74397704790943',
+          caeFchVto: '20260323',
+          nroComprobante: 43,
+          ptoVta: 1,
+          estado: 'EMITIDA',
+        }),
+      }),
+    );
   });
 
   // CAE-02: getUltimoAutorizado
@@ -229,5 +241,39 @@ describe('AfipRealService', () => {
     expect(caughtError).toBeDefined();
     expect(caughtError!.spanishMessage).toMatch(/IVA|condición/i);
     expect(caughtError!.spanishMessage).toContain('condición de IVA');
+  });
+
+  // QR-01: qrData persisted after successful CAE
+  it('QR-01: factura.update is called with qrData starting with AFIP QR base URL', async () => {
+    const mockPrisma = buildMockPrisma();
+    mockAxiosPost
+      .mockResolvedValueOnce({ data: ULTIMO_AUTORIZADO_XML })
+      .mockResolvedValueOnce({ data: FECAE_APPROVED_XML });
+
+    const service = await buildService(mockPrisma);
+    await service.emitirComprobante(buildBaseParams());
+
+    const updateCall = mockPrisma.mockFacturaUpdate.mock.calls[0][0];
+    expect(updateCall.data.qrData).toMatch(/^https:\/\/www\.afip\.gob\.ar\/fe\/qr\/\?p=/);
+  });
+
+  // QR-01: qrData decoded base64 contains emisor CUIT as number
+  it('QR-01: decoded qrData base64 contains cfg.cuit as a number', async () => {
+    const mockPrisma = buildMockPrisma();
+    mockAxiosPost
+      .mockResolvedValueOnce({ data: ULTIMO_AUTORIZADO_XML })
+      .mockResolvedValueOnce({ data: FECAE_APPROVED_XML });
+
+    const service = await buildService(mockPrisma);
+    await service.emitirComprobante(buildBaseParams());
+
+    const updateCall = mockPrisma.mockFacturaUpdate.mock.calls[0][0];
+    const qrUrl: string = updateCall.data.qrData;
+    const b64 = qrUrl.replace('https://www.afip.gob.ar/fe/qr/?p=', '');
+    const payload = JSON.parse(Buffer.from(b64, 'base64').toString('utf-8'));
+
+    // cfg.cuit = '20123456789' → must be number 20123456789 in payload
+    expect(payload.cuit).toBe(20123456789);
+    expect(typeof payload.cuit).toBe('number');
   });
 });

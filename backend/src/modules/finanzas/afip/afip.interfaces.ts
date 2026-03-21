@@ -20,6 +20,7 @@ export interface EmitirComprobanteResult {
   cbtHasta: number;
   resultado: 'A' | 'R';     // A=Aprobado, R=Rechazado
   observaciones?: string[];  // Error messages when resultado='R'
+  qrData?: string;           // AFIP QR URL per RG 5616/2024 (optional — stub/real both return it)
 }
 
 export interface AfipService {

@@ -106,7 +106,12 @@ Plans:
   1. El PDF descargable de una factura emitida incluye un código QR que al ser escaneado abre la URL https://www.afip.gob.ar/fe/qr/?p= con el JSON base64 de 13 campos especificados en RG 5616/2024
   2. El Facturador puede ver en el detalle de la factura el número de CAE, la fecha de vencimiento del CAE, y el código QR renderizado como imagen
   3. Para facturas en USD, el Facturador puede ingresar manualmente la cotización BNA del día; la pantalla muestra un link directo a bna.com.ar para consultar el tipo de cambio
-**Plans**: TBD
+**Plans**: 4 plans
+Plans:
+- [ ] 15-01-PLAN.md — qrcode install + FacturaPdfService + buildAfipQrUrl + AfipRealService qrData extension (QR-01)
+- [ ] 15-02-PLAN.md — Backend API: GET facturas/:id + GET facturas/:id/pdf + PATCH facturas/:id/tipo-cambio (QR-01, QR-02, QR-03)
+- [ ] 15-03-PLAN.md — Frontend: types + hooks + FacturaDetailModal + ComprobantesTab wiring (QR-02, QR-03)
+- [ ] 15-04-PLAN.md — Human verify: PDF QR scan + CAE display + USD tipoCambio flow (QR-01, QR-02, QR-03)
 **Research flag**: None — qrcode 1.5.4 API estable; integración PDFKit ya existe para presupuestos; patrón estándar
 
 ### Phase 16: CAEA Contingency Mode
@@ -141,7 +146,7 @@ Plans:
 | 12. Schema AFIP Extendido + Certificados | v1.2 | Complete    | 2026-03-16 | 2026-03-16 |
 | 13. WSAA Token Service | 2/2 | Complete    | 2026-03-20 | - |
 | 14. Emisión CAE Real (WSFEv1) | 4/4 | Complete    | 2026-03-21 | - |
-| 15. QR AFIP + PDF + Frontend | v1.2 | 0/? | Not started | - |
+| 15. QR AFIP + PDF + Frontend | v1.2 | 0/4 | Planned | - |
 | 16. CAEA Contingency Mode | v1.2 | 0/? | Not started | - |
 
 ---

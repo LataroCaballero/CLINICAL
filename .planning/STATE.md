@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: AFIP Real
-status: verifying
-stopped_at: Completed 14-04-PLAN.md — Phase 14 complete
-last_updated: "2026-03-21T00:55:19.585Z"
-last_activity: "2026-03-21 — Phase 14 Plan 04 complete: human verify approved — full async CAE emission pipeline end-to-end in stub mode (202, EMISION_PENDIENTE→EMITIDA, stub CAE value, error path for missing config)"
+status: active
+stopped_at: Completed 15-01-PLAN.md
+last_updated: "2026-03-20T22:20:00.000Z"
+last_activity: "2026-03-20 — Phase 15 Plan 01 complete: qrcode installed, FacturaPdfService with buildAfipQrUrl (RG 5616/2024), AfipRealService persisting qrData in CAE transaction, 41 finanzas tests green"
 progress:
   total_phases: 5
   completed_phases: 3
-  total_plans: 10
-  completed_plans: 10
-  percent: 88
+  total_plans: 14
+  completed_plans: 11
+  percent: 79
 ---
 
 # Project State
@@ -26,13 +26,13 @@ See: .planning/PROJECT.md (updated 2026-03-16)
 ## Current Position
 
 ```
-Phase:    14 — Emisión CAE Real (WSFEv1) — COMPLETE
-Plan:     Plan 04 complete — human verify approved
-Status:   Phase 14 complete — full async CAE emission pipeline wired and human-verified end-to-end in stub mode
-Progress: [████████░░] 88% of v1.2 plans (Phase 12 done, Phase 13 done, Phase 14 done; Phase 15 + 16 remaining)
+Phase:    15 — QR AFIP + PDF + Frontend (in progress)
+Plan:     Plan 01 complete — qrcode + FacturaPdfService + AfipRealService qrData persistence
+Status:   Phase 15 Plan 01 done; Plans 02, 03, 04 remaining
+Progress: [████████░░] 79% of v1.2 plans (Phase 12 done, Phase 13 done, Phase 14 done; Phase 15 Plan 01 done, Plans 02-04 + Phase 16 remaining)
 ```
 
-Last activity: 2026-03-21 — Phase 14 Plan 04 complete: human verify approved — full async CAE emission pipeline end-to-end in stub mode (202, EMISION_PENDIENTE→EMITIDA, stub CAE value, error path for missing config)
+Last activity: 2026-03-20 — Phase 15 Plan 01 complete: qrcode installed, buildAfipQrUrl (RG 5616/2024 compliant), FacturaPdfService with QR PNG embed, AfipRealService persisting qrData in CAE transaction — 41 finanzas tests green, TypeScript clean
 
 ## Milestone Summary
 
@@ -93,6 +93,11 @@ Last activity: 2026-03-21 — Phase 14 Plan 04 complete: human verify approved �
 - [Plan 14-04] AFIP_SERVICE useFactory in FinanzasModule routes to AfipRealService (USE_AFIP_STUB != 'true') or AfipStubService (USE_AFIP_STUB='true') — env toggle pattern mirrors WSAA_SERVICE from Phase 13
 - [Plan 14-04] condicionIVAReceptor null check in emitirFactura before enqueue (not in processor) — prevents AFIP error 10242 from being retried 5 times with exponential backoff
 - [Plan 14-04] ConfiguracionAFIP existence validated before setting EMISION_PENDIENTE — prevents orphaned estado if cert not uploaded
+- [Plan 15-01] buildAfipQrUrl uses Buffer.from(json).toString('base64') — standard Node.js, no external encoder; URL-safe per AFIP spec examples
+- [Plan 15-01] facturaFields fetched BEFORE $transaction (outside advisory lock) to avoid adding DB round-trip inside timed lock window
+- [Plan 15-01] AfipStubService returns deterministic qrData with stub CUIT 20000000001 — makes unit tests predictable regardless of date
+- [Plan 15-01] EmitirComprobanteResult.qrData is optional (?) — real service always sets it, stub always returns it; existing callers (CaeEmissionProcessor) don't break
+- [Plan 15-01] FacturaPdfService NOT exported from FinanzasModule — internal use only; Plan 02 injects it into FinanzasService
 
 ### Research Flags (for plan-phase to act on)
 - **Phase 13 y 14:** Verificar URLs actuales WSAA y WSFEv1 bajo dominio arca.gob.ar al momento de implementar. Almacenar en env config: AFIP_WSAA_URL_HOMO, AFIP_WSAA_URL_PROD, AFIP_WSFEV1_URL_HOMO, AFIP_WSFEV1_URL_PROD
@@ -119,10 +124,11 @@ Last activity: 2026-03-21 — Phase 14 Plan 04 complete: human verify approved �
 
 ## Session Continuity
 
-Next action: Execute Phase 15 — QR AFIP + PDF + Frontend (gate satisfied: Phase 14 complete).
-Stopped at: Completed 14-04-PLAN.md — Phase 14 complete
+Next action: Execute Phase 15 Plan 02 — integrate FacturaPdfService into FinanzasService + expose GET /finanzas/facturas/:id/pdf endpoint.
+Stopped at: Completed 15-01-PLAN.md
 
-Files to read at session start for Phase 15:
-- `.planning/phases/14-emision-cae-real-wsfev1/14-04-SUMMARY.md` — emission endpoint artifacts
+Files to read at session start for Phase 15 Plan 02:
+- `.planning/phases/15-qr-afip-pdf-frontend-comprobantes/15-01-SUMMARY.md` — FacturaPdfService artifacts + qrData persistence
+- `backend/src/modules/finanzas/finanzas.service.ts` — current FinanzasService to add generatePdf method
 - `backend/src/modules/finanzas/finanzas.controller.ts` — current GET /finanzas/facturas/:id response shape
-- `backend/src/prisma/schema.prisma` — Factura model qrData, cae, caeFchVto fields
+- `backend/src/modules/finanzas/factura-pdf.service.ts` — FacturaPdfData interface shape

@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Building2, AlertTriangle, TrendingUp } from "lucide-react";
 import Link from "next/link";
+import { useAfipConfig } from "@/hooks/useAfipConfig";
 
 function formatMoney(value: number): string {
   return new Intl.NumberFormat("es-AR", {
@@ -36,6 +37,7 @@ export default function FacturadorPage() {
   const { data: limiteData, isLoading: loadingLimite } =
     useLimiteDisponible(selectedProfessionalId, mesActual);
   const setLimite = useSetLimiteMensual();
+  const { data: afipConfig } = useAfipConfig();
 
   // Empty state when no professional selected
   if (!selectedProfessionalId) {
@@ -69,6 +71,25 @@ export default function FacturadorPage() {
     <div className="p-6 space-y-6 max-w-4xl mx-auto">
       <h1 className="text-2xl font-semibold text-gray-900">Panel de Facturación</h1>
       <p className="text-sm text-gray-500">Período: {mesActual}</p>
+
+      {afipConfig?.configured && (
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-gray-500">Certificado AFIP:</span>
+          <Badge
+            className={
+              afipConfig.certStatus === "OK"
+                ? "bg-green-600 hover:bg-green-600 text-white"
+                : afipConfig.certStatus === "EXPIRING_SOON"
+                ? "bg-yellow-500 hover:bg-yellow-500 text-white"
+                : "bg-red-600 hover:bg-red-600 text-white"
+            }
+          >
+            {afipConfig.certStatus === "OK" && "Certificado activo"}
+            {afipConfig.certStatus === "EXPIRING_SOON" && `Vence en ${afipConfig.daysUntilExpiry}d`}
+            {afipConfig.certStatus === "EXPIRED" && "Certificado vencido"}
+          </Badge>
+        </div>
+      )}
 
       {/* DASH-02: Prácticas pendientes por obra social */}
       <section>

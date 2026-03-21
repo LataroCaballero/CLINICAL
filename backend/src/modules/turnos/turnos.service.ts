@@ -13,6 +13,7 @@ import {
   TipoMovimiento,
   EstadoCirugia,
   EtapaCRM,
+  TipoContacto,
 } from '@prisma/client';
 import { getDayRange } from '@/src/common/utils/date-range';
 import { ReprogramarTurnoDto } from './dto/reprogramar-turno.dto';
@@ -73,23 +74,25 @@ export class TurnosService {
 
     const fin = new Date(inicio.getTime() + duracionMin * 60 * 1000);
 
-    // 3) Validar solapamiento (para ese profesional)
-    const turnoSolapado = await this.prisma.turno.findFirst({
-      where: {
-        profesionalId: dto.profesionalId,
-        // Excluir cancelados del conflicto (MVP)
-        estado: { not: EstadoTurno.CANCELADO },
-        // Overlap: existente.inicio < nuevoFin AND existente.fin > nuevoInicio
-        inicio: { lt: fin },
-        fin: { gt: inicio },
-      },
-      select: { id: true, inicio: true, fin: true, estado: true },
-    });
+    // 3) Validar solapamiento (para ese profesional) — se saltea si es sobreturno
+    if (!dto.esSobreturno) {
+      const turnoSolapado = await this.prisma.turno.findFirst({
+        where: {
+          profesionalId: dto.profesionalId,
+          // Excluir cancelados del conflicto (MVP)
+          estado: { not: EstadoTurno.CANCELADO },
+          // Overlap: existente.inicio < nuevoFin AND existente.fin > nuevoInicio
+          inicio: { lt: fin },
+          fin: { gt: inicio },
+        },
+        select: { id: true, inicio: true, fin: true, estado: true },
+      });
 
-    if (turnoSolapado) {
-      throw new BadRequestException(
-        `El profesional ya tiene un turno que se solapa en ese horario (${turnoSolapado.estado}).`,
-      );
+      if (turnoSolapado) {
+        throw new BadRequestException(
+          `El profesional ya tiene un turno que se solapa en ese horario (${turnoSolapado.estado}).`,
+        );
+      }
     }
 
     // 4) Crear turno
@@ -102,6 +105,7 @@ export class TurnosService {
         fin,
         estado: dto.estado ?? EstadoTurno.PENDIENTE,
         observaciones: dto.observaciones?.trim() || null,
+        esSobreturno: dto.esSobreturno ?? false,
 
         // MVP: no tocamos automatizaciones / cirugías / finanzas
         // notificacionEnviada queda false por default
@@ -118,15 +122,29 @@ export class TurnosService {
       },
     });
 
-    // 5) CRM auto-transition: si el paciente no tiene etapa asignada → TURNO_AGENDADO
+    // 5) CRM auto-transition: avanzar a TURNO_AGENDADO si el paciente está en etapa inicial
     const pacienteCRM = await this.prisma.paciente.findUnique({
       where: { id: dto.pacienteId },
-      select: { etapaCRM: true },
+      select: { etapaCRM: true, profesionalId: true },
     });
-    if (!pacienteCRM?.etapaCRM) {
+    const etapasIniciales: (EtapaCRM | null)[] = [null, EtapaCRM.NUEVO_LEAD];
+    if (etapasIniciales.includes(pacienteCRM?.etapaCRM ?? null)) {
       await this.prisma.paciente.update({
         where: { id: dto.pacienteId },
         data: { etapaCRM: EtapaCRM.TURNO_AGENDADO },
+      });
+    }
+
+    // Auto-contacto: turno creado
+    const profIdParaContacto = dto.profesionalId ?? pacienteCRM?.profesionalId;
+    if (profIdParaContacto) {
+      await this.prisma.contactoLog.create({
+        data: {
+          pacienteId: dto.pacienteId,
+          profesionalId: profIdParaContacto,
+          tipo: TipoContacto.SISTEMA,
+          nota: 'Esperando a ser atendido',
+        },
       });
     }
 
@@ -250,6 +268,20 @@ export class TurnosService {
       data: {
         estado: EstadoTurno.CONFIRMADO,
       },
+    });
+  }
+
+  async updateObservaciones(turnoId: string, observaciones: string) {
+    const turno = await this.prisma.turno.findUnique({
+      where: { id: turnoId },
+      select: { id: true },
+    });
+    if (!turno) throw new NotFoundException('Turno no encontrado.');
+
+    return this.prisma.turno.update({
+      where: { id: turnoId },
+      data: { observaciones: observaciones?.trim() || null },
+      select: { id: true, observaciones: true },
     });
   }
 
@@ -675,6 +707,7 @@ export class TurnosService {
       select: {
         esCirugia: true,
         pacienteId: true,
+        profesionalId: true,
         paciente: { select: { etapaCRM: true } },
       },
     });
@@ -691,16 +724,33 @@ export class TurnosService {
 
     // CRM auto-transition on cerrar sesion
     if (turnoInfo) {
+      let nuevaEtapa: EtapaCRM | null = null;
+      let notaContacto: string | null = null;
+
       if (turnoInfo.esCirugia) {
-        await this.prisma.paciente.update({
-          where: { id: turnoInfo.pacienteId },
-          data: { etapaCRM: EtapaCRM.PROCEDIMIENTO_REALIZADO },
-        });
+        nuevaEtapa = EtapaCRM.PROCEDIMIENTO_REALIZADO;
+        notaContacto = 'Procedimiento realizado';
       } else if (turnoInfo.paciente.etapaCRM === EtapaCRM.TURNO_AGENDADO) {
+        nuevaEtapa = EtapaCRM.CONSULTADO;
+        notaContacto = 'Esperando presupuesto';
+      }
+
+      if (nuevaEtapa) {
         await this.prisma.paciente.update({
           where: { id: turnoInfo.pacienteId },
-          data: { etapaCRM: EtapaCRM.CONSULTADO },
+          data: { etapaCRM: nuevaEtapa },
         });
+
+        if (turnoInfo.profesionalId && notaContacto) {
+          await this.prisma.contactoLog.create({
+            data: {
+              pacienteId: turnoInfo.pacienteId,
+              profesionalId: turnoInfo.profesionalId,
+              tipo: TipoContacto.SISTEMA,
+              nota: notaContacto,
+            },
+          });
+        }
       }
     }
 
@@ -734,6 +784,7 @@ export class TurnosService {
             id: true,
             nombreCompleto: true,
             diagnostico: true,
+            tratamiento: true,
           },
         },
         tipoTurno: {

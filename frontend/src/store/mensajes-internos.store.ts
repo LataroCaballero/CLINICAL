@@ -6,6 +6,7 @@ interface MensajesState {
   isWidgetOpen: boolean;
   selectedPacienteId: string | null;
   widgetPosition: { x: number; y: number };
+  triggerPosition: { x: number; y: number } | null; // null = posición CSS por defecto
 
   // Contadores (actualizados por polling)
   unreadTotal: number;
@@ -19,6 +20,7 @@ interface MensajesState {
   selectChat: (pacienteId: string) => void;
   clearSelection: () => void;
   setWidgetPosition: (pos: { x: number; y: number }) => void;
+  setTriggerPosition: (pos: { x: number; y: number }) => void;
   updateUnreadCounts: (data: {
     total: number;
     alta: number;
@@ -34,6 +36,7 @@ export const useMensajesStore = create<MensajesState>()(
       isWidgetOpen: false,
       selectedPacienteId: null,
       widgetPosition: { x: 20, y: 80 },
+      triggerPosition: null,
       unreadTotal: 0,
       unreadAlta: 0,
       unreadByPaciente: {},
@@ -58,6 +61,8 @@ export const useMensajesStore = create<MensajesState>()(
       clearSelection: () => set({ selectedPacienteId: null }),
 
       setWidgetPosition: (pos) => set({ widgetPosition: pos }),
+
+      setTriggerPosition: (pos) => set({ triggerPosition: pos }),
 
       updateUnreadCounts: (data) =>
         set({
@@ -88,6 +93,7 @@ export const useMensajesStore = create<MensajesState>()(
       name: 'mensajes-internos',
       partialize: (state) => ({
         widgetPosition: state.widgetPosition,
+        triggerPosition: state.triggerPosition,
       }),
     }
   )

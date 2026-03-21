@@ -47,4 +47,11 @@ describe('AfipStubService', () => {
     const result = await service.verificarServicio();
     expect(result).toBe(true);
   });
+
+  // QR-01: stub returns deterministic qrData
+  it('emitirComprobante returns qrData starting with AFIP QR base URL', async () => {
+    const result = await service.emitirComprobante(mockParams);
+    expect(result.qrData).toBeDefined();
+    expect(result.qrData).toMatch(/^https:\/\/www\.afip\.gob\.ar\/fe\/qr\/\?p=/);
+  });
 });

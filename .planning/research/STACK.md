@@ -1,19 +1,18 @@
 # Stack Research
 
-**Domain:** Argentine medical clinic SaaS — AFIP/ARCA electronic invoicing (WSFE), OS settlement workflow, billing limit dashboard
-**Researched:** 2026-03-12
-**Confidence:** MEDIUM (AFIP library landscape fragmented; core recommendation HIGH; third-party API pricing MEDIUM)
+**Domain:** Argentine medical clinic SaaS — AFIP/ARCA real CAE emission (v1.2)
+**Researched:** 2026-03-16
+**Confidence:** HIGH (raw SOAP approach locked; package versions verified; QR spec confirmed)
 
 ---
 
-## Context: Milestone Scope
+## Milestone Scope
 
-The v1.1 Vista del Facturador milestone has two clearly separable concerns:
+This document supersedes the v1.1 STACK.md (which was a research deliverable). v1.2 is the **real implementation** milestone. The architecture decision from AFIP-INTEGRATION.md is locked:
 
-1. **Billing limit dashboard + OS liquidation workflow** — pure NestJS/Prisma work, no new libraries needed. Uses existing `Factura`, `PracticaRealizada`, `LiquidacionObraSocial` models.
-2. **AFIP WSFE integration** — researched here. The PROJECT.md explicitly says: "Research e informe de integración AFIP para emisión de comprobantes desde la plataforma" — this is a *research deliverable*, not a build deliverable for v1.1.
+> **Raw SOAP/XML — no third-party AFIP library.**
 
-> **Key finding:** AFIP integration is NOT in scope for v1.1 implementation. The goal is to document what stack is needed, what friction points exist, and what would be required in a future milestone. The dashboard and OS liquidation features need zero new libraries.
+This means `@arcasdk/core` (recommended in v1.1 research) is NOT used for v1.2. The rationale for this reversal is documented below.
 
 ---
 
@@ -21,11 +20,13 @@ The v1.1 Vista del Facturador milestone has two clearly separable concerns:
 
 | Already in Place | Version | Notes |
 |-----------------|---------|-------|
-| `pdfkit` | 0.17.2 | Installed, used in `reportes-export.service.ts`. Extend for invoice PDFs. |
-| `@nestjs/schedule` | 6.1.0 | Cron for daily billing summaries. |
-| `redis` + `cache-manager-redis-yet` | 5.9.0 / 5.1.5 | Redis present. Can cache WSAA tokens. |
-| `Decimal.js` (via Prisma) | — | All monetary fields already use `@db.Decimal(10, 2)`. |
-| Existing `Factura` model | — | Has `tipo`, `numero`, `cuit`, `razonSocial`, `condicionIVA`, `subtotal`, `impuestos`, `total`. Structure is partially AFIP-compatible. |
+| `pdfkit` | 0.17.2 | Installed, used in `reportes-export.service.ts`. Extend for invoice PDFs with QR. |
+| `axios` | 1.13.1 | Used for all HTTP. Will handle SOAP calls to WSAA and WSFEv1 directly. |
+| `@nestjs/schedule` | 6.1.0 | Already installed. Use for CAEA pre-request cron job. |
+| `redis` + `cache-manager-redis-yet` | 5.9.0 / 5.1.5 | Redis in place. Use for WSAA token caching per-CUIT. |
+| `EncryptionService` | — | AES-256-GCM at `backend/src/modules/whatsapp/crypto/encryption.service.ts`. Reuse for cert/key encryption. |
+| `AfipStubService` | — | Interface `emitirComprobante()` already defined. Real service swaps in. |
+| `@nestjs/schedule` | 6.1.0 | Already installed for CAEA cron. No additional install needed. |
 
 **Constraint:** NestJS 10.x + Node.js 20.x + Prisma 6.x. No framework changes.
 
@@ -33,237 +34,259 @@ The v1.1 Vista del Facturador milestone has two clearly separable concerns:
 
 ## Recommended Stack
 
-### 1. AFIP WSFE Integration Library
+### Core Technologies
 
-**Recommendation: `@arcasdk/core` (self-hosted, TypeScript-native, no cloud proxy required)**
+| Technology | Version | Purpose | Why Recommended |
+|------------|---------|---------|-----------------|
+| `node-forge` | 1.3.3 | CMS/PKCS#7 signing of WSAA TRA | In-process signing — no subprocess, no temp files, no OpenSSL binary dependency. Works on any OS. The only viable pure-JS PKCS#7 SignedData implementation. |
+| `qrcode` | 1.5.4 | QR code PNG generation for AFIP invoice PDFs | 9M+ weekly downloads, canvas-free, outputs PNG `Buffer` directly compatible with `PDFKit.doc.image()`. Stable — last published 2 years ago but AFIP QR format has not changed. |
+| `xml2js` | 0.6.2 | XML parsing of WSAA and WSFEv1 SOAP responses | Established standard (10K+ dependents). Simpler and safer than manual regex for structured SOAP response parsing in production. |
+| `async-mutex` | 0.5.0 | Per-CUIT mutex for WSAA token refresh | Prevents duplicate concurrent WSAA calls when two requests arrive for the same CUIT simultaneously. Zero-overhead when token is cached. |
 
-| Library | Type | TS Support | Active | Self-Hosted | Last Version | Verdict |
-|---------|------|-----------|--------|------------|-------------|---------|
-| **`@arcasdk/core`** | Open source npm | Native TS | Yes | Yes — direct SOAP to ARCA | 0.3.6 (Dec 2025) | **RECOMMENDED** |
-| `@afipsdk/afip.js` | npm + cloud proxy | Native TS | Yes (v1.2.3 Feb 2026) | No — requires `access_token` from afipsdk.com | v1.2.3 | Viable but cloud dependency |
-| `facturajs` | Open source npm | Partial TS | Stale | Yes | 0.3.2 (Sep 2025) | Usable, JS-first |
-| `afipjs` (egnuez) | Open source npm | No (JS only) | Stale | Yes | Old | Avoid — no TS, unmaintained |
-| `afip-apis` | Open source npm | Yes | Low activity | Yes | — | Avoid — low adoption |
+### Supporting Libraries
 
-**Why `@arcasdk/core` over `@afipsdk/afip.js`:**
+| Library | Version | Purpose | When to Use |
+|---------|---------|---------|-------------|
+| `@types/node-forge` | 1.3.14 | TypeScript types for `node-forge` | Always — dev dependency |
+| `@types/qrcode` | latest | TypeScript types for `qrcode` | Always — dev dependency |
+| `@types/xml2js` | 0.4.14 | TypeScript types for `xml2js` | Always — dev dependency |
 
-`@afipsdk/afip.js` is the most popular option (100k+ downloads since 2017), **but** it requires an `access_token` obtained from `app.afipsdk.com` — their SaaS platform. This creates:
-- A mandatory third-party cloud dependency for every invoice emission in production.
-- A per-request pricing model ($25–$250/mo depending on volume) on top of your own infrastructure.
-- Single point of failure: if afipsdk.com is down, your clinic cannot emit invoices.
-- Per-tenant cost multiplication in a SaaS context (each tenant's CUIT counts toward the tier limit).
+### Development Tools
 
-`@arcasdk/core` evolved from the `afip.ts` project (same maintainer, rebranded). It is entirely self-hosted: you pass your CUIT, `cert` (certificate content), and `key` (private key content) directly. No intermediary service. Direct SOAP calls to ARCA endpoints. MIT licensed.
-
-```typescript
-// @arcasdk/core constructor — no cloud token required
-const arca = new Arca({
-  key: process.env.AFIP_PRIVATE_KEY,   // PEM content, stored encrypted
-  cert: process.env.AFIP_CERT,          // PEM content, stored encrypted
-  cuit: parseInt(process.env.AFIP_CUIT),
-});
-
-const invoiceService = arca.electronicBillingService;
-const result = await invoiceService.createInvoice(payload);
-```
-
-**Why not `facturajs`:**
-- JavaScript-first with partial TypeScript types — adds type friction in a TypeScript-strict codebase.
-- Last meaningful update September 2025 — not tracking RG 5616/2024 compliance deadline (December 2025).
-- No native NestJS DI pattern support.
-
-```bash
-# Backend — AFIP integration
-npm install @arcasdk/core   # v0.3.6
-```
-
-**Confidence: MEDIUM** — `@arcasdk/core` verified as self-hosted, TS-native, and recently updated. Version 0.3.6 confirmed current as of Dec 2025. Community adoption is lower than `@afipsdk/afip.js` but architecture is superior for a SaaS product.
+| Tool | Purpose | Notes |
+|------|---------|-------|
+| OpenSSL CLI | CSR generation for AFIP cert provisioning | Not a runtime dependency — only for onboarding. Must be available on developer/admin machine, not the server. |
+| AFIP Homologacion portal | Test CUIT and sandbox cert issuance | `https://wsass-homo.afip.gov.ar/wsass/` — manual step per tenant during onboarding |
 
 ---
 
-### 2. SOAP Client (Transitive Dependency — Verify)
-
-AFIP WSFE is a SOAP web service. All Node.js AFIP libraries use `soap` or `strong-soap` internally. You do not install this directly — it comes as a dependency of `@arcasdk/core`. Verify it includes a compatible SOAP client:
-
-```bash
-# After install, verify transitive deps:
-cat node_modules/@arcasdk/core/package.json | grep soap
-```
-
-If the project ever needs to call AFIP web services directly (e.g., WSFEX for export invoices, or WSPADRON for CUIT lookup), use:
-
-```bash
-npm install soap   # v1.0.x — the canonical Node.js SOAP client
-```
-
-Do NOT use `strong-soap` — it is abandoned (last commit 2021).
-
-**Confidence: HIGH** — AFIP exclusively uses SOAP. `soap` npm package is the established standard.
-
----
-
-### 3. WSAA Token Caching
-
-AFIP's WSAA (Authentication and Authorization Web Service) issues access tickets (TA) with a **12-hour TTL**. Every call to WSFE must be accompanied by a valid TA. The pattern is:
-
-1. Authenticate with WSAA using your certificate → receive `Token` + `Sign` (valid 12h).
-2. Cache the `Token`+`Sign` pair for the duration of validity.
-3. Use cached credentials for all WSFE calls until expiry.
-4. On expiry, re-authenticate.
-
-**Recommendation: Cache in Redis (already installed)**
-
-Redis is already deployed for BullMQ queues and session caching. Store WSAA tokens per-CUIT with TTL:
-
-```typescript
-// In AfipTokenService (NestJS injectable)
-const TOKEN_TTL_SECONDS = 11 * 60 * 60; // 11 hours (1h buffer before AFIP's 12h expiry)
-await this.redis.set(`wsaa:token:${cuit}`, JSON.stringify({ token, sign }), 'EX', TOKEN_TTL_SECONDS);
-```
-
-**Why not file-based caching (facturajs default):**
-- File-based token cache (`cacheTokensPath` param in some libraries) doesn't work correctly in containerized deployments where the filesystem is ephemeral.
-- Redis survives container restarts, handles multi-instance deployments correctly.
-- Per-tenant CUIT tokens can be namespaced: `wsaa:token:{cuit}`.
-
-**No new library needed** — use the existing `redis` client (5.9.0) already installed.
-
-**Confidence: HIGH** — WSAA 12-hour TTL is documented in official AFIP specs. Redis TTL pattern is standard NestJS practice.
-
----
-
-### 4. Invoice PDF Generation (AFIP-compliant)
-
-AFIP electronic invoices require a specific PDF format including:
-- CAE (Código de Autorización Electrónica) number and expiry date.
-- QR code linking to the AFIP invoice verification portal (`https://www.afip.gob.ar/fe/qr/`).
-- Sender/receiver fiscal data (CUIT, razon social, condicion IVA).
-- Invoice number, punto de venta, and date.
-
-**Recommendation: Extend existing PDFKit 0.17.2 + add `qrcode` for QR generation**
-
-| Requirement | Solution | Library | Already Installed? |
-|-------------|----------|---------|-------------------|
-| Invoice PDF layout | PDFKit | `pdfkit` 0.17.2 | Yes |
-| AFIP QR code | QR PNG embedded in PDF | `qrcode` | No |
-| Barcode (optional) | CAE barcode | `jsbarcode` | No |
-
-```bash
-# New additions for AFIP-compliant invoice PDF
-npm install qrcode          # v1.5.4 — QR code generation (PNG buffer → embed in PDFKit)
-npm install @types/qrcode   # TypeScript types
-```
-
-**Why `qrcode` over alternatives:**
-- `qrcode` is the established standard (9M+ weekly downloads). Canvas-free, generates PNG buffers directly — compatible with PDFKit's `doc.image(buffer)` method.
-- QR code format for AFIP invoices is specified in official documentation (`https://www.afip.gob.ar/fe/qr/`): URL-encoded JSON embedded in QR pointing to the AFIP verification service.
-
-**Why NOT generate PDFs via a third-party service (afipsdk.com PDF add-on):**
-- Sends invoice data (patient/clinic financial data) to external service — privacy concern in medical context.
-- Additional cost per PDF.
-- PDFKit is already installed and adequate for structured financial documents.
-
-**Confidence: HIGH** — `qrcode` library verified as standard for QR PNG generation in Node.js. AFIP QR spec is public documentation.
-
----
-
-### 5. Schema Additions Required (No New Libraries)
-
-The existing `Factura` model needs additions to support AFIP electronic invoicing fields. This is schema work (Prisma migration), not library work:
-
-```prisma
-// Fields to ADD to existing Factura model
-cae           String?   // Código de Autorización Electrónica (AFIP response)
-caeFechaVto   DateTime? // CAE expiration date
-puntoVenta    Int?      // Punto de venta registrado en AFIP (e.g., 1, 2...)
-tipoComprobante Int?    // AFIP numeric code (1=Factura A, 6=Factura B, 11=Factura C)
-// condicionIVA, cuit, razonSocial already exist in current model
-```
-
-Also needed: a new `ConfigAfip` model (per-tenant AFIP credentials):
-
-```prisma
-model ConfigAfip {
-  id              String   @id @default(uuid())
-  profesionalId   String   @unique
-  cuit            String
-  certEncrypted   String   // AES-256-GCM encrypted PEM cert
-  keyEncrypted    String   // AES-256-GCM encrypted private key
-  puntoVenta      Int      @default(1)
-  produccion      Boolean  @default(false) // false = homologacion
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  profesional     Profesional @relation(fields: [profesionalId], references: [id])
-}
-```
-
-Use the existing `EncryptionService` (AES-256-GCM) already in the codebase to encrypt `cert` and `key` before persisting — same pattern as `ConfiguracionWABA.accessTokenEncrypted`.
-
-**Confidence: HIGH** — This is purely additive Prisma schema work following established patterns in the codebase.
-
----
-
-### 6. Billing Limit Tracking (Dashboard Feature)
-
-The monthly billing limit feature (facturador sets configurable limit, dashboard shows progress) requires:
-
-- A `LimiteMensualFacturacion` config model (or a `Json` config field on `ConfigAfip`).
-- A query aggregating `Factura.total` for the current month (filtered by `profesionalId` and `fecha`).
-- No new libraries — standard Prisma aggregate (`_sum`, `_count`) and `@nestjs/schedule` cron for daily reset.
-
-```typescript
-// Prisma aggregate pattern — no library needed
-const totalesMes = await this.prisma.factura.aggregate({
-  _sum: { total: true },
-  _count: true,
-  where: {
-    profesionalId,
-    fecha: { gte: startOfMonth, lte: endOfMonth },
-    estado: 'EMITIDA',
-  },
-});
-```
-
-**No new libraries needed for this feature.**
-
----
-
-## Complete Installation Summary
+## Installation
 
 ```bash
 # From backend/ directory
 
-# AFIP WSFE integration (future milestone — research confirmed viable)
-npm install @arcasdk/core    # v0.3.6 — self-hosted SOAP client for ARCA WSFE
+# CMS/PKCS#7 signing (WSAA TRA signing — replaces openssl subprocess)
+npm install node-forge
+npm install -D @types/node-forge
 
-# AFIP-compliant invoice PDF (QR code for CAE verification)
-npm install qrcode @types/qrcode   # v1.5.4
+# QR code PNG for AFIP-compliant invoice PDF
+npm install qrcode
+npm install -D @types/qrcode
 
-# Billing limit dashboard — NO NEW LIBRARIES. Pure Prisma + existing stack.
-# WSAA token caching — NO NEW LIBRARIES. Use existing redis@5.9.0.
+# XML parsing for SOAP responses (WSAA LoginTicketResponse, WSFEv1 CAE response)
+npm install xml2js
+npm install -D @types/xml2js
+
+# Per-CUIT mutex for WSAA token refresh concurrency
+npm install async-mutex
 ```
 
-**New environment variables needed (AFIP integration phase):**
+No new backend framework packages. No new frontend packages. No cloud services.
+
+---
+
+## Architecture Decisions
+
+### Decision 1: Raw SOAP/XML — No Third-Party AFIP Library
+
+**Locked in AFIP-INTEGRATION.md. Do not reopen.**
+
+`@arcasdk/core` (recommended in v1.1 research) is architecturally superior to `@afipsdk/afip.js`, but it still adds unnecessary abstraction. Its own dependency tree includes `node-forge`, `soap`, `xml2js`, `moment`, and `winston` — which means installing `@arcasdk/core` installs exactly the same packages we would install for raw SOAP, plus the `soap` npm package (which causes AFIP WS-Security failures on specific endpoints) and `moment` (deprecated, 300KB, already covered by `date-fns`).
+
+Raw SOAP with `axios` + `node-forge` + `xml2js` gives us:
+- Full control over SOAP envelope construction (required because AFIP uses non-standard WS-Security variants)
+- Debuggable request/response at the HTTP level
+- No surprise library updates changing AFIP field mappings
+- Smaller dependency surface
+
+### Decision 2: `node-forge` for CMS Signing (Over `openssl` Subprocess)
+
+AFIP-INTEGRATION.md documented two options for PKCS#7 CMS signing of the WSAA TRA:
+
+**Option A (subprocess):** `openssl smime -sign` via `execSync` with temp files.
+**Option B (in-process):** `node-forge`.
+
+**Use Option B (`node-forge`) for v1.2.**
+
+Rationale:
+- Temp file approach has a security surface: PEM files on disk (even briefly) during cert operations, especially under high concurrency where cleanup may race
+- `execSync` blocks the Node.js event loop thread during the ~20ms OpenSSL call — under load, this degrades throughput
+- `openssl` binary must be present on the production host — adds an infrastructure constraint that is not currently documented anywhere
+- `node-forge` 1.3.3 is actively maintained (last published December 2025), MIT licensed, 11M+ weekly downloads
+- AFIP-specific CMS signing with `node-forge` is a known working pattern (used by `@arcasdk/core` internally)
+
+**Confidence: MEDIUM** — `node-forge` against AFIP production is confirmed working via `@arcasdk/core`'s use of it, but direct integration has not been validated in this codebase. Flag the first WSAA call in homologacion as a validation checkpoint.
+
+### Decision 3: Redis for WSAA Token Cache (11-Hour TTL Per CUIT)
+
+WSAA tickets are valid for 12 hours. Cache per CUIT with an 11-hour TTL (1-hour safety buffer) to avoid serving near-expired tokens.
+
 ```
-AFIP_CUIT=                    # Clinic CUIT (per-tenant via ConfigAfip table, or global for single-tenant)
-AFIP_CERT=                    # PEM certificate (store encrypted in DB; env var for single-tenant deploy)
-AFIP_PRIVATE_KEY=             # PEM private key (store encrypted in DB via EncryptionService)
-AFIP_PUNTO_VENTA=1            # Registered punto de venta number in ARCA
-AFIP_PRODUCCION=false         # false = homologacion (testing), true = production
+Redis key pattern: wsaa:token:{ambiente}:{cuit}
+Example:          wsaa:token:homologacion:20111111112
+TTL:              39600 seconds (11 hours)
+Value:            JSON { token, sign, expiration }
+```
+
+The existing `redis` client (v5.9.0) handles this. No new library needed. This is multi-instance safe — all NestJS pods share the same Redis, so only one WSAA call fires per CUIT per 11 hours regardless of horizontal scaling.
+
+### Decision 4: `xml2js` for SOAP Response Parsing (Over Manual Regex)
+
+AFIP-INTEGRATION.md showed manual regex extraction of `<token>`, `<sign>`, and `<expirationTime>` from the WSAA response. This is adequate for a stub but fragile in production:
+- AFIP occasionally changes whitespace and namespace prefixes in responses
+- SOAP faults (error responses) have a different XML structure than success responses — regex silently misses them
+
+Use `xml2js.parseStringPromise()` instead. It handles SOAP faults, namespace stripping, and attribute extraction robustly. The manual regex patterns from AFIP-INTEGRATION.md serve as documentation of what to extract — implement them as `xml2js` path lookups.
+
+### Decision 5: `async-mutex` for Per-CUIT WSAA Refresh
+
+Without a mutex, two concurrent requests for Tenant A's invoice can each find the Redis token expired and both call WSAA simultaneously. WSAA does not block duplicate requests — it issues two tickets, wastes one call, and creates a race condition on which ticket gets cached.
+
+`async-mutex` provides an in-process `Mutex` per CUIT. The pattern:
+
+```typescript
+// In WsaaService
+private mutexes = new Map<string, Mutex>();
+
+private getMutex(cuit: string): Mutex {
+  if (!this.mutexes.has(cuit)) {
+    this.mutexes.set(cuit, new Mutex());
+  }
+  return this.mutexes.get(cuit);
+}
+
+async getAccessTicket(cuit: string): Promise<AccessTicket> {
+  return this.getMutex(cuit).runExclusive(async () => {
+    // Check Redis first (another pod may have refreshed already)
+    const cached = await this.redis.get(`wsaa:token:${ambiente}:${cuit}`);
+    if (cached) return JSON.parse(cached);
+    // Refresh WSAA, store in Redis, return
+    ...
+  });
+}
+```
+
+For multi-instance deployments, the Redis check inside the mutex means a pod that wins the lock will find the token already refreshed by another pod — eliminating redundant WSAA calls even across instances.
+
+---
+
+## Environment Variables Needed (v1.2 Additions)
+
+These are PER-TENANT values stored encrypted in the `ConfiguracionAFIP` DB model (see AFIP-INTEGRATION.md Section 1), NOT environment variables. The only env vars needed are infrastructure-level:
+
+```bash
+# Already exists — no new env vars for per-tenant AFIP config
+# Per-tenant cert/key are stored AES-256-GCM encrypted in ConfiguracionAFIP table
+
+# New optional env var for global ambient default:
+AFIP_AMBIENTE=HOMOLOGACION   # or PRODUCCION — controls which AFIP endpoints are used
+                              # Can also be set per-tenant in ConfiguracionAFIP.ambiente
+```
+
+No `AFIP_CERT`, `AFIP_PRIVATE_KEY`, or `AFIP_CUIT` global env vars. Certificate material must live in the database per-tenant, following the same pattern as `ConfiguracionWABA.accessTokenEncrypted`.
+
+---
+
+## AFIP QR Code Format (Implementation Reference)
+
+The QR embedded in invoice PDFs encodes a URL:
+
+```
+https://www.afip.gob.ar/fe/qr/?p={base64_encoded_json}
+```
+
+The JSON payload fields:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `ver` | Integer | Format version — always `1` |
+| `fecha` | String | Invoice date `YYYY-MM-DD` |
+| `cuit` | Integer | Issuer CUIT (no hyphens) |
+| `ptoVta` | Integer | Punto de venta |
+| `tipoCmp` | Integer | Invoice type (1=FA, 6=FB, 11=FC) |
+| `nroCmp` | Integer | Invoice number |
+| `importe` | Decimal | Total amount |
+| `moneda` | String | `"PES"` or `"DOL"` |
+| `ctz` | Decimal | Exchange rate (1 for ARS) |
+| `tipoDocRec` | Integer | Recipient doc type (80=CUIT, 96=DNI, 99=CF) |
+| `nroDocRec` | Integer | Recipient document number (0 for CF) |
+| `tipoCodAut` | String | `"E"` for CAE, `"A"` for CAEA |
+| `codAut` | Integer | CAE or CAEA code |
+
+Implementation pattern:
+```typescript
+const payload = { ver: 1, fecha, cuit, ptoVta, tipoCmp, nroCmp, importe, moneda, ctz, tipoDocRec, nroDocRec, tipoCodAut: 'E', codAut: cae };
+const b64 = Buffer.from(JSON.stringify(payload)).toString('base64');
+const url = `https://www.afip.gob.ar/fe/qr/?p=${b64}`;
+const qrBuffer = await QRCode.toBuffer(url, { type: 'png', width: 120 });
+doc.image(qrBuffer, x, y, { width: 80 }); // PDFKit embed
+```
+
+**Confidence: HIGH** — QR JSON structure confirmed from official AFIP QR spec page and multiple corroborating community sources.
+
+---
+
+## Schema Additions (No New Libraries — Prisma Only)
+
+From AFIP-INTEGRATION.md Section 1, add a dedicated `ConfiguracionAFIP` model:
+
+```prisma
+model ConfiguracionAFIP {
+  id                String       @id @default(uuid())
+  profesionalId     String       @unique
+  cuit              String
+  certPemEncrypted  String       // AES-256-GCM encrypted — iv:authTag:ciphertext
+  keyPemEncrypted   String       // AES-256-GCM encrypted — iv:authTag:ciphertext
+  certExpiresAt     DateTime     // Parsed from cert notAfter — warn 30 days before
+  puntoVenta        Int          @default(1)
+  ambiente          AmbienteAFIP @default(HOMOLOGACION)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  profesional       Profesional  @relation(fields: [profesionalId], references: [id])
+}
+
+enum AmbienteAFIP {
+  HOMOLOGACION
+  PRODUCCION
+}
+```
+
+Also add to `Factura` model (fields for emitted electronic invoices):
+
+```prisma
+cae             String?   // CAE code from FECAESolicitar response
+caeFechaVto     DateTime? // CAE expiry date — invoice legally invalid after this
+ptoVta          Int?      // Punto de venta used for emission
+cbteTipo        Int?      // 1=FA, 6=FB, 11=FC, 51=FM
+cbteNumero      Int?      // Sequential invoice number confirmed by AFIP
+caea            String?   // CAEA code if emitted in contingency mode
+```
+
+CAEA contingency storage — add a `CaeaVigente` model per tenant:
+
+```prisma
+model CaeaVigente {
+  id            String       @id @default(uuid())
+  profesionalId String
+  caea          String       // Authorization code
+  fchVigDesde   DateTime     // Period start
+  fchVigHasta   DateTime     // Period end
+  fchTopeInf    DateTime     // Last date to inform invoices under this CAEA
+  createdAt     DateTime     @default(now())
+  profesional   Profesional  @relation(fields: [profesionalId], references: [id])
+}
 ```
 
 ---
 
 ## Alternatives Considered
 
-| Category | Recommended | Alternative | Why Not |
-|----------|-------------|-------------|---------|
-| AFIP library | `@arcasdk/core` | `@afipsdk/afip.js` | Requires afipsdk.com cloud service ($25–250/mo); per-tenant pricing multiplies costs in SaaS |
-| AFIP library | `@arcasdk/core` | `facturajs` | JS-first, stale, not tracking RG 5616/2024 compliance deadline |
-| AFIP library | `@arcasdk/core` | TusFacturasAPP REST API | Third-party API; same cloud dependency problem as afipsdk.com; subscription required |
-| Token caching | Redis (existing) | File-based (`ta_folder` param) | Ephemeral filesystem in containers; doesn't work multi-instance |
-| Invoice PDF | PDFKit (existing) + qrcode | afipsdk.com PDF add-on | Sends financial data to external service; extra cost per PDF |
-| Invoice PDF | PDFKit + qrcode | Puppeteer | +300MB Chromium; overkill for structured invoice layout |
+| Recommended | Alternative | When to Use Alternative |
+|-------------|-------------|-------------------------|
+| `node-forge` (in-process PKCS#7) | `openssl smime -sign` subprocess | Use if node-forge AFIP compatibility issues arise in homologacion testing. Both approaches are documented in AFIP-INTEGRATION.md. Switch is a single-function change. |
+| Raw SOAP/XML via `axios` | `@arcasdk/core` | Use only if raw SOAP approach hits an undocumented AFIP endpoint behavior that `@arcasdk/core` handles internally. Its dependency tree (`soap`, `xml2js`, `node-forge`) is a superset of what we install anyway. |
+| `xml2js` for SOAP parsing | Manual regex extraction | Regex is acceptable for Phase 9 stub only (already documented in AFIP-INTEGRATION.md). Replace with `xml2js` in v1.2 real implementation for fault handling robustness. |
+| `async-mutex` for in-process lock | Redis-based distributed lock | Use Redis lock (`SET NX EX`) only if the deployment uses more than 3 NestJS instances — the Redis check inside the `async-mutex` block handles the multi-instance case adequately at current scale. |
 
 ---
 
@@ -271,49 +294,37 @@ AFIP_PRODUCCION=false         # false = homologacion (testing), true = productio
 
 | Avoid | Why | Use Instead |
 |-------|-----|-------------|
-| **`@afipsdk/afip.js` as primary integration** | Requires cloud access token from afipsdk.com — mandatory third-party dependency for every invoice emission. In a multi-tenant SaaS, each CUIT counts toward their tier ($25/mo for 10 CUITs). | `@arcasdk/core` — same functionality, fully self-hosted |
-| **`afipjs` (egnuez/afipjs)** | JavaScript-only, no TypeScript support, no recent updates, doesn't track RG 5616/2024 spec changes | `@arcasdk/core` |
-| **`strong-soap`** | Abandoned (no commits since 2021) | `soap` npm package (if direct SOAP calls needed) |
-| **TusFacturasAPP API** | Third-party SaaS REST API wrapping AFIP — introduces same cloud dependency problem as afipsdk.com. Monthly subscription required. | `@arcasdk/core` direct SOAP integration |
-| **File-based WSAA token cache** | Fails in containerized environments (ephemeral filesystem). Doesn't work with multiple NestJS instances. | Redis (already installed) with TTL matching WSAA ticket validity |
-| **Storing AFIP cert/key in plaintext** | Private key compromise allows fraudulent invoice emission in your CUIT | AES-256-GCM via existing `EncryptionService` (same pattern as WABA tokens) |
+| **`@afipsdk/afip.js`** | Routes all AFIP calls through afipsdk.com cloud infrastructure. Requires their `access_token`. In a SaaS with multiple tenant CUITs, this is a mandatory third-party dependency for every invoice emission with tiered pricing ($25–$250/mo). Single point of failure for billing. | Raw SOAP via `axios` + `node-forge` |
+| **`@arcasdk/core`** | Good architecture but adds `soap` + `moment` + `winston` dependencies beyond what the raw approach requires. `soap` npm package has known issues with AFIP's non-standard WS-Security. `moment` is deprecated and replaced by `date-fns` already in the project. | Raw SOAP approach — installs only what is actually needed |
+| **`afipjs` (egnuez)** | JavaScript-only, no TypeScript types, no updates since 2020, does not support RG 5616/2024 fields | `node-forge` + raw SOAP |
+| **`soap` npm package** | Causes failures on AFIP-specific WS-Security variants. The `@arcasdk/core` team moved away from it. For raw SOAP, using `axios` to POST the raw XML envelope is simpler and more reliable. | `axios` with raw SOAP XML strings |
+| **`strong-soap`** | Abandoned — last commit 2021 | `axios` with raw XML |
+| **File-based WSAA token cache** | Ephemeral filesystem in containers; fails with multiple NestJS instances | Redis with 11-hour TTL (existing Redis client) |
+| **Global `AFIP_CERT` env var** | Single global cert is wrong for multi-tenant SaaS — each clinic has a different CUIT and therefore a different AFIP certificate | `ConfiguracionAFIP` DB model with per-tenant AES-256-GCM encrypted PEM fields |
+| **Storing AFIP cert/key in plaintext** | Private key compromise allows fraudulent invoice emission from the tenant's CUIT | `EncryptionService.encrypt()` — same AES-256-GCM pattern as WABA tokens |
 
 ---
 
 ## Stack Patterns by Variant
 
-**If building AFIP integration (future milestone):**
-- Use `@arcasdk/core` with certificates stored encrypted in DB via `ConfigAfip` model.
-- Cache WSAA tokens in Redis with 11-hour TTL.
-- Wrap in a `NestJS @Injectable() AfipService` with constructor DI for `PrismaService`, `EncryptionService`, `RedisService`.
-- Test in homologacion (AFIP sandbox) first — different WSDL endpoints, test CUIT available.
-- Compliance: RG 5616/2024 requires `condicionIVA` of receiver and exchange rate for USD invoices, effective 01/12/2025. Verify `@arcasdk/core` v0.3.6 includes this.
+**CAEA Contingency Cron Pattern:**
+- Use existing `@nestjs/schedule` 6.1.0 (already installed — no new install)
+- Cron expression: `0 6 27,11,12 * *` — runs at 6AM UTC-3 on days 27, 11, and 12 of each month
+- Day 27: pre-request CAEA for next month's first half (days 1–15)
+- Day 11: pre-request CAEA for current month's second half (days 16–end)
+- Day 12: retry in case day 11 failed
+- Store result in `CaeaVigente` table per profesionalId
 
-**If v1.1 scope stays as research-only for AFIP:**
-- Ship the dashboard + OS liquidation workflow with zero AFIP library additions.
-- Only add `qrcode` to support adding QR to manually-tracked invoices if needed.
-- AFIP integration becomes its own milestone (v1.2 or later) with proper certificate provisioning per tenant.
+**Multi-Instance Deployment:**
+- WSAA token in Redis (not in-memory Map) — already handled by Redis cache recommendation
+- `async-mutex` prevents intra-pod duplicate calls; Redis check inside the lock handles inter-pod cases
+- BullMQ advisory lock pattern is NOT applicable here — advisory lock must be a PostgreSQL `pg_advisory_xact_lock` inside a `$transaction` (per AFIP-INTEGRATION.md Section 3 for CAE sequencing)
 
-**If a single-tenant (one clinic, one CUIT) deploy is acceptable first:**
-- Manage AFIP credentials via environment variables (`AFIP_CERT`, `AFIP_PRIVATE_KEY`).
-- Simpler than per-tenant DB encryption; acceptable for initial launch.
-- Migrate to per-tenant `ConfigAfip` model when second tenant onboards.
-
----
-
-## Critical Integration Requirements (AFIP-Specific)
-
-These are AFIP/ARCA requirements that constrain implementation decisions, independent of library choice:
-
-| Requirement | Detail | Impact |
-|-------------|--------|--------|
-| **Certificate provisioning** | Each CUIT must generate a CSR with OpenSSL, submit to ARCA, download signed cert. Manual per-tenant step. | Cannot automate without external service; operator must configure per clinic |
-| **Punto de venta registration** | Must register a "punto de venta tipo WSFEV1" in ARCA panel before first invoice | One-time setup per CUIT; no API to create it programmatically |
-| **Invoice date limit** | Cannot submit invoices dated more than 10 days in the past; cannot backdate beyond that | Do not allow bulk-backdating from the UI |
-| **Consecutive numbering** | Invoice numbers must be strictly consecutive per punto de venta + comprobante type | Always call `FECompUltimoAutorizado` before issuing; never assume the next number |
-| **RG 5616/2024 compliance** | From 01/12/2025: must include receiver's IVA condition and exchange rate (for USD). Non-compliant systems cannot generate valid invoices. | Verify library supports these fields before using |
-| **Homologacion vs Produccion** | Different WSDL endpoints and test certificates. Homologacion accepts any CUIT for testing. | Always build + test against homologacion; production credentials require ARCA approval |
-| **CAE validity** | CAE has an expiration date (typically ~10 days). Invoice is legally invalid after CAE expiry. | Store `caeFechaVto` and warn if invoice PDF is generated after expiry |
+**Homologacion vs Produccion:**
+- Switch via `ConfiguracionAFIP.ambiente` per tenant (or `AFIP_AMBIENTE` env var for global default)
+- Different WSAA endpoints: `wsaahomo.afip.gov.ar` vs `wsaa.afip.gov.ar`
+- Different WSFEv1 endpoints: `wswhomo.afip.gov.ar` vs `servicios1.afip.gov.ar`
+- Test CUIT `20111111112` available for homologacion (no real certificate required for testing)
 
 ---
 
@@ -321,31 +332,34 @@ These are AFIP/ARCA requirements that constrain implementation decisions, indepe
 
 | Package | Version | Compatible With | Notes |
 |---------|---------|-----------------|-------|
-| `@arcasdk/core` | 0.3.6 | Node 18+, TypeScript 4+ | Dec 2025; verify RG 5616 compliance |
-| `qrcode` | 1.5.4 | Node 14+, NestJS any | Canvas-free PNG buffer mode compatible with PDFKit |
-| `@types/qrcode` | — | TypeScript 4+ | Dev dependency |
-| `pdfkit` | 0.17.2 (existing) | Node 14+, @types/pdfkit installed | Already typed; extend existing service |
-| `redis` | 5.9.0 (existing) | Node 18+, Redis 7+ | Already installed; use for WSAA token TTL cache |
+| `node-forge` | 1.3.3 | Node 18+, TypeScript 5+ | Dec 2025. Used by `@arcasdk/core` against AFIP production — compatibility confirmed transitively. |
+| `qrcode` | 1.5.4 | Node 14+, PDFKit 0.17.x | Canvas-free. `QRCode.toBuffer(url, { type: 'png' })` returns `Buffer` compatible with `doc.image()`. |
+| `xml2js` | 0.6.2 | Node 14+, TypeScript 5+ | Stable since 2023, 10K+ dependents in npm. |
+| `async-mutex` | 0.5.0 | Node 18+, TypeScript 5+ | Zero deps. Stable since 2024. |
+| `@nestjs/schedule` | 6.1.0 | NestJS 10.x (already installed) | No version change needed. |
+| `pdfkit` | 0.17.2 (existing) | Node 14+ | Already installed. Extend existing PDF service for CAE/QR fields. |
+| `redis` | 5.9.0 (existing) | Redis 7+ | Already installed. Use `SET key value EX ttl` for WSAA token TTL cache. |
+| `axios` | 1.13.1 (existing) | Node 18+ | Already installed. Use for raw SOAP POST to WSAA and WSFEv1. |
 
 ---
 
 ## Sources
 
-- [ARCA/AFIP WSFE official documentation](https://www.afip.gob.ar/ws/documentacion/ws-factura-electronica.asp) — WSDL endpoints, homologacion/produccion URLs, WSFEv1 spec (HIGH — official)
-- [Resolución General 5616/2024 — Boletín Oficial](https://www.boletinoficial.gob.ar/detalleAviso/primera/318374/20241218) — IVA condition + exchange rate requirements (HIGH — official, effective 01/12/2025)
-- [AFIP QR code specification](https://www.afip.gob.ar/fe/qr/) — QR format for invoice verification URL (HIGH — official)
-- [@arcasdk/core GitHub README](https://github.com/ralcorta/afip.ts) — constructor params, self-hosted model confirmed (MEDIUM — single source, project actively maintained)
-- [@arcasdk/core npm](https://www.npmjs.com/package/@arcasdk/core) — version 0.3.6, last published Dec 2025 (HIGH — verified via npm)
-- [@afipsdk/afip.js npm](https://www.npmjs.com/~afipsdk) — version 1.2.3, Feb 2026; requires afipsdk.com access_token (HIGH — verified)
-- [AfipSDK pricing page](https://afipsdk.com/pricing) — $25/mo Pro (10 CUITs), $80/mo Growth (100 CUITs); free tier 1 CUIT 1k req (MEDIUM — pricing may change)
-- [AfipSDK blog — usar web services en NodeJS](https://afipsdk.com/blog/usar-web-services-de-afip-en-nodejs/) — confirmed access_token requirement (MEDIUM — vendor blog)
-- [facturajs npm](https://www.npmjs.com/package/facturajs) — v0.3.2, Sep 2025; JS-first (MEDIUM — npm registry)
-- [afipjs GitHub](https://github.com/egnuez/afipjs) — JS only, stale; avoid (LOW — community project, inactive)
-- [qrcode npm](https://www.npmjs.com/package/qrcode) — v1.5.4, 9M+ weekly downloads (HIGH — npm registry)
-- [DevelopArgentina — guía AFIP/ARCA 2025](https://developargentina.com/blog/facturacion-electronica-arca-guia-completa-2025) — practical integration guide, RG 5616 impact (MEDIUM — technical blog)
-- [AFIP WSFEv1 ProyectoWSFEv1 spec](https://www.sistemasagiles.com.ar/trac/wiki/ProyectoWSFEv1) — WSFEv1 method reference, FECAESolicitar parameters (MEDIUM — community technical reference)
+- [AFIP-INTEGRATION.md](/.planning/research/AFIP-INTEGRATION.md) — canonical reference doc (774 lines); WSAA/WSFEv1/CAEA patterns; locked architecture decisions (HIGH — project-internal)
+- [@arcasdk/core package.json](https://github.com/ralcorta/arcasdk) — confirmed `node-forge` + `xml2js` as its signing/parsing dependencies; v0.3.6 (HIGH — direct inspection)
+- [@arcasdk/core GitHub README](https://github.com/ralcorta/arcasdk) — 498 commits, 93 stars, Dec 2025 release; actively maintained (MEDIUM — single source)
+- [@afipsdk/afip.js docs](https://docs.afipsdk.com/integracion/node.js) — confirmed cloud proxy model requires `access_token` from app.afipsdk.com (HIGH — vendor docs)
+- [node-forge npm](https://www.npmjs.com/package/node-forge) — v1.3.3, last published ~3 months ago (December 2025) (HIGH — npm registry)
+- [qrcode npm](https://www.npmjs.com/package/qrcode) — v1.5.4, 9M+ weekly downloads, canvas-free PNG buffer mode (HIGH — npm registry)
+- [xml2js npm](https://www.npmjs.com/package/xml2js) — v0.6.2, 10K+ dependents (HIGH — npm registry)
+- [async-mutex npm](https://www.npmjs.com/package/async-mutex) — v0.5.0, last published ~2 years ago (stable) (HIGH — npm registry)
+- [AFIP QR code spec](https://www.afip.gob.ar/fe/qr/) — official AFIP QR documentation confirming URL format (HIGH — official AFIP)
+- [AFIP QR JSON structure](https://groups.google.com/g/pyafipws/c/fRbtMUsuqDQ) — community-confirmed JSON field list: ver, fecha, cuit, ptoVta, tipoCmp, nroCmp, importe, moneda, ctz, tipoDocRec, nroDocRec, tipoCodAut, codAut (MEDIUM — community, corroborates multiple sources)
+- [RG 5616/2024 enforcement](https://www.boletinoficial.gob.ar/detalleAviso/primera/318374/20241218) — CondicionIVAReceptorId mandatory from April 1, 2026 (HIGH — official Boletín Oficial)
+- [@nestjs/schedule npm](https://www.npmjs.com/package/@nestjs/schedule) — v6.1.1, last published ~1 month ago; already installed at 6.1.0 in project (HIGH — npm registry)
 
 ---
 
-*Stack research for: CLINICAL v1.1 — Vista del Facturador (AFIP WSFE integration research)*
-*Researched: 2026-03-12*
+*Stack research for: CLINICAL v1.2 — AFIP Real CAE Emission*
+*Researched: 2026-03-16*
+*Supersedes: v1.1 STACK.md (2026-03-12)*

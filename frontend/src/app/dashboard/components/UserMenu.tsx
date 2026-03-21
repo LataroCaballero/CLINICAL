@@ -14,6 +14,8 @@ import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { logout } from "@/lib/api";
+import { useUIStore } from "@/lib/stores/useUIStore";
+import { cn } from "@/lib/utils";
 
 const ROL_LABELS: Record<string, string> = {
   ADMIN: "Administrador",
@@ -25,6 +27,8 @@ const ROL_LABELS: Record<string, string> = {
 
 export default function UserMenu({ collapsed }: { collapsed: boolean }) {
   const { data: user } = useCurrentUser();
+  const { focusModeEnabled } = useUIStore();
+  const fm = focusModeEnabled;
   const router = useRouter();
   const queryClient = useQueryClient();
 
@@ -58,15 +62,18 @@ export default function UserMenu({ collapsed }: { collapsed: boolean }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="w-full flex items-center gap-3 rounded-lg p-2 hover:bg-gray-100 transition">
+        <button className={cn(
+          "w-full flex items-center gap-3 rounded-lg p-2 transition",
+          fm ? "hover:bg-slate-700" : "hover:bg-gray-100"
+        )}>
           <Avatar className="h-9 w-9">
             <AvatarImage src={user.fotoUrl || "/images/avatar.png"} alt={fullName} />
             <AvatarFallback>{initials}</AvatarFallback>
           </Avatar>
           {!collapsed && (
             <div className="flex flex-col leading-tight text-left">
-              <span className="text-sm font-medium text-gray-800">{fullName}</span>
-              <span className="text-xs text-gray-500">{rolLabel}</span>
+              <span className={cn("text-sm font-medium", fm ? "text-slate-100" : "text-gray-800")}>{fullName}</span>
+              <span className={cn("text-xs", fm ? "text-slate-400" : "text-gray-500")}>{rolLabel}</span>
             </div>
           )}
         </button>

@@ -7,6 +7,8 @@ import {
   Param,
   Query,
   Request,
+  HttpCode,
+  BadRequestException,
 } from '@nestjs/common';
 import { FinanzasService } from './finanzas.service';
 import {
@@ -119,6 +121,23 @@ export class FinanzasController {
   @Post('facturas/:id/anular')
   anularFactura(@Param('id') id: string) {
     return this.service.anularFactura(id);
+  }
+
+  /**
+   * Emitir una factura via AFIP WSFEv1 (async — enqueues BullMQ job)
+   * Returns 202 Accepted with jobId. Poll GET /finanzas/facturas/:id to see estado.
+   * Validates condicionIVAReceptor + AFIP config before enqueueing.
+   */
+  @Post('facturas/:id/emitir')
+  @HttpCode(202)
+  async emitirFactura(
+    @Param('id') id: string,
+    @Query('profesionalId') profesionalId: string,
+  ) {
+    if (!profesionalId) {
+      throw new BadRequestException('profesionalId es requerido.');
+    }
+    return this.service.emitirFactura(id, profesionalId);
   }
 
   /**

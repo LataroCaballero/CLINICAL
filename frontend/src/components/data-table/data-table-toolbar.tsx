@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { Table } from "@tanstack/react-table";
+import { useUIStore } from "@/lib/stores/useUIStore";
+import { cn } from "@/lib/utils";
 import AutocompletePaciente from "@/components/AutocompletePaciente";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,9 +15,6 @@ import {
 } from "@/components/ui/select";
 import { Plus } from "lucide-react";
 import NewPacienteModal from "@/app/dashboard/pacientes/components/NewPacienteModal";
-import { useCreatePaciente } from "@/hooks/useCreatePaciente";
-import { useProfesionales } from "@/hooks/useProfesionales";
-import { useObrasSociales } from "@/hooks/useObrasSociales";
 import { toast } from "sonner";
 
 interface DataTableToolbarProps {
@@ -24,19 +23,12 @@ interface DataTableToolbarProps {
 }
 
 export function DataTableToolbar({ table, onNewPaciente }: DataTableToolbarProps) {
+  const { focusModeEnabled: fm } = useUIStore();
   const [selectedPaciente, setSelectedPaciente] = useState<{
     nombreCompleto: string;
     fotoUrl: string | null;
   } | null>(null);
   const [openNewPaciente, setOpenNewPaciente] = useState(false);
-
-  const { data: obrasSocialesData } = useObrasSociales();
-  const { data: profesionalesData } = useProfesionales();
-
-  console.log("OBRAS SOCIALES:", obrasSocialesData);
-  console.log("PROFESIONALES:", profesionalesData);
-
-  const createPacienteMutation = useCreatePaciente();
 
   const setEstadoFilter = (value: string | null) => {
     table.getColumn("estado")?.setFilterValue(value === "todos" ? "" : value);
@@ -52,7 +44,7 @@ export function DataTableToolbar({ table, onNewPaciente }: DataTableToolbarProps
 
         {/* SELECT ESTADO (estilo compacto como la referencia) */}
         <Select onValueChange={setEstadoFilter}>
-          <SelectTrigger className="w-[180px] bg-white border border-gray-300 text-sm h-10 shadow-sm">
+          <SelectTrigger className={cn("w-[180px] text-sm h-10 shadow-sm", fm ? "bg-[var(--fc-bg-surface)] border-[var(--fc-border)] text-[var(--fc-text-primary)]" : "bg-white border border-gray-300")}>
             <SelectValue placeholder="Estado del paciente" />
           </SelectTrigger>
 
@@ -91,39 +83,17 @@ export function DataTableToolbar({ table, onNewPaciente }: DataTableToolbarProps
       </div>
 
       {/* RIGHT SIDE → BOTÓN NUEVO PACIENTE */}
-      <Button onClick={() => setOpen(true)}>
+      <Button
+        onClick={() => setOpen(true)}
+        className={cn(fm && "bg-[var(--fc-bg-surface)] border border-[var(--fc-border)] text-[var(--fc-text-primary)] hover:bg-[var(--fc-bg-hover)]")}
+        variant={fm ? "outline" : "default"}
+      >
         Nuevo paciente
       </Button>
 
       <NewPacienteModal
         open={open}
         onClose={() => setOpen(false)}
-        onCreate={(payload, setError, setGlobalError) => {
-          // Limpiamos cualquier error global anterior
-          setGlobalError("");
-
-          createPacienteMutation.mutate(payload, {
-            onError: (error: any) => {
-              const status = error?.response?.status || error?.statusCode;
-              const message = error?.response?.data?.message || error?.message;
-
-              if (status === 409 || message?.includes("DNI")) {
-                setGlobalError("El DNI ingresado ya está registrado.");
-                return;
-              }
-
-              setGlobalError(message || "Ocurrió un error al crear el paciente.");
-            },
-
-            onSuccess: () => {
-              toast.success("Paciente creado correctamente");
-              setOpen(false);
-            },
-          });
-        }}
-
-        obrasSociales={obrasSocialesData}
-        profesionales={profesionalesData}
       />
     </div>
   );

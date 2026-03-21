@@ -40,7 +40,8 @@ import {
   useMarcarPracticasPagadas,
   useCierreMensual,
 } from "@/hooks/useFinanzas";
-import { EstadoLiquidacion, LiquidacionesFilters } from "@/types/finanzas";
+import { useActualizarMontoPagado } from "@/hooks/useActualizarMontoPagado";
+import { EstadoLiquidacion, LiquidacionesFilters, PracticaRealizada } from "@/types/finanzas";
 import { toast } from "sonner";
 
 function formatMoney(value: number): string {
@@ -62,6 +63,48 @@ function formatDate(dateStr: string): string {
 
 type SortField = "fecha" | "paciente" | "obraSocial" | "monto";
 
+function EditableMontoCell({
+  practica,
+  onSuccess,
+}: {
+  practica: PracticaRealizada;
+  onSuccess: (id: string, monto: number) => void;
+}) {
+  const [localMonto, setLocalMonto] = useState("");
+  const actualizarMonto = useActualizarMontoPagado();
+
+  const handleBlur = () => {
+    if (localMonto === "") return;
+    const parsed = parseFloat(localMonto);
+    if (isNaN(parsed)) return;
+    const current = practica.montoPagado ?? practica.monto;
+    if (parsed === current) return;
+    actualizarMonto.mutate(
+      { practicaId: practica.id, montoPagado: parsed },
+      {
+        onSuccess: () => onSuccess(practica.id, parsed),
+        onError: () => {
+          setLocalMonto("");
+          toast.error("Error al guardar el monto");
+        },
+      }
+    );
+  };
+
+  return (
+    <Input
+      type="number"
+      min="0"
+      step="1"
+      value={localMonto}
+      placeholder={formatMoney(practica.montoPagado ?? practica.monto)}
+      onChange={(e) => setLocalMonto(e.target.value)}
+      onBlur={handleBlur}
+      className="w-28 text-right ml-auto h-7 text-sm"
+    />
+  );
+}
+
 export default function LiquidacionesTab() {
   const [filters, setFilters] = useState<LiquidacionesFilters>({
     estadoLiquidacion: EstadoLiquidacion.PENDIENTE,
@@ -74,9 +117,19 @@ export default function LiquidacionesTab() {
   const [sortField, setSortField] = useState<SortField>("fecha");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
+  const [overrides, setOverrides] = useState<Map<string, number>>(new Map());
+
   const { data: practicas, isLoading, error, refetch } = usePracticasPendientes(filters);
   const { data: cierreMensual, isLoading: loadingCierre } = useCierreMensual(mesActual);
   const marcarPagadas = useMarcarPracticasPagadas();
+
+  const handleMontoOverride = (id: string, monto: number) => {
+    setOverrides((prev) => {
+      const next = new Map(prev);
+      next.set(id, monto);
+      return next;
+    });
+  };
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -298,11 +351,12 @@ export default function LiquidacionesTab() {
                         onClick={() => handleSort("monto")}
                       >
                         <div className="flex items-center justify-end gap-2">
-                          Monto
+                          Autorizado
                           {sortField === "monto" && <ArrowUpDown className="w-4 h-4" />}
                         </div>
                       </TableHead>
                       <TableHead className="text-right">Coseguro</TableHead>
+                      <TableHead className="text-right">Pagado</TableHead>
                       <TableHead>Estado</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -354,6 +408,18 @@ export default function LiquidacionesTab() {
                             {practica.coseguro > 0
                               ? formatMoney(practica.coseguro)
                               : "-"}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {isPagado ? (
+                              <span className="text-sm text-gray-500">
+                                {formatMoney(overrides.get(practica.id) ?? practica.montoPagado ?? practica.monto)}
+                              </span>
+                            ) : (
+                              <EditableMontoCell
+                                practica={practica}
+                                onSuccess={handleMontoOverride}
+                              />
+                            )}
                           </TableCell>
                           <TableCell>
                             {isPagado ? (

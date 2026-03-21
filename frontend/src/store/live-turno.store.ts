@@ -16,9 +16,21 @@ export interface LiveTurnoSession {
   scheduledStart: string; // Original turno.inicio
 }
 
+export interface HCFormDraft {
+  tipo: string;
+  pvDiagnostico?: { zonas: string[]; subzonas: string[]; otroTexto?: string };
+  pvTratamientos?: Array<{ nombre: string; tratamientoId?: string; precio: number }>;
+  pvComentario?: string;
+  pvPresupuestoId?: string;
+  pvPresupuestoTotal?: number;
+  textoLibre?: string;
+  saved?: boolean;
+}
+
 export interface LiveTurnoDraftData {
   hcEntryId?: string;
   hcDraftAnswers?: Record<string, unknown>;
+  hcFormDraft?: HCFormDraft;
   scheduledTurnoData?: {
     fecha?: string;
     hora?: string;

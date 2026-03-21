@@ -1,585 +1,664 @@
-# Architecture Research
+# Architecture Patterns: v1.2 AFIP Real
 
-**Domain:** Medical SaaS — FACTURADOR dashboard + OS settlement workflow
-**Researched:** 2026-03-12
-**Confidence:** HIGH (based on direct codebase inspection, no external sources required)
-
----
-
-## Standard Architecture
-
-### System Overview
-
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                         Next.js 16 App Router                        │
-├──────────────────────────────┬──────────────────────────────────────┤
-│  /dashboard/page.tsx         │  /dashboard/facturador/page.tsx       │
-│  (CRM — PROFESIONAL default) │  (NEW — FACTURADOR home)              │
-├──────────────────────────────┴──────────────────────────────────────┤
-│              /dashboard/finanzas/liquidaciones/page.tsx              │
-│              (EXISTING — enhanced for FACTURADOR workflow)           │
-├─────────────────────────────────────────────────────────────────────┤
-│                    TanStack Query hooks layer                         │
-│  useFinanzas.ts (extend)  useFacturadorKpis (NEW in useFinanzas.ts) │
-│  useLimiteFacturacion (NEW)  useCrearLiquidacion (NEW)              │
-├─────────────────────────────────────────────────────────────────────┤
-│                     Axios API client (lib/api.ts)                    │
-└───────────────────────────┬─────────────────────────────────────────┘
-                            │ HTTP/JWT
-┌───────────────────────────▼─────────────────────────────────────────┐
-│                      NestJS Backend                                   │
-├─────────────────────────────────────────────────────────────────────┤
-│  FinanzasController (extend)    FinanzasService (extend)             │
-│  @Auth('ADMIN','PROFESIONAL','FACTURADOR')                           │
-├─────────────────────────────────────────────────────────────────────┤
-│                       PrismaService                                   │
-├─────────────────────────────────────────────────────────────────────┤
-│  PracticaRealizada   LiquidacionObraSocial   LimiteFacturacionMensual│
-│  (add montoPagado)   (creation now enforced)  (NEW model)           │
-└─────────────────────────────────────────────────────────────────────┘
-```
-
-### Component Responsibilities
-
-| Component | Responsibility | Location |
-|-----------|---------------|----------|
-| `FacturadorDashboardPage` | KPIs de limite mensual, practicas pendientes por OS, acceso rapido a liquidar | `frontend/.../dashboard/facturador/page.tsx` (NEW) |
-| `LimiteFacturacionCard` | Progress bar: facturado vs limite del mes | `frontend/.../dashboard/facturador/components/LimiteFacturacionCard.tsx` (NEW) |
-| `PracticasPendientesSummary` | Count + total agrupado por OS, link a liquidaciones | `frontend/.../dashboard/facturador/components/PracticasPendientesSummary.tsx` (NEW) |
-| `LiquidacionesPage` | Tabla de practicas + edicion montoPagado inline + cerrar lote por OS | `frontend/.../finanzas/liquidaciones/page.tsx` (MODIFY) |
-| `CerrarLoteModal` | Confirmacion + resumen + llama endpoint crear-lote | `frontend/.../finanzas/liquidaciones/components/CerrarLoteModal.tsx` (NEW) |
-| `FinanzasService` | crearLiquidacion(), setLimite(), getFacturadorKpis(), actualizarMontoPagado() | `backend/.../finanzas/finanzas.service.ts` (MODIFY) |
-| `FinanzasController` | 6 nuevos endpoints — ver tabla API Endpoints | `backend/.../finanzas/finanzas.controller.ts` (MODIFY) |
-| `AfipStubService` | Mock emitirComprobante() — CAE fake para investigacion | `backend/.../finanzas/afip-stub.service.ts` (NEW) |
+**Domain:** Medical SaaS — AFIP/ARCA Electronic Invoicing (real CAE)
+**Researched:** 2026-03-16
+**Confidence:** HIGH (based on direct codebase inspection + AFIP-INTEGRATION.md reference)
+**Scope:** What changes from the stub (AfipStubService) to the real implementation. Does NOT redocument v1.1 architecture.
 
 ---
 
-## Recommended Project Structure
+## Recommended Architecture
 
-### Backend additions (all within `backend/src/modules/finanzas/`)
+### System Overview: v1.2 Delta
 
-```
-backend/src/modules/finanzas/
-├── dto/
-│   └── finanzas.dto.ts          # ADD: CrearLiquidacionDto, SetLimiteFacturacionDto,
-│                                 #       ActualizarMontoPagadoDto
-├── afip-stub.service.ts         # NEW: mock AFIP emitir comprobante
-├── finanzas.module.ts           # ADD: AfipStubService as provider
-├── finanzas.controller.ts       # ADD: 6 new route handlers (see API Endpoints)
-└── finanzas.service.ts          # ADD: 4 new methods (see Data Flow)
-```
-
-No new NestJS module is needed. `FinanzasModule` already owns all financial domain
-logic, is registered in `AppModule`, and already grants access to `FACTURADOR` via
-`@Auth('ADMIN', 'PROFESIONAL', 'FACTURADOR')`.
-
-### Database schema additions
+The v1.2 change is **surgical**: one DI token (`AfipStubService`) is replaced by a real implementation (`AfipRealService`) organized in a new sub-module (`AfipModule`) that is imported into the existing `FinanzasModule`. No new routes. No new frontend pages beyond a certificate upload form and QR display in the existing factura view.
 
 ```
-backend/src/prisma/schema.prisma
-  - ADD model LimiteFacturacionMensual (see Pattern 3 below)
-  - MODIFY PracticaRealizada: add montoPagado Decimal? @db.Decimal(10,2)
-  - ADD relation LimiteFacturacionMensual on Profesional
-
-backend/src/prisma/migrations/
-  YYYYMMDDHHMMSS_facturador_v1/   # single migration covers both changes
-```
-
-### Frontend additions
-
-```
-frontend/src/app/dashboard/
-├── facturador/
-│   ├── page.tsx                                   # NEW: FACTURADOR home
-│   └── components/
-│       ├── LimiteFacturacionCard.tsx              # NEW: progress bar uso/limite
-│       ├── PracticasPendientesSummary.tsx         # NEW: pending count + total by OS
-│       └── AccionesRapidasFacturador.tsx          # NEW: quick links
-├── finanzas/
-│   └── liquidaciones/
-│       ├── page.tsx                               # MODIFY: montoPagado col + cerrar lote
-│       └── components/
-│           └── CerrarLoteModal.tsx                # NEW: confirm batch close dialog
-
-frontend/src/hooks/
-└── useFinanzas.ts   # ADD: useFacturadorKpis, useLimiteFacturacion,
-                     #       useSetLimiteFacturacion, useCrearLiquidacion,
-                     #       useActualizarMontoPagado
-
-frontend/src/lib/
-└── permissions.ts   # ADD: /dashboard/facturador rule (before /dashboard entry)
-
-frontend/src/app/dashboard/layout.tsx
-  # ADD: useEffect redirect FACTURADOR from /dashboard to /dashboard/facturador
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         Next.js 16 App Router                               │
+│                                                                             │
+│  /dashboard/facturador/**        (EXISTING — no structural changes)         │
+│  /dashboard/facturador/config/   (NEW — certificate upload for ADMIN only)  │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  TanStack Query hooks                                                       │
+│  useEmitirAfip (EXISTING — already calls POST /finanzas/facturas/:id/emitir-afip) │
+│  useAfipConfig (NEW — GET/POST /afip/config/:profesionalId)                 │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  Axios API client (lib/api.ts)  — no change                                 │
+└──────────────────────────────────┬──────────────────────────────────────────┘
+                                   │ HTTP/JWT
+┌──────────────────────────────────▼──────────────────────────────────────────┐
+│                           NestJS Backend                                     │
+│                                                                             │
+│  FinanzasController (MODIFY — emitir-afip now returns real CAE + QR data)   │
+│  FinanzasService (MODIFY — post-emission: store CAE, caeFchVto, qrData)     │
+│                                                                             │
+│  ┌─────────────────────────────────────────────────────────────────────┐    │
+│  │  AfipModule (NEW — separate NestJS module, imported by FinanzasModule)│   │
+│  │                                                                      │    │
+│  │  AfipConfigService   WsaaService        Wsfev1Service                │    │
+│  │  (cert CRUD,         (TRA build,        (FECAESolicitar,             │    │
+│  │   encryption)         signing, cache)    advisory lock,              │    │
+│  │                                          FECompUltimoAutorizado)     │    │
+│  │                                                                      │    │
+│  │  CaeaService         AfipModule                                      │    │
+│  │  (pre-fetch cron,    (providers + DI                                 │    │
+│  │   contingency mode)   wiring)                                        │    │
+│  └─────────────────────────────────────────────────────────────────────┘    │
+│                                                                             │
+│  WhatsappModule (re-exports EncryptionService — imported by AfipModule)      │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  PrismaService / PostgreSQL                                                  │
+│  Factura (MODIFY — add cae, caeFchVto, qrData, ptoVta, nroComprobante)      │
+│  ConfiguracionAFIP (NEW model — cert storage per profesional)                │
+│  CaeaVigente (NEW model — current period CAEA per profesional)               │
+└─────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Architectural Patterns
+## Component Boundaries
 
-### Pattern 1: Role-specific home via layout redirect
+### New Components
 
-**What:** `/dashboard/page.tsx` serves the CRM dashboard (PROFESIONAL context). Rather
-than polluting it with FACTURADOR content, a dedicated `/dashboard/facturador/page.tsx`
-is created. The `DashboardLayout` useEffect handles the redirect.
+| Component | Responsibility | Location | Status |
+|-----------|---------------|----------|--------|
+| `AfipModule` | NestJS module that wires AfipConfigService, WsaaService, Wsfev1Service, CaeaService. Imports WhatsappModule for EncryptionService. | `backend/src/modules/finanzas/afip/afip.module.ts` | NEW |
+| `AfipConfigService` | CRUD for `ConfiguracionAFIP` per tenant. Encrypts/decrypts cert and key PEM using EncryptionService. Parses `certExpiresAt` from cert. | `backend/src/modules/finanzas/afip/afip-config.service.ts` | NEW |
+| `AfipConfigController` | `POST /afip/config/:profesionalId` (upload cert+key), `GET /afip/config/:profesionalId` (expiry status only — NEVER returns encrypted fields). ADMIN only. | `backend/src/modules/finanzas/afip/afip-config.controller.ts` | NEW |
+| `WsaaService` | Builds TRA XML, signs via `openssl smime` subprocess, calls WSAA LoginCms SOAP endpoint, extracts token+sign, caches in Redis keyed `wsaa:{cuit}:{service}` with TTL = expiration - 5min. | `backend/src/modules/finanzas/afip/wsaa.service.ts` | NEW |
+| `Wsfev1Service` | Calls `FECompUltimoAutorizado` + `FECAESolicitar` wrapped in Prisma `$transaction` with `pg_advisory_xact_lock`. Returns `EmitirComprobanteResult`. Falls back to CaeaService on timeout/5xx. | `backend/src/modules/finanzas/afip/wsfev1.service.ts` | NEW |
+| `CaeaService` | Calls `FECAEASolicitar` on a cron schedule, stores `CaeaVigente` per profesional. On contingency: retrieves current CAEA, assigns to invoice. On inform window: calls `FECAEAInformar`. | `backend/src/modules/finanzas/afip/caea.service.ts` | NEW |
+| `AfipRealService` | Implements `AfipService` interface. Orchestrates: get config → get token (WsaaService) → call WSFEv1 (Wsfev1Service) → fallback to CAEA (CaeaService) → return result. This is the class that replaces AfipStubService as the DI provider. | `backend/src/modules/finanzas/afip/afip-real.service.ts` | NEW |
+| `FacturaPdfService` | Reuses PDFKit (already installed). Adds QR AFIP code to existing factura PDF layout. Reads `qrData` from `Factura` record. | `backend/src/modules/finanzas/afip/factura-pdf.service.ts` | NEW |
 
-**When to use:** Any role that needs a meaningfully different home from PROFESIONAL.
+### Modified Components
 
-**Trade-offs:** Two pages to maintain, but clean role separation. The existing
-`hasRouteAccess` enforcement handles unauthorized access at any other URL.
+| Component | What Changes | Location | Status |
+|-----------|-------------|----------|--------|
+| `AfipStubService` | Replaced as the active DI provider by `AfipRealService` in `AfipModule`. The class file stays for local dev / testing toggle. | `backend/src/modules/finanzas/afip/afip-stub.service.ts` | MODIFY (DI binding only) |
+| `FinanzasModule` | Remove `AfipStubService` from providers/exports. Add `AfipModule` to imports. The `FinanzasService` receives `AfipService` (interface token) via DI — no import path change. | `backend/src/modules/finanzas/finanzas.module.ts` | MODIFY |
+| `FinanzasService` | `emitirAfip(facturaId)` method: after getting result from AfipService, writes `cae`, `caeFchVto`, `qrData`, `nroComprobante`, `ptoVta` back to `Factura`. Also generates QR data string. | `backend/src/modules/finanzas/finanzas.service.ts` | MODIFY |
+| `FinanzasController` | `POST /finanzas/facturas/:id/emitir-afip` response shape now includes `{ cae, caeFchVto, qrUrl }` with real data. No route change. | `backend/src/modules/finanzas/finanzas.controller.ts` | MODIFY (response only) |
+| `Factura` (Prisma model) | Add fields: `cae String?`, `caeFchVto String?`, `qrData String?`, `ptoVta Int?`, `nroComprobante Int?`. These are null until AFIP emission. | `backend/src/prisma/schema.prisma` | MODIFY |
+| `ConfiguracionAFIP` | New model added to schema. | `backend/src/prisma/schema.prisma` | NEW MODEL |
+| `CaeaVigente` | New model added to schema. | `backend/src/prisma/schema.prisma` | NEW MODEL |
+| `AppModule` | If `AfipModule` is standalone (not just FinanzasModule-internal), register in AppModule imports after FinanzasModule. Needed only if AfipConfigController registers routes directly. | `backend/src/app.module.ts` | MAYBE MODIFY |
 
-**Important:** Add the `/dashboard/facturador` entry to `ROUTE_PERMISSIONS` in
-`permissions.ts` BEFORE the existing `/dashboard` catch-all. Prefix-matching order
-matters — the more specific prefix must come first.
+---
 
-```typescript
-// frontend/src/app/dashboard/layout.tsx — add to existing useEffect block
-useEffect(() => {
-  if (!isLoading && user?.rol === 'FACTURADOR' && pathname === '/dashboard') {
-    router.replace('/dashboard/facturador');
-  }
-}, [isLoading, user, pathname, router]);
-```
+## DI Token Strategy: Swap Without Changing Call Sites
 
-### Pattern 2: montoPagado as an optional nullable field on PracticaRealizada
-
-**What:** Add `montoPagado Decimal? @db.Decimal(10,2)` to `PracticaRealizada`. When
-null, the OS paid the full authorized `monto`. When set, it records the actual amount
-received — enabling discrepancy tracking without breaking existing records.
-
-**When to use:** When the OS pays less (or more) than the authorized code amount.
-
-**Trade-offs:** Null = "not yet corrected" is slightly ambiguous, but is backward
-compatible. No data migration required. The FACTURADOR edits this inline before
-closing a batch.
+The stub-to-real swap uses NestJS custom provider tokens. `AfipStubService` was registered directly as a class provider in `FinanzasModule`. For v1.2, this changes to an interface token:
 
 ```typescript
-// FinanzasService — new method
-async actualizarMontoPagado(practicaId: string, montoPagado: number) {
-  return this.prisma.practicaRealizada.update({
-    where: { id: practicaId },
-    data: { montoPagado: new Prisma.Decimal(montoPagado) },
-  });
+// backend/src/modules/finanzas/afip/afip.interfaces.ts  (already exists)
+// Add:
+export const AFIP_SERVICE = 'AFIP_SERVICE';  // injection token
+
+// AfipModule providers array:
+{
+  provide: AFIP_SERVICE,
+  useClass: AfipRealService,   // swap to AfipStubService for local dev/tests
 }
+
+// FinanzasService constructor (MODIFY):
+constructor(
+  @Inject(AFIP_SERVICE) private readonly afipService: AfipService,
+  // ... existing injections
+)
 ```
 
-### Pattern 3: LimiteFacturacionMensual as a standalone model with per-month uniqueness
+`FinanzasService` already calls `this.afipService.emitirComprobante(params)` — no change to call sites. The `AFIP_SERVICE` token is the only wiring change.
 
-**What:** New model `LimiteFacturacionMensual` scoped to `(profesionalId, mes)` with a
-`@@unique` constraint. The month is stored as a string `"YYYY-MM"` for simplicity.
-
-**Why not on Profesional:** The limit changes every month (it comes from the accountant).
-Per-row storage allows history, auditing, and detecting whether last month's limit was
-exceeded. A mutable field on `Profesional` loses history.
-
-```prisma
-model LimiteFacturacionMensual {
-  id            String      @id @default(uuid())
-  profesionalId String
-  mes           String      // "YYYY-MM"
-  montoLimite   Decimal     @db.Decimal(10, 2)
-  createdAt     DateTime    @default(now())
-  profesional   Profesional @relation(fields: [profesionalId], references: [id])
-
-  @@unique([profesionalId, mes])
-  @@index([profesionalId, mes])
-}
-```
-
-### Pattern 4: Atomic batch close via a dedicated endpoint with Prisma transaction
-
-**What:** A single `POST /finanzas/liquidaciones/crear-lote` endpoint wraps in a
-Prisma `$transaction`:
-1. `liquidacionObraSocial.create()` — creates the settlement record
-2. `practicaRealizada.updateMany()` — sets `estadoLiquidacion = PAGADO` and
-   `liquidacionId = newLiquidacion.id` for all selected practices
-
-**Why not two separate calls from the frontend:** If `marcarPracticasPagadas` succeeds
-but `crearLiquidacion` fails, practices are marked PAGADO with no parent
-`LiquidacionObraSocial`. The existing `marcarPracticasPagadas` endpoint has this gap —
-this milestone closes it by requiring both operations happen atomically.
-
-```typescript
-async crearLiquidacion(dto: CrearLiquidacionDto) {
-  return this.prisma.$transaction(async (tx) => {
-    const liquidacion = await tx.liquidacionObraSocial.create({
-      data: {
-        obraSocialId: dto.obraSocialId,
-        periodo: dto.periodo,
-        montoTotal: dto.montoTotal,
-        usuarioId: dto.usuarioId,
-      },
-    });
-    await tx.practicaRealizada.updateMany({
-      where: { id: { in: dto.practicaIds } },
-      data: {
-        estadoLiquidacion: 'PAGADO',
-        liquidacionId: liquidacion.id,
-      },
-    });
-    return liquidacion;
-  });
-}
-```
+To switch back to stub for local development, change `useClass: AfipRealService` to `useClass: AfipStubService` in `AfipModule`. No other code changes.
 
 ---
 
 ## Data Flow
 
-### Request Flow: FACTURADOR closes a settlement batch
+### Primary Flow: CAE Emission (WSFEv1)
 
 ```
-FACTURADOR filters practices by OS in LiquidacionesPage
+FACTURADOR clicks "Emitir AFIP" on a Factura
     |
-FACTURADOR edits montoPagado inline for each practice
+POST /finanzas/facturas/:id/emitir-afip  (FinanzasController)
     |
-PATCH /finanzas/practicas/:id/monto-pagado  (per practice, as edits happen)
+FinanzasService.emitirAfip(facturaId)
     |
-FACTURADOR clicks "Cerrar lote" -> CerrarLoteModal opens
+Load Factura from DB (get profesionalId, condicionIVAReceptor, moneda, tipoCambio, total)
     |
-CerrarLoteModal.confirm()
+AfipRealService.emitirComprobante(params)
     |
-useCrearLiquidacion.mutateAsync({ obraSocialId, periodo, practicaIds, montoTotal })
-    |
-POST /finanzas/liquidaciones/crear-lote  (FinanzasController)
-    |
-FinanzasService.crearLiquidacion(dto)
-    |
-prisma.$transaction([
-  liquidacionObraSocial.create(),
-  practicaRealizada.updateMany(estadoLiquidacion=PAGADO, liquidacionId)
-])
-    |
-Response: { id, obraSocialId, periodo, montoTotal }
-    |
-queryClient.invalidateQueries(['finanzas','practicas-pendientes'])
-queryClient.invalidateQueries(['finanzas','facturador-kpis'])
-```
+    ├─► AfipConfigService.getConfig(profesionalId)
+    │     → loads ConfiguracionAFIP from DB
+    │     → decrypts certPem + keyPem via EncryptionService
+    │
+    ├─► WsaaService.getAccessTicket(cuit, 'wsfe', certPem, keyPem)
+    │     → check Redis cache key "wsaa:{cuit}:wsfe"
+    │     → if hit and not expiring: return cached {token, sign}
+    │     → if miss: buildTRA() → signTRA() via openssl smime subprocess
+    │               → POST WSAA SOAP LoginCms
+    │               → parse token/sign/expiration from XML
+    │               → SET Redis key with TTL = (expiration - now - 5min)
+    │
+    ├─► Wsfev1Service.emitir(params, auth)
+    │     → prisma.$transaction(async tx => {
+    │           SELECT pg_advisory_xact_lock(hashtext(profesionalId||ptoVta||cbteTipo))
+    │           FECompUltimoAutorizado → lastNum
+    │           cbteDesde = lastNum + 1
+    │           FECAESolicitar → { cae, caeFchVto, resultado }
+    │       })
+    │     → if AFIP returns resultado='R': throw AfipRejectionException
+    │     → if timeout/5xx: throw AfipUnavailableException → caller falls back to CAEA
+    │
+    └─► (fallback) CaeaService.getActiveCaea(profesionalId)
+          → load CaeaVigente from DB for current period
+          → assign caea as authorization code
+          → mark Factura as CAEA_PENDIENTE_INFORMAR
 
-### Request Flow: FACTURADOR sets monthly limit
-
-```
-FACTURADOR enters limit amount for current month in LimiteFacturacionCard
     |
-useSetLimiteFacturacion.mutateAsync({ profesionalId, mes: '2026-03', montoLimite })
+FinanzasService (post-emission)
     |
-POST /finanzas/limite-facturacion  (FinanzasController)
+Build QR data string (AFIP spec: JSON → base64 → URL)
     |
-FinanzasService.setLimiteFacturacion(profesionalId, mes, monto)
-    |
-prisma.limiteFacturacionMensual.upsert({
-  where: { profesionalId_mes: { profesionalId, mes } },
-  create: { ... },
-  update: { montoLimite }
+prisma.factura.update({
+  cae, caeFchVto, qrData, nroComprobante: cbteDesde, ptoVta,
+  estado: EstadoFactura.EMITIDA
 })
     |
-queryClient.invalidateQueries(['finanzas','facturador-kpis'])
+Return { cae, caeFchVto, qrData } to controller → frontend
     |
-LimiteFacturacionCard re-renders with updated progress bar
+Frontend: invalidate factura query → re-render with QR badge + CAE number
 ```
 
-### State Management
-
-All FACTURADOR state follows the existing TanStack Query pattern. No new Zustand store
-is needed. Local React state in `LiquidacionesPage` manages the checkbox selection and
-the per-practice montoPagado draft edits before confirmation.
+### CAEA Pre-fetch Flow (Cron)
 
 ```
-TanStack Query cache
-    | (useFacturadorKpis, useLimiteFacturacion)
-FacturadorDashboardPage
-
-    | (local useState)
-LiquidacionesPage: selectedPracticaIds, draftMontoPagado map
+CaeaService cron: '0 6 27,11,12 * *'  (6 AM ART on days 27, 11, 12)
     |
-useCrearLiquidacion.mutate() -> POST -> server
+For each Profesional with ConfiguracionAFIP.ambiente = PRODUCCION
     |
-onSuccess -> invalidateQueries -> refetch -> UI update
+WsaaService.getAccessTicket(cuit, 'wsfe', ...) — reuses token cache
+    |
+FECAEASolicitar(Periodo: YYYYMM, Orden: 1 or 2)
+    |
+prisma.caeaVigente.upsert({
+  profesionalId, periodo, orden,
+  caea, fchVigDesde, fchVigHasta, fchTopeInf
+})
 ```
 
-### Key Data Flows
+### CAEA Inform Flow (Cron, post-period)
 
-1. **Facturador KPIs:** `GET /finanzas/facturador/kpis?profesionalId=&mes=` returns
-   `{ limiteActual, facturadoMes, porcentajeUsado, practicasPendienteCount,
-   practicasPendienteTotal, liquidacionesRecientes[] }`. Computed server-side by joining
-   `LimiteFacturacionMensual + PracticaRealizada + LiquidacionObraSocial`.
+```
+CaeaService cron: runs within 30 days after period end
+    |
+Find all Factura with estado = CAEA_PENDIENTE_INFORMAR for the expired period
+    |
+FECAEAInformar with those invoices
+    |
+Update Factura.estado to EMITIDA (CAEA confirmed)
+```
 
-2. **montoPagado editing:** Each PATCH fires immediately on blur. TanStack Query
-   invalidates `['finanzas','practicas-pendientes']` so the table re-renders with the
-   saved value. The FACTURADOR sees their edits persist across page refresh.
+### Certificate Upload Flow
 
-3. **Multi-tenant scoping:** `FACTURADOR` has no `Profesional` record. All new endpoints
-   receive `profesionalId` as an explicit query or body parameter, consistent with the
-   existing `FinanzasController` pattern (e.g., `getDashboard(@Query profesionalId?)`).
-   The FACTURADOR selects the professional context from the existing `RoleSelector`
-   component already present in the dashboard.
+```
+ADMIN opens /dashboard/facturador/config (NEW page)
+    |
+Uploads cert.pem + key.pem files (multipart/form-data)
+    |
+POST /afip/config/:profesionalId  (AfipConfigController, @Auth('ADMIN') only)
+    |
+AfipConfigService.upsertConfig(profesionalId, certPem, keyPem, ambiente)
+    |
+EncryptionService.encrypt(certPem) → certPemEncrypted
+EncryptionService.encrypt(keyPem) → keyPemEncrypted
+Parse certExpiresAt from cert (node crypto — X.509 notAfter field)
+    |
+prisma.configuracionAFIP.upsert({ profesionalId, cuit, certPemEncrypted,
+  keyPemEncrypted, certExpiresAt, ambiente })
+    |
+Return { certExpiresAt, ambiente } — NEVER return encrypted fields
+```
 
 ---
 
-## API Endpoints
+## Database Schema Changes
 
-### New endpoints (all added to FinanzasController)
+### New Model: ConfiguracionAFIP
 
-| Method | Path | Roles | Purpose |
-|--------|------|-------|---------|
-| `GET` | `/finanzas/facturador/kpis` | ADMIN, FACTURADOR | KPIs: limite, facturado, pendientes |
-| `POST` | `/finanzas/limite-facturacion` | ADMIN, FACTURADOR | Upsert limite mensual |
-| `GET` | `/finanzas/limite-facturacion` | ADMIN, FACTURADOR | Get limite del mes |
-| `POST` | `/finanzas/liquidaciones/crear-lote` | ADMIN, FACTURADOR | Atomic batch close |
-| `PATCH` | `/finanzas/practicas/:id/monto-pagado` | ADMIN, FACTURADOR | Update montoPagado |
-| `GET` | `/finanzas/liquidaciones` | ADMIN, FACTURADOR, PROFESIONAL | List LiquidacionObraSocial history |
-| `POST` | `/finanzas/facturas/:id/emitir-afip` | ADMIN, FACTURADOR | AFIP stub endpoint |
+```prisma
+model ConfiguracionAFIP {
+  id                String       @id @default(uuid())
+  profesionalId     String       @unique
+  cuit              String       // CUIT the cert was issued for (no hyphens)
+  certPemEncrypted  String       // AES-256-GCM: iv:authTag:ciphertext — NEVER in API responses
+  keyPemEncrypted   String       // AES-256-GCM: iv:authTag:ciphertext — NEVER in API responses
+  certExpiresAt     DateTime     // Parsed from cert's notAfter field
+  ambiente          AmbienteAFIP @default(HOMOLOGACION)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  profesional       Profesional  @relation(fields: [profesionalId], references: [id])
+}
 
-### Modified endpoints
+enum AmbienteAFIP {
+  HOMOLOGACION
+  PRODUCCION
+}
+```
 
-| Method | Path | Change |
-|--------|------|--------|
-| `GET` | `/finanzas/practicas-pendientes` | Response shape adds `montoPagado` field |
-| `GET` | `/finanzas/dashboard` | No change — FACTURADOR uses `/facturador/kpis` |
+### New Model: CaeaVigente
+
+```prisma
+model CaeaVigente {
+  id            String      @id @default(uuid())
+  profesionalId String
+  periodo       String      // "YYYYMM"
+  orden         Int         // 1 = first half (days 1-15), 2 = second half (days 16-end)
+  caea          String      // The authorization code — store as plaintext (not a secret, unlike certs)
+  fchVigDesde   String      // YYYYMMDD
+  fchVigHasta   String      // YYYYMMDD
+  fchTopeInf    String      // YYYYMMDD — last date to inform invoices under this CAEA
+  createdAt     DateTime    @default(now())
+  profesional   Profesional @relation(fields: [profesionalId], references: [id])
+
+  @@unique([profesionalId, periodo, orden])
+}
+```
+
+### Modified Model: Factura (additions only)
+
+```prisma
+// Add to existing Factura model:
+cae             String?     // 14-digit CAE from AFIP — null until EMITIDA
+caeFchVto       String?     // YYYYMMDD CAE expiry — null until EMITIDA
+qrData          String?     // Base64 QR content per AFIP spec — null until EMITIDA
+ptoVta          Int?        // AFIP punto de venta used for this invoice
+nroComprobante  Int?        // Sequential invoice number confirmed by AFIP
+```
+
+New `EstadoFactura` enum value needed:
+
+```prisma
+enum EstadoFactura {
+  EMITIDA
+  ANULADA
+  CAEA_PENDIENTE_INFORMAR  // NEW: emitted under CAEA, awaiting inform call
+}
+```
 
 ---
 
-## New DTOs (backend/src/modules/finanzas/dto/finanzas.dto.ts — additions)
+## Advisory Lock: Concrete NestJS/Prisma Pattern
+
+This is required for correctness. Two concurrent requests for the same professional + punto de venta + tipo comprobante must not both query `FECompUltimoAutorizado` and submit with the same sequence number.
+
+The lock must wrap the sequence `FECompUltimoAutorizado → FECAESolicitar` inside a single Prisma interactive transaction (`$transaction(async tx => ...)`). The `pg_advisory_xact_lock` releases automatically at transaction end.
 
 ```typescript
-export class CrearLiquidacionDto {
-  @IsUUID()           obraSocialId: string;
-  @IsString()         periodo: string;       // "YYYY-MM"
-  @IsNumber()         montoTotal: number;
-  @IsOptional()
-  @IsUUID()           usuarioId?: string;    // set from req.user.id in controller
-  @IsArray()
-  @IsUUID('4', { each: true }) practicaIds: string[];
-}
+// In Wsfev1Service (backend/src/modules/finanzas/afip/wsfev1.service.ts):
 
-export class SetLimiteFacturacionDto {
-  @IsUUID()           profesionalId: string;
-  @IsString()         mes: string;           // "YYYY-MM"
-  @IsNumber()
-  @IsPositive()       montoLimite: number;
-}
+async emitir(
+  params: EmitirComprobanteParams,
+  auth: { token: string; sign: string; cuit: string },
+): Promise<EmitirComprobanteResult> {
+  return this.prisma.$transaction(async (tx) => {
+    // Lock key: deterministic integer from (profesionalId, ptoVta, cbteTipo)
+    // hashtext() is PostgreSQL's built-in string hash → int4
+    await tx.$executeRaw`
+      SELECT pg_advisory_xact_lock(
+        hashtext(${params.cuitEmisor} || ':' || ${params.puntoVenta}::text || ':' || ${params.tipoComprobante}::text)
+      )
+    `;
 
-export class ActualizarMontoPagadoDto {
-  @IsNumber()
-  @IsPositive()       montoPagado: number;
+    // Safely read last authorized number AFTER lock is held
+    const lastNum = await this.callFECompUltimoAutorizado(
+      params.puntoVenta,
+      params.tipoComprobante,
+      auth,
+    );
+
+    const cbteDesde = lastNum + 1;
+    const cbteHasta = cbteDesde; // single invoice
+
+    // Submit to AFIP — if this throws, lock releases and transaction rolls back
+    return this.callFECAESolicitar({ ...params, cbteDesde, cbteHasta }, auth);
+    // pg_advisory_xact_lock releases here (transaction commit)
+  });
 }
+```
+
+Key constraints:
+- The entire method must run inside `prisma.$transaction(async tx => ...)` — not a batch transaction.
+- `tx.$executeRaw` (not `this.prisma.$executeRaw`) to ensure the lock is within the same connection.
+- The AFIP SOAP calls (`callFECompUltimoAutorizado`, `callFECAESolicitar`) happen inside the transaction scope but are external HTTP calls — Prisma's transaction timeout must be set high enough (default is 5s; AFIP can take 3-8s).
+
+Set Prisma transaction timeout in the call:
+
+```typescript
+return this.prisma.$transaction(async (tx) => { ... }, { timeout: 15000 }); // 15 seconds
 ```
 
 ---
 
-## Integration Points
+## WSAA Token Caching: Redis Pattern
 
-### Internal Boundaries
-
-| Boundary | Communication | Notes |
-|----------|---------------|-------|
-| `FinanzasModule` <-> `PrismaService` | Direct Prisma client | No change to existing pattern |
-| `FinanzasController` <-> `JwtRolesGuard` | `@Auth('FACTURADOR','ADMIN')` | Already established pattern |
-| `LiquidacionObraSocial` <-> `PracticaRealizada` | FK `liquidacionId` on `PracticaRealizada` | FK exists in schema but was never populated by a dedicated endpoint; this milestone closes that gap |
-| Frontend `permissions.ts` <-> `DashboardLayout` | `hasRouteAccess('/dashboard/facturador', rol)` | Must add rule BEFORE the `/dashboard` catch-all (prefix-matching order) |
-| `LimiteFacturacionMensual` <-> `Profesional` | FK `profesionalId` on `LimiteFacturacionMensual` | `FACTURADOR` Usuario has no `Profesional` record; `profesionalId` must be passed explicitly in requests |
-| `AfipStubService` <-> `FinanzasService` | Direct injection via module provider | Stub only; no real AFIP connection until future milestone |
-
-### AFIP Stub Integration Point
-
-The AFIP research deliverable should be scoped as a service stub + research document.
-Placement:
+The in-memory Map from AFIP-INTEGRATION.md section 2 works for single-instance but not horizontal scaling. Since Redis is already configured for BullMQ, use it for token caching.
 
 ```
-backend/src/modules/finanzas/afip-stub.service.ts
+Redis key:   "wsaa:{cuit}:{service}"      e.g. "wsaa:20123456789:wsfe"
+Redis value: JSON.stringify({ token, sign })
+Redis TTL:   (expiration.getTime() - Date.now() - 5*60*1000) / 1000  seconds
 ```
 
-The stub exposes `emitirComprobante(facturaId: string)` that returns a mock CAE
-structure `{ cae: 'MOCK-CAE-...', vencimientoCae: '...' }` and logs the call.
-The `FinanzasController` endpoint `POST /finanzas/facturas/:id/emitir-afip` calls it
-and returns the mock response. This pins down the interface shape for when real AFIP
-integration lands.
+The cache is a plain `redis` client (already in `package.json` as `"redis": "^5.9.0"`). Use `cache-manager-redis-yet` (already in package.json) or the raw `redis` client directly in `WsaaService`. Do not add a new Redis client — reuse the existing connection.
+
+Multi-instance safe: all instances share the same Redis key. First instance to miss cache calls WSAA and sets the key. Subsequent instances hit the cache.
+
+Race condition between two instances both missing cache simultaneously is acceptable — both call WSAA, last writer wins in Redis. AFIP does not reject duplicate TRA calls for the same CUIT+service as long as `uniqueId` (unix timestamp) differs slightly (it will, since they run milliseconds apart).
+
+---
+
+## QR Code Generation
+
+AFIP requires a QR code on printed/digital comprobantes per RG 5616/2024. The QR encodes a URL pointing to AFIP's verification portal with a base64-encoded JSON payload.
+
+### QR Data Format
+
+```typescript
+// Content to encode in the QR (AFIP spec):
+const qrPayload = {
+  ver: 1,
+  fecha: cbteFch,           // "YYYY-MM-DD"
+  cuit: cuitEmisor,         // number
+  ptoVta: puntoVenta,       // number
+  tipoCmp: tipoComprobante, // number
+  nroCmp: nroComprobante,   // number
+  importe: importeTotal,    // number
+  moneda: monId,            // "PES" or "DOL"
+  ctz: monCotiz,            // number
+  tipoDocRec: docTipo,      // number
+  nroDocRec: docNro,        // number (parse to int for non-CUIT types)
+  tipoCodAut: 'E',          // "E" for CAE, "A" for CAEA
+  codAut: cae,              // number
+};
+
+const qrData = Buffer.from(JSON.stringify(qrPayload)).toString('base64');
+const qrUrl = `https://www.afip.gob.ar/fe/qr/?p=${qrData}`;
+```
+
+### Generation Strategy: At Emission Time, Synchronous
+
+Generate `qrData` synchronously in `FinanzasService.emitirAfip()` immediately after receiving the CAE from AfipRealService. Store the `qrData` string in `Factura.qrData`. No async QR image rendering is needed on the backend — the frontend or PDF service generates the actual scannable image from this string.
+
+For the PDF (`FacturaPdfService`), use `qrcode` npm package (`npm install qrcode @types/qrcode`) to render the QR image into the PDFKit document. The `qrData` column stores the URL string; PDFKit renders it as a QR image using the qrcode library.
+
+```typescript
+// In FacturaPdfService:
+import * as QRCode from 'qrcode';
+
+const qrImageBuffer: Buffer = await QRCode.toBuffer(factura.qrData, {
+  width: 80,
+  margin: 1,
+});
+doc.image(qrImageBuffer, { width: 80 });
+```
+
+---
+
+## Certificate Storage: Per-Tenant Isolation
+
+Each `Profesional` has at most one `ConfiguracionAFIP` record (`@unique` on `profesionalId`). This maps 1:1 to a CUIT — each professional has their own CUIT and therefore their own AFIP certificate.
+
+Security rules (enforced in `AfipConfigService`):
+1. `certPemEncrypted` and `keyPemEncrypted` are NEVER included in any `select` clause that feeds a DTO response.
+2. Decryption happens only inside `AfipConfigService.getDecryptedCredentials()`, called only by `WsaaService`.
+3. The upload endpoint (`POST /afip/config/:profesionalId`) is `@Auth('ADMIN')` only — no FACTURADOR or PROFESIONAL access.
+4. Certificate files are never written to disk permanently — they arrive as multipart upload, are processed in memory, and the temp file (if any) is deleted immediately after encryption.
+
+The `@unique` constraint on `profesionalId` means upsert semantics: uploading a new cert replaces the old one. No versioning — if key rotation is needed, replace in full.
+
+---
+
+## Frontend Changes
+
+The frontend surface area for v1.2 is small. The existing emission flow already exists (AfipStubService returned a fake CAE). What changes is:
+
+### 1. Factura detail view: show real CAE and QR
+
+The existing factura table/detail does not yet render CAE or QR (stub returns a fake CAE that is not stored). After v1.2:
+- Factura row shows CAE badge (14-digit number) when `cae` is not null.
+- Factura detail panel shows QR code (rendered from `qrData`).
+
+**Frontend QR rendering:** Use `qrcode.react` (`npm install qrcode.react`) in the frontend. The backend stores the `qrData` string (the URL). The frontend renders it as a QR image with `<QRCodeSVG value={factura.qrData} size={80} />`.
+
+No backend change to the emission endpoint URL or response shape — just the data is real now.
+
+### 2. Certificate upload page: ADMIN only
+
+New page at `/dashboard/facturador/config` (or `/dashboard/configuracion/afip`). Accessible only to ADMIN role. Contains:
+- File inputs for `cert.pem` and `key.pem`.
+- Dropdown for `ambiente` (HOMOLOGACION / PRODUCCION).
+- CUIT text field.
+- Submit button: `POST /afip/config/:profesionalId` as `multipart/form-data`.
+- Display of current cert expiry (from `GET /afip/config/:profesionalId`).
+
+### 3. No new hooks beyond the above
+
+The emission hook (`useEmitirAfip`) already exists and calls `POST /finanzas/facturas/:id/emitir-afip`. No structural change. Two new hooks needed:
+- `useAfipConfig(profesionalId)` — GET cert expiry status.
+- `useUploadAfipConfig()` — POST cert upload mutation.
 
 ---
 
 ## Suggested Build Order
 
-This ordering respects hard dependencies: DB schema must exist before service methods,
-service methods before controllers, controllers before frontend hooks, hooks before
-UI components.
+Dependencies are strict: DB schema must exist before any backend code that references new fields, AfipModule must exist before FinanzasModule imports it, WSAA must work before WSFEv1 can be tested.
 
-### Step 1: Database migration (prerequisite for all subsequent steps)
+### Step 1: Database migration (blocks everything else)
 
-- Add `LimiteFacturacionMensual` model to `schema.prisma`
-- Add `montoPagado Decimal?` field to `PracticaRealizada`
-- Add `limitesFacturacion LimiteFacturacionMensual[]` relation on `Profesional`
-- Run `npx prisma migrate dev --name facturador_v1` from `backend/`
-- Run `npx prisma generate`
+- Add `ConfiguracionAFIP` model and `AmbienteAFIP` enum to `schema.prisma`.
+- Add `CaeaVigente` model to `schema.prisma`.
+- Add nullable fields to `Factura`: `cae`, `caeFchVto`, `qrData`, `ptoVta`, `nroComprobante`.
+- Add `CAEA_PENDIENTE_INFORMAR` to `EstadoFactura` enum.
+- Run `npx prisma migrate dev --name afip_real_v1` from `backend/`.
+- Run `npx prisma generate`.
 
-### Step 2: Backend DTOs and service methods
+No data migration needed — all new fields are nullable with no backfill requirement.
 
-- Add `CrearLiquidacionDto`, `SetLimiteFacturacionDto`, `ActualizarMontoPagadoDto`
-  to `finanzas.dto.ts`
-- Add to `FinanzasService`: `crearLiquidacion()`, `setLimiteFacturacion()`,
-  `getLimiteFacturacion()`, `getFacturadorKpis()`, `actualizarMontoPagado()`
-- All within `FinanzasService` — no new service class needed
+### Step 2: AfipModule skeleton + DI token (unblocks Steps 3-6)
 
-### Step 3: Backend new controller endpoints
+- Create `backend/src/modules/finanzas/afip/afip.module.ts` with empty providers.
+- Add `export const AFIP_SERVICE = 'AFIP_SERVICE'` to `afip.interfaces.ts`.
+- Update `FinanzasModule`: remove `AfipStubService` from providers/exports, add `AfipModule` to imports.
+- Update `FinanzasService` constructor: `@Inject(AFIP_SERVICE) private readonly afipService: AfipService`.
+- Register `AfipStubService` as `{ provide: AFIP_SERVICE, useClass: AfipStubService }` in AfipModule initially — keeps existing behavior while building the real services.
 
-- Add 7 route handlers to `FinanzasController`
-- Set `@Auth('ADMIN', 'FACTURADOR')` (or include `PROFESIONAL` where appropriate)
-- Wire `@Request() req` to extract `usuarioId` for `crearLiquidacion`
+Verify: `npm run start:dev` must still boot and existing stub endpoint must still work.
 
-### Step 4: Backend AFIP stub (can run parallel with Step 3)
+### Step 3: AfipConfigService + Controller + cert upload endpoint
 
-- Create `afip-stub.service.ts` with mock `emitirComprobante()` returning fake CAE
-- Register in `FinanzasModule` providers
-- Add `POST /finanzas/facturas/:id/emitir-afip` to controller
+- Create `AfipConfigService`: `upsertConfig()`, `getConfig()` (returns decrypted for internal use), `getConfigPublic()` (returns expiry only for API response).
+- Import `WhatsappModule` in `AfipModule` to get `EncryptionService`.
+- Create `AfipConfigController` with `POST /afip/config/:profesionalId` (multipart) and `GET /afip/config/:profesionalId`.
+- Add to `AppModule` imports if controller has its own route prefix.
 
-### Step 5: Frontend permissions and routing
+At this point: certificates can be uploaded and stored for a professional. WSAA not yet wired.
 
-- Add `/dashboard/facturador` rule to `permissions.ts` BEFORE the `/dashboard` entry
-- Add redirect effect in `DashboardLayout` for FACTURADOR landing on `/dashboard`
-- Create `frontend/src/app/dashboard/facturador/page.tsx` with minimal placeholder
+### Step 4: WsaaService + Redis token cache
 
-### Step 6: Frontend new TanStack Query hooks (add to useFinanzas.ts)
+- Implement `WsaaService`: `buildTRA()`, `signTRA()` (openssl subprocess), `callWsaa()` (axios SOAP), `extractCredentials()` (regex), `getAccessTicket()` (Redis cache).
+- Add `WsaaService` to `AfipModule` providers.
+- Add integration test: with a test cert (self-signed), call `getAccessTicket()` against AFIP homologacion. Verify token is returned and cached.
 
-- `useFacturadorKpis(profesionalId, mes)` — GET kpis
-- `useLimiteFacturacion(profesionalId, mes)` — GET limite
-- `useSetLimiteFacturacion()` — POST/upsert limite
-- `useCrearLiquidacion()` — POST crear-lote (invalidates practicas-pendientes + kpis)
-- `useActualizarMontoPagado()` — PATCH monto-pagado
+This step requires a real AFIP homologacion certificate to test. Use a throwaway self-signed cert against `wsaahomo.afip.gov.ar`.
 
-### Step 7: Frontend enhanced LiquidacionesPage
+### Step 5: Wsfev1Service + advisory lock
 
-- Add `montoPagado` column (inline number input, saves on blur via `useActualizarMontoPagado`)
-- Add OS selector filter to restrict the batch to one obra social at a time
-- Add "Cerrar lote" button (enabled when >= 1 PENDIENTE practice of same OS selected)
-- Build `CerrarLoteModal` using existing `Dialog` + `Button` from shadcn/ui
+- Implement `Wsfev1Service`: `callFECompUltimoAutorizado()`, `callFECAESolicitar()`, `emitir()` with `prisma.$transaction` and `pg_advisory_xact_lock`.
+- Add `Wsfev1Service` to `AfipModule` providers.
+- Set Prisma transaction timeout to 15000ms in the `$transaction` call.
+- Test with AFIP homologacion (test CUIT): submit a B invoice for Consumidor Final.
 
-### Step 8: Frontend Facturador home dashboard
+### Step 6: AfipRealService (orchestrator) + swap DI token
 
-- Build `FacturadorDashboardPage` with three components: `LimiteFacturacionCard`,
-  `PracticasPendientesSummary`, quick links to `/dashboard/finanzas/liquidaciones`
-- Wire `useFacturadorKpis` and `useLimiteFacturacion`
+- Create `AfipRealService` implementing `AfipService` interface.
+- It calls: `AfipConfigService.getConfig()` → `WsaaService.getAccessTicket()` → `Wsfev1Service.emitir()`.
+- On `AfipUnavailableException`: call `CaeaService.getActiveCaea()` (stub implementation for now — CAEA comes in Step 7).
+- Update `AfipModule`: change `{ provide: AFIP_SERVICE, useClass: AfipStubService }` to `{ provide: AFIP_SERVICE, useClass: AfipRealService }`.
 
----
+At this point: the end-to-end emission flow works for CAE (no CAEA fallback yet).
 
-## Multi-tenant Considerations
+### Step 7: FinanzasService post-emission logic + QR generation
 
-1. **FACTURADOR has no Profesional record.** The `useEffectiveProfessionalId()` hook
-   returns `null` for FACTURADOR. Do not use this hook in FACTURADOR-specific pages.
-   The existing `RoleSelector` component in the dashboard lets ADMIN/FACTURADOR pick
-   a professional context. Read `profesionalId` from there (Zustand store or query
-   param) and pass it explicitly to hooks.
+- After `afipService.emitirComprobante()` returns, build `qrData` URL string.
+- `prisma.factura.update()` with `cae`, `caeFchVto`, `qrData`, `nroComprobante`, `ptoVta`.
+- Install `qrcode` package (`npm install qrcode @types/qrcode`).
+- Implement `FacturaPdfService.generateFacturaPdf()` using PDFKit + qrcode.
 
-2. **All new backend endpoints follow the existing pattern** of accepting `profesionalId`
-   as an optional query param (not derived from JWT), consistent with the existing
-   `FinanzasController.getDashboard` approach.
+### Step 8: CAEA service + pre-fetch cron
 
-3. **LimiteFacturacionMensual scopes per profesionalId.** One FACTURADOR user can
-   manage limits for multiple professionals in the same clinic. Correct multi-professional
-   model.
+- Implement `CaeaService`: `prefetchCaea()` (cron), `getActiveCaea()` (contingency fallback), `informCaea()` (post-period inform).
+- Register `@nestjs/schedule` `ScheduleModule.forRoot()` in `AppModule` (already installed in package.json — check if registered; add if missing).
+- Cron expression: `'0 6 27,11,12 * *'` (6 AM ART on days 27, 11, 12).
 
-4. **Authorization gap in v1.1 (acceptable):** There is no DB-level assignment of
-   FACTURADOR to a specific professional. Any FACTURADOR can read/write limits for
-   any professional by passing their `profesionalId`. For a single-clinic deployment
-   this is fine. Future milestone: add `FacturadorProfesional` assignment table.
+### Step 9: Frontend — CAE/QR display in factura views
 
----
+- Install `qrcode.react` in frontend (`npm install qrcode.react`).
+- Add `cae`, `caeFchVto`, `qrData` to the Factura type in `frontend/src/types/finanzas.ts`.
+- Add QR display in factura detail panel (existing component).
+- Add CAE badge in factura table row (existing component).
 
-## Anti-Patterns
+### Step 10: Frontend — Certificate upload page (ADMIN only)
 
-### Anti-Pattern 1: Creating a new NestJS module for FACTURADOR
-
-**What people do:** Create `backend/src/modules/facturador/` as a new module with its
-own service and controller.
-
-**Why it's wrong:** All new entities (`LimiteFacturacionMensual`, liquidation batch
-close, montoPagado) operate entirely on the financial domain. Splitting creates
-cross-module service dependencies and adds boilerplate. The existing `FinanzasModule`
-already has `@Auth('FACTURADOR')` on its controller.
-
-**Do this instead:** Add methods to `FinanzasService`. Group new endpoints in the
-controller with a `// ── FACTURADOR ──` comment block.
-
-### Anti-Pattern 2: Closing a batch as two separate frontend API calls
-
-**What people do:** Call `marcarPracticasPagadas` first, then `crearLiquidacion`
-separately.
-
-**Why it's wrong:** If the first succeeds and the second fails (network error, server
-restart), practices are PAGADO with no parent `LiquidacionObraSocial`. Data is
-inconsistent and difficult to recover.
-
-**Do this instead:** Single `POST /finanzas/liquidaciones/crear-lote` wrapping both
-operations in a Prisma `$transaction`. Either both succeed or both roll back.
-
-### Anti-Pattern 3: Treating montoPagado != null as equivalent to estadoLiquidacion == PAGADO
-
-**What people do:** Check `montoPagado !== null` as the authoritative "paid" flag.
-
-**Why it's wrong:** The FACTURADOR may set a draft `montoPagado` before closing the
-batch. `estadoLiquidacion` is the single authoritative state field; `liquidacionId`
-presence is the secondary confirmation.
-
-**Do this instead:** Keep `estadoLiquidacion` as state driver. `montoPagado` is a
-financial correction field only. UI should reflect `estadoLiquidacion`.
-
-### Anti-Pattern 4: Redirecting FACTURADOR with a separate Next.js middleware file
-
-**What people do:** Create `middleware.ts` at `frontend/src/` to redirect FACTURADOR.
-
-**Why it's wrong:** The existing `DashboardLayout` already runs `useCurrentUser` and
-the `hasRouteAccess` redirect. Adding a second redirect mechanism causes race
-conditions and double redirects (client-side vs server-side).
-
-**Do this instead:** Single `useEffect` in `DashboardLayout` checking
-`user.rol === 'FACTURADOR' && pathname === '/dashboard'` then `router.replace(...)`.
-
-### Anti-Pattern 5: Fixing the N+1 query in getPracticasPendientes outside this milestone
-
-**What people do:** Refactor `getPracticasPendientes` to eliminate `Promise.all` for
-patient lookups in the same PR.
-
-**Why it's wrong (timing risk):** The N+1 fix requires changing the Prisma query
-structure, which could break other callers of the endpoint. It is a separate concern.
-
-**Do this instead:** Create a separate task for the N+1 fix. For v1.1, the FACTURADOR
-view can tolerate the existing performance as clinic volumes are low. Track it as
-known technical debt.
+- New page at `/dashboard/configuracion/afip` or `/dashboard/facturador/config`.
+- Add to `ROUTE_PERMISSIONS` in `permissions.ts` (ADMIN only).
+- Build form: file inputs + CUIT + ambiente dropdown + submit.
+- Display current `certExpiresAt` with warning if < 30 days.
 
 ---
 
-## Scaling Considerations
+## Integration Points Summary
 
-| Scale | Architecture Adjustments |
-|-------|--------------------------|
-| 0-50 clinics | Current monolith is fine. All within FinanzasModule. |
-| 50-500 clinics | Add DB index on `LimiteFacturacionMensual(profesionalId, mes)` (already included in model above). Fix the N+1 `getPracticasPendientes` query with a single join. Add `staleTime: 30_000` to `useFacturadorKpis` to avoid refetch on every tab focus. |
-| 500+ clinics | Financial module extract to separate service only if FACTURADOR query traffic dominates. Not relevant at current scale. |
+| Boundary | Communication | New vs Existing |
+|----------|---------------|-----------------|
+| `FinanzasModule` → `AfipModule` | NestJS module import + `AFIP_SERVICE` token | NEW |
+| `AfipModule` → `WhatsappModule` | Import for `EncryptionService` | NEW |
+| `AfipModule` → `PrismaService` | `@Global()` PrismaModule — no explicit import needed | EXISTING |
+| `WsaaService` → Redis | `redis` package client (already installed) — new usage in new module | NEW |
+| `Wsfev1Service` → PostgreSQL | `pg_advisory_xact_lock` via `prisma.$executeRaw` | NEW |
+| `WsaaService` → AFIP WSAA | SOAP 1.1 via axios (already installed) | NEW (external) |
+| `Wsfev1Service` → AFIP WSFEv1 | SOAP 1.1 via axios | NEW (external) |
+| `CaeaService` → `@nestjs/schedule` | `ScheduleModule.forRoot()` in AppModule | NEW (package already installed) |
+| `AfipConfigController` → `EncryptionService` | Via `AfipConfigService` | NEW |
+| Frontend `useEmitirAfip` | No change — same endpoint URL, response now has real data | EXISTING |
+| Frontend `useAfipConfig` | `GET /afip/config/:profesionalId` | NEW |
+| Frontend `useUploadAfipConfig` | `POST /afip/config/:profesionalId` | NEW |
 
-### Scaling Priorities
+---
 
-1. **First bottleneck:** `getPracticasPendientes` uses `Promise.all(N patient lookups)` —
-   an N+1 pattern. For a FACTURADOR seeing hundreds of practices, this will be slow.
-   Fix: convert to single `findMany` with `include: { paciente: { include: { obraSocial } } }`.
-   The FK relation exists on the Prisma schema; the current service just does not use it.
+## Patterns to Follow
 
-2. **Second bottleneck:** `getFacturadorKpis` runs three aggregate queries on every load.
-   Use TanStack Query `staleTime: 30_000` on the frontend to avoid redundant fetches.
+### Pattern 1: AfipModule as isolated sub-module (not inline in FinanzasModule)
+
+**What:** All AFIP-specific services (`WsaaService`, `Wsfev1Service`, `CaeaService`, `AfipConfigService`) live in `AfipModule`. `FinanzasModule` imports `AfipModule` and injects via `AFIP_SERVICE` token. No AFIP-specific code bleeds into `FinanzasService` beyond the single `emitirComprobante()` call.
+
+**Why:** AFIP services have their own infrastructure concerns (Redis, subprocess signing, SOAP, cron). Keeping them isolated from the financial billing logic prevents coupling and makes the stub-to-real swap clean.
+
+**Boundary:** `FinanzasService` knows nothing about WSAA, tokens, or certs. It only knows `AfipService.emitirComprobante(params)`.
+
+### Pattern 2: openssl smime subprocess over node-forge
+
+**Decision:** Use `openssl smime -sign` subprocess for CMS/PKCS#7 signing.
+
+**Why:** No new npm dependency. `openssl` binary is standard on Linux. More battle-tested against AFIP's specific CMS requirements. The subprocess has ~20ms latency, which is negligible compared to the WSAA SOAP round trip (~200-500ms). Temp files are written to `os.tmpdir()` with mode `0o600` and deleted in a `finally` block.
+
+**Implication:** The deployment environment (Docker image or server) must have the `openssl` binary. Standard on any Debian/Ubuntu/Alpine base image. Add `RUN which openssl` to CI to verify.
+
+### Pattern 3: Manual BNA rate entry for USD invoices
+
+**Decision:** FACTURADOR enters the BNA exchange rate manually when creating a USD invoice.
+
+**Why:** The BNA does not have a public API. Scraping is fragile and an audit liability. Manual entry is explicit, auditable, and immune to third-party failures. A link to `https://www.bna.com.ar/Personas` is shown next to the field as reference.
+
+**When USD invoices are created:** The `CreateFacturaDto` already has `tipoCambio` and `moneda` fields from v1.1. The emission flow maps `Factura.moneda` to `MonId` and `Factura.tipoCambio` to `MonCotiz` using the lookup objects from AFIP-INTEGRATION.md section 3.
+
+### Pattern 4: CondicionIVA mapping at emission time (not stored as AFIP integer)
+
+**What:** `Factura.condicionIVAReceptor` stores the Prisma enum value (e.g., `CONSUMIDOR_FINAL`). The AFIP integer ID (e.g., `5`) is derived at emission time via a static lookup map in `Wsfev1Service`.
+
+**Why:** AFIP codes may change with new regulations. Storing the semantic enum keeps the data meaningful independent of AFIP's numbering scheme. The lookup map is the single place to update if AFIP adds new IDs.
+
+---
+
+## Anti-Patterns to Avoid
+
+### Anti-Pattern 1: Hardcoding the certificate path on the filesystem
+
+**What goes wrong:** Storing cert.pem and key.pem as files in the repo or on a shared filesystem path.
+
+**Why bad:** Certs are credentials. File system paths break in multi-instance deployments. No per-tenant isolation.
+
+**Instead:** Store encrypted in `ConfiguracionAFIP.certPemEncrypted` using the existing `EncryptionService`. Decrypt in memory at call time. Never touch the filesystem for persistent storage.
+
+### Anti-Pattern 2: Calling FECAESolicitar without pg_advisory_xact_lock
+
+**What goes wrong:** Two concurrent requests for the same professional + punto de venta + tipo comprobante may read the same last authorized number and submit with the same sequence number. AFIP rejects both (or produces a gap in sequence).
+
+**Why bad:** Sequence errors are hard to recover — AFIP does not allow retroactive re-numbering.
+
+**Instead:** The advisory lock in `Wsfev1Service.emitir()` (Step 5) is mandatory, not optional.
+
+### Anti-Pattern 3: Using the same DI class name (AfipStubService) for the real implementation
+
+**What goes wrong:** If `AfipRealService` is named `AfipStubService` (overwriting the stub), toggling back for local dev requires a code change.
+
+**Instead:** Keep both classes. The DI token `AFIP_SERVICE` determines which is active. Switch by changing `useClass` in `AfipModule`. No other code changes.
+
+### Anti-Pattern 4: Generating QR as a server-side image and storing it in the DB
+
+**What goes wrong:** Storing a large PNG/SVG blob in PostgreSQL. Increases row size. Requires regeneration if QR spec changes.
+
+**Instead:** Store the `qrData` string (the URL, ~300 chars). Render the QR image in the PDF service (at PDF generation time) and in the frontend (at display time). The data string is stable and small.
+
+### Anti-Pattern 5: Using CAEA as the primary invoicing path
+
+**What goes wrong:** Violates RG 5782/2025 (effective June 2026), which restricts CAEA to contingency only. Could trigger AFIP penalties.
+
+**Instead:** Always attempt CAE first. Only fall back to CAEA when `FECAESolicitar` returns a network timeout or HTTP 5xx. The contingency branch must be clearly logged and the invoice marked `CAEA_PENDIENTE_INFORMAR` for the inform step.
+
+---
+
+## Scalability Considerations
+
+| Concern | Current scale (single clinic) | 50+ tenants | Notes |
+|---------|-------------------------------|-------------|-------|
+| WSAA token calls | 1 token per 12h per CUIT — negligible | Redis cache shared across instances — already solved | No action needed |
+| Advisory lock contention | Zero — single professional, sequential invoicing | Lock is per (cuit, ptoVta, cbteTipo) — parallel emission for different professionals is safe | Acceptable |
+| AFIP latency per emission | 3-8s round trip (WSAA + WSFEv1) — synchronous | At 50+ simultaneous emissions: queue-based async emission to avoid HTTP timeout on frontend | Out of scope for v1.2 |
+| CAEA cron | Runs for all professionals — O(N) AFIP calls | At 100+ tenants: add jitter to cron (stagger calls by 1-5s per tenant) to avoid rate-limiting | Note for future |
+| Cert expiry monitoring | Check on each WSAA call (already done via certExpiresAt comparison) | Add dedicated cron for 30-day warning email to ADMIN | Nice to have in v1.2 |
 
 ---
 
 ## Sources
 
-- `backend/src/modules/finanzas/finanzas.service.ts` — direct inspection (HIGH confidence)
-- `backend/src/modules/finanzas/finanzas.controller.ts` — direct inspection (HIGH confidence)
-- `backend/src/prisma/schema.prisma` — direct inspection (HIGH confidence)
-- `frontend/src/lib/permissions.ts` — direct inspection (HIGH confidence)
-- `frontend/src/app/dashboard/layout.tsx` — direct inspection (HIGH confidence)
-- `frontend/src/hooks/useFinanzas.ts` — direct inspection (HIGH confidence)
-- `frontend/src/app/dashboard/finanzas/liquidaciones/page.tsx` — direct inspection (HIGH confidence)
-- `frontend/src/app/dashboard/page.tsx` — direct inspection (HIGH confidence)
-- `.planning/PROJECT.md` — direct inspection (HIGH confidence)
+All findings are HIGH confidence — derived entirely from direct codebase inspection and the pre-researched AFIP-INTEGRATION.md reference document.
+
+- `backend/src/modules/finanzas/afip/afip.interfaces.ts` — existing TypeScript contract
+- `backend/src/modules/finanzas/afip/afip-stub.service.ts` — existing stub (DI baseline)
+- `backend/src/modules/finanzas/finanzas.module.ts` — current DI wiring
+- `backend/src/modules/finanzas/finanzas.service.ts` — emitirAfip call site
+- `backend/src/modules/whatsapp/whatsapp.module.ts` — EncryptionService export pattern
+- `backend/src/modules/whatsapp/crypto/encryption.service.ts` — AES-256-GCM interface
+- `backend/src/prisma/schema.prisma` — Factura model, CondicionIVA enum, MonedaFactura enum
+- `backend/src/app.module.ts` — module registration pattern, BullMQ, Redis wiring
+- `backend/package.json` — confirmed: `@nestjs/schedule`, `pdfkit`, `redis`, `axios` already installed; `xml2js`, `node-forge`, `qrcode` NOT installed
+- `.planning/research/AFIP-INTEGRATION.md` — WSAA, WSFEv1, CAEA, advisory lock, signing options, QR spec
 
 ---
 
-*Architecture research for: CLINICAL SaaS v1.1 — Vista del Facturador*
-*Researched: 2026-03-12*
+*Architecture research for: CLINICAL SaaS v1.2 — AFIP Real Implementation*
+*Researched: 2026-03-16*
+*Supersedes: v1.1 ARCHITECTURE.md sections on AfipStubService placement*

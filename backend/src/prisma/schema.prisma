@@ -128,6 +128,8 @@ model Profesional {
   configClinica     ConfigClinica?
   autorizaciones    AutorizacionObraSocial[]
   limitesFacturacion LimiteFacturacionMensual[]
+  configuracionAFIP  ConfiguracionAFIP?
+  caeaVigentes       CaeaVigente[]
 }
 
 model Secretaria {
@@ -537,6 +539,11 @@ model Factura {
   movimientoId  String?
   obraSocialId  String?
   pacienteId    String?
+  cae              String?   // 14-digit CAE from AFIP (null until real emission in Phase 14)
+  caeFchVto        String?   // CAE expiry 'YYYYMMDD'
+  nroComprobante   Int?      // Sequential invoice number assigned at emission
+  qrData           String?   // Full AFIP QR URL (Phase 15 renders this as a QR code)
+  ptoVta           Int?      // Point of sale used for emission
   Archivo       Archivo[]
   movimiento    MovimientoCC?           @relation(fields: [movimientoId], references: [id])
   profesional   Profesional             @relation(fields: [profesionalId], references: [id])
@@ -926,7 +933,14 @@ enum MedioPago {
 
 enum EstadoFactura {
   EMITIDA
+  EMISION_PENDIENTE  // Transient: BullMQ job enqueued, CAE not yet assigned
   ANULADA
+  CAEA_PENDIENTE_INFORMAR  // Issued under CAEA contingency — must be informed to AFIP within 8 days
+}
+
+enum AmbienteAFIP {
+  HOMOLOGACION
+  PRODUCCION
 }
 
 enum EstadoPresupuesto {
@@ -1168,6 +1182,39 @@ model AutorizacionObraSocial {
   @@index([pacienteId])
   @@index([estado])
   @@index([profesionalId, estado])
+}
+
+// ── AFIP Configuration ────────────────────────────────────────────────────────
+
+model ConfiguracionAFIP {
+  id                String       @id @default(uuid())
+  profesionalId     String       @unique
+  cuit              String       // Extracted from cert CN at upload — source of truth
+  certPemEncrypted  String       // AES-256-GCM: iv:authTag:ciphertext — NEVER return in API
+  keyPemEncrypted   String       // AES-256-GCM: iv:authTag:ciphertext — NEVER return in API
+  certExpiresAt     DateTime     // Parsed from cert notAfter at upload time
+  ptoVta            Int          // Validated via FEParamGetPtosVenta at save time
+  ambiente          AmbienteAFIP @default(HOMOLOGACION)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  profesional       Profesional  @relation(fields: [profesionalId], references: [id])
+}
+
+model CaeaVigente {
+  id            String      @id @default(uuid())
+  profesionalId String
+  cuit          String
+  caea          String      // The CAEA code from AFIP
+  periodo       String      // 'YYYYMM'
+  orden         Int         // 1 = first half (days 1–15), 2 = second half (days 16–end)
+  fchVigDesde   String      // Period start 'YYYYMMDD'
+  fchVigHasta   String      // Period end 'YYYYMMDD'
+  fchTopeInf    String      // Last date to inform invoices under this CAEA 'YYYYMMDD'
+  createdAt     DateTime    @default(now())
+  profesional   Profesional @relation(fields: [profesionalId], references: [id])
+
+  @@unique([profesionalId, periodo, orden])
+  @@index([profesionalId, fchVigHasta])
 }
 
 model MensajeWhatsApp {

@@ -27,6 +27,22 @@ export class PresupuestoPublicController {
     return this.service.rechazarByToken(token, body.motivoRechazo);
   }
 
+  @Post(':token/verificar')
+  verificarDni(
+    @Param('token') token: string,
+    @Body() body: { dni: string },
+  ) {
+    return this.service.verificarYCargar(token, body.dni);
+  }
+
+  @Post(':token/duda')
+  registrarDuda(
+    @Param('token') token: string,
+    @Body() body: { duda: string },
+  ) {
+    return this.service.registrarDuda(token, body.duda);
+  }
+
   /**
    * GET /presupuestos/public/:id/pdf
    * Returns the presupuesto PDF buffer without auth.

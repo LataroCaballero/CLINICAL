@@ -48,7 +48,8 @@ export class ProfesionalesController {
   ) {
     const user = req.user;
 
-    // Solo el propio profesional puede editar
+    // PROFESIONAL: solo puede editar su propio perfil
+    // SECRETARIA / ADMIN: pueden editar cualquier perfil
     if (user.rol === RolUsuario.PROFESIONAL) {
       const profesional = await this.profesionalesService.findByUserId(
         user.userId,
@@ -58,8 +59,11 @@ export class ProfesionalesController {
           'Solo podés editar tu propia configuración',
         );
       }
-    } else {
-      throw new ForbiddenException('Solo profesionales pueden editar');
+    } else if (
+      user.rol !== RolUsuario.SECRETARIA &&
+      user.rol !== RolUsuario.ADMIN
+    ) {
+      throw new ForbiddenException('Sin permisos para editar profesionales');
     }
 
     return this.profesionalesService.update(id, dto);

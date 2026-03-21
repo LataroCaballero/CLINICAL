@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -18,6 +18,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
 import {
   CalendarIcon,
   Clock,
@@ -30,6 +31,8 @@ import {
   CheckCircle,
   XCircle,
   MessageSquare,
+  Pencil,
+  Check,
 } from "lucide-react";
 import {
   Tooltip,
@@ -92,9 +95,32 @@ export default function AppointmentDetailModal({
   const [newDate, setNewDate] = useState<Date | undefined>(undefined);
   const [newTime, setNewTime] = useState("");
   const [waModalOpen, setWaModalOpen] = useState(false);
+  const [editingObs, setEditingObs] = useState(false);
+  const [obsValue, setObsValue] = useState(event?.observaciones ?? "");
 
   const queryClient = useQueryClient();
   const reprogramar = useReprogramarTurno();
+
+  // Sync textarea when a different event opens
+  useEffect(() => {
+    setObsValue(event?.observaciones ?? "");
+    setEditingObs(false);
+  }, [event?.id]);
+
+  const updateObsMutation = useMutation({
+    mutationFn: async ({ id, observaciones }: { id: string; observaciones: string }) => {
+      const { data } = await api.patch(`/turnos/${id}/observaciones`, { observaciones });
+      return data;
+    },
+    onSuccess: () => {
+      toast.success("Observaciones actualizadas");
+      queryClient.invalidateQueries({ queryKey: ["turnos"] });
+      setEditingObs(false);
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message ?? "Error al guardar");
+    },
+  });
 
   const confirmarMutation = useMutation({
     mutationFn: async (turnoId: string) => {
@@ -226,16 +252,69 @@ export default function AppointmentDetailModal({
             </div>
           </div>
 
-          {/* Observaciones */}
-          {event.observaciones && (
-            <div className="flex items-start gap-3">
-              <FileText className="w-5 h-5 text-muted-foreground mt-0.5" />
-              <div>
+          {/* Observaciones — editable inline */}
+          <div className="flex items-start gap-3">
+            <FileText className="w-5 h-5 text-muted-foreground mt-0.5 shrink-0" />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between mb-1">
                 <p className="text-sm text-muted-foreground">Observaciones</p>
-                <p className="text-sm">{event.observaciones}</p>
+                {!editingObs && (
+                  <button
+                    onClick={() => setEditingObs(true)}
+                    className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
+                  >
+                    <Pencil className="w-3 h-3" />
+                    Editar
+                  </button>
+                )}
               </div>
+
+              {editingObs ? (
+                <div className="space-y-2">
+                  <Textarea
+                    value={obsValue}
+                    onChange={(e) => setObsValue(e.target.value)}
+                    placeholder="Agregar observaciones..."
+                    className="text-sm resize-none"
+                    rows={3}
+                    autoFocus
+                  />
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => updateObsMutation.mutate({ id: event.id, observaciones: obsValue })}
+                      disabled={updateObsMutation.isPending}
+                    >
+                      {updateObsMutation.isPending ? (
+                        <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                      ) : (
+                        <Check className="w-3 h-3 mr-1" />
+                      )}
+                      Guardar
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex-1"
+                      onClick={() => { setEditingObs(false); setObsValue(event.observaciones ?? ""); }}
+                      disabled={updateObsMutation.isPending}
+                    >
+                      <X className="w-3 h-3 mr-1" />
+                      Cancelar
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <p
+                  className="text-sm text-gray-700 cursor-pointer hover:bg-muted/50 rounded px-1 -mx-1 py-0.5 transition-colors"
+                  onClick={() => setEditingObs(true)}
+                >
+                  {obsValue || <span className="text-muted-foreground italic">Sin observaciones — click para agregar</span>}
+                </p>
+              )}
             </div>
-          )}
+          </div>
 
           <Separator />
 

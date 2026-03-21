@@ -25,10 +25,22 @@ export class TratamientosController {
     private readonly prisma: PrismaService,
   ) {}
 
-  private async getProfesionalId(user: any): Promise<string> {
+  private async getProfesionalId(
+    user: any,
+    targetProfesionalId?: string,
+  ): Promise<string> {
+    // SECRETARIA / ADMIN pueden operar sobre cualquier profesional
+    // siempre que pasen el profesionalId como query param
+    if (
+      (user.rol === RolUsuario.SECRETARIA || user.rol === RolUsuario.ADMIN) &&
+      targetProfesionalId
+    ) {
+      return targetProfesionalId;
+    }
+
     if (user.rol !== RolUsuario.PROFESIONAL) {
       throw new ForbiddenException(
-        'Solo profesionales pueden gestionar tratamientos',
+        'Se requiere profesionalId para gestionar tratamientos',
       );
     }
 
@@ -70,24 +82,33 @@ export class TratamientosController {
   async findMyTratamientos(
     @Req() req: any,
     @Query('includeInactive') includeInactive?: string,
+    @Query('profesionalId') profesionalId?: string,
   ) {
-    const profesionalId = await this.getProfesionalId(req.user);
+    const pid = await this.getProfesionalId(req.user, profesionalId);
     return this.tratamientosService.findAllByProfesional(
-      profesionalId,
+      pid,
       includeInactive === 'true',
     );
   }
 
   @Get(':id')
-  async findOne(@Req() req: any, @Param('id') id: string) {
-    const profesionalId = await this.getProfesionalId(req.user);
-    return this.tratamientosService.findById(id, profesionalId);
+  async findOne(
+    @Req() req: any,
+    @Param('id') id: string,
+    @Query('profesionalId') profesionalId?: string,
+  ) {
+    const pid = await this.getProfesionalId(req.user, profesionalId);
+    return this.tratamientosService.findById(id, pid);
   }
 
   @Post()
-  async create(@Req() req: any, @Body() dto: CreateTratamientoDto) {
-    const profesionalId = await this.getProfesionalId(req.user);
-    return this.tratamientosService.create(profesionalId, dto);
+  async create(
+    @Req() req: any,
+    @Body() dto: CreateTratamientoDto,
+    @Query('profesionalId') profesionalId?: string,
+  ) {
+    const pid = await this.getProfesionalId(req.user, profesionalId);
+    return this.tratamientosService.create(pid, dto);
   }
 
   @Patch(':id')
@@ -95,20 +116,29 @@ export class TratamientosController {
     @Req() req: any,
     @Param('id') id: string,
     @Body() dto: UpdateTratamientoDto,
+    @Query('profesionalId') profesionalId?: string,
   ) {
-    const profesionalId = await this.getProfesionalId(req.user);
-    return this.tratamientosService.update(id, profesionalId, dto);
+    const pid = await this.getProfesionalId(req.user, profesionalId);
+    return this.tratamientosService.update(id, pid, dto);
   }
 
   @Delete(':id')
-  async remove(@Req() req: any, @Param('id') id: string) {
-    const profesionalId = await this.getProfesionalId(req.user);
-    return this.tratamientosService.softDelete(id, profesionalId);
+  async remove(
+    @Req() req: any,
+    @Param('id') id: string,
+    @Query('profesionalId') profesionalId?: string,
+  ) {
+    const pid = await this.getProfesionalId(req.user, profesionalId);
+    return this.tratamientosService.softDelete(id, pid);
   }
 
   @Post(':id/restore')
-  async restore(@Req() req: any, @Param('id') id: string) {
-    const profesionalId = await this.getProfesionalId(req.user);
-    return this.tratamientosService.restore(id, profesionalId);
+  async restore(
+    @Req() req: any,
+    @Param('id') id: string,
+    @Query('profesionalId') profesionalId?: string,
+  ) {
+    const pid = await this.getProfesionalId(req.user, profesionalId);
+    return this.tratamientosService.restore(id, pid);
   }
 }

@@ -24,6 +24,9 @@ import { CuentasCorrientesProveedoresModule } from './modules/cuentas-corrientes
 import { ReportesModule } from './modules/reportes/reportes.module';
 import { BullModule } from '@nestjs/bullmq';
 import { WhatsappModule } from './modules/whatsapp/whatsapp.module';
+import { AutorizacionesModule } from './modules/autorizaciones/autorizaciones.module';
+import { WsaaModule } from './modules/wsaa/wsaa.module';
+import { AfipConfigModule } from './modules/afip-config/afip-config.module';
 
 @Module({
   imports: [
@@ -69,6 +72,9 @@ import { WhatsappModule } from './modules/whatsapp/whatsapp.module';
     AlertasModule,
     ReportesModule,
     WhatsappModule,
+    AutorizacionesModule,
+    WsaaModule,
+    AfipConfigModule,
   ],
 })
 export class AppModule implements NestModule {

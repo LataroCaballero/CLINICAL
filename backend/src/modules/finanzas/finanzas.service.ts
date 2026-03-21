@@ -3,8 +3,12 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
+import * as QRCode from 'qrcode';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CuentasCorrientesService } from '../cuentas-corrientes/cuentas-corrientes.service';
+import { FacturaPdfService } from './factura-pdf.service';
 import {
   CreatePagoDto,
   PagosFiltersDto,
@@ -13,6 +17,7 @@ import {
   LiquidacionesFiltersDto,
   ReporteFiltersDto,
   CreateLoteDto,
+  FacturaDetailDto,
 } from './dto/finanzas.dto';
 import { getMonthBoundariesART } from './utils/month-boundaries';
 import {
@@ -20,12 +25,15 @@ import {
   EstadoLiquidacion,
   EstadoFactura,
 } from '@prisma/client';
+import { CAE_QUEUE } from './processors/cae-emission.processor';
 
 @Injectable()
 export class FinanzasService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly cuentasCorrientesService: CuentasCorrientesService,
+    @InjectQueue(CAE_QUEUE) private readonly caeQueue: Queue,
+    private readonly factPdfService: FacturaPdfService,
   ) {}
 
   /**
@@ -386,6 +394,146 @@ export class FinanzasService {
       estado: factura.estado,
       total: Number(factura.total),
     };
+  }
+
+  /**
+   * Get factura detail with AFIP fields + server-side QR image data URL.
+   * Note: Factura model has only scalar pacienteId/obraSocialId — no ORM relations.
+   * Paciente and ObraSocial are fetched separately.
+   */
+  async getFacturaById(id: string): Promise<FacturaDetailDto> {
+    const f = await this.prisma.factura.findUniqueOrThrow({
+      where: { id },
+      include: {
+        profesional: {
+          include: {
+            usuario: { select: { nombre: true, apellido: true } },
+            configClinica: { select: { nombreClinica: true, direccion: true, telefono: true } },
+          },
+        },
+      },
+    });
+
+    // Fetch related entities separately (Factura model has no direct ORM relations to Paciente/ObraSocial)
+    const [paciente, obraSocial] = await Promise.all([
+      f.pacienteId
+        ? this.prisma.paciente.findUnique({
+            where: { id: f.pacienteId },
+            select: { id: true, nombreCompleto: true, dni: true },
+          })
+        : Promise.resolve(null),
+      f.obraSocialId
+        ? this.prisma.obraSocial.findUnique({
+            where: { id: f.obraSocialId },
+            select: { id: true, nombre: true },
+          })
+        : Promise.resolve(null),
+    ]);
+
+    const qrImageDataUrl = f.qrData
+      ? await QRCode.toDataURL(f.qrData, { errorCorrectionLevel: 'M', width: 200 })
+      : null;
+
+    return {
+      id: f.id,
+      tipo: f.tipo,
+      numero: f.numero,
+      fecha: f.fecha.toISOString().slice(0, 10),
+      estado: f.estado,
+      cuit: f.cuit,
+      razonSocial: f.razonSocial,
+      domicilio: f.domicilio,
+      concepto: f.concepto,
+      subtotal: Number(f.subtotal),
+      impuestos: Number(f.impuestos),
+      total: Number(f.total),
+      moneda: f.moneda,
+      tipoCambio: Number(f.tipoCambio),
+      cae: f.cae,
+      caeFchVto: f.caeFchVto,
+      nroComprobante: f.nroComprobante,
+      qrData: f.qrData,
+      qrImageDataUrl,
+      ptoVta: f.ptoVta,
+      profesionalId: f.profesionalId,
+      paciente: paciente ?? null,
+      obraSocial: obraSocial ?? null,
+    };
+  }
+
+  /**
+   * Generate PDF buffer for a factura (requires CAE to be set)
+   */
+  async generateFacturaPdf(id: string): Promise<{ buffer: Buffer; filename: string }> {
+    const facturaDetail = await this.getFacturaById(id);
+
+    if (!facturaDetail.cae) {
+      throw new BadRequestException(
+        'La factura no ha sido emitida via AFIP. Emitir primero para obtener el PDF con QR obligatorio.',
+      );
+    }
+
+    // Fetch profesional data for PDF (not part of FacturaDetailDto)
+    const profesional = await this.prisma.factura.findUniqueOrThrow({
+      where: { id },
+      include: {
+        profesional: {
+          include: {
+            usuario: { select: { nombre: true, apellido: true } },
+            configClinica: { select: { nombreClinica: true, direccion: true, telefono: true } },
+          },
+        },
+      },
+    });
+
+    const pdfData = {
+      id: facturaDetail.id,
+      numero: facturaDetail.numero,
+      fecha: facturaDetail.fecha,
+      tipo: facturaDetail.tipo,
+      cae: facturaDetail.cae,
+      caeFchVto: facturaDetail.caeFchVto ?? '',
+      nroComprobante: facturaDetail.nroComprobante ?? 0,
+      qrData: facturaDetail.qrData ?? '',
+      total: facturaDetail.total,
+      subtotal: facturaDetail.subtotal,
+      impuestos: facturaDetail.impuestos,
+      moneda: facturaDetail.moneda,
+      tipoCambio: facturaDetail.tipoCambio,
+      razonSocial: facturaDetail.razonSocial,
+      cuit: facturaDetail.cuit,
+      concepto: facturaDetail.concepto,
+      profesional: {
+        nombre: profesional.profesional.usuario.nombre,
+        apellido: profesional.profesional.usuario.apellido,
+      },
+      config: profesional.profesional.configClinica
+        ? {
+            nombreClinica: profesional.profesional.configClinica.nombreClinica,
+            direccion: profesional.profesional.configClinica.direccion,
+            telefono: profesional.profesional.configClinica.telefono,
+          }
+        : undefined,
+    };
+
+    const buffer = await this.factPdfService.generatePdfBuffer(pdfData);
+    const filename = `factura-${facturaDetail.numero}-${facturaDetail.fecha}.pdf`;
+
+    return { buffer, filename };
+  }
+
+  /**
+   * Update tipoCambio on a Factura (BNA exchange rate for USD invoices)
+   */
+  async updateTipoCambio(id: string, tipoCambio: number): Promise<{ tipoCambio: number }> {
+    if (tipoCambio <= 0) {
+      throw new BadRequestException('tipoCambio debe ser mayor a 0');
+    }
+    await this.prisma.factura.update({
+      where: { id },
+      data: { tipoCambio },
+    });
+    return { tipoCambio };
   }
 
   /**
@@ -920,6 +1068,66 @@ export class FinanzasService {
         corregidoAt: new Date(),
       },
     });
+  }
+
+  /**
+   * Validates pre-conditions and enqueues a BullMQ job for async CAE emission.
+   * Returns 202 Accepted with jobId. Client polls GET /finanzas/facturas/:id to check estado.
+   *
+   * Pre-conditions (validated BEFORE enqueueing to avoid retrying bad data):
+   * - Factura exists and belongs to profesionalId
+   * - Factura.estado is not EMISION_PENDIENTE (not already in-flight)
+   * - Factura.condicionIVAReceptor is non-null (mandatory AFIP field from April 2026)
+   * - ConfiguracionAFIP exists for the tenant (cert must be uploaded)
+   *
+   * @throws BadRequestException with Spanish message on any pre-condition failure
+   */
+  async emitirFactura(facturaId: string, profesionalId: string): Promise<{ jobId: string; status: string }> {
+    // 1. Load Factura
+    const factura = await this.prisma.factura.findFirst({
+      where: { id: facturaId, profesionalId },
+      select: { id: true, estado: true, condicionIVAReceptor: true },
+    });
+
+    if (!factura) {
+      throw new BadRequestException('Factura no encontrada o no pertenece a este profesional.');
+    }
+
+    if (factura.estado === EstadoFactura.EMISION_PENDIENTE) {
+      throw new BadRequestException('Esta factura ya tiene una emisión en curso. Esperá a que finalice.');
+    }
+
+    if (factura.condicionIVAReceptor === null) {
+      // Guard per STATE.md Pitfall 2 — error 10242 from AFIP if missing
+      throw new BadRequestException('Falta la condición de IVA del receptor. Completá el campo antes de emitir.');
+    }
+
+    // 2. Check AFIP config exists for tenant
+    const afipConfig = await this.prisma.configuracionAFIP.findUnique({
+      where: { profesionalId },
+      select: { id: true },
+    });
+
+    if (!afipConfig) {
+      throw new BadRequestException('No se encontró la configuración AFIP del consultorio. Subí el certificado desde Configuración > AFIP.');
+    }
+
+    // 3. Set transient estado — Facturador sees "en proceso" while job is in-flight
+    await this.prisma.factura.update({
+      where: { id: facturaId },
+      data: { estado: EstadoFactura.EMISION_PENDIENTE },
+    });
+
+    // 4. Enqueue BullMQ job
+    // Passing only identifiers — AfipRealService reads amounts from DB to enforce server-side totals.
+    // attempts: 5 overrides the global default of 3 (AFIP may be slower than Meta API).
+    const job = await this.caeQueue.add(
+      'emit-cae',
+      { facturaId, profesionalId },
+      { attempts: 5, backoff: { type: 'exponential', delay: 2000 } },
+    );
+
+    return { jobId: job.id ?? '', status: 'EMISION_PENDIENTE' };
   }
 
   /**

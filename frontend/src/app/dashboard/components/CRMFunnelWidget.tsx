@@ -1,4 +1,5 @@
 "use client";
+import { useRouter } from "next/navigation";
 import { useCRMFunnel } from "@/hooks/useCRMFunnel";
 import { useEffectiveProfessionalId } from "@/hooks/useEffectiveProfessionalId";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -24,8 +25,14 @@ const MOTIVO_LABELS: Record<string, string> = {
 };
 
 export default function CRMFunnelWidget() {
+  const router = useRouter();
   const profId = useEffectiveProfessionalId();
   const { data, isLoading } = useCRMFunnel(profId);
+
+  function handleClick() {
+    localStorage.setItem("pacientes-vista", "embudo");
+    router.push("/dashboard/pacientes");
+  }
 
   if (isLoading) return <Skeleton className="h-64 w-full rounded-xl" />;
   if (!data) return null;
@@ -33,10 +40,20 @@ export default function CRMFunnelWidget() {
   const maxCount = Math.max(...data.etapas.map((e) => e.count), 1);
 
   return (
-    <div className="bg-white rounded-xl border p-4">
-      <h3 className="text-sm font-semibold text-gray-700 mb-4">
-        Embudo de conversión
-      </h3>
+    <div
+      className="bg-white rounded-xl border-2 border-blue-200 p-4 cursor-pointer hover:border-blue-400 hover:shadow-md transition-all group"
+      onClick={handleClick}
+      role="button"
+      aria-label="Ver embudo CRM"
+    >
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-sm font-semibold text-gray-700">
+          Embudo de conversión
+        </h3>
+        <span className="text-xs text-blue-500 group-hover:text-blue-700 transition-colors">
+          Ver embudo →
+        </span>
+      </div>
       <div className="flex gap-6">
         {/* Trapecio izquierdo */}
         <div className="flex-1 flex flex-col gap-1">

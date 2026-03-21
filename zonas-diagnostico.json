@@ -1,0 +1,100 @@
+{
+    "zonas_diagnosticos": {
+        "abdomen": {
+            "diagnosticos": [
+                "piel",
+                "musculo",
+                "grasa",
+                "pared",
+                "hernia",
+                "otros"
+            ]
+        },
+        "Nariz": {
+            "diagnosticos": [
+                "dorso alto",
+                "dorso bajo",
+                "giba",
+                "dorso ancho",
+                "punta ancha",
+                "punta caída",
+                "punta indefinida",
+                "punta rotada",
+                "base ancha",
+                "base colapsada",
+                "laterorrinia",
+                "otros"
+            ]
+        },
+        "Mamas": {
+            "diagnosticos": [
+                "hipomastia",
+                "hipertrofia",
+                "ptosis",
+                "contractura capsular",
+                "hernia",
+                "otros"
+            ]
+        },
+        "Otros": {
+            "diagnosticos": [
+                "otros"
+            ]
+        }
+    },
+    "tratamientos": {
+        "abdominoplastia": {
+            "tratamientos": [
+                "Dermolipectomia",
+                "Dermoliposuccion",
+                "Minidermoliposuccion",
+                "Gluteoplastia",
+                "Otros"
+            ]
+        },
+        "mastoplastia": {
+            "tratamientos": [
+                "Aumento de volumen",
+                "Reduccion de volumen",
+                "Levantamiento con implante",
+                "Levantamiento sin implante",
+                "Reconstruccion de mama",
+                "Recambio de implante",
+                "Otros"
+            ]
+        },
+        "rinoplastia": {
+            "tratamientos": [
+                "Rinoplastia",
+                "Rinoplastia estructural",
+                "Otros"
+            ]
+        },
+        "lunar_cirugia_local": {
+            "tratamientos": [
+                "Electrocauterio",
+                "Resección y plastia",
+                "Otros"
+            ]
+        },
+        "tratamiento_facial": {
+            "tratamientos": [
+                "Botox frente",
+                "Botox entrecejo",
+                "Botox patas de gallo",
+                "Acido hialuronico rinomodelacion",
+                "Acido hialuronico labios",
+                "Acido hialuronico surco nasogeniano",
+                "Acido hialuronico pomulos",
+                "Acido hialuronico menton",
+                "Armonizacion facial",
+                "Otros"
+            ]
+        },
+        "otros": {
+            "tratamientos": [
+                "Otros"
+            ]
+        }
+    }
+}

@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import PacienteDetails from "./PacienteDetails";
 import PacienteDetailsSkeleton from "./PacienteDetailsSkeleton";
 import { usePaciente } from "@/hooks/usePaciente";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import DatosCompletos from "@/components/patient/PatientDrawer/views/DatosCompletos";
 import HistoriaClinica from "@/components/patient/PatientDrawer/views/HistoriaClinica";
 import PacienteTurnos from "@/components/patient/PatientDrawer/views/TurnosPaciente";
@@ -20,18 +20,28 @@ import CuentaCorrienteView from "@/components/patient/PatientDrawer/views/Cuenta
 import PresupuestosView from "@/components/patient/PatientDrawer/views/PresupuestosView";
 import MensajesView from "@/components/patient/PatientDrawer/views/MensajesView";
 import { ContactosSection } from "./ContactosSection";
+import { AutorizacionesPacienteSection } from "./AutorizacionesPacienteSection";
+
+type DrawerView = "default" | "datos" | "historia" | "turnos" | "mensajes" | "cuenta" | "presupuestos";
 
 export default function PatientDrawer({
   open,
   onOpenChange,
   pacienteId,
+  initialView = "default",
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   pacienteId: string | null;
+  initialView?: DrawerView;
 }) {
   const { data: paciente, isLoading, isError } = usePaciente(pacienteId);
-  const [view, setView] = useState<"default" | "datos" | "historia" | "turnos" | "mensajes" | "cuenta" | "presupuestos">("default");
+  const [view, setView] = useState<DrawerView>(initialView);
+
+  // Reset to initialView every time the drawer opens
+  useEffect(() => {
+    if (open) setView(initialView);
+  }, [open, initialView]);
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
@@ -62,6 +72,13 @@ export default function PatientDrawer({
                   paciente={paciente}
                   onAction={setView}
                 />
+                <div className="mt-6 pt-5 border-t">
+                  <AutorizacionesPacienteSection
+                    pacienteId={paciente.id}
+                    obraSocialId={(paciente as any).obraSocialId}
+                    profesionalId={(paciente as any).profesionalId}
+                  />
+                </div>
                 <div className="mt-6 pt-5 border-t">
                   <ContactosSection
                     pacienteId={paciente.id}

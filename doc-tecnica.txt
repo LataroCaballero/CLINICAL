@@ -1,0 +1,229 @@
+---
+  Documento Técnico-Funcional: Sistema de Gestión de Clínica Médica
+
+  Versión: 1.0 | Fecha: Febrero 2026 | Tipo: SaaS Multi-tenant · Cirugía Estética
+
+  ---
+  1. Descripción General
+
+  El sistema es una plataforma SaaS de gestión integral para clínicas de cirugía estética y medicina estética. Permite a profesionales de la salud, secretarias y
+  administradores gestionar el ciclo completo del paciente: desde el primer contacto comercial hasta el cierre quirúrgico, incluyendo historia clínica, finanzas, stock e
+  informes.
+
+  El modelo de negocio es multi-profesional y multi-tenant: varios profesionales pueden operar sobre la misma infraestructura, con datos completamente aislados por
+  profesional.
+
+  ---
+  2. Módulos del Sistema
+
+  2.1 Gestión de Pacientes
+
+  El núcleo del sistema. Cada paciente tiene un perfil completo que incluye:
+
+  - Datos personales: nombre, DNI, teléfono, email, dirección, foto.
+  - Datos médicos: alergias, patologías, diagnóstico, plan de tratamiento, estudios solicitados.
+  - Datos quirúrgicos: objetivos pre-quirúrgicos, consentimientos informados, fechas de indicación.
+  - Datos comerciales: obra social y plan, presupuestos asociados, objecciones de venta.
+  - Estado del paciente: ACTIVO, ARCHIVADO, QUIRÚRGICO, PRESUPUESTO, PRIMERA, PRÁCTICA_CONSULTORIO.
+
+  El estado permite usar el sistema como un CRM liviano, diferenciando pacientes en distintas etapas del funnel (primera consulta, presupuestados, en lista de espera
+  quirúrgica, etc.).
+
+  Funciones clave:
+  - Búsqueda con autocompletado por nombre o teléfono.
+  - Registro de objecciones de venta (por qué el paciente no avanzó) reutilizables entre múltiples pacientes.
+  - Baja lógica (no se eliminan datos).
+
+  ---
+  2.2 Turnos y Agenda
+
+  Sistema de agenda completo con visualización en calendario (día, semana, mes):
+
+  - Creación de turnos con tipo, profesional, duración y estado.
+  - Tipos de turno configurables por profesional: cada profesional define duración por defecto y color para cada tipo.
+  - Cirugías: bloque especial de turno con campos propios (anestesia, quirófano, asistente, anestesiólogo, notas pre/post-operatorias).
+  - Estados del turno: PENDIENTE → CONFIRMADO → FINALIZADO / CANCELADO / AUSENTE.
+  - Reprogramación con historial.
+  - Cobro en el turno: permite registrar el pago directamente desde el contexto del turno.
+  - Sesión en vivo (LiveTurno): permite iniciar y cerrar una consulta en tiempo real. El sistema registra el tiempo real de inicio y fin, calculando la duración efectiva
+  independientemente de la duración planificada.
+
+  Visualización de ocupación con indicadores de color (alta/media/baja ocupación) y gestión de días bloqueados.
+
+  ---
+  2.3 Historia Clínica
+
+  Registro clínico digital vinculado a cada paciente, con soporte para múltiples profesionales:
+
+  - Cada entrada de HC puede basarse en una plantilla personalizada (definida por el profesional) o ser de texto libre.
+  - Las plantillas son formularios con esquema JSON versionado: el profesional puede crear versiones nuevas sin perder datos históricos. Ciclo: BORRADOR → PUBLICADA →
+  ARCHIVADA.
+  - Cada entrada puede ser BORRADOR o FINALIZADA (con firma del profesional).
+  - Soporte para archivos adjuntos (imágenes, estudios, PDFs).
+  - Registro de estudios solicitados con seguimiento de entrega.
+
+  ---
+  2.4 Finanzas
+
+  Módulo financiero completo con tres ejes:
+
+  Cuenta Corriente del Paciente:
+  - Cada paciente tiene una cuenta corriente con movimientos de tipo CARGO o PAGO.
+  - Métodos de pago: efectivo, transferencia, débito, crédito, Mercado Pago.
+  - Análisis de antigüedad de deuda y morosidad.
+
+  Presupuestos:
+  - Creación de presupuestos detallados (ítems, cantidades, precios, descuentos).
+  - Ciclo: BORRADOR → ENVIADO → ACEPTADO / RECHAZADO / CANCELADO.
+  - Los presupuestos aceptados generan cargos automáticos en la cuenta corriente.
+
+  Facturación y Obras Sociales:
+  - Emisión de facturas y recibos con datos fiscales (CUIT, condición frente al IVA).
+  - Registro de prácticas realizadas con código y monto de obra social.
+  - Liquidaciones periódicas por obra social: agrupan prácticas en un período y permiten marcarlas como cobradas.
+  - Dashboard financiero con KPIs: facturación mensual, ingreso diario, cuentas por cobrar, pendientes de liquidación.
+
+  ---
+  2.5 Stock e Inventario
+
+  Gestión de inventario orientada a insumos de clínica y productos de venta:
+
+  - Catálogo de productos con SKU, categoría, precio de costo y venta, unidad de medida.
+  - Tipos: insumo interno, producto de venta al paciente, uso interno.
+  - Inventario por profesional: cada profesional tiene su propio stock con nivel mínimo configurable.
+  - Lotes (batches): control de lotes con número de lote y fecha de vencimiento.
+  - Alertas automáticas: stock bajo mínimo y productos próximos a vencer.
+  - Movimientos de stock: entrada, salida y ajuste con trazabilidad completa.
+  - Órdenes de compra: gestión de pedidos a proveedores con estados (PENDIENTE → ENVIADA → RECIBIDA). Soporta planes de pago con cuotas (30/60/90 días).
+  - Cuentas corrientes de proveedores: seguimiento de deudas con cada proveedor.
+  - Venta de productos a pacientes: con generación de factura y registro de pago.
+
+  ---
+  2.6 Reportes
+
+  Sistema de reportes operativos y financieros:
+
+  Operativos:
+  - Estadísticas de turnos (diario/semanal/mensual).
+  - Tasa de ausentismo por paciente.
+  - Tasa de ocupación por profesional.
+  - Ranking de procedimientos más realizados.
+  - Ventas de productos.
+
+  Financieros:
+  - Ingresos por período, por profesional, por obra social, por prestación.
+  - Cuentas por cobrar.
+  - Morosidad.
+  - Pagos pendientes.
+
+  Exportación y suscripciones:
+  - Exportación a JSON, CSV o PDF.
+  - Suscripciones a reportes por email con frecuencia configurable (semanal/mensual).
+  - Tipos disponibles: resumen semanal, resumen mensual, ingresos, turnos, morosidad.
+
+  ---
+  2.7 Usuarios y Roles
+
+  Gestión de acceso multi-rol:
+
+  ┌─────────────┬─────────────────────────────────────────────────────┐
+  │     Rol     │                     Descripción                     │
+  ├─────────────┼─────────────────────────────────────────────────────┤
+  │ ADMIN       │ Acceso total, gestión de usuarios                   │
+  ├─────────────┼─────────────────────────────────────────────────────┤
+  │ PROFESIONAL │ Acceso a sus datos: agenda, pacientes, HC, finanzas │
+  ├─────────────┼─────────────────────────────────────────────────────┤
+  │ SECRETARIA  │ Gestión de agenda, pacientes y turnos               │
+  ├─────────────┼─────────────────────────────────────────────────────┤
+  │ FACTURADOR  │ Acceso al módulo financiero                         │
+  ├─────────────┼─────────────────────────────────────────────────────┤
+  │ PACIENTE    │ Acceso futuro (portal del paciente)                 │
+  └─────────────┴─────────────────────────────────────────────────────┘
+
+  Las sesiones se gestionan con JWT y refresh tokens. Se registra dispositivo e IP por sesión, con soporte para revocar sesiones individuales o todas a la vez.
+
+  ---
+  3. Cómo se Conectan los Módulos
+
+  El sistema sigue un flujo natural del proceso clínico:
+
+  [CRM / Captación]
+       ↓
+   Paciente creado con estado PRESUPUESTO
+       ↓
+   Presupuesto generado y aceptado
+       ↓ (genera cargo en cuenta corriente)
+   Turno agendado (tipo: primera consulta / cirugía)
+       ↓
+   Sesión en vivo iniciada → Historia Clínica completada
+       ↓
+   Cobro registrado → Movimiento en cuenta corriente
+       ↓ (opcional)
+   Práctica obra social registrada → Liquidación periódica
+       ↓
+   Reportes y dashboard consolidan toda la información
+
+  El stock se descuenta cuando se registran prácticas realizadas o ventas directas. Las órdenes de compra alimentan el inventario cuando se recibe el pedido.
+
+  El contexto profesional es el eje de todo: la mayoría de los listados y reportes se filtran por el profesional activo, lo que permite que múltiples profesionales
+  convivan en la misma clínica sin ver datos ajenos.
+
+  ---
+  4. Capacidad de Escala
+
+  El sistema está diseñado con escala en mente desde la arquitectura:
+
+  Multi-tenant nativo:
+  El aislamiento por profesional es funcional hoy. Escalar a un modelo de clínicas con múltiples profesionales (o múltiples clínicas) requiere agregar una entidad
+  Clinica/Tenant sobre la capa de Profesional, sin reescribir lógica existente.
+
+  Módulos independientes:
+  Cada módulo (turnos, finanzas, stock, HC) es autónomo. Se pueden habilitar o deshabilitar por plan de suscripción sin afectar el resto.
+
+  Plantillas clínicas versionadas:
+  El sistema de HC templates con JSON schema soporta que diferentes especialidades médicas (no solo cirugía estética) adopten el sistema con sus propios formularios, sin
+  tocar el código.
+
+  Configuración por profesional:
+  Tipos de turno, colores, duraciones, agendas laborales, plantillas de HC: todo es configurable por profesional, lo que permite adaptar el producto a distintos perfiles
+  sin personalización de código.
+
+  Extensiones identificadas:
+  - Portal del paciente (rol PACIENTE ya existe en el schema).
+  - Mensajería con pacientes (módulo mensajes-internos ya iniciado).
+  - Notificaciones automáticas de turno (template de mensajes ya existe en TipoTurno).
+  - Integración con facturación electrónica AFIP (estructura fiscal ya preparada: CUIT, condición IVA).
+  - App mobile (API REST desacoplada de frontend).
+
+  ---
+  5. Estado Actual del Producto
+
+  El sistema tiene implementados y funcionales los módulos core:
+
+  ┌───────────────────────────────────────────────┬────────────────┐
+  │                    Módulo                     │     Estado     │
+  ├───────────────────────────────────────────────┼────────────────┤
+  │ Autenticación y usuarios                      │ ✅ Completo    │
+  ├───────────────────────────────────────────────┼────────────────┤
+  │ Gestión de pacientes                          │ ✅ Completo    │
+  ├───────────────────────────────────────────────┼────────────────┤
+  │ Agenda y turnos                               │ ✅ Completo    │
+  ├───────────────────────────────────────────────┼────────────────┤
+  │ Historia clínica + templates                  │ ✅ Completo    │
+  ├───────────────────────────────────────────────┼────────────────┤
+  │ Finanzas (cuentas, presupuestos, facturación) │ ✅ Completo    │
+  ├───────────────────────────────────────────────┼────────────────┤
+  │ Stock e inventario                            │ ✅ Completo    │
+  ├───────────────────────────────────────────────┼────────────────┤
+  │ Reportes                                      │ ✅ Completo    │
+  ├───────────────────────────────────────────────┼────────────────┤
+  │ Obras sociales y liquidaciones                │ ✅ Completo    │
+  ├───────────────────────────────────────────────┼────────────────┤
+  │ Portal del paciente                           │ 🔲 No iniciado │
+  ├───────────────────────────────────────────────┼────────────────┤
+  │ Mensajería con pacientes                      │ 🟡 Iniciado    │
+  ├───────────────────────────────────────────────┼────────────────┤
+  │ Notificaciones automáticas                    │ 🔲 No iniciado │
+  ├───────────────────────────────────────────────┼────────────────┤
+  │ Facturación electrónica AFIP                  │ 🔲 No iniciado │
+  └───────────────────────────────────────────────┴────────────────┘

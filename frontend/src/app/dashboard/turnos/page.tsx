@@ -2,6 +2,7 @@
 
 import { JSX, useEffect, useMemo, useState } from "react";
 import QuickAppointment from "../components/QuickAppointment";
+import { ListaEsperaSheet } from "@/components/crm/ListaEsperaSheet";
 
 import moment from "moment";
 import "moment/locale/es";
@@ -17,7 +18,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import { ChevronLeft, ChevronRight, CalendarPlus, X, Loader2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, CalendarPlus, X, Loader2, Clock } from "lucide-react";
 
 import NewAppointmentModal from "./NewAppointmentModal";
 import AppointmentDetailModal from "./AppointmentDetailModal";
@@ -30,6 +31,7 @@ import { useAgenda } from "@/hooks/useAgenda";
 import { AgendaConfig } from "@/hooks/useProfesionalMe";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useConfigTiposTurno } from "@/hooks/useConfigTiposTurno";
+import { useUIStore } from "@/lib/stores/useUIStore";
 import { motion, AnimatePresence } from "framer-motion";
 
 moment.locale("es");
@@ -48,6 +50,7 @@ interface CalendarEvent {
   tipoTurnoId: string;
   estado: "PENDIENTE" | "CONFIRMADO" | "CANCELADO" | "AUSENTE" | "FINALIZADO";
   observaciones?: string;
+  esSobreturno?: boolean;
 }
 
 // Helper para formatear fecha local (sin problemas de timezone)
@@ -202,6 +205,7 @@ function occupancyColor(occupancy: number, alpha: number = 1): string {
 
 export default function TurnosPage() {
   const { data: user } = useCurrentUser();
+  const { focusModeEnabled: fm } = useUIStore();
 
   // Vista derivada: el usuario puede cambiar manualmente, sino se usa la default por rol
   const [viewOverride, setViewOverride] = useState<ViewType | null>(null);
@@ -215,6 +219,8 @@ export default function TurnosPage() {
   });
 
   const [quickAppointmentOpen, setQuickAppointmentOpen] = useState(false);
+  const [listaEsperaOpen, setListaEsperaOpen] = useState(false);
+  const [listaEsperaPacienteId, setListaEsperaPacienteId] = useState<string | null>(null);
 
   const [openNewModal, setOpenNewModal] = useState(false);
   const [openDetailModal, setOpenDetailModal] = useState(false);
@@ -271,9 +277,11 @@ export default function TurnosPage() {
     hasta
   );
 
-  // Map turnos -> eventos
+  // Map turnos -> eventos (excluir cancelados del calendario)
   useEffect(() => {
-    const mapped: CalendarEvent[] = (turnosRango as any[]).map((t) => ({
+    const mapped: CalendarEvent[] = (turnosRango as any[])
+      .filter((t) => t.estado !== "CANCELADO")
+      .map((t) => ({
       id: t.id,
       title: `${t.tipoTurno?.nombre ?? "Turno"} – ${t.paciente?.nombreCompleto ?? ""
         }`,
@@ -286,6 +294,7 @@ export default function TurnosPage() {
       tipoTurnoId: t.tipoTurno?.id ?? "",
       estado: t.estado,
       observaciones: t.observaciones ?? "",
+      esSobreturno: t.esSobreturno ?? false,
     }));
 
     setEvents(mapped);
@@ -457,9 +466,9 @@ export default function TurnosPage() {
   return (
     <div className="flex flex-col gap-4 p-6 max-w-[100vw] h-[calc(100dvh-3.5rem)]">
       {/* CALENDARIO - Contenido principal */}
-      <Card className="p-4 shadow-sm flex-1 flex flex-col min-h-0">
+      <Card className={`p-4 shadow-sm flex-1 flex flex-col min-h-0 transition-colors duration-300 ${fm ? "bg-[var(--fc-bg-surface)] border-[var(--fc-border)]" : ""}`}>
         <CardHeader className="flex justify-between items-center">
-          <CardTitle className="text-base font-medium text-gray-800">
+          <CardTitle className={`text-base font-medium ${fm ? "text-[var(--fc-text-primary)]" : "text-gray-800"}`}>
             Agenda
           </CardTitle>
 
@@ -485,12 +494,14 @@ export default function TurnosPage() {
           open={openNewModal}
           onOpenChange={(v) => {
             setOpenNewModal(v);
-            if (!v) setNewSlotDate(null);
+            if (!v) { setNewSlotDate(null); setListaEsperaPacienteId(null); }
           }}
           onSwitchToSurgery={() => {
             setOpenSurgeryModal(true);
           }}
-          selectedEvent={newSlotDate ? {
+          selectedEvent={listaEsperaPacienteId ? {
+            pacienteId: listaEsperaPacienteId,
+          } : newSlotDate ? {
             fecha: newSlotDate.toISOString(),
             hora: `${String(newSlotDate.getHours()).padStart(2, "0")}:${String(newSlotDate.getMinutes()).padStart(2, "0")}`,
           } : null}
@@ -545,7 +556,7 @@ export default function TurnosPage() {
               </Button>
             </div>
 
-            <h2 className="text-base font-semibold text-gray-800 capitalize">
+            <h2 className={`text-base font-semibold capitalize ${fm ? "text-[var(--fc-text-primary)]" : "text-gray-800"}`}>
               {dateRangeLabel}
             </h2>
           </div>
@@ -553,19 +564,19 @@ export default function TurnosPage() {
           {/* CALENDARIO */}
           {view === "month" ? (
             // Vista mensual personalizada
-            <div className="relative flex-1 min-h-0 flex flex-col rounded-md border border-gray-200 overflow-hidden">
+            <div className={`relative flex-1 min-h-0 flex flex-col rounded-md border overflow-hidden ${fm ? "border-[var(--fc-border)]" : "border-gray-200"}`}>
               {/* Loading overlay */}
               {loadingTurnos && (
-                <div className="absolute inset-0 z-30 flex items-center justify-center bg-white/40 backdrop-blur-[2px]">
-                  <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
+                <div className={`absolute inset-0 z-30 flex items-center justify-center backdrop-blur-[2px] ${fm ? "bg-[var(--fc-bg-primary)]/60" : "bg-white/40"}`}>
+                  <Loader2 className={`h-8 w-8 animate-spin ${fm ? "text-violet-400" : "text-indigo-500"}`} />
                 </div>
               )}
               {/* Header días de la semana */}
-              <div className="grid grid-cols-7 bg-gray-50 border-b shrink-0">
+              <div className={`grid grid-cols-7 border-b shrink-0 ${fm ? "bg-[var(--fc-bg-primary)] border-[var(--fc-border)]" : "bg-gray-50"}`}>
                 {["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"].map((d) => (
                   <div
                     key={d}
-                    className="p-2 text-center text-sm font-medium text-gray-600"
+                    className={`p-2 text-center text-sm font-medium ${fm ? "text-[var(--fc-text-secondary)]" : "text-gray-600"}`}
                   >
                     {d}
                   </div>
@@ -590,17 +601,21 @@ export default function TurnosPage() {
                     const stats = getDaySlotStats(dayDate, agenda ?? null, events);
                     const isWorkDay = isCurrentMonth && !blocked && stats.total > 0;
 
-                    let bgColor = "bg-white";
-                    if (!isCurrentMonth) bgColor = "bg-gray-50/80";
-                    else if (blocked) bgColor = "bg-gray-100";
-                    else if (surgery) bgColor = "bg-yellow-50";
+                    let bgColor = fm ? "bg-[var(--fc-bg-surface)]" : "bg-white";
+                    if (!isCurrentMonth) bgColor = fm ? "bg-[var(--fc-bg-primary)]" : "bg-gray-50/80";
+                    else if (blocked) bgColor = fm ? "bg-slate-800/60" : "bg-gray-100";
+                    else if (surgery) bgColor = fm ? "bg-yellow-950/40" : "bg-yellow-50";
 
                     days.push(
                       <div
                         key={currentDay.format("YYYY-MM-DD")}
                         className={`relative p-2 border-b border-r ${bgColor} ${
-                          isToday ? "ring-2 ring-inset ring-indigo-500" : ""
-                        } cursor-pointer hover:brightness-[0.97] transition-all flex flex-col`}
+                          isToday
+                            ? fm
+                              ? "ring-2 ring-inset ring-violet-500"
+                              : "ring-2 ring-inset ring-indigo-500"
+                            : ""
+                        } cursor-pointer hover:brightness-[0.97] transition-all flex flex-col ${fm ? "border-[var(--fc-border)]" : ""}`}
                         style={isWorkDay ? {
                           boxShadow: `inset 0 -6px 12px -2px ${occupancyColor(stats.occupancy, 0.25)}`,
                           borderBottom: `2px solid ${occupancyColor(stats.occupancy, 0.4)}`,
@@ -614,10 +629,10 @@ export default function TurnosPage() {
                         <div
                           className={`text-sm font-medium ${
                             !isCurrentMonth
-                              ? "text-gray-300"
+                              ? fm ? "text-slate-700" : "text-gray-300"
                               : isToday
-                                ? "text-indigo-600 font-bold"
-                                : "text-gray-700"
+                                ? fm ? "text-violet-400 font-bold" : "text-indigo-600 font-bold"
+                                : fm ? "text-[var(--fc-text-primary)]" : "text-gray-700"
                           }`}
                         >
                           {currentDay.format("D")}
@@ -652,14 +667,14 @@ export default function TurnosPage() {
 
                         {/* Bloqueado */}
                         {isCurrentMonth && blocked && (
-                          <div className="mt-auto text-[11px] text-gray-400">
+                          <div className={`mt-auto text-[11px] ${fm ? "text-slate-600" : "text-gray-400"}`}>
                             No disponible
                           </div>
                         )}
 
                         {/* Cirugía */}
                         {isCurrentMonth && surgery && (
-                          <div className="mt-1 text-[11px] text-yellow-700 font-medium">
+                          <div className={`mt-1 text-[11px] font-medium ${fm ? "text-yellow-400" : "text-yellow-700"}`}>
                             Cirugía
                           </div>
                         )}
@@ -677,8 +692,8 @@ export default function TurnosPage() {
             // Vista diaria y semanal con grid custom
             <div className="relative flex-1 min-h-0 flex flex-col">
               {loadingTurnos && (
-                <div className="absolute inset-0 z-30 flex items-center justify-center bg-white/40 backdrop-blur-[2px]">
-                  <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
+                <div className={`absolute inset-0 z-30 flex items-center justify-center backdrop-blur-[2px] ${fm ? "bg-[var(--fc-bg-primary)]/60" : "bg-white/40"}`}>
+                  <Loader2 className={`h-8 w-8 animate-spin ${fm ? "text-violet-400" : "text-indigo-500"}`} />
                 </div>
               )}
               <CalendarGrid
@@ -689,6 +704,7 @@ export default function TurnosPage() {
                 agenda={agenda ?? null}
                 timeRange={timeRange}
                 colorMap={colorMap}
+                focusMode={fm}
                 onSelectEvent={handleSelectEvent}
                 onSelectSlot={handleSelectSlot}
                 onEventMove={handleEventMove}
@@ -701,18 +717,37 @@ export default function TurnosPage() {
 
       {/* Pestaña flotante + Panel deslizable de QuickAppointment */}
       <AnimatePresence>
-        {!quickAppointmentOpen && (
+        {!quickAppointmentOpen && !listaEsperaOpen && (
           <motion.button
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 20 }}
             onClick={() => setQuickAppointmentOpen(true)}
-            className="fixed right-0 top-1/2 -translate-y-1/2 z-40 bg-indigo-500 hover:bg-indigo-600 text-white shadow-lg rounded-l-lg px-2 py-4 flex flex-col items-center gap-1 transition-colors"
+            className="fixed right-0 top-[calc(50%-52px)] z-40 bg-indigo-500 hover:bg-indigo-600 text-white shadow-lg rounded-l-lg px-2 py-4 flex flex-col items-center gap-1 transition-colors"
             title="Turno rápido"
           >
             <CalendarPlus className="w-5 h-5" />
             <span className="text-xs font-medium [writing-mode:vertical-lr] rotate-180">
               Turno rápido
+            </span>
+          </motion.button>
+        )}
+      </AnimatePresence>
+
+      {/* Pestaña flotante Lista de espera */}
+      <AnimatePresence>
+        {!quickAppointmentOpen && !listaEsperaOpen && (
+          <motion.button
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 20 }}
+            onClick={() => setListaEsperaOpen(true)}
+            className="fixed right-0 top-[calc(50%+52px)] z-40 bg-amber-500 hover:bg-amber-600 text-white shadow-lg rounded-l-lg px-2 py-4 flex flex-col items-center gap-1 transition-colors"
+            title="Lista de espera"
+          >
+            <Clock className="w-5 h-5" />
+            <span className="text-xs font-medium [writing-mode:vertical-lr] rotate-180">
+              Lista espera
             </span>
           </motion.button>
         )}
@@ -759,6 +794,16 @@ export default function TurnosPage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <ListaEsperaSheet
+        open={listaEsperaOpen}
+        onOpenChange={setListaEsperaOpen}
+        profesionalId={effectiveProfessionalId}
+        onDarTurno={(pacienteId) => {
+          setListaEsperaPacienteId(pacienteId);
+          setOpenNewModal(true);
+        }}
+      />
     </div>
   );
 }

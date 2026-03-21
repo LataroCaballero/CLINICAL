@@ -238,6 +238,7 @@ export interface PracticaRealizada {
   codigo: string;
   descripcion: string;
   monto: number;
+  montoPagado: number | null;
   coseguro: number;
   fecha: string;
   estadoLiquidacion: EstadoLiquidacion;

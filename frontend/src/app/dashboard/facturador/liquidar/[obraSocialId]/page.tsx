@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useProfessionalContext } from "@/store/professional-context.store";
 import {
   usePracticasPendientesPorOS,
@@ -86,6 +87,7 @@ export default function LotePage() {
   const cerrarLote = useCerrarLote();
 
   const [overrides, setOverrides] = useState<Map<string, number>>(new Map());
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleOverride = (practicaId: string, newMonto: number) => {
@@ -96,16 +98,35 @@ export default function LotePage() {
     });
   };
 
-  const derivedTotal = (practicas ?? []).reduce((sum, p) => {
-    return sum + (overrides.get(p.id) ?? p.montoPagado ?? p.monto);
-  }, 0);
+  const handleToggleSelect = (id: string, checked: boolean) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (checked) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedIds(new Set((practicas ?? []).map((p) => p.id)));
+    } else {
+      setSelectedIds(new Set());
+    }
+  };
+
+  const allSelected = (practicas?.length ?? 0) > 0 && selectedIds.size === (practicas?.length ?? 0);
+
+  const derivedTotal = (practicas ?? [])
+    .filter((p) => selectedIds.has(p.id))
+    .reduce((sum, p) => sum + (overrides.get(p.id) ?? p.montoPagado ?? p.monto), 0);
 
   const handleConfirmarCierre = () => {
-    if (!selectedProfessionalId || !practicas) return;
+    if (!selectedProfessionalId || selectedIds.size === 0) return;
     cerrarLote.mutate({
       profesionalId: selectedProfessionalId,
       obraSocialId,
-      practicaIds: practicas.map((p) => p.id),
+      practicaIds: [...selectedIds],
     });
   };
 
@@ -126,9 +147,12 @@ export default function LotePage() {
             {formatMoney(derivedTotal)}
           </span>
         </span>
+        <span className="text-sm text-muted-foreground">
+          {selectedIds.size > 0 ? `${selectedIds.size} seleccionadas` : "Ninguna seleccionada"}
+        </span>
         <Button
           variant="default"
-          disabled={!practicas || practicas.length === 0 || cerrarLote.isPending}
+          disabled={selectedIds.size === 0 || cerrarLote.isPending}
           onClick={() => setIsModalOpen(true)}
         >
           Cerrar Lote
@@ -151,6 +175,12 @@ export default function LotePage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b text-muted-foreground text-left">
+                <th className="pb-2 pr-4 w-10">
+                  <Checkbox
+                    checked={allSelected}
+                    onCheckedChange={(v) => handleSelectAll(!!v)}
+                  />
+                </th>
                 <th className="pb-2 pr-4 font-medium">Paciente</th>
                 <th className="pb-2 pr-4 font-medium">Código</th>
                 <th className="pb-2 pr-4 font-medium">Descripción</th>
@@ -162,6 +192,12 @@ export default function LotePage() {
             <tbody>
               {practicas?.map((practica) => (
                 <tr key={practica.id} className="border-b last:border-0 hover:bg-gray-50">
+                  <td className="py-2 pr-4">
+                    <Checkbox
+                      checked={selectedIds.has(practica.id)}
+                      onCheckedChange={(v) => handleToggleSelect(practica.id, !!v)}
+                    />
+                  </td>
                   <td className="py-2 pr-4">
                     {practica.paciente?.nombreCompleto ?? "—"}
                   </td>
@@ -193,7 +229,7 @@ export default function LotePage() {
           <p className="text-sm text-muted-foreground">
             Se marcarán{" "}
             <span className="font-semibold text-foreground">
-              {practicas?.length ?? 0} prácticas
+              {selectedIds.size} práctica{selectedIds.size !== 1 ? "s" : ""}
             </span>{" "}
             como PAGADO por un total de{" "}
             <span className="font-semibold text-foreground">

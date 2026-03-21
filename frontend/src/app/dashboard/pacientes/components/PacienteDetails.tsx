@@ -122,6 +122,39 @@ export default function PacienteDetails({ paciente, onAction }: { paciente: any;
       </div>
 
       {/* =======================
+          ASISTENCIA
+      ======================== */}
+      {(() => {
+        const stats = (paciente as any)._stats;
+        if (!stats) return null;
+        const { porcentajeAsistencia, finalizados, cancelados, ausentes } = stats;
+        const totalRelevantes = finalizados + cancelados + ausentes;
+        if (totalRelevantes === 0) return null;
+
+        const pct = porcentajeAsistencia ?? 0;
+        const color =
+          pct >= 75 ? "bg-green-500" : pct >= 50 ? "bg-yellow-400" : "bg-red-400";
+        const textColor =
+          pct >= 75 ? "text-green-700" : pct >= 50 ? "text-yellow-700" : "text-red-600";
+
+        return (
+          <div className="rounded-lg border bg-gray-50 px-4 py-3 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-semibold text-gray-700">Tasa de asistencia</span>
+              <span className={`text-sm font-bold ${textColor}`}>{pct}%</span>
+            </div>
+            <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+              <div className={`h-full rounded-full ${color}`} style={{ width: `${pct}%` }} />
+            </div>
+            <p className="text-xs text-gray-500">
+              {finalizados} asistió · {cancelados} canceló · {ausentes} ausente
+              {" "}— sobre {totalRelevantes} turno{totalRelevantes !== 1 ? "s" : ""} con resolución
+            </p>
+          </div>
+        );
+      })()}
+
+      {/* =======================
           GRID DE 2 COLUMNAS
       ======================== */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">

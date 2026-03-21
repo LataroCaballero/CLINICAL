@@ -33,10 +33,10 @@ export function ChatView({
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Marcar todos como leidos cuando se abre el chat
+  // Marcar todos como leidos cuando se abre el chat (incluye mensajes del sistema)
   useEffect(() => {
     if (pacienteId && mensajes && mensajes.length > 0) {
-      const hayNoLeidos = mensajes.some((m) => !m.leido && !m.esPropio);
+      const hayNoLeidos = mensajes.some((m) => !m.leido);
       if (hayNoLeidos) {
         marcarTodosLeidos.mutate(pacienteId);
       }
@@ -122,6 +122,7 @@ export function ChatView({
                 autor={mensaje.autor}
                 createdAt={mensaje.createdAt}
                 esPropio={mensaje.esPropio}
+                esSistema={mensaje.esSistema}
                 leido={mensaje.leido}
               />
             ))}

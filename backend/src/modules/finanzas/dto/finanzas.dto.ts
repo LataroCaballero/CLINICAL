@@ -184,3 +184,36 @@ export class ActualizarMontoPagadoDto {
   @IsPositive()
   montoPagado: number;
 }
+
+export class UpdateTipoCambioDto {
+  @IsNumber()
+  @IsPositive()
+  tipoCambio: number;
+}
+
+// Return DTO — no class-validator decorators needed (read-only response shape)
+export class FacturaDetailDto {
+  id: string;
+  tipo: TipoFactura;
+  numero: string;
+  fecha: string;
+  estado: string;
+  cuit: string | null;
+  razonSocial: string | null;
+  domicilio: string | null;
+  concepto: string | null;
+  subtotal: number;
+  impuestos: number;
+  total: number;
+  moneda: string;
+  tipoCambio: number;
+  cae: string | null;
+  caeFchVto: string | null;
+  nroComprobante: number | null;
+  qrData: string | null;
+  qrImageDataUrl: string | null;
+  ptoVta: number | null;
+  profesionalId: string;
+  paciente: { id: string; nombreCompleto: string; dni: string } | null;
+  obraSocial: { id: string; nombre: string } | null;
+}

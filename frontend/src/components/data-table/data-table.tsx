@@ -13,6 +13,8 @@ import {
 } from "@tanstack/react-table";
 
 import React, { useState, useEffect } from "react";
+import { useUIStore } from "@/lib/stores/useUIStore";
+import { cn } from "@/lib/utils";
 
 import {
   Table,
@@ -91,9 +93,8 @@ export function DataTable<TData, TValue>({
   const [sorting, setSorting] = useState<SortingState>(initialSorting);
   const [globalFilter, setGlobalFilter] = useState("");
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [selectedPatientId, setSelectedPatientId] = useState<string | null>(
-    null
-  );
+  const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
+  const { focusModeEnabled: fm } = useUIStore();
 
   const table = useReactTable({
     data: tableData, // ← usamos la copia local editable
@@ -163,7 +164,7 @@ export function DataTable<TData, TValue>({
         </div>
       )}
 
-      <div className="rounded-md border bg-white">
+      <div className={cn("rounded-md border", fm ? "bg-[var(--fc-bg-surface)] border-[var(--fc-border)] [&_th]:text-slate-400 [&_td]:text-slate-200 [&_tr]:border-[var(--fc-border)]" : "bg-white")}>
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -188,7 +189,7 @@ export function DataTable<TData, TValue>({
                 return (
                   <TableRow
                     key={row.id}
-                    className="cursor-pointer hover:bg-muted/40 transition"
+                    className={cn("cursor-pointer transition", fm ? "hover:bg-[var(--fc-bg-hover)]" : "hover:bg-muted/40")}
                     onClick={() => handleRowClick(paciente)}
                   >
                     {row.getVisibleCells().map((cell) => (

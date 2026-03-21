@@ -17,7 +17,7 @@ type TurnoAgenda = {
   inicio: string;
   estado: "PENDIENTE" | "CONFIRMADO" | "CANCELADO" | "AUSENTE" | "FINALIZADO";
   observaciones?: string | null;
-  paciente: { id: string; nombreCompleto: string; diagnostico?: string | null };
+  paciente: { id: string; nombreCompleto: string; diagnostico?: string | null; tratamiento?: string | null };
   tipoTurno: { id: string; nombre: string };
 };
 
@@ -38,19 +38,21 @@ export default function NextPatientCard({ profesionalId }: Props) {
         params: { profesionalId, dias: 30 },
       });
       const turnos = res.data ?? [];
-      if (turnos.length > 0) {
-        const firstDate = turnos[0].inicio.slice(0, 10);
-        return {
-          fecha: firstDate,
-          turnos: turnos.filter((t) => t.inicio.slice(0, 10) === firstDate),
-        };
+      const grouped: Record<string, TurnoAgenda[]> = {};
+      for (const t of turnos) {
+        const key = t.inicio.slice(0, 10);
+        if (!grouped[key]) grouped[key] = [];
+        grouped[key].push(t);
       }
-      return { fecha: new Date().toISOString().slice(0, 10), turnos: [] as TurnoAgenda[] };
+      const dates = Object.keys(grouped).sort();
+      return { dates, grouped };
     },
     enabled: !!profesionalId,
   });
 
-  const nextTurno = (data?.turnos ?? []).find(
+  const firstDate = data?.dates?.[0];
+  const firstTurnos = firstDate ? (data?.grouped?.[firstDate] ?? []) : [];
+  const nextTurno = firstTurnos.find(
     (t) => t.estado === "PENDIENTE" || t.estado === "CONFIRMADO"
   );
 

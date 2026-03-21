@@ -48,6 +48,14 @@ export class TurnosController {
     return this.turnosService.findAll(scope, pacienteId);
   }
 
+  @Patch(':id/observaciones')
+  updateObservaciones(
+    @Param('id') id: string,
+    @Body('observaciones') observaciones: string,
+  ) {
+    return this.turnosService.updateObservaciones(id, observaciones);
+  }
+
   @Patch(':id/cancelar')
   cancelar(@Param('id') id: string) {
     return this.turnosService.cancelarTurno(id);

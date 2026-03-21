@@ -20,11 +20,13 @@ import {
   MotivoPerdidaCRM,
   TipoTareaSeguimiento,
   TipoContacto,
+  Prisma,
 } from '@prisma/client';
 import { EstadoPresupuesto } from '@prisma/client';
 import { BadRequestException } from '@nestjs/common';
 import { UpdatePacienteSectionDto } from './dto/update-paciente-section.dto';
 import { CreateContactoDto } from './dto/create-contacto.dto';
+import { UpdateListaEsperaDto } from './dto/update-lista-espera.dto';
 
 @Injectable()
 export class PacientesService {
@@ -58,10 +60,11 @@ export class PacientesService {
     }
   }
 
-  async obtenerListaPacientes(): Promise<PacienteListaDto[]> {
+  async obtenerListaPacientes(profesionalId?: string): Promise<PacienteListaDto[]> {
     const ahora = new Date();
 
     const pacientes = await this.prisma.paciente.findMany({
+      where: profesionalId ? { profesionalId } : undefined,
       orderBy: { createdAt: 'desc' },
       include: {
         usuario: {
@@ -195,14 +198,45 @@ export class PacientesService {
 
   // Buscar por ID
   async findOne(id: string) {
-    const paciente = await this.prisma.paciente.findUnique({
-      where: { id },
-      include: {
-        obraSocial: true,
-      },
-    });
+    const [paciente, turnosCounts] = await Promise.all([
+      this.prisma.paciente.findUnique({
+        where: { id },
+        include: { obraSocial: true },
+      }),
+      this.prisma.turno.groupBy({
+        by: ['estado'],
+        where: { pacienteId: id },
+        _count: { estado: true },
+      }),
+    ]);
+
     if (!paciente) throw new NotFoundException('Paciente no encontrado');
-    return paciente;
+
+    // Calcular porcentaje de asistencia
+    // Solo se consideran turnos con resolución: FINALIZADO, CANCELADO, AUSENTE
+    const countByEstado: Record<string, number> = {};
+    for (const row of turnosCounts) {
+      countByEstado[row.estado] = row._count.estado;
+    }
+    const finalizados = countByEstado['FINALIZADO'] ?? 0;
+    const cancelados = countByEstado['CANCELADO'] ?? 0;
+    const ausentes = countByEstado['AUSENTE'] ?? 0;
+    const totalRelevantes = finalizados + cancelados + ausentes;
+    const porcentajeAsistencia =
+      totalRelevantes > 0
+        ? Math.round((finalizados / totalRelevantes) * 100)
+        : null;
+
+    return {
+      ...paciente,
+      _stats: {
+        turnosTotales: turnosCounts.reduce((s, r) => s + r._count.estado, 0),
+        finalizados,
+        cancelados,
+        ausentes,
+        porcentajeAsistencia,
+      },
+    };
   }
 
   // RF-008 — Búsqueda avanzada + fonética simple
@@ -276,10 +310,13 @@ export class PacientesService {
     if (!exists) throw new NotFoundException('Paciente no encontrado');
   }
 
-  async suggest(q: string): Promise<PacienteSuggest[]> {
+  async suggest(q: string, profesionalId?: string): Promise<PacienteSuggest[]> {
     if (!q || q.trim().length < 2) return [];
 
     const query = q.trim();
+    const profesionalFilter = profesionalId
+      ? Prisma.sql`AND p."profesionalId" = ${profesionalId}`
+      : Prisma.sql``;
 
     try {
       console.log('>>> SUGGEST START', query);
@@ -300,13 +337,13 @@ export class PacientesService {
         p.telefono,
         p."fotoUrl",
         (
-          CASE 
-            WHEN LOWER(unaccent(p."nombreCompleto")) = LOWER(unaccent(${query})) 
-              THEN 1.0 ELSE 0 
+          CASE
+            WHEN LOWER(unaccent(p."nombreCompleto")) = LOWER(unaccent(${query}))
+              THEN 1.0 ELSE 0
           END +
-          CASE 
-            WHEN unaccent(p."nombreCompleto") ILIKE '%' || unaccent(${query}) || '%' 
-              THEN 0.6 ELSE 0 
+          CASE
+            WHEN unaccent(p."nombreCompleto") ILIKE '%' || unaccent(${query}) || '%'
+              THEN 0.6 ELSE 0
           END +
           (similarity(unaccent(p."nombreCompleto"), unaccent(${query})) * 0.7) +
           CASE WHEN p.dni = ${query} THEN 0.95 ELSE 0 END +
@@ -315,10 +352,13 @@ export class PacientesService {
         ) AS score
       FROM "Paciente" p
       WHERE
-        similarity(unaccent(p."nombreCompleto"), unaccent(${query})) > 0.25
-        OR unaccent(p."nombreCompleto") ILIKE '%' || unaccent(${query}) || '%'
-        OR p.dni LIKE ${query} || '%'
-        OR p.telefono LIKE '%' || ${query} || '%'
+        (
+          similarity(unaccent(p."nombreCompleto"), unaccent(${query})) > 0.25
+          OR unaccent(p."nombreCompleto") ILIKE '%' || unaccent(${query}) || '%'
+          OR p.dni LIKE ${query} || '%'
+          OR p.telefono LIKE '%' || ${query} || '%'
+        )
+        ${profesionalFilter}
       ORDER BY score DESC
       LIMIT 10;
     `;
@@ -508,6 +548,23 @@ export class PacientesService {
       },
     });
 
+    // Auto-registrar contacto del sistema según etapa
+    const etapaNotaMap: Partial<Record<EtapaCRM, string>> = {
+      [EtapaCRM.NUEVO_LEAD]: 'Otorgar turno',
+      [EtapaCRM.CONSULTADO]: 'Esperando presupuesto',
+      [EtapaCRM.PRESUPUESTO_ENVIADO]: 'Esperando respuesta',
+    };
+    if (paciente.profesionalId && etapaNotaMap[dto.etapaCRM]) {
+      await this.prisma.contactoLog.create({
+        data: {
+          pacienteId: id,
+          profesionalId: paciente.profesionalId,
+          tipo: TipoContacto.SISTEMA,
+          nota: etapaNotaMap[dto.etapaCRM]!,
+        },
+      });
+    }
+
     // Crear tareas de seguimiento al enviar presupuesto
     if (
       dto.etapaCRM === EtapaCRM.PRESUPUESTO_ENVIADO &&
@@ -566,9 +623,11 @@ export class PacientesService {
         etapaCRM: true,
         temperatura: true,
         scoreConversion: true,
-        diagnostico: true,
+        tratamiento: true,
         lugarIntervencion: true,
         updatedAt: true,
+        enListaEspera: true,
+        comentarioListaEspera: true,
         presupuestos: {
           select: { total: true, estado: true, fechaEnviado: true },
           orderBy: { createdAt: 'desc' },
@@ -578,6 +637,15 @@ export class PacientesService {
           select: { inicio: true },
           orderBy: { inicio: 'desc' },
           take: 1,
+        },
+        contactos: {
+          orderBy: { fecha: 'desc' },
+          take: 1,
+          select: { nota: true, tipo: true, fecha: true },
+        },
+        autorizaciones: {
+          where: { estado: 'PENDIENTE' },
+          select: { id: true },
         },
       },
       orderBy: { updatedAt: 'desc' },
@@ -613,7 +681,9 @@ export class PacientesService {
         etapaCRM: p.etapaCRM,
         temperatura: p.temperatura,
         scoreConversion: p.scoreConversion,
-        procedimiento: p.diagnostico ?? p.lugarIntervencion ?? null,
+        procedimiento: p.tratamiento ?? p.lugarIntervencion ?? null,
+        ultimoContactoNota: p.contactos[0]?.nota ?? null,
+        ultimoContactoFecha: p.contactos[0]?.fecha ?? null,
         ultimoTurno: p.turnos[0]?.inicio ?? null,
         presupuesto: p.presupuestos[0]
           ? {
@@ -629,8 +699,46 @@ export class PacientesService {
                 (1000 * 60 * 60 * 24),
             )
           : null,
+        enListaEspera: p.enListaEspera,
+        comentarioListaEspera: p.comentarioListaEspera,
+        pendingAutorizaciones: p.autorizaciones.length,
       })),
     }));
+  }
+
+  async getListaEspera(profesionalId: string) {
+    return this.prisma.paciente.findMany({
+      where: { profesionalId, enListaEspera: true },
+      select: {
+        id: true,
+        nombreCompleto: true,
+        telefono: true,
+        comentarioListaEspera: true,
+        fechaListaEspera: true,
+        tratamiento: true,
+        lugarIntervencion: true,
+      },
+      orderBy: { fechaListaEspera: 'asc' },
+    });
+  }
+
+  async updateListaEspera(id: string, dto: UpdateListaEsperaDto) {
+    const exists = await this.prisma.paciente.findUnique({
+      where: { id },
+      select: { id: true },
+    });
+    if (!exists) throw new NotFoundException('Paciente no encontrado');
+
+    return this.prisma.paciente.update({
+      where: { id },
+      data: {
+        enListaEspera: dto.enListaEspera,
+        comentarioListaEspera: dto.enListaEspera
+          ? (dto.comentarioListaEspera ?? null)
+          : null,
+        fechaListaEspera: dto.enListaEspera ? new Date() : null,
+      },
+    });
   }
 
   async updateWhatsappOptIn(id: string, optIn: boolean) {

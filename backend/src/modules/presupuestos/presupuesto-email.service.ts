@@ -4,7 +4,7 @@ import { PresupuestoPdfService } from './presupuesto-pdf.service';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
 import * as crypto from 'crypto';
-import { EstadoPresupuesto, EtapaCRM } from '@prisma/client';
+import { EstadoPresupuesto, EtapaCRM, TipoContacto } from '@prisma/client';
 
 @Injectable()
 export class PresupuestoEmailService {
@@ -129,6 +129,14 @@ export class PresupuestoEmailService {
       this.prisma.paciente.update({
         where: { id: presupuesto.paciente.id },
         data: { etapaCRM: EtapaCRM.PRESUPUESTO_ENVIADO },
+      }),
+      this.prisma.contactoLog.create({
+        data: {
+          pacienteId: presupuesto.paciente.id,
+          profesionalId: presupuesto.profesionalId,
+          tipo: TipoContacto.SISTEMA,
+          nota: 'Presupuesto enviado por email — esperando respuesta',
+        },
       }),
     ]);
 

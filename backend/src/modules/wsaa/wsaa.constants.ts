@@ -1,0 +1,2 @@
+export const WSAA_SERVICE = 'WSAA_SERVICE';
+export const WSAA_REDIS_CLIENT = 'WSAA_REDIS_CLIENT';

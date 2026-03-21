@@ -136,16 +136,20 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 
 13/13 requisitos completados en 3 días (2026-03-13 → 2026-03-16). Ver `.planning/milestones/v1.1-ROADMAP.md` para detalles completos.
 
-## Next Milestone: v1.2 AFIP Real
+## Current Milestone: v1.2 AFIP Real
 
-**Suggested goal:** Emitir comprobantes electrónicos reales desde la plataforma usando AFIP/ARCA (CAE real, certificado por tenant, advisory lock en numeración).
+**Goal:** Emitir comprobantes electrónicos reales desde la plataforma usando AFIP/ARCA (CAE real, certificado por tenant, advisory lock en numeración).
+
+**Target features:**
+- Emisión de comprobantes electrónicos con CAE real (WSFEv1)
+- Gestión de certificados digitales por tenant (WSAA)
+- CAEA contingency mode para cuando ARCA no responde
+- QR AFIP en PDF de comprobantes emitidos
 
 **Foundation ready:**
 - `.planning/research/AFIP-INTEGRATION.md` — referencia técnica completa con 6 secciones
 - `AfipStubService` — interfaz `emitirComprobante()` lista para swap-out con implementación real
 - Schema DB con `CondicionIVA`, `MonedaFactura`, `Factura.condicionIVAReceptor`, `Factura.tipoCambio`
 
-Start with `/gsd:new-milestone` to define requirements and roadmap.
-
 ---
-*Last updated: 2026-03-16 after v1.1 milestone — Vista del Facturador*
+*Last updated: 2026-03-16 after v1.2 milestone start — AFIP Real*

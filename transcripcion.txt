@@ -1,0 +1,4668 @@
+WEBVTT
+Kind: captions
+Language: es
+
+00:00:00.000 --> 00:00:04.000
+(federico garcia aguiar)
+tomó. Sí, me tomó como yo en algún momento he puesto como
+
+00:00:04.000 --> 00:00:08.000
+(Lautaro Caballero)
+Ah.
+-
+ 
+(federico garcia aguiar)
+probando el tema del micrófono eh control por
+
+00:00:08.000 --> 00:00:12.000
+(federico garcia aguiar)
+voz y me tomó algunas funciones y cerró toda la
+
+00:00:12.000 --> 00:00:16.000
+(Lautaro Caballero)
+Ah. Eso. Ahí está. Eh, ahí
+-
+ 
+(federico garcia aguiar)
+otra. Ahí lo
+
+00:00:16.000 --> 00:00:20.000
+(Lautaro Caballero)
+está. Mira, ahí te va a aparecer. la voy a grabar a la reunión
+
+00:00:20.000 --> 00:00:24.000
+(Lautaro Caballero)
+porque supongo que bueno, hablaremos varias cosas para hacer ideas
+
+00:00:24.000 --> 00:00:28.000
+(Lautaro Caballero)
+y para no se me olviden cosas después y poder
+-
+ 
+(federico garcia aguiar)
+desactivé. Qué buena
+
+00:00:28.000 --> 00:00:32.000
+(Lautaro Caballero)
+volver, eh, porque la última vez con ganas de de volver a escuchar
+-
+ 
+(federico garcia aguiar)
+onda.
+
+00:00:32.000 --> 00:00:36.000
+(Lautaro Caballero)
+algunas cosas y y
+-
+ 
+(federico garcia aguiar)
+Bueno, bien. Bueno, ahí no me molesta
+
+00:00:36.000 --> 00:00:40.000
+(Lautaro Caballero)
+bueno, eso te quería
+-
+ 
+(federico garcia aguiar)
+para nada que vos me digas, "Che, eh, ¿qué pensamos de qué hablamos
+
+00:00:40.000 --> 00:00:44.000
+(federico garcia aguiar)
+de inicio de la pantalla? Oye, estuve hablando
+
+00:00:44.000 --> 00:00:48.000
+(federico garcia aguiar)
+con con bueno, con Carolina, la
+
+00:00:48.000 --> 00:00:52.000
+(Lautaro Caballero)
+Sí, sí,
+-
+ 
+(federico garcia aguiar)
+ubicass y bueno, nos pasa lo mismo. Entonces por ahí
+
+00:00:52.000 --> 00:00:56.000
+(federico garcia aguiar)
+con la para ir anotando, eh, tenemos un
+
+00:00:56.000 --> 00:01:00.000
+(Lautaro Caballero)
+sí.
+-
+ 
+(federico garcia aguiar)
+sistema donde vamos como a todos los pendientes los vamos como
+
+00:01:00.000 --> 00:01:04.000
+(federico garcia aguiar)
+lo vamos si uno habla el otro va va como
+
+00:01:04.000 --> 00:01:08.000
+(federico garcia aguiar)
+agendando y después en las en las reuniones siguientes como que vamos
+
+00:01:08.000 --> 00:01:12.000
+(federico garcia aguiar)
+chequeando. Bueno, esto en qué quedó esto, esto, esto.
+
+00:01:12.000 --> 00:01:16.000
+(Lautaro Caballero)
+Bien, perfecto, perfecto.
+-
+ 
+(federico garcia aguiar)
+Bueno, yo yo te
+
+00:01:16.000 --> 00:01:20.000
+(federico garcia aguiar)
+decía por ahí el sábado me me puse como a
+
+00:01:20.000 --> 00:01:24.000
+(federico garcia aguiar)
+a ver el programa. me he quedado
+
+00:01:24.000 --> 00:01:28.000
+(federico garcia aguiar)
+bastante como pensativo con después de la reunión
+
+00:01:28.000 --> 00:01:32.000
+(federico garcia aguiar)
+de de Diego y la verdad que a mí me me ha dado como
+
+00:01:32.000 --> 00:01:36.000
+(federico garcia aguiar)
+una una un enchufe de de por
+
+00:01:36.000 --> 00:01:40.000
+(Lautaro Caballero)
+Mhm.
+-
+ 
+(federico garcia aguiar)
+ahí de creer en que esto se puede ir más y por
+
+00:01:40.000 --> 00:01:44.000
+(federico garcia aguiar)
+otro lado digo, bueno, pará, o sea, tranquilo, o sea, probá primero lo
+
+00:01:44.000 --> 00:01:48.000
+(federico garcia aguiar)
+tuyo. Pero es notable que
+
+00:01:48.000 --> 00:01:52.000
+(federico garcia aguiar)
+que en mi cabeza trabaja esa posibilidad
+
+00:01:52.000 --> 00:01:56.000
+(federico garcia aguiar)
+en en paralelo, por más que yo diga, "No, esto es
+
+00:01:56.000 --> 00:02:00.000
+(federico garcia aguiar)
+para mi sistema y nada más, pero en paralelo, o
+
+00:02:00.000 --> 00:02:04.000
+(federico garcia aguiar)
+sea, yo estoy seguro de que lo que más quiero es que eso sea
+
+00:02:04.000 --> 00:02:08.000
+(Lautaro Caballero)
+Exacto.
+-
+ 
+(federico garcia aguiar)
+replicable." Y cuando yo me puse
+
+00:02:08.000 --> 00:02:12.000
+(federico garcia aguiar)
+a analizarlo con chat GPT y me
+
+00:02:12.000 --> 00:02:16.000
+(Lautaro Caballero)
+Está.
+-
+ 
+(federico garcia aguiar)
+fui haciendo preguntas y y yo me fui cada vez aclarando porque lo primero que
+
+00:02:16.000 --> 00:02:20.000
+(federico garcia aguiar)
+me dijo, esto es para vos o para replicar. Yo decía, bueno, o sea, si es para mí es
+
+00:02:20.000 --> 00:02:24.000
+(federico garcia aguiar)
+para replicar, o sea, es para replicarlo. Y me fui por
+
+00:02:24.000 --> 00:02:28.000
+(federico garcia aguiar)
+este lado y digo, bueno, eh,
+
+00:02:28.000 --> 00:02:32.000
+(federico garcia aguiar)
+bueno, primero eh lo
+
+00:02:32.000 --> 00:02:36.000
+(federico garcia aguiar)
+estamos haciendo a estos juntos. Eh,
+
+00:02:36.000 --> 00:02:40.000
+(federico garcia aguiar)
+yo entiendo que a vos te te gusta la idea de replicarlo,
+
+00:02:40.000 --> 00:02:44.000
+(federico garcia aguiar)
+obviamente. como
+
+00:02:44.000 --> 00:02:48.000
+(federico garcia aguiar)
+que me fue como aclarando situaciones o fui
+
+00:02:48.000 --> 00:02:52.000
+(federico garcia aguiar)
+aclarándome situaciones donde me propuso
+
+00:02:52.000 --> 00:02:56.000
+(federico garcia aguiar)
+una me dijo, "Bueno, esto es apunta algo
+
+00:02:56.000 --> 00:03:00.000
+(federico garcia aguiar)
+administrativo, pero vos sos, o sea, por la por la Si
+
+00:03:00.000 --> 00:03:04.000
+(federico garcia aguiar)
+querés te lo comparto después por es largo. Estuve 2 horas, no
+
+00:03:04.000 --> 00:03:08.000
+(federico garcia aguiar)
+sé cuánto estuve entreviendo, 3 horas, después me quedé
+
+00:03:08.000 --> 00:03:12.000
+(federico garcia aguiar)
+pensando todo el día y me tiró Barep,
+
+00:03:12.000 --> 00:03:16.000
+(federico garcia aguiar)
+pero eh lo a donde me decía
+
+00:03:16.000 --> 00:03:20.000
+(federico garcia aguiar)
+que la recomendación era como que
+
+00:03:20.000 --> 00:03:24.000
+(federico garcia aguiar)
+lo que yo necesito y lo que el mundo
+
+00:03:24.000 --> 00:03:28.000
+(federico garcia aguiar)
+necesita es como un sistema no administrativo, sino
+
+00:03:28.000 --> 00:03:32.000
+(federico garcia aguiar)
+como eh se pueden hacer un montón de cosas.
+
+00:03:32.000 --> 00:03:36.000
+(federico garcia aguiar)
+O sea, se puede hacer un sistema administrativo para replicar que cosa que ya hay
+
+00:03:36.000 --> 00:03:40.000
+(federico garcia aguiar)
+mucho, o sea, turnos, historia clínica,
+
+00:03:40.000 --> 00:03:44.000
+(federico garcia aguiar)
+ya hay un montón. Y después se puede hacer algo como muy
+
+00:03:44.000 --> 00:03:48.000
+(federico garcia aguiar)
+especializado. Es lo cuando yo te digo de, ¿viste? de de ubicar como un
+
+00:03:48.000 --> 00:03:52.000
+(federico garcia aguiar)
+un tener un programa que llame a la acción todo el tiempo.
+
+00:03:52.000 --> 00:03:56.000
+(federico garcia aguiar)
+Esto que vos vos ponés como sabés como simplificar
+
+00:03:56.000 --> 00:04:00.000
+(federico garcia aguiar)
+proceso, decir, "No, esto tiene que estar así, eh, el paso 1 2 3 cu
+
+00:04:00.000 --> 00:04:04.000
+(federico garcia aguiar)
+para que vaya avanzando." Eso es una con, por ahí lo
+
+00:04:04.000 --> 00:04:08.000
+(federico garcia aguiar)
+mencionaba, me lo me lo puso bien, como un convertidor,
+
+00:04:08.000 --> 00:04:12.000
+(federico garcia aguiar)
+una de de presupuesto en cirugía. Eso
+
+00:04:12.000 --> 00:04:16.000
+(Lautaro Caballero)
+Bien.
+-
+ 
+(federico garcia aguiar)
+es, eso no es administrativo, eso es como más de gestión
+
+00:04:16.000 --> 00:04:20.000
+(federico garcia aguiar)
+o no me acuerdo cómo lo mencionaba, pero me parece que es
+
+00:04:20.000 --> 00:04:24.000
+(federico garcia aguiar)
+justamente lo que hace que, a ver, si hay
+
+00:04:24.000 --> 00:04:28.000
+(federico garcia aguiar)
+algo que hace ganar al cirujero plástico es que los presupuestos se conviertan en
+
+00:04:28.000 --> 00:04:32.000
+(Lautaro Caballero)
+Claro.
+-
+ 
+(federico garcia aguiar)
+cirugía, ¿no? O sea,
+
+00:04:32.000 --> 00:04:36.000
+(federico garcia aguiar)
+no, el sistema de la agenda de turnos y de cómo se y
+
+00:04:36.000 --> 00:04:40.000
+(federico garcia aguiar)
+de los reportes inclusive, que a mí me parece
+
+00:04:40.000 --> 00:04:44.000
+(federico garcia aguiar)
+superinesante. A ver, es un fuerte, pero por ejemplo
+
+00:04:44.000 --> 00:04:48.000
+(federico garcia aguiar)
+hay en algún lugar que que bueno, eso ya
+
+00:04:48.000 --> 00:04:52.000
+(federico garcia aguiar)
+le vamos a ir dando forma porque es lo mismo, pero encarado de una
+
+00:04:52.000 --> 00:04:56.000
+(federico garcia aguiar)
+manera como que la prioridad vaya
+
+00:04:56.000 --> 00:05:00.000
+(federico garcia aguiar)
+hacia que hayan más consultas, que las
+
+00:05:00.000 --> 00:05:04.000
+(federico garcia aguiar)
+consultas se pase rápido el presupuesto, que el presupuesto pase a
+
+00:05:04.000 --> 00:05:08.000
+(federico garcia aguiar)
+eso como que debería ser lo más fuerte. Ahí hay que
+
+00:05:08.000 --> 00:05:12.000
+(federico garcia aguiar)
+darle como a la parte de presupuestos o de pacientes o del inicio.
+
+00:05:12.000 --> 00:05:16.000
+(federico garcia aguiar)
+En los en el inicio por ahí más indicadores que apunten a eso. ¿Cuántos
+
+00:05:16.000 --> 00:05:20.000
+(Lautaro Caballero)
+Bien.
+-
+ 
+(federico garcia aguiar)
+presupuestos hay en la espera? Eh, me vas
+
+00:05:20.000 --> 00:05:24.000
+(Lautaro Caballero)
+Sí, voy captando.
+-
+ 
+(federico garcia aguiar)
+siguiendo como esa por ahí. No tanto no tanto. Yo no tengo
+
+00:05:24.000 --> 00:05:28.000
+(federico garcia aguiar)
+una idea así fija fija, pero sí la propuesta de
+
+00:05:28.000 --> 00:05:32.000
+(federico garcia aguiar)
+decir hay que apuntar a que toda la información que uno
+
+00:05:32.000 --> 00:05:36.000
+(federico garcia aguiar)
+vea, está bien, haya una historia clínica. sigamos con
+
+00:05:36.000 --> 00:05:40.000
+(federico garcia aguiar)
+las plantillas que tienen que ser, pero el fuerte de la
+
+00:05:40.000 --> 00:05:44.000
+(federico garcia aguiar)
+aplicación y del sistema tiene que ser que uno entre y
+
+00:05:44.000 --> 00:05:48.000
+(federico garcia aguiar)
+diga, "Che, hay cinco o 10
+
+00:05:48.000 --> 00:05:52.000
+(Lautaro Caballero)
+No.
+-
+ 
+(federico garcia aguiar)
+pacientes que están esperando presupuesto." Eso tiene que ser rápido. O
+
+00:05:52.000 --> 00:05:56.000
+(federico garcia aguiar)
+sea, eso el alerta, o sea, eso tiene que pasar a número.
+
+00:05:56.000 --> 00:06:00.000
+(federico garcia aguiar)
+que el reporte diga el tiempo de espera
+
+00:06:00.000 --> 00:06:04.000
+(federico garcia aguiar)
+del paciente para un presupuesto es de tres días y
+
+00:06:04.000 --> 00:06:08.000
+(federico garcia aguiar)
+decir, "Che, el, o sea, eso hay que bajarlo a horas."
+
+00:06:08.000 --> 00:06:12.000
+(federico garcia aguiar)
+eh en el reporte de qué sé yo,
+
+00:06:12.000 --> 00:06:16.000
+(federico garcia aguiar)
+de agenda, es decir, eh la el la cantidad de
+
+00:06:16.000 --> 00:06:20.000
+(federico garcia aguiar)
+ausentismo, la cantidad de pacientes que han consultado este mes, la
+
+00:06:20.000 --> 00:06:24.000
+(federico garcia aguiar)
+de eh la la la lista de espera del que
+
+00:06:24.000 --> 00:06:28.000
+(federico garcia aguiar)
+viene, o sea, procesar aumentar tienen que ir
+
+00:06:28.000 --> 00:06:32.000
+(federico garcia aguiar)
+aumentar las consultas, disminuir las ausentismo,
+
+00:06:32.000 --> 00:06:36.000
+(Lautaro Caballero)
+Sal.
+-
+ 
+(federico garcia aguiar)
+aumentar la rapidez de presupuesto, eh el
+
+00:06:36.000 --> 00:06:40.000
+(federico garcia aguiar)
+seguimiento eh y Puedes ir clasificando por
+
+00:06:40.000 --> 00:06:44.000
+(federico garcia aguiar)
+qué
+
+00:06:44.000 --> 00:06:48.000
+(federico garcia aguiar)
+no esa información en reporte como como guía de de encararlo más
+
+00:06:48.000 --> 00:06:52.000
+(federico garcia aguiar)
+desde la parte de gestión de de presupuesto
+
+00:06:52.000 --> 00:06:56.000
+(federico garcia aguiar)
+hacia y me pareció muy interesante porque por ejemplo en no hay que
+
+00:06:56.000 --> 00:07:00.000
+(federico garcia aguiar)
+hacer grandes modificaciones simplemente por ejemplo en
+
+00:07:00.000 --> 00:07:04.000
+(federico garcia aguiar)
+paciente eh o bueno o o o o ya a
+
+00:07:04.000 --> 00:07:08.000
+(federico garcia aguiar)
+ver por ahí no me
+
+00:07:08.000 --> 00:07:12.000
+(federico garcia aguiar)
+quieroar a decirte yo porque capaz que lo puedas resolver mejor o capaz que lo podemos ir como
+
+00:07:12.000 --> 00:07:16.000
+(federico garcia aguiar)
+viendo, pero pero sí me parece que es interesante como
+
+00:07:16.000 --> 00:07:20.000
+(federico garcia aguiar)
+la propuesta. Sí, sí, sí. No, o sea, nuestro diferencial es ese y creo que
+
+00:07:20.000 --> 00:07:24.000
+(federico garcia aguiar)
+a a
+
+00:07:24.000 --> 00:07:28.000
+(federico garcia aguiar)
+Diego se lo podemos como Dale, Diego, mira,
+
+00:07:28.000 --> 00:07:32.000
+(federico garcia aguiar)
+tenemos este sistema, o sea, esta es nuestra propuesta, no es tanto la
+
+00:07:32.000 --> 00:07:36.000
+(Lautaro Caballero)
+L
+-
+ 
+(federico garcia aguiar)
+agenda que sea carga fácil de cargar, o sea, tenemos un
+
+00:07:36.000 --> 00:07:40.000
+(federico garcia aguiar)
+convertidor de se un sistema donde bueno, va
+
+00:07:40.000 --> 00:07:44.000
+(Lautaro Caballero)
+Exacto. o a otra persona.
+-
+ 
+(federico garcia aguiar)
+acelerando a Diego o o por ahí al que sea, pero sí
+
+00:07:44.000 --> 00:07:48.000
+(federico garcia aguiar)
+es cierto, sí Es cierto que por ahí me
+
+00:07:48.000 --> 00:07:52.000
+(federico garcia aguiar)
+me hizo una pregunta clave que es si es para cirujanos
+
+00:07:52.000 --> 00:07:56.000
+(federico garcia aguiar)
+plásticos o si es para el común.
+
+00:07:56.000 --> 00:08:00.000
+(federico garcia aguiar)
+Ahí yo creo que bueno, esas cosas las tenemos
+
+00:08:00.000 --> 00:08:04.000
+(federico garcia aguiar)
+que ver porque podemos
+
+00:08:04.000 --> 00:08:08.000
+(federico garcia aguiar)
+empez, no sé qué opinas, pero si hay algo por lo que empezar, yo
+
+00:08:08.000 --> 00:08:12.000
+(federico garcia aguiar)
+creo que es por lo que más sabemos que es la cirugía
+
+00:08:12.000 --> 00:08:16.000
+(Lautaro Caballero)
+Tal cual.
+-
+ 
+(federico garcia aguiar)
+plástica desde mi punto de vista porque de
+
+00:08:16.000 --> 00:08:20.000
+(federico garcia aguiar)
+mis amigos más cercanos, oncólogo oftalmólogo,
+
+00:08:20.000 --> 00:08:24.000
+(federico garcia aguiar)
+todos trabajan de una manera distinta, entonces se hace algo
+
+00:08:24.000 --> 00:08:28.000
+(federico garcia aguiar)
+muy muy específico y de alto
+
+00:08:28.000 --> 00:08:32.000
+(federico garcia aguiar)
+valor porque no hay mucho en el mercado,
+
+00:08:32.000 --> 00:08:36.000
+(federico garcia aguiar)
+no tiene mucho impacto.
+
+00:08:36.000 --> 00:08:40.000
+(federico garcia aguiar)
+Entonces, como que el sistema, o sea, chat GPT me decía, o sea,
+
+00:08:40.000 --> 00:08:44.000
+(federico garcia aguiar)
+estás haciendo un producto premium para empezar, si elegís esto,
+
+00:08:44.000 --> 00:08:48.000
+(federico garcia aguiar)
+un producto premium, ha que tener un conocimiento super especializado
+
+00:08:48.000 --> 00:08:52.000
+(federico garcia aguiar)
+porque eso yo y donde sí tengo que
+
+00:08:52.000 --> 00:08:56.000
+(federico garcia aguiar)
+averiguar con mis colegas dónde están sus dificultades, porque
+
+00:08:56.000 --> 00:09:00.000
+(federico garcia aguiar)
+ahí me dio una tarea de si soy yo el que los da lento y
+
+00:09:00.000 --> 00:09:04.000
+(federico garcia aguiar)
+cuáles son los problemas que tienen mis colegas como para chequear de que
+
+00:09:04.000 --> 00:09:08.000
+(Lautaro Caballero)
+Eso yo creo ahí justo, o
+-
+ 
+(federico garcia aguiar)
+el problema sea el mismo para
+
+00:09:08.000 --> 00:09:12.000
+(Lautaro Caballero)
+sea, voy pensando que eh por
+
+00:09:12.000 --> 00:09:16.000
+(Lautaro Caballero)
+ejemplo está bueno Eso de eh justamente como eh darse cuenta que, por
+-
+ 
+(federico garcia aguiar)
+todos.
+
+00:09:16.000 --> 00:09:20.000
+(Lautaro Caballero)
+ejemplo, eh una parte que puede aportar mucho valor al sistema eso,
+
+00:09:20.000 --> 00:09:24.000
+(Lautaro Caballero)
+de acelerar el tiempo de convertir eh la consulta a enviar
+
+00:09:24.000 --> 00:09:28.000
+(Lautaro Caballero)
+el presupuesto a que el paciente lo acepte. De ahí vos que
+
+00:09:28.000 --> 00:09:32.000
+(Lautaro Caballero)
+tenés y de ahí que eso se convierte en una cirugía. V de ahí si si
+
+00:09:32.000 --> 00:09:36.000
+(Lautaro Caballero)
+lo abstraemos como esa esa línea este de
+
+00:09:36.000 --> 00:09:40.000
+(Lautaro Caballero)
+acciones vos tenés de que el paciente pide el turno a
+
+00:09:40.000 --> 00:09:44.000
+(Lautaro Caballero)
+que va al turno. Bueno, eh no es
+
+00:09:44.000 --> 00:09:48.000
+(Lautaro Caballero)
+nada mecánico, o sea, no es algo que vos podés realmente hacer más rápido, o
+
+00:09:48.000 --> 00:09:52.000
+(Lautaro Caballero)
+sea, lo vas a hacer tan rápido como tu agenda te lo permita, ¿no? Y el
+
+00:09:52.000 --> 00:09:56.000
+(Lautaro Caballero)
+paciente tenga disponibilidad. Pero ya después entre que el paciente
+
+00:09:56.000 --> 00:10:00.000
+(Lautaro Caballero)
+fue y se elabora y se envía el presupuesto, eso es algo puramente
+
+00:10:00.000 --> 00:10:04.000
+(Lautaro Caballero)
+mecánico. Eh, entonces quizás el sistema en vez
+
+00:10:04.000 --> 00:10:08.000
+(Lautaro Caballero)
+de estar como midiendo ese tiempo y
+
+00:10:08.000 --> 00:10:12.000
+(Lautaro Caballero)
+alertándote como de que está pendiente o lo que sea, capaz que podríamos
+
+00:10:12.000 --> 00:10:16.000
+(Lautaro Caballero)
+tratar de enfocar la solución del sistema en decir, bueno, eso que es mecánico,
+
+00:10:16.000 --> 00:10:20.000
+(Lautaro Caballero)
+en vez de advertirlo, no, no lo adviertas, hacelo. Entonces, que el
+
+00:10:20.000 --> 00:10:24.000
+(Lautaro Caballero)
+sistema lo haga. Entonces, apenas el paciente termina, genera el presupuesto y lo
+
+00:10:24.000 --> 00:10:28.000
+(Lautaro Caballero)
+haga rápido. Después vemos cómo eh pero como tratar de
+-
+ 
+(federico garcia aguiar)
+Sí,
+
+00:10:28.000 --> 00:10:32.000
+(Lautaro Caballero)
+de encarar quizás el problema no tanto en el avisar, el
+
+00:10:32.000 --> 00:10:36.000
+(Lautaro Caballero)
+mostrar, sino el hacer y que el sistema haga todo lo que pueda, que lo
+-
+ 
+(federico garcia aguiar)
+sí,
+
+00:10:36.000 --> 00:10:40.000
+(Lautaro Caballero)
+haga. De ahí, ¿qué? Se lo envía al paciente, que el sistema esté
+-
+ 
+(federico garcia aguiar)
+sí,
+
+00:10:40.000 --> 00:10:44.000
+(Lautaro Caballero)
+pendiente al paciente de cuando el paciente diga sí o no. Si dice
+-
+ 
+(federico garcia aguiar)
+sí.
+
+00:10:44.000 --> 00:10:48.000
+(Lautaro Caballero)
+que no, que tome una acción rápida para tratar de salvarlo. Si dice que sí, listo,
+
+00:10:48.000 --> 00:10:52.000
+(Lautaro Caballero)
+chao, te doy el turno. ¿Cuándo? la semana que viene la otra eh
+
+00:10:52.000 --> 00:10:56.000
+(Lautaro Caballero)
+lo antes posible. Entonces ya te
+
+00:10:56.000 --> 00:11:00.000
+(Lautaro Caballero)
+quita del del de la persona porque si no nosotros podemos avisar, el sistema puede
+
+00:11:00.000 --> 00:11:04.000
+(Lautaro Caballero)
+avisarte, te puede dar mucha alerta, lo que sea, pero al fin y al
+
+00:11:04.000 --> 00:11:08.000
+(Lautaro Caballero)
+cabo si el médico se va de viaje un fin de semana o
+
+00:11:08.000 --> 00:11:12.000
+(Lautaro Caballero)
+tiene otras cosas o qué sé yo, juega el golf y no tiene tiempo,
+
+00:11:12.000 --> 00:11:16.000
+(Lautaro Caballero)
+lo que sea, y va va a demorarse un poco más y por más
+
+00:11:16.000 --> 00:11:20.000
+(Lautaro Caballero)
+que bueno o avisador que sea el sistema, sigue teniendo como
+
+00:11:20.000 --> 00:11:24.000
+(Lautaro Caballero)
+un un delay humano. Este, entonces por
+
+00:11:24.000 --> 00:11:28.000
+(Lautaro Caballero)
+ahí podríamos tratar de enfocarlo desde ese punto de vista, ¿no? Decir,
+
+00:11:28.000 --> 00:11:32.000
+(Lautaro Caballero)
+bueno, qué cosas este puede dejar de hacerl las personas, digamos, y que las haga
+
+00:11:32.000 --> 00:11:36.000
+(Lautaro Caballero)
+el sistema solamente. Este y en este caso los presupuestos puede
+
+00:11:36.000 --> 00:11:40.000
+(Lautaro Caballero)
+ser eso. Eh, a ver, atender al paciente no lo va a atender, pero en el momento que se
+
+00:11:40.000 --> 00:11:44.000
+(Lautaro Caballero)
+atiende, que el sistema genere el presupuesto con la información
+
+00:11:44.000 --> 00:11:48.000
+(Lautaro Caballero)
+necesaria, se lo mande y esté pendiente de qué responde el cliente y apenas
+
+00:11:48.000 --> 00:11:52.000
+(Lautaro Caballero)
+responda este, bueno, tome algún camino. Si es que sí,
+
+00:11:52.000 --> 00:11:56.000
+(Lautaro Caballero)
+listo, este, te mando las indicaciones eh de acá se
+
+00:11:56.000 --> 00:12:00.000
+(Lautaro Caballero)
+ti que hacer estos estudios y te doy esta este día para el día de
+
+00:12:00.000 --> 00:12:04.000
+(Lautaro Caballero)
+cirugía. Eh, y si te dice, no sé, eh, no tengo
+
+00:12:04.000 --> 00:12:08.000
+(Lautaro Caballero)
+plata, bueno, a ver cómo la hacemos. Este, bueno, tratar de de verlo
+
+00:12:08.000 --> 00:12:12.000
+(Lautaro Caballero)
+ahí, pero como que yo diría que enfocarlo en ese sentido como que el
+
+00:12:12.000 --> 00:12:16.000
+(Lautaro Caballero)
+sistema haga haga haga haga
+
+00:12:16.000 --> 00:12:20.000
+(Lautaro Caballero)
+Aquí
+-
+ 
+(federico garcia aguiar)
+Sí, se me ocurre, se me a mí se me ocurre que eso es cierto
+
+00:12:20.000 --> 00:12:24.000
+(federico garcia aguiar)
+que para
+
+00:12:24.000 --> 00:12:28.000
+(Lautaro Caballero)
+está.
+-
+ 
+(federico garcia aguiar)
+mí va está bueno de que el sistema haga solo, o sea,
+
+00:12:28.000 --> 00:12:32.000
+(federico garcia aguiar)
+eso quita tarea humana que después se puede supervisar.
+
+00:12:32.000 --> 00:12:36.000
+(federico garcia aguiar)
+Me parece que está bueno. Me parece que las métricas van a ser más
+
+00:12:36.000 --> 00:12:40.000
+(federico garcia aguiar)
+exactas, eh, porque apenas se va el paciente va a tener un
+
+00:12:40.000 --> 00:12:44.000
+(federico garcia aguiar)
+presupuesto que a veces hay que corregirlo, observarlo, hay que
+
+00:12:44.000 --> 00:12:48.000
+(Lautaro Caballero)
+Exc
+-
+ 
+(federico garcia aguiar)
+ver cómo cómo lo adaptamos, hay que ver por ahí si otros colegas
+
+00:12:48.000 --> 00:12:52.000
+(federico garcia aguiar)
+por ahí les gusta entregarlo así o no, censar un
+
+00:12:52.000 --> 00:12:56.000
+(federico garcia aguiar)
+poquito, pero creo que por lo menos la opción inicial sí
+
+00:12:56.000 --> 00:13:00.000
+(federico garcia aguiar)
+para saber porque por ejemplo ahí se puede, por ejemplo, cuando
+
+00:13:00.000 --> 00:13:04.000
+(federico garcia aguiar)
+uno viene el paciente o sea saca el turno, viene la
+
+00:13:04.000 --> 00:13:08.000
+(federico garcia aguiar)
+consulta, yo le hago la consulta, le hago la
+
+00:13:08.000 --> 00:13:12.000
+(federico garcia aguiar)
+plantilla, le cargo el presupuesto correcto o le hago la
+
+00:13:12.000 --> 00:13:16.000
+(federico garcia aguiar)
+observación de 10% de descuento, le doy
+
+00:13:16.000 --> 00:13:20.000
+(federico garcia aguiar)
+finalizar, se manda, que sería como lo ideal, se manda el presupuesto por
+
+00:13:20.000 --> 00:13:24.000
+(Lautaro Caballero)
+Eso.
+-
+ 
+(federico garcia aguiar)
+lo menos una tentativa, después se puede aclarar que pueden haber
+
+00:13:24.000 --> 00:13:28.000
+(federico garcia aguiar)
+variables, o sea, hay que hay que ser como
+
+00:13:28.000 --> 00:13:32.000
+(federico garcia aguiar)
+claro, bien fino en eso, decir, bueno, porque a veces las
+
+00:13:32.000 --> 00:13:36.000
+(federico garcia aguiar)
+clínicas, viste, aumentan. otra vez el el valor del implante está en dólar,
+
+00:13:36.000 --> 00:13:40.000
+(federico garcia aguiar)
+pero bien explicado y y que le deo la opción al
+
+00:13:40.000 --> 00:13:44.000
+(federico garcia aguiar)
+paciente de como aceptarlo, eh voy a
+
+00:13:44.000 --> 00:13:48.000
+(federico garcia aguiar)
+pensarlo y que cargue como las preguntas
+
+00:13:48.000 --> 00:13:52.000
+(Lautaro Caballero)
+Hm. Exact.
+-
+ 
+(federico garcia aguiar)
+automáticas y que por ejemplo una secretaria pueda acceder a
+
+00:13:52.000 --> 00:13:56.000
+(federico garcia aguiar)
+ese chat o a preguntarle por lo menos si a ese
+
+00:13:56.000 --> 00:14:00.000
+(federico garcia aguiar)
+o no, si por ejemplo por lo menos eh hay
+
+00:14:00.000 --> 00:14:04.000
+(federico garcia aguiar)
+como alguna duda o algo y yo creo que Con eso,
+
+00:14:04.000 --> 00:14:08.000
+(federico garcia aguiar)
+esa devolución nos puede ya empezar a clasificar el paciente
+
+00:14:08.000 --> 00:14:12.000
+(federico garcia aguiar)
+como que me pareció muy interesante, como si un paciente que está
+
+00:14:12.000 --> 00:14:16.000
+(federico garcia aguiar)
+frío, que no responde, que no le interesa, que no contesta,
+
+00:14:16.000 --> 00:14:20.000
+(federico garcia aguiar)
+uno tibio como que pregunta si hay cuotas o que no tiene o
+
+00:14:20.000 --> 00:14:24.000
+(federico garcia aguiar)
+que contesta, pero dice que no lo va a pensar. Y uno
+
+00:14:24.000 --> 00:14:28.000
+(federico garcia aguiar)
+caliente que eh sí aceptó
+
+00:14:28.000 --> 00:14:32.000
+(federico garcia aguiar)
+el presupuesto, quiere saber fecha y demás. esa
+
+00:14:32.000 --> 00:14:36.000
+(federico garcia aguiar)
+clasificación puede ser eh muy interesante y nos va a dar
+
+00:14:36.000 --> 00:14:40.000
+(federico garcia aguiar)
+información como muy clara y automática. Entonces,
+
+00:14:40.000 --> 00:14:44.000
+(Lautaro Caballero)
+Exacto. Bien, bien,
+-
+ 
+(federico garcia aguiar)
+creo que sí es por ahí, es por ahí y hay
+
+00:14:44.000 --> 00:14:48.000
+(federico garcia aguiar)
+que hay que avanzar sobre las planillas para ya empezar a
+
+00:14:48.000 --> 00:14:52.000
+(federico garcia aguiar)
+entregar el presupuesto. Ahora, no sé cómo es esa comunicación, si la puede hacer desde este
+
+00:14:52.000 --> 00:14:56.000
+(federico garcia aguiar)
+sistema o si hay que activar
+
+00:14:56.000 --> 00:15:00.000
+(Lautaro Caballero)
+bien. No, o sea, eh habría, o sea, hay que
+-
+ 
+(federico garcia aguiar)
+como otra otra vía.
+
+00:15:00.000 --> 00:15:04.000
+(Lautaro Caballero)
+activar la el, digamos el el uso del WhatsApp, pero
+
+00:15:04.000 --> 00:15:08.000
+(Lautaro Caballero)
+no es lo del secretario, este, o sea, es un módulo
+
+00:15:08.000 --> 00:15:12.000
+(Lautaro Caballero)
+especial que tendríamos que desarrollar acá.
+
+00:15:12.000 --> 00:15:16.000
+(Lautaro Caballero)
+este que trabaja trabaja, digamos con una herramienta muy parecida a la que trabaja
+
+00:15:16.000 --> 00:15:20.000
+(Lautaro Caballero)
+el secretario, pero son dos cosas distintas. Eh, después se puede
+-
+ 
+(federico garcia aguiar)
+Hay
+
+00:15:20.000 --> 00:15:24.000
+(Lautaro Caballero)
+también incluir el secretario y hacer los que que digamos que que trabajen
+
+00:15:24.000 --> 00:15:28.000
+(Lautaro Caballero)
+juntos, pero la parte de enviar algunas cosas
+
+00:15:28.000 --> 00:15:32.000
+(Lautaro Caballero)
+este de automatizar esa parte es
+
+00:15:32.000 --> 00:15:36.000
+(Lautaro Caballero)
+aparte. Claro, por
+-
+ 
+(federico garcia aguiar)
+Sí. Por ejemplo, los
+
+00:15:36.000 --> 00:15:40.000
+(Lautaro Caballero)
+ejemplo, o sea, eso, por ejemplo, que yo que enviemos el presupuesto,
+-
+ 
+(federico garcia aguiar)
+presupuestos y las
+
+00:15:40.000 --> 00:15:44.000
+(Lautaro Caballero)
+lo que se puede hacer es eh que por WhatsApp, cuando se genere el presupuesto, se
+-
+ 
+(federico garcia aguiar)
+respuestas.
+
+00:15:44.000 --> 00:15:48.000
+(Lautaro Caballero)
+lo manden por WhatsApp este y quizás
+
+00:15:48.000 --> 00:15:52.000
+(Lautaro Caballero)
+eh se lo manden quizás por PDF y, eh, o por un
+
+00:15:52.000 --> 00:15:56.000
+(Lautaro Caballero)
+link, entonces que le manden el link y que la persona entra al link, peduo
+
+00:15:56.000 --> 00:16:00.000
+(Lautaro Caballero)
+ahí y de ahí mismo este eh tengo un botón que sea
+
+00:16:00.000 --> 00:16:04.000
+(Lautaro Caballero)
+aceptarlo o quiero pensarlo o tengo
+
+00:16:04.000 --> 00:16:08.000
+(Lautaro Caballero)
+alguna duda, eh, y que ahí deriva WhatsApp, quizás por ahora que
+-
+ 
+(federico garcia aguiar)
+Claro.
+
+00:16:08.000 --> 00:16:12.000
+(Lautaro Caballero)
+deriva el WhatsApp de Carolina y Carolina sigue la conversación, en otro
+
+00:16:12.000 --> 00:16:16.000
+(Lautaro Caballero)
+momento derivará un WhatsApp que está este automatizado y será todo más rápido.
+
+00:16:16.000 --> 00:16:20.000
+(Lautaro Caballero)
+Este, como podemos ir haciéndolo así,
+
+00:16:20.000 --> 00:16:24.000
+(Lautaro Caballero)
+eh, pero bueno, me gusta sí que no
+-
+ 
+(federico garcia aguiar)
+Bien, bien. Eso, eso
+
+00:16:24.000 --> 00:16:28.000
+(Lautaro Caballero)
+lo que para no olvidarme como habíamos empezado de decir, bueno,
+
+00:16:28.000 --> 00:16:32.000
+(Lautaro Caballero)
+eh, el sistema lo vamos a orientar a que se pueda vender, listo.
+-
+ 
+(federico garcia aguiar)
+sí.
+
+00:16:32.000 --> 00:16:36.000
+(Lautaro Caballero)
+Entonces tomamos decisiones en base a eso y me parece que está bueno
+
+00:16:36.000 --> 00:16:40.000
+(Lautaro Caballero)
+decidir de entrada decir, bueno, hagamos la que la esta primer versión y
+
+00:16:40.000 --> 00:16:44.000
+(Lautaro Caballero)
+todo sea solamente para cirugía estética y eso nos
+
+00:16:44.000 --> 00:16:48.000
+(Lautaro Caballero)
+va a ayudar primero, bueno, a a enfocar como las energías en
+
+00:16:48.000 --> 00:16:52.000
+(Lautaro Caballero)
+eso y pedir referencias también de profesionales,
+
+00:16:52.000 --> 00:16:56.000
+(Lautaro Caballero)
+justamente colegas tuyos, este, que se quieran sumar a eso. Y se me ocurre
+
+00:16:56.000 --> 00:17:00.000
+(Lautaro Caballero)
+que estaría muy bueno, por ejemplo, con gente que vos tengas confianza,
+
+00:17:00.000 --> 00:17:04.000
+(Lautaro Caballero)
+decirle, "Mira, estoy desarrollando esto, bla, bla, bla, este, te
+
+00:17:04.000 --> 00:17:08.000
+(Lautaro Caballero)
+voy a claro, probalo. Si te pruebalo gratis, este, si
+-
+ 
+(federico garcia aguiar)
+Probalo.
+
+00:17:08.000 --> 00:17:12.000
+(Lautaro Caballero)
+vos me haces la gama de probarlo gratis, no sé, un mes, o dos
+
+00:17:12.000 --> 00:17:16.000
+(Lautaro Caballero)
+meses o bueno, o dos semanas, después vemos bien qué tiempo, qué
+
+00:17:16.000 --> 00:17:20.000
+(Lautaro Caballero)
+tiempo sirve para que lo pruebe y con la condición de que, o
+
+00:17:20.000 --> 00:17:24.000
+(Lautaro Caballero)
+sea, te lo comprado gratis con la condición de que eh me me
+
+00:17:24.000 --> 00:17:28.000
+(Lautaro Caballero)
+escribas todo lo que veas que se puede mejorar, cosas que no te gustan,
+
+00:17:28.000 --> 00:17:32.000
+(Lautaro Caballero)
+cosas, vos me des ese feedback que para mí es supervalioso. Este, y bueno, y el
+
+00:17:32.000 --> 00:17:36.000
+(Lautaro Caballero)
+día de mañana si vos querés y te gusta, nosotros te lo dejamos a mitad de precio por
+
+00:17:36.000 --> 00:17:40.000
+(Lautaro Caballero)
+haber probado y por habernos dado esa mano, qué sé yo. Entonces,
+
+00:17:40.000 --> 00:17:44.000
+(Lautaro Caballero)
+nosotros ahí, digamos, prácticamente gratis estamos
+
+00:17:44.000 --> 00:17:48.000
+(Lautaro Caballero)
+obteniendo este ese feedback que es indispensable,
+
+00:17:48.000 --> 00:17:52.000
+(Lautaro Caballero)
+eh, que si no de otra forma tendríamos que terminarlo y salir a buscar
+-
+ 
+(federico garcia aguiar)
+Sí, sí, yo creo que
+
+00:17:52.000 --> 00:17:56.000
+(Lautaro Caballero)
+clientes sin tener ese feedback y tenerlo recién con gente que te está pagando y
+
+00:17:56.000 --> 00:18:00.000
+(Lautaro Caballero)
+que en vez de decírtelo a modo constructivo, te lo va a decir como una queja.
+-
+ 
+(federico garcia aguiar)
+sí.
+
+00:18:00.000 --> 00:18:04.000
+(federico garcia aguiar)
+Sí, sí, tal cual. No, no es por ahí. Hay que hacer como
+
+00:18:04.000 --> 00:18:08.000
+(federico garcia aguiar)
+una hay que hacer una buena estrategia de
+
+00:18:08.000 --> 00:18:12.000
+(federico garcia aguiar)
+de publicidad y de de ventas. Sería un buen
+
+00:18:12.000 --> 00:18:16.000
+(Lautaro Caballero)
+Exacto. Yo
+-
+ 
+(federico garcia aguiar)
+asesoramiento. Aparte para que Claro,
+
+00:18:16.000 --> 00:18:20.000
+(federico garcia aguiar)
+cuidar cuidar que el tema del choreo o que
+
+00:18:20.000 --> 00:18:24.000
+(federico garcia aguiar)
+nos mostrar información que
+
+00:18:24.000 --> 00:18:28.000
+(Lautaro Caballero)
+eso. Sí, en ese caso yo
+-
+ 
+(federico garcia aguiar)
+Pero sí me parece que sí. Yo creo
+
+00:18:28.000 --> 00:18:32.000
+(Lautaro Caballero)
+voyar de de armar un plan corto, digamos, como de acción,
+
+00:18:32.000 --> 00:18:36.000
+(Lautaro Caballero)
+eh, decir, bueno, paso uno, contactar esta
+
+00:18:36.000 --> 00:18:40.000
+(Lautaro Caballero)
+gente, paso dos, ofrecerles esto, paso tres, darle el acceso para que lo
+
+00:18:40.000 --> 00:18:44.000
+(Lautaro Caballero)
+prueben o o prueben estas funciones, no hace falta darle acceso a
+
+00:18:44.000 --> 00:18:48.000
+(Lautaro Caballero)
+todo, este, y bueno, ir viéndolo de esa forma.
+-
+ 
+(federico garcia aguiar)
+que
+
+00:18:48.000 --> 00:18:52.000
+(Lautaro Caballero)
+Este, bueno, para ir viendo
+-
+ 
+(federico garcia aguiar)
+tal cual. Sí, sí. Yo creo
+
+00:18:52.000 --> 00:18:56.000
+(federico garcia aguiar)
+que hay hay cosas que hay que simplificar, ¿eh?
+
+00:18:56.000 --> 00:19:00.000
+(federico garcia aguiar)
+hacerlas como más intuitivas y más fáciles. No sé si
+
+00:19:00.000 --> 00:19:04.000
+(federico garcia aguiar)
+has visto o o cómo cómo has visto la terminación, por ejemplo,
+
+00:19:04.000 --> 00:19:08.000
+(federico garcia aguiar)
+de lo que son las finanzas, el stock y los
+
+00:19:08.000 --> 00:19:12.000
+(Lautaro Caballero)
+No.
+-
+ 
+(federico garcia aguiar)
+reportes. Eh, creo
+
+00:19:12.000 --> 00:19:16.000
+(Lautaro Caballero)
+H.
+-
+ 
+(federico garcia aguiar)
+que que se puede como
+
+00:19:16.000 --> 00:19:20.000
+(federico garcia aguiar)
+simplificar. Ahora sí creo que si la prioridad es esa, tenemos que hacer
+
+00:19:20.000 --> 00:19:24.000
+(federico garcia aguiar)
+más hincapié en la en la para
+
+00:19:24.000 --> 00:19:28.000
+(federico garcia aguiar)
+que estoy tratando ponerlo. Bueno, en el inicio, en el inicio los
+
+00:19:28.000 --> 00:19:32.000
+(federico garcia aguiar)
+pacientes y por ahí la agenda también,
+
+00:19:32.000 --> 00:19:36.000
+(federico garcia aguiar)
+porque por ahí en la agenda yo creo que está bueno
+
+00:19:36.000 --> 00:19:40.000
+(federico garcia aguiar)
+ver el tema del ausentismo, de cuántas consultas,
+
+00:19:40.000 --> 00:19:44.000
+(Lautaro Caballero)
+Yes.
+-
+ 
+(federico garcia aguiar)
+cuántos pacientes han han tomado contacto, cuántos
+
+00:19:44.000 --> 00:19:48.000
+(federico garcia aguiar)
+eh eh cuántos
+
+00:19:48.000 --> 00:19:52.000
+(federico garcia aguiar)
+eh han faltado, cuántos están sin
+
+00:19:52.000 --> 00:19:56.000
+(federico garcia aguiar)
+confirmar para hoy. O sea, es es o o eh mostrar
+
+00:19:56.000 --> 00:20:00.000
+(federico garcia aguiar)
+indicadores en la agenda, indicadores que sean como más
+
+00:20:00.000 --> 00:20:04.000
+(federico garcia aguiar)
+proactivos, ¿viste? No solamente una una agenda
+
+00:20:04.000 --> 00:20:08.000
+(Lautaro Caballero)
+Bien.
+-
+ 
+(federico garcia aguiar)
+donde digas, bueno, tengas esa información que está
+
+00:20:08.000 --> 00:20:12.000
+(federico garcia aguiar)
+ahí, sino como que esté a simple vista, no tengas que leer,
+
+00:20:12.000 --> 00:20:16.000
+(federico garcia aguiar)
+bueno, hay tantos libres tal y tal, sino
+
+00:20:16.000 --> 00:20:20.000
+(federico garcia aguiar)
+que hayan indicadores que digan, bueno,
+
+00:20:20.000 --> 00:20:24.000
+(federico garcia aguiar)
+el que hablen de de eso, ¿no? así como hay indicadores en el
+
+00:20:24.000 --> 00:20:28.000
+(federico garcia aguiar)
+inicio general o bueno, no sé, o darle como
+
+00:20:28.000 --> 00:20:32.000
+(Lautaro Caballero)
+Bien.
+-
+ 
+(federico garcia aguiar)
+ver definir bien qué queremos mostrar en el inicio, en la
+
+00:20:32.000 --> 00:20:36.000
+(federico garcia aguiar)
+agenda y en la y en los pacientes. Hay como
+
+00:20:36.000 --> 00:20:40.000
+(federico garcia aguiar)
+que ver eso. Podemos
+
+00:20:40.000 --> 00:20:44.000
+(federico garcia aguiar)
+ir empezando porque, por ejemplo, ahí en la en la en
+
+00:20:44.000 --> 00:20:48.000
+(federico garcia aguiar)
+el menú de pacientes hay como muchos pacientes. Está bien
+
+00:20:48.000 --> 00:20:52.000
+(federico garcia aguiar)
+que a ninguno se le ha cargado presupuesto todavía. Capaz que tenemos que empezar por
+
+00:20:52.000 --> 00:20:56.000
+(Lautaro Caballero)
+Perfecto.
+-
+ 
+(federico garcia aguiar)
+ahí.
+
+00:20:56.000 --> 00:21:00.000
+(Lautaro Caballero)
+Bien.
+-
+ 
+(federico garcia aguiar)
+No, de poder empezar a cargar los presupuestos a los pacientes que están de primera
+
+00:21:00.000 --> 00:21:04.000
+(Lautaro Caballero)
+Claro.
+-
+ 
+(federico garcia aguiar)
+vez. Eh, acá yo veo muchos
+
+00:21:04.000 --> 00:21:08.000
+(federico garcia aguiar)
+pacientes que, por ejemplo, de esta primera lista, entonces se me ve en la cabeza
+
+00:21:08.000 --> 00:21:12.000
+(federico garcia aguiar)
+solamente como González, que es la única que está
+
+00:21:12.000 --> 00:21:16.000
+(federico garcia aguiar)
+esperando un presupuesto, pero está refría esa paciente y en
+
+00:21:16.000 --> 00:21:20.000
+(federico garcia aguiar)
+los pacientes que están más calientes, que yo identifico de mi
+
+00:21:20.000 --> 00:21:24.000
+(federico garcia aguiar)
+planilla, eh todavía no ni ni figuran.
+
+00:21:24.000 --> 00:21:28.000
+(federico garcia aguiar)
+Entonces, por ahí podemos empezar a cargar esos presupuestos.
+
+00:21:28.000 --> 00:21:32.000
+(Lautaro Caballero)
+No.
+-
+ 
+(federico garcia aguiar)
+Yo no sé, por ejemplo, cómo deberíamos hacer y después la forma
+
+00:21:32.000 --> 00:21:36.000
+(federico garcia aguiar)
+de visualizarlo sería interesante darle como
+
+00:21:36.000 --> 00:21:40.000
+(federico garcia aguiar)
+una un diseño práctico para que no sé si
+
+00:21:40.000 --> 00:21:44.000
+(federico garcia aguiar)
+es la lista lo más práctico o
+
+00:21:44.000 --> 00:21:48.000
+(federico garcia aguiar)
+qué, pero bueno, hay que
+
+00:21:48.000 --> 00:21:52.000
+(federico garcia aguiar)
+hay que darle una
+
+00:21:52.000 --> 00:21:56.000
+(federico garcia aguiar)
+una eh
+
+00:21:56.000 --> 00:22:00.000
+(federico garcia aguiar)
+como un diseño pequeño de
+
+00:22:00.000 --> 00:22:04.000
+(federico garcia aguiar)
+de tarea, por ejemplo. No sé, se me se me viene a la
+
+00:22:04.000 --> 00:22:08.000
+(federico garcia aguiar)
+cabeza lo primero, lo primero que es como
+
+00:22:08.000 --> 00:22:12.000
+(Lautaro Caballero)
+Bien.
+-
+ 
+(federico garcia aguiar)
+bueno, este coso que vos marcaste de las
+
+00:22:12.000 --> 00:22:16.000
+(federico garcia aguiar)
+etapas se me viene primero a la cabeza donde están como las distintas etapas que
+
+00:22:16.000 --> 00:22:20.000
+(federico garcia aguiar)
+se me ocurra que pueden ser como fichas, ¿no? donde uno pone, bueno, la
+
+00:22:20.000 --> 00:22:24.000
+(Lautaro Caballero)
+Sí.
+-
+ 
+(federico garcia aguiar)
+ficha de los pacientes han accedido a consulta, los que
+
+00:22:24.000 --> 00:22:28.000
+(federico garcia aguiar)
+están vos pon pasada presupuesto, los que están en presupuesto, los que están
+
+00:22:28.000 --> 00:22:32.000
+(federico garcia aguiar)
+en lista esperan fecha y los que ya tienen
+
+00:22:32.000 --> 00:22:36.000
+(Lautaro Caballero)
+Bien. Bueno, no me
+-
+ 
+(federico garcia aguiar)
+fecha. Entonces de cada uno,
+
+00:22:36.000 --> 00:22:40.000
+(Lautaro Caballero)
+gusta. es una forma distinta de pensarlo y está bueno, está bueno. Puede ser
+-
+ 
+(federico garcia aguiar)
+sí, como
+
+00:22:40.000 --> 00:22:44.000
+(Lautaro Caballero)
+más
+-
+ 
+(federico garcia aguiar)
+los pasos. Claro, eso yo creo que
+
+00:22:44.000 --> 00:22:48.000
+(federico garcia aguiar)
+tiene que ser intuitivo, tiene uno tiene que ver, o
+
+00:22:48.000 --> 00:22:52.000
+(federico garcia aguiar)
+sea, vos ponés los que están esperando presupuesto,
+
+00:22:52.000 --> 00:22:56.000
+(federico garcia aguiar)
+la fila y entender que hay que como que avanzar los
+
+00:22:56.000 --> 00:23:00.000
+(Lautaro Caballero)
+intuitivo.
+-
+ 
+(federico garcia aguiar)
+pasos, darle como una prioridad las
+
+00:23:00.000 --> 00:23:04.000
+(Lautaro Caballero)
+Bien.
+-
+ 
+(federico garcia aguiar)
+alertas en cada en cada uno, ¿no? Hay cinco
+
+00:23:04.000 --> 00:23:08.000
+(federico garcia aguiar)
+pacientes alerta, hay cinco pacientes que llevan más de 5 días esperando
+
+00:23:08.000 --> 00:23:12.000
+(federico garcia aguiar)
+cosas así, ¿no? Entonces, como que sea bien
+
+00:23:12.000 --> 00:23:16.000
+(federico garcia aguiar)
+intuitivo y que sea bueno, tener bien en
+
+00:23:16.000 --> 00:23:20.000
+(federico garcia aguiar)
+claro desde cuántos pacientes sería ideal, ¿no?,
+
+00:23:20.000 --> 00:23:24.000
+(Lautaro Caballero)
+Bien.
+-
+ 
+(federico garcia aguiar)
+eh tienen contacto con WhatsApp,
+
+00:23:24.000 --> 00:23:28.000
+(federico garcia aguiar)
+¿cuántos de eso tienen el turno? ¿Cuántos de los que tienen el
+
+00:23:28.000 --> 00:23:32.000
+(federico garcia aguiar)
+turno tienen el presupuesto? ¿Cuántos
+
+00:23:32.000 --> 00:23:36.000
+(federico garcia aguiar)
+ya le han dado algún avance a ese presupuesto? alguna,
+
+00:23:36.000 --> 00:23:40.000
+(federico garcia aguiar)
+¿okay? O cuántos accedieron, eso eso, a
+
+00:23:40.000 --> 00:23:44.000
+(federico garcia aguiar)
+eso me refiero. Y cuántos están en lista de cirugía y cuántos para este
+
+00:23:44.000 --> 00:23:48.000
+(federico garcia aguiar)
+mes, para lo otro. Entonces, creo que eso es eso es
+
+00:23:48.000 --> 00:23:52.000
+(federico garcia aguiar)
+medible, es es intuitivo, es como
+
+00:23:52.000 --> 00:23:56.000
+(federico garcia aguiar)
+podemos sacar métricas de de cuánta conversión
+
+00:23:56.000 --> 00:24:00.000
+(federico garcia aguiar)
+hay. El porcentaje de conversiones es una métrica que es
+
+00:24:00.000 --> 00:24:04.000
+(federico garcia aguiar)
+como muy zarpada porque de ahí vas a
+
+00:24:04.000 --> 00:24:08.000
+(federico garcia aguiar)
+si ahí vas tenés mucha información. Si estás con
+
+00:24:08.000 --> 00:24:12.000
+(federico garcia aguiar)
+con poca conversión, bueno, hay un problema. Si tenés mucha
+
+00:24:12.000 --> 00:24:16.000
+(Lautaro Caballero)
+Bien.
+-
+ 
+(federico garcia aguiar)
+conversión es como estás muy bien, estás muy barato,
+
+00:24:16.000 --> 00:24:20.000
+(Lautaro Caballero)
+Bien.
+-
+ 
+(federico garcia aguiar)
+¿entendés? Entonces es como y y de ahí creo
+
+00:24:20.000 --> 00:24:24.000
+(federico garcia aguiar)
+que más o menos es como, bueno, esa sería la
+
+00:24:24.000 --> 00:24:28.000
+(Lautaro Caballero)
+Bien,
+-
+ 
+(federico garcia aguiar)
+dirección. tiene que ser fácil también porque
+
+00:24:28.000 --> 00:24:32.000
+(Lautaro Caballero)
+bien,
+-
+ 
+(federico garcia aguiar)
+por ahí muy cargado es como
+
+00:24:32.000 --> 00:24:36.000
+(federico garcia aguiar)
+muchos pacientes en los mensajes internos eso está
+
+00:24:36.000 --> 00:24:40.000
+(federico garcia aguiar)
+buenísimo que que se pueda como ver
+
+00:24:40.000 --> 00:24:44.000
+(Lautaro Caballero)
+Bien.
+-
+ 
+(federico garcia aguiar)
+claramente sea la máquina, sea la
+
+00:24:44.000 --> 00:24:48.000
+(federico garcia aguiar)
+secretaria o el médico, poder identificar si es un paciente que está frío,
+
+00:24:48.000 --> 00:24:52.000
+(federico garcia aguiar)
+caliente, eh que está buscando presupuesto,
+
+00:24:52.000 --> 00:24:56.000
+(federico garcia aguiar)
+formas de pagos o si tiene problema con la fecha o si
+
+00:24:56.000 --> 00:25:00.000
+(federico garcia aguiar)
+tiene dudas o si nos responde, o sea, todas esas métricas creo
+
+00:25:00.000 --> 00:25:04.000
+(federico garcia aguiar)
+que están buenas para la estadística, pero también para clasificar el paciente
+
+00:25:04.000 --> 00:25:08.000
+(Lautaro Caballero)
+Bien, bien,
+-
+ 
+(federico garcia aguiar)
+y estar más encima o menos
+
+00:25:08.000 --> 00:25:12.000
+(Lautaro Caballero)
+bien, bien. Yo creo que e, a ver,
+
+00:25:12.000 --> 00:25:16.000
+(Lautaro Caballero)
+para, a ver, tratar organizar por paso, podría
+-
+ 
+(federico garcia aguiar)
+encima. Sí, de
+
+00:25:16.000 --> 00:25:20.000
+(Lautaro Caballero)
+podría tratar e o sea, podría tratar
+
+00:25:20.000 --> 00:25:24.000
+(Lautaro Caballero)
+e si querés te hago como una un digamos este una posibilidad de cómo
+-
+ 
+(federico garcia aguiar)
+una.
+
+00:25:24.000 --> 00:25:28.000
+(Lautaro Caballero)
+podría quedar el tema de pacientes organizado de esta
+
+00:25:28.000 --> 00:25:32.000
+(Lautaro Caballero)
+forma, este, de hacerlo digamos como por pasos.
+
+00:25:32.000 --> 00:25:36.000
+(Lautaro Caballero)
+Eh, no sé que, o sea, digamos, los pasos tendrían que ser los
+
+00:25:36.000 --> 00:25:40.000
+(Lautaro Caballero)
+estados del
+
+00:25:40.000 --> 00:25:44.000
+(Lautaro Caballero)
+paciente, o sea, digamos, de la forma lógica que el sistema los puede
+
+00:25:44.000 --> 00:25:48.000
+(Lautaro Caballero)
+manejar sería de eso para de esa forma para poder clasificarlo. Entonces,
+-
+ 
+(federico garcia aguiar)
+Sí.
+
+00:25:48.000 --> 00:25:52.000
+(Lautaro Caballero)
+sería el paso cero, sería los que están activos,
+
+00:25:52.000 --> 00:25:56.000
+(Lautaro Caballero)
+después el paso uno, sería los que están en primera consulta, el paso
+
+00:25:56.000 --> 00:26:00.000
+(Lautaro Caballero)
+dos son los que están en presupuesto, eh, y quizá el paso
+
+00:26:00.000 --> 00:26:04.000
+(Lautaro Caballero)
+tres son los práctic consultorio barraquirúrgico con
+
+00:26:04.000 --> 00:26:08.000
+(Lautaro Caballero)
+él. Este, o lo podemos
+-
+ 
+(federico garcia aguiar)
+Sí, yo creo que
+
+00:26:08.000 --> 00:26:12.000
+(Lautaro Caballero)
+hacer separados los quirúrgicos de de de práctica en consultorio,
+
+00:26:12.000 --> 00:26:16.000
+(Lautaro Caballero)
+digamos, pero sería si lo planteamos el punto de vista de la
+-
+ 
+(federico garcia aguiar)
+sí. Sí, sí, sí.
+
+00:26:16.000 --> 00:26:20.000
+(Lautaro Caballero)
+evolución del paciente en en el
+
+00:26:20.000 --> 00:26:24.000
+(Lautaro Caballero)
+consultorio. Entonces, bueno, que los pacientes se vayan moviendo entre eso de forma automática y vos
+
+00:26:24.000 --> 00:26:28.000
+(Lautaro Caballero)
+puedes ir paso por paso revisando, o sea, como si
+
+00:26:28.000 --> 00:26:32.000
+(Lautaro Caballero)
+fuese este, bueno, eso como por
+
+00:26:32.000 --> 00:26:36.000
+(Lautaro Caballero)
+eh como viste cuando está en plantilla, por perdón, en
+
+00:26:36.000 --> 00:26:40.000
+(Lautaro Caballero)
+finanzas que te metes en balances ingresos, pagos o cuentas por
+-
+ 
+(federico garcia aguiar)
+Sí. Claro. Ah,
+
+00:26:40.000 --> 00:26:44.000
+(Lautaro Caballero)
+cobrar, fíjate ahí, finanzas en
+-
+ 
+(federico garcia aguiar)
+no. ¿A dónde querés
+
+00:26:44.000 --> 00:26:48.000
+(Lautaro Caballero)
+balance. Ah,
+-
+ 
+(federico garcia aguiar)
+mostrarme? ¿Querés compartirme ahí o me
+
+00:26:48.000 --> 00:26:52.000
+(Lautaro Caballero)
+dale. Comparto, te comparto acá.
+-
+ 
+(federico garcia aguiar)
+fijo?
+
+00:26:52.000 --> 00:26:56.000
+
+
+00:26:56.000 --> 00:27:00.000
+(Lautaro Caballero)
+Acá, acá viste que te digo,
+
+00:27:00.000 --> 00:27:04.000
+(Lautaro Caballero)
+tenés como esta pestaña de ingresos y pagos y otro cuentas por cobrar.
+-
+ 
+(federico garcia aguiar)
+Dale.
+
+00:27:04.000 --> 00:27:08.000
+(Lautaro Caballero)
+Se puede armar una cosa parecida, pero que sean los pasos. Entonces queda
+-
+ 
+(federico garcia aguiar)
+Sí,
+
+00:27:08.000 --> 00:27:12.000
+(Lautaro Caballero)
+uno eh en primera vez,
+-
+ 
+(federico garcia aguiar)
+sí, claro.
+
+00:27:12.000 --> 00:27:16.000
+(Lautaro Caballero)
+dos eh presupuesto enviado, tres, tal y
+-
+ 
+(federico garcia aguiar)
+Sí, sí.
+
+00:27:16.000 --> 00:27:20.000
+(Lautaro Caballero)
+así. Entonces, exacto. Entonces, los podemos ir viendo
+-
+ 
+(federico garcia aguiar)
+confirmado. Ya con
+
+00:27:20.000 --> 00:27:24.000
+(Lautaro Caballero)
+así por ahí eso puede estar bueno y entonces vas tocando y
+
+00:27:24.000 --> 00:27:28.000
+(Lautaro Caballero)
+te van apareciendo los pacientes este que están en esa situación.
+
+00:27:28.000 --> 00:27:32.000
+(Lautaro Caballero)
+Entonces, eso ya quizás puede ser como
+-
+ 
+(federico garcia aguiar)
+eso,
+
+00:27:32.000 --> 00:27:36.000
+(Lautaro Caballero)
+una una vista ya
+
+00:27:36.000 --> 00:27:40.000
+(Lautaro Caballero)
+este, o sea, algo bastante vistoso.
+-
+ 
+(federico garcia aguiar)
+bien. Sí, yo exactamente yo
+
+00:27:40.000 --> 00:27:44.000
+(federico garcia aguiar)
+lo tengo así como pacientes en primera consulta, después está pacientes
+
+00:27:44.000 --> 00:27:48.000
+(federico garcia aguiar)
+en presupuestos enviados y pacientes quirúrgicos. Yo lo
+
+00:27:48.000 --> 00:27:52.000
+(federico garcia aguiar)
+tengo así. Entonces, los de primera consulta son los que hay que
+
+00:27:52.000 --> 00:27:56.000
+(federico garcia aguiar)
+ver eh bueno, eh que tienen que hacer lo que tienen que hacer
+
+00:27:56.000 --> 00:28:00.000
+(federico garcia aguiar)
+para que se les pueda entregar el presupuesto. Generalmente es autorizar un
+
+00:28:00.000 --> 00:28:04.000
+(federico garcia aguiar)
+código, hacerse un estudio para ver si se les da el código y en
+
+00:28:04.000 --> 00:28:08.000
+(Lautaro Caballero)
+Exact.
+-
+ 
+(federico garcia aguiar)
+fin. Después
+
+00:28:08.000 --> 00:28:12.000
+(federico garcia aguiar)
+la el presupuesto enviado donde bueno,
+
+00:28:12.000 --> 00:28:16.000
+(federico garcia aguiar)
+lo analizan y
+
+00:28:16.000 --> 00:28:20.000
+(federico garcia aguiar)
+una vez que lo confirman está todo okay. Bueno, ponemos fecha paciente
+
+00:28:20.000 --> 00:28:24.000
+(federico garcia aguiar)
+quirúrgico. Esas son las tres. Ahora, yo
+
+00:28:24.000 --> 00:28:28.000
+(federico garcia aguiar)
+sospecho, y eso lo voy a confirmar con con la referencia de mis colegas, que
+
+00:28:28.000 --> 00:28:32.000
+(Lautaro Caballero)
+Bien.
+-
+ 
+(federico garcia aguiar)
+yo estoy como postergando mucho la entrega del
+
+00:28:32.000 --> 00:28:36.000
+(federico garcia aguiar)
+presupuesto en esta cosa del
+
+00:28:36.000 --> 00:28:40.000
+(federico garcia aguiar)
+código, como que capaz que los dilato a estos estos pacientes que veo que digo,
+
+00:28:40.000 --> 00:28:44.000
+(federico garcia aguiar)
+"Bueno, autorizar el código, después te entregamos la en
+
+00:28:44.000 --> 00:28:48.000
+(Lautaro Caballero)
+Eso.
+-
+ 
+(federico garcia aguiar)
+esta situación porque no sé, no sé,
+
+00:28:48.000 --> 00:28:52.000
+(federico garcia aguiar)
+ya lo voy a confirmar con mis colegas porque yo creo
+
+00:28:52.000 --> 00:28:56.000
+(federico garcia aguiar)
+que o bueno, hay que
+
+00:28:56.000 --> 00:29:00.000
+(federico garcia aguiar)
+ver, hay que ver porque yo yo muchas veces a estos pacientes les digo, mira, la cirugía
+
+00:29:00.000 --> 00:29:04.000
+(federico garcia aguiar)
+sale 5 millones y con la social te puedes contar algo. Cuando
+
+00:29:04.000 --> 00:29:08.000
+(federico garcia aguiar)
+lo autorices, me decís, pedimos el presupuesto y se van con
+
+00:29:08.000 --> 00:29:12.000
+(federico garcia aguiar)
+eso. Yo creo que yo
+
+00:29:12.000 --> 00:29:16.000
+(federico garcia aguiar)
+creo que que bueno, tenemos que hacer
+
+00:29:16.000 --> 00:29:20.000
+(federico garcia aguiar)
+algo que que sea como un borrador y ahí ir
+
+00:29:20.000 --> 00:29:24.000
+(federico garcia aguiar)
+viendo porque porque bueno,
+
+00:29:24.000 --> 00:29:28.000
+(Lautaro Caballero)
+Exacto. Yo creo que lo mejor eso sería
+-
+ 
+(federico garcia aguiar)
+puede variar en base a lo
+
+00:29:28.000 --> 00:29:32.000
+(Lautaro Caballero)
+aprovechar el módulo que tenemos de tratamientos en configuración.
+
+00:29:32.000 --> 00:29:36.000
+(Lautaro Caballero)
+Entonces, que ahí estén cargados todos los tratamientos que vos
+
+00:29:36.000 --> 00:29:40.000
+(Lautaro Caballero)
+hacés, este, de tratamientos y es todos esos
+
+00:29:40.000 --> 00:29:44.000
+(Lautaro Caballero)
+tratamientos van a tener un precio o después los podés ir este
+-
+ 
+(federico garcia aguiar)
+Eh,
+
+00:29:44.000 --> 00:29:48.000
+(Lautaro Caballero)
+actualizando al precio, lo que fuese. Entonces, que vos pueda el presupuesto
+-
+ 
+(federico garcia aguiar)
+bien,
+
+00:29:48.000 --> 00:29:52.000
+(Lautaro Caballero)
+se haga se arme con ese con esos precios.
+
+00:29:52.000 --> 00:29:56.000
+(Lautaro Caballero)
+Bien. Entonces, eh, bueno, se arma con esos precios,
+-
+ 
+(federico garcia aguiar)
+bien, listo.
+
+00:29:56.000 --> 00:30:00.000
+(Lautaro Caballero)
+etcétera. Cuando vos lo mandás, decís, este
+
+00:30:00.000 --> 00:30:04.000
+(Lautaro Caballero)
+sería lo mandas con alguna leyenda, algo que diga, este sería
+
+00:30:04.000 --> 00:30:08.000
+(Lautaro Caballero)
+el presupuesto de manera particular, este,
+
+00:30:08.000 --> 00:30:12.000
+(Lautaro Caballero)
+para tener el presupuesto este con el descuento de la
+
+00:30:12.000 --> 00:30:16.000
+(Lautaro Caballero)
+obra social e autorizar tal código, una cosa así. Bueno,
+
+00:30:16.000 --> 00:30:20.000
+(Lautaro Caballero)
+vemos cómo es bien, pero yo creo que debería ser algo
+-
+ 
+(federico garcia aguiar)
+Tal cual, tal cual. Yo creo que
+
+00:30:20.000 --> 00:30:24.000
+(Lautaro Caballero)
+así y eso tiene que ser instantáneo que se
+-
+ 
+(federico garcia aguiar)
+así. Sí, sí, sí. para
+
+00:30:24.000 --> 00:30:28.000
+(Lautaro Caballero)
+mande.
+-
+ 
+(federico garcia aguiar)
+eso sí, totalmente. Y de último que
+
+00:30:28.000 --> 00:30:32.000
+(federico garcia aguiar)
+queden en con alguna alerta si es con obra social para que
+
+00:30:32.000 --> 00:30:36.000
+(Lautaro Caballero)
+Eh, exacto. O sea,
+-
+ 
+(federico garcia aguiar)
+bueno se revise ese presupuesto
+
+00:30:36.000 --> 00:30:40.000
+(Lautaro Caballero)
+ese presupuesto quedará, por ejemplo, vos sol podemos hacer
+
+00:30:40.000 --> 00:30:44.000
+(Lautaro Caballero)
+esto. A ver si te parece. Vos generas, se genera el
+-
+ 
+(federico garcia aguiar)
+después.
+
+00:30:44.000 --> 00:30:48.000
+(Lautaro Caballero)
+presupuesto automático, se le envía al paciente, cuando el paciente lo va a
+
+00:30:48.000 --> 00:30:52.000
+(Lautaro Caballero)
+confirmar o a rechazar o lo que sea, el paciente que pueda decir
+
+00:30:52.000 --> 00:30:56.000
+(Lautaro Caballero)
+confirmar presupuesto particular o que diga
+
+00:30:56.000 --> 00:31:00.000
+(Lautaro Caballero)
+eh eh no sé o quiero autorizarlo,
+
+00:31:00.000 --> 00:31:04.000
+(Lautaro Caballero)
+quiero autorizar un código o quiero hacerlo con obra social, lo que
+
+00:31:04.000 --> 00:31:08.000
+(Lautaro Caballero)
+fuese, este
+
+00:31:08.000 --> 00:31:12.000
+(Lautaro Caballero)
+porque ahora mi pregunta es, vos de tus pacientes la todo se lo hacen con obra
+
+00:31:12.000 --> 00:31:16.000
+(Lautaro Caballero)
+social o todos se lo hac en particular o mitad
+-
+ 
+(federico garcia aguiar)
+Yes. No, no, no, no. Te diría que
+
+00:31:16.000 --> 00:31:20.000
+(federico garcia aguiar)
+solamente Claro, el 10% o menos
+
+00:31:20.000 --> 00:31:24.000
+(federico garcia aguiar)
+le autoriza la cirugía, que son los dos de 4 de de una de
+
+00:31:24.000 --> 00:31:28.000
+(Lautaro Caballero)
+mitad.
+-
+ 
+(federico garcia aguiar)
+20 se hará solo con
+
+00:31:28.000 --> 00:31:32.000
+(federico garcia aguiar)
+después tres te diría, o cuatro de 10
+
+00:31:32.000 --> 00:31:36.000
+(Lautaro Caballero)
+Bien.
+-
+ 
+(federico garcia aguiar)
+o eh que son las las dermos, o sea, la la cirugía
+
+00:31:36.000 --> 00:31:40.000
+(federico garcia aguiar)
+abdominal. Yo hago de nariz, de mama y
+
+00:31:40.000 --> 00:31:44.000
+(federico garcia aguiar)
+de y de abdomen. De las de abdomen, más de la
+
+00:31:44.000 --> 00:31:48.000
+(federico garcia aguiar)
+mitad van con un descuento de la obra social. Es esa el porcentaje. Ponerle
+
+00:31:48.000 --> 00:31:52.000
+(federico garcia aguiar)
+que sean un 30% de los pacientes van con un descuento de
+
+00:31:52.000 --> 00:31:56.000
+(Lautaro Caballero)
+Bueno, entonces se le puede poner
+-
+ 
+(federico garcia aguiar)
+obra
+
+00:31:56.000 --> 00:32:00.000
+(Lautaro Caballero)
+eh se le puede poner a la página y decirle eh tres botones,
+-
+ 
+(federico garcia aguiar)
+social.
+
+00:32:00.000 --> 00:32:04.000
+(Lautaro Caballero)
+uno eh acepto el presupuesto. dos.
+
+00:32:04.000 --> 00:32:08.000
+(Lautaro Caballero)
+Eh, eh, bueno, pasa que Claro,
+
+00:32:08.000 --> 00:32:12.000
+(federico garcia aguiar)
+Bueno,
+
+00:32:12.000 --> 00:32:16.000
+(federico garcia aguiar)
+mira, eh por ahí e
+
+00:32:16.000 --> 00:32:20.000
+(federico garcia aguiar)
+capaz que ahí lo el enviado por eso
+
+00:32:20.000 --> 00:32:24.000
+(federico garcia aguiar)
+en en en los demás, o sea, primero la norma general sería
+
+00:32:24.000 --> 00:32:28.000
+(federico garcia aguiar)
+como bueno, que envíe el presupuesto y que
+
+00:32:28.000 --> 00:32:32.000
+(federico garcia aguiar)
+ahí esté las opciones, ¿no? Confirmado, o sea, está
+
+00:32:32.000 --> 00:32:36.000
+(federico garcia aguiar)
+todo o tengo duda, me gustaría saber forma de pago,
+
+00:32:36.000 --> 00:32:40.000
+(federico garcia aguiar)
+ponele o describir opciones. Después esas opciones las vamos a ir
+
+00:32:40.000 --> 00:32:44.000
+(Lautaro Caballero)
+Claro.
+-
+ 
+(federico garcia aguiar)
+personalizando y después eh espero descuento con obra
+
+00:32:44.000 --> 00:32:48.000
+(federico garcia aguiar)
+social. Entonces ahí cuando hay eh una
+
+00:32:48.000 --> 00:32:52.000
+(federico garcia aguiar)
+respuesta afirmativa, listo, ya sabemos que ese
+
+00:32:52.000 --> 00:32:56.000
+(federico garcia aguiar)
+paciente ya lo aceptó y que no queda más nada. Cuando te dice, por
+
+00:32:56.000 --> 00:33:00.000
+(federico garcia aguiar)
+ejemplo, forma de pago, ya tiene que ir la secretaria a ofrecer las formas de pago,
+
+00:33:00.000 --> 00:33:04.000
+(federico garcia aguiar)
+tarjeta, investigar, ver, ya nos da
+
+00:33:04.000 --> 00:33:08.000
+(federico garcia aguiar)
+información y cuando dice espero descuento por hora
+
+00:33:08.000 --> 00:33:12.000
+(federico garcia aguiar)
+social, ya nos da una un indicador de que es un paciente
+
+00:33:12.000 --> 00:33:16.000
+(federico garcia aguiar)
+que permanece, si bien el presupuesto está
+
+00:33:16.000 --> 00:33:20.000
+(federico garcia aguiar)
+enviado en como
+
+00:33:20.000 --> 00:33:24.000
+(Lautaro Caballero)
+Claro, sí. Queda ahí en la parte de
+-
+ 
+(federico garcia aguiar)
+en en lista espera de presupuesto,
+
+00:33:24.000 --> 00:33:28.000
+(Lautaro Caballero)
+presupuesto que está enviado, eh, pero le podemos poner que active alguna
+
+00:33:28.000 --> 00:33:32.000
+(Lautaro Caballero)
+alerta, como decir, este paciente está esperando la autorización de la
+-
+ 
+(federico garcia aguiar)
+Claro.
+
+00:33:32.000 --> 00:33:36.000
+(Lautaro Caballero)
+obra social.
+-
+ 
+(federico garcia aguiar)
+Sí, enviado y pendiente, por ejemplo,
+
+00:33:36.000 --> 00:33:40.000
+(Lautaro Caballero)
+Exacto.
+-
+ 
+(federico garcia aguiar)
+con un pendiente, por ejemplo, en los enviados
+
+00:33:40.000 --> 00:33:44.000
+(federico garcia aguiar)
+va a estar, o sea, en en los presupuestos enviados, ahí
+
+00:33:44.000 --> 00:33:48.000
+(federico garcia aguiar)
+está, o sea, todo paciente de consulta va a estar
+
+00:33:48.000 --> 00:33:52.000
+(federico garcia aguiar)
+en la lista de consulta hasta que se eh le dé el
+
+00:33:52.000 --> 00:33:56.000
+(federico garcia aguiar)
+presupuesto. Una vez que va a consulta, se va a enviar un
+
+00:33:56.000 --> 00:34:00.000
+(federico garcia aguiar)
+presupuesto. En esa en esa columna de presupuestos va
+
+00:34:00.000 --> 00:34:04.000
+(Lautaro Caballero)
+Exacto. Sí, sí, la estoy
+-
+ 
+(federico garcia aguiar)
+a Se ve mi imagen, si no sea
+
+00:34:04.000 --> 00:34:08.000
+(federico garcia aguiar)
+bien. En esa en esa en esa pestaña
+
+00:34:08.000 --> 00:34:12.000
+(federico garcia aguiar)
+de presupuestos estarán los confirmados,
+
+00:34:12.000 --> 00:34:16.000
+(federico garcia aguiar)
+estarán los para asesorar y estarán los eh
+
+00:34:16.000 --> 00:34:20.000
+(Lautaro Caballero)
+viendo.
+-
+ 
+(federico garcia aguiar)
+para pendiente de obra social, por
+
+00:34:20.000 --> 00:34:24.000
+(federico garcia aguiar)
+ejemplo. Listo. y después se irán agregando como
+
+00:34:24.000 --> 00:34:28.000
+(Lautaro Caballero)
+Bien.
+-
+ 
+(federico garcia aguiar)
+estados de ese mismo sector. Y después de los pacientes
+
+00:34:28.000 --> 00:34:32.000
+(federico garcia aguiar)
+que avancen con eso, yo creo que
+
+00:34:32.000 --> 00:34:36.000
+(federico garcia aguiar)
+hay que por ahí la eh puede ser automático o
+
+00:34:36.000 --> 00:34:40.000
+(federico garcia aguiar)
+no eh a través de un link o a través de la secretaria, pero creo que
+
+00:34:40.000 --> 00:34:44.000
+(federico garcia aguiar)
+lo híbrido sería como lo ideal que
+
+00:34:44.000 --> 00:34:48.000
+(federico garcia aguiar)
+cuando que cuando el se puedan hacer
+
+00:34:48.000 --> 00:34:52.000
+(federico garcia aguiar)
+hasta respuestas automáticas, cuando el paciente se
+
+00:34:52.000 --> 00:34:56.000
+(federico garcia aguiar)
+contacte o la quería saber, no sé qué cosa, se despliegu en opciones y
+
+00:34:56.000 --> 00:35:00.000
+(federico garcia aguiar)
+diga con consulta para presupuesto, consulta para fecha, consulta para
+
+00:35:00.000 --> 00:35:04.000
+(federico garcia aguiar)
+formas de pago y que mande como una información inmediata
+
+00:35:04.000 --> 00:35:08.000
+(federico garcia aguiar)
+hasta que venga la secretaria que capaz que viene el otro día y dice, "Ah,
+
+00:35:08.000 --> 00:35:12.000
+(federico garcia aguiar)
+sí, sí, bueno, sí, sí, crees fecha, listo, te paso yo a
+
+00:35:12.000 --> 00:35:16.000
+(federico garcia aguiar)
+eh paciente quirúrgico o que la máquina lo
+
+00:35:16.000 --> 00:35:20.000
+(federico garcia aguiar)
+detecte y diga, listo, identificó fecha, este, tenemos
+
+00:35:20.000 --> 00:35:24.000
+(federico garcia aguiar)
+esto pendiente. Okay, hemos tomado tu pedido. Carolina se va a comunicar
+
+00:35:24.000 --> 00:35:28.000
+(federico garcia aguiar)
+con vos para asignar un turno y que
+
+00:35:28.000 --> 00:35:32.000
+(federico garcia aguiar)
+alerte y listo y que por ahí sea como asistido,
+
+00:35:32.000 --> 00:35:36.000
+(federico garcia aguiar)
+pero manual el paso hasta que le vayamos dando forma.
+
+00:35:36.000 --> 00:35:40.000
+(Lautaro Caballero)
+Bien.
+-
+ 
+(federico garcia aguiar)
+Pero en esa como en esa comunicación,
+
+00:35:40.000 --> 00:35:44.000
+(federico garcia aguiar)
+yo creo que puede haber hasta incluso como un
+
+00:35:44.000 --> 00:35:48.000
+(federico garcia aguiar)
+checklist en la en el contacto con el paciente y de la y
+
+00:35:48.000 --> 00:35:52.000
+(federico garcia aguiar)
+de la secretaria y de la del paciente y el y el
+
+00:35:52.000 --> 00:35:56.000
+(federico garcia aguiar)
+asistente, digo, viste como cuando llamas
+
+00:35:56.000 --> 00:36:00.000
+(federico garcia aguiar)
+a Movistar, te dan como esas opciones, marca la opción una o
+
+00:36:00.000 --> 00:36:04.000
+(Lautaro Caballero)
+Exacto. Bien,
+-
+ 
+(federico garcia aguiar)
+más intuitivo todavía con botones.
+
+00:36:04.000 --> 00:36:08.000
+(Lautaro Caballero)
+bien, bien, bien, bien. Lo voy
+-
+ 
+(federico garcia aguiar)
+Puede ser WhatsApp o
+
+00:36:08.000 --> 00:36:12.000
+(Lautaro Caballero)
+entendiendo en un link.
+-
+ 
+(federico garcia aguiar)
+directamente como en un link que vaya como marcando
+
+00:36:12.000 --> 00:36:16.000
+(federico garcia aguiar)
+como checklist. Recibiste el presupuesto. Okay. Eh, dudas
+
+00:36:16.000 --> 00:36:20.000
+(federico garcia aguiar)
+con ya está. Eh, forma de pago, ya está. Pendiente
+
+00:36:20.000 --> 00:36:24.000
+(federico garcia aguiar)
+fecha, pendiente fecha y que la paciente lo vaya
+
+00:36:24.000 --> 00:36:28.000
+(federico garcia aguiar)
+viendo. Le fecha, le queda la forma de pago, le queda,
+
+00:36:28.000 --> 00:36:32.000
+(Lautaro Caballero)
+Perfecto. Yo eso voy a sabes
+-
+ 
+(federico garcia aguiar)
+¿entendés? Puede ser una cosa así también.
+
+00:36:32.000 --> 00:36:36.000
+(Lautaro Caballero)
+que para porque para aclararlo un poco más siento que es algo que es muy
+
+00:36:36.000 --> 00:36:40.000
+(Lautaro Caballero)
+gráfico que lo podemos representar. Voy a tratar de hacer como si fuese un dibujito, un flujo
+
+00:36:40.000 --> 00:36:44.000
+(Lautaro Caballero)
+este de paso paso a paso de cómo se los los caminos que se
+
+00:36:44.000 --> 00:36:48.000
+(Lautaro Caballero)
+pueden abrir, porque siento que también hay mucho camino, porque es
+
+00:36:48.000 --> 00:36:52.000
+(Lautaro Caballero)
+primero eh, ¿qué se va a hacer? se haya la cirugía o una práctica una práctica en
+
+00:36:52.000 --> 00:36:56.000
+(Lautaro Caballero)
+consultorio. Eh, hay que ver si hay alguna diferencia entre eso o si el
+-
+ 
+(federico garcia aguiar)
+Sí.
+
+00:36:56.000 --> 00:37:00.000
+(Lautaro Caballero)
+presupuesto es lo mismo, nada más que cambiará el el digamos los ítems
+
+00:37:00.000 --> 00:37:04.000
+(Lautaro Caballero)
+del presupuesto. Supongamos que es lo mismo. Bueno, eh el
+
+00:37:04.000 --> 00:37:08.000
+(Lautaro Caballero)
+paciente lo va a aceptar de una o eh dice que va a
+
+00:37:08.000 --> 00:37:12.000
+(Lautaro Caballero)
+esperar a a que se lo acepte el orden social o que dice,
+
+00:37:12.000 --> 00:37:16.000
+(Lautaro Caballero)
+"Sí, lo quiero aceptar, pero quiero el turno dentro de dos meses." O sea, no me lo
+
+00:37:16.000 --> 00:37:20.000
+(Lautaro Caballero)
+quiero hacer ya. ver todos esos posibles escenarios y bueno y en base
+
+00:37:20.000 --> 00:37:24.000
+(Lautaro Caballero)
+a eso ver qué decisiones y de qué forma podemos tratar de sistematizarlos, porque
+
+00:37:24.000 --> 00:37:28.000
+(Lautaro Caballero)
+es algo superhumano, o sea, es algo muy poco mecánico,
+
+00:37:28.000 --> 00:37:32.000
+(Lautaro Caballero)
+¿viste? Es algo que depende mucho de las personas y no solamente depende del
+-
+ 
+(federico garcia aguiar)
+Sí,
+
+00:37:32.000 --> 00:37:36.000
+(Lautaro Caballero)
+paciente, sino depende también de ustedes, depende de la hora social que
+
+00:37:36.000 --> 00:37:40.000
+(Lautaro Caballero)
+es burocracia y que una orden que aparte te tarda 3 días
+-
+ 
+(federico garcia aguiar)
+sí.
+
+00:37:40.000 --> 00:37:44.000
+(Lautaro Caballero)
+o entonces hay muchas cosas que por ahí se pueden escapar. Entonces,
+
+00:37:44.000 --> 00:37:48.000
+(Lautaro Caballero)
+me parece que lo mejor sería que eh plasmarlo así como en un árbol de
+
+00:37:48.000 --> 00:37:52.000
+(Lautaro Caballero)
+posibilidades, decir, bueno, ¿qué es todo lo que puede pasar y qué es todo lo que podemos
+
+00:37:52.000 --> 00:37:56.000
+(Lautaro Caballero)
+controlar? este y automatizar eso.
+
+00:37:56.000 --> 00:38:00.000
+(Lautaro Caballero)
+Este, así que si te parece eso, voy a tratar de hacer eso como
+
+00:38:00.000 --> 00:38:04.000
+(Lautaro Caballero)
+un un gráfico que podamos verlo y después discutir sobre
+
+00:38:04.000 --> 00:38:08.000
+(Lautaro Caballero)
+eso. Y vos me decís, "Mira, no, en realidad
+-
+ 
+(federico garcia aguiar)
+Sí, sí.
+
+00:38:08.000 --> 00:38:12.000
+(Lautaro Caballero)
+esto no es así, porque el paciente cuando quiere, o sea,
+
+00:38:12.000 --> 00:38:16.000
+(Lautaro Caballero)
+podemos tomizar igual al paciente que lo acepta, al paciente que lo acepta, pero
+
+00:38:16.000 --> 00:38:20.000
+(Lautaro Caballero)
+para dentro de dos meses y nada más colocarle una alerta, decir, bueno,
+
+00:38:20.000 --> 00:38:24.000
+(Lautaro Caballero)
+eh, que el sistema te avise dentro de dos meses, che, este paciente ahora es cuando se quiere hacer la
+
+00:38:24.000 --> 00:38:28.000
+(Lautaro Caballero)
+cirugía, una cosa
+
+00:38:28.000 --> 00:38:32.000
+(Lautaro Caballero)
+así.
+-
+ 
+(federico garcia aguiar)
+Claro, sí. es que eso también se puede como sistematizar y
+
+00:38:32.000 --> 00:38:36.000
+(federico garcia aguiar)
+esa toda es información super válida porque en todas
+
+00:38:36.000 --> 00:38:40.000
+(federico garcia aguiar)
+esas opciones que se pueden dar es información
+
+00:38:40.000 --> 00:38:44.000
+(federico garcia aguiar)
+que que nos sirve y que le sirve al paciente y creo
+
+00:38:44.000 --> 00:38:48.000
+(federico garcia aguiar)
+que está bueno también como eh ofrecerle
+
+00:38:48.000 --> 00:38:52.000
+(federico garcia aguiar)
+algo por ahí cuando yo digo, "Che, ¿qué estoy haciendo?" Yo pienso en
+
+00:38:52.000 --> 00:38:56.000
+(federico garcia aguiar)
+mí, pienso en mis eh mi efectividad y por ahí digo, "Che, pero al
+
+00:38:56.000 --> 00:39:00.000
+(federico garcia aguiar)
+paciente no sé si le estoy dando más este un problema
+
+00:39:00.000 --> 00:39:04.000
+(federico garcia aguiar)
+o solucies." Entonces creo que decir, "Che, ¿qué puede estar bueno
+
+00:39:04.000 --> 00:39:08.000
+(federico garcia aguiar)
+para los pacientes y qué les puede servir?" Yo creo que les puede servir y
+
+00:39:08.000 --> 00:39:12.000
+(federico garcia aguiar)
+eso está bueno tenerlo como como referencia,
+
+00:39:12.000 --> 00:39:16.000
+(federico garcia aguiar)
+decir, ¿qué para paciente? ¿Qué
+
+00:39:16.000 --> 00:39:20.000
+(federico garcia aguiar)
+beneficio? Y yo creo que la claridad de que le quede
+
+00:39:20.000 --> 00:39:24.000
+(federico garcia aguiar)
+como los pasos a seguir, porque yo se los doy en una planilla, dice,
+
+00:39:24.000 --> 00:39:28.000
+(federico garcia aguiar)
+bueno, queda la fecha. A veces, a veces es muy
+
+00:39:28.000 --> 00:39:32.000
+(federico garcia aguiar)
+sencillo y no sé si capaz que estoy como
+
+00:39:32.000 --> 00:39:36.000
+(federico garcia aguiar)
+enroscándome en algo que que ya ya es suficientemente fácil. tiene que saber que
+
+00:39:36.000 --> 00:39:40.000
+(federico garcia aguiar)
+se se tiene que comunicar y preguntar,
+
+00:39:40.000 --> 00:39:44.000
+(federico garcia aguiar)
+pero pero por ahí está ese tema de los presupuestos que te
+
+00:39:44.000 --> 00:39:48.000
+(federico garcia aguiar)
+decía, que hasta incluso se pueden como ir actualizando con el con
+
+00:39:48.000 --> 00:39:52.000
+(federico garcia aguiar)
+algún administrativo donde si ya está en el
+
+00:39:52.000 --> 00:39:56.000
+(federico garcia aguiar)
+sistema ya en el momento que el paciente
+
+00:39:56.000 --> 00:40:00.000
+(federico garcia aguiar)
+autoriza la orden como que tal vez un administrativo de la
+
+00:40:00.000 --> 00:40:04.000
+(federico garcia aguiar)
+clínica tal vez ya puede como pasar el presupuesto ahí y que se
+
+00:40:04.000 --> 00:40:08.000
+(federico garcia aguiar)
+envíe inmediato y que no nos lo mande a nosotros, nosotros se lo
+
+00:40:08.000 --> 00:40:12.000
+(federico garcia aguiar)
+enviamos. E
+
+00:40:12.000 --> 00:40:16.000
+(federico garcia aguiar)
+se me ocurre algo así, ¿no? Como que también pensar, bueno, ¿qué le puede servir al
+
+00:40:16.000 --> 00:40:20.000
+(federico garcia aguiar)
+paciente que bueno, que le quede registrado, sí?
+
+00:40:20.000 --> 00:40:24.000
+(federico garcia aguiar)
+Eh, que le quede, por ejemplo, los pasos a
+
+00:40:24.000 --> 00:40:28.000
+(federico garcia aguiar)
+seguir. Perfecto. ¿Tenés dudas sobre qué fechas hay
+
+00:40:28.000 --> 00:40:32.000
+(federico garcia aguiar)
+disponibles, TUC? que lo pueda marcar y que
+
+00:40:32.000 --> 00:40:36.000
+(federico garcia aguiar)
+eso quede como en algún lugar organizado. Entonces, como que le puede
+
+00:40:36.000 --> 00:40:40.000
+(federico garcia aguiar)
+salir algo como, bueno, tenemos la fecha confirmada para tal
+
+00:40:40.000 --> 00:40:44.000
+(Lautaro Caballero)
+Exacto.
+-
+ 
+(federico garcia aguiar)
+día,
+
+00:40:44.000 --> 00:40:48.000
+(federico garcia aguiar)
+eh, tenés duda con el autorización, ¿qué hacer?
+
+00:40:48.000 --> 00:40:52.000
+(federico garcia aguiar)
+Tuc que diga, no, la autorización debe estar entregada una
+
+00:40:52.000 --> 00:40:56.000
+(federico garcia aguiar)
+semana antes, sí o sí. Eh, fíjate
+
+00:40:56.000 --> 00:41:00.000
+(federico garcia aguiar)
+si venció hace 30 días, eso puede ser necesario reactivar.
+
+00:41:00.000 --> 00:41:04.000
+(federico garcia aguiar)
+O sea, como que tengan como un módulo decir, bueno, un link donde diga, "Bueno, a
+
+00:41:04.000 --> 00:41:08.000
+(federico garcia aguiar)
+ver, ¿cuál es mi ficha?" Ah, mira, si yo hice la primer consulta, acá está mi
+
+00:41:08.000 --> 00:41:12.000
+(Lautaro Caballero)
+Es
+-
+ 
+(federico garcia aguiar)
+planilla, acá está lo que me dio el doctor. Eh,
+
+00:41:12.000 --> 00:41:16.000
+(federico garcia aguiar)
+vuelvo ahí la fecha está por confirmar
+
+00:41:16.000 --> 00:41:20.000
+(federico garcia aguiar)
+y qué sé yo. Y ya Carolina me dijo
+
+00:41:20.000 --> 00:41:24.000
+(federico garcia aguiar)
+que tengo tanta posibilidad. Bueno,
+
+00:41:24.000 --> 00:41:28.000
+(federico garcia aguiar)
+eh presupuesto es este. Acá está el detalle
+
+00:41:28.000 --> 00:41:32.000
+(federico garcia aguiar)
+y bueno, no sé, hasta por ahí hasta
+
+00:41:32.000 --> 00:41:36.000
+(federico garcia aguiar)
+Carolina hasta puede llegar a poner en las
+
+00:41:36.000 --> 00:41:40.000
+(federico garcia aguiar)
+formas de pago, dejar todo eso aclarado, porque a
+
+00:41:40.000 --> 00:41:44.000
+(federico garcia aguiar)
+veces son kilómetros, a veces son 5 millones así y otras veces el
+
+00:41:44.000 --> 00:41:48.000
+(federico garcia aguiar)
+implante se puede transferir todo en efectivo. Son
+
+00:41:48.000 --> 00:41:52.000
+(federico garcia aguiar)
+cosas que por ahí uno va coordinando con el paciente y está bueno que
+
+00:41:52.000 --> 00:41:56.000
+(federico garcia aguiar)
+queden que queden como registradas, pero bueno, tampoco
+
+00:41:56.000 --> 00:42:00.000
+(federico garcia aguiar)
+es sé si la idea es hacerla tan
+
+00:42:00.000 --> 00:42:04.000
+(federico garcia aguiar)
+complicada a la a la a la a la a la historia. Creo que con que
+
+00:42:04.000 --> 00:42:08.000
+(Lautaro Caballero)
+Bien.
+-
+ 
+(federico garcia aguiar)
+ya nos con que pasemos un valor
+
+00:42:08.000 --> 00:42:12.000
+(federico garcia aguiar)
+y con que nos dé una respuesta de en qué situación está para
+
+00:42:12.000 --> 00:42:16.000
+(federico garcia aguiar)
+empezar, yo creo que está bien porque por ahí, bueno,
+
+00:42:16.000 --> 00:42:20.000
+(federico garcia aguiar)
+sistematizar absolutamente todo, precio, forma de pago, no
+
+00:42:20.000 --> 00:42:24.000
+(federico garcia aguiar)
+sé, no sé cómo pueda llegar a a
+
+00:42:24.000 --> 00:42:28.000
+(federico garcia aguiar)
+a salir. Creo que si
+
+00:42:28.000 --> 00:42:32.000
+(federico garcia aguiar)
+esto va avanzando y si vemos que que pues que es
+
+00:42:32.000 --> 00:42:36.000
+(Lautaro Caballero)
+H
+-
+ 
+(federico garcia aguiar)
+fácil y que nos ahorra, bien. Si
+
+00:42:36.000 --> 00:42:40.000
+(federico garcia aguiar)
+no, bueno, hay que por ahí pensar no tanto en
+
+00:42:40.000 --> 00:42:44.000
+(federico garcia aguiar)
+números, en dinero, sino en
+
+00:42:44.000 --> 00:42:48.000
+(federico garcia aguiar)
+unidades. Sí. Confirmado cirugía. Tac.
+
+00:42:48.000 --> 00:42:52.000
+(federico garcia aguiar)
+Chao. El presupuesto enviado, no enviado.
+
+00:42:52.000 --> 00:42:56.000
+(Lautaro Caballero)
+Exacto. Bien, bien,
+-
+ 
+(federico garcia aguiar)
+Fin. Eh, capaz que sea como más
+
+00:42:56.000 --> 00:43:00.000
+(Lautaro Caballero)
+bien, bien, bien, bien. Bueno, me gusta, me gusta, me
+-
+ 
+(federico garcia aguiar)
+sencillo. Solicitó formas de pago. Me
+
+00:43:00.000 --> 00:43:04.000
+(Lautaro Caballero)
+gusta. Bien.
+-
+ 
+(federico garcia aguiar)
+parece que es mejor mantenerlo sin dinero. Tal
+
+00:43:04.000 --> 00:43:08.000
+(Lautaro Caballero)
+Bueno, podemos encararlo así y después conectarlo bien a la
+
+00:43:08.000 --> 00:43:12.000
+(Lautaro Caballero)
+parte financiera,
+
+00:43:12.000 --> 00:43:16.000
+(Lautaro Caballero)
+este, y hacerlo lo más modular, o sea, que vos lo puedas
+
+00:43:16.000 --> 00:43:20.000
+(Lautaro Caballero)
+usar sin sin parte financiera, como también con, digamos, No.
+-
+ 
+(federico garcia aguiar)
+vez.
+
+00:43:20.000 --> 00:43:24.000
+(federico garcia aguiar)
+Exacto, exacto. Que estén por ahí las dos opciones y
+
+00:43:24.000 --> 00:43:28.000
+(federico garcia aguiar)
+uno ponga la que quiera. Me parece que que
+
+00:43:28.000 --> 00:43:32.000
+(federico garcia aguiar)
+puede ser puede ser una forma. Yo eso lo voy a censar un
+
+00:43:32.000 --> 00:43:36.000
+(federico garcia aguiar)
+poco y y ahí lo vamos a
+
+00:43:36.000 --> 00:43:40.000
+(federico garcia aguiar)
+a ir como viendo. Pero eso se
+
+00:43:40.000 --> 00:43:44.000
+(federico garcia aguiar)
+puede personalizar, eso en el momento que uno lo vende, como
+
+00:43:44.000 --> 00:43:48.000
+(federico garcia aguiar)
+decía Diego, eh, se
+
+00:43:48.000 --> 00:43:52.000
+(federico garcia aguiar)
+escucha.
+
+00:43:52.000 --> 00:43:56.000
+
+
+00:43:56.000 --> 00:44:00.000
+(Lautaro Caballero)
+Ahí está. Hola. Hola. Ahí está. Ahí
+-
+ 
+(federico garcia aguiar)
+Hola, hola. Ahora sí.
+
+00:44:00.000 --> 00:44:04.000
+(Lautaro Caballero)
+volví. Se me cortó el wifi. Ahí está.
+-
+ 
+(federico garcia aguiar)
+Bien. Sí, está yendo y viniendo
+
+00:44:04.000 --> 00:44:08.000
+(Lautaro Caballero)
+Eh, sí, acá igual
+-
+ 
+(federico garcia aguiar)
+acá. Se ha cortado la luz en otros lugares también, me
+
+00:44:08.000 --> 00:44:12.000
+(Lautaro Caballero)
+acá está hace como unas semanas que están dando re. Pasa que
+-
+ 
+(federico garcia aguiar)
+parece.
+
+00:44:12.000 --> 00:44:16.000
+(Lautaro Caballero)
+es el está el departamento debajo de una clínica,
+
+00:44:16.000 --> 00:44:20.000
+(Lautaro Caballero)
+¿eh? Y es el wifi de la clínica. Kil.
+-
+ 
+(federico garcia aguiar)
+Claro, claro,
+
+00:44:20.000 --> 00:44:24.000
+(Lautaro Caballero)
+Pues es todo el
+-
+ 
+(federico garcia aguiar)
+claro. Eh, bueno, te decía como que se puede
+
+00:44:24.000 --> 00:44:28.000
+(Lautaro Caballero)
+mismo. Bien. Sí, sí, sí. Eh, que inclusive eso
+-
+ 
+(federico garcia aguiar)
+personalizar eso. ¿Qué es lo
+
+00:44:28.000 --> 00:44:32.000
+(Lautaro Caballero)
+por tratar de hacerlo un poco separado después nos puede
+
+00:44:32.000 --> 00:44:36.000
+(Lautaro Caballero)
+ayudar justamente eso, a ofrecer el día que lo vas a lo salimos a vender,
+
+00:44:36.000 --> 00:44:40.000
+(Lautaro Caballero)
+ofrecer la versión eh una versión más chica eh y si
+
+00:44:40.000 --> 00:44:44.000
+(Lautaro Caballero)
+no una versión un poco más grande que será un poco más cara, pero que te include la parte
+
+00:44:44.000 --> 00:44:48.000
+(Lautaro Caballero)
+financiera. Entonces ahí el que no le importa, el que no quiere la parte de los
+-
+ 
+(federico garcia aguiar)
+que
+
+00:44:48.000 --> 00:44:52.000
+(Lautaro Caballero)
+números, el que no quiere eso, no lo paga y listo. Y el que lo quiere dice,
+-
+ 
+(federico garcia aguiar)
+sí?
+
+00:44:52.000 --> 00:44:56.000
+(Lautaro Caballero)
+"Buenísimo, lo pago extra porque a mí me
+-
+ 
+(federico garcia aguiar)
+Sí, tal cual. Sí,
+
+00:44:56.000 --> 00:45:00.000
+(federico garcia aguiar)
+eso, eso, eso. Así creo que hay que ir desde lo desde
+
+00:45:00.000 --> 00:45:04.000
+(Lautaro Caballero)
+sirve.
+-
+ 
+(federico garcia aguiar)
+lo funcional, desde lo más funcional y simple y
+
+00:45:04.000 --> 00:45:08.000
+(federico garcia aguiar)
+fácil y y significativo. Ahí está el
+
+00:45:08.000 --> 00:45:12.000
+(federico garcia aguiar)
+desafío. Que sea fácil, rápido, entendible, que sea casi que
+
+00:45:12.000 --> 00:45:16.000
+(federico garcia aguiar)
+intuitivo, que muestre variables
+
+00:45:16.000 --> 00:45:20.000
+(federico garcia aguiar)
+como este lo más prácticas posible y de
+
+00:45:20.000 --> 00:45:24.000
+(federico garcia aguiar)
+última ir agregando, ¿no? Pero
+
+00:45:24.000 --> 00:45:28.000
+(federico garcia aguiar)
+ser como muy Ahora creo que toca esa parte de de ir como afinando un
+
+00:45:28.000 --> 00:45:32.000
+(Lautaro Caballero)
+Exacto.
+-
+ 
+(federico garcia aguiar)
+poquito más en hacia dónde
+
+00:45:32.000 --> 00:45:36.000
+(Lautaro Caballero)
+Exacto. Yo creo
+
+00:45:36.000 --> 00:45:40.000
+(Lautaro Caballero)
+que bueno, si te parece como próximo
+-
+ 
+(federico garcia aguiar)
+apuntar.
+
+00:45:40.000 --> 00:45:44.000
+(Lautaro Caballero)
+paso hacemos esto de que te digo de
+
+00:45:44.000 --> 00:45:48.000
+(Lautaro Caballero)
+tratar de visualizar como todas las posibilidades y cómo sería el
+-
+ 
+(federico garcia aguiar)
+Sí.
+
+00:45:48.000 --> 00:45:52.000
+(Lautaro Caballero)
+flujo de acciones y el paso a paso tanto no solamente del
+
+00:45:52.000 --> 00:45:56.000
+(Lautaro Caballero)
+sistema, sino ustedes también, digamos, operativamente como grupo de
+
+00:45:56.000 --> 00:46:00.000
+(Lautaro Caballero)
+personas para entender en qué puntos el sistema los tiene que apoyar a
+
+00:46:00.000 --> 00:46:04.000
+(Lautaro Caballero)
+ustedes. e y en
+
+00:46:04.000 --> 00:46:08.000
+(Lautaro Caballero)
+base a eso ir tomando algunas decisiones. Este, y creo que también es
+
+00:46:08.000 --> 00:46:12.000
+(Lautaro Caballero)
+fundamental si podemos empezar a recabar un poco de información, digamos,
+
+00:46:12.000 --> 00:46:16.000
+(Lautaro Caballero)
+de otros médicos, este, que por
+
+00:46:16.000 --> 00:46:20.000
+(Lautaro Caballero)
+ahí tengan así como una vista un poco más fría de
+
+00:46:20.000 --> 00:46:24.000
+(Lautaro Caballero)
+sin sin porque nosotros estamos saturados de de ideas
+
+00:46:24.000 --> 00:46:28.000
+(Lautaro Caballero)
+y de cosas, entonces como decir, bueno, que tengan una vista
+
+00:46:28.000 --> 00:46:32.000
+(Lautaro Caballero)
+fresca, eh, y que te van a dar una respuesta organizada un poco más
+
+00:46:32.000 --> 00:46:36.000
+(Lautaro Caballero)
+puntual, sin darle tanta vuelta y decirle, "Sí, esto
+
+00:46:36.000 --> 00:46:40.000
+(Lautaro Caballero)
+Entonces, tratar de primero plantear cómo podría hacer
+
+00:46:40.000 --> 00:46:44.000
+(Lautaro Caballero)
+la solución, armarla así rápido y
+
+00:46:44.000 --> 00:46:48.000
+(Lautaro Caballero)
+y mostrarla este y empezar a tomar
+
+00:46:48.000 --> 00:46:52.000
+(Lautaro Caballero)
+esas
+-
+ 
+(federico garcia aguiar)
+Sí, sí, sí, sí, sí.
+
+00:46:52.000 --> 00:46:56.000
+(Lautaro Caballero)
+referencias.
+-
+ 
+(federico garcia aguiar)
+Okay. Bueno, yo voy a yo voy a hacer eso. Voy a
+
+00:46:56.000 --> 00:47:00.000
+(federico garcia aguiar)
+a compartirlo con a a empezar a censar en realidad con algunos
+
+00:47:00.000 --> 00:47:04.000
+(Lautaro Caballero)
+Eso.
+-
+ 
+(federico garcia aguiar)
+amigos y
+
+00:47:04.000 --> 00:47:08.000
+(federico garcia aguiar)
+y ¿cómo que te iba a decir?
+
+00:47:08.000 --> 00:47:12.000
+(federico garcia aguiar)
+y empezar a
+
+00:47:12.000 --> 00:47:16.000
+(federico garcia aguiar)
+a recabar un poquito más de información de de dónde
+
+00:47:16.000 --> 00:47:20.000
+(federico garcia aguiar)
+dónde tienen sus problemáticas, sus embudos. Yo
+
+00:47:20.000 --> 00:47:24.000
+(federico garcia aguiar)
+sospecho, bueno, que que va a haber un poquito todo,
+
+00:47:24.000 --> 00:47:28.000
+(federico garcia aguiar)
+pero que que bueno es que yo creo que tenemos que apuntar a lo que consideramos que es más
+
+00:47:28.000 --> 00:47:32.000
+(Lautaro Caballero)
+Exacto.
+-
+ 
+(federico garcia aguiar)
+importante desde desde esto que
+
+00:47:32.000 --> 00:47:36.000
+(federico garcia aguiar)
+que yo lo voy a empezar a probar en mí y
+
+00:47:36.000 --> 00:47:40.000
+(federico garcia aguiar)
+y bueno, apoyarse por ahí en las métricas para
+
+00:47:40.000 --> 00:47:44.000
+(federico garcia aguiar)
+ver este qué es lo que a ver si sirve esto de de que
+
+00:47:44.000 --> 00:47:48.000
+(Lautaro Caballero)
+Exactamente.
+-
+ 
+(federico garcia aguiar)
+avise dónde están los embudos, ¿no?
+
+00:47:48.000 --> 00:47:52.000
+(federico garcia aguiar)
+y y de lo que me vayan diciendo, voy a ir
+
+00:47:52.000 --> 00:47:56.000
+(federico garcia aguiar)
+como este pasándote esa
+
+00:47:56.000 --> 00:48:00.000
+(Lautaro Caballero)
+Exacto. Perfecto. Bueno, hagamos esos.
+-
+ 
+(federico garcia aguiar)
+información. Eh, eso me acabo de notar. El segundo Exacto, es lo del
+
+00:48:00.000 --> 00:48:04.000
+(federico garcia aguiar)
+presupuesto, creo, ¿no? Como que agregar eh a
+
+00:48:04.000 --> 00:48:08.000
+(federico garcia aguiar)
+ver o no, eso ya no es tan importante. Bueno, los voy a anotar igual
+
+00:48:08.000 --> 00:48:12.000
+(federico garcia aguiar)
+para que vayamos viendo cómo cómo quedan por lo menos. Voy
+
+00:48:12.000 --> 00:48:16.000
+(Lautaro Caballero)
+Sí.
+-
+ 
+(federico garcia aguiar)
+a voy a ir anotando cirugías con presupuestos para ver
+
+00:48:16.000 --> 00:48:20.000
+(federico garcia aguiar)
+cómo cómo van pasando después. Eh, ah, bueno, te había
+
+00:48:20.000 --> 00:48:24.000
+(Lautaro Caballero)
+Sí.
+-
+ 
+(federico garcia aguiar)
+dicho que por ahí algunos pacientes, Carolina están ha
+
+00:48:24.000 --> 00:48:28.000
+(federico garcia aguiar)
+anotado algunos no más, le voy a decir que empiece cargarlos un poquito
+
+00:48:28.000 --> 00:48:32.000
+(federico garcia aguiar)
+más para empezar a darle como
+
+00:48:32.000 --> 00:48:36.000
+(federico garcia aguiar)
+esta a así nos
+
+00:48:36.000 --> 00:48:40.000
+(federico garcia aguiar)
+empiezan a aparecer los pacientes con
+
+00:48:40.000 --> 00:48:44.000
+(federico garcia aguiar)
+presupuestos enviados y por enviar
+
+00:48:44.000 --> 00:48:48.000
+(federico garcia aguiar)
+ya con ese con
+
+00:48:48.000 --> 00:48:52.000
+(Lautaro Caballero)
+Yeah.
+-
+ 
+(federico garcia aguiar)
+esa este con ese estado,
+
+00:48:52.000 --> 00:48:56.000
+(Lautaro Caballero)
+Exacto. Sí, sí,
+-
+ 
+(federico garcia aguiar)
+¿no?, que habría que ver cómo se ella cómo lo puede cargar
+
+00:48:56.000 --> 00:49:00.000
+(Lautaro Caballero)
+sí, eso
+-
+ 
+(federico garcia aguiar)
+a eso. Yo no sé si ya eso está activo,
+
+00:49:00.000 --> 00:49:04.000
+(Lautaro Caballero)
+sí. En realidad eso desde los datos del paciente se puede
+-
+ 
+(federico garcia aguiar)
+digamos.
+
+00:49:04.000 --> 00:49:08.000
+(Lautaro Caballero)
+editar
+-
+ 
+(federico garcia aguiar)
+Ah,
+
+00:49:08.000 --> 00:49:12.000
+(Lautaro Caballero)
+directamente. Eh, lo que no está automatizado es el
+
+00:49:12.000 --> 00:49:16.000
+(Lautaro Caballero)
+decir, bueno, cuando un paciente este se
+
+00:49:16.000 --> 00:49:20.000
+(Lautaro Caballero)
+le genera un presupuesto, se le cambia el estado, eso. Pero bueno, eso igual
+
+00:49:20.000 --> 00:49:24.000
+(Lautaro Caballero)
+lo se los agrego ahora por si quieren, o sea, ya van a cargar los
+
+00:49:24.000 --> 00:49:28.000
+(Lautaro Caballero)
+presupuestos en el sistema, Mesis.
+-
+ 
+(federico garcia aguiar)
+bien. Yo sí, yo voy a
+
+00:49:28.000 --> 00:49:32.000
+(federico garcia aguiar)
+cargar los presupuestos y como
+
+00:49:32.000 --> 00:49:36.000
+(federico garcia aguiar)
+para que por lo menos estén ahí de alguna manera y después de última se vaya
+
+00:49:36.000 --> 00:49:40.000
+(federico garcia aguiar)
+editando, pero a modo de que los que no estén enviados
+
+00:49:40.000 --> 00:49:44.000
+(federico garcia aguiar)
+aparezcan, no como no
+
+00:49:44.000 --> 00:49:48.000
+(Lautaro Caballero)
+Bien. Bueno, entonces sí, yo te
+-
+ 
+(federico garcia aguiar)
+enviados o los que tengan este, por ejemplo, pendiente de obra social,
+
+00:49:48.000 --> 00:49:52.000
+(Lautaro Caballero)
+lo bien, bien, bien. Bueno, entonces te lo te ahí te
+
+00:49:52.000 --> 00:49:56.000
+(Lautaro Caballero)
+después ahora en la tarde te lo te lo dejo activo eso para
+-
+ 
+(federico garcia aguiar)
+perdón.
+
+00:49:56.000 --> 00:50:00.000
+(Lautaro Caballero)
+que ya tenga automático eso de que cuando vos cargues el presupuesto
+
+00:50:00.000 --> 00:50:04.000
+(Lautaro Caballero)
+se les pase solo al estado de presupuesto y te vayan apareciendo ahí
+
+00:50:04.000 --> 00:50:08.000
+(Lautaro Caballero)
+esas alertas. Este, lo mismo después con la
+
+00:50:08.000 --> 00:50:12.000
+(Lautaro Caballero)
+cirugía, si le das un turno de cirugía, se cambie, o sea, si
+
+00:50:12.000 --> 00:50:16.000
+(Lautaro Caballero)
+al paciente le das un turno de cirugía, eso se cambie el estado a eh
+
+00:50:16.000 --> 00:50:20.000
+(federico garcia aguiar)
+Bueno, claro. Y por ejemplo, para
+
+00:50:20.000 --> 00:50:24.000
+(federico garcia aguiar)
+para editar el estado, ponerle en el caso de que
+
+00:50:24.000 --> 00:50:28.000
+(Lautaro Caballero)
+cirugía. Manual.
+-
+ 
+(federico garcia aguiar)
+Carolina entregue un presupuesto como o
+
+00:50:28.000 --> 00:50:32.000
+(Lautaro Caballero)
+Sí, ahí viste, mira.
+-
+ 
+(federico garcia aguiar)
+o sí en
+
+00:50:32.000 --> 00:50:36.000
+(Lautaro Caballero)
+Claro, en la parte de los de datos
+-
+ 
+(federico garcia aguiar)
+dat.
+
+00:50:36.000 --> 00:50:40.000
+(Lautaro Caballero)
+personales,
+
+00:50:40.000 --> 00:50:44.000
+(Lautaro Caballero)
+eh, si querés te comparto pantalla y te lo
+-
+ 
+(federico garcia aguiar)
+Dale. Sí, porque lo estoy
+
+00:50:44.000 --> 00:50:48.000
+(Lautaro Caballero)
+muestro.
+-
+ 
+(federico garcia aguiar)
+viendo. datos completos sería
+
+00:50:48.000 --> 00:50:52.000
+(Lautaro Caballero)
+Claro. Acá mira, estamos en
+
+00:50:52.000 --> 00:51:00.000
+
+
+00:51:00.000 --> 00:51:04.000
+(Lautaro Caballero)
+pacientes. Te terminé de
+
+00:51:04.000 --> 00:51:08.000
+(Lautaro Caballero)
+cargar. Vas a acá.
+
+00:51:08.000 --> 00:51:12.000
+(Lautaro Caballero)
+Vení acá abajo a la parte de datos
+
+00:51:12.000 --> 00:51:16.000
+(Lautaro Caballero)
+completos y
+-
+ 
+(federico garcia aguiar)
+Yeah. Sí.
+
+00:51:16.000 --> 00:51:20.000
+(Lautaro Caballero)
+acá si bajas tenés acá estado y
+
+00:51:20.000 --> 00:51:24.000
+(Lautaro Caballero)
+seguimiento y acá le puedes editar y ponerle
+-
+ 
+(federico garcia aguiar)
+Ah, bien.
+
+00:51:24.000 --> 00:51:28.000
+(Lautaro Caballero)
+cualquiera. Aparece y lo pasamos de archivado. Bueno,
+-
+ 
+(federico garcia aguiar)
+Okay. Bien.
+
+00:51:28.000 --> 00:51:32.000
+(Lautaro Caballero)
+archivado, primera consulta o le das
+-
+ 
+(federico garcia aguiar)
+Yo creo que bien, bien.
+
+00:51:32.000 --> 00:51:36.000
+(Lautaro Caballero)
+ahí en el okay y listo. Y se guarda el estado. Cerrar.
+-
+ 
+(federico garcia aguiar)
+Entiendo, entiendo,
+
+00:51:36.000 --> 00:51:40.000
+(Lautaro Caballero)
+Y ahora después cuando actualicas ya te aparece el nuevo
+-
+ 
+(federico garcia aguiar)
+entiendo. Yo creo que eso
+
+00:51:40.000 --> 00:51:44.000
+(federico garcia aguiar)
+está bien. Yo creo que a eso hay que darle como
+
+00:51:44.000 --> 00:51:48.000
+(federico garcia aguiar)
+una en el en el nueva en el nuevo
+
+00:51:48.000 --> 00:51:52.000
+(federico garcia aguiar)
+diseño uno va a
+
+00:51:52.000 --> 00:51:56.000
+(federico garcia aguiar)
+ver, bueno, podés ver la lista así como todos, eh, pero
+
+00:51:56.000 --> 00:52:00.000
+(federico garcia aguiar)
+yo creo que puede ser más interesante como ya como habíamos dicho, ¿no? los distintos
+
+00:52:00.000 --> 00:52:04.000
+(Lautaro Caballero)
+estado. Sí, sí, sí,
+-
+ 
+(federico garcia aguiar)
+como estados donde uno pone directamente, bueno, el
+
+00:52:04.000 --> 00:52:08.000
+(Lautaro Caballero)
+sí.
+-
+ 
+(federico garcia aguiar)
+estado de presupuesto y que ahí como que cuando
+
+00:52:08.000 --> 00:52:12.000
+(federico garcia aguiar)
+uno de el click enviado, una cosa así,
+
+00:52:12.000 --> 00:52:16.000
+(federico garcia aguiar)
+¿viste? Es como algo más un una un con un
+
+00:52:16.000 --> 00:52:20.000
+(federico garcia aguiar)
+llamado acción más más rápido. Vos imagínate que está
+
+00:52:20.000 --> 00:52:24.000
+(federico garcia aguiar)
+Carolina. Em, a ver, ¿cómo
+
+00:52:24.000 --> 00:52:28.000
+(federico garcia aguiar)
+sería? mirando el WhatsApp y ve que,
+
+00:52:28.000 --> 00:52:32.000
+(Lautaro Caballero)
+Bien. Hm.
+-
+ 
+(federico garcia aguiar)
+por ejemplo, una paciente dice, "Bueno, sí, eh quiero saber cómo cuándo te
+
+00:52:32.000 --> 00:52:36.000
+(federico garcia aguiar)
+puedo llevar el dinero." Perfecto. Entonces
+
+00:52:36.000 --> 00:52:40.000
+(federico garcia aguiar)
+ella tiene que entrar acá,
+
+00:52:40.000 --> 00:52:44.000
+(federico garcia aguiar)
+¿no? Y por ejemplo en en Lautaro que
+
+00:52:44.000 --> 00:52:48.000
+(federico garcia aguiar)
+está en presupuesto enviado, ¿no?
+
+00:52:48.000 --> 00:52:52.000
+(Lautaro Caballero)
+Sí.
+-
+ 
+(federico garcia aguiar)
+Decir, eh, okay, pasa. Eso se puede como
+
+00:52:52.000 --> 00:52:56.000
+(federico garcia aguiar)
+arrastrar.
+
+00:52:56.000 --> 00:53:00.000
+(federico garcia aguiar)
+Como sería como esa, ¿no? Como arrastrarlo a fecha, que le pregunte
+
+00:53:00.000 --> 00:53:04.000
+(federico garcia aguiar)
+fecha pendiente o tal fecha, eh,
+
+00:53:04.000 --> 00:53:08.000
+(federico garcia aguiar)
+pero que ya quede si no la alerta, ¿me explico?
+
+00:53:08.000 --> 00:53:12.000
+(federico garcia aguiar)
+Y pagó por pagar. Listo,
+
+00:53:12.000 --> 00:53:16.000
+(Lautaro Caballero)
+Bien.
+-
+ 
+(federico garcia aguiar)
+pendiente, pendiente. Listo. Ahí ahí está. pendiente de fecha y pendiente, pero
+
+00:53:16.000 --> 00:53:20.000
+(federico garcia aguiar)
+ya el paciente pasó al al avisa que que
+
+00:53:20.000 --> 00:53:24.000
+(federico garcia aguiar)
+quiere pagar, que entonces creo
+
+00:53:24.000 --> 00:53:28.000
+(federico garcia aguiar)
+que sería como la forma de y decir, bueno, ¿y quién me queda
+
+00:53:28.000 --> 00:53:32.000
+(federico garcia aguiar)
+acá? Y me queda fulanita y fulanita que me dijeron
+
+00:53:32.000 --> 00:53:36.000
+(federico garcia aguiar)
+que que les parece bien eh la forma de pago.
+
+00:53:36.000 --> 00:53:40.000
+(federico garcia aguiar)
+Okay, listo, los paso también. ¿O no? Que quier saber que
+
+00:53:40.000 --> 00:53:44.000
+(Lautaro Caballero)
+Okay.
+-
+ 
+(federico garcia aguiar)
+con otra esta otra tarjeta. Bueno, le tengo que pasar esa información. Tuc queda
+
+00:53:44.000 --> 00:53:48.000
+(federico garcia aguiar)
+ahí pendiente hasta que tenga respuesta. ¿Me explico? Y cuando uno
+
+00:53:48.000 --> 00:53:52.000
+(federico garcia aguiar)
+va y decir, "Ah, mira, y acá en quirúrgico hay una alerta. ¿Qué será
+
+00:53:52.000 --> 00:53:56.000
+(federico garcia aguiar)
+tu? Entrada en quirúrgico y figura
+
+00:53:56.000 --> 00:54:00.000
+(federico garcia aguiar)
+fecha pendiente y pago pendiente de esta paciente que, bueno,
+
+00:54:00.000 --> 00:54:04.000
+(federico garcia aguiar)
+confirmó que quería hacerse la cirugía." Entonces, ese sería
+
+00:54:04.000 --> 00:54:08.000
+(federico garcia aguiar)
+como el el carácter intuitivo que debería tener uno
+
+00:54:08.000 --> 00:54:12.000
+(federico garcia aguiar)
+ver como los distintos estados, paso uno, paso dos, paso tres, paso cuatro, cuántos
+
+00:54:12.000 --> 00:54:16.000
+(Lautaro Caballero)
+Okay.
+-
+ 
+(federico garcia aguiar)
+pacientes hay en cada uno y con cuántas
+
+00:54:16.000 --> 00:54:20.000
+(federico garcia aguiar)
+cuántos pacientes en alerta e para
+
+00:54:20.000 --> 00:54:24.000
+(federico garcia aguiar)
+decir, bueno, ¿dónde está el embudo más importante? O sea, tenés la
+
+00:54:24.000 --> 00:54:28.000
+(federico garcia aguiar)
+prioridad, decís, bueno, a ver, los quirúrgicos. Y después decís, "Bueno, pero
+
+00:54:28.000 --> 00:54:32.000
+(federico garcia aguiar)
+acá en en consulta tengo
+
+00:54:32.000 --> 00:54:36.000
+(federico garcia aguiar)
+10 pacientes que están esperando turno, o sea, identificar
+
+00:54:36.000 --> 00:54:40.000
+(federico garcia aguiar)
+rápido el embudo sería como y después
+
+00:54:40.000 --> 00:54:44.000
+(Lautaro Caballero)
+Bien.
+-
+ 
+(federico garcia aguiar)
+saber dónde están los pendientes, eh, que yo
+
+00:54:44.000 --> 00:54:48.000
+(federico garcia aguiar)
+creo que con el circulito que está bueno,
+
+00:54:48.000 --> 00:54:52.000
+(federico garcia aguiar)
+hay que ver para qué lo aplicamos, pero creo que tienen que estar como en
+
+00:54:52.000 --> 00:54:56.000
+(federico garcia aguiar)
+estos estados, o sea, eh, si si bien están caracterizados
+
+00:54:56.000 --> 00:55:00.000
+(federico garcia aguiar)
+por estado, decir, bueno, en cada una de las de
+
+00:55:00.000 --> 00:55:04.000
+(federico garcia aguiar)
+las de las de las pestañas saber identificar qué es lo
+
+00:55:04.000 --> 00:55:08.000
+(federico garcia aguiar)
+que está pendiente o si es una objeción o si
+
+00:55:08.000 --> 00:55:12.000
+(federico garcia aguiar)
+falta saber, por ejemplo, si es la objeción lo que lo que falta, o
+
+00:55:12.000 --> 00:55:16.000
+(federico garcia aguiar)
+sea, ver de de todas las cosas que hacen
+
+00:55:16.000 --> 00:55:20.000
+(federico garcia aguiar)
+todo cada paso es si responde, si no responde, si está un
+
+00:55:20.000 --> 00:55:24.000
+(federico garcia aguiar)
+paciente frío, tibio, caliente, o sea, en cada uno que que
+
+00:55:24.000 --> 00:55:28.000
+(federico garcia aguiar)
+esté como sectoriz Y cuando vos decís, "Che, pero este no tengo
+
+00:55:28.000 --> 00:55:32.000
+(federico garcia aguiar)
+información, ¿qué es lo que me falta?" Y es que no se ha comunicado.
+
+00:55:32.000 --> 00:55:36.000
+(federico garcia aguiar)
+Bueno, eh tocar ahí eh este que
+
+00:55:36.000 --> 00:55:40.000
+(federico garcia aguiar)
+no está clasificado, ¿qué qué le está pasando? ¿Lleva 5
+
+00:55:40.000 --> 00:55:44.000
+(Lautaro Caballero)
+H
+-
+ 
+(federico garcia aguiar)
+días sin responder? Bueno, que se vaya frío, ¿me explico?
+
+00:55:44.000 --> 00:55:48.000
+(federico garcia aguiar)
+O no sé, ir viendo eso, ¿viste? de qué
+
+00:55:48.000 --> 00:55:52.000
+(federico garcia aguiar)
+manera ir como por lo menos diagramando
+
+00:55:52.000 --> 00:55:56.000
+(federico garcia aguiar)
+como para que vayamos encontrándole una forma práctica de
+
+00:55:56.000 --> 00:56:00.000
+(federico garcia aguiar)
+que no sea todo manual, pero que a la vez Carolina
+
+00:56:00.000 --> 00:56:04.000
+(federico garcia aguiar)
+diga, bueno, este, por ejemplo, el tema de arrastrar ya es un
+
+00:56:04.000 --> 00:56:08.000
+(Lautaro Caballero)
+Bien. Bien.
+-
+ 
+(federico garcia aguiar)
+montón, sea para que tiene que ir a
+
+00:56:08.000 --> 00:56:12.000
+(federico garcia aguiar)
+presupuesto nuevo o a fecha de cirugía o frío y
+
+00:56:12.000 --> 00:56:16.000
+(federico garcia aguiar)
+caliente para arriba y para abajo, en cada pestaña ir para
+
+00:56:16.000 --> 00:56:20.000
+(federico garcia aguiar)
+arriba o para abajo. Ya eso indica un montón porque,
+
+00:56:20.000 --> 00:56:24.000
+(federico garcia aguiar)
+por ejemplo, si ya hay una objeción ya
+
+00:56:24.000 --> 00:56:28.000
+(federico garcia aguiar)
+sabemos, ya nos da información. Si no contesta, tuc, al quinto día,
+
+00:56:28.000 --> 00:56:32.000
+(federico garcia aguiar)
+no contesta, tuc. Eso es un eso es un criterio de que un
+
+00:56:32.000 --> 00:56:36.000
+(Lautaro Caballero)
+Bien.
+-
+ 
+(federico garcia aguiar)
+paciente frío. Entonces, tod esas
+
+00:56:36.000 --> 00:56:40.000
+(federico garcia aguiar)
+cosas que la que Carolina vaya poniendo como tac tac,
+
+00:56:40.000 --> 00:56:44.000
+(federico garcia aguiar)
+pinchando así en en esto, que es lo que tengo esta semana. Entonces tengo
+
+00:56:44.000 --> 00:56:48.000
+(federico garcia aguiar)
+que como los mensajes sin leer, ¿no?
+
+00:56:48.000 --> 00:56:52.000
+(federico garcia aguiar)
+Mensaje sin leer donde hay este más o menos alertas en
+
+00:56:52.000 --> 00:56:56.000
+(federico garcia aguiar)
+cada uno donde donde tenga que saber, por ejemplo,
+
+00:56:56.000 --> 00:57:00.000
+(Lautaro Caballero)
+Mhm.
+-
+ 
+(federico garcia aguiar)
+cuántos eh cuántos
+
+00:57:00.000 --> 00:57:04.000
+(federico garcia aguiar)
+eh eh si se si se
+
+00:57:04.000 --> 00:57:08.000
+(federico garcia aguiar)
+comunicó al quinto día o si o al
+
+00:57:08.000 --> 00:57:12.000
+(federico garcia aguiar)
+mes. Hay distintas como variables, cosas que tienen que que ir
+
+00:57:12.000 --> 00:57:16.000
+(federico garcia aguiar)
+anotando en cada punto. Por ejemplo, en el primero, si recibió el
+
+00:57:16.000 --> 00:57:20.000
+(federico garcia aguiar)
+presupuesto, si tiene alguna
+
+00:57:20.000 --> 00:57:24.000
+(Lautaro Caballero)
+Exact.
+-
+ 
+(federico garcia aguiar)
+duda, fin, a los 5 días o 7 días,
+
+00:57:24.000 --> 00:57:28.000
+(federico garcia aguiar)
+eh, si tiene alguna o no sé
+
+00:57:28.000 --> 00:57:32.000
+(federico garcia aguiar)
+si si le interesa saber este si pudo autorizar la obra
+
+00:57:32.000 --> 00:57:36.000
+(federico garcia aguiar)
+social, hay cosas acá. Acá chat GPT me dio como
+
+00:57:36.000 --> 00:57:40.000
+(federico garcia aguiar)
+una me dio como
+
+00:57:40.000 --> 00:57:44.000
+(federico garcia aguiar)
+un eh me dio como un sistema de temperatura
+
+00:57:44.000 --> 00:57:48.000
+(federico garcia aguiar)
+caliente p hay como un Ya te voy
+
+00:57:48.000 --> 00:57:52.000
+(federico garcia aguiar)
+a decir por ejemplo, mira cuando cómo
+
+00:57:52.000 --> 00:57:56.000
+(federico garcia aguiar)
+debería funcionar. Ya te lo voy a pasar. Mira, lo voy
+
+00:57:56.000 --> 00:58:00.000
+(federico garcia aguiar)
+a ver y te lo voy a pasar
+
+00:58:00.000 --> 00:58:04.000
+(federico garcia aguiar)
+porque, por ejemplo, acá poner un
+
+00:58:04.000 --> 00:58:08.000
+(federico garcia aguiar)
+sistema como día 3, 7, 14 y
+
+00:58:08.000 --> 00:58:12.000
+(Lautaro Caballero)
+Bien.
+-
+ 
+(federico garcia aguiar)
+21, eh, donde califica si un
+
+00:58:12.000 --> 00:58:16.000
+(federico garcia aguiar)
+paciente en qué estado está, un recordatorio, un
+
+00:58:16.000 --> 00:58:20.000
+(federico garcia aguiar)
+seguimiento y un cierre. Entonces que
+
+00:58:20.000 --> 00:58:24.000
+(federico garcia aguiar)
+Carolina por ahí tenga por ahí
+
+00:58:24.000 --> 00:58:28.000
+(federico garcia aguiar)
+eso como guía de que
+
+00:58:28.000 --> 00:58:32.000
+(federico garcia aguiar)
+uno entra y ve decir, "Bueno, lo que tengo en gris son botones que tengo que
+
+00:58:32.000 --> 00:58:36.000
+(federico garcia aguiar)
+tocar y los cuadritos que tengo vacíos."
+
+00:58:36.000 --> 00:58:40.000
+(federico garcia aguiar)
+Ah, es que todavía no le pregunté si es esto. Aquello. Tac tac. Sí, le
+
+00:58:40.000 --> 00:58:44.000
+(federico garcia aguiar)
+pregunté tac tac. Con este. Me explico más o menos
+
+00:58:44.000 --> 00:58:48.000
+(Lautaro Caballero)
+Sí, sí, sí, sí, sí,
+-
+ 
+(federico garcia aguiar)
+cómo por ahí. Si si cuando lo vayas viendo, lo
+
+00:58:48.000 --> 00:58:52.000
+(federico garcia aguiar)
+vayas haciendo por ahí, avisame si querés y
+
+00:58:52.000 --> 00:58:56.000
+(Lautaro Caballero)
+sí.
+-
+ 
+(federico garcia aguiar)
+y ahora todo lo que voy tirando
+
+00:58:56.000 --> 00:59:00.000
+(federico garcia aguiar)
+así por ahí le podemos dar más formas si lo
+
+00:59:00.000 --> 00:59:04.000
+(Lautaro Caballero)
+Bien,
+-
+ 
+(federico garcia aguiar)
+necesitas. Creo
+
+00:59:04.000 --> 00:59:08.000
+(Lautaro Caballero)
+bien,
+-
+ 
+(federico garcia aguiar)
+que a mí no. O sea, mejor si me si me
+
+00:59:08.000 --> 00:59:12.000
+(Lautaro Caballero)
+bien. Sí, no, no, yo creo que tendremos que que bueno ver eso, o sea,
+-
+ 
+(federico garcia aguiar)
+avisas.
+
+00:59:12.000 --> 00:59:16.000
+(Lautaro Caballero)
+se puede hay muchas opciones que podemos tomar. Yo creo que lo
+
+00:59:16.000 --> 00:59:20.000
+(Lautaro Caballero)
+primero tendremos que suesclarecer un poco el camino de decir, bueno, el
+
+00:59:20.000 --> 00:59:24.000
+(Lautaro Caballero)
+sistema, ¿qué puntos va a apoyar? de qué se va a ocupar y de qué no se va a
+
+00:59:24.000 --> 00:59:28.000
+(Lautaro Caballero)
+ocupar y y o sea
+
+00:59:28.000 --> 00:59:32.000
+(Lautaro Caballero)
+tratar de que se ocupe de la mayor parte y que trate de de automatizar y de
+
+00:59:32.000 --> 00:59:36.000
+(Lautaro Caballero)
+agilizar la mayor parte de la mayor este todos los puntos posibles
+-
+ 
+(federico garcia aguiar)
+Hm.
+
+00:59:36.000 --> 00:59:40.000
+(Lautaro Caballero)
+de de ese de ese hilo digamos de acciones este desde que el
+
+00:59:40.000 --> 00:59:44.000
+(Lautaro Caballero)
+paciente saca su primer turno hasta que el paciente es operado.
+
+00:59:44.000 --> 00:59:48.000
+(Lautaro Caballero)
+e y después bueno, tratar de eso también
+
+00:59:48.000 --> 00:59:52.000
+(Lautaro Caballero)
+como mezclarlo un poco con esa facilidad,
+
+00:59:52.000 --> 00:59:56.000
+(Lautaro Caballero)
+digamos, de visualmente y mecánicamente para las personas que
+
+00:59:56.000 --> 01:00:00.000
+(Lautaro Caballero)
+interactúan con el sistema eh de visualizar la
+
+01:00:00.000 --> 01:00:04.000
+(Lautaro Caballero)
+información y actualizar la información.
+
+01:00:04.000 --> 01:00:08.000
+(Lautaro Caballero)
+Este, así que bueno, si te parece eh pasame
+
+01:00:08.000 --> 01:00:12.000
+(Lautaro Caballero)
+eso que charlaste con CH GPT, eh, que por ahí puede estar
+-
+ 
+(federico garcia aguiar)
+Sí,
+
+01:00:12.000 --> 01:00:16.000
+(Lautaro Caballero)
+bueno, eh, para hacer un poco más de ideas. Yo trato de hacer como este gráfico, digamos, de
+-
+ 
+(federico garcia aguiar)
+dale. Sí,
+
+01:00:16.000 --> 01:00:20.000
+(Lautaro Caballero)
+de bueno, poner un poco sobre la mesa eso, digamos, que qué acciones tiene que tomar el
+
+01:00:20.000 --> 01:00:24.000
+(Lautaro Caballero)
+sistema y demás, eh, y lo volvemos a charlar, pues
+-
+ 
+(federico garcia aguiar)
+sí.
+
+01:00:24.000 --> 01:00:28.000
+(Lautaro Caballero)
+seguimos pensando, se te ocurre algo, vos vas a andar anotándolo, me lo vas mandando por WhatsApp y después
+
+01:00:28.000 --> 01:00:32.000
+(Lautaro Caballero)
+lo lo reveemos todo, ¿eh? Y bueno, y
+
+01:00:32.000 --> 01:00:36.000
+(Lautaro Caballero)
+quizás nos ponemos nos podemos juntar, charlar, no sé,
+
+01:00:36.000 --> 01:00:40.000
+(Lautaro Caballero)
+el el lunes que viene o
+
+01:00:40.000 --> 01:00:44.000
+(Lautaro Caballero)
+eh y o sea, dejar eso un par de días para se más ahí un poco
+-
+ 
+(federico garcia aguiar)
+Dale,
+
+01:00:44.000 --> 01:00:48.000
+(Lautaro Caballero)
+la idea y este y vemos a ver qué
+-
+ 
+(federico garcia aguiar)
+dale,
+
+01:00:48.000 --> 01:00:52.000
+(Lautaro Caballero)
+va saliendo, ¿te
+-
+ 
+(federico garcia aguiar)
+dale, dale. Sí, sí, sí, sí, sí,
+
+01:00:52.000 --> 01:00:56.000
+(Lautaro Caballero)
+parece? Este, así que bueno, eso te propongo,
+-
+ 
+(federico garcia aguiar)
+sí. De una. de una. Sí, tenemos
+
+01:00:56.000 --> 01:01:00.000
+(Lautaro Caballero)
+¿te parece? tratar de eso, de pensar
+-
+ 
+(federico garcia aguiar)
+tarea. Dale. Sí, sí, sí, sí,
+
+01:01:00.000 --> 01:01:04.000
+(Lautaro Caballero)
+a full y de darle una vuelta de tuerca y lo mismo
+
+01:01:04.000 --> 01:01:08.000
+(Lautaro Caballero)
+si por ahí tenés algún colega que se lo quieras comentar
+
+01:01:08.000 --> 01:01:12.000
+(Lautaro Caballero)
+y ofrecerle, decirle, "Mira, este si te
+-
+ 
+(federico garcia aguiar)
+sí.
+
+01:01:12.000 --> 01:01:16.000
+(Lautaro Caballero)
+pinta eh y me me querés dar una mano, a mí me sirve mucho si vos
+
+01:01:16.000 --> 01:01:20.000
+(Lautaro Caballero)
+me yo te muestro algo y vos me me me lo criticas en el sentido de decirme,
+
+01:01:20.000 --> 01:01:24.000
+(Lautaro Caballero)
+esto sí me gusta, esto no, yo lo haría de esta forma, qué sé yo, eh,
+
+01:01:24.000 --> 01:01:28.000
+(Lautaro Caballero)
+y después nosotros te te dejamos cuando cuando el sistema
+
+01:01:28.000 --> 01:01:32.000
+(Lautaro Caballero)
+salga, eh, te lo dejamos a mitad de precio para que vos lo uses si a vos te
+
+01:01:32.000 --> 01:01:36.000
+(Lautaro Caballero)
+gusta. Este, ofrecerlo así, este, que para nosotros es muy
+
+01:01:36.000 --> 01:01:40.000
+(Lautaro Caballero)
+valiosa esa
+-
+ 
+(federico garcia aguiar)
+Sí, sí. Yo creo que
+
+01:01:40.000 --> 01:01:44.000
+(federico garcia aguiar)
+yo por ahora me parece que está bueno. Sí, sí, si por ahí lo quieren
+
+01:01:44.000 --> 01:01:48.000
+(Lautaro Caballero)
+información.
+-
+ 
+(federico garcia aguiar)
+ver puede estar bueno. Eh, creo que tenemos como que un
+
+01:01:48.000 --> 01:01:52.000
+(federico garcia aguiar)
+producto todavía no bueno empieza a
+
+01:01:52.000 --> 01:01:56.000
+(federico garcia aguiar)
+mostrar, pero capaz que a estas personas le
+
+01:01:56.000 --> 01:02:00.000
+(federico garcia aguiar)
+cuesten ver esa proyección. Así que sí voy a censar
+
+01:02:00.000 --> 01:02:04.000
+(federico garcia aguiar)
+mucho lo que en qué dificultades andan, cómo se
+
+01:02:04.000 --> 01:02:08.000
+(federico garcia aguiar)
+manejan y como para saber si es un problema que yo
+
+01:02:08.000 --> 01:02:12.000
+(federico garcia aguiar)
+tengo o si y dónde están los problemas de los demás en primero y en
+
+01:02:12.000 --> 01:02:16.000
+(federico garcia aguiar)
+segundo sí, si lo si le dan una mirada porque muchos ya usan, pero sé
+
+01:02:16.000 --> 01:02:20.000
+(Lautaro Caballero)
+No.
+-
+ 
+(federico garcia aguiar)
+que tienen más este como administrativo como como lo que yo
+
+01:02:20.000 --> 01:02:24.000
+(federico garcia aguiar)
+tengo, historia clínica, turnos, nada más.
+
+01:02:24.000 --> 01:02:28.000
+(federico garcia aguiar)
+Entonces, bueno, que vean las métricas y que y tener un feedback creo
+
+01:02:28.000 --> 01:02:32.000
+(federico garcia aguiar)
+que me nos va a ayudar y y creo que en ese
+
+01:02:32.000 --> 01:02:36.000
+(federico garcia aguiar)
+sentido, bueno, va a ser super valiosa la la lo que nos
+
+01:02:36.000 --> 01:02:40.000
+(Lautaro Caballero)
+Sí.
+-
+ 
+(federico garcia aguiar)
+ofrezcan. Así que bueno,
+
+01:02:40.000 --> 01:02:44.000
+(Lautaro Caballero)
+Totalmente de una de
+-
+ 
+(federico garcia aguiar)
+eh, por lo demás sí, el lunes estaría bueno. Yo lo tengo
+
+01:02:44.000 --> 01:02:48.000
+(Lautaro Caballero)
+una una. Bueno, entonces el lunes no nos juntemos ahí,
+-
+ 
+(federico garcia aguiar)
+libre.
+
+01:02:48.000 --> 01:02:52.000
+(Lautaro Caballero)
+así tratamos de charlarlo, así
+-
+ 
+(federico garcia aguiar)
+Bueno, dale dale dale dale.
+
+01:02:52.000 --> 01:02:56.000
+(Lautaro Caballero)
+que
+-
+ 
+(federico garcia aguiar)
+Si después me decí si sobre la siesta, sobre esta hora yo me viene
+
+01:02:56.000 --> 01:03:00.000
+(Lautaro Caballero)
+bueno. Sí, bueno, dale. No
+-
+ 
+(federico garcia aguiar)
+bien. Si no, a la mañana vamos
+
+01:03:00.000 --> 01:03:04.000
+(Lautaro Caballero)
+tengo drama, la siesta lo hacemos. Así
+-
+ 
+(federico garcia aguiar)
+viendo. Bueno, gracias.
+
+01:03:04.000 --> 01:03:08.000
+(Lautaro Caballero)
+que bueno, nos vemos y nada, está esa tarea ahí de de seguir
+
+01:03:08.000 --> 01:03:12.000
+(Lautaro Caballero)
+dándole una vuelta. Vos cuando tengas eso tratarme lo de chat GPT, así
+-
+ 
+(federico garcia aguiar)
+Perfecto. De ver.
+
+01:03:12.000 --> 01:03:16.000
+(Lautaro Caballero)
+también le doy una leída a lo que estuviste
+-
+ 
+(federico garcia aguiar)
+Dale, dale. Me pongo ahora con a verlo,
+
+01:03:16.000 --> 01:03:20.000
+(Lautaro Caballero)
+charlando. Listo, perfecto. Entonces, bueno, nos vemos,
+-
+ 
+(federico garcia aguiar)
+así te mando un resumen. Dale, de
+
+01:03:20.000 --> 01:03:24.000
+(Lautaro Caballero)
+Fe. Tengas lindo fin de Chao.
+-
+ 
+(federico garcia aguiar)
+una. Nos vemos. Que ande bien. Gracias. Igualmente.
+
+01:03:24.000 --> 01:03:28.000
+(Lautaro Caballero)
+Chao. Chao.
+-
+ 
+(federico garcia aguiar)
+Chao.
+
+01:03:28.000 --> 01:03:29.000
+
+

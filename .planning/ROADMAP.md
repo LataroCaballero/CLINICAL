@@ -41,7 +41,7 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
 
 - [x] **Phase 12: Schema AFIP Extendido + Gestión de Certificados** — DB migration con modelos AFIP y UI completa de configuración de certificados por tenant (completed 2026-03-16)
 - [x] **Phase 13: WSAA Token Service** — Access tickets reales con firma CMS in-process, cache Redis y mutex por CUIT (completed 2026-03-20)
-- [ ] **Phase 14: Emisión CAE Real (WSFEv1)** — FECAESolicitar con advisory lock, clasificación de errores y swap del DI token
+- [x] **Phase 14: Emisión CAE Real (WSFEv1)** — FECAESolicitar con advisory lock, clasificación de errores y swap del DI token (completed 2026-03-21)
 - [ ] **Phase 15: QR AFIP + PDF + Frontend de Comprobantes** — QR embebido en PDF, display de CAE en UI, cotización BNA para USD
 - [ ] **Phase 16: CAEA Contingency Mode** — Pre-fetch, fallback automático, FECAEAInformar con 72 reintentos y alertas de deadline
 
@@ -140,7 +140,7 @@ Plans:
 | 11. Settlement Workflow | v1.1 | 2/2 | Complete | 2026-03-16 |
 | 12. Schema AFIP Extendido + Certificados | v1.2 | Complete    | 2026-03-16 | 2026-03-16 |
 | 13. WSAA Token Service | 2/2 | Complete    | 2026-03-20 | - |
-| 14. Emisión CAE Real (WSFEv1) | 3/4 | In Progress|  | - |
+| 14. Emisión CAE Real (WSFEv1) | 4/4 | Complete   | 2026-03-21 | - |
 | 15. QR AFIP + PDF + Frontend | v1.2 | 0/? | Not started | - |
 | 16. CAEA Contingency Mode | v1.2 | 0/? | Not started | - |
 

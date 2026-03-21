@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: AFIP Real
 status: completed
-stopped_at: Completed 14-03-PLAN.md
-last_updated: "2026-03-21T00:14:00Z"
-last_activity: "2026-03-21 — Phase 14 Plan 03 complete: CaeEmissionProcessor BullMQ processor, AfipBusinessError → UnrecoverableError, 3 unit tests passing (CAE-04)"
+stopped_at: Completed 14-04 tasks 1-3; awaiting human-verify checkpoint
+last_updated: "2026-03-21T00:19:45.783Z"
+last_activity: "2026-03-21 — Phase 14 Plan 04 tasks 1-3 complete: FinanzasModule wired (AFIP_SERVICE DI swap), emitirFactura endpoint + service method added, 31 finanzas tests passing; awaiting human verify"
 progress:
   total_phases: 5
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 10
-  completed_plans: 9
+  completed_plans: 10
   percent: 90
 ---
 
@@ -27,12 +27,12 @@ See: .planning/PROJECT.md (updated 2026-03-16)
 
 ```
 Phase:    14 — Emisión CAE Real (WSFEv1) — in progress
-Plan:     Plan 03 complete (Wave 1 - CaeEmissionProcessor done)
-Status:   Phase 14 Plan 03 complete — ready for Plan 04 (FinanzasService enqueue integration)
-Progress: [█████████░] 90% of v1.2 plans (Phase 12 done, Phase 13 done, Phase 14 Plans 01+02+03 done)
+Plan:     Plan 04 tasks 1-3 complete — awaiting human verify checkpoint
+Status:   Phase 14 Plan 04 tasks 1-3 complete — full async CAE emission pipeline wired; human verify pending
+Progress: [█████████░] 90% of v1.2 plans (Phase 12 done, Phase 13 done, Phase 14 Plans 01+02+03+04 tasks 1-3 done)
 ```
 
-Last activity: 2026-03-21 — Phase 14 Plan 03 complete: CaeEmissionProcessor BullMQ processor, AfipBusinessError → UnrecoverableError, 3 unit tests passing (CAE-04)
+Last activity: 2026-03-21 — Phase 14 Plan 04 tasks 1-3 complete: FinanzasModule wired (AFIP_SERVICE DI swap), emitirFactura endpoint + service method added, 31 finanzas tests passing; awaiting human verify
 
 ## Milestone Summary
 
@@ -90,6 +90,9 @@ Last activity: 2026-03-21 — Phase 14 Plan 03 complete: CaeEmissionProcessor Bu
 - [Plan 14-03] CaeJobData carries only facturaId + profesionalId — never monetary amounts — server-side totals rule; AfipRealService reads Factura data from DB
 - [Plan 14-03] instanceof AfipBusinessError check must precede generic re-throw — order is critical so business errors are never accidentally retried with backoff
 - [Plan 14-03] emitirComprobante called as (afipService as any).emitirComprobante() — AfipRealService DB-read signature differs from AfipService interface (identifiers only vs full params)
+- [Plan 14-04] AFIP_SERVICE useFactory in FinanzasModule routes to AfipRealService (USE_AFIP_STUB != 'true') or AfipStubService (USE_AFIP_STUB='true') — env toggle pattern mirrors WSAA_SERVICE from Phase 13
+- [Plan 14-04] condicionIVAReceptor null check in emitirFactura before enqueue (not in processor) — prevents AFIP error 10242 from being retried 5 times with exponential backoff
+- [Plan 14-04] ConfiguracionAFIP existence validated before setting EMISION_PENDIENTE — prevents orphaned estado if cert not uploaded
 
 ### Research Flags (for plan-phase to act on)
 - **Phase 13 y 14:** Verificar URLs actuales WSAA y WSFEv1 bajo dominio arca.gob.ar al momento de implementar. Almacenar en env config: AFIP_WSAA_URL_HOMO, AFIP_WSAA_URL_PROD, AFIP_WSFEV1_URL_HOMO, AFIP_WSFEV1_URL_PROD
@@ -117,7 +120,7 @@ Last activity: 2026-03-21 — Phase 14 Plan 03 complete: CaeEmissionProcessor Bu
 ## Session Continuity
 
 Next action: Execute Phase 14 Plan 04 — FinanzasService enqueue integration (enqueue CAE jobs, EMISION_PENDIENTE state update, pg_advisory_xact_lock).
-Stopped at: Completed 14-03-PLAN.md
+Stopped at: Completed 14-04 tasks 1-3; awaiting human-verify checkpoint
 
 Files to read at session start for Phase 14 Plan 03:
 - `.planning/phases/14-emision-cae-real-wsfev1/14-02-SUMMARY.md` — AfipRealService artifacts

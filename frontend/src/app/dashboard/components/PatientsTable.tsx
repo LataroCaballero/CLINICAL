@@ -2,15 +2,11 @@
 
 import { useState, useMemo } from "react";
 import { usePacientes } from "@/hooks/usePacientes";
-import { useCreatePaciente } from "@/hooks/useCreatePaciente";
-import { useProfesionales } from "@/hooks/useProfesionales";
-import { useObrasSociales } from "@/hooks/useObrasSociales";
 import { pacienteColumns } from "../pacientes/components/columns";
 import { DataTable } from "@/components/data-table/data-table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import NewPacienteModal from "../pacientes/components/NewPacienteModal";
-import { toast } from "sonner";
 
 const ESTADO_ORDER: Record<string, number> = {
   QUIRURGICO: 1,
@@ -32,10 +28,6 @@ export default function PatientsTable() {
       return orderA - orderB;
     });
   }, [data]);
-  const { data: obrasSocialesData } = useObrasSociales();
-  const { data: profesionalesData } = useProfesionales();
-  const createPacienteMutation = useCreatePaciente();
-
   const [openNewPaciente, setOpenNewPaciente] = useState(false);
 
   if (isLoading) {
@@ -70,28 +62,6 @@ export default function PatientsTable() {
       <NewPacienteModal
         open={openNewPaciente}
         onClose={() => setOpenNewPaciente(false)}
-        onCreate={(payload, setError, setGlobalError) => {
-          setGlobalError("");
-
-          createPacienteMutation.mutate(payload, {
-            onError: (error: any) => {
-              const status = error?.response?.status || error?.statusCode;
-              const message = error?.response?.data?.message || error?.message;
-
-              if (status === 409 || message?.includes("DNI")) {
-                setGlobalError("El DNI ingresado ya está registrado.");
-                return;
-              }
-              setGlobalError(message || "Ocurrió un error al crear el paciente.");
-            },
-            onSuccess: () => {
-              toast.success("Paciente creado correctamente");
-              setOpenNewPaciente(false);
-            },
-          });
-        }}
-        obrasSociales={obrasSocialesData}
-        profesionales={profesionalesData}
       />
     </div>
   );

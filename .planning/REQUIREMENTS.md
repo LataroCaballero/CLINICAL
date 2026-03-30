@@ -33,7 +33,7 @@
 
 - [x] **CAEA-01**: Sistema pre-fetcha códigos CAEA con cron bimensual (`0 6 27,11,12 * *`) y los almacena en `CaeaVigente` por tenant
 - [x] **CAEA-02**: Sistema asigna CAEA automáticamente cuando ARCA no está disponible (`AfipUnavailableException`) y marca la factura como `CAEA_PENDIENTE_INFORMAR`
-- [ ] **CAEA-03**: Sistema informa facturas CAEA a AFIP dentro del plazo de 8 días calendario via job BullMQ con 72 reintentos distribuidos en la ventana
+- [x] **CAEA-03**: Sistema informa facturas CAEA a AFIP dentro del plazo de 8 días calendario via job BullMQ con 72 reintentos distribuidos en la ventana
 - [x] **CAEA-04**: Sistema alerta al Admin si el plazo de 8 días para informar CAEA está en riesgo de vencerse antes de que ocurra
 
 ## v2 Requirements
@@ -73,7 +73,7 @@
 | QR-03 | Phase 15 | Complete |
 | CAEA-01 | Phase 16 | Complete |
 | CAEA-02 | Phase 16 | Complete |
-| CAEA-03 | Phase 16 | Pending |
+| CAEA-03 | Phase 16 | Complete |
 | CAEA-04 | Phase 16 | Complete |
 
 **Coverage:**

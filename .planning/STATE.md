@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: AFIP Real
-status: executing
-stopped_at: Completed 16-02-PLAN.md
-last_updated: "2026-03-30T22:43:53.757Z"
-last_activity: "2026-03-30 — Phase 16 Plan 02 complete: CaeaPrefetchScheduler bimensual cron + deadline email alert, CaeEmissionProcessor onFailed CAEA fallback. CAEA-01, CAEA-02, CAEA-04. 10 tests green."
+status: complete
+stopped_at: Completed 16-03-PLAN.md
+last_updated: "2026-03-30T22:51:00.000Z"
+last_activity: "2026-03-30 — Phase 16 Plan 03 complete: CaeaService.informarFactura FECAEARegInformativo SOAP + CaeaInformarProcessor (72 retries, fixed 160min), FinanzasModule wiring, USE_AFIP_STUB bypass. CAEA-03. 25 CAEA tests green."
 progress:
   total_phases: 5
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 17
-  completed_plans: 16
-  percent: 96
+  completed_plans: 17
+  percent: 100
 ---
 
 # Project State
@@ -26,13 +26,13 @@ See: .planning/PROJECT.md (updated 2026-03-16)
 ## Current Position
 
 ```
-Phase:    16 — CAEA Contingency Mode (IN PROGRESS)
-Plan:     Plan 01 complete — CaeaService core (CAEA-01, CAEA-02)
-Status:   Phase 16 in progress; Plans 02 (scheduler) and 03 (informar) remaining
-Progress: [█████████░] 92% of v1.2 (Phase 12 done, Phase 13 done, Phase 14 done, Phase 15 done; Phase 16 Plan 01 done)
+Phase:    16 — CAEA Contingency Mode (COMPLETE)
+Plan:     All 3 plans complete — CAEA-01 CAEA-02 CAEA-03 CAEA-04 done
+Status:   Phase 16 COMPLETE. v1.2 AFIP Real milestone COMPLETE.
+Progress: [██████████] 100% of v1.2 (Phases 12-16 all done)
 ```
 
-Last activity: 2026-03-30 — Phase 16 Plan 01 complete: CaeaService core with FECAEASolicitar SOAP + asignarCaeaFallback, AfipUnavailableError, period helpers, cbteFchHsGen migration applied. CAEA-01, CAEA-02. 15 tests green.
+Last activity: 2026-03-30 — Phase 16 Plan 03 complete: CaeaService.informarFactura FECAEARegInformativo SOAP + CaeaInformarProcessor (72 retries, fixed 160min), FinanzasModule wiring, USE_AFIP_STUB bypass. CAEA-03. 25 CAEA tests green.
 
 ## Milestone Summary
 
@@ -108,6 +108,9 @@ Last activity: 2026-03-30 — Phase 16 Plan 01 complete: CaeaService core with F
 - [Plan 16-02] CaeaPrefetchScheduler.checkDeadlines() called inline from prefetchAllTenants() — no separate daily cron needed (same bimensual run)
 - [Plan 16-02] onFailed becomes async in CaeEmissionProcessor; asignarCaeaFallback errors propagate visibly in logs without being swallowed
 - [Plan 16-02] maxAttempts defaults to 3 in onFailed when job.opts.attempts is undefined — consistent with FinanzasModule BullMQ queue config
+- [Plan 16-03] cbteTipo derived from condicionIVAReceptor (RESPONSABLE_INSCRIPTO=A=1, all others=B=6) — TipoFactura enum only has FACTURA/RECIBO, not A/B sub-type; AFIP rule: RI gets Factura A
+- [Plan 16-03] CAEA_INFORMAR_QUEUE injected into CaeaService via @InjectQueue; enqueue happens in asignarCaeaFallback after successful factura update (72 attempts, 9600000ms fixed delay = 8 days)
+- [Plan 16-03] USE_AFIP_STUB=true bypass in solicitarYPersistir upserts stub CAEA '00000000000001' with computed bimensual period dates — skips SOAP, enables local dev/CI without AFIP certs
 
 ### Research Flags (for plan-phase to act on)
 - **Phase 13 y 14:** Verificar URLs actuales WSAA y WSFEv1 bajo dominio arca.gob.ar al momento de implementar. Almacenar en env config: AFIP_WSAA_URL_HOMO, AFIP_WSAA_URL_PROD, AFIP_WSFEV1_URL_HOMO, AFIP_WSFEV1_URL_PROD
@@ -134,10 +137,5 @@ Last activity: 2026-03-30 — Phase 16 Plan 01 complete: CaeaService core with F
 
 ## Session Continuity
 
-Next action: Execute Phase 16 Plan 03 — CaeaService.informarFactura full implementation (FECAEARegInformativo) + CAEA_INFORMADA estado transition.
-Stopped at: Completed 16-02-PLAN.md
-
-Files to read at session start for Phase 16 Plan 03:
-- `.planning/phases/16-caea-contingency-mode/16-02-SUMMARY.md` — scheduler + fallback processor complete
-- `.planning/phases/16-caea-contingency-mode/16-03-PLAN.md` — informarFactura plan
-- `backend/src/modules/finanzas/afip/caea.service.ts` — stub informarFactura to implement
+Next action: v1.2 AFIP Real milestone COMPLETE. All 5 phases (12-16), all 17 plans done. 25 CAEA tests + full backend build green. Ready for production deploy / IVA matrix review.
+Stopped at: Completed 16-03-PLAN.md

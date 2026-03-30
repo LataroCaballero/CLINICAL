@@ -15,6 +15,8 @@ describe('CaeaService', () => {
   let mockConfig: any;
   let mockLogger: any;
 
+  let mockCaeaInformarQueue: any;
+
   beforeEach(() => {
     mockWsaaService = {
       getTicket: jest.fn().mockResolvedValue({ token: 'tok', sign: 'sig' }),
@@ -34,6 +36,7 @@ describe('CaeaService', () => {
       },
       factura: {
         update: jest.fn().mockResolvedValue({}),
+        findUniqueOrThrow: jest.fn(),
       },
     };
 
@@ -47,7 +50,11 @@ describe('CaeaService', () => {
       warn: jest.fn(),
     };
 
-    service = new CaeaService(mockWsaaService, mockPrisma, mockConfig);
+    mockCaeaInformarQueue = {
+      add: jest.fn().mockResolvedValue({}),
+    };
+
+    service = new CaeaService(mockWsaaService, mockPrisma, mockConfig, mockCaeaInformarQueue);
     // Inject mock logger to avoid console output in tests
     (service as any).logger = mockLogger;
   });
@@ -167,10 +174,72 @@ describe('CaeaService', () => {
   });
 
   describe('informarFactura', () => {
-    it('stub throws Not implemented error', async () => {
-      await expect(
-        service.informarFactura('factura-1', 'prof-1'),
-      ).rejects.toThrow('Not implemented');
+    const baseFactura = {
+      cae: '12345678901234',
+      nroComprobante: 5,
+      ptoVta: 1,
+      cbteFchHsGen: '20260115103000',
+      total: 1210,
+      subtotal: 1000,
+      impuestos: 210,
+      condicionIVAReceptor: 'CONSUMIDOR_FINAL',
+      tipo: 'FACTURA_A',
+      cuit: '20111222333',
+      fecha: new Date('2026-01-15'),
+    };
+
+    const successXml = `
+      <?xml version="1.0"?>
+      <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
+        <soapenv:Body>
+          <FECAEARegInformativoResponse>
+            <FECAEARegInformativoResult>
+              <Resultado>A</Resultado>
+            </FECAEARegInformativoResult>
+          </FECAEARegInformativoResponse>
+        </soapenv:Body>
+      </soapenv:Envelope>
+    `;
+
+    beforeEach(() => {
+      mockPrisma.factura = {
+        ...mockPrisma.factura,
+        findUniqueOrThrow: jest.fn().mockResolvedValue(baseFactura),
+      };
+    });
+
+    it('Test 4: Resultado=A updates Factura estado to EMITIDA', async () => {
+      mockedAxios.post = jest.fn().mockResolvedValue({ data: successXml });
+
+      await service.informarFactura('f1', 'prof-1');
+
+      expect(mockPrisma.factura.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'f1' },
+          data: expect.objectContaining({ estado: EstadoFactura.EMITIDA }),
+        }),
+      );
+    });
+
+    it('Test 5: Resultado=R throws AfipBusinessError', async () => {
+      const rejectedXml = `
+        <?xml version="1.0"?>
+        <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
+          <soapenv:Body>
+            <FECAEARegInformativoResponse>
+              <FECAEARegInformativoResult>
+                <Resultado>R</Resultado>
+                <Errors><Err><Msg>CAEA incorrecto</Msg></Err></Errors>
+              </FECAEARegInformativoResult>
+            </FECAEARegInformativoResponse>
+          </soapenv:Body>
+        </soapenv:Envelope>
+      `;
+      mockedAxios.post = jest.fn().mockResolvedValue({ data: rejectedXml });
+
+      await expect(service.informarFactura('f1', 'prof-1')).rejects.toBeInstanceOf(
+        AfipBusinessError,
+      );
     });
   });
 });

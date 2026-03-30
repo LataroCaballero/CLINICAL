@@ -9,7 +9,9 @@ import {
   Request,
   HttpCode,
   BadRequestException,
+  Res,
 } from '@nestjs/common';
+import { Response } from 'express';
 import { FinanzasService } from './finanzas.service';
 import {
   CreatePagoDto,
@@ -22,6 +24,7 @@ import {
   CreateLoteDto,
   SetLimiteMensualDto,
   ActualizarMontoPagadoDto,
+  UpdateTipoCambioDto,
 } from './dto/finanzas.dto';
 import { Auth } from '../auth/decorators/auth.decorator';
 import { MedioPago, TipoFactura, EstadoLiquidacion } from '@prisma/client';
@@ -113,6 +116,43 @@ export class FinanzasController {
   @Post('facturas')
   createFactura(@Body() dto: CreateFacturaDto) {
     return this.service.createFactura(dto);
+  }
+
+  /**
+   * Get a single factura by ID with AFIP fields + server-side QR image data URL.
+   * IMPORTANT: Must appear BEFORE POST facturas/:id/anular and POST facturas/:id/emitir
+   * to avoid NestJS routing conflicts with literal-segment routes below.
+   */
+  @Get('facturas/:id')
+  getFacturaById(@Param('id') id: string) {
+    return this.service.getFacturaById(id);
+  }
+
+  /**
+   * Download a factura PDF with embedded QR (requires CAE to be set — invoice must be emitted).
+   */
+  @Get('facturas/:id/pdf')
+  async downloadFacturaPdf(@Param('id') id: string, @Res() res: Response) {
+    const { buffer, filename } = await this.service.generateFacturaPdf(id);
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="${filename}"`,
+      'Content-Length': buffer.length,
+    });
+    res.end(buffer);
+  }
+
+  /**
+   * Update tipoCambio (BNA exchange rate) on a factura.
+   * Allowed for any non-emitted invoice or for USD invoices already emitted (cotización correction).
+   */
+  @Patch('facturas/:id/tipo-cambio')
+  @Auth('ADMIN', 'FACTURADOR')
+  updateTipoCambio(
+    @Param('id') id: string,
+    @Body() dto: UpdateTipoCambioDto,
+  ) {
+    return this.service.updateTipoCambio(id, dto.tipoCambio);
   }
 
   /**

@@ -147,7 +147,7 @@ Plans:
 | 13. WSAA Token Service | 2/2 | Complete    | 2026-03-20 | - |
 | 14. Emisión CAE Real (WSFEv1) | 4/4 | Complete    | 2026-03-21 | - |
 | 15. QR AFIP + PDF + Frontend | v1.2 | Complete    | 2026-03-30 | 2026-03-30 |
-| 16. CAEA Contingency Mode | v1.2 | 0/? | Not started | - |
+| 16. CAEA Contingency Mode | 1/3 | In Progress|  | - |
 
 ---
 *Roadmap initialized: 2026-02-23 | v1.0 shipped: 2026-03-03 | v1.1 shipped: 2026-03-16 | v1.2 started: 2026-03-16*

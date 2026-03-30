@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: AFIP Real
 status: completed
-stopped_at: Completed 15-04-PLAN.md (Phase 15 fully complete)
-last_updated: "2026-03-30T21:56:31.714Z"
-last_activity: "2026-03-30 — Phase 15 Plan 04 complete: human verification approved — all 5 test scenarios passed (QR PDF scan, CAE modal display, estado badges, USD tipoCambio persistence, non-emitted guard) — QR-01, QR-02, QR-03 confirmed end-to-end. Phase 15 COMPLETE."
+stopped_at: Completed 16-01-PLAN.md
+last_updated: "2026-03-30T22:36:48.685Z"
+last_activity: "2026-03-30 — Phase 16 Plan 01 complete: CaeaService core with FECAEASolicitar SOAP + asignarCaeaFallback, AfipUnavailableError, period helpers, cbteFchHsGen migration applied. CAEA-01, CAEA-02. 15 tests green."
 progress:
   total_phases: 5
   completed_phases: 4
-  total_plans: 14
-  completed_plans: 14
+  total_plans: 17
+  completed_plans: 15
   percent: 100
 ---
 
@@ -26,13 +26,13 @@ See: .planning/PROJECT.md (updated 2026-03-16)
 ## Current Position
 
 ```
-Phase:    15 — QR AFIP + PDF + Frontend (COMPLETE)
-Plan:     All 4 plans complete — Plan 04 human verification approved 2026-03-30
-Status:   Phase 15 COMPLETE (QR-01, QR-02, QR-03 confirmed); Phase 16 CAEA Contingency Mode is next
-Progress: [██████████] 100% of v1.2 Phase 15 plans (Phase 12 done, Phase 13 done, Phase 14 done, Phase 15 done; Phase 16 remaining)
+Phase:    16 — CAEA Contingency Mode (IN PROGRESS)
+Plan:     Plan 01 complete — CaeaService core (CAEA-01, CAEA-02)
+Status:   Phase 16 in progress; Plans 02 (scheduler) and 03 (informar) remaining
+Progress: [█████████░] 92% of v1.2 (Phase 12 done, Phase 13 done, Phase 14 done, Phase 15 done; Phase 16 Plan 01 done)
 ```
 
-Last activity: 2026-03-30 — Phase 15 Plan 04 complete: human verification approved — all 5 test scenarios passed (QR PDF scan, CAE modal display, estado badges, USD tipoCambio persistence, non-emitted guard) — QR-01, QR-02, QR-03 confirmed end-to-end. Phase 15 COMPLETE.
+Last activity: 2026-03-30 — Phase 16 Plan 01 complete: CaeaService core with FECAEASolicitar SOAP + asignarCaeaFallback, AfipUnavailableError, period helpers, cbteFchHsGen migration applied. CAEA-01, CAEA-02. 15 tests green.
 
 ## Milestone Summary
 
@@ -101,6 +101,9 @@ Last activity: 2026-03-30 — Phase 15 Plan 04 complete: human verification appr
 - [Plan 15-02] GET facturas/:id/pdf placed before POST facturas/:id/anular — NestJS route ordering: literal segments before param routes to avoid shadowing
 - [Plan 15-02] generateFacturaPdf calls getFacturaById() then second findUniqueOrThrow for profesional/configClinica — FacturaDetailDto does not carry config data, second query needed for PDF FacturaPdfData building
 - [Plan 15-03] downloadFacturaPdf defined independently in FacturaDetailModal and ComprobantesTab — small duplication preferred over coupling sibling components
+- [Plan 16-01] UTC-based getUTCDate() in CAEA period helpers — avoids timezone bugs in Argentina (UTC-3) where new Date('YYYY-MM-DD') midnight becomes previous day locally
+- [Plan 16-01] caea.helpers.ts is pure module with no NestJS/Prisma deps — importable in unit tests without DI mocking
+- [Plan 16-01] CaeaService.informarFactura is a stub shell in Plan 01 (throws 'Not implemented') — Plan 03 provides full implementation
 - [Plan 15-03] formatAfipDate helper converts 'YYYYMMDD' string to 'DD/MM/YYYY' via string slicing — no date library needed, avoids timezone issues with AFIP date strings
 
 ### Research Flags (for plan-phase to act on)
@@ -128,11 +131,11 @@ Last activity: 2026-03-30 — Phase 15 Plan 04 complete: human verification appr
 
 ## Session Continuity
 
-Next action: Execute Phase 16 — CAEA Contingency Mode. Pre-read RG 5782/2025 research flag before starting.
-Stopped at: Completed 15-04-PLAN.md (Phase 15 fully complete)
+Next action: Execute Phase 16 Plan 02 — CAEA scheduler + BullMQ fallback processor. CaeaService (Plan 01) is ready.
+Stopped at: Completed 16-01-PLAN.md
 
-Files to read at session start for Phase 16:
-- `.planning/phases/15-qr-afip-pdf-frontend-comprobantes/15-04-SUMMARY.md` — Phase 15 completion confirmed
-- `.planning/ROADMAP.md` — Phase 16 goal, requirements CAEA-01..04, success criteria
-- `backend/src/modules/finanzas/` — current finanzas module structure
-- `backend/src/prisma/schema.prisma` — CaeaVigente model + CAEA_PENDIENTE_INFORMAR enum value
+Files to read at session start for Phase 16 Plan 02:
+- `.planning/phases/16-caea-contingency-mode/16-01-SUMMARY.md` — CaeaService ready (Plan 01 complete)
+- `.planning/phases/16-caea-contingency-mode/16-02-PLAN.md` — scheduler + fallback processor plan
+- `backend/src/modules/finanzas/afip/caea.service.ts` — CaeaService interface
+- `backend/src/modules/finanzas/processors/` — existing BullMQ processor pattern

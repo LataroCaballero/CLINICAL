@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: AFIP Real
-status: active
-stopped_at: Completed 15-01-PLAN.md
-last_updated: "2026-03-20T22:20:00.000Z"
-last_activity: "2026-03-20 — Phase 15 Plan 01 complete: qrcode installed, FacturaPdfService with buildAfipQrUrl (RG 5616/2024), AfipRealService persisting qrData in CAE transaction, 41 finanzas tests green"
+status: completed
+stopped_at: Completed 15-02-PLAN.md
+last_updated: "2026-03-30T21:41:30.974Z"
+last_activity: "2026-03-30 — Phase 15 Plan 02 complete: GET facturas/:id, GET facturas/:id/pdf, PATCH facturas/:id/tipo-cambio wired in FinanzasController — 50 finanzas tests green, QR-02 and QR-03 backend contracts delivered"
 progress:
   total_phases: 5
   completed_phases: 3
   total_plans: 14
-  completed_plans: 11
-  percent: 79
+  completed_plans: 12
+  percent: 82
 ---
 
 # Project State
@@ -27,12 +27,12 @@ See: .planning/PROJECT.md (updated 2026-03-16)
 
 ```
 Phase:    15 — QR AFIP + PDF + Frontend (in progress)
-Plan:     Plan 01 complete — qrcode + FacturaPdfService + AfipRealService qrData persistence
-Status:   Phase 15 Plan 01 done; Plans 02, 03, 04 remaining
-Progress: [████████░░] 79% of v1.2 plans (Phase 12 done, Phase 13 done, Phase 14 done; Phase 15 Plan 01 done, Plans 02-04 + Phase 16 remaining)
+Plan:     Plan 02 complete — GET facturas/:id + GET facturas/:id/pdf + PATCH facturas/:id/tipo-cambio
+Status:   Phase 15 Plans 01-02 done; Plans 03, 04 remaining
+Progress: [████████░░] 82% of v1.2 plans (Phase 12 done, Phase 13 done, Phase 14 done; Phase 15 Plans 01-02 done, Plans 03-04 + Phase 16 remaining)
 ```
 
-Last activity: 2026-03-20 — Phase 15 Plan 01 complete: qrcode installed, buildAfipQrUrl (RG 5616/2024 compliant), FacturaPdfService with QR PNG embed, AfipRealService persisting qrData in CAE transaction — 41 finanzas tests green, TypeScript clean
+Last activity: 2026-03-30 — Phase 15 Plan 02 complete: GET facturas/:id, GET facturas/:id/pdf, PATCH facturas/:id/tipo-cambio wired in FinanzasController — 50 finanzas tests green, QR-02 and QR-03 backend contracts delivered
 
 ## Milestone Summary
 
@@ -98,6 +98,8 @@ Last activity: 2026-03-20 — Phase 15 Plan 01 complete: qrcode installed, build
 - [Plan 15-01] AfipStubService returns deterministic qrData with stub CUIT 20000000001 — makes unit tests predictable regardless of date
 - [Plan 15-01] EmitirComprobanteResult.qrData is optional (?) — real service always sets it, stub always returns it; existing callers (CaeEmissionProcessor) don't break
 - [Plan 15-01] FacturaPdfService NOT exported from FinanzasModule — internal use only; Plan 02 injects it into FinanzasService
+- [Plan 15-02] GET facturas/:id/pdf placed before POST facturas/:id/anular — NestJS route ordering: literal segments before param routes to avoid shadowing
+- [Plan 15-02] generateFacturaPdf calls getFacturaById() then second findUniqueOrThrow for profesional/configClinica — FacturaDetailDto does not carry config data, second query needed for PDF FacturaPdfData building
 
 ### Research Flags (for plan-phase to act on)
 - **Phase 13 y 14:** Verificar URLs actuales WSAA y WSFEv1 bajo dominio arca.gob.ar al momento de implementar. Almacenar en env config: AFIP_WSAA_URL_HOMO, AFIP_WSAA_URL_PROD, AFIP_WSFEV1_URL_HOMO, AFIP_WSFEV1_URL_PROD
@@ -124,11 +126,10 @@ Last activity: 2026-03-20 — Phase 15 Plan 01 complete: qrcode installed, build
 
 ## Session Continuity
 
-Next action: Execute Phase 15 Plan 02 — integrate FacturaPdfService into FinanzasService + expose GET /finanzas/facturas/:id/pdf endpoint.
-Stopped at: Completed 15-01-PLAN.md
+Next action: Execute Phase 15 Plan 03 — Frontend comprobante detail page consuming GET /finanzas/facturas/:id and GET /finanzas/facturas/:id/pdf.
+Stopped at: Completed 15-02-PLAN.md
 
-Files to read at session start for Phase 15 Plan 02:
-- `.planning/phases/15-qr-afip-pdf-frontend-comprobantes/15-01-SUMMARY.md` — FacturaPdfService artifacts + qrData persistence
-- `backend/src/modules/finanzas/finanzas.service.ts` — current FinanzasService to add generatePdf method
-- `backend/src/modules/finanzas/finanzas.controller.ts` — current GET /finanzas/facturas/:id response shape
-- `backend/src/modules/finanzas/factura-pdf.service.ts` — FacturaPdfData interface shape
+Files to read at session start for Phase 15 Plan 03:
+- `.planning/phases/15-qr-afip-pdf-frontend-comprobantes/15-02-SUMMARY.md` — backend endpoint contracts
+- `backend/src/modules/finanzas/finanzas.controller.ts` — final route shapes
+- `frontend/src/hooks/` — existing TanStack Query hooks pattern to follow

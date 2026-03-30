@@ -45,6 +45,8 @@ import { TablePagination } from "@/components/ui/table-pagination";
 import { useFacturas, useCreateFactura } from "@/hooks/useFinanzas";
 import { TipoFactura, EstadoFactura, FacturasFilters } from "@/types/finanzas";
 import { toast } from "sonner";
+import { api } from "@/lib/api";
+import FacturaDetailModal from "./FacturaDetailModal";
 
 function formatMoney(value: number): string {
   return new Intl.NumberFormat("es-AR", {
@@ -75,15 +77,20 @@ const TIPO_BADGE: Record<TipoFactura, { label: string; className: string }> = {
 };
 
 const ESTADO_BADGE: Record<EstadoFactura, { label: string; className: string }> = {
-  [EstadoFactura.EMITIDA]: {
-    label: "Emitida",
-    className: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  },
-  [EstadoFactura.ANULADA]: {
-    label: "Anulada",
-    className: "bg-gray-100 text-gray-500 border-gray-200",
-  },
+  [EstadoFactura.EMITIDA]: { label: "Emitida", className: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+  [EstadoFactura.ANULADA]: { label: "Anulada", className: "bg-gray-100 text-gray-500 border-gray-200" },
+  [EstadoFactura.EMISION_PENDIENTE]: { label: "Emitiendo...", className: "bg-amber-50 text-amber-700 border-amber-200" },
+  [EstadoFactura.CAEA_PENDIENTE_INFORMAR]: { label: "CAEA Pendiente", className: "bg-orange-50 text-orange-700 border-orange-200" },
 };
+
+async function downloadFacturaPdf(facturaId: string, numero: string) {
+  const response = await api.get(`/finanzas/facturas/${facturaId}/pdf`, { responseType: 'blob' });
+  const url = URL.createObjectURL(response.data);
+  const a = document.createElement('a');
+  a.href = url; a.download = `factura-${numero}.pdf`;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
+}
 
 type SortField = "fecha" | "numero" | "receptor" | "total";
 
@@ -91,6 +98,8 @@ export default function ComprobantesTab() {
   const [filters, setFilters] = useState<FacturasFilters>({});
   const [search, setSearch] = useState("");
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [selectedFacturaId, setSelectedFacturaId] = useState<string | null>(null);
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [sortField, setSortField] = useState<SortField>("fecha");
@@ -331,7 +340,11 @@ export default function ComprobantesTab() {
                 {paginatedFacturas.map((factura) => (
                   <TableRow
                     key={factura.id}
-                    className={factura.estado === EstadoFactura.ANULADA ? "opacity-50" : ""}
+                    onClick={() => {
+                      setSelectedFacturaId(factura.id);
+                      setDetailModalOpen(true);
+                    }}
+                    className={`cursor-pointer hover:bg-gray-50 ${factura.estado === EstadoFactura.ANULADA ? "opacity-50" : ""}`}
                   >
                     <TableCell>
                       <Badge variant="outline" className={TIPO_BADGE[factura.tipo].className}>
@@ -387,7 +400,19 @@ export default function ComprobantesTab() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="sm">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (factura.cae) {
+                            downloadFacturaPdf(factura.id, factura.numero);
+                          } else {
+                            toast.info('Esta factura no tiene CAE. Emitir primero vía AFIP.');
+                          }
+                        }}
+                        title={factura.cae ? "Descargar PDF con QR AFIP" : "Sin CAE — emitir primero"}
+                      >
                         <Download className="w-4 h-4" />
                       </Button>
                     </TableCell>
@@ -419,6 +444,16 @@ export default function ComprobantesTab() {
         onSuccess={() => {
           refetch();
           setCreateModalOpen(false);
+        }}
+      />
+
+      {/* Modal Detalle Comprobante */}
+      <FacturaDetailModal
+        facturaId={selectedFacturaId}
+        open={detailModalOpen}
+        onOpenChange={(open) => {
+          setDetailModalOpen(open);
+          if (!open) setSelectedFacturaId(null);
         }}
       />
     </div>

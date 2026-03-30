@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: AFIP Real
 status: completed
-stopped_at: Completed 15-02-PLAN.md
-last_updated: "2026-03-30T21:41:30.974Z"
-last_activity: "2026-03-30 — Phase 15 Plan 02 complete: GET facturas/:id, GET facturas/:id/pdf, PATCH facturas/:id/tipo-cambio wired in FinanzasController — 50 finanzas tests green, QR-02 and QR-03 backend contracts delivered"
+stopped_at: Completed 15-03-PLAN.md
+last_updated: "2026-03-30T21:48:00.561Z"
+last_activity: "2026-03-30 — Phase 15 Plan 03 complete: FacturaDetailModal with CAE/QR/PDF/USD tipoCambio, useFactura + useUpdateTipoCambio hooks, ComprobantesTab row-click + Download wired — zero TypeScript errors, QR-02 and QR-03 frontend delivered"
 progress:
   total_phases: 5
   completed_phases: 3
   total_plans: 14
-  completed_plans: 12
-  percent: 82
+  completed_plans: 13
+  percent: 96
 ---
 
 # Project State
@@ -27,12 +27,12 @@ See: .planning/PROJECT.md (updated 2026-03-16)
 
 ```
 Phase:    15 — QR AFIP + PDF + Frontend (in progress)
-Plan:     Plan 02 complete — GET facturas/:id + GET facturas/:id/pdf + PATCH facturas/:id/tipo-cambio
-Status:   Phase 15 Plans 01-02 done; Plans 03, 04 remaining
-Progress: [████████░░] 82% of v1.2 plans (Phase 12 done, Phase 13 done, Phase 14 done; Phase 15 Plans 01-02 done, Plans 03-04 + Phase 16 remaining)
+Plan:     Plan 03 complete — FacturaDetailModal + useFactura hook + ComprobantesTab wired
+Status:   Phase 15 Plans 01-03 done; Plan 04 remaining
+Progress: [██████████] 96% of v1.2 plans (Phase 12 done, Phase 13 done, Phase 14 done; Phase 15 Plans 01-03 done, Plan 04 + Phase 16 remaining)
 ```
 
-Last activity: 2026-03-30 — Phase 15 Plan 02 complete: GET facturas/:id, GET facturas/:id/pdf, PATCH facturas/:id/tipo-cambio wired in FinanzasController — 50 finanzas tests green, QR-02 and QR-03 backend contracts delivered
+Last activity: 2026-03-30 — Phase 15 Plan 03 complete: FacturaDetailModal with CAE/QR/PDF/USD tipoCambio, useFactura + useUpdateTipoCambio hooks, ComprobantesTab row-click + Download wired — zero TypeScript errors, QR-02 and QR-03 frontend delivered
 
 ## Milestone Summary
 
@@ -100,6 +100,8 @@ Last activity: 2026-03-30 — Phase 15 Plan 02 complete: GET facturas/:id, GET f
 - [Plan 15-01] FacturaPdfService NOT exported from FinanzasModule — internal use only; Plan 02 injects it into FinanzasService
 - [Plan 15-02] GET facturas/:id/pdf placed before POST facturas/:id/anular — NestJS route ordering: literal segments before param routes to avoid shadowing
 - [Plan 15-02] generateFacturaPdf calls getFacturaById() then second findUniqueOrThrow for profesional/configClinica — FacturaDetailDto does not carry config data, second query needed for PDF FacturaPdfData building
+- [Plan 15-03] downloadFacturaPdf defined independently in FacturaDetailModal and ComprobantesTab — small duplication preferred over coupling sibling components
+- [Plan 15-03] formatAfipDate helper converts 'YYYYMMDD' string to 'DD/MM/YYYY' via string slicing — no date library needed, avoids timezone issues with AFIP date strings
 
 ### Research Flags (for plan-phase to act on)
 - **Phase 13 y 14:** Verificar URLs actuales WSAA y WSFEv1 bajo dominio arca.gob.ar al momento de implementar. Almacenar en env config: AFIP_WSAA_URL_HOMO, AFIP_WSAA_URL_PROD, AFIP_WSFEV1_URL_HOMO, AFIP_WSFEV1_URL_PROD
@@ -126,10 +128,10 @@ Last activity: 2026-03-30 — Phase 15 Plan 02 complete: GET facturas/:id, GET f
 
 ## Session Continuity
 
-Next action: Execute Phase 15 Plan 03 — Frontend comprobante detail page consuming GET /finanzas/facturas/:id and GET /finanzas/facturas/:id/pdf.
-Stopped at: Completed 15-02-PLAN.md
+Next action: Execute Phase 15 Plan 04 — final plan of Phase 15 (if exists), or proceed to Phase 16 CAEA Contingency Mode.
+Stopped at: Completed 15-03-PLAN.md
 
-Files to read at session start for Phase 15 Plan 03:
-- `.planning/phases/15-qr-afip-pdf-frontend-comprobantes/15-02-SUMMARY.md` — backend endpoint contracts
-- `backend/src/modules/finanzas/finanzas.controller.ts` — final route shapes
-- `frontend/src/hooks/` — existing TanStack Query hooks pattern to follow
+Files to read at session start for Phase 15 Plan 04:
+- `.planning/phases/15-qr-afip-pdf-frontend-comprobantes/15-03-SUMMARY.md` — frontend contracts delivered
+- `frontend/src/app/dashboard/finanzas/facturacion/components/ComprobantesTab.tsx` — current state
+- `frontend/src/types/finanzas.ts` — extended interfaces

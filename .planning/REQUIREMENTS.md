@@ -19,8 +19,8 @@
 ### Emisión CAE Real
 
 - [x] **CAE-01**: Sistema obtiene Access Ticket de WSAA con firma CMS in-process via `node-forge`, cacheado en Redis (clave `afip_ta:{profesionalId}:{cuit}:{service}`, TTL = expiry menos 5 min, ~11hs), con `async-mutex` por CUIT para evitar renovaciones concurrentes
-- [x] **CAE-02**: Sistema emite comprobante electrónico real via `FECAESolicitar` con `pg_advisory_xact_lock(hashtext(cuit:ptoVta:cbteTipo))` dentro de `prisma.$transaction({ timeout: 45000 })`, y almacena CAE + nroComprobante en `Factura`
-- [x] **CAE-03**: Facturador ve errores de AFIP traducidos a mensajes legibles en español en un modal (no toasts genéricos) — mínimo error 10242, resultado='R', cert inválido
+- [ ] **CAE-02**: Sistema emite comprobante electrónico real via `FECAESolicitar` con `pg_advisory_xact_lock(hashtext(cuit:ptoVta:cbteTipo))` dentro de `prisma.$transaction({ timeout: 45000 })`, y almacena CAE + nroComprobante en `Factura`
+- [ ] **CAE-03**: Facturador ve errores de AFIP traducidos a mensajes legibles en español en un modal (no toasts genéricos) — mínimo error 10242, resultado='R', cert inválido
 - [x] **CAE-04**: Jobs de emisión clasifican errores de negocio AFIP (10242, resultado=R) como permanentes (DLQ inmediato); errores transitorios (timeout, HTTP 5xx) usan backoff exponencial
 
 ### Output QR y PDF
@@ -65,8 +65,8 @@
 | CERT-03 | Phase 12 | Complete |
 | CERT-04 | Phase 12 | Complete |
 | CAE-01 | Phase 13 | Complete |
-| CAE-02 | Phase 14 | Complete |
-| CAE-03 | Phase 14 | Complete |
+| CAE-02 | Phase 17 | Pending |
+| CAE-03 | Phase 17 | Pending |
 | CAE-04 | Phase 14 | Complete |
 | QR-01 | Phase 15 | Complete |
 | QR-02 | Phase 15 | Complete |
@@ -80,6 +80,7 @@
 - v1.2 requirements: 16 total
 - Mapped to phases: 16
 - Unmapped: 0 ✓
+- Pending (gap closure): CAE-02, CAE-03 → Phase 17
 
 ---
 *Requirements defined: 2026-03-16*

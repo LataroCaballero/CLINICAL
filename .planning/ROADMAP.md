@@ -44,6 +44,7 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
 - [x] **Phase 14: Emisión CAE Real (WSFEv1)** — FECAESolicitar con advisory lock, clasificación de errores y swap del DI token (completed 2026-03-21)
 - [x] **Phase 15: QR AFIP + PDF + Frontend de Comprobantes** — QR embebido en PDF, display de CAE en UI, cotización BNA para USD (completed 2026-03-30)
 - [x] **Phase 16: CAEA Contingency Mode** — Pre-fetch, fallback automático, FECAEAInformar con 72 reintentos y alertas de deadline (completed 2026-03-30)
+- [ ] **Phase 17: CAE Emission UX** — Hook `useEmitirFactura`, wiring del botón "Emitir Comprobante", polling de estado, y modal de errores AFIP en español (gap closure: CAE-02, CAE-03)
 
 ## Phase Details
 
@@ -126,6 +127,19 @@ Plans:
 **Plans**: TBD
 **Research flag**: Verificar RG 5782/2025 en Boletín Oficial antes de comenzar implementacion — confirmar (a) fecha efectiva junio 2026, (b) definicion del umbral 5% de volumen, (c) ventana de 8 dias calendario; si algún parámetro difiere de fuentes comunitarias, actualizar diseño de CaeaService
 
+### Phase 17: CAE Emission UX
+**Goal**: El Facturador puede disparar la emisión de comprobantes desde la UI, ver el estado actualizado en tiempo real, y recibir mensajes de error AFIP legibles en español en un modal cuando la emisión es rechazada
+**Depends on**: Phase 14 (POST /finanzas/facturas/:id/emitir debe existir), Phase 15 (FacturaDetailModal debe existir)
+**Requirements**: CAE-02, CAE-03
+**Gap Closure:** Cierra gaps de audit v1.2 — MISSING-01, MISSING-02, FLOW-BROKEN-01, FLOW-BROKEN-02; unblocks CAEA-02 reachability
+**Success Criteria** (what must be TRUE):
+  1. El Facturador hace click en "Emitir Comprobante" y el botón llama POST /finanzas/facturas/:id/emitir; la factura queda visible en estado EMISION_PENDIENTE inmediatamente
+  2. Cuando el job BullMQ completa (EMITIDA o fallo), la UI refleja el nuevo estado sin recargar la página (polling o invalidación de query)
+  3. Cuando AFIP rechaza con error de negocio (ej. 10242), el Facturador ve un modal con el `spanishMessage` en español — no un toast genérico
+  4. El modal de error cubre al menos: resultado=R (error 10242), cert inválido, y cualquier `AfipBusinessError.spanishMessage` presente en el job `failedReason`
+  5. El hook `useGenerarFacturaPDF` (stub muerto) es removido de `useFinanzas.ts`
+**Plans**: TBD
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -148,6 +162,7 @@ Plans:
 | 14. Emisión CAE Real (WSFEv1) | 4/4 | Complete    | 2026-03-21 | - |
 | 15. QR AFIP + PDF + Frontend | v1.2 | Complete    | 2026-03-30 | 2026-03-30 |
 | 16. CAEA Contingency Mode | 3/3 | Complete    | 2026-03-30 | - |
+| 17. CAE Emission UX | v1.2 | 0/TBD | Pending | - |
 
 ---
 *Roadmap initialized: 2026-02-23 | v1.0 shipped: 2026-03-03 | v1.1 shipped: 2026-03-16 | v1.2 started: 2026-03-16*

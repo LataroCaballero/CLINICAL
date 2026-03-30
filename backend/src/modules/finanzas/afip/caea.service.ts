@@ -44,6 +44,55 @@ export class CaeaService {
     periodo: string,
     orden: 1 | 2,
   ): Promise<void> {
+    // Stub bypass for local development / CI — skips SOAP call and upserts deterministic data.
+    if (process.env.USE_AFIP_STUB === 'true') {
+      const cfg = await this.prisma.configuracionAFIP.findUniqueOrThrow({
+        where: { profesionalId },
+        select: { cuit: true },
+      });
+      // Compute bimensual period dates from periodo (YYYYMM) + orden (1=first half, 2=second half)
+      const year = parseInt(periodo.slice(0, 4), 10);
+      const month = parseInt(periodo.slice(4, 6), 10);
+      const fchVigDesde = orden === 1
+        ? `${periodo}01`
+        : `${periodo}16`;
+      const lastDay = new Date(year, month, 0).getDate(); // last day of month
+      const fchVigHasta = orden === 1
+        ? `${periodo}15`
+        : `${periodo}${lastDay}`;
+      // fchTopeInf = fchVigHasta + 8 calendar days
+      const topeDate = new Date(year, month - 1, parseInt(fchVigHasta.slice(6, 8), 10) + 8);
+      const fchTopeInf =
+        `${topeDate.getFullYear()}` +
+        `${String(topeDate.getMonth() + 1).padStart(2, '0')}` +
+        `${String(topeDate.getDate()).padStart(2, '0')}`;
+
+      await this.prisma.caeaVigente.upsert({
+        where: { profesionalId_periodo_orden: { profesionalId, periodo, orden: Number(orden) } },
+        create: {
+          profesionalId,
+          cuit: cfg.cuit,
+          caea: '00000000000001',
+          periodo,
+          orden: Number(orden),
+          fchVigDesde,
+          fchVigHasta,
+          fchTopeInf,
+        },
+        update: {
+          caea: '00000000000001',
+          fchVigDesde,
+          fchVigHasta,
+          fchTopeInf,
+        },
+      });
+
+      this.logger.log(
+        `[STUB] CAEA upserted for profesional ${profesionalId} periodo ${periodo} orden ${orden}`,
+      );
+      return;
+    }
+
     const { token, sign } = await this.wsaaService.getTicket(profesionalId, 'wsfe');
 
     const cfg = await this.prisma.configuracionAFIP.findUniqueOrThrow({

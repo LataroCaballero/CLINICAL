@@ -58,3 +58,15 @@ export class AfipTransientError extends Error {
     this.name = 'AfipTransientError';
   }
 }
+
+/**
+ * Thrown when ARCA/AFIP endpoints are completely unreachable (connection refused, DNS failure,
+ * repeated timeouts indicating service outage). Subclass of AfipTransientError so existing
+ * BullMQ retry logic still applies, but specifically signals CAEA fallback should be triggered.
+ */
+export class AfipUnavailableError extends AfipTransientError {
+  constructor(message: string) {
+    super(message);
+    this.name = 'AfipUnavailableError';
+  }
+}

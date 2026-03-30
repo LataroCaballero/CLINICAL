@@ -16,6 +16,7 @@ import {
   PresupuestosFilters,
   CreatePresupuestoInput,
   Factura,
+  FacturaDetail,
   FacturasFilters,
   CreateFacturaInput,
   PracticaRealizada,
@@ -356,6 +357,30 @@ export function useGenerarFacturaPDF() {
       // TODO: Implement PDF generation when backend endpoint is ready
       console.log(`Generating PDF for factura ${facturaId}`);
       throw new Error("PDF generation not implemented yet");
+    },
+  });
+}
+
+export function useFactura(id: string | null) {
+  return useQuery({
+    queryKey: ['finanzas', 'facturas', id],
+    enabled: !!id,
+    queryFn: async () => {
+      const { data } = await api.get(`/finanzas/facturas/${id}`);
+      return data as FacturaDetail;
+    },
+  });
+}
+
+export function useUpdateTipoCambio() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, tipoCambio }: { id: string; tipoCambio: number }) => {
+      const { data } = await api.patch(`/finanzas/facturas/${id}/tipo-cambio`, { tipoCambio });
+      return data;
+    },
+    onSuccess: (_, { id }) => {
+      qc.invalidateQueries({ queryKey: ['finanzas', 'facturas', id] });
     },
   });
 }

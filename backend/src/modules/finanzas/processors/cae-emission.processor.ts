@@ -4,6 +4,7 @@ import { Job, UnrecoverableError } from 'bullmq';
 import { AFIP_SERVICE } from '../afip/afip.constants';
 import { AfipService } from '../afip/afip.interfaces';
 import { AfipBusinessError } from '../afip/afip.errors';
+import { CaeaService } from '../afip/caea.service';
 
 export const CAE_QUEUE = 'cae-emission';
 
@@ -19,6 +20,7 @@ export class CaeEmissionProcessor extends WorkerHost {
 
   constructor(
     @Inject(AFIP_SERVICE) private readonly afipService: AfipService,
+    private readonly caeaService: CaeaService,
   ) {
     super();
   }
@@ -56,7 +58,14 @@ export class CaeEmissionProcessor extends WorkerHost {
   }
 
   @OnWorkerEvent('failed')
-  onFailed(job: Job): void {
+  async onFailed(job: Job<CaeJobData>): Promise<void> {
     this.logger.error(`CAE job ${job.id} failed: ${job.failedReason}`);
+    const maxAttempts = job.opts?.attempts ?? 3;
+    if (job.attemptsMade >= maxAttempts) {
+      this.logger.warn(
+        `Max retries reached for facturaId ${job.data.facturaId} — attempting CAEA fallback`,
+      );
+      await this.caeaService.asignarCaeaFallback(job.data.facturaId, job.data.profesionalId);
+    }
   }
 }

@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: AFIP Real
-status: completed
-stopped_at: Completed 16-01-PLAN.md
-last_updated: "2026-03-30T22:36:48.685Z"
-last_activity: "2026-03-30 — Phase 16 Plan 01 complete: CaeaService core with FECAEASolicitar SOAP + asignarCaeaFallback, AfipUnavailableError, period helpers, cbteFchHsGen migration applied. CAEA-01, CAEA-02. 15 tests green."
+status: executing
+stopped_at: Completed 16-02-PLAN.md
+last_updated: "2026-03-30T22:43:53.757Z"
+last_activity: "2026-03-30 — Phase 16 Plan 02 complete: CaeaPrefetchScheduler bimensual cron + deadline email alert, CaeEmissionProcessor onFailed CAEA fallback. CAEA-01, CAEA-02, CAEA-04. 10 tests green."
 progress:
   total_phases: 5
   completed_phases: 4
   total_plans: 17
-  completed_plans: 15
-  percent: 100
+  completed_plans: 16
+  percent: 96
 ---
 
 # Project State
@@ -105,6 +105,9 @@ Last activity: 2026-03-30 — Phase 16 Plan 01 complete: CaeaService core with F
 - [Plan 16-01] caea.helpers.ts is pure module with no NestJS/Prisma deps — importable in unit tests without DI mocking
 - [Plan 16-01] CaeaService.informarFactura is a stub shell in Plan 01 (throws 'Not implemented') — Plan 03 provides full implementation
 - [Plan 15-03] formatAfipDate helper converts 'YYYYMMDD' string to 'DD/MM/YYYY' via string slicing — no date library needed, avoids timezone issues with AFIP date strings
+- [Plan 16-02] CaeaPrefetchScheduler.checkDeadlines() called inline from prefetchAllTenants() — no separate daily cron needed (same bimensual run)
+- [Plan 16-02] onFailed becomes async in CaeEmissionProcessor; asignarCaeaFallback errors propagate visibly in logs without being swallowed
+- [Plan 16-02] maxAttempts defaults to 3 in onFailed when job.opts.attempts is undefined — consistent with FinanzasModule BullMQ queue config
 
 ### Research Flags (for plan-phase to act on)
 - **Phase 13 y 14:** Verificar URLs actuales WSAA y WSFEv1 bajo dominio arca.gob.ar al momento de implementar. Almacenar en env config: AFIP_WSAA_URL_HOMO, AFIP_WSAA_URL_PROD, AFIP_WSFEV1_URL_HOMO, AFIP_WSFEV1_URL_PROD
@@ -131,11 +134,10 @@ Last activity: 2026-03-30 — Phase 16 Plan 01 complete: CaeaService core with F
 
 ## Session Continuity
 
-Next action: Execute Phase 16 Plan 02 — CAEA scheduler + BullMQ fallback processor. CaeaService (Plan 01) is ready.
-Stopped at: Completed 16-01-PLAN.md
+Next action: Execute Phase 16 Plan 03 — CaeaService.informarFactura full implementation (FECAEARegInformativo) + CAEA_INFORMADA estado transition.
+Stopped at: Completed 16-02-PLAN.md
 
-Files to read at session start for Phase 16 Plan 02:
-- `.planning/phases/16-caea-contingency-mode/16-01-SUMMARY.md` — CaeaService ready (Plan 01 complete)
-- `.planning/phases/16-caea-contingency-mode/16-02-PLAN.md` — scheduler + fallback processor plan
-- `backend/src/modules/finanzas/afip/caea.service.ts` — CaeaService interface
-- `backend/src/modules/finanzas/processors/` — existing BullMQ processor pattern
+Files to read at session start for Phase 16 Plan 03:
+- `.planning/phases/16-caea-contingency-mode/16-02-SUMMARY.md` — scheduler + fallback processor complete
+- `.planning/phases/16-caea-contingency-mode/16-03-PLAN.md` — informarFactura plan
+- `backend/src/modules/finanzas/afip/caea.service.ts` — stub informarFactura to implement

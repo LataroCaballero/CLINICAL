@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: AFIP Real
-status: complete
+status: completed
 stopped_at: Completed 16-03-PLAN.md
-last_updated: "2026-03-30T22:51:00.000Z"
+last_updated: "2026-03-30T22:56:14.283Z"
 last_activity: "2026-03-30 — Phase 16 Plan 03 complete: CaeaService.informarFactura FECAEARegInformativo SOAP + CaeaInformarProcessor (72 retries, fixed 160min), FinanzasModule wiring, USE_AFIP_STUB bypass. CAEA-03. 25 CAEA tests green."
 progress:
   total_phases: 5

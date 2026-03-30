@@ -42,7 +42,7 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
 - [x] **Phase 12: Schema AFIP Extendido + Gestión de Certificados** — DB migration con modelos AFIP y UI completa de configuración de certificados por tenant (completed 2026-03-16)
 - [x] **Phase 13: WSAA Token Service** — Access tickets reales con firma CMS in-process, cache Redis y mutex por CUIT (completed 2026-03-20)
 - [x] **Phase 14: Emisión CAE Real (WSFEv1)** — FECAESolicitar con advisory lock, clasificación de errores y swap del DI token (completed 2026-03-21)
-- [ ] **Phase 15: QR AFIP + PDF + Frontend de Comprobantes** — QR embebido en PDF, display de CAE en UI, cotización BNA para USD
+- [x] **Phase 15: QR AFIP + PDF + Frontend de Comprobantes** — QR embebido en PDF, display de CAE en UI, cotización BNA para USD (completed 2026-03-30)
 - [ ] **Phase 16: CAEA Contingency Mode** — Pre-fetch, fallback automático, FECAEAInformar con 72 reintentos y alertas de deadline
 
 ## Phase Details
@@ -108,10 +108,10 @@ Plans:
   3. Para facturas en USD, el Facturador puede ingresar manualmente la cotización BNA del día; la pantalla muestra un link directo a bna.com.ar para consultar el tipo de cambio
 **Plans**: 4 plans
 Plans:
-- [ ] 15-01-PLAN.md — qrcode install + FacturaPdfService + buildAfipQrUrl + AfipRealService qrData extension (QR-01)
-- [ ] 15-02-PLAN.md — Backend API: GET facturas/:id + GET facturas/:id/pdf + PATCH facturas/:id/tipo-cambio (QR-01, QR-02, QR-03)
-- [ ] 15-03-PLAN.md — Frontend: types + hooks + FacturaDetailModal + ComprobantesTab wiring (QR-02, QR-03)
-- [ ] 15-04-PLAN.md — Human verify: PDF QR scan + CAE display + USD tipoCambio flow (QR-01, QR-02, QR-03)
+- [x] 15-01-PLAN.md — qrcode install + FacturaPdfService + buildAfipQrUrl + AfipRealService qrData extension (QR-01)
+- [x] 15-02-PLAN.md — Backend API: GET facturas/:id + GET facturas/:id/pdf + PATCH facturas/:id/tipo-cambio (QR-01, QR-02, QR-03)
+- [x] 15-03-PLAN.md — Frontend: types + hooks + FacturaDetailModal + ComprobantesTab wiring (QR-02, QR-03)
+- [x] 15-04-PLAN.md — Human verify: PDF QR scan + CAE display + USD tipoCambio flow (QR-01, QR-02, QR-03) — APPROVED 2026-03-30
 **Research flag**: None — qrcode 1.5.4 API estable; integración PDFKit ya existe para presupuestos; patrón estándar
 
 ### Phase 16: CAEA Contingency Mode
@@ -146,7 +146,7 @@ Plans:
 | 12. Schema AFIP Extendido + Certificados | v1.2 | Complete    | 2026-03-16 | 2026-03-16 |
 | 13. WSAA Token Service | 2/2 | Complete    | 2026-03-20 | - |
 | 14. Emisión CAE Real (WSFEv1) | 4/4 | Complete    | 2026-03-21 | - |
-| 15. QR AFIP + PDF + Frontend | 3/4 | In Progress|  | - |
+| 15. QR AFIP + PDF + Frontend | v1.2 | 4/4 | Complete | 2026-03-30 |
 | 16. CAEA Contingency Mode | v1.2 | 0/? | Not started | - |
 
 ---

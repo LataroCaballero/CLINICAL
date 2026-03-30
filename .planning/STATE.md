@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: AFIP Real
 status: completed
-stopped_at: Completed 15-03-PLAN.md
-last_updated: "2026-03-30T21:48:00.561Z"
-last_activity: "2026-03-30 — Phase 15 Plan 03 complete: FacturaDetailModal with CAE/QR/PDF/USD tipoCambio, useFactura + useUpdateTipoCambio hooks, ComprobantesTab row-click + Download wired — zero TypeScript errors, QR-02 and QR-03 frontend delivered"
+stopped_at: Completed 15-04-PLAN.md
+last_updated: "2026-03-30T22:00:00.000Z"
+last_activity: "2026-03-30 — Phase 15 Plan 04 complete: human verification approved — all 5 test scenarios passed (QR PDF scan, CAE modal display, estado badges, USD tipoCambio persistence, non-emitted guard) — QR-01, QR-02, QR-03 confirmed end-to-end"
 progress:
   total_phases: 5
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 14
-  completed_plans: 13
-  percent: 96
+  completed_plans: 14
+  percent: 100
 ---
 
 # Project State
@@ -26,13 +26,13 @@ See: .planning/PROJECT.md (updated 2026-03-16)
 ## Current Position
 
 ```
-Phase:    15 — QR AFIP + PDF + Frontend (in progress)
-Plan:     Plan 03 complete — FacturaDetailModal + useFactura hook + ComprobantesTab wired
-Status:   Phase 15 Plans 01-03 done; Plan 04 remaining
-Progress: [██████████] 96% of v1.2 plans (Phase 12 done, Phase 13 done, Phase 14 done; Phase 15 Plans 01-03 done, Plan 04 + Phase 16 remaining)
+Phase:    15 — QR AFIP + PDF + Frontend (COMPLETE)
+Plan:     All 4 plans complete — Plan 04 human verification approved 2026-03-30
+Status:   Phase 15 COMPLETE (QR-01, QR-02, QR-03 confirmed); Phase 16 CAEA Contingency Mode is next
+Progress: [██████████] 100% of v1.2 Phase 15 plans (Phase 12 done, Phase 13 done, Phase 14 done, Phase 15 done; Phase 16 remaining)
 ```
 
-Last activity: 2026-03-30 — Phase 15 Plan 03 complete: FacturaDetailModal with CAE/QR/PDF/USD tipoCambio, useFactura + useUpdateTipoCambio hooks, ComprobantesTab row-click + Download wired — zero TypeScript errors, QR-02 and QR-03 frontend delivered
+Last activity: 2026-03-30 — Phase 15 Plan 04 complete: human verification approved — all 5 test scenarios passed (QR PDF scan, CAE modal display, estado badges, USD tipoCambio persistence, non-emitted guard) — QR-01, QR-02, QR-03 confirmed end-to-end. Phase 15 COMPLETE.
 
 ## Milestone Summary
 
@@ -128,10 +128,11 @@ Last activity: 2026-03-30 — Phase 15 Plan 03 complete: FacturaDetailModal with
 
 ## Session Continuity
 
-Next action: Execute Phase 15 Plan 04 — final plan of Phase 15 (if exists), or proceed to Phase 16 CAEA Contingency Mode.
-Stopped at: Completed 15-03-PLAN.md
+Next action: Execute Phase 16 — CAEA Contingency Mode. Pre-read RG 5782/2025 research flag before starting.
+Stopped at: Completed 15-04-PLAN.md (Phase 15 fully complete)
 
-Files to read at session start for Phase 15 Plan 04:
-- `.planning/phases/15-qr-afip-pdf-frontend-comprobantes/15-03-SUMMARY.md` — frontend contracts delivered
-- `frontend/src/app/dashboard/finanzas/facturacion/components/ComprobantesTab.tsx` — current state
-- `frontend/src/types/finanzas.ts` — extended interfaces
+Files to read at session start for Phase 16:
+- `.planning/phases/15-qr-afip-pdf-frontend-comprobantes/15-04-SUMMARY.md` — Phase 15 completion confirmed
+- `.planning/ROADMAP.md` — Phase 16 goal, requirements CAEA-01..04, success criteria
+- `backend/src/modules/finanzas/` — current finanzas module structure
+- `backend/src/prisma/schema.prisma` — CaeaVigente model + CAEA_PENDIENTE_INFORMAR enum value

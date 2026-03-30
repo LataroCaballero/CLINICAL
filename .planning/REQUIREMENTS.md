@@ -26,8 +26,8 @@
 ### Output QR y PDF
 
 - [x] **QR-01**: PDF de factura incluye código QR AFIP (`https://www.afip.gob.ar/fe/qr/?p=` + Base64 JSON con 13 campos RG 5616/2024) embebido via `qrcode` 1.5.4 + PDFKit
-- [ ] **QR-02**: Facturador ve número de CAE y código QR renderizado en el detalle de la factura emitida
-- [ ] **QR-03**: Facturador puede ingresar cotización BNA manualmente para facturas en USD, con link directo a bna.com.ar
+- [x] **QR-02**: Facturador ve número de CAE y código QR renderizado en el detalle de la factura emitida
+- [x] **QR-03**: Facturador puede ingresar cotización BNA manualmente para facturas en USD, con link directo a bna.com.ar
 
 ### CAEA Contingency Mode
 
@@ -69,8 +69,8 @@
 | CAE-03 | Phase 14 | Complete |
 | CAE-04 | Phase 14 | Complete |
 | QR-01 | Phase 15 | Complete |
-| QR-02 | Phase 15 | Pending |
-| QR-03 | Phase 15 | Pending |
+| QR-02 | Phase 15 | Complete |
+| QR-03 | Phase 15 | Complete |
 | CAEA-01 | Phase 16 | Pending |
 | CAEA-02 | Phase 16 | Pending |
 | CAEA-03 | Phase 16 | Pending |

@@ -267,7 +267,10 @@ export default function FacturaDetailModal({
           </div>
         )}
 
-        {factura?.afipError && factura.estado === EstadoFactura.EMISION_PENDIENTE && (
+        {factura?.afipError && (
+          factura.estado === EstadoFactura.EMISION_PENDIENTE ||
+          factura.estado === EstadoFactura.CAEA_PENDIENTE_INFORMAR
+        ) && (
           <>
             <Separator />
             <div className="p-3 bg-red-50 border border-red-200 rounded-lg mx-6 mb-2">

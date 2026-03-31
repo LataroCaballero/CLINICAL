@@ -433,7 +433,7 @@ export default function LiquidacionesPage() {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => {
-                                  setSelectedFacturaId((os as { facturaId?: string | null }).facturaId ?? null);
+                                  setSelectedFacturaId(os.facturaId);
                                   setDetailModalOpen(true);
                                 }}
                               >

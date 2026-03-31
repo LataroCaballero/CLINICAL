@@ -296,6 +296,7 @@ export interface CierreMensualResumen {
     total: number;
     facturado: number;
     pendiente: number;
+    facturaId: string | null;
   }[];
 }
 

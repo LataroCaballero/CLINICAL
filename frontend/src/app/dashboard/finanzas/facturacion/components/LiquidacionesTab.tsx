@@ -574,7 +574,7 @@ export default function LiquidacionesTab() {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => {
-                                  setSelectedFacturaId((os as { facturaId?: string | null }).facturaId ?? null);
+                                  setSelectedFacturaId(os.facturaId);
                                   setDetailModalOpen(true);
                                 }}
                               >

@@ -59,7 +59,10 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
   1. Cuando AFIP rechaza con error de negocio (UnrecoverableError / error 10242), `afipError` se persiste en DB incluso si `job.attemptsMade < maxAttempts` — el Facturador ve el panel de error rojo en el modal
   2. Cuando se agotan los 5 reintentos transitorios y la factura cae en CAEA_PENDIENTE_INFORMAR, el panel de error sigue visible en FacturaDetailModal (condición expandida incluye ese estado)
   3. El test unitario del procesador confirma que `prisma.factura.update({ afipError })` se llama para la ruta UnrecoverableError
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 18-01-PLAN.md — TDD RED: Add Test 9 (UnrecoverableError afipError-persist path) to processor spec
+- [ ] 18-02-PLAN.md — BUG-1 fix (move prisma.update outside guard) + BUG-2 fix (expand modal condition) + human verify
 
 ### Phase 19: getCierreMensual facturaId Extension
 **Goal**: El botón "Emitir Comprobante" en LiquidacionesTab y liquidaciones/page puede abrir FacturaDetailModal con el `facturaId` real en lugar de null

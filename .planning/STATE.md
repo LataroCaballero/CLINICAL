@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: AFIP Real
 status: in-progress
-stopped_at: Completed 18-01-PLAN.md — Test 9 RED state confirmed. Plan 02 applies BUG-1 fix.
-last_updated: "2026-03-31T12:09:45Z"
-last_activity: "2026-03-31 — Phase 18 Plan 01 complete: Test 9 added (RED) to cae-emission.processor.spec.ts. 1 test failing (expected), 6 passing. TDD RED state established for BUG-1 fix in Plan 02."
+stopped_at: "Completed 18-02 Tasks 1+2. Awaiting human-verify checkpoint (Task 3: Scenarios A/B/C)."
+last_updated: "2026-03-31T12:18:00Z"
+last_activity: "2026-03-31 — Phase 18 Plan 02 Tasks 1+2 complete: BUG-1 fix (prisma.factura.update unconditional), BUG-2 fix (FacturaDetailModal CAEA_PENDIENTE_INFORMAR), Test 9 GREEN. Awaiting human-verify checkpoint."
 progress:
   total_phases: 8
-  completed_phases: 6
+  completed_phases: 7
   total_plans: 22
   completed_plans: 21
-  percent: 97
+  percent: 100
 ---
 
 # Project State
@@ -27,12 +27,12 @@ See: .planning/PROJECT.md (updated 2026-03-16)
 
 ```
 Phase:    18 — CAE-03 Error Display Fixes (In Progress)
-Plan:     18-01 complete (TDD RED). Plan 02 next: BUG-1 fix + BUG-2 fix.
-Status:   1 of 2 plans complete. Test 9 RED established, awaiting GREEN in Plan 02.
-Progress: [██████████] 97% complete
+Plan:     18-02 Tasks 1+2 complete. Awaiting human-verify checkpoint (Task 3: Scenarios A/B/C).
+Status:   2 of 2 auto-tasks complete. BUG-1 + BUG-2 fixed. Test 9 GREEN. Human verify pending.
+Progress: [██████████] 100% complete
 ```
 
-Last activity: 2026-03-31 — Phase 18 Plan 01 complete: Test 9 added (RED) to cae-emission.processor.spec.ts. 1 test failing (expected), 6 passing. TDD RED state established for BUG-1 fix in Plan 02.
+Last activity: 2026-03-31 — Phase 18 Plan 02 Tasks 1+2 complete: BUG-1 fix (prisma.factura.update unconditional), BUG-2 fix (FacturaDetailModal CAEA_PENDIENTE_INFORMAR), Test 9 GREEN. Awaiting human-verify checkpoint.
 
 ## Milestone Summary
 
@@ -119,6 +119,8 @@ Last activity: 2026-03-31 — Phase 18 Plan 01 complete: Test 9 added (RED) to c
 - [Plan 17-03] refetchInterval callback pattern in useFactura: returns 3000 when estado=EMISION_PENDIENTE, false otherwise — stops polling automatically when job resolves, no custom loop needed
 - [Plan 17-03] os.facturaId unavailable from getCierreMensual endpoint — button wired to open modal with null facturaId via forward-compatible type cast; backend extension of getCierreMensual to include facturaId is deferred tech debt
 - [Plan 18-01] Test 9 uses attemptsMade: 1, opts.attempts: 5 to simulate UnrecoverableError BullMQ lifecycle — onFailed fires with attemptsMade=1 for immediate failure, not maxAttempts; fix (Plan 02) moves prisma.factura.update outside the guard unconditionally
+- [Plan 18-02] prisma.factura.update moved before if (attemptsMade >= maxAttempts) guard — unconditional write on every onFailed invocation covers both UnrecoverableError (attemptsMade=1) and transient exhaustion paths
+- [Plan 18-02] Error panel condition: EMISION_PENDIENTE || CAEA_PENDIENTE_INFORMAR — EMITIDA/ANULADA excluded to prevent stale error display on terminal-state facturas
 
 ### Research Flags (for plan-phase to act on)
 - **Phase 13 y 14:** Verificar URLs actuales WSAA y WSFEv1 bajo dominio arca.gob.ar al momento de implementar. Almacenar en env config: AFIP_WSAA_URL_HOMO, AFIP_WSAA_URL_PROD, AFIP_WSFEV1_URL_HOMO, AFIP_WSFEV1_URL_PROD
@@ -145,5 +147,5 @@ Last activity: 2026-03-31 — Phase 18 Plan 01 complete: Test 9 added (RED) to c
 
 ## Session Continuity
 
-Next action: Execute Phase 18 Plan 02 — apply BUG-1 fix (move prisma.factura.update outside guard in cae-emission.processor.ts), apply BUG-2 fix (expand modal condition to include CAEA_PENDIENTE_INFORMAR in FacturaDetailModal.tsx), confirm Test 9 GREEN + all existing tests pass.
-Stopped at: Completed 18-01-PLAN.md — Test 9 RED state confirmed. Plan 02 applies BUG-1 fix.
+Next action: Human verifies Task 3 checkpoint — Scenario A (EMISION_PENDIENTE + afipError shows red panel), Scenario B (CAEA_PENDIENTE_INFORMAR + afipError shows red panel), Scenario C (EMITIDA + stale afipError does NOT show panel). Type "approved" to close CAE-03.
+Stopped at: Completed 18-02 Tasks 1+2. Awaiting human-verify checkpoint (Task 3: Scenarios A/B/C).

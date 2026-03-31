@@ -73,7 +73,10 @@ Plans:
   1. El endpoint/service `getCierreMensual` retorna `facturaId: string | null` en `detalleObrasSociales`
   2. `LiquidacionesTab.tsx` y `liquidaciones/page.tsx` pasan el `facturaId` real a FacturaDetailModal (no null cast)
   3. Cuando hay una factura existente, el modal carga los datos completos de la factura y permite emitir
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 19-01-PLAN.md — TDD RED: Add getCierreMensual describe block with 3 failing unit tests
+- [ ] 19-02-PLAN.md — GREEN: backend service extension + TypeScript type update + cast removal + human verify
 
 ### Phase 12: Schema AFIP Extendido + Gestión de Certificados
 **Goal**: El Admin puede configurar el certificado digital y punto de venta por tenant, y el sistema almacena toda la infraestructura de datos AFIP lista para emisión real

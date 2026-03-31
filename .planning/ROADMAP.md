@@ -194,7 +194,7 @@ Plans:
 | 15. QR AFIP + PDF + Frontend | v1.2 | Complete    | 2026-03-30 | 2026-03-30 |
 | 16. CAEA Contingency Mode | 3/3 | Complete    | 2026-03-30 | - |
 | 17. CAE Emission UX | 3/3 | Complete    | 2026-03-31 | - |
-| 18. CAE-03 Error Display Fixes | 2/2 | Complete   | 2026-03-31 | - |
+| 18. CAE-03 Error Display Fixes | 2/2 | Complete    | 2026-03-31 | - |
 | 19. getCierreMensual facturaId Extension | v1.2 | 0/TBD | Pending | - |
 
 ---

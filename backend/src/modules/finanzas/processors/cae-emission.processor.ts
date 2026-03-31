@@ -5,6 +5,7 @@ import { AFIP_SERVICE } from '../afip/afip.constants';
 import { AfipService } from '../afip/afip.interfaces';
 import { AfipBusinessError } from '../afip/afip.errors';
 import { CaeaService } from '../afip/caea.service';
+import { PrismaService } from '../../../prisma/prisma.service';
 
 export const CAE_QUEUE = 'cae-emission';
 
@@ -21,6 +22,7 @@ export class CaeEmissionProcessor extends WorkerHost {
   constructor(
     @Inject(AFIP_SERVICE) private readonly afipService: AfipService,
     private readonly caeaService: CaeaService,
+    private readonly prisma: PrismaService,
   ) {
     super();
   }

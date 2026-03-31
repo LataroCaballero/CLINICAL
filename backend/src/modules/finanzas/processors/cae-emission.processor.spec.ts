@@ -15,6 +15,7 @@ import { CaeEmissionProcessor, CAE_QUEUE } from './cae-emission.processor';
 import { AfipBusinessError, AfipTransientError } from '../afip/afip.errors';
 import { AFIP_SERVICE } from '../afip/afip.constants';
 import { CaeaService } from '../afip/caea.service';
+import { PrismaService } from '../../../prisma/prisma.service';
 
 const makeJob = (data: any) => ({ id: 'job-1', name: 'emit-cae', data } as any);
 
@@ -22,16 +23,19 @@ describe('CaeEmissionProcessor', () => {
   let processor: CaeEmissionProcessor;
   let mockAfipService: { emitirComprobante: jest.Mock };
   let mockCaeaService: { asignarCaeaFallback: jest.Mock };
+  let mockPrismaService: { factura: { update: jest.Mock } };
 
   beforeEach(async () => {
     mockAfipService = { emitirComprobante: jest.fn() };
     mockCaeaService = { asignarCaeaFallback: jest.fn().mockResolvedValue(undefined) };
+    mockPrismaService = { factura: { update: jest.fn().mockResolvedValue({}) } };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         CaeEmissionProcessor,
         { provide: AFIP_SERVICE, useValue: mockAfipService },
         { provide: CaeaService, useValue: mockCaeaService },
+        { provide: PrismaService, useValue: mockPrismaService },
       ],
     }).compile();
 
@@ -103,6 +107,23 @@ describe('CaeEmissionProcessor', () => {
       await processor.onFailed(job);
 
       expect(mockCaeaService.asignarCaeaFallback).not.toHaveBeenCalled();
+    });
+
+    it('Test 8: persists afipError in Factura when max retries reached', async () => {
+      const job = {
+        id: 'j1',
+        attemptsMade: 3,
+        opts: { attempts: 3 },
+        data: { facturaId: 'f1', profesionalId: 'p1' },
+        failedReason: 'IVA del receptor es inválido (10242).',
+      } as any;
+
+      await processor.onFailed(job);
+
+      expect(mockPrismaService.factura.update).toHaveBeenCalledWith({
+        where: { id: 'f1' },
+        data: { afipError: 'IVA del receptor es inválido (10242).' },
+      });
     });
   });
 });

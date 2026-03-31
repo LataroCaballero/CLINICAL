@@ -64,6 +64,11 @@ export class CaeEmissionProcessor extends WorkerHost {
     this.logger.error(`CAE job ${job.id} failed: ${job.failedReason}`);
     const maxAttempts = job.opts?.attempts ?? 3;
     if (job.attemptsMade >= maxAttempts) {
+      // Persist Spanish error message so frontend polling can surface it via GET /finanzas/facturas/:id
+      await this.prisma.factura.update({
+        where: { id: job.data.facturaId },
+        data: { afipError: job.failedReason ?? 'Error desconocido al emitir.' },
+      });
       this.logger.warn(
         `Max retries reached for facturaId ${job.data.facturaId} — attempting CAEA fallback`,
       );

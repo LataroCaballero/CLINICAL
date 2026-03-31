@@ -44,7 +44,7 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
 - [x] **Phase 14: Emisión CAE Real (WSFEv1)** — FECAESolicitar con advisory lock, clasificación de errores y swap del DI token (completed 2026-03-21)
 - [x] **Phase 15: QR AFIP + PDF + Frontend de Comprobantes** — QR embebido en PDF, display de CAE en UI, cotización BNA para USD (completed 2026-03-30)
 - [x] **Phase 16: CAEA Contingency Mode** — Pre-fetch, fallback automático, FECAEAInformar con 72 reintentos y alertas de deadline (completed 2026-03-30)
-- [ ] **Phase 17: CAE Emission UX** — Hook `useEmitirFactura`, wiring del botón "Emitir Comprobante", polling de estado, y modal de errores AFIP en español (gap closure: CAE-02, CAE-03)
+- [x] **Phase 17: CAE Emission UX** — Hook `useEmitirFactura`, wiring del botón "Emitir Comprobante", polling de estado, y modal de errores AFIP en español (gap closure: CAE-02, CAE-03) (completed 2026-03-31)
 
 ## Phase Details
 
@@ -166,7 +166,7 @@ Plans:
 | 14. Emisión CAE Real (WSFEv1) | 4/4 | Complete    | 2026-03-21 | - |
 | 15. QR AFIP + PDF + Frontend | v1.2 | Complete    | 2026-03-30 | 2026-03-30 |
 | 16. CAEA Contingency Mode | 3/3 | Complete    | 2026-03-30 | - |
-| 17. CAE Emission UX | 2/3 | In Progress|  | - |
+| 17. CAE Emission UX | 3/3 | Complete   | 2026-03-31 | - |
 
 ---
 *Roadmap initialized: 2026-02-23 | v1.0 shipped: 2026-03-03 | v1.1 shipped: 2026-03-16 | v1.2 started: 2026-03-16*

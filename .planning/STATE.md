@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: AFIP Real
-status: completed
-stopped_at: Completed 17-02-PLAN.md
-last_updated: "2026-03-31T02:46:07Z"
-last_activity: "2026-03-31 — Phase 17 Plan 02 complete: CaeEmissionProcessor.onFailed persists afipError to DB before CAEA fallback (Test 8 GREEN). FacturaDetailDto and getFacturaById expose afipError field for frontend polling. CAE-02, CAE-03."
+status: checkpoint
+stopped_at: "Completed 17-03-PLAN.md Tasks 1-2 — awaiting human-verify checkpoint (Task 3)"
+last_updated: "2026-03-30T00:00:00Z"
+last_activity: "2026-03-30 — Phase 17 Plan 03 Tasks 1-2 complete: useEmitirFactura + refetchInterval polling + afipError error panel in FacturaDetailModal + button wiring in LiquidacionesTab and liquidaciones/page. useGenerarFacturaPDF stub removed."
 progress:
   total_phases: 6
   completed_phases: 5
   total_plans: 20
   completed_plans: 19
-  percent: 97
+  percent: 100
 ---
 
 # Project State
@@ -26,13 +26,13 @@ See: .planning/PROJECT.md (updated 2026-03-16)
 ## Current Position
 
 ```
-Phase:    17 — CAE Emission UX (IN PROGRESS)
-Plan:     17-02 complete (onFailed GREEN + DTO). Next: 17-03 (frontend polling + error modal)
-Status:   Phase 17 Plan 02 complete. afipError persisted in DB, FacturaDetailDto extended, getFacturaById returns afipError.
-Progress: [██████████] 97% of v1.3 (Phase 17 Plan 02/3 done)
+Phase:    17 — CAE Emission UX (CHECKPOINT)
+Plan:     17-03 Tasks 1-2 complete. Awaiting: human-verify checkpoint (Task 3).
+Status:   useEmitirFactura hook, 3s polling, afipError panel, button wiring all done. TypeScript clean.
+Progress: [██████████] 100% implementation complete — pending human verification
 ```
 
-Last activity: 2026-03-31 — Phase 17 Plan 02 complete: CaeEmissionProcessor.onFailed persists afipError to DB before CAEA fallback (Test 8 GREEN). FacturaDetailDto and getFacturaById expose afipError field for frontend polling. CAE-02, CAE-03.
+Last activity: 2026-03-30 — Phase 17 Plan 03 Tasks 1-2 complete: useEmitirFactura + refetchInterval polling + afipError error panel in FacturaDetailModal + button wiring in LiquidacionesTab and liquidaciones/page. useGenerarFacturaPDF stub removed.
 
 ## Milestone Summary
 
@@ -116,6 +116,8 @@ Last activity: 2026-03-31 — Phase 17 Plan 02 complete: CaeEmissionProcessor.on
 - [Plan 17-02] prisma.factura.update placed BEFORE caeaService.asignarCaeaFallback in onFailed — error persisted to DB even if CAEA fallback throws
 - [Plan 17-02] failedReason ?? 'Error desconocido al emitir.' for null-safety — BullMQ failedReason can be undefined in edge cases; Spanish message maintains UX consistency
 - [Plan 17-02] afipError: f.afipError ?? null in getFacturaById — Prisma include returns all scalar fields so no select change needed
+- [Plan 17-03] refetchInterval callback pattern in useFactura: returns 3000 when estado=EMISION_PENDIENTE, false otherwise — stops polling automatically when job resolves, no custom loop needed
+- [Plan 17-03] os.facturaId unavailable from getCierreMensual endpoint — button wired to open modal with null facturaId via forward-compatible type cast; backend extension of getCierreMensual to include facturaId is deferred tech debt
 
 ### Research Flags (for plan-phase to act on)
 - **Phase 13 y 14:** Verificar URLs actuales WSAA y WSFEv1 bajo dominio arca.gob.ar al momento de implementar. Almacenar en env config: AFIP_WSAA_URL_HOMO, AFIP_WSAA_URL_PROD, AFIP_WSFEV1_URL_HOMO, AFIP_WSFEV1_URL_PROD
@@ -143,4 +145,4 @@ Last activity: 2026-03-31 — Phase 17 Plan 02 complete: CaeEmissionProcessor.on
 ## Session Continuity
 
 Next action: Phase 17 Plan 03 — frontend polling hook + CAE emission error modal.
-Stopped at: Completed 17-02-PLAN.md
+Stopped at: Completed 17-03-PLAN.md (awaiting human verify checkpoint)

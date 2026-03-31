@@ -138,7 +138,11 @@ Plans:
   3. Cuando AFIP rechaza con error de negocio (ej. 10242), el Facturador ve un modal con el `spanishMessage` en español — no un toast genérico
   4. El modal de error cubre al menos: resultado=R (error 10242), cert inválido, y cualquier `AfipBusinessError.spanishMessage` presente en el job `failedReason`
   5. El hook `useGenerarFacturaPDF` (stub muerto) es removido de `useFinanzas.ts`
-**Plans**: TBD
+**Plans**: 3 plans
+Plans:
+- [ ] 17-01-PLAN.md — Wave 0: Prisma migration afipError String? + PrismaService injection in processor + failing test (RED)
+- [ ] 17-02-PLAN.md — Backend: onFailed persists afipError + FacturaDetailDto + getFacturaById propagation (GREEN)
+- [ ] 17-03-PLAN.md — Frontend: useEmitirFactura + polling + FacturaDetailModal wiring + error panel + human verify
 
 ## Progress
 
@@ -162,7 +166,7 @@ Plans:
 | 14. Emisión CAE Real (WSFEv1) | 4/4 | Complete    | 2026-03-21 | - |
 | 15. QR AFIP + PDF + Frontend | v1.2 | Complete    | 2026-03-30 | 2026-03-30 |
 | 16. CAEA Contingency Mode | 3/3 | Complete    | 2026-03-30 | - |
-| 17. CAE Emission UX | v1.2 | 0/TBD | Pending | - |
+| 17. CAE Emission UX | v1.2 | 0/3 | Pending | - |
 
 ---
 *Roadmap initialized: 2026-02-23 | v1.0 shipped: 2026-03-03 | v1.1 shipped: 2026-03-16 | v1.2 started: 2026-03-16*

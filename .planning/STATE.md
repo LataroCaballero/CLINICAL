@@ -1,17 +1,17 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.2
-milestone_name: AFIP Real
-status: completed
-stopped_at: Completed 16-03-PLAN.md
-last_updated: "2026-03-30T22:56:14.283Z"
-last_activity: "2026-03-30 — Phase 16 Plan 03 complete: CaeaService.informarFactura FECAEARegInformativo SOAP + CaeaInformarProcessor (72 retries, fixed 160min), FinanzasModule wiring, USE_AFIP_STUB bypass. CAEA-03. 25 CAEA tests green."
+milestone: v1.3
+milestone_name: CAE Emission UX
+status: in_progress
+stopped_at: Completed 17-01-PLAN.md
+last_updated: "2026-03-31T02:42:00Z"
+last_activity: "2026-03-31 — Phase 17 Plan 01 complete: Factura.afipError String? migration applied, PrismaService injected into CaeEmissionProcessor, Test 8 RED committed. CAE-03."
 progress:
-  total_phases: 5
+  total_phases: 6
   completed_phases: 5
-  total_plans: 17
-  completed_plans: 17
-  percent: 100
+  total_plans: 20
+  completed_plans: 18
+  percent: 93
 ---
 
 # Project State
@@ -26,13 +26,13 @@ See: .planning/PROJECT.md (updated 2026-03-16)
 ## Current Position
 
 ```
-Phase:    16 — CAEA Contingency Mode (COMPLETE)
-Plan:     All 3 plans complete — CAEA-01 CAEA-02 CAEA-03 CAEA-04 done
-Status:   Phase 16 COMPLETE. v1.2 AFIP Real milestone COMPLETE.
-Progress: [██████████] 100% of v1.2 (Phases 12-16 all done)
+Phase:    17 — CAE Emission UX (IN PROGRESS)
+Plan:     17-01 complete (schema + TDD RED). Next: 17-02 (onFailed implementation GREEN), 17-03 (DTO + frontend)
+Status:   Phase 17 Plan 01 complete. afipError migration applied, PrismaService injected, Test 8 RED.
+Progress: [█████████░] 93% of v1.3 (Phase 17 Plan 01/3 done)
 ```
 
-Last activity: 2026-03-30 — Phase 16 Plan 03 complete: CaeaService.informarFactura FECAEARegInformativo SOAP + CaeaInformarProcessor (72 retries, fixed 160min), FinanzasModule wiring, USE_AFIP_STUB bypass. CAEA-03. 25 CAEA tests green.
+Last activity: 2026-03-31 — Phase 17 Plan 01 complete: Factura.afipError String? migration 20260331024012 applied, PrismaService injected into CaeEmissionProcessor constructor, Test 8 RED (prisma.factura.update asserted, not yet implemented). CAE-03.
 
 ## Milestone Summary
 
@@ -111,6 +111,8 @@ Last activity: 2026-03-30 — Phase 16 Plan 03 complete: CaeaService.informarFac
 - [Plan 16-03] cbteTipo derived from condicionIVAReceptor (RESPONSABLE_INSCRIPTO=A=1, all others=B=6) — TipoFactura enum only has FACTURA/RECIBO, not A/B sub-type; AFIP rule: RI gets Factura A
 - [Plan 16-03] CAEA_INFORMAR_QUEUE injected into CaeaService via @InjectQueue; enqueue happens in asignarCaeaFallback after successful factura update (72 attempts, 9600000ms fixed delay = 8 days)
 - [Plan 16-03] USE_AFIP_STUB=true bypass in solicitarYPersistir upserts stub CAEA '00000000000001' with computed bimensual period dates — skips SOAP, enables local dev/CI without AFIP certs
+- [Plan 17-01] afipError String? approach only — no EstadoFactura.EMISION_ERROR enum (no cascade migration risk; simpler path per research decision)
+- [Plan 17-01] PrismaService added to CaeEmissionProcessor constructor in Plan 01 (not Plan 02) — spec must compile at RED stage; DI resolution happens at module compile, not at runtime call site
 
 ### Research Flags (for plan-phase to act on)
 - **Phase 13 y 14:** Verificar URLs actuales WSAA y WSFEv1 bajo dominio arca.gob.ar al momento de implementar. Almacenar en env config: AFIP_WSAA_URL_HOMO, AFIP_WSAA_URL_PROD, AFIP_WSFEV1_URL_HOMO, AFIP_WSFEV1_URL_PROD
@@ -137,5 +139,5 @@ Last activity: 2026-03-30 — Phase 16 Plan 03 complete: CaeaService.informarFac
 
 ## Session Continuity
 
-Next action: v1.2 AFIP Real milestone COMPLETE. All 5 phases (12-16), all 17 plans done. 25 CAEA tests + full backend build green. Ready for production deploy / IVA matrix review.
-Stopped at: Completed 16-03-PLAN.md
+Next action: Phase 17 Plan 02 — implement onFailed logic in CaeEmissionProcessor to call prisma.factura.update (makes Test 8 GREEN).
+Stopped at: Completed 17-01-PLAN.md

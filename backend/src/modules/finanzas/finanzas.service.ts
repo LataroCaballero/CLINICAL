@@ -458,6 +458,7 @@ export class FinanzasService {
       profesionalId: f.profesionalId,
       paciente: paciente ?? null,
       obraSocial: obraSocial ?? null,
+      afipError: f.afipError ?? null,
     };
   }
 

@@ -1,35 +1,35 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.2
-milestone_name: AFIP Real
-status: complete
-stopped_at: Completed 19-02-PLAN.md — human-verify approved, CAE-02 closed, Phase 19 complete
-last_updated: "2026-03-31T21:02:31.751Z"
-last_activity: "2026-03-31 — Phase 19 Plan 02 complete: getCierreMensual facturaId extension GREEN, frontend casts removed, human-verify approved. CAE-02 closed. Phase 19 complete."
+milestone: v2.0
+milestone_name: TBD
+status: planning_next
+stopped_at: v1.2 AFIP Real archived — milestone complete, planning v2.0 next
+last_updated: "2026-03-31T00:00:00.000Z"
+last_activity: "2026-03-31 — v1.2 AFIP Real milestone archived. ROADMAP.md/REQUIREMENTS.md reorganized. PROJECT.md evolved. Git tag v1.2 pending. Ready for /gsd:new-milestone."
 progress:
-  total_phases: 8
-  completed_phases: 8
-  total_plans: 24
-  completed_plans: 24
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-16)
+See: .planning/PROJECT.md (updated 2026-03-31)
 
 **Core value:** Que un cirujano plástico cierre más cirugías — el sistema hace visible qué pacientes seguir, cuándo y cómo, de la manera más automatizada posible
-**Current focus:** v1.2 AFIP Real — emisión de comprobantes electrónicos reales con CAE, certificado por tenant, QR obligatorio RG 5616/2024, y modo contingencia CAEA
+**Current focus:** v1.2 AFIP Real — ARCHIVED. Planning v2.0 next.
 
 ## Current Position
 
 ```
-Phase:    19 — getCierreMensual facturaId Extension (Complete)
-Plan:     19-02 complete. Human-verify approved. CAE-02 fully closed.
-Status:   All 3 tasks complete. facturaId secondary query GREEN, frontend casts removed, human-verify approved.
-Progress: [██████████] 100% complete
+Milestone: v1.2 AFIP Real — SHIPPED 2026-03-31
+Status:    Archived. ROADMAP.md, REQUIREMENTS.md, PROJECT.md updated.
+Next:      /gsd:new-milestone to start v2.0
+Progress:  [██████████] 100% — milestone complete
 ```
 
 Last activity: 2026-03-31 — Phase 19 Plan 02 complete: getCierreMensual extended with liquidacionObraSocial.findMany, CierreMensualResumen updated, unsafe frontend casts removed, human-verify approved. CAE-02 closed. Phase 19 complete.
@@ -151,5 +151,5 @@ Last activity: 2026-03-31 — Phase 19 Plan 02 complete: getCierreMensual extend
 
 ## Session Continuity
 
-Next action: Phase 19 complete. CAE-02 fully closed. Next work: Phase 16 (CAEA Contingency Mode) when gate conditions are met (prod invoice real + RG 5782/2025 verified).
+Next action: v1.2 archived. Start next milestone with /gsd:new-milestone.
 Stopped at: Completed 19-02-PLAN.md — human-verify approved, CAE-02 closed, Phase 19 complete

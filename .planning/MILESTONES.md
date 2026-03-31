@@ -1,5 +1,20 @@
 # Milestones
 
+## v1.2 AFIP Real (Shipped: 2026-03-31)
+
+**Phases completed:** 8 phases (12–19), 24 plans
+**Stats:** 50 días (2026-02-09 → 2026-03-31) | 399 archivos | +70,242 líneas | ~82K LOC TypeScript total
+
+**Key accomplishments:**
+1. Schema AFIP completo por tenant: ConfiguracionAFIP (cert+key AES-256-GCM), CaeaVigente, AFIP fields en Factura, cert expiry email scheduler
+2. WSAA Token Service: firma CMS in-process con node-forge, Redis cache con mutex por CUIT — elimina openssl subprocess y exposición de clave en /tmp
+3. Emisión CAE real via WSFEv1: pg_advisory_xact_lock dentro de $transaction(45s), AfipBusinessError → DLQ inmediato, AfipTransientError → backoff exponencial
+4. QR AFIP obligatorio RG 5616/2024: PDF con QR escaneable, FacturaDetailModal con CAE + QR + USD tipoCambio con link BNA
+5. CAEA contingency mode: cron bimensual prefetch, fallback automático a CAEA_PENDIENTE_INFORMAR, FECAEAInformar 72 reintentos en ventana 8 días, alertas de deadline
+6. CAE Emission UX + error display: useEmitirFactura, polling TanStack Query, panel de errores AFIP en español (2 logic bugs del audit corregidos)
+
+---
+
 ## v1.1 Vista del Facturador (Shipped: 2026-03-16)
 
 **Phases completed:** 4 phases (8–11), 9 plans

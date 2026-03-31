@@ -46,7 +46,7 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
 - [x] **Phase 16: CAEA Contingency Mode** — Pre-fetch, fallback automático, FECAEAInformar con 72 reintentos y alertas de deadline (completed 2026-03-30)
 - [x] **Phase 17: CAE Emission UX** — Hook `useEmitirFactura`, wiring del botón "Emitir Comprobante", polling de estado, y modal de errores AFIP en español (gap closure: CAE-02, CAE-03) (completed 2026-03-31)
 - [x] **Phase 18: CAE-03 Error Display Fixes** — Corrige dos bugs lógicos que impiden que el panel de errores AFIP se renderice en cualquier ruta de error (gap closure: CAE-03) (completed 2026-03-31)
-- [ ] **Phase 19: getCierreMensual facturaId Extension** — Extiende el backend para retornar `facturaId` en `getCierreMensual` y elimina el null cast en LiquidacionesTab (gap closure: CAE-02 secondary surface)
+- [x] **Phase 19: getCierreMensual facturaId Extension** — Extiende el backend para retornar `facturaId` en `getCierreMensual` y elimina el null cast en LiquidacionesTab (gap closure: CAE-02 secondary surface) (completed 2026-03-31)
 
 ## Phase Details
 
@@ -198,7 +198,7 @@ Plans:
 | 16. CAEA Contingency Mode | 3/3 | Complete    | 2026-03-30 | - |
 | 17. CAE Emission UX | 3/3 | Complete    | 2026-03-31 | - |
 | 18. CAE-03 Error Display Fixes | 2/2 | Complete    | 2026-03-31 | - |
-| 19. getCierreMensual facturaId Extension | 1/2 | In Progress|  | - |
+| 19. getCierreMensual facturaId Extension | 2/2 | Complete   | 2026-03-31 | - |
 
 ---
 *Roadmap initialized: 2026-02-23 | v1.0 shipped: 2026-03-03 | v1.1 shipped: 2026-03-16 | v1.2 started: 2026-03-16*

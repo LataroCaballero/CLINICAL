@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: AFIP Real
 status: verifying
-stopped_at: Completed 19-01-PLAN.md (Phase 19 Plan 01 — RED tests for getCierreMensual facturaId)
-last_updated: "2026-03-31T20:51:23.069Z"
+stopped_at: Completed 19-02-PLAN.md — awaiting human-verify for Task 3 (checkpoint)
+last_updated: "2026-03-31T20:57:42.121Z"
 last_activity: "2026-03-31 — Phase 18 Plan 02 complete: BUG-1+BUG-2 fixed, Test 9 GREEN, human-verify approved (Scenarios A/B/C). CAE-03 closed. Phase 18 complete."
 progress:
   total_phases: 8
-  completed_phases: 7
+  completed_phases: 8
   total_plans: 24
-  completed_plans: 23
+  completed_plans: 24
   percent: 100
 ---
 
@@ -121,6 +121,10 @@ Last activity: 2026-03-31 — Phase 18 Plan 02 complete: BUG-1+BUG-2 fixed, Test
 - [Plan 18-01] Test 9 uses attemptsMade: 1, opts.attempts: 5 to simulate UnrecoverableError BullMQ lifecycle — onFailed fires with attemptsMade=1 for immediate failure, not maxAttempts; fix (Plan 02) moves prisma.factura.update outside the guard unconditionally
 - [Plan 18-02] prisma.factura.update moved before if (attemptsMade >= maxAttempts) guard — unconditional write on every onFailed invocation covers both UnrecoverableError (attemptsMade=1) and transient exhaustion paths
 - [Plan 18-02] Error panel condition: EMISION_PENDIENTE || CAEA_PENDIENTE_INFORMAR — EMITIDA/ANULADA excluded to prevent stale error display on terminal-state facturas
+- [Plan 19-02] Secondary liquidacionObraSocial.findMany placed after practicas loop — additive pattern, no structural changes to existing loop
+- [Plan 19-02] facturaIdByOs Map prefers non-null: existing=undefined→set; existing=null && new!=null→overwrite; existing non-null→skip
+- [Plan 19-02] obraSocialIds filtered by k !== 'particular' to exclude synthetic particular key from OS Prisma lookup
+- [Plan 19-02] Forward-compatible type cast from Plan 17-03 decision fully resolved — deferred tech debt closed
 
 ### Research Flags (for plan-phase to act on)
 - **Phase 13 y 14:** Verificar URLs actuales WSAA y WSFEv1 bajo dominio arca.gob.ar al momento de implementar. Almacenar en env config: AFIP_WSAA_URL_HOMO, AFIP_WSAA_URL_PROD, AFIP_WSFEV1_URL_HOMO, AFIP_WSFEV1_URL_PROD
@@ -147,5 +151,5 @@ Last activity: 2026-03-31 — Phase 18 Plan 02 complete: BUG-1+BUG-2 fixed, Test
 
 ## Session Continuity
 
-Next action: Phase 18 complete. CAE-03 closed. All v1.2 gap closure phases (17, 18) are done. Check ROADMAP.md for any remaining phases or declare v1.2 milestone complete.
-Stopped at: Completed 19-01-PLAN.md (Phase 19 Plan 01 — RED tests for getCierreMensual facturaId)
+Next action: Phase 19 Plan 02 awaiting human-verify (Task 3 checkpoint). After approval: CAE-02 fully closed, Phase 19 complete.
+Stopped at: Completed 19-02-PLAN.md — awaiting human-verify for Task 3 (checkpoint)

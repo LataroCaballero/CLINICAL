@@ -4,7 +4,7 @@
 
 - ✅ **v1.0 CRM Conversión** — Fases 1–7 (shipped 2026-03-03)
 - ✅ **v1.1 Vista del Facturador** — Fases 8–11 (shipped 2026-03-16)
-- 🔄 **v1.2 AFIP Real** — Fases 12–16 (in progress)
+- 🔄 **v1.2 AFIP Real** — Fases 12–19 (in progress)
 
 ## Phases
 
@@ -45,8 +45,32 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
 - [x] **Phase 15: QR AFIP + PDF + Frontend de Comprobantes** — QR embebido en PDF, display de CAE en UI, cotización BNA para USD (completed 2026-03-30)
 - [x] **Phase 16: CAEA Contingency Mode** — Pre-fetch, fallback automático, FECAEAInformar con 72 reintentos y alertas de deadline (completed 2026-03-30)
 - [x] **Phase 17: CAE Emission UX** — Hook `useEmitirFactura`, wiring del botón "Emitir Comprobante", polling de estado, y modal de errores AFIP en español (gap closure: CAE-02, CAE-03) (completed 2026-03-31)
+- [ ] **Phase 18: CAE-03 Error Display Fixes** — Corrige dos bugs lógicos que impiden que el panel de errores AFIP se renderice en cualquier ruta de error (gap closure: CAE-03)
+- [ ] **Phase 19: getCierreMensual facturaId Extension** — Extiende el backend para retornar `facturaId` en `getCierreMensual` y elimina el null cast en LiquidacionesTab (gap closure: CAE-02 secondary surface)
 
 ## Phase Details
+
+### Phase 18: CAE-03 Error Display Fixes
+**Goal**: El Facturador ve errores AFIP en español en el modal para ambas rutas de error — rechazo de negocio (UnrecoverableError) y agotamiento de reintentos transitorios con fallback CAEA
+**Depends on**: Phase 17 (afipError field, onFailed hook, FacturaDetailModal error panel infrastructure ya existen)
+**Requirements**: CAE-03
+**Gap Closure:** Cierra CAE-03-BUG-1 y CAE-03-BUG-2 identificados por integration checker en audit v1.2
+**Success Criteria** (what must be TRUE):
+  1. Cuando AFIP rechaza con error de negocio (UnrecoverableError / error 10242), `afipError` se persiste en DB incluso si `job.attemptsMade < maxAttempts` — el Facturador ve el panel de error rojo en el modal
+  2. Cuando se agotan los 5 reintentos transitorios y la factura cae en CAEA_PENDIENTE_INFORMAR, el panel de error sigue visible en FacturaDetailModal (condición expandida incluye ese estado)
+  3. El test unitario del procesador confirma que `prisma.factura.update({ afipError })` se llama para la ruta UnrecoverableError
+**Plans**: TBD
+
+### Phase 19: getCierreMensual facturaId Extension
+**Goal**: El botón "Emitir Comprobante" en LiquidacionesTab y liquidaciones/page puede abrir FacturaDetailModal con el `facturaId` real en lugar de null
+**Depends on**: Phase 17 (FacturaDetailModal y useEmitirFactura ya existen), Phase 18 (error display fixes)
+**Requirements**: CAE-02 (secondary surface)
+**Gap Closure:** Cierra la desviación CAE-02-PARTIAL — LiquidacionesTab/liquidaciones/page emite con facturaId=null porque getCierreMensual no retorna facturaId
+**Success Criteria** (what must be TRUE):
+  1. El endpoint/service `getCierreMensual` retorna `facturaId: string | null` en `detalleObrasSociales`
+  2. `LiquidacionesTab.tsx` y `liquidaciones/page.tsx` pasan el `facturaId` real a FacturaDetailModal (no null cast)
+  3. Cuando hay una factura existente, el modal carga los datos completos de la factura y permite emitir
+**Plans**: TBD
 
 ### Phase 12: Schema AFIP Extendido + Gestión de Certificados
 **Goal**: El Admin puede configurar el certificado digital y punto de venta por tenant, y el sistema almacena toda la infraestructura de datos AFIP lista para emisión real
@@ -167,6 +191,8 @@ Plans:
 | 15. QR AFIP + PDF + Frontend | v1.2 | Complete    | 2026-03-30 | 2026-03-30 |
 | 16. CAEA Contingency Mode | 3/3 | Complete    | 2026-03-30 | - |
 | 17. CAE Emission UX | 3/3 | Complete    | 2026-03-31 | - |
+| 18. CAE-03 Error Display Fixes | v1.2 | 0/TBD | Pending | - |
+| 19. getCierreMensual facturaId Extension | v1.2 | 0/TBD | Pending | - |
 
 ---
 *Roadmap initialized: 2026-02-23 | v1.0 shipped: 2026-03-03 | v1.1 shipped: 2026-03-16 | v1.2 started: 2026-03-16*

@@ -1,17 +1,17 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.3
-milestone_name: CAE Emission UX
-status: in_progress
-stopped_at: Completed 17-01-PLAN.md
-last_updated: "2026-03-31T02:42:00Z"
-last_activity: "2026-03-31 — Phase 17 Plan 01 complete: Factura.afipError String? migration applied, PrismaService injected into CaeEmissionProcessor, Test 8 RED committed. CAE-03."
+milestone: v1.2
+milestone_name: AFIP Real
+status: completed
+stopped_at: Completed 17-02-PLAN.md
+last_updated: "2026-03-31T02:46:07Z"
+last_activity: "2026-03-31 — Phase 17 Plan 02 complete: CaeEmissionProcessor.onFailed persists afipError to DB before CAEA fallback (Test 8 GREEN). FacturaDetailDto and getFacturaById expose afipError field for frontend polling. CAE-02, CAE-03."
 progress:
   total_phases: 6
   completed_phases: 5
   total_plans: 20
-  completed_plans: 18
-  percent: 93
+  completed_plans: 19
+  percent: 97
 ---
 
 # Project State
@@ -27,12 +27,12 @@ See: .planning/PROJECT.md (updated 2026-03-16)
 
 ```
 Phase:    17 — CAE Emission UX (IN PROGRESS)
-Plan:     17-01 complete (schema + TDD RED). Next: 17-02 (onFailed implementation GREEN), 17-03 (DTO + frontend)
-Status:   Phase 17 Plan 01 complete. afipError migration applied, PrismaService injected, Test 8 RED.
-Progress: [█████████░] 93% of v1.3 (Phase 17 Plan 01/3 done)
+Plan:     17-02 complete (onFailed GREEN + DTO). Next: 17-03 (frontend polling + error modal)
+Status:   Phase 17 Plan 02 complete. afipError persisted in DB, FacturaDetailDto extended, getFacturaById returns afipError.
+Progress: [██████████] 97% of v1.3 (Phase 17 Plan 02/3 done)
 ```
 
-Last activity: 2026-03-31 — Phase 17 Plan 01 complete: Factura.afipError String? migration 20260331024012 applied, PrismaService injected into CaeEmissionProcessor constructor, Test 8 RED (prisma.factura.update asserted, not yet implemented). CAE-03.
+Last activity: 2026-03-31 — Phase 17 Plan 02 complete: CaeEmissionProcessor.onFailed persists afipError to DB before CAEA fallback (Test 8 GREEN). FacturaDetailDto and getFacturaById expose afipError field for frontend polling. CAE-02, CAE-03.
 
 ## Milestone Summary
 
@@ -113,6 +113,9 @@ Last activity: 2026-03-31 — Phase 17 Plan 01 complete: Factura.afipError Strin
 - [Plan 16-03] USE_AFIP_STUB=true bypass in solicitarYPersistir upserts stub CAEA '00000000000001' with computed bimensual period dates — skips SOAP, enables local dev/CI without AFIP certs
 - [Plan 17-01] afipError String? approach only — no EstadoFactura.EMISION_ERROR enum (no cascade migration risk; simpler path per research decision)
 - [Plan 17-01] PrismaService added to CaeEmissionProcessor constructor in Plan 01 (not Plan 02) — spec must compile at RED stage; DI resolution happens at module compile, not at runtime call site
+- [Plan 17-02] prisma.factura.update placed BEFORE caeaService.asignarCaeaFallback in onFailed — error persisted to DB even if CAEA fallback throws
+- [Plan 17-02] failedReason ?? 'Error desconocido al emitir.' for null-safety — BullMQ failedReason can be undefined in edge cases; Spanish message maintains UX consistency
+- [Plan 17-02] afipError: f.afipError ?? null in getFacturaById — Prisma include returns all scalar fields so no select change needed
 
 ### Research Flags (for plan-phase to act on)
 - **Phase 13 y 14:** Verificar URLs actuales WSAA y WSFEv1 bajo dominio arca.gob.ar al momento de implementar. Almacenar en env config: AFIP_WSAA_URL_HOMO, AFIP_WSAA_URL_PROD, AFIP_WSFEV1_URL_HOMO, AFIP_WSFEV1_URL_PROD
@@ -139,5 +142,5 @@ Last activity: 2026-03-31 — Phase 17 Plan 01 complete: Factura.afipError Strin
 
 ## Session Continuity
 
-Next action: Phase 17 Plan 02 — implement onFailed logic in CaeEmissionProcessor to call prisma.factura.update (makes Test 8 GREEN).
-Stopped at: Completed 17-01-PLAN.md
+Next action: Phase 17 Plan 03 — frontend polling hook + CAE emission error modal.
+Stopped at: Completed 17-02-PLAN.md

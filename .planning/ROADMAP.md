@@ -166,7 +166,7 @@ Plans:
 | 14. Emisión CAE Real (WSFEv1) | 4/4 | Complete    | 2026-03-21 | - |
 | 15. QR AFIP + PDF + Frontend | v1.2 | Complete    | 2026-03-30 | 2026-03-30 |
 | 16. CAEA Contingency Mode | 3/3 | Complete    | 2026-03-30 | - |
-| 17. CAE Emission UX | 3/3 | Complete   | 2026-03-31 | - |
+| 17. CAE Emission UX | 3/3 | Complete    | 2026-03-31 | - |
 
 ---
 *Roadmap initialized: 2026-02-23 | v1.0 shipped: 2026-03-03 | v1.1 shipped: 2026-03-16 | v1.2 started: 2026-03-16*

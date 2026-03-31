@@ -52,13 +52,14 @@ completed: 2026-03-31
 - **Duration:** ~5 min
 - **Started:** 2026-03-31T12:12:54Z
 - **Completed:** 2026-03-31T12:18:00Z
-- **Tasks:** 2 auto-tasks complete (Task 3 is checkpoint:human-verify — pending)
+- **Tasks:** 3 (2 auto + 1 human-verify checkpoint — all complete)
 - **Files modified:** 2
 
 ## Accomplishments
 - BUG-1: Moved `prisma.factura.update` outside the `attemptsMade >= maxAttempts` guard in `onFailed` — afipError is now persisted for every job failure, including the UnrecoverableError path where `attemptsMade=1 < maxAttempts=5`
 - BUG-2: Expanded FacturaDetailModal error panel JSX condition to include `CAEA_PENDIENTE_INFORMAR` alongside `EMISION_PENDIENTE` — Facturador sees the red error panel for CAEA fallback failures as well
-- Test 9 turns GREEN — all 7 processor tests pass (Tests 6, 7, 8 unchanged)
+- Test 9 turns GREEN — all processor tests pass (Tests 6, 7, 8, 9 all GREEN)
+- Human verification approved: Scenario A (EMISION_PENDIENTE + afipError shows panel), Scenario B (CAEA_PENDIENTE_INFORMAR + afipError shows panel), Scenario C (EMITIDA + stale afipError does NOT show panel)
 
 ## Task Commits
 
@@ -66,8 +67,9 @@ Each task was committed atomically:
 
 1. **Task 1: BUG-1 fix — move prisma.factura.update before attemptsMade guard** - `fca3dc7` (fix)
 2. **Task 2: BUG-2 fix — expand FacturaDetailModal error panel to CAEA_PENDIENTE_INFORMAR** - `3730f9a` (fix)
+3. **Task 3: Human verify checkpoint** - Approved (no code commit — checkpoint task, user confirmed all 3 scenarios)
 
-_Task 3 is a checkpoint:human-verify — no commit until approved._
+**Plan metadata:** `db3db8f` (docs: complete BUG-1+BUG-2 fix plan — checkpoint commit)
 
 ## Files Created/Modified
 - `backend/src/modules/finanzas/processors/cae-emission.processor.ts` - BUG-1: prisma.factura.update moved before the attemptsMade guard; comment updated
@@ -81,6 +83,14 @@ _Task 3 is a checkpoint:human-verify — no commit until approved._
 
 None — plan executed exactly as written. Both fixes matched the exact replacement snippets provided in `<interfaces>`.
 
+## Human Verification Checkpoint
+
+**Task 3 — Checkpoint: human-verify**
+- **Status:** PASSED (user typed "approved")
+- **Scenario A:** EMISION_PENDIENTE + afipError — red panel visible. PASSED.
+- **Scenario B:** CAEA_PENDIENTE_INFORMAR + afipError — red panel visible. PASSED.
+- **Scenario C:** EMITIDA + stale afipError — red panel NOT shown. PASSED.
+
 ## Issues Encountered
 - Frontend `npm run build` fails with Node.js 18.x (project requires >=20.9.0) — pre-existing environment constraint unrelated to this fix. TypeScript type-check via `tsc --noEmit` passes cleanly with no errors.
 
@@ -89,9 +99,9 @@ None — plan executed exactly as written. Both fixes matched the exact replacem
 None — no external service configuration required.
 
 ## Next Phase Readiness
-- Task 3 (checkpoint:human-verify) pending human approval of Scenarios A/B/C
-- Once approved, CAE-03 requirement is fully closed
-- Phase 18 will be complete after checkpoint passes
+- CAE-03 requirement is fully closed — Facturador sees AFIP errors in Spanish in FacturaDetailModal for both business rejection (UnrecoverableError) and transient exhaustion leading to CAEA fallback
+- Phase 18 is complete (2 plans done: 18-01 added failing Test 9 RED, 18-02 fixed BUG-1+BUG-2 turning Test 9 GREEN)
+- No blockers for subsequent phases
 
 ---
 *Phase: 18-cae03-error-display-fixes*
@@ -104,3 +114,5 @@ None — no external service configuration required.
 - FOUND: `frontend/src/app/dashboard/finanzas/facturacion/components/FacturaDetailModal.tsx`
 - FOUND: commit `fca3dc7` (BUG-1 fix)
 - FOUND: commit `3730f9a` (BUG-2 fix)
+- FOUND: commit `db3db8f` (docs checkpoint)
+- Human verify Task 3: APPROVED by user

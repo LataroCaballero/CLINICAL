@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: AFIP Real
-status: in-progress
-stopped_at: "Completed 18-02 Tasks 1+2. Awaiting human-verify checkpoint (Task 3: Scenarios A/B/C)."
-last_updated: "2026-03-31T12:18:00Z"
-last_activity: "2026-03-31 — Phase 18 Plan 02 Tasks 1+2 complete: BUG-1 fix (prisma.factura.update unconditional), BUG-2 fix (FacturaDetailModal CAEA_PENDIENTE_INFORMAR), Test 9 GREEN. Awaiting human-verify checkpoint."
+status: verifying
+stopped_at: Completed 18-02-PLAN.md (Phase 18 complete — CAE-03 closed)
+last_updated: "2026-03-31T12:27:43.281Z"
+last_activity: "2026-03-31 — Phase 18 Plan 02 complete: BUG-1+BUG-2 fixed, Test 9 GREEN, human-verify approved (Scenarios A/B/C). CAE-03 closed. Phase 18 complete."
 progress:
   total_phases: 8
   completed_phases: 7
   total_plans: 22
-  completed_plans: 21
+  completed_plans: 22
   percent: 100
 ---
 
@@ -26,13 +26,13 @@ See: .planning/PROJECT.md (updated 2026-03-16)
 ## Current Position
 
 ```
-Phase:    18 — CAE-03 Error Display Fixes (In Progress)
-Plan:     18-02 Tasks 1+2 complete. Awaiting human-verify checkpoint (Task 3: Scenarios A/B/C).
-Status:   2 of 2 auto-tasks complete. BUG-1 + BUG-2 fixed. Test 9 GREEN. Human verify pending.
+Phase:    18 — CAE-03 Error Display Fixes (Complete)
+Plan:     18-02 complete. Human-verify approved. CAE-03 closed.
+Status:   All 3 tasks complete. BUG-1 + BUG-2 fixed. Test 9 GREEN. Human verify approved.
 Progress: [██████████] 100% complete
 ```
 
-Last activity: 2026-03-31 — Phase 18 Plan 02 Tasks 1+2 complete: BUG-1 fix (prisma.factura.update unconditional), BUG-2 fix (FacturaDetailModal CAEA_PENDIENTE_INFORMAR), Test 9 GREEN. Awaiting human-verify checkpoint.
+Last activity: 2026-03-31 — Phase 18 Plan 02 complete: BUG-1+BUG-2 fixed, Test 9 GREEN, human-verify approved (Scenarios A/B/C). CAE-03 closed. Phase 18 complete.
 
 ## Milestone Summary
 
@@ -147,5 +147,5 @@ Last activity: 2026-03-31 — Phase 18 Plan 02 Tasks 1+2 complete: BUG-1 fix (pr
 
 ## Session Continuity
 
-Next action: Human verifies Task 3 checkpoint — Scenario A (EMISION_PENDIENTE + afipError shows red panel), Scenario B (CAEA_PENDIENTE_INFORMAR + afipError shows red panel), Scenario C (EMITIDA + stale afipError does NOT show panel). Type "approved" to close CAE-03.
-Stopped at: Completed 18-02 Tasks 1+2. Awaiting human-verify checkpoint (Task 3: Scenarios A/B/C).
+Next action: Phase 18 complete. CAE-03 closed. All v1.2 gap closure phases (17, 18) are done. Check ROADMAP.md for any remaining phases or declare v1.2 milestone complete.
+Stopped at: Completed 18-02-PLAN.md (Phase 18 complete — CAE-03 closed)

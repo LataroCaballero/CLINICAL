@@ -198,7 +198,7 @@ Plans:
 | 16. CAEA Contingency Mode | 3/3 | Complete    | 2026-03-30 | - |
 | 17. CAE Emission UX | 3/3 | Complete    | 2026-03-31 | - |
 | 18. CAE-03 Error Display Fixes | 2/2 | Complete    | 2026-03-31 | - |
-| 19. getCierreMensual facturaId Extension | v1.2 | 0/TBD | Pending | - |
+| 19. getCierreMensual facturaId Extension | 1/2 | In Progress|  | - |
 
 ---
 *Roadmap initialized: 2026-02-23 | v1.0 shipped: 2026-03-03 | v1.1 shipped: 2026-03-16 | v1.2 started: 2026-03-16*

@@ -125,5 +125,25 @@ describe('CaeEmissionProcessor', () => {
         data: { afipError: 'IVA del receptor es inválido (10242).' },
       });
     });
+
+    it('Test 9: persists afipError in Factura even when attemptsMade < maxAttempts (UnrecoverableError path)', async () => {
+      const job = {
+        id: 'j1',
+        attemptsMade: 1,           // BullMQ fires onFailed with 1 for UnrecoverableError
+        opts: { attempts: 5 },     // configured retries — does NOT match attemptsMade
+        data: { facturaId: 'f1', profesionalId: 'p1' },
+        failedReason: 'El receptor tiene condición de IVA inválida (10242).',
+      } as any;
+
+      await processor.onFailed(job);
+
+      // BUG-1 fix target: update must be called regardless of attemptsMade
+      expect(mockPrismaService.factura.update).toHaveBeenCalledWith({
+        where: { id: 'f1' },
+        data: { afipError: 'El receptor tiene condición de IVA inválida (10242).' },
+      });
+      // Guard still protects CAEA fallback — must NOT be called when attemptsMade < maxAttempts
+      expect(mockCaeaService.asignarCaeaFallback).not.toHaveBeenCalled();
+    });
   });
 });

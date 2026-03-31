@@ -227,6 +227,7 @@ export interface FacturaDetail extends Factura {
   qrImageDataUrl: string | null;
   ptoVta: number | null;
   obraSocial?: { id: string; nombre: string } | null;
+  afipError: string | null; // Spanish AFIP error from backend (Phase 17)
 }
 
 export interface CreateFacturaInput {

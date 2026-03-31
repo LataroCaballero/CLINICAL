@@ -16,7 +16,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { Download, ExternalLink, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
-import { useFactura, useUpdateTipoCambio } from "@/hooks/useFinanzas";
+import { useFactura, useUpdateTipoCambio, useEmitirFactura } from "@/hooks/useFinanzas";
 import { EstadoFactura } from "@/types/finanzas";
 import { api } from "@/lib/api";
 
@@ -73,6 +73,7 @@ export default function FacturaDetailModal({
 }) {
   const { data: factura, isLoading } = useFactura(facturaId);
   const updateTipoCambio = useUpdateTipoCambio();
+  const emitirFactura = useEmitirFactura();
   const [tipoCambioInput, setTipoCambioInput] = useState<string>("");
   const [isDownloading, setIsDownloading] = useState(false);
 
@@ -266,7 +267,38 @@ export default function FacturaDetailModal({
           </div>
         )}
 
+        {factura?.afipError && factura.estado === EstadoFactura.EMISION_PENDIENTE && (
+          <>
+            <Separator />
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg mx-6 mb-2">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="w-4 h-4 text-red-600 mt-0.5 shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-red-700">Error de emisión AFIP</p>
+                  <p className="text-sm text-red-600 mt-1">{factura.afipError}</p>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+
         <DialogFooter>
+          {!factura?.cae && factura?.estado !== EstadoFactura.ANULADA && (
+            <Button
+              variant="default"
+              onClick={() => emitirFactura.mutate(facturaId!)}
+              disabled={
+                emitirFactura.isPending ||
+                factura?.estado === EstadoFactura.EMISION_PENDIENTE
+              }
+            >
+              {factura?.estado === EstadoFactura.EMISION_PENDIENTE
+                ? 'Emitiendo...'
+                : emitirFactura.isPending
+                ? 'Enviando...'
+                : 'Emitir Comprobante'}
+            </Button>
+          )}
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cerrar
           </Button>

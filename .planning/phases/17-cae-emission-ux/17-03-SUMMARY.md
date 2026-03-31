@@ -23,8 +23,8 @@ decisions:
   - "os.facturaId cast via (os as { facturaId?: string | null }) since CierreMensualResumen.detalleObrasSociales type lacks facturaId — backend does not return it yet; modal opens, shows graceful state"
   - "Emitir button positioned BEFORE Cerrar in DialogFooter — primary action first per shadcn convention"
 metrics:
-  duration_minutes: 25
-  tasks_completed: 2
+  duration_minutes: 30
+  tasks_completed: 3
   tasks_total: 3
   files_modified: 5
   completed_date: "2026-03-30"
@@ -95,15 +95,8 @@ metrics:
 
 ## Self-Check: PASSED
 
-## Awaiting Human Verification
+## Human Verification: APPROVED
 
-Task 3 is a `checkpoint:human-verify` gate. See the plan for the 11-step verification checklist:
-`.planning/phases/17-cae-emission-ux/17-03-PLAN.md` — Task 3 `<how-to-verify>` section.
+Task 3 (`checkpoint:human-verify`) was presented to the user with the 11-step verification checklist and received approval. All 3 tasks are complete.
 
-Key steps:
-1. Navigate to Finanzas > Facturación > Comprobantes, open any factura without CAE.
-2. Click "Emitir Comprobante" — verify button changes to "Enviando..." → "Emitiendo..." → estado EMISION_PENDIENTE.
-3. Wait ~6s — verify estado auto-updates to EMITIDA without page reload.
-4. In Liquidaciones tab and page, verify "Emitir Comprobante" opens FacturaDetailModal.
-5. Test afipError panel: set `afipError` on test factura in DB, verify red panel with AlertTriangle appears.
-6. Verify `useGenerarFacturaPDF` is absent: `grep -r "useGenerarFacturaPDF" frontend/src/` → no results.
+Phase 17 (CAE Emission UX) is fully complete.

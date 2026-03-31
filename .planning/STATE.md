@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: AFIP Real
-status: checkpoint
-stopped_at: "Completed 17-03-PLAN.md Tasks 1-2 — awaiting human-verify checkpoint (Task 3)"
+status: complete
+stopped_at: "Completed 17-03-PLAN.md — human verification approved"
 last_updated: "2026-03-30T00:00:00Z"
-last_activity: "2026-03-30 — Phase 17 Plan 03 Tasks 1-2 complete: useEmitirFactura + refetchInterval polling + afipError error panel in FacturaDetailModal + button wiring in LiquidacionesTab and liquidaciones/page. useGenerarFacturaPDF stub removed."
+last_activity: "2026-03-30 — Phase 17 Plan 03 fully complete: human verified 'Emitir Comprobante' end-to-end flow. All 3 tasks done. Phase 17 (CAE Emission UX) closed."
 progress:
   total_phases: 6
   completed_phases: 5
@@ -26,13 +26,13 @@ See: .planning/PROJECT.md (updated 2026-03-16)
 ## Current Position
 
 ```
-Phase:    17 — CAE Emission UX (CHECKPOINT)
-Plan:     17-03 Tasks 1-2 complete. Awaiting: human-verify checkpoint (Task 3).
-Status:   useEmitirFactura hook, 3s polling, afipError panel, button wiring all done. TypeScript clean.
-Progress: [██████████] 100% implementation complete — pending human verification
+Phase:    17 — CAE Emission UX (COMPLETE)
+Plan:     17-03 fully complete. Human verification approved.
+Status:   All plans in all phases complete. v1.2 AFIP Real milestone fully implemented.
+Progress: [██████████] 100% complete
 ```
 
-Last activity: 2026-03-30 — Phase 17 Plan 03 Tasks 1-2 complete: useEmitirFactura + refetchInterval polling + afipError error panel in FacturaDetailModal + button wiring in LiquidacionesTab and liquidaciones/page. useGenerarFacturaPDF stub removed.
+Last activity: 2026-03-30 — Phase 17 Plan 03 fully complete: human verified 'Emitir Comprobante' end-to-end flow. All 3 tasks done. Phase 17 (CAE Emission UX) and entire v1.2 AFIP Real milestone closed.
 
 ## Milestone Summary
 
@@ -144,5 +144,5 @@ Last activity: 2026-03-30 — Phase 17 Plan 03 Tasks 1-2 complete: useEmitirFact
 
 ## Session Continuity
 
-Next action: Phase 17 Plan 03 — frontend polling hook + CAE emission error modal.
-Stopped at: Completed 17-03-PLAN.md (awaiting human verify checkpoint)
+Next action: v1.2 AFIP Real milestone complete. All 20 plans across 6 phases done.
+Stopped at: Completed 17-03-PLAN.md — human verification approved. Phase 17 and v1.2 milestone fully closed.

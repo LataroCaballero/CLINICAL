@@ -784,6 +784,8 @@ export class TurnosService {
         inicio: true,
         estado: true,
         observaciones: true,
+        esCirugia: true,
+        entradaHCId: true,
         paciente: {
           select: {
             id: true,
@@ -796,6 +798,7 @@ export class TurnosService {
           select: {
             id: true,
             nombre: true,
+            esCirugia: true,
           },
         },
       },

@@ -89,7 +89,11 @@ Plans:
   5. Cada turno FINALIZADO muestra un botón "Ver HC" que abre un modal con las entradas HC del turno en modo solo-lectura
   6. El modal permite agregar una nueva entrada HC con el selector de tipo (Primera Consulta / Pre Quirúrgico / Control / Práctica) y el formulario correspondiente
   7. La nueva entrada retroactiva queda fechada en el día del turno seleccionado, no en la fecha actual
-**Plans**: TBD
+**Plans**: 3 planes
+Plans:
+- [ ] 21-01-PLAN.md — Fecha retroactiva en /hc/entries: backend DTO + service + tipo frontend
+- [ ] 21-02-PLAN.md — UpcomingAppointments agenda-first: hoy por defecto, nav día-a-día, métricas, Ver HC
+- [ ] 21-03-PLAN.md — TurnoHCModal wiring de fecha + checkpoint verificación humana
 
 ### 📋 v2.0 TBD (Planned)
 
@@ -120,8 +124,8 @@ Plans:
 | 17. CAE Emission UX | v1.2 | 3/3 | Complete | 2026-03-31 |
 | 18. CAE-03 Error Display Fixes | v1.2 | 2/2 | Complete | 2026-03-31 |
 | 19. getCierreMensual facturaId Extension | v1.2 | 2/2 | Complete | 2026-03-31 |
-| 20. Backend Data Fixes | 1/1 | Complete    | 2026-04-02 | - |
-| 21. Agenda Widget + Modal HC | v1.3 | 0/? | Not started | - |
+| 20. Backend Data Fixes | v1.3 | 1/1 | Complete | 2026-04-02 |
+| 21. Agenda Widget + Modal HC | v1.3 | 0/3 | Not started | - |
 
 ---
 *Roadmap initialized: 2026-02-23 | v1.0 shipped: 2026-03-03 | v1.1 shipped: 2026-03-16 | v1.2 shipped: 2026-03-31 | v1.3 started: 2026-04-02*

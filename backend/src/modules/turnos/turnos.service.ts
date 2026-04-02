@@ -311,11 +311,15 @@ export class TurnosService {
         fin: true,
         estado: true,
         observaciones: true,
+        entradaHCId: true,
+        esCirugia: true,
         paciente: {
           select: {
             id: true,
             nombreCompleto: true,
             whatsappOptIn: true,
+            diagnostico: true,
+            tratamiento: true,
           },
         },
         tipoTurno: {
@@ -323,6 +327,7 @@ export class TurnosService {
             id: true,
             nombre: true,
             duracionDefault: true,
+            esCirugia: true,
           },
         },
       },

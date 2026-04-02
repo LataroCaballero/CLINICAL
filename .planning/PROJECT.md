@@ -152,6 +152,18 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 
 16/16 requisitos completados en 50 días (2026-02-09 → 2026-03-31). 8 fases, 24 planes. Ver `.planning/milestones/v1.2-ROADMAP.md` para detalles completos.
 
+## Current Milestone: v1.3 Historial de Consultas
+
+**Goal:** Expandir el widget "Turnos del día" para que el profesional pueda navegar a cualquier día y ver el historial de consultas con sus entradas de HC asociadas, y agregar entradas retroactivas usando el mismo formato que LiveTurno.
+
+**Target features:**
+- Widget agenda-first (hoy por defecto vía `/turnos/agenda`, no `/proximos`)
+- Selector de calendario para navegar a cualquier día pasado o futuro
+- Métricas del día para días pasados/hoy (total, finalizados, cirugías, ausentes, cancelados)
+- Botón "Ver HC" por turno FINALIZADO → modal con entradas read-only + agregar nueva
+- Modal HC con mismo formato que HistoriaClinicaTab (tipo selector + PrimeraConsultaForm / Textarea)
+- Entradas retroactivas: backend acepta `fecha` opcional para datar la entrada en el día histórico
+
 ## Next Milestone: v2.0 (TBD)
 
 Planning pendiente. Candidatos para el próximo milestone:
@@ -161,4 +173,4 @@ Planning pendiente. Candidatos para el próximo milestone:
 - IVA matrix para cirugía estética (blocker de go-live AFIP producción)
 
 ---
-*Last updated: 2026-03-31 after v1.2 milestone completion — AFIP Real*
+*Last updated: 2026-04-02 after v1.3 milestone start — Historial de Consultas*

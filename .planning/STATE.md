@@ -1,11 +1,11 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.0
-milestone_name: TBD
-status: planning_next
-stopped_at: v1.2 AFIP Real archived — milestone complete, planning v2.0 next
-last_updated: "2026-03-31T00:00:00.000Z"
-last_activity: "2026-03-31 — v1.2 AFIP Real milestone archived. ROADMAP.md/REQUIREMENTS.md reorganized. PROJECT.md evolved. Git tag v1.2 pending. Ready for /gsd:new-milestone."
+milestone: v1.3
+milestone_name: Historial de Consultas
+status: defining_requirements
+stopped_at: Milestone v1.3 started — defining requirements
+last_updated: "2026-04-02T00:00:00.000Z"
+last_activity: "2026-04-02 — Milestone v1.3 started. Defining requirements for Historial de Consultas widget."
 progress:
   total_phases: 0
   completed_phases: 0
@@ -18,21 +18,22 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-31)
+See: .planning/PROJECT.md (updated 2026-04-02)
 
 **Core value:** Que un cirujano plástico cierre más cirugías — el sistema hace visible qué pacientes seguir, cuándo y cómo, de la manera más automatizada posible
-**Current focus:** v1.2 AFIP Real — ARCHIVED. Planning v2.0 next.
+**Current focus:** v1.3 Historial de Consultas — defining requirements
 
 ## Current Position
 
 ```
-Milestone: v1.2 AFIP Real — SHIPPED 2026-03-31
-Status:    Archived. ROADMAP.md, REQUIREMENTS.md, PROJECT.md updated.
-Next:      /gsd:new-milestone to start v2.0
-Progress:  [██████████] 100% — milestone complete
+Milestone: v1.3 Historial de Consultas
+Phase:     Not started (defining requirements)
+Plan:      —
+Status:    Defining requirements
+Progress:  [░░░░░░░░░░] 0%
 ```
 
-Last activity: 2026-03-31 — Phase 19 Plan 02 complete: getCierreMensual extended with liquidacionObraSocial.findMany, CierreMensualResumen updated, unsafe frontend casts removed, human-verify approved. CAE-02 closed. Phase 19 complete.
+Last activity: 2026-04-02 — Milestone v1.3 started
 
 ## Milestone Summary
 

@@ -73,7 +73,9 @@ Full details: `.planning/milestones/v1.2-ROADMAP.md`
   2. `GET /turnos/proximos` devuelve `esCirugia` y `entradaHCId` en cada turno, sin error de compilación Prisma
   3. `POST /pacientes/:id/historia-clinica/entradas` acepta campo `fecha` opcional y la entrada queda registrada con esa fecha en la DB
   4. Intentar crear una entrada HC con fecha futura retorna error de validación (400)
-**Plans**: TBD
+**Plans**: 1 plan
+Plans:
+- [ ] 20-01-PLAN.md — Fixes quirúrgicos en turnos.service.ts y soporte fecha retroactiva en HC
 
 ### Phase 21: Agenda Widget + Modal HC
 **Goal**: El profesional puede navegar día a día desde el dashboard, ver la agenda completa con métricas, y agregar entradas HC retroactivas a cualquier turno finalizado
@@ -118,7 +120,7 @@ Full details: `.planning/milestones/v1.2-ROADMAP.md`
 | 17. CAE Emission UX | v1.2 | 3/3 | Complete | 2026-03-31 |
 | 18. CAE-03 Error Display Fixes | v1.2 | 2/2 | Complete | 2026-03-31 |
 | 19. getCierreMensual facturaId Extension | v1.2 | 2/2 | Complete | 2026-03-31 |
-| 20. Backend Data Fixes | v1.3 | 0/? | Not started | - |
+| 20. Backend Data Fixes | v1.3 | 0/1 | Not started | - |
 | 21. Agenda Widget + Modal HC | v1.3 | 0/? | Not started | - |
 
 ---

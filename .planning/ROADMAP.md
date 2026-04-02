@@ -59,7 +59,7 @@ Full details: `.planning/milestones/v1.2-ROADMAP.md`
 
 **Milestone Goal:** Expandir el widget "Turnos del día" para que el profesional pueda navegar a cualquier día, ver la agenda completa con métricas, y agregar entradas de HC retroactivas a turnos finalizados usando el mismo formato que LiveTurno.
 
-- [ ] **Phase 20: Backend Data Fixes** — Corregir selects de Prisma en turnos.service.ts y agregar soporte de fecha retroactiva en HC
+- [x] **Phase 20: Backend Data Fixes** — Corregir selects de Prisma en turnos.service.ts y agregar soporte de fecha retroactiva en HC (completed 2026-04-02)
 - [ ] **Phase 21: Agenda Widget + Modal HC** — Reescribir UpcomingAppointments.tsx con enfoque agenda-first y TurnoHCModal.tsx con formato LiveTurno
 
 ## Phase Details
@@ -120,7 +120,7 @@ Plans:
 | 17. CAE Emission UX | v1.2 | 3/3 | Complete | 2026-03-31 |
 | 18. CAE-03 Error Display Fixes | v1.2 | 2/2 | Complete | 2026-03-31 |
 | 19. getCierreMensual facturaId Extension | v1.2 | 2/2 | Complete | 2026-03-31 |
-| 20. Backend Data Fixes | v1.3 | 0/1 | Not started | - |
+| 20. Backend Data Fixes | 1/1 | Complete   | 2026-04-02 | - |
 | 21. Agenda Widget + Modal HC | v1.3 | 0/? | Not started | - |
 
 ---

@@ -21,9 +21,9 @@
 
 ### Backend
 
-- [ ] **BACK-01**: `GET /turnos/agenda` retorna `diagnostico`, `tratamiento` del paciente en el select
-- [ ] **BACK-02**: `GET /turnos/proximos` retorna `esCirugia`, `entradaHCId`, `tipoTurno.esCirugia` en el select
-- [ ] **BACK-03**: `POST /pacientes/:id/historia-clinica/entradas` acepta campo `fecha` opcional para entradas retroactivas (validado: no puede ser futuro)
+- [x] **BACK-01**: `GET /turnos/agenda` retorna `diagnostico`, `tratamiento` del paciente en el select
+- [x] **BACK-02**: `GET /turnos/proximos` retorna `esCirugia`, `entradaHCId`, `tipoTurno.esCirugia` en el select
+- [x] **BACK-03**: `POST /pacientes/:id/historia-clinica/entradas` acepta campo `fecha` opcional para entradas retroactivas (validado: no puede ser futuro)
 
 ## Out of Scope
 
@@ -38,9 +38,9 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| BACK-01 | Phase 20 | Pending |
-| BACK-02 | Phase 20 | Pending |
-| BACK-03 | Phase 20 | Pending |
+| BACK-01 | Phase 20 | Complete |
+| BACK-02 | Phase 20 | Complete |
+| BACK-03 | Phase 20 | Complete |
 | DASH-01 | Phase 21 | Pending |
 | DASH-02 | Phase 21 | Pending |
 | DASH-03 | Phase 21 | Pending |

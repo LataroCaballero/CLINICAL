@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Historial de Consultas
-status: ready_to_plan
-stopped_at: Roadmap v1.3 created — Phase 20 ready to plan
-last_updated: "2026-04-02T00:00:00.000Z"
-last_activity: "2026-04-02 — Roadmap v1.3 created. 2 phases, 11 requirements mapped. Phase 20 ready to plan."
+status: planning
+stopped_at: Completed 20-backend-data-fixes-20-01-PLAN.md
+last_updated: "2026-04-02T15:05:40.678Z"
+last_activity: 2026-04-02 — Roadmap created, Phase 20 ready to plan
 progress:
   total_phases: 2
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  completed_phases: 1
+  total_plans: 1
+  completed_plans: 1
   percent: 0
 ---
 
@@ -27,13 +27,13 @@ See: .planning/PROJECT.md (updated 2026-04-02)
 
 ```
 Milestone: v1.3 Historial de Consultas
-Phase:     20 of 21 (Backend Data Fixes)
-Plan:      —
-Status:    Ready to plan
-Progress:  [░░░░░░░░░░] 0%
+Phase:     20 of 21 (Backend Data Fixes) — COMPLETE
+Plan:      01 of 01 — COMPLETE
+Status:    Phase 20 done, Phase 21 ready
+Progress:  [██████████] 100%
 ```
 
-Last activity: 2026-04-02 — Roadmap created, Phase 20 ready to plan
+Last activity: 2026-04-02 — Phase 20 plan 01 complete (BACK-01, BACK-02, BACK-03)
 
 ## Milestone Summary
 
@@ -54,7 +54,8 @@ Last activity: 2026-04-02 — Roadmap created, Phase 20 ready to plan
 - Montos server-side en transacción atómica — nunca totales del cliente
 
 ### Decisions (v1.3 new)
-*(none yet — populated during plan-phase)*
+- Future date boundary uses `hoy.setHours(23, 59, 59, 999)` so today is not rejected as future in HC entries
+- `fechaFinal` only passed to Prisma when provided; DB `@default(now())` handles nil case without behavior regression
 
 ### Key Files for v1.3
 - `backend/src/modules/turnos/turnos.service.ts` — fix Prisma selects (BACK-01, BACK-02)
@@ -71,6 +72,6 @@ Last activity: 2026-04-02 — Roadmap created, Phase 20 ready to plan
 
 ## Session Continuity
 
-Last session: 2026-04-02
-Stopped at: Roadmap v1.3 created — ready to run /gsd:plan-phase 20
+Last session: 2026-04-02T15:05:40.677Z
+Stopped at: Completed 20-backend-data-fixes-20-01-PLAN.md
 Resume file: None

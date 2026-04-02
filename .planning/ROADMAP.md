@@ -5,6 +5,7 @@
 - ✅ **v1.0 CRM Conversión** — Fases 1–7 (shipped 2026-03-03)
 - ✅ **v1.1 Vista del Facturador** — Fases 8–11 (shipped 2026-03-16)
 - ✅ **v1.2 AFIP Real** — Fases 12–19 (shipped 2026-03-31)
+- 🚧 **v1.3 Historial de Consultas** — Fases 20–21 (in progress)
 - 📋 **v2.0 TBD** — (planned)
 
 ## Phases
@@ -54,6 +55,40 @@ Full details: `.planning/milestones/v1.2-ROADMAP.md`
 
 </details>
 
+### 🚧 v1.3 Historial de Consultas (In Progress)
+
+**Milestone Goal:** Expandir el widget "Turnos del día" para que el profesional pueda navegar a cualquier día, ver la agenda completa con métricas, y agregar entradas de HC retroactivas a turnos finalizados usando el mismo formato que LiveTurno.
+
+- [ ] **Phase 20: Backend Data Fixes** — Corregir selects de Prisma en turnos.service.ts y agregar soporte de fecha retroactiva en HC
+- [ ] **Phase 21: Agenda Widget + Modal HC** — Reescribir UpcomingAppointments.tsx con enfoque agenda-first y TurnoHCModal.tsx con formato LiveTurno
+
+## Phase Details
+
+### Phase 20: Backend Data Fixes
+**Goal**: Los endpoints de turnos exponen todos los campos que el frontend necesita, y el backend acepta entradas HC con fecha histórica
+**Depends on**: Nothing (first phase of v1.3)
+**Requirements**: BACK-01, BACK-02, BACK-03
+**Success Criteria** (what must be TRUE):
+  1. `GET /turnos/agenda` devuelve `diagnostico` y `tratamiento` del paciente en cada turno
+  2. `GET /turnos/proximos` devuelve `esCirugia` y `entradaHCId` en cada turno, sin error de compilación Prisma
+  3. `POST /pacientes/:id/historia-clinica/entradas` acepta campo `fecha` opcional y la entrada queda registrada con esa fecha en la DB
+  4. Intentar crear una entrada HC con fecha futura retorna error de validación (400)
+**Plans**: TBD
+
+### Phase 21: Agenda Widget + Modal HC
+**Goal**: El profesional puede navegar día a día desde el dashboard, ver la agenda completa con métricas, y agregar entradas HC retroactivas a cualquier turno finalizado
+**Depends on**: Phase 20
+**Requirements**: DASH-01, DASH-02, DASH-03, DASH-04, DASH-05, HC-01, HC-02, HC-03
+**Success Criteria** (what must be TRUE):
+  1. Al abrir el dashboard, el widget muestra los turnos del día actual (todos, no solo futuros)
+  2. El profesional puede navegar al día anterior y siguiente con botones de flecha, y la lista de turnos se actualiza
+  3. El profesional puede seleccionar cualquier fecha pasada o futura con un selector de calendario y la lista se actualiza
+  4. Para el día de hoy y días pasados, el widget muestra métricas del día (total, finalizados, cirugías, ausentes, cancelados)
+  5. Cada turno FINALIZADO muestra un botón "Ver HC" que abre un modal con las entradas HC del turno en modo solo-lectura
+  6. El modal permite agregar una nueva entrada HC con el selector de tipo (Primera Consulta / Pre Quirúrgico / Control / Práctica) y el formulario correspondiente
+  7. La nueva entrada retroactiva queda fechada en el día del turno seleccionado, no en la fecha actual
+**Plans**: TBD
+
 ### 📋 v2.0 TBD (Planned)
 
 *(Next milestone to be defined via `/gsd:new-milestone`)*
@@ -83,6 +118,8 @@ Full details: `.planning/milestones/v1.2-ROADMAP.md`
 | 17. CAE Emission UX | v1.2 | 3/3 | Complete | 2026-03-31 |
 | 18. CAE-03 Error Display Fixes | v1.2 | 2/2 | Complete | 2026-03-31 |
 | 19. getCierreMensual facturaId Extension | v1.2 | 2/2 | Complete | 2026-03-31 |
+| 20. Backend Data Fixes | v1.3 | 0/? | Not started | - |
+| 21. Agenda Widget + Modal HC | v1.3 | 0/? | Not started | - |
 
 ---
-*Roadmap initialized: 2026-02-23 | v1.0 shipped: 2026-03-03 | v1.1 shipped: 2026-03-16 | v1.2 shipped: 2026-03-31*
+*Roadmap initialized: 2026-02-23 | v1.0 shipped: 2026-03-03 | v1.1 shipped: 2026-03-16 | v1.2 shipped: 2026-03-31 | v1.3 started: 2026-04-02*

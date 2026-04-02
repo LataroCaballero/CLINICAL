@@ -120,7 +120,7 @@ Plans:
 | 17. CAE Emission UX | v1.2 | 3/3 | Complete | 2026-03-31 |
 | 18. CAE-03 Error Display Fixes | v1.2 | 2/2 | Complete | 2026-03-31 |
 | 19. getCierreMensual facturaId Extension | v1.2 | 2/2 | Complete | 2026-03-31 |
-| 20. Backend Data Fixes | 1/1 | Complete   | 2026-04-02 | - |
+| 20. Backend Data Fixes | 1/1 | Complete    | 2026-04-02 | - |
 | 21. Agenda Widget + Modal HC | v1.3 | 0/? | Not started | - |
 
 ---

@@ -7,17 +7,17 @@
 
 ### Dashboard Widget
 
-- [ ] **DASH-01**: Profesional ve los turnos del día actual por defecto (agenda completa del día, no solo turnos futuros)
-- [ ] **DASH-02**: Profesional puede navegar al día anterior / siguiente desde el widget
-- [ ] **DASH-03**: Profesional puede seleccionar cualquier fecha con el selector de calendario (pasado o futuro)
-- [ ] **DASH-04**: Para días pasados y hoy, se muestran métricas del día (total, finalizados, cirugías, ausentes, cancelados)
-- [ ] **DASH-05**: Cada turno FINALIZADO en días pasados/hoy muestra botón "Ver HC"
+- [x] **DASH-01**: Profesional ve los turnos del día actual por defecto (agenda completa del día, no solo turnos futuros)
+- [x] **DASH-02**: Profesional puede navegar al día anterior / siguiente desde el widget
+- [x] **DASH-03**: Profesional puede seleccionar cualquier fecha con el selector de calendario (pasado o futuro)
+- [x] **DASH-04**: Para días pasados y hoy, se muestran métricas del día (total, finalizados, cirugías, ausentes, cancelados)
+- [x] **DASH-05**: Cada turno FINALIZADO en días pasados/hoy muestra botón "Ver HC"
 
 ### Modal Historia Clínica
 
 - [ ] **HC-01**: Modal muestra entradas HC del día del turno en modo solo-lectura con indicador visual de inmutabilidad legal
 - [ ] **HC-02**: Modal permite agregar nueva entrada HC usando el mismo formato que LiveTurno (selector de tipo: Primera Consulta / Pre Quirúrgico / Control / Práctica + form correspondiente)
-- [ ] **HC-03**: Nueva entrada retroactiva queda fechada en el día histórico seleccionado (no en hoy)
+- [x] **HC-03**: Nueva entrada retroactiva queda fechada en el día histórico seleccionado (no en hoy)
 
 ### Backend
 
@@ -41,14 +41,14 @@
 | BACK-01 | Phase 20 | Complete |
 | BACK-02 | Phase 20 | Complete |
 | BACK-03 | Phase 20 | Complete |
-| DASH-01 | Phase 21 | Pending |
-| DASH-02 | Phase 21 | Pending |
-| DASH-03 | Phase 21 | Pending |
-| DASH-04 | Phase 21 | Pending |
-| DASH-05 | Phase 21 | Pending |
+| DASH-01 | Phase 21 | Complete |
+| DASH-02 | Phase 21 | Complete |
+| DASH-03 | Phase 21 | Complete |
+| DASH-04 | Phase 21 | Complete |
+| DASH-05 | Phase 21 | Complete |
 | HC-01 | Phase 21 | Pending |
 | HC-02 | Phase 21 | Pending |
-| HC-03 | Phase 21 | Pending |
+| HC-03 | Phase 21 | Complete |
 
 **Coverage:**
 - v1.3 requirements: 11 total

@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Historial de Consultas
-status: completed
-stopped_at: Completed 21-agenda-widget-modal-hc-21-01-PLAN.md
-last_updated: "2026-04-03T12:19:09.697Z"
-last_activity: 2026-04-02 — Phase 20 plan 01 complete (BACK-01, BACK-02, BACK-03)
+status: in-progress
+stopped_at: Completed 21-agenda-widget-modal-hc-21-02-PLAN.md
+last_updated: "2026-04-03T00:08:00Z"
+last_activity: 2026-04-03 — Phase 21 plan 02 complete (DASH-01..05)
 progress:
   total_phases: 2
   completed_phases: 1
   total_plans: 4
-  completed_plans: 2
-  percent: 100
+  completed_plans: 4
+  percent: 92
 ---
 
 # Project State
@@ -28,12 +28,12 @@ See: .planning/PROJECT.md (updated 2026-04-02)
 ```
 Milestone: v1.3 Historial de Consultas
 Phase:     21 of 21 (Agenda Widget + Modal HC) — IN PROGRESS
-Plan:      01 of 03 — COMPLETE
-Status:    Phase 21 plan 01 done (HC-03), plans 02-03 pending
-Progress:  [█████████░] 85%
+Plan:      02 of 03 — COMPLETE
+Status:    Phase 21 plan 02 done (DASH-01..05), plan 03 pending
+Progress:  [█████████░] 92%
 ```
 
-Last activity: 2026-04-03 — Phase 21 plan 01 complete (HC-03)
+Last activity: 2026-04-03 — Phase 21 plan 02 complete (DASH-01..05)
 
 ## Milestone Summary
 
@@ -57,6 +57,8 @@ Last activity: 2026-04-03 — Phase 21 plan 01 complete (HC-03)
 - Future date boundary uses `hoy.setHours(23, 59, 59, 999)` so today is not rejected as future in HC entries
 - `fechaFinal` only passed to Prisma when provided; DB `@default(now())` handles nil case without behavior regression
 - Retroactive fecha pattern reused verbatim from Phase 20 historia-clinica for hc-templates createEntry (HC-03)
+- Single `selectedDate: Date` state initialized to `new Date()` replaces dual `dateIndex`+`pickedDate` in UpcomingAppointments — eliminates mode-switching complexity (21-02)
+- `isHoyOPasado = isToday || isPast` is the single gate for both metrics strip and Ver HC button — no pickedDate condition needed (21-02)
 
 ### Key Files for v1.3
 - `backend/src/modules/turnos/turnos.service.ts` — fix Prisma selects (BACK-01, BACK-02)
@@ -73,6 +75,6 @@ Last activity: 2026-04-03 — Phase 21 plan 01 complete (HC-03)
 
 ## Session Continuity
 
-Last session: 2026-04-03T12:19:09.696Z
-Stopped at: Completed 21-agenda-widget-modal-hc-21-01-PLAN.md
+Last session: 2026-04-03T12:20:07.633Z
+Stopped at: Completed 21-agenda-widget-modal-hc-21-02-PLAN.md
 Resume file: None

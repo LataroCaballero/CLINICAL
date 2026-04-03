@@ -288,6 +288,7 @@ export interface UpdateTemplateDto {
 export interface CreateEntryDto {
   templateId: string;
   templateVersionId: string;
+  fecha?: string; // ISO date string YYYY-MM-DD para entradas retroactivas
 }
 
 export interface UpdateEntryAnswersDto {

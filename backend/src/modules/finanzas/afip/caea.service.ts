@@ -8,7 +8,7 @@ import { PrismaService } from '../../../prisma/prisma.service';
 import { WSAA_SERVICE } from '../../wsaa/wsaa.constants';
 import { WsaaServiceInterface } from '../../wsaa/wsaa.interfaces';
 import { AfipBusinessError, AfipTransientError } from './afip.errors';
-import { CAEA_INFORMAR_QUEUE } from '../processors/caea-informar.processor';
+import { CAEA_INFORMAR_QUEUE } from '../processors/caea-informar.constants';
 
 /**
  * Maps Prisma CondicionIVA enum values to AFIP integer IDs for FECAEARegInformativo.

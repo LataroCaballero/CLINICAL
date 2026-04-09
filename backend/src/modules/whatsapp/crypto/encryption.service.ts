@@ -16,8 +16,8 @@ export class EncryptionService {
         'Generate one with: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"';
       this.logger.warn(msg);
       // Use a deterministic fallback for dev/test — NOT for production
-      const fallback = 'dev-fallback-key-not-for-prod-00000000000000000000000000000000';
-      this.key = Buffer.from(fallback.slice(0, 64), 'hex');
+      const fallback = '0000000000000000000000000000000000000000000000000000000000000000';
+      this.key = Buffer.from(fallback, 'hex');
     } else {
       this.key = Buffer.from(hexKey, 'hex');
     }

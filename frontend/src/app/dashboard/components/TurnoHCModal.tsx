@@ -9,35 +9,32 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
 import {
-  Lock,
-  Plus,
   FileText,
-  CalendarDays,
   AlertCircle,
-  FileCode,
   Loader2,
+  Save,
+  ChevronLeft,
+  Plus,
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 import { useHistoriaClinica } from "@/hooks/useHistoriaClinica";
-import { useAvailableHCTemplates } from "@/hooks/useHCTemplates";
 import {
-  useCreateHCEntry,
-  useHCEntry,
-  useHCDraftEntries,
-} from "@/hooks/useHCEntries";
-import { DynamicTemplateWizard } from "@/components/hc-templates/runner";
-import type {
-  HCTemplateWithCurrentVersion,
-  TemplateSchema,
-  HCEntryFromTemplate,
-} from "@/types/hc-templates";
+  useCreateHistoriaClinicaEntry,
+  type TipoEntrada,
+} from "@/hooks/useCreateHistoriaClinicaEntry";
+import { usePaciente } from "@/hooks/usePaciente";
+import {
+  PrimeraConsultaForm,
+  type PrimeraConsultaFormState,
+} from "@/components/live-turno/tabs/hc/PrimeraConsultaForm";
 
 type TurnoAgenda = {
   id: string;
@@ -66,21 +63,32 @@ function yyyyMmDd(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-export default function TurnoHCModal({ turno, open, onClose, selectedDate }: Props) {
-  const [showTemplateSelector, setShowTemplateSelector] = useState(false);
-  const [wizardEntryId, setWizardEntryId] = useState<string | null>(null);
-  const [wizardSchema, setWizardSchema] = useState<TemplateSchema | null>(null);
+const TIPOS: { id: TipoEntrada; label: string }[] = [
+  { id: "primera_vez", label: "Primera Consulta" },
+  { id: "pre_quirurgico", label: "Pre Quirúrgico" },
+  { id: "control", label: "Control" },
+  { id: "practica", label: "Práctica" },
+];
+
+export default function TurnoHCModal({
+  turno,
+  open,
+  onClose,
+  selectedDate,
+}: Props) {
+  const [showForm, setShowForm] = useState(false);
+  const [tipoSeleccionado, setTipoSeleccionado] = useState<TipoEntrada | null>(
+    null
+  );
+  const [pvState, setPvState] = useState<PrimeraConsultaFormState | null>(null);
+  const [textoLibre, setTextoLibre] = useState("");
+  const [saved, setSaved] = useState(false);
 
   const pacienteId = turno?.paciente.id ?? "";
 
   const { data: hcEntries, isLoading } = useHistoriaClinica(pacienteId);
-  const { data: drafts = [] } = useHCDraftEntries(pacienteId || null);
-  const { data: templates = [] } = useAvailableHCTemplates();
-  const createTemplateEntry = useCreateHCEntry();
-  const { data: wizardEntry } = useHCEntry(
-    wizardEntryId ? pacienteId : null,
-    wizardEntryId
-  );
+  const { data: pacienteData } = usePaciente(pacienteId || null);
+  const createEntry = useCreateHistoriaClinicaEntry();
 
   if (!turno) return null;
 
@@ -93,281 +101,277 @@ export default function TurnoHCModal({ turno, open, onClose, selectedDate }: Pro
 
   const entriesByDate = allEntries.filter((e) => {
     const d = new Date(e.fecha);
-    return yyyyMmDd(d) === selectedDateStr;
+    const entryDateStr = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
+    return entryDateStr === selectedDateStr;
   });
 
   const dayEntries = linkedById ? [linkedById] : entriesByDate;
 
-  // Drafts for this day (filter by creation date)
-  const dayDrafts = (drafts as HCEntryFromTemplate[]).filter((d) => {
-    const created = new Date(d.createdAt);
-    return yyyyMmDd(created) === selectedDateStr;
-  });
+  const canSave =
+    tipoSeleccionado !== null &&
+    (tipoSeleccionado === "primera_vez"
+      ? pvState !== null &&
+        (pvState.diagnostico.zonas.length > 0 ||
+          pvState.tratamientos.length > 0)
+      : textoLibre.trim().length > 0);
 
-  const handleSelectTemplate = async (template: HCTemplateWithCurrentVersion) => {
-    if (!template.currentVersion) return;
-    setShowTemplateSelector(false);
+  const handleSave = async () => {
+    if (!tipoSeleccionado) return;
     try {
-      const entry = await createTemplateEntry.mutateAsync({
-        pacienteId,
-        dto: {
-          templateId: template.id,
-          templateVersionId: template.currentVersion.id,
-          fecha: yyyyMmDd(selectedDate),
-        },
-      });
-      setWizardEntryId(entry.id);
-      setWizardSchema(template.currentVersion.schema);
+      const fecha = yyyyMmDd(selectedDate);
+      if (tipoSeleccionado === "primera_vez") {
+        if (!pvState) return;
+        await createEntry.mutateAsync({
+          pacienteId,
+          dto: {
+            tipo: "primera_vez",
+            fecha,
+            diagnostico: pvState.diagnostico,
+            tratamientos: pvState.tratamientos,
+            comentario: pvState.comentario,
+            autorizaciones: pvState.autorizacion
+              ? [
+                  {
+                    obraSocialId: pvState.autorizacion.obraSocialId,
+                    codigos: pvState.autorizacion.codigos,
+                  },
+                ]
+              : undefined,
+          },
+        });
+      } else {
+        await createEntry.mutateAsync({
+          pacienteId,
+          dto: { tipo: tipoSeleccionado, fecha, texto: textoLibre },
+        });
+      }
+      setSaved(true);
+      setTimeout(() => {
+        setSaved(false);
+        setShowForm(false);
+        setTipoSeleccionado(null);
+        setPvState(null);
+        setTextoLibre("");
+      }, 1500);
     } catch {
-      toast.error("No se pudo crear la entrada");
+      toast.error("No se pudo guardar la entrada");
     }
   };
 
-  const handleContinueDraft = (draft: HCEntryFromTemplate) => {
-    if (draft.templateVersion?.schema) {
-      setWizardEntryId(draft.id);
-      setWizardSchema(draft.templateVersion.schema as TemplateSchema);
-    } else {
-      toast.error("No se pudo cargar la plantilla del borrador");
-    }
+  const handleCloseForm = () => {
+    setShowForm(false);
+    setTipoSeleccionado(null);
+    setPvState(null);
+    setTextoLibre("");
   };
-
-  const handleCloseWizard = () => {
-    setWizardEntryId(null);
-    setWizardSchema(null);
-  };
-
-  // If wizard is open, take over the dialog content
-  if (wizardEntryId && wizardSchema) {
-    return (
-      <Dialog open={open} onOpenChange={(v) => { if (!v) { handleCloseWizard(); onClose(); } }}>
-        <DialogContent className="max-w-3xl w-full max-h-[90vh] flex flex-col overflow-hidden p-0">
-          <div className="flex-1 overflow-y-auto p-6">
-            <DynamicTemplateWizard
-              entryId={wizardEntryId}
-              pacienteId={pacienteId}
-              schema={wizardSchema}
-              initialAnswers={(wizardEntry?.answers as Record<string, unknown>) || {}}
-              initialComputed={(wizardEntry?.computed as Record<string, unknown>) || {}}
-              onClose={handleCloseWizard}
-              onFinalize={handleCloseWizard}
-            />
-          </div>
-        </DialogContent>
-      </Dialog>
-    );
-  }
 
   return (
-    <>
-      <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-        <DialogContent className="max-w-2xl w-full max-h-[85vh] flex flex-col overflow-hidden">
-          <DialogHeader>
-            <DialogTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-              <FileText className="w-4 h-4 text-indigo-500" />
-              HC — {turno.paciente.nombreCompleto}
-            </DialogTitle>
-            <p className="text-sm text-gray-500">
-              {turno.tipoTurno.nombre} · {hhmm(turno.inicio)} ·{" "}
-              {format(selectedDate, "EEEE d 'de' MMMM yyyy", { locale: es })}
-            </p>
-          </DialogHeader>
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-w-2xl w-full max-h-[85vh] flex flex-col overflow-hidden">
+        <DialogHeader>
+          <DialogTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+            <FileText className="w-4 h-4 text-indigo-500" />
+            HC — {turno.paciente.nombreCompleto}
+          </DialogTitle>
+          <p className="text-sm text-gray-500">
+            {turno.tipoTurno.nombre} · {hhmm(turno.inicio)} ·{" "}
+            {format(selectedDate, "EEEE d 'de' MMMM yyyy", { locale: es })}
+          </p>
+        </DialogHeader>
 
+        {showForm ? (
+          /* ── FORM MODE ── */
+          <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
+            <ScrollArea className="flex-1 overflow-y-auto pr-1">
+              <div className="space-y-4 py-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-gray-500 -ml-1"
+                  onClick={handleCloseForm}
+                >
+                  <ChevronLeft className="w-4 h-4 mr-1" /> Volver al historial
+                </Button>
+
+                {/* Tipo selector */}
+                <div className="flex gap-2 flex-wrap">
+                  {TIPOS.map(({ id, label }) => (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => setTipoSeleccionado(id)}
+                      className={cn(
+                        "px-4 py-2 rounded-lg text-sm font-medium border transition-colors",
+                        tipoSeleccionado === id
+                          ? "bg-blue-600 text-white border-blue-600"
+                          : "bg-white text-gray-700 border-gray-300 hover:border-blue-400"
+                      )}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+
+                {tipoSeleccionado === "primera_vez" && (
+                  <PrimeraConsultaForm
+                    onChange={setPvState}
+                    onGenerarPresupuesto={() => {}}
+                    obraSocialId={pacienteData?.obraSocialId}
+                  />
+                )}
+
+                {tipoSeleccionado && tipoSeleccionado !== "primera_vez" && (
+                  <Textarea
+                    value={textoLibre}
+                    onChange={(e) => setTextoLibre(e.target.value)}
+                    placeholder={`Notas de ${
+                      TIPOS.find((t) => t.id === tipoSeleccionado)?.label ??
+                      "consulta"
+                    }...`}
+                    rows={8}
+                    className="resize-none"
+                  />
+                )}
+              </div>
+            </ScrollArea>
+
+            {tipoSeleccionado && (
+              <div className="border-t pt-3 flex justify-end gap-2 shrink-0">
+                <Button
+                  onClick={handleSave}
+                  disabled={!canSave || createEntry.isPending || saved}
+                  size="sm"
+                >
+                  {createEntry.isPending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-1 animate-spin" />{" "}
+                      Guardando...
+                    </>
+                  ) : saved ? (
+                    "✓ Guardado"
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4 mr-1" /> Guardar
+                    </>
+                  )}
+                </Button>
+              </div>
+            )}
+          </div>
+        ) : (
+          /* ── LIST MODE ── */
           <ScrollArea className="flex-1 overflow-y-auto pr-1">
             <div className="space-y-4 py-2">
-
-              {/* Borradores del día */}
-              {dayDrafts.length > 0 && (
-                <Card className="p-4 bg-amber-50 border-amber-200 space-y-2">
-                  <p className="text-sm font-medium text-amber-800">Borradores pendientes</p>
-                  {dayDrafts.map((draft) => (
-                    <div key={draft.id} className="flex items-center justify-between p-3 bg-white rounded border">
-                      <div>
-                        <p className="text-sm font-medium">{draft.template?.nombre ?? "Borrador"}</p>
-                        <p className="text-xs text-gray-500">
-                          Última edición: {new Date(draft.updatedAt).toLocaleDateString("es-AR")}
-                        </p>
-                      </div>
-                      <Button size="sm" onClick={() => handleContinueDraft(draft)}>
-                        Continuar
-                      </Button>
-                    </div>
-                  ))}
-                </Card>
-              )}
-
-              {/* Entradas HC del día */}
-              {isLoading ? (
-                <div className="flex items-center gap-2 text-sm text-gray-400 py-4">
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Cargando historia clínica...
-                </div>
-              ) : dayEntries.length > 0 ? (
-                <div className="space-y-3">
-                  {dayEntries.map((entry) => (
-                    <EntryReadOnly key={entry.id} entry={entry} />
-                  ))}
-                </div>
-              ) : (
-                <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-50 border border-gray-200 rounded-md p-3">
-                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                  No hay entradas HC registradas para este día.
-                </div>
-              )}
+              <div>
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+                  Historial
+                </h3>
+                {isLoading ? (
+                  <div className="flex items-center gap-2 text-sm text-gray-400 py-4">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Cargando historia clínica...
+                  </div>
+                ) : dayEntries.length > 0 ? (
+                  <div className="space-y-3">
+                    {dayEntries.map((entrada: any) => (
+                      <EntryCard key={entrada.id} entrada={entrada} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-50 border border-gray-200 rounded-md p-3">
+                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                    No hay entradas HC registradas para este día.
+                  </div>
+                )}
+              </div>
 
               <Separator />
 
-              {/* Agregar nueva entrada */}
               <div className="border border-dashed border-indigo-200 rounded-lg p-3 bg-indigo-50/40">
                 <p className="text-sm text-indigo-700 font-medium mb-1">
                   Agregar información a este día
                 </p>
                 <p className="text-xs text-indigo-500 mb-3">
-                  Las entradas ya registradas no se pueden modificar por razones legales.
+                  Las entradas ya registradas no se pueden modificar por razones
+                  legales.
                 </p>
                 <Button
                   size="sm"
                   className="bg-indigo-500 hover:bg-indigo-600 text-white"
-                  onClick={() => setShowTemplateSelector(true)}
-                  disabled={createTemplateEntry.isPending}
+                  onClick={() => setShowForm(true)}
                 >
-                  {createTemplateEntry.isPending ? (
-                    <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
-                  ) : (
-                    <Plus className="w-3.5 h-3.5 mr-1" />
-                  )}
+                  <Plus className="w-3.5 h-3.5 mr-1" />
                   Nueva entrada HC
                 </Button>
               </div>
-
             </div>
           </ScrollArea>
-        </DialogContent>
-      </Dialog>
-
-      {/* Template selector */}
-      <Dialog open={showTemplateSelector} onOpenChange={setShowTemplateSelector}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Seleccionar plantilla</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-2 py-4">
-            {templates.length === 0 ? (
-              <p className="text-sm text-gray-500 text-center py-4">
-                No hay plantillas disponibles.
-                <br />
-                Creá una desde Configuración → Plantillas HC
-              </p>
-            ) : (
-              templates.map((template) => (
-                <Card
-                  key={template.id}
-                  className="p-4 cursor-pointer hover:border-indigo-400 transition-colors"
-                  onClick={() => handleSelectTemplate(template)}
-                >
-                  <div className="flex items-center gap-2">
-                    <FileCode className="w-4 h-4 text-indigo-500" />
-                    <span className="font-medium text-sm">{template.nombre}</span>
-                  </div>
-                  {template.descripcion && (
-                    <p className="text-xs text-gray-500 mt-1 ml-6">{template.descripcion}</p>
-                  )}
-                </Card>
-              ))
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
-    </>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }
 
-function EntryReadOnly({ entry }: { entry: any }) {
+function EntryCard({ entrada }: { entrada: any }) {
+  const contenido = (entrada.contenido ?? null) as any;
+  const isPrimeraVez = contenido?.tipo === "primera_vez";
+
+  const tipoLabel =
+    contenido?.tipo === "primera_vez"
+      ? "Primera consulta"
+      : contenido?.tipo === "pre_quirurgico"
+      ? "Pre quirúrgico"
+      : contenido?.tipo === "control"
+      ? "Control"
+      : contenido?.tipo === "practica"
+      ? "Práctica"
+      : "Libre";
+
   return (
-    <div className="border border-gray-200 rounded-lg p-4 space-y-3">
-      {/* Badge read-only */}
-      <div className="flex items-center gap-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
-        <Lock className="w-3.5 h-3.5 flex-shrink-0" />
-        <span>Entrada finalizada — no puede modificarse por razones legales.</span>
-      </div>
-
-      {/* Metadata */}
-      <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600">
-        <CalendarDays className="w-4 h-4 text-gray-400 flex-shrink-0" />
-        <span>
-          {new Date(entry.fecha).toLocaleDateString("es-AR", {
-            day: "2-digit",
-            month: "long",
-            year: "numeric",
-          })}
+    <div className="border rounded-lg p-3 bg-white shadow-sm space-y-2">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+          {tipoLabel}
         </span>
-        {entry.template?.nombre ? (
-          <>
-            <span className="text-gray-300">·</span>
-            <Badge variant="secondary" className="text-xs flex items-center gap-1">
-              <FileCode className="w-3 h-3" />
-              {entry.template.nombre}
-            </Badge>
-          </>
-        ) : (
-          <Badge variant="outline" className="text-xs">Texto libre</Badge>
-        )}
-        <Badge className="ml-auto bg-green-100 text-green-700 hover:bg-green-100 text-xs">
-          Finalizada
-        </Badge>
+        <span className="text-xs text-muted-foreground">
+          {format(new Date(entrada.fecha), "d MMM yyyy", { locale: es })}
+        </span>
       </div>
 
-      {/* Contenido legacy */}
-      {entry.contenido && typeof entry.contenido === "object" && (
-        <div className="text-sm text-gray-700 space-y-1 pt-1">
-          {entry.contenido.texto && (
-            <p className="whitespace-pre-wrap">{entry.contenido.texto}</p>
+      {isPrimeraVez ? (
+        <div className="space-y-1.5">
+          {contenido.diagnostico?.zonas?.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {contenido.diagnostico.zonas.map((z: string) => (
+                <Badge key={z} variant="secondary" className="text-xs capitalize">
+                  {z}
+                </Badge>
+              ))}
+              {contenido.diagnostico.subzonas?.map((s: string) => (
+                <Badge key={s} variant="outline" className="text-xs capitalize">
+                  {s}
+                </Badge>
+              ))}
+            </div>
           )}
-          {entry.contenido.tipoPractica && (
-            <p className="text-xs text-gray-500">
-              Tipo: <span className="font-medium">{entry.contenido.tipoPractica}</span>
-            </p>
-          )}
-          {entry.contenido.tipo === "primera_vez" && (
-            <div className="space-y-1">
-              {entry.contenido.diagnostico?.zonas?.length > 0 && (
-                <p className="text-xs text-gray-600">
-                  Zonas: <span className="font-medium">{entry.contenido.diagnostico.zonas.join(", ")}</span>
-                </p>
-              )}
-              {entry.contenido.tratamientos?.length > 0 && (
-                <p className="text-xs text-gray-600">
-                  Tratamientos:{" "}
-                  <span className="font-medium">
-                    {entry.contenido.tratamientos.map((t: any) => t.nombre).join(", ")}
-                  </span>
-                </p>
-              )}
+          {contenido.tratamientos?.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {contenido.tratamientos.map((t: any, i: number) => (
+                <Badge
+                  key={i}
+                  className="text-xs bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-50"
+                >
+                  {t.nombre}
+                </Badge>
+              ))}
             </div>
           )}
         </div>
+      ) : (
+        <p className="text-xs text-muted-foreground line-clamp-2">
+          {contenido?.texto || "(sin contenido)"}
+        </p>
       )}
-
-      {/* Template answers */}
-      {entry.answers &&
-        typeof entry.answers === "object" &&
-        Object.keys(entry.answers).length > 0 && (
-          <div className="space-y-1 pt-1">
-            {Object.entries(entry.answers as Record<string, unknown>)
-              .filter(([, v]) => v !== null && v !== undefined && v !== "")
-              .slice(0, 6)
-              .map(([k, v]) => (
-                <div key={k} className="flex gap-2 text-xs">
-                  <span className="text-gray-400 capitalize min-w-[110px]">
-                    {k.replace(/_/g, " ")}:
-                  </span>
-                  <span className="text-gray-700">
-                    {Array.isArray(v) ? v.join(", ") : String(v)}
-                  </span>
-                </div>
-              ))}
-          </div>
-        )}
     </div>
   );
 }

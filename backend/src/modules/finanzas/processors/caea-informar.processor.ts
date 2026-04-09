@@ -3,8 +3,9 @@ import { OnWorkerEvent, Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job, UnrecoverableError } from 'bullmq';
 import { CaeaService } from '../afip/caea.service';
 import { AfipBusinessError } from '../afip/afip.errors';
+import { CAEA_INFORMAR_QUEUE } from './caea-informar.constants';
 
-export const CAEA_INFORMAR_QUEUE = 'caea-informar';
+export { CAEA_INFORMAR_QUEUE };
 
 export interface CaeaInformarJobData {
   facturaId: string;

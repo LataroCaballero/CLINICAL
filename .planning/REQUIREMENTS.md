@@ -15,8 +15,8 @@
 
 ### Modal Historia Clínica
 
-- [ ] **HC-01**: Modal muestra entradas HC del día del turno en modo solo-lectura con indicador visual de inmutabilidad legal
-- [ ] **HC-02**: Modal permite agregar nueva entrada HC usando el mismo formato que LiveTurno (selector de tipo: Primera Consulta / Pre Quirúrgico / Control / Práctica + form correspondiente)
+- [x] **HC-01**: Modal muestra entradas HC del día del turno en modo solo-lectura con indicador visual de inmutabilidad legal
+- [x] **HC-02**: Modal permite agregar nueva entrada HC usando el mismo formato que LiveTurno (selector de tipo: Primera Consulta / Pre Quirúrgico / Control / Práctica + form correspondiente)
 - [x] **HC-03**: Nueva entrada retroactiva queda fechada en el día histórico seleccionado (no en hoy)
 
 ### Backend
@@ -46,8 +46,8 @@
 | DASH-03 | Phase 21 | Complete |
 | DASH-04 | Phase 21 | Complete |
 | DASH-05 | Phase 21 | Complete |
-| HC-01 | Phase 21 | Pending |
-| HC-02 | Phase 21 | Pending |
+| HC-01 | Phase 21 | Complete |
+| HC-02 | Phase 21 | Complete |
 | HC-03 | Phase 21 | Complete |
 
 **Coverage:**

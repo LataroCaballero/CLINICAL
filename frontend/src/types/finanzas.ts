@@ -29,6 +29,8 @@ export enum TipoFactura {
 export enum EstadoFactura {
   EMITIDA = "EMITIDA",
   ANULADA = "ANULADA",
+  EMISION_PENDIENTE = "EMISION_PENDIENTE",
+  CAEA_PENDIENTE_INFORMAR = "CAEA_PENDIENTE_INFORMAR",
 }
 
 export enum EstadoLiquidacion {
@@ -212,6 +214,20 @@ export interface Factura {
     id: string;
     nombre: string;
   } | null;
+  // AFIP fields (Phase 14/15)
+  moneda: 'ARS' | 'USD';
+  tipoCambio: number;
+  cae: string | null;
+  caeFchVto: string | null;
+  nroComprobante: number | null;
+  qrData: string | null;
+}
+
+export interface FacturaDetail extends Factura {
+  qrImageDataUrl: string | null;
+  ptoVta: number | null;
+  obraSocial?: { id: string; nombre: string } | null;
+  afipError: string | null; // Spanish AFIP error from backend (Phase 17)
 }
 
 export interface CreateFacturaInput {
@@ -280,6 +296,7 @@ export interface CierreMensualResumen {
     total: number;
     facturado: number;
     pendiente: number;
+    facturaId: string | null;
   }[];
 }
 

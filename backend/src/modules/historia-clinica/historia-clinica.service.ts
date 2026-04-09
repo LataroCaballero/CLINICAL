@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 import { CreateEntradaDto } from './dto/crear-entrada.dto';
@@ -108,6 +108,22 @@ export class HistoriaClinicaService {
         : null;
     }
 
+    // Validar y preparar fecha retroactiva (antes de la transacción)
+    let fechaFinal: Date | undefined;
+    if (dto.fecha) {
+      const parsed = new Date(dto.fecha);
+      if (isNaN(parsed.getTime())) {
+        throw new BadRequestException('Formato de fecha inválido.');
+      }
+      // Normalizar a fin-de-día para comparar solo fecha (hoy no es futuro)
+      const hoy = new Date();
+      hoy.setHours(23, 59, 59, 999);
+      if (parsed > hoy) {
+        throw new BadRequestException('No se puede crear una entrada con fecha futura.');
+      }
+      fechaFinal = parsed;
+    }
+
     // Pre-fetch OS names for autorizaciones (outside tx to avoid nested queries)
     const autorizacionesMeta: Array<{ obraSocialNombre: string; autIdx: number }> = [];
     if (dto.tipo === 'primera_vez' && dto.autorizaciones?.length) {
@@ -131,7 +147,11 @@ export class HistoriaClinicaService {
       }
 
       const entrada = await tx.historiaClinicaEntrada.create({
-        data: { historiaClinicaId: historia.id, contenido },
+        data: {
+          historiaClinicaId: historia.id,
+          contenido,
+          ...(fechaFinal && { fecha: fechaFinal }),
+        },
       });
 
       if (diagnosticoStr !== null || tratamientoStr !== null) {

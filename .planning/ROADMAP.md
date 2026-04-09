@@ -4,7 +4,9 @@
 
 - ✅ **v1.0 CRM Conversión** — Fases 1–7 (shipped 2026-03-03)
 - ✅ **v1.1 Vista del Facturador** — Fases 8–11 (shipped 2026-03-16)
-- 🔄 **v1.2 AFIP Real** — Fases 12–16 (in progress)
+- ✅ **v1.2 AFIP Real** — Fases 12–19 (shipped 2026-03-31)
+- 🚧 **v1.3 Historial de Consultas** — Fases 20–21 (in progress)
+- 📋 **v2.0 TBD** — (planned)
 
 ## Phases
 
@@ -37,94 +39,65 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
 
 </details>
 
-### v1.2 AFIP Real (Fases 12–16)
+<details>
+<summary>✅ v1.2 AFIP Real (Fases 12–19) — SHIPPED 2026-03-31</summary>
 
-- [x] **Phase 12: Schema AFIP Extendido + Gestión de Certificados** — DB migration con modelos AFIP y UI completa de configuración de certificados por tenant (completed 2026-03-16)
-- [x] **Phase 13: WSAA Token Service** — Access tickets reales con firma CMS in-process, cache Redis y mutex por CUIT (completed 2026-03-20)
-- [x] **Phase 14: Emisión CAE Real (WSFEv1)** — FECAESolicitar con advisory lock, clasificación de errores y swap del DI token (completed 2026-03-21)
-- [ ] **Phase 15: QR AFIP + PDF + Frontend de Comprobantes** — QR embebido en PDF, display de CAE en UI, cotización BNA para USD
-- [ ] **Phase 16: CAEA Contingency Mode** — Pre-fetch, fallback automático, FECAEAInformar con 72 reintentos y alertas de deadline
+- [x] Phase 12: Schema AFIP Extendido + Gestión de Certificados (4/4 planes) — completado 2026-03-16
+- [x] Phase 13: WSAA Token Service (2/2 planes) — completado 2026-03-20
+- [x] Phase 14: Emisión CAE Real (WSFEv1) (4/4 planes) — completado 2026-03-21
+- [x] Phase 15: QR AFIP + PDF + Frontend de Comprobantes (4/4 planes) — completado 2026-03-30
+- [x] Phase 16: CAEA Contingency Mode (3/3 planes) — completado 2026-03-30
+- [x] Phase 17: CAE Emission UX (3/3 planes) — completado 2026-03-31
+- [x] Phase 18: CAE-03 Error Display Fixes [INSERTED] (2/2 planes) — completado 2026-03-31
+- [x] Phase 19: getCierreMensual facturaId Extension [INSERTED] (2/2 planes) — completado 2026-03-31
+
+Full details: `.planning/milestones/v1.2-ROADMAP.md`
+
+</details>
+
+### 🚧 v1.3 Historial de Consultas (In Progress)
+
+**Milestone Goal:** Expandir el widget "Turnos del día" para que el profesional pueda navegar a cualquier día, ver la agenda completa con métricas, y agregar entradas de HC retroactivas a turnos finalizados usando el mismo formato que LiveTurno.
+
+- [x] **Phase 20: Backend Data Fixes** — Corregir selects de Prisma en turnos.service.ts y agregar soporte de fecha retroactiva en HC (completed 2026-04-02)
+- [x] **Phase 21: Agenda Widget + Modal HC** — Reescribir UpcomingAppointments.tsx con enfoque agenda-first y TurnoHCModal.tsx con formato LiveTurno (completed 2026-04-09)
 
 ## Phase Details
 
-### Phase 12: Schema AFIP Extendido + Gestión de Certificados
-**Goal**: El Admin puede configurar el certificado digital y punto de venta por tenant, y el sistema almacena toda la infraestructura de datos AFIP lista para emisión real
-**Depends on**: Phase 11 (schema v1.1 ya incluye CondicionIVA, MonedaFactura, LimiteFacturacionMensual)
-**Requirements**: AFIP-01, CERT-01, CERT-02, CERT-03, CERT-04
+### Phase 20: Backend Data Fixes
+**Goal**: Los endpoints de turnos exponen todos los campos que el frontend necesita, y el backend acepta entradas HC con fecha histórica
+**Depends on**: Nothing (first phase of v1.3)
+**Requirements**: BACK-01, BACK-02, BACK-03
 **Success Criteria** (what must be TRUE):
-  1. Admin puede subir certificado PEM y clave privada; el sistema rechaza el upload si el CUIT del cert CN no coincide con el CUIT registrado
-  2. Admin puede configurar ambiente (HOMO/PROD) y punto de venta; el sistema valida que el ptoVta sea tipo RECE via FEParamGetPtosVenta antes de confirmar
-  3. Facturador ve en su home un badge que indica el estado del certificado: OK, venciendo pronto, o no configurado
-  4. Sistema envía email al Admin 30 y 60 días antes de que venza el certificado
-  5. Al consultar la DB, los campos cae, caeFchVto, nroComprobante, qrData, ptoVta existen en Factura, y el modelo CaeaVigente y enum EstadoFactura.CAEA_PENDIENTE_INFORMAR existen en el schema
-**Plans**: 4 plans
+  1. `GET /turnos/agenda` devuelve `diagnostico` y `tratamiento` del paciente en cada turno
+  2. `GET /turnos/proximos` devuelve `esCirugia` y `entradaHCId` en cada turno, sin error de compilación Prisma
+  3. `POST /pacientes/:id/historia-clinica/entradas` acepta campo `fecha` opcional y la entrada queda registrada con esa fecha en la DB
+  4. Intentar crear una entrada HC con fecha futura retorna error de validación (400)
+**Plans**: 1 plan
 Plans:
-- [ ] 12-01-PLAN.md — Prisma schema extension (all AFIP models + fields) + test spec scaffolds
-- [x] 12-02-PLAN.md — AfipConfigModule backend (service, controller, 3 endpoints, module wiring)
-- [ ] 12-03-PLAN.md — CertExpiryScheduler (@Cron daily, email alerts at 60d/30d, unit tests)
-- [ ] 12-04-PLAN.md — Frontend: AfipConfigTab + hooks + Facturador badge + human verify
-**Research flag**: None — direct Prisma migration + NestJS CRUD, patrón EncryptionService ya existe en WhatsappModule
+- [ ] 20-01-PLAN.md — Fixes quirúrgicos en turnos.service.ts y soporte fecha retroactiva en HC
 
-### Phase 13: WSAA Token Service
-**Goal**: El sistema obtiene y cachea Access Tickets de WSAA reales usando firma CMS in-process, listo para ser consumido por WSFEv1
-**Depends on**: Phase 12 (ConfiguracionAFIP con cert+key encriptados debe existir en DB)
-**Requirements**: CAE-01
+### Phase 21: Agenda Widget + Modal HC
+**Goal**: El profesional puede navegar día a día desde el dashboard, ver la agenda completa con métricas, y agregar entradas HC retroactivas a cualquier turno finalizado
+**Depends on**: Phase 20
+**Requirements**: DASH-01, DASH-02, DASH-03, DASH-04, DASH-05, HC-01, HC-02, HC-03
 **Success Criteria** (what must be TRUE):
-  1. Al emitir un comprobante en homologacion, el sistema obtiene un Access Ticket real de wsaahomo.afip.gov.ar (respuesta con token + sign + expiry confirmada en logs)
-  2. Si se hacen dos llamadas concurrentes para el mismo CUIT, solo una llega a WSAA; la segunda usa el ticket cacheado en Redis
-  3. El ticket se almacena en Redis con clave afip_ta:{profesionalId}:{cuit}:{service} y TTL = expiry menos 5 minutos; una nueva instancia del servidor puede retomar el ticket sin llamar a WSAA
-  4. Si el ticket está vigente y Redis lo devuelve, no se realiza ninguna llamada HTTP a WSAA (verificable en logs de red)
-**Plans**: 2 plans
+  1. Al abrir el dashboard, el widget muestra los turnos del día actual (todos, no solo futuros)
+  2. El profesional puede navegar al día anterior y siguiente con botones de flecha, y la lista de turnos se actualiza
+  3. El profesional puede seleccionar cualquier fecha pasada o futura con un selector de calendario y la lista se actualiza
+  4. Para el día de hoy y días pasados, el widget muestra métricas del día (total, finalizados, cirugías, ausentes, cancelados)
+  5. Cada turno FINALIZADO muestra un botón "Ver HC" que abre un modal con las entradas HC del turno en modo solo-lectura
+  6. El modal permite agregar una nueva entrada HC con el selector de tipo (Primera Consulta / Pre Quirúrgico / Control / Práctica) y el formulario correspondiente
+  7. La nueva entrada retroactiva queda fechada en el día del turno seleccionado, no en la fecha actual
+**Plans**: 3 planes
 Plans:
-- [x] 13-01-PLAN.md — WsaaModule core: interfaces, WsaaService (CMS signing + Redis cache + mutex), WsaaStubService, unit tests
-- [x] 13-02-PLAN.md — Integration: rewire AfipConfigService to use WsaaService, eliminate openssl subprocess, register in AppModule
-**Research flag**: Verificar URLs actuales de WSAA bajo dominio arca.gob.ar al momento de implementar (MEDIUM confidence — AFIP rebrandeado a ARCA)
+- [ ] 21-01-PLAN.md — Fecha retroactiva en /hc/entries: backend DTO + service + tipo frontend
+- [ ] 21-02-PLAN.md — UpcomingAppointments agenda-first: hoy por defecto, nav día-a-día, métricas, Ver HC
+- [ ] 21-03-PLAN.md — TurnoHCModal wiring de fecha + checkpoint verificación humana
 
-### Phase 14: Emisión CAE Real (WSFEv1)
-**Goal**: El Facturador puede emitir comprobantes electrónicos reales que retornan CAE y número de comprobante de AFIP, con errores explicados en español
-**Depends on**: Phase 13 (WsaaService debe retornar tickets válidos)
-**Requirements**: CAE-02, CAE-03, CAE-04
-**Success Criteria** (what must be TRUE):
-  1. Al emitir una factura en homologacion, la respuesta contiene un CAE real de 14 dígitos y un número de comprobante asignado por AFIP, ambos guardados en la fila Factura de la DB
-  2. Si dos emisiones ocurren simultáneamente para el mismo CUIT+ptoVta+cbteTipo, la segunda espera el advisory lock y obtiene un número de comprobante secuencial correcto (sin duplicado)
-  3. Si AFIP rechaza por error de negocio (ej. 10242 CondicionIVA inválida), el Facturador ve un modal con el mensaje en español y la factura va a DLQ sin reintentos
-  4. Si AFIP falla por timeout o HTTP 5xx, el job reintenta con backoff exponencial y el Facturador no ve error hasta que se agoten los reintentos transitorios
-  5. El DI token AFIP_SERVICE apunta a AfipRealService; AfipStubService sigue disponible activable por env var para desarrollo local
-**Plans**: 4 plans
-Plans:
-- [ ] 14-01-PLAN.md — Wave 0: EMISION_PENDIENTE migration + AFIP_SERVICE constant + test scaffolds
-- [ ] 14-02-PLAN.md — AfipRealService: WSFEv1 SOAP + advisory lock + AfipBusinessError/TransientError (CAE-02, CAE-03)
-- [ ] 14-03-PLAN.md — CaeEmissionProcessor: BullMQ error classification — UnrecoverableError vs backoff (CAE-04)
-- [ ] 14-04-PLAN.md — Module wiring: AFIP_SERVICE DI swap + POST /emitir endpoint + human verify
-**Research flag**: WSFEv1 URLs confirmed non-migrated to arca.gob.ar as of 2026-03-20 — stored in env vars AFIP_WSFEV1_URL_HOMO/PROD with current afip.gov.ar defaults
+### 📋 v2.0 TBD (Planned)
 
-### Phase 15: QR AFIP + PDF + Frontend de Comprobantes
-**Goal**: El PDF de cada comprobante emitido incluye el QR obligatorio RG 5616/2024, y el Facturador puede ver el CAE y QR en la vista de detalle de la factura
-**Depends on**: Phase 14 (CAE y nroComprobante deben existir en Factura antes de poder generar el QR)
-**Requirements**: QR-01, QR-02, QR-03
-**Success Criteria** (what must be TRUE):
-  1. El PDF descargable de una factura emitida incluye un código QR que al ser escaneado abre la URL https://www.afip.gob.ar/fe/qr/?p= con el JSON base64 de 13 campos especificados en RG 5616/2024
-  2. El Facturador puede ver en el detalle de la factura el número de CAE, la fecha de vencimiento del CAE, y el código QR renderizado como imagen
-  3. Para facturas en USD, el Facturador puede ingresar manualmente la cotización BNA del día; la pantalla muestra un link directo a bna.com.ar para consultar el tipo de cambio
-**Plans**: 4 plans
-Plans:
-- [ ] 15-01-PLAN.md — qrcode install + FacturaPdfService + buildAfipQrUrl + AfipRealService qrData extension (QR-01)
-- [ ] 15-02-PLAN.md — Backend API: GET facturas/:id + GET facturas/:id/pdf + PATCH facturas/:id/tipo-cambio (QR-01, QR-02, QR-03)
-- [ ] 15-03-PLAN.md — Frontend: types + hooks + FacturaDetailModal + ComprobantesTab wiring (QR-02, QR-03)
-- [ ] 15-04-PLAN.md — Human verify: PDF QR scan + CAE display + USD tipoCambio flow (QR-01, QR-02, QR-03)
-**Research flag**: None — qrcode 1.5.4 API estable; integración PDFKit ya existe para presupuestos; patrón estándar
-
-### Phase 16: CAEA Contingency Mode
-**Goal**: Cuando ARCA no está disponible, el sistema asigna automáticamente un CAEA vigente a la factura y la informa a AFIP dentro del plazo de 8 días, con alerta proactiva si el plazo está en riesgo
-**Depends on**: Phase 14 (el path CAE primario debe estar probado en produccion real antes de activar el fallback; RG 5782/2025 verificada en Boletín Oficial)
-**Requirements**: CAEA-01, CAEA-02, CAEA-03, CAEA-04
-**Success Criteria** (what must be TRUE):
-  1. El cron bimensual (días 27 y 12 de cada mes a las 6:00) pre-fetcha y almacena el código CAEA vigente en CaeaVigente por tenant; si falla, reintenta antes del cierre del período
-  2. Cuando el sistema detecta AfipUnavailableException durante la emisión, la factura queda con estado CAEA_PENDIENTE_INFORMAR y el CAEA vigente asignado, sin intervención del Facturador
-  3. Dentro de los 8 días calendario posteriores al período CAEA, el job FECAEAInformar informa todas las facturas pendientes a AFIP; si AFIP confirma, el estado cambia a EMITIDA
-  4. Si el plazo de 8 días está en riesgo de vencerse con facturas aún sin informar, el Admin recibe un email de alerta antes de que venza el deadline
-**Plans**: TBD
-**Research flag**: Verificar RG 5782/2025 en Boletín Oficial antes de comenzar implementacion — confirmar (a) fecha efectiva junio 2026, (b) definicion del umbral 5% de volumen, (c) ventana de 8 dias calendario; si algún parámetro difiere de fuentes comunitarias, actualizar diseño de CaeaService
+*(Next milestone to be defined via `/gsd:new-milestone`)*
 
 ## Progress
 
@@ -143,11 +116,16 @@ Plans:
 | 9. Backend API Layer | v1.1 | 3/3 | Complete | 2026-03-13 |
 | 10. FACTURADOR Home Dashboard | v1.1 | 2/2 | Complete | 2026-03-14 |
 | 11. Settlement Workflow | v1.1 | 2/2 | Complete | 2026-03-16 |
-| 12. Schema AFIP Extendido + Certificados | v1.2 | Complete    | 2026-03-16 | 2026-03-16 |
-| 13. WSAA Token Service | 2/2 | Complete    | 2026-03-20 | - |
-| 14. Emisión CAE Real (WSFEv1) | 4/4 | Complete    | 2026-03-21 | - |
-| 15. QR AFIP + PDF + Frontend | 1/4 | In Progress|  | - |
-| 16. CAEA Contingency Mode | v1.2 | 0/? | Not started | - |
+| 12. Schema AFIP Extendido + Certificados | v1.2 | 4/4 | Complete | 2026-03-16 |
+| 13. WSAA Token Service | v1.2 | 2/2 | Complete | 2026-03-20 |
+| 14. Emisión CAE Real (WSFEv1) | v1.2 | 4/4 | Complete | 2026-03-21 |
+| 15. QR AFIP + PDF + Frontend | v1.2 | 4/4 | Complete | 2026-03-30 |
+| 16. CAEA Contingency Mode | v1.2 | 3/3 | Complete | 2026-03-30 |
+| 17. CAE Emission UX | v1.2 | 3/3 | Complete | 2026-03-31 |
+| 18. CAE-03 Error Display Fixes | v1.2 | 2/2 | Complete | 2026-03-31 |
+| 19. getCierreMensual facturaId Extension | v1.2 | 2/2 | Complete | 2026-03-31 |
+| 20. Backend Data Fixes | v1.3 | 1/1 | Complete | 2026-04-02 |
+| 21. Agenda Widget + Modal HC | 3/3 | Complete   | 2026-04-09 | - |
 
 ---
-*Roadmap initialized: 2026-02-23 | v1.0 shipped: 2026-03-03 | v1.1 shipped: 2026-03-16 | v1.2 started: 2026-03-16*
+*Roadmap initialized: 2026-02-23 | v1.0 shipped: 2026-03-03 | v1.1 shipped: 2026-03-16 | v1.2 shipped: 2026-03-31 | v1.3 started: 2026-04-02*

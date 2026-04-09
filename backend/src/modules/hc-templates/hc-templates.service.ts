@@ -271,6 +271,20 @@ export class HCTemplatesService {
       throw new NotFoundException('Versión no encontrada');
     }
 
+    // Validar fecha retroactiva si se provee
+    let fechaFinal: Date | undefined;
+    if (dto.fecha) {
+      fechaFinal = new Date(dto.fecha);
+      if (isNaN(fechaFinal.getTime())) {
+        throw new BadRequestException('Fecha inválida');
+      }
+      const hoy = new Date();
+      hoy.setHours(23, 59, 59, 999);
+      if (fechaFinal > hoy) {
+        throw new BadRequestException('La fecha no puede ser futura');
+      }
+    }
+
     // Buscar o crear HistoriaClinica del paciente
     let historiaClinica = await this.prisma.historiaClinica.findFirst({
       where: { pacienteId },
@@ -294,6 +308,7 @@ export class HCTemplatesService {
         status: EstadoEntradaHC.DRAFT,
         answers: {},
         computed: {},
+        ...(fechaFinal && { fecha: fechaFinal }),
       },
       include: {
         template: { select: { nombre: true } },

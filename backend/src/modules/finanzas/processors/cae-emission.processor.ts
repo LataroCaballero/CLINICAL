@@ -4,6 +4,8 @@ import { Job, UnrecoverableError } from 'bullmq';
 import { AFIP_SERVICE } from '../afip/afip.constants';
 import { AfipService } from '../afip/afip.interfaces';
 import { AfipBusinessError } from '../afip/afip.errors';
+import { CaeaService } from '../afip/caea.service';
+import { PrismaService } from '../../../prisma/prisma.service';
 
 export const CAE_QUEUE = 'cae-emission';
 
@@ -19,6 +21,8 @@ export class CaeEmissionProcessor extends WorkerHost {
 
   constructor(
     @Inject(AFIP_SERVICE) private readonly afipService: AfipService,
+    private readonly caeaService: CaeaService,
+    private readonly prisma: PrismaService,
   ) {
     super();
   }
@@ -56,7 +60,20 @@ export class CaeEmissionProcessor extends WorkerHost {
   }
 
   @OnWorkerEvent('failed')
-  onFailed(job: Job): void {
+  async onFailed(job: Job<CaeJobData>): Promise<void> {
     this.logger.error(`CAE job ${job.id} failed: ${job.failedReason}`);
+    const maxAttempts = job.opts?.attempts ?? 3;
+    // Persist afipError unconditionally — covers both UnrecoverableError (attemptsMade=1)
+    // and transient exhaustion (attemptsMade=maxAttempts). DB write always precedes fallback.
+    await this.prisma.factura.update({
+      where: { id: job.data.facturaId },
+      data: { afipError: job.failedReason ?? 'Error desconocido al emitir.' },
+    });
+    if (job.attemptsMade >= maxAttempts) {
+      this.logger.warn(
+        `Max retries reached for facturaId ${job.data.facturaId} — attempting CAEA fallback`,
+      );
+      await this.caeaService.asignarCaeaFallback(job.data.facturaId, job.data.profesionalId);
+    }
   }
 }

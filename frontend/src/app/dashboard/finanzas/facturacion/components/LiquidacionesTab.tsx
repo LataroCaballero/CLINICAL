@@ -43,6 +43,7 @@ import {
 import { useActualizarMontoPagado } from "@/hooks/useActualizarMontoPagado";
 import { EstadoLiquidacion, LiquidacionesFilters, PracticaRealizada } from "@/types/finanzas";
 import { toast } from "sonner";
+import FacturaDetailModal from "./FacturaDetailModal";
 
 function formatMoney(value: number): string {
   return new Intl.NumberFormat("es-AR", {
@@ -118,6 +119,8 @@ export default function LiquidacionesTab() {
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
   const [overrides, setOverrides] = useState<Map<string, number>>(new Map());
+  const [selectedFacturaId, setSelectedFacturaId] = useState<string | null>(null);
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
 
   const { data: practicas, isLoading, error, refetch } = usePracticasPendientes(filters);
   const { data: cierreMensual, isLoading: loadingCierre } = useCierreMensual(mesActual);
@@ -567,7 +570,14 @@ export default function LiquidacionesTab() {
                           </TableCell>
                           <TableCell className="text-right">
                             {os.pendiente > 0 && (
-                              <Button variant="outline" size="sm">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedFacturaId(os.facturaId);
+                                  setDetailModalOpen(true);
+                                }}
+                              >
                                 Emitir Comprobante
                               </Button>
                             )}
@@ -587,6 +597,12 @@ export default function LiquidacionesTab() {
           )}
         </TabsContent>
       </Tabs>
+
+      <FacturaDetailModal
+        facturaId={selectedFacturaId}
+        open={detailModalOpen}
+        onOpenChange={setDetailModalOpen}
+      />
     </div>
   );
 }

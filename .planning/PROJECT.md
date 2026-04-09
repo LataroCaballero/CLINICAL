@@ -63,12 +63,13 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 - ✓ Capa backend de facturación: getMonthBoundariesART() UTC-3, 5 FinanzasService methods, 7 endpoints (ADMIN+FACTURADOR), AfipStubService — v1.1
 - ✓ Dashboard FACTURADOR: routing exclusivo `/dashboard/facturador`, KPIs por OS, barra progreso límite mensual, configuración de límite — v1.1
 - ✓ Flujo de liquidación: edición inline montoPagado, CerrarLoteModal, transacción atómica LiquidacionObraSocial — v1.1
+- ✓ Emisión de comprobantes electrónicos AFIP/ARCA reales (CAE real, certificado por tenant) — v1.2
+- ✓ CAEA contingency mode para cuando ARCA no responde — v1.2
+- ✓ QR AFIP en PDF de comprobantes (RG 5616/2024, 13 campos) — v1.2
+- ✓ Errores AFIP en español en modal con error panel (BUG-1 + BUG-2 corregidos) — v1.2
 
 ### Active
 
-- [ ] Emisión de comprobantes electrónicos AFIP/ARCA reales (CAE real, certificado por tenant) — v1.2
-- [ ] CAEA contingency mode para cuando ARCA no responde — v1.2
-- [ ] QR AFIP en PDF de comprobantes — v1.2
 - [ ] Reportes ejecutivos exportables (comparativas entre períodos) — v2
 - [ ] Historial de liquidaciones por OS con comparativa autorizado vs. pagado — v2
 
@@ -88,18 +89,20 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 
 ## Context
 
-**Estado actual (post-v1.1):** El módulo FACTURADOR está completo y funcional. Además del CRM de conversión completo (v1.0), el sistema ahora permite al rol FACTURADOR: ver prácticas pendientes agrupadas por obra social, configurar el límite mensual de facturación, editar el monto real cobrado por la OS por práctica, y cerrar lotes de liquidación en transacciones atómicas. El schema DB está preparado para AFIP (CondicionIVA, MonedaFactura, LimiteFacturacionMensual) y existe un documento de referencia técnica completo para la implementación real en v1.2. 13/13 requisitos del milestone v1.1 satisfechos en 3 días de desarrollo.
+**Estado actual (post-v1.2):** El módulo de facturación electrónica AFIP/ARCA está completo. El Facturador puede emitir comprobantes electrónicos reales (CAE), ver el QR obligatorio RG 5616/2024 en el PDF, configurar el certificado digital por tenant, y el sistema maneja automáticamente el modo contingencia CAEA cuando ARCA no está disponible. 16/16 requisitos del milestone v1.2 satisfechos.
 
-**Stack:** NestJS + Prisma + PostgreSQL (backend) | Next.js 16 + React 19 + TypeScript (frontend) | BullMQ + Redis (async) | WhatsApp Cloud API.
+**Stack:** NestJS + Prisma + PostgreSQL (backend) | Next.js 16 + React 19 + TypeScript (frontend) | BullMQ + Redis (async) | WhatsApp Cloud API | node-forge (firma CMS WSAA) | qrcode 1.5.4 + PDFKit (QR en PDF).
 
-**Deuda técnica acumulada (post-v1.1):**
+**Deuda técnica acumulada (post-v1.2):**
 - EncryptionService dev fallback key — configurar `ENCRYPTION_KEY` en .env de producción antes de deploy
 - `console.log('DTO RECIBIDO')` en `pacientes.service.ts:33` — expone PII en logs
 - SMTP password decryption no implementada per-tenant (funcional vía env vars)
 - TypeScript strict mode desactivado, cobertura de tests <6%
 - marcarPracticasPagadas deprecado con cuerpo intacto — limpiar cuando se confirme sin callers externos
-- IVA treatment matrix para cirugía estética en obras sociales debe validarse con contador antes de v1.2
-- RG 5782/2025 (CAEA contingency-only desde junio 2026) — verificar en Boletín Oficial antes de implementar CAEA en v1.2
+- IVA alicuota ID 5 (21%) hardcoded en FECAESolicitar — production IVA matrix (mixed rates, exempt) necesaria antes de go-live
+- RG 5782/2025 CAEA: verificar umbral 5% volumen y ventana 8 días en Boletín Oficial antes de activar en producción
+- Human verification pendiente en staging: BullMQ async lifecycle E2E, CAEA fallback con Redis real, SMTP delivery
+- Phase 11 VERIFICATION.md faltante (proceso, no funcional)
 
 **Usuarios clave:**
 - **Profesional (cirujano):** ve dashboard de conversión, aprueba acciones. No técnico.
@@ -131,25 +134,43 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 | FACTURADOR no tiene Profesional record — v1.1 | Rol de billing/contabilidad distinto al profesional médico | ✓ Correcto — profesionalId siempre parámetro explícito |
 | Prisma migrate deploy (no migrate dev) — v1.1 | Entorno no interactivo (no TTY), deploy diseñado para CI/prod | ✓ Correcto — migration SQL hand-written con backfill seguro |
 | Montos server-side en transacción (no client totals) — v1.1 | Prevenir manipulación de totales financieros | ✓ Correcto — montoTotal calculado dentro de $transaction |
+| node-forge 1.3.3 para firma CMS in-process — v1.2 | Evita openssl subprocess + /tmp key exposure | ✓ Correcto — firma funcional en homologación, no deps externas |
+| Redis cache WSAA desde commit 1 (no Map en memoria) — v1.2 | Map no sobrevive horizontal scale | ✓ Correcto — TTL expiry-5min, mutex por CUIT |
+| pg_advisory_xact_lock dentro de $transaction(45000ms) — v1.2 | Default 5s insuficiente para SLA AFIP 30s | ✓ Correcto — serialización CAE sin duplicados de numeración |
+| AfipBusinessError → DLQ inmediato (no retry) — v1.2 | Error 10242 y resultado=R nunca se resuelven reintentando | ✓ Correcto — UnrecoverableError evita 5 reintentos inútiles |
+| QR data como URL string en Factura.qrData — v1.2 | Re-renderizable si spec AFIP cambia, no blob PNG inmutable | ✓ Correcto — buildAfipQrUrl() re-ejecutable |
+| CAEA como fallback únicamente — v1.2 | RG 5782/2025 lo restringe desde junio 2026 | ✓ Correcto — path primario siempre CAE; CAEA solo en AfipUnavailableException |
+| FECAEAInformar + deadline alerts en mismo milestone — v1.2 | CAEA sin inform tracking es riesgo regulatorio (multas) | ✓ Correcto — 72 reintentos en 8 días + email alert antes de vencimiento |
+| afipError persist incondicional en onFailed (BUG-1 fix) — v1.2 | Guard attemptsMade >= maxAttempts impedía persist para UnrecoverableError (attemptsMade=1) | ✓ Correcto — update antes del guard; Test 9 GREEN |
+| Modal condition: EMISION_PENDIENTE \|\| CAEA_PENDIENTE_INFORMAR (BUG-2 fix) — v1.2 | EMISION_PENDIENTE solo dejaba error invisible tras CAEA fallback | ✓ Correcto — ambas rutas de error muestran panel rojo |
 
 ## Shipped: v1.1 Vista del Facturador ✅
 
 13/13 requisitos completados en 3 días (2026-03-13 → 2026-03-16). Ver `.planning/milestones/v1.1-ROADMAP.md` para detalles completos.
 
-## Current Milestone: v1.2 AFIP Real
+## Shipped: v1.2 AFIP Real ✅
 
-**Goal:** Emitir comprobantes electrónicos reales desde la plataforma usando AFIP/ARCA (CAE real, certificado por tenant, advisory lock en numeración).
+16/16 requisitos completados en 50 días (2026-02-09 → 2026-03-31). 8 fases, 24 planes. Ver `.planning/milestones/v1.2-ROADMAP.md` para detalles completos.
+
+## Current Milestone: v1.3 Historial de Consultas
+
+**Goal:** Expandir el widget "Turnos del día" para que el profesional pueda navegar a cualquier día y ver el historial de consultas con sus entradas de HC asociadas, y agregar entradas retroactivas usando el mismo formato que LiveTurno.
 
 **Target features:**
-- Emisión de comprobantes electrónicos con CAE real (WSFEv1)
-- Gestión de certificados digitales por tenant (WSAA)
-- CAEA contingency mode para cuando ARCA no responde
-- QR AFIP en PDF de comprobantes emitidos
+- Widget agenda-first (hoy por defecto vía `/turnos/agenda`, no `/proximos`)
+- Selector de calendario para navegar a cualquier día pasado o futuro
+- Métricas del día para días pasados/hoy (total, finalizados, cirugías, ausentes, cancelados)
+- Botón "Ver HC" por turno FINALIZADO → modal con entradas read-only + agregar nueva
+- Modal HC con mismo formato que HistoriaClinicaTab (tipo selector + PrimeraConsultaForm / Textarea)
+- Entradas retroactivas: backend acepta `fecha` opcional para datar la entrada en el día histórico
 
-**Foundation ready:**
-- `.planning/research/AFIP-INTEGRATION.md` — referencia técnica completa con 6 secciones
-- `AfipStubService` — interfaz `emitirComprobante()` lista para swap-out con implementación real
-- Schema DB con `CondicionIVA`, `MonedaFactura`, `Factura.condicionIVAReceptor`, `Factura.tipoCambio`
+## Next Milestone: v2.0 (TBD)
+
+Planning pendiente. Candidatos para el próximo milestone:
+- Reportes ejecutivos exportables (comparativas entre períodos)
+- Historial de liquidaciones por OS con comparativa autorizado vs. pagado
+- Dashboard multi-profesional de estado de certificados (SaaS admin)
+- IVA matrix para cirugía estética (blocker de go-live AFIP producción)
 
 ---
-*Last updated: 2026-03-16 after v1.2 milestone start — AFIP Real*
+*Last updated: 2026-04-02 after v1.3 milestone start — Historial de Consultas*

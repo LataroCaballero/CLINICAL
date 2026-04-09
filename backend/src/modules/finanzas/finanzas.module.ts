@@ -12,13 +12,17 @@ import { AFIP_SERVICE } from './afip/afip.constants';
 import { WSAA_SERVICE } from '../wsaa/wsaa.constants';
 import { WsaaServiceInterface } from '../wsaa/wsaa.interfaces';
 import { CaeEmissionProcessor, CAE_QUEUE } from './processors/cae-emission.processor';
+import { CaeaInformarProcessor, CAEA_INFORMAR_QUEUE } from './processors/caea-informar.processor';
+import { CaeaService } from './afip/caea.service';
+import { CaeaPrefetchScheduler } from './schedulers/caea-prefetch.scheduler';
 import { FacturaPdfService } from './factura-pdf.service';
 
 @Module({
   imports: [
     CuentasCorrientesModule,
-    WsaaModule,                                   // Makes WSAA_SERVICE injectable in AfipRealService
-    BullModule.registerQueue({ name: CAE_QUEUE }), // Registers 'cae-emission' BullMQ queue
+    WsaaModule,                                         // Makes WSAA_SERVICE injectable in AfipRealService
+    BullModule.registerQueue({ name: CAE_QUEUE }),      // Registers 'cae-emission' BullMQ queue
+    BullModule.registerQueue({ name: CAEA_INFORMAR_QUEUE }), // Registers 'caea-informar' BullMQ queue
     ConfigModule,
   ],
   controllers: [FinanzasController],
@@ -26,6 +30,9 @@ import { FacturaPdfService } from './factura-pdf.service';
     FinanzasService,
     PrismaService,
     CaeEmissionProcessor,
+    CaeaService,
+    CaeaPrefetchScheduler,
+    CaeaInformarProcessor,
     FacturaPdfService,
     {
       provide: AFIP_SERVICE,

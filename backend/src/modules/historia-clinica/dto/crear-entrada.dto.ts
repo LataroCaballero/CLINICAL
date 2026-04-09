@@ -1,3 +1,5 @@
+import { IsOptional, IsDateString } from 'class-validator';
+
 export class DiagnosticoDto {
   zonas: string[];
   subzonas: string[];
@@ -33,4 +35,8 @@ export class CreateEntradaDto {
   autorizaciones?: AutorizacionEntradaDto[];
   // Para tipos libres
   texto?: string;
+
+  @IsOptional()
+  @IsDateString()
+  fecha?: string; // ISO date string para entradas retroactivas (YYYY-MM-DD o ISO 8601 completo)
 }

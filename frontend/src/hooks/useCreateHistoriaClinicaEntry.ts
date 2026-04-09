@@ -38,6 +38,8 @@ export interface CreateEntradaDto {
   autorizaciones?: AutorizacionEntradaDto[];
   // tipos libres
   texto?: string;
+  // fecha retroactiva (YYYY-MM-DD)
+  fecha?: string;
 }
 
 export function useCreateHistoriaClinicaEntry() {

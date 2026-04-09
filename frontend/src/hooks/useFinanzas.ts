@@ -16,6 +16,7 @@ import {
   PresupuestosFilters,
   CreatePresupuestoInput,
   Factura,
+  FacturaDetail,
   FacturasFilters,
   CreateFacturaInput,
   PracticaRealizada,
@@ -24,6 +25,7 @@ import {
   ReporteIngresosParams,
   ReporteIngresos,
   EstadoPresupuesto,
+  EstadoFactura,
 } from "@/types/finanzas";
 
 // ================== DASHBOARD ==================
@@ -350,12 +352,54 @@ export function useAnularFactura() {
   });
 }
 
-export function useGenerarFacturaPDF() {
+export function useEmitirFactura() {
+  const queryClient = useQueryClient();
+  const profesionalId = useEffectiveProfessionalId();
+
   return useMutation({
     mutationFn: async (facturaId: string) => {
-      // TODO: Implement PDF generation when backend endpoint is ready
-      console.log(`Generating PDF for factura ${facturaId}`);
-      throw new Error("PDF generation not implemented yet");
+      const { data } = await api.post(
+        `/finanzas/facturas/${facturaId}/emitir`,
+        undefined,
+        { params: { profesionalId } },
+      );
+      return data as { jobId: string; status: string };
+    },
+    onSuccess: (_, facturaId) => {
+      // Invalidate list (refreshes estado badge in ComprobantesTab)
+      queryClient.invalidateQueries({ queryKey: ['finanzas', 'facturas'] });
+      // Invalidate detail (kicks off polling loop via refetchInterval)
+      queryClient.invalidateQueries({ queryKey: ['finanzas', 'facturas', facturaId] });
+    },
+  });
+}
+
+export function useFactura(id: string | null) {
+  return useQuery({
+    queryKey: ['finanzas', 'facturas', id],
+    enabled: !!id,
+    queryFn: async () => {
+      const { data } = await api.get(`/finanzas/facturas/${id}`);
+      return data as FacturaDetail;
+    },
+    // Poll every 3s while emission job is in-flight; stop when resolved.
+    // Pattern from useWAUnread. false = no polling (TanStack Query default).
+    refetchInterval: (query) => {
+      const estado = query.state.data?.estado;
+      return estado === EstadoFactura.EMISION_PENDIENTE ? 3000 : false;
+    },
+  });
+}
+
+export function useUpdateTipoCambio() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, tipoCambio }: { id: string; tipoCambio: number }) => {
+      const { data } = await api.patch(`/finanzas/facturas/${id}/tipo-cambio`, { tipoCambio });
+      return data;
+    },
+    onSuccess: (_, { id }) => {
+      qc.invalidateQueries({ queryKey: ['finanzas', 'facturas', id] });
     },
   });
 }

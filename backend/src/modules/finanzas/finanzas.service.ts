@@ -458,6 +458,7 @@ export class FinanzasService {
       profesionalId: f.profesionalId,
       paciente: paciente ?? null,
       obraSocial: obraSocial ?? null,
+      afipError: f.afipError ?? null,
     };
   }
 
@@ -676,6 +677,7 @@ export class FinanzasService {
         total: number;
         facturado: number;
         pendiente: number;
+        facturaId: string | null;
       }
     > = {};
 
@@ -696,6 +698,7 @@ export class FinanzasService {
           total: 0,
           facturado: 0,
           pendiente: 0,
+          facturaId: null,
         };
       }
       porObraSocial[key].total += monto;
@@ -710,6 +713,31 @@ export class FinanzasService {
         totalObrasSociales += monto;
       } else {
         totalParticulares += monto;
+      }
+    }
+
+    // Lookup facturaId per obra social via LiquidacionObraSocial
+    const obraSocialIds = Object.keys(porObraSocial).filter((k) => k !== 'particular');
+    if (obraSocialIds.length > 0) {
+      const liquidaciones = await this.prisma.liquidacionObraSocial.findMany({
+        where: {
+          periodo: mes,
+          obraSocialId: { in: obraSocialIds },
+        },
+        select: { obraSocialId: true, facturaId: true },
+      });
+      // Build map preferring non-null facturaId (last-write-wins with null skipped)
+      const facturaIdByOs = new Map<string, string | null>();
+      for (const liq of liquidaciones) {
+        const existing = facturaIdByOs.get(liq.obraSocialId);
+        if (existing === undefined || (existing === null && liq.facturaId !== null)) {
+          facturaIdByOs.set(liq.obraSocialId, liq.facturaId ?? null);
+        }
+      }
+      for (const key of obraSocialIds) {
+        if (porObraSocial[key]) {
+          porObraSocial[key].facturaId = facturaIdByOs.get(key) ?? null;
+        }
       }
     }
 

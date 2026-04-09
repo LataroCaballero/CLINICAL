@@ -1,4 +1,4 @@
-import { IsString, IsUUID } from 'class-validator';
+import { IsDateString, IsOptional, IsString, IsUUID } from 'class-validator';
 
 export class CreateEntryDto {
   @IsUUID()
@@ -8,4 +8,8 @@ export class CreateEntryDto {
   @IsUUID()
   @IsString()
   templateVersionId: string;
+
+  @IsOptional()
+  @IsDateString()
+  fecha?: string;
 }

@@ -39,6 +39,7 @@ const mockPrismaService = {
   },
   liquidacionObraSocial: {
     create: jest.fn(),
+    findMany: jest.fn(),
   },
   $transaction: jest.fn(),
   movimientoCC: {
@@ -489,6 +490,57 @@ describe('FinanzasService', () => {
       await expect(service.generateFacturaPdf('f-uuid')).rejects.toThrow(
         'La factura no ha sido emitida via AFIP',
       );
+    });
+  });
+
+  describe('getCierreMensual', () => {
+    const MES = '2026-03';
+    const OS_ID = 'os-uuid-1';
+
+    // Minimal mock data shared across tests
+    const basePractica = {
+      pacienteId: 'pac-1',
+      monto: 100,
+      estadoLiquidacion: 'PENDIENTE',
+      profesionalId: null,
+      Profesional: null,
+    };
+
+    const basePaciente = {
+      id: 'pac-1',
+      obraSocial: { id: OS_ID, nombre: 'OSDE' },
+    };
+
+    beforeEach(() => {
+      prisma.practicaRealizada.findMany.mockResolvedValue([basePractica]);
+      prisma.paciente.findMany.mockResolvedValue([basePaciente]);
+      prisma.movimientoCC.aggregate.mockResolvedValue({ _sum: { monto: 0 } });
+    });
+
+    it('returns facturaId from LiquidacionObraSocial when one exists for the OS', async () => {
+      prisma.liquidacionObraSocial.findMany.mockResolvedValue([
+        { obraSocialId: OS_ID, facturaId: 'factura-uuid-1' },
+      ]);
+      const result = await service.getCierreMensual(MES);
+      const osEntry = (result.detalleObrasSociales as any[]).find((d) => d.obraSocialId === OS_ID);
+      expect(osEntry?.facturaId).toBe('factura-uuid-1');
+    });
+
+    it('returns facturaId: null when no LiquidacionObraSocial exists for the OS', async () => {
+      prisma.liquidacionObraSocial.findMany.mockResolvedValue([]);
+      const result = await service.getCierreMensual(MES);
+      const osEntry = (result.detalleObrasSociales as any[]).find((d) => d.obraSocialId === OS_ID);
+      expect(osEntry?.facturaId).toBeNull();
+    });
+
+    it('prefers non-null facturaId when multiple LiquidacionObraSocial rows exist for same OS', async () => {
+      prisma.liquidacionObraSocial.findMany.mockResolvedValue([
+        { obraSocialId: OS_ID, facturaId: null },
+        { obraSocialId: OS_ID, facturaId: 'uuid-2' },
+      ]);
+      const result = await service.getCierreMensual(MES);
+      const osEntry = (result.detalleObrasSociales as any[]).find((d) => d.obraSocialId === OS_ID);
+      expect(osEntry?.facturaId).toBe('uuid-2');
     });
   });
 });

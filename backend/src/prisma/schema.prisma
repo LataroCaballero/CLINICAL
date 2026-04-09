@@ -544,6 +544,8 @@ model Factura {
   nroComprobante   Int?      // Sequential invoice number assigned at emission
   qrData           String?   // Full AFIP QR URL (Phase 15 renders this as a QR code)
   ptoVta           Int?      // Point of sale used for emission
+  cbteFchHsGen     String?   // Datetime of CAEA invoice generation 'YYYYMMDDHHMMSS' (Phase 16)
+  afipError        String?   // Spanish AFIP error message persisted by CaeEmissionProcessor.onFailed on permanent failure (Phase 17)
   Archivo       Archivo[]
   movimiento    MovimientoCC?           @relation(fields: [movimientoId], references: [id])
   profesional   Profesional             @relation(fields: [profesionalId], references: [id])

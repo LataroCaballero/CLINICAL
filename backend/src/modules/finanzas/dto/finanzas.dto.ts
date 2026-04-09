@@ -216,4 +216,5 @@ export class FacturaDetailDto {
   profesionalId: string;
   paciente: { id: string; nombreCompleto: string; dni: string } | null;
   obraSocial: { id: string; nombre: string } | null;
+  afipError: string | null; // Spanish AFIP error from CaeEmissionProcessor.onFailed (Phase 17)
 }

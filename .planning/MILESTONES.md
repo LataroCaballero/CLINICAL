@@ -1,5 +1,18 @@
 # Milestones
 
+## v1.3 Historial de Consultas (Shipped: 2026-04-13)
+
+**Phases completed:** 2 phases (20–21), 4 plans
+**Stats:** 7 días (2026-04-02 → 2026-04-09) | 28 archivos | +2,329 líneas
+
+**Key accomplishments:**
+1. Backend Prisma fixes: `GET /turnos/agenda` retorna `diagnostico`/`tratamiento`; `GET /turnos/proximos` retorna `esCirugia`/`entradaHCId` sin error de compilación (BACK-01, BACK-02)
+2. Soporte de entradas HC retroactivas: `POST /pacientes/:id/historia-clinica/entradas` acepta `fecha` opcional con validación de fecha futura (400) — patrón replicado en hc-templates endpoint (BACK-03, HC-03)
+3. Widget agenda-first: `UpcomingAppointments` reescrito con `selectedDate` unificado, hoy por defecto, navegación día a día, reset a hoy, métricas strip (total/finalizados/cirugías/ausentes/cancelados) para hoy y días pasados (DASH-01..05)
+4. `TurnoHCModal` completo: entradas HC del turno en modo solo-lectura con indicador legal Lock, formulario agenda con tipo selector (Primera Consulta / Pre Quirúrgico / Control / Práctica), entradas retroactivas fechadas al día histórico del turno (HC-01, HC-02, HC-03)
+
+---
+
 ## v1.2 AFIP Real (Shipped: 2026-03-31)
 
 **Phases completed:** 8 phases (12–19), 24 plans

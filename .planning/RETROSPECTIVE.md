@@ -95,6 +95,45 @@
 
 ---
 
+## Milestone: v1.3 — Historial de Consultas
+
+**Shipped:** 2026-04-13
+**Phases:** 2 (20–21) | **Plans:** 4 | **Timeline:** 7 days (2026-04-02 → 2026-04-09)
+
+### What Was Built
+- Backend Prisma select fixes: `GET /turnos/agenda` retorna `diagnostico`/`tratamiento` del paciente; `GET /turnos/proximos` retorna `esCirugia`/`entradaHCId` sin error de compilación
+- Retroactive HC entry support: `POST /pacientes/:id/historia-clinica/entradas` y el hc-templates endpoint aceptan campo `fecha` opcional con validación de futuro (400)
+- `UpcomingAppointments` reescrito agenda-first: single `selectedDate` state, hoy por defecto, navegación con chevrons ±1 día, reset X button, metrics strip para hoy/pasados, "Ver HC" para FINALIZADO turnos
+- `TurnoHCModal` completo: entradas HC en modo solo-lectura con Lock badge, tipo selector (Primera Consulta / Pre Quirúrgico / Control / Práctica), formularios correspondientes, entradas retroactivas fechadas al día histórico del turno
+
+### What Worked
+- **Surgical changes**: los 4 planes fueron cambios mínimos y quirúrgicos — sin refactors colaterales. Cada plan modificó exactamente los archivos necesarios
+- **Reuse de patrón entre phases**: el retroactive fecha pattern de Phase 20 se replicó verbatim en Phase 21 sin variaciones — nomenclatura consistente, mismo boundary logic, misma conditional spread
+- **Milestone scope mínimo**: 2 phases, 4 plans, 7 días. El scope estuvo bien acotado desde el inicio — sin scope creep ni phases de gap closure
+- **Single state simplification**: reemplazar `dateIndex`+`pickedDate` por un solo `selectedDate: Date` eliminó una clase entera de bugs de sincronización de estado antes de que pudieran manifestarse
+
+### What Was Inefficient
+- **Human-verify checkpoint (Plan 21-03 Task 2)**: el checkpoint de verificación en browser quedó pendiente al momento del archivado — el estado de "milestone shipped" y "verificado en producción" no coinciden en tiempo
+- **MILESTONES.md accomplishments vacíos (de nuevo)**: mismo problema que v1.1 y v1.2 — gsd-tools no extrae one_liners porque los SUMMARY.md no tienen ese campo en el frontmatter. Requirió edición manual post-archivado
+- **No audit previo al archivado**: milestone completado sin correr `/gsd:audit-milestone` primero — aceptable dado el scope mínimo y yolo mode, pero el flujo completo recomendaría audit
+
+### Patterns Established
+- `selectedDate: Date` unificado como estado de navegación en widgets de calendario — evitar el patrón dual mode (upcoming vs picked)
+- `isHoyOPasado = isToday || isPast` como gate único para features que aplican a hoy y días pasados — derivar condiciones compuestas en una sola variable
+- Retroactive date en HC: `...(fechaFinal && { fecha: fechaFinal })` spread condicional + `setHours(23,59,59,999)` boundary — patrón reutilizable para cualquier entidad con fechas históricas
+
+### Key Lessons
+1. **El scope mínimo bien acotado es el mejor predictor de velocidad**: 4 plans en 7 días sin audit ni gap-closure porque los requisitos fueron claros y el scope no creció
+2. **Replicar patrones verbatim (no adaptar) reduce tiempo de decisión**: usar el mismo código de Phase 20 exactamente en Phase 21 tomó ~0 tiempo de diseño
+3. **Agregar `one_liner:` field al frontmatter de SUMMARY.md**: el issue recurrente de accomplishments vacíos en gsd-tools tiene una fix simple — agregar el campo en el template de SUMMARY
+
+### Cost Observations
+- Model: claude-sonnet-4-6 (balanced profile)
+- Sessions: 4 plan executions
+- Notable: Plans 21-02 y 21-03 fueron los más eficientes del proyecto (~8min y ~5min cada uno) — scope quirúrgico con prerequisitos claros
+
+---
+
 ## Cross-Milestone Trends
 
 ### Process Evolution
@@ -104,6 +143,7 @@
 | v1.0 CRM Conversión | 9 | 23 | 8 días | ~21min | Baseline |
 | v1.1 Vista Facturador | 4 | 9 | 3 días | ~6min est. | Planes más pequeños y focalizados |
 | v1.2 AFIP Real | 8 | 24 | 50 días | ~variable | Complejidad regulatoria + audit rounds; 2 gap-closure phases |
+| v1.3 Historial de Consultas | 2 | 4 | 7 días | ~7min est. | Scope mínimo, cambios quirúrgicos, sin audit/gap-closure |
 
 ### Cumulative Quality
 
@@ -112,11 +152,13 @@
 | v1.0 | ~minimal | <6% | BullMQ (ya existía) |
 | v1.1 | 9 TDD tests (timezone + service) | <6% | ninguna |
 | v1.2 | ~40+ TDD tests (WSAA, AfipReal, CAEA, processor) | <10% | node-forge 1.3.3, qrcode 1.5.4, async-mutex |
+| v1.3 | 0 tests (UI/UX changes) | <10% | ninguna |
 
 ### Recurring Process Debt
 
-| Issue | v1.0 | v1.1 | v1.2 | Fix |
-|-------|------|------|------|-----|
-| MILESTONES.md accomplishments vacíos | — | ✗ | ✗ | Actualizar formato SUMMARY.md con `one_liner:` field |
-| STATE.md progress desactualizado durante ejecución | — | ✗ | parcial | GSD executor actualiza STATE al final de cada plan |
-| Integration bugs detectados tarde (audit, no verify) | — | — | ✗ | Correr integration checker en verify de cada phase |
+| Issue | v1.0 | v1.1 | v1.2 | v1.3 | Fix |
+|-------|------|------|------|------|-----|
+| MILESTONES.md accomplishments vacíos | — | ✗ | ✗ | ✗ | Agregar `one_liner:` field al frontmatter de SUMMARY.md |
+| STATE.md progress desactualizado durante ejecución | — | ✗ | parcial | ✓ | GSD executor actualiza STATE al final de cada plan |
+| Integration bugs detectados tarde (audit, no verify) | — | — | ✗ | n/a | Correr integration checker en verify de cada phase |
+| Human-verify checkpoint pendiente al archivar | — | — | — | ✗ | Resolver checkpoint antes de invocar complete-milestone |

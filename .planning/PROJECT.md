@@ -67,6 +67,11 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 - ✓ CAEA contingency mode para cuando ARCA no responde — v1.2
 - ✓ QR AFIP en PDF de comprobantes (RG 5616/2024, 13 campos) — v1.2
 - ✓ Errores AFIP en español en modal con error panel (BUG-1 + BUG-2 corregidos) — v1.2
+- ✓ Widget agenda-first en dashboard: hoy por defecto, navegación día a día, métricas del día (total/finalizados/cirugías/ausentes/cancelados) — v1.3
+- ✓ Botón "Ver HC" por turno FINALIZADO en días pasados/hoy → modal con entradas read-only y indicador legal — v1.3
+- ✓ Modal HC con tipo selector (Primera Consulta / Pre Quirúrgico / Control / Práctica) usando mismo formato que LiveTurno — v1.3
+- ✓ Entradas HC retroactivas: fechadas al día histórico del turno, no a hoy — v1.3
+- ✓ Backend endpoints de turnos corregidos: `diagnostico`/`tratamiento` en agenda, `esCirugia`/`entradaHCId` en próximos, `fecha` opcional en creación de entrada HC — v1.3
 
 ### Active
 
@@ -89,7 +94,7 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 
 ## Context
 
-**Estado actual (post-v1.2):** El módulo de facturación electrónica AFIP/ARCA está completo. El Facturador puede emitir comprobantes electrónicos reales (CAE), ver el QR obligatorio RG 5616/2024 en el PDF, configurar el certificado digital por tenant, y el sistema maneja automáticamente el modo contingencia CAEA cuando ARCA no está disponible. 16/16 requisitos del milestone v1.2 satisfechos.
+**Estado actual (post-v1.3):** El widget de dashboard del profesional fue reescrito con enfoque agenda-first. El profesional navega día a día, ve métricas completas del día, y puede revisar y agregar entradas de HC retroactivas a cualquier turno finalizado usando el mismo formato que LiveTurno. El módulo de facturación electrónica AFIP/ARCA (v1.2) permanece completo. 11/11 requisitos del milestone v1.3 satisfechos.
 
 **Stack:** NestJS + Prisma + PostgreSQL (backend) | Next.js 16 + React 19 + TypeScript (frontend) | BullMQ + Redis (async) | WhatsApp Cloud API | node-forge (firma CMS WSAA) | qrcode 1.5.4 + PDFKit (QR en PDF).
 
@@ -143,6 +148,9 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 | FECAEAInformar + deadline alerts en mismo milestone — v1.2 | CAEA sin inform tracking es riesgo regulatorio (multas) | ✓ Correcto — 72 reintentos en 8 días + email alert antes de vencimiento |
 | afipError persist incondicional en onFailed (BUG-1 fix) — v1.2 | Guard attemptsMade >= maxAttempts impedía persist para UnrecoverableError (attemptsMade=1) | ✓ Correcto — update antes del guard; Test 9 GREEN |
 | Modal condition: EMISION_PENDIENTE \|\| CAEA_PENDIENTE_INFORMAR (BUG-2 fix) — v1.2 | EMISION_PENDIENTE solo dejaba error invisible tras CAEA fallback | ✓ Correcto — ambas rutas de error muestran panel rojo |
+| Single `selectedDate` state en UpcomingAppointments — v1.3 | Dual `dateIndex`+`pickedDate` creaba modo-switching complejo y edge cases | ✓ Correcto — elimina condición `pickedDate` en métricas y Ver HC |
+| `isHoyOPasado = isToday \|\| isPast` como único gate — v1.3 | Gate simple y declarativo en lugar de múltiples condiciones distribuidas | ✓ Correcto — métricas y Ver HC con una sola condición |
+| Future date boundary: `setHours(23,59,59,999)` — v1.3 | Hoy no debe rechazarse como fecha futura en entradas HC | ✓ Correcto — patrón replicado verbatim en ambos endpoints HC |
 
 ## Shipped: v1.1 Vista del Facturador ✅
 
@@ -152,17 +160,9 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 
 16/16 requisitos completados en 50 días (2026-02-09 → 2026-03-31). 8 fases, 24 planes. Ver `.planning/milestones/v1.2-ROADMAP.md` para detalles completos.
 
-## Current Milestone: v1.3 Historial de Consultas
+## Shipped: v1.3 Historial de Consultas ✅
 
-**Goal:** Expandir el widget "Turnos del día" para que el profesional pueda navegar a cualquier día y ver el historial de consultas con sus entradas de HC asociadas, y agregar entradas retroactivas usando el mismo formato que LiveTurno.
-
-**Target features:**
-- Widget agenda-first (hoy por defecto vía `/turnos/agenda`, no `/proximos`)
-- Selector de calendario para navegar a cualquier día pasado o futuro
-- Métricas del día para días pasados/hoy (total, finalizados, cirugías, ausentes, cancelados)
-- Botón "Ver HC" por turno FINALIZADO → modal con entradas read-only + agregar nueva
-- Modal HC con mismo formato que HistoriaClinicaTab (tipo selector + PrimeraConsultaForm / Textarea)
-- Entradas retroactivas: backend acepta `fecha` opcional para datar la entrada en el día histórico
+11/11 requisitos completados en 7 días (2026-04-02 → 2026-04-09). 2 fases, 4 planes. Ver `.planning/milestones/v1.3-ROADMAP.md` para detalles completos.
 
 ## Next Milestone: v2.0 (TBD)
 
@@ -173,4 +173,4 @@ Planning pendiente. Candidatos para el próximo milestone:
 - IVA matrix para cirugía estética (blocker de go-live AFIP producción)
 
 ---
-*Last updated: 2026-04-02 after v1.3 milestone start — Historial de Consultas*
+*Last updated: 2026-04-13 after v1.3 milestone — Historial de Consultas*

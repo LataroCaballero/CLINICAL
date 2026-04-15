@@ -191,6 +191,7 @@ model Paciente {
   temperatura                TemperaturaPaciente?
   scoreConversion            Int               @default(0)
   motivoPerdida              MotivoPerdidaCRM?
+  flujo                      FlujoPaciente?    @default(PENDIENTE)
   notasComerciales           String?
   tareasSeguimiento          TareaSeguimiento[]
   whatsappOptIn              Boolean           @default(false)
@@ -207,6 +208,8 @@ model Paciente {
   @@index([etapaCRM])
   @@index([profesionalId, etapaCRM])
   @@index([profesionalId, enListaEspera])
+  @@index([flujo])
+  @@index([profesionalId, flujo])
 }
 
 model MensajeInterno {
@@ -764,6 +767,7 @@ model TipoTurno {
   instrucciones   String?
   duracionDefault Int?
   esCirugia       Boolean                 @default(false)
+  flujoPaciente   FlujoPaciente?
   turnos          Turno[]
   configProfesionales TipoTurnoProfesional[]
 }
@@ -1062,6 +1066,12 @@ enum MotivoPerdidaCRM {
   NO_CANDIDATO_MEDICO
   NO_RESPONDIO
   OTRO
+}
+
+enum FlujoPaciente {
+  CIRUGIA
+  TRATAMIENTO
+  PENDIENTE
 }
 
 enum TipoTareaSeguimiento {

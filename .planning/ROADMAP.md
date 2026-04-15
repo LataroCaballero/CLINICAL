@@ -156,7 +156,7 @@ Full details: `.planning/milestones/v1.3-ROADMAP.md`
 | 19. getCierreMensual facturaId Extension | v1.2 | 2/2 | Complete | 2026-03-31 |
 | 20. Backend Data Fixes | v1.3 | 1/1 | Complete | 2026-04-02 |
 | 21. Agenda Widget + Modal HC | v1.3 | 3/3 | Complete | 2026-04-09 |
-| 22. Schema Foundation | v1.4 | 0/3 | Planning | - |
+| 22. Schema Foundation | 1/3 | In Progress|  | - |
 | 23. Backend Logic | v1.4 | 0/TBD | Not started | - |
 | 24. LiveTurno Banner | v1.4 | 0/TBD | Not started | - |
 | 25. Tratamientos Tab | v1.4 | 0/TBD | Not started | - |

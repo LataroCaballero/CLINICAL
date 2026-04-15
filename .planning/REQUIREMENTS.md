@@ -7,7 +7,7 @@
 
 ### Tipos de Turno
 
-- [ ] **TIPOS-01**: El sistema cuenta con 5 tipos de turno disponibles: "Consulta para cirugía", "Consulta para tratamiento en consultorio", "Pre-operatorio", "Control", "Consulta pendiente"
+- [x] **TIPOS-01**: El sistema cuenta con 5 tipos de turno disponibles: "Consulta para cirugía", "Consulta para tratamiento en consultorio", "Pre-operatorio", "Control", "Consulta pendiente"
 - [ ] **TIPOS-02**: Al crear un turno, la secretaria/profesional selecciona el tipo de turno de la lista actualizada con los 5 tipos
 
 ### Flujo del Paciente
@@ -17,7 +17,7 @@
 - [ ] **FLUJO-03**: Al crear un turno de tipo "Pre-operatorio", el flujo del paciente se actualiza a CIRUGIA (solo si está en PENDIENTE)
 - [ ] **FLUJO-04**: Los tipos "Control" y "Consulta pendiente" no modifican el flujo del paciente
 - [ ] **FLUJO-05**: La lista de pacientes muestra un badge de flujo por paciente: CIRUGIA (azul), TRATAMIENTO (verde), PENDIENTE (amber), sin clasificar/legacy (gris)
-- [ ] **FLUJO-06**: Los pacientes existentes en el embudo CRM migran a flujo = CIRUGIA en base a historial de turnos (Turno.esCirugia / etapaCRM activo); pacientes sin historial quedan como null (sin clasificar — no aparecen en embudo ni en lista de tratamientos)
+- [x] **FLUJO-06**: Los pacientes existentes en el embudo CRM migran a flujo = CIRUGIA en base a historial de turnos (Turno.esCirugia / etapaCRM activo); pacientes sin historial quedan como null (sin clasificar — no aparecen en embudo ni en lista de tratamientos)
 
 ### CRM / Embudo
 
@@ -67,14 +67,14 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| TIPOS-01 | Phase 22 | Pending |
+| TIPOS-01 | Phase 22 | Complete |
 | TIPOS-02 | Phase 22 | Pending |
 | FLUJO-01 | Phase 23 | Pending |
 | FLUJO-02 | Phase 23 | Pending |
 | FLUJO-03 | Phase 23 | Pending |
 | FLUJO-04 | Phase 23 | Pending |
 | FLUJO-05 | Phase 25 | Pending |
-| FLUJO-06 | Phase 22 | Pending |
+| FLUJO-06 | Phase 22 | Complete |
 | CRM-01 | Phase 23 | Pending |
 | CRM-02 | Phase 23 | Pending |
 | CRM-03 | Phase 23 | Pending |

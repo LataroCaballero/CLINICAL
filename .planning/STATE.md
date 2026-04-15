@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Flujo de Pacientes
-status: planning
-stopped_at: Phase 22 context gathered
-last_updated: "2026-04-15T21:40:50.766Z"
-last_activity: 2026-04-15 — Roadmap created, 4 phases (22–25), 20/20 requirements mapped
+status: in-progress
+stopped_at: "Completed 22-01-PLAN.md"
+last_updated: "2026-04-15T22:13:32Z"
+last_activity: 2026-04-15 — Plan 22-01 complete — FlujoPaciente enum + migration SQL
 progress:
   total_phases: 4
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
-  percent: 0
+  total_plans: 3
+  completed_plans: 1
+  percent: 8
 ---
 
 # Project State
@@ -28,12 +28,12 @@ See: .planning/PROJECT.md (updated 2026-04-15)
 ```
 Milestone: v1.4 Flujo de Pacientes
 Phase:     22 of 25 (Schema Foundation)
-Plan:      —
-Status:    Ready to plan
-Progress:  [░░░░░░░░░░] 0%
+Plan:      1 of 3 complete
+Status:    In progress
+Progress:  [█░░░░░░░░░] 8%
 ```
 
-Last activity: 2026-04-15 — Roadmap created, 4 phases (22–25), 20/20 requirements mapped
+Last activity: 2026-04-15 — Plan 22-01 complete — FlujoPaciente enum + migration SQL added to schema.prisma
 
 ## Milestone Summary
 
@@ -49,6 +49,8 @@ Last activity: 2026-04-15 — Roadmap created, 4 phases (22–25), 20/20 require
 ## Accumulated Context
 
 ### Critical Decisions (v1.4)
+- [22-01] Paciente.flujo column added without SQL DEFAULT — existing rows = NULL (legacy), new inserts get PENDIENTE from Prisma @default; this cleanly distinguishes legacy from unclassified
+- [22-01] Control TipoTurno reused via UPDATE (not INSERT) due to UNIQUE constraint on nombre; only 4 net-new TipoTurno rows inserted
 - Backfill SQL infers CIRUGIA from `Turno.esCirugia = true` OR `etapaCRM IS NOT NULL` — NOT blanket PENDIENTE
 - CRM filter: `WHERE (flujo = 'CIRUGIA' OR (flujo IS NULL AND etapaCRM IS NOT NULL))` — preserves legacy data
 - `flujo = null` (legacy) vs `flujo = PENDIENTE` are different: only PENDIENTE triggers LiveTurno banner
@@ -69,6 +71,6 @@ Last activity: 2026-04-15 — Roadmap created, 4 phases (22–25), 20/20 require
 
 ## Session Continuity
 
-Last session: 2026-04-15T21:40:50.762Z
-Stopped at: Phase 22 context gathered
-Resume file: .planning/phases/22-schema-foundation/22-CONTEXT.md
+Last session: 2026-04-15T22:13:32Z
+Stopped at: Completed 22-01-PLAN.md
+Resume file: .planning/phases/22-schema-foundation/22-01-SUMMARY.md

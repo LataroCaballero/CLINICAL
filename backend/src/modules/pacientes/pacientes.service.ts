@@ -17,6 +17,7 @@ import {
   RolUsuario,
   EtapaCRM,
   TemperaturaPaciente,
+  FlujoPaciente,
   MotivoPerdidaCRM,
   TipoTareaSeguimiento,
   TipoContacto,
@@ -941,5 +942,18 @@ export class PacientesService {
       ...p,
       obraSocialNombre: p.obraSocial?.nombre ?? null,
     }));
+  }
+
+  async updateFlujo(id: string, flujo: FlujoPaciente) {
+    const exists = await this.prisma.paciente.findUnique({
+      where: { id },
+      select: { id: true },
+    });
+    if (!exists) throw new NotFoundException('Paciente no encontrado');
+
+    return this.prisma.paciente.update({
+      where: { id },
+      data: { flujo },
+    });
   }
 }

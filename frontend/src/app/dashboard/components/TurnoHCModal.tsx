@@ -19,6 +19,7 @@ import {
   Save,
   ChevronLeft,
   Plus,
+  ArrowUpRight,
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -31,6 +32,7 @@ import {
   type TipoEntrada,
 } from "@/hooks/useCreateHistoriaClinicaEntry";
 import { usePaciente } from "@/hooks/usePaciente";
+import PatientDrawer from "@/app/dashboard/pacientes/components/PatientDrawer";
 import {
   PrimeraConsultaForm,
   type PrimeraConsultaFormState,
@@ -83,6 +85,7 @@ export default function TurnoHCModal({
   const [pvState, setPvState] = useState<PrimeraConsultaFormState | null>(null);
   const [textoLibre, setTextoLibre] = useState("");
   const [saved, setSaved] = useState(false);
+  const [patientDrawerOpen, setPatientDrawerOpen] = useState(false);
 
   const pacienteId = turno?.paciente.id ?? "";
 
@@ -166,12 +169,20 @@ export default function TurnoHCModal({
   };
 
   return (
+    <>
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-w-2xl w-full max-h-[85vh] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">
             <FileText className="w-4 h-4 text-indigo-500" />
-            HC — {turno.paciente.nombreCompleto}
+            <button
+              type="button"
+              onClick={() => setPatientDrawerOpen(true)}
+              className="flex items-center gap-1.5 hover:text-indigo-600 transition-colors group"
+            >
+              HC — {turno.paciente.nombreCompleto}
+              <ArrowUpRight className="w-4 h-4 text-indigo-400 opacity-60 group-hover:opacity-100 transition-opacity" />
+            </button>
           </DialogTitle>
           <p className="text-sm text-gray-500">
             {turno.tipoTurno.nombre} · {hhmm(turno.inicio)} ·{" "}
@@ -309,6 +320,14 @@ export default function TurnoHCModal({
         )}
       </DialogContent>
     </Dialog>
+
+      <PatientDrawer
+        open={patientDrawerOpen}
+        onOpenChange={setPatientDrawerOpen}
+        pacienteId={pacienteId || null}
+        initialView="historia"
+      />
+    </>
   );
 }
 

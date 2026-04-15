@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Flujo de Pacientes
 status: in-progress
-stopped_at: "Completed 22-02-PLAN.md"
-last_updated: "2026-04-15T22:30:00Z"
-last_activity: 2026-04-15 — Plan 22-02 complete — Migration applied, seed updated, findAll() exposes flujoPaciente+esCirugia
+stopped_at: "Completed 22-03-PLAN.md"
+last_updated: "2026-04-15T22:45:00Z"
+last_activity: 2026-04-15 — Plan 22-03 complete — PATCH /pacientes/:id/flujo endpoint with role restriction (FACTURADOR excluded)
 progress:
   total_phases: 4
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 3
-  completed_plans: 2
-  percent: 17
+  completed_plans: 3
+  percent: 33
 ---
 
 # Project State
@@ -27,13 +27,13 @@ See: .planning/PROJECT.md (updated 2026-04-15)
 
 ```
 Milestone: v1.4 Flujo de Pacientes
-Phase:     22 of 25 (Schema Foundation)
-Plan:      2 of 3 complete
-Status:    In progress
-Progress:  [██░░░░░░░░] 17%
+Phase:     22 of 25 (Schema Foundation) — COMPLETE
+Plan:      3 of 3 complete
+Status:    In progress (Phase 23 next)
+Progress:  [███░░░░░░░] 33%
 ```
 
-Last activity: 2026-04-15 — Plan 22-02 complete — Migration applied, seed updated, findAll() exposes flujoPaciente+esCirugia
+Last activity: 2026-04-15 — Plan 22-03 complete — PATCH /pacientes/:id/flujo endpoint with FACTURADOR exclusion via method-level @Auth override
 
 ## Milestone Summary
 
@@ -60,6 +60,8 @@ Last activity: 2026-04-15 — Plan 22-02 complete — Migration applied, seed up
 - Phases 24 and 25 are independent of each other (both depend on Phase 23)
 - [22-02] Prisma auto-generated supplemental migration 20260415221758 (SET DEFAULT PENDIENTE + 2 indexes) when migrate dev ran — expected behavior, committed alongside manual migration
 - [22-02] DB has 6 TipoTurno records (5 new + pre-existing Cirugia); seed creates only the 5 new types for dev environments
+- [22-03] RolesGuard.getAllAndOverride([handler, class]) — method-level @Auth takes priority over class-level; PATCH /pacientes/:id/flujo restricts to ADMIN+PROFESIONAL+SECRETARIA excluding FACTURADOR
+- [22-03] UpdateFlujoDto does not accept null; future "clear flujo" will require a separate endpoint
 
 ### Decisions (carry-forward from v1.3)
 - Future date boundary uses `hoy.setHours(23, 59, 59, 999)` so today is not rejected in HC entries
@@ -73,6 +75,6 @@ Last activity: 2026-04-15 — Plan 22-02 complete — Migration applied, seed up
 
 ## Session Continuity
 
-Last session: 2026-04-15T22:30:00Z
-Stopped at: Completed 22-02-PLAN.md
-Resume file: .planning/phases/22-schema-foundation/22-02-SUMMARY.md
+Last session: 2026-04-15T22:45:00Z
+Stopped at: Completed 22-03-PLAN.md
+Resume file: .planning/phases/22-schema-foundation/22-03-SUMMARY.md

@@ -1,664 +1,371 @@
-# Architecture Patterns: v1.2 AFIP Real
+# Architecture Patterns — v1.4 Flujo de Pacientes
 
-**Domain:** Medical SaaS — AFIP/ARCA Electronic Invoicing (real CAE)
-**Researched:** 2026-03-16
-**Confidence:** HIGH (based on direct codebase inspection + AFIP-INTEGRATION.md reference)
-**Scope:** What changes from the stub (AfipStubService) to the real implementation. Does NOT redocument v1.1 architecture.
+**Domain:** Patient flow classification added to existing NestJS + Prisma + Next.js clinical SaaS
+**Researched:** 2026-04-15
+**Overall confidence:** HIGH — based on direct code inspection of all integration points
 
 ---
 
-## Recommended Architecture
+## Current System Map (what exists today)
 
-### System Overview: v1.2 Delta
+### Backend modules relevant to this milestone
 
-The v1.2 change is **surgical**: one DI token (`AfipStubService`) is replaced by a real implementation (`AfipRealService`) organized in a new sub-module (`AfipModule`) that is imported into the existing `FinanzasModule`. No new routes. No new frontend pages beyond a certificate upload form and QR display in the existing factura view.
+| Module | Key files | Current role |
+|--------|-----------|-------------|
+| `turnos` | `turnos.service.ts` | Creates turnos; houses CRM auto-transition logic (crearTurno step 5 and cerrarSesion) |
+| `pacientes` | `pacientes.service.ts`, `pacientes.controller.ts` | Kanban query, lista-acción, CRM update; no `flujo` field yet |
+| `tipos-turno` | `tipos-turno.service.ts` | CRUD + per-profesional duration/color config; no `clasificatorio` concept yet |
+| `historia-clinica` | (not changed in this milestone) | Linked via `entradaHCId` on Turno |
+
+### Schema: Paciente model (current state)
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                         Next.js 16 App Router                               │
-│                                                                             │
-│  /dashboard/facturador/**        (EXISTING — no structural changes)         │
-│  /dashboard/facturador/config/   (NEW — certificate upload for ADMIN only)  │
-├─────────────────────────────────────────────────────────────────────────────┤
-│  TanStack Query hooks                                                       │
-│  useEmitirAfip (EXISTING — already calls POST /finanzas/facturas/:id/emitir-afip) │
-│  useAfipConfig (NEW — GET/POST /afip/config/:profesionalId)                 │
-├─────────────────────────────────────────────────────────────────────────────┤
-│  Axios API client (lib/api.ts)  — no change                                 │
-└──────────────────────────────────┬──────────────────────────────────────────┘
-                                   │ HTTP/JWT
-┌──────────────────────────────────▼──────────────────────────────────────────┐
-│                           NestJS Backend                                     │
-│                                                                             │
-│  FinanzasController (MODIFY — emitir-afip now returns real CAE + QR data)   │
-│  FinanzasService (MODIFY — post-emission: store CAE, caeFchVto, qrData)     │
-│                                                                             │
-│  ┌─────────────────────────────────────────────────────────────────────┐    │
-│  │  AfipModule (NEW — separate NestJS module, imported by FinanzasModule)│   │
-│  │                                                                      │    │
-│  │  AfipConfigService   WsaaService        Wsfev1Service                │    │
-│  │  (cert CRUD,         (TRA build,        (FECAESolicitar,             │    │
-│  │   encryption)         signing, cache)    advisory lock,              │    │
-│  │                                          FECompUltimoAutorizado)     │    │
-│  │                                                                      │    │
-│  │  CaeaService         AfipModule                                      │    │
-│  │  (pre-fetch cron,    (providers + DI                                 │    │
-│  │   contingency mode)   wiring)                                        │    │
-│  └─────────────────────────────────────────────────────────────────────┘    │
-│                                                                             │
-│  WhatsappModule (re-exports EncryptionService — imported by AfipModule)      │
-├─────────────────────────────────────────────────────────────────────────────┤
-│  PrismaService / PostgreSQL                                                  │
-│  Factura (MODIFY — add cae, caeFchVto, qrData, ptoVta, nroComprobante)      │
-│  ConfiguracionAFIP (NEW model — cert storage per profesional)                │
-│  CaeaVigente (NEW model — current period CAEA per profesional)               │
-└─────────────────────────────────────────────────────────────────────────────┘
+Paciente {
+  etapaCRM          EtapaCRM?        // drives Kanban + lista-acción
+  temperatura       TemperaturaPaciente?
+  scoreConversion   Int
+  motivoPerdida     MotivoPerdidaCRM?
+  // NO flujo field — to be added
+}
 ```
 
----
+### Schema: TipoTurno model (current state)
 
-## Component Boundaries
+```
+TipoTurno {
+  id              String  @id
+  nombre          String  @unique
+  descripcion     String?
+  duracionDefault Int?
+  esCirugia       Boolean @default(false)
+  // NO rol/clasificatorio flag — to be added
+}
+```
 
-### New Components
+### CRM auto-transition logic (exact locations)
 
-| Component | Responsibility | Location | Status |
-|-----------|---------------|----------|--------|
-| `AfipModule` | NestJS module that wires AfipConfigService, WsaaService, Wsfev1Service, CaeaService. Imports WhatsappModule for EncryptionService. | `backend/src/modules/finanzas/afip/afip.module.ts` | NEW |
-| `AfipConfigService` | CRUD for `ConfiguracionAFIP` per tenant. Encrypts/decrypts cert and key PEM using EncryptionService. Parses `certExpiresAt` from cert. | `backend/src/modules/finanzas/afip/afip-config.service.ts` | NEW |
-| `AfipConfigController` | `POST /afip/config/:profesionalId` (upload cert+key), `GET /afip/config/:profesionalId` (expiry status only — NEVER returns encrypted fields). ADMIN only. | `backend/src/modules/finanzas/afip/afip-config.controller.ts` | NEW |
-| `WsaaService` | Builds TRA XML, signs via `openssl smime` subprocess, calls WSAA LoginCms SOAP endpoint, extracts token+sign, caches in Redis keyed `wsaa:{cuit}:{service}` with TTL = expiration - 5min. | `backend/src/modules/finanzas/afip/wsaa.service.ts` | NEW |
-| `Wsfev1Service` | Calls `FECompUltimoAutorizado` + `FECAESolicitar` wrapped in Prisma `$transaction` with `pg_advisory_xact_lock`. Returns `EmitirComprobanteResult`. Falls back to CaeaService on timeout/5xx. | `backend/src/modules/finanzas/afip/wsfev1.service.ts` | NEW |
-| `CaeaService` | Calls `FECAEASolicitar` on a cron schedule, stores `CaeaVigente` per profesional. On contingency: retrieves current CAEA, assigns to invoice. On inform window: calls `FECAEAInformar`. | `backend/src/modules/finanzas/afip/caea.service.ts` | NEW |
-| `AfipRealService` | Implements `AfipService` interface. Orchestrates: get config → get token (WsaaService) → call WSFEv1 (Wsfev1Service) → fallback to CAEA (CaeaService) → return result. This is the class that replaces AfipStubService as the DI provider. | `backend/src/modules/finanzas/afip/afip-real.service.ts` | NEW |
-| `FacturaPdfService` | Reuses PDFKit (already installed). Adds QR AFIP code to existing factura PDF layout. Reads `qrData` from `Factura` record. | `backend/src/modules/finanzas/afip/factura-pdf.service.ts` | NEW |
+Two transition sites in `turnos.service.ts`:
 
-### Modified Components
-
-| Component | What Changes | Location | Status |
-|-----------|-------------|----------|--------|
-| `AfipStubService` | Replaced as the active DI provider by `AfipRealService` in `AfipModule`. The class file stays for local dev / testing toggle. | `backend/src/modules/finanzas/afip/afip-stub.service.ts` | MODIFY (DI binding only) |
-| `FinanzasModule` | Remove `AfipStubService` from providers/exports. Add `AfipModule` to imports. The `FinanzasService` receives `AfipService` (interface token) via DI — no import path change. | `backend/src/modules/finanzas/finanzas.module.ts` | MODIFY |
-| `FinanzasService` | `emitirAfip(facturaId)` method: after getting result from AfipService, writes `cae`, `caeFchVto`, `qrData`, `nroComprobante`, `ptoVta` back to `Factura`. Also generates QR data string. | `backend/src/modules/finanzas/finanzas.service.ts` | MODIFY |
-| `FinanzasController` | `POST /finanzas/facturas/:id/emitir-afip` response shape now includes `{ cae, caeFchVto, qrUrl }` with real data. No route change. | `backend/src/modules/finanzas/finanzas.controller.ts` | MODIFY (response only) |
-| `Factura` (Prisma model) | Add fields: `cae String?`, `caeFchVto String?`, `qrData String?`, `ptoVta Int?`, `nroComprobante Int?`. These are null until AFIP emission. | `backend/src/prisma/schema.prisma` | MODIFY |
-| `ConfiguracionAFIP` | New model added to schema. | `backend/src/prisma/schema.prisma` | NEW MODEL |
-| `CaeaVigente` | New model added to schema. | `backend/src/prisma/schema.prisma` | NEW MODEL |
-| `AppModule` | If `AfipModule` is standalone (not just FinanzasModule-internal), register in AppModule imports after FinanzasModule. Needed only if AfipConfigController registers routes directly. | `backend/src/app.module.ts` | MAYBE MODIFY |
-
----
-
-## DI Token Strategy: Swap Without Changing Call Sites
-
-The stub-to-real swap uses NestJS custom provider tokens. `AfipStubService` was registered directly as a class provider in `FinanzasModule`. For v1.2, this changes to an interface token:
-
+**Site 1 — `crearTurno()`, lines 126–136:**
 ```typescript
-// backend/src/modules/finanzas/afip/afip.interfaces.ts  (already exists)
-// Add:
-export const AFIP_SERVICE = 'AFIP_SERVICE';  // injection token
-
-// AfipModule providers array:
-{
-  provide: AFIP_SERVICE,
-  useClass: AfipRealService,   // swap to AfipStubService for local dev/tests
-}
-
-// FinanzasService constructor (MODIFY):
-constructor(
-  @Inject(AFIP_SERVICE) private readonly afipService: AfipService,
-  // ... existing injections
-)
-```
-
-`FinanzasService` already calls `this.afipService.emitirComprobante(params)` — no change to call sites. The `AFIP_SERVICE` token is the only wiring change.
-
-To switch back to stub for local development, change `useClass: AfipRealService` to `useClass: AfipStubService` in `AfipModule`. No other code changes.
-
----
-
-## Data Flow
-
-### Primary Flow: CAE Emission (WSFEv1)
-
-```
-FACTURADOR clicks "Emitir AFIP" on a Factura
-    |
-POST /finanzas/facturas/:id/emitir-afip  (FinanzasController)
-    |
-FinanzasService.emitirAfip(facturaId)
-    |
-Load Factura from DB (get profesionalId, condicionIVAReceptor, moneda, tipoCambio, total)
-    |
-AfipRealService.emitirComprobante(params)
-    |
-    ├─► AfipConfigService.getConfig(profesionalId)
-    │     → loads ConfiguracionAFIP from DB
-    │     → decrypts certPem + keyPem via EncryptionService
-    │
-    ├─► WsaaService.getAccessTicket(cuit, 'wsfe', certPem, keyPem)
-    │     → check Redis cache key "wsaa:{cuit}:wsfe"
-    │     → if hit and not expiring: return cached {token, sign}
-    │     → if miss: buildTRA() → signTRA() via openssl smime subprocess
-    │               → POST WSAA SOAP LoginCms
-    │               → parse token/sign/expiration from XML
-    │               → SET Redis key with TTL = (expiration - now - 5min)
-    │
-    ├─► Wsfev1Service.emitir(params, auth)
-    │     → prisma.$transaction(async tx => {
-    │           SELECT pg_advisory_xact_lock(hashtext(profesionalId||ptoVta||cbteTipo))
-    │           FECompUltimoAutorizado → lastNum
-    │           cbteDesde = lastNum + 1
-    │           FECAESolicitar → { cae, caeFchVto, resultado }
-    │       })
-    │     → if AFIP returns resultado='R': throw AfipRejectionException
-    │     → if timeout/5xx: throw AfipUnavailableException → caller falls back to CAEA
-    │
-    └─► (fallback) CaeaService.getActiveCaea(profesionalId)
-          → load CaeaVigente from DB for current period
-          → assign caea as authorization code
-          → mark Factura as CAEA_PENDIENTE_INFORMAR
-
-    |
-FinanzasService (post-emission)
-    |
-Build QR data string (AFIP spec: JSON → base64 → URL)
-    |
-prisma.factura.update({
-  cae, caeFchVto, qrData, nroComprobante: cbteDesde, ptoVta,
-  estado: EstadoFactura.EMITIDA
-})
-    |
-Return { cae, caeFchVto, qrData } to controller → frontend
-    |
-Frontend: invalidate factura query → re-render with QR badge + CAE number
-```
-
-### CAEA Pre-fetch Flow (Cron)
-
-```
-CaeaService cron: '0 6 27,11,12 * *'  (6 AM ART on days 27, 11, 12)
-    |
-For each Profesional with ConfiguracionAFIP.ambiente = PRODUCCION
-    |
-WsaaService.getAccessTicket(cuit, 'wsfe', ...) — reuses token cache
-    |
-FECAEASolicitar(Periodo: YYYYMM, Orden: 1 or 2)
-    |
-prisma.caeaVigente.upsert({
-  profesionalId, periodo, orden,
-  caea, fchVigDesde, fchVigHasta, fchTopeInf
-})
-```
-
-### CAEA Inform Flow (Cron, post-period)
-
-```
-CaeaService cron: runs within 30 days after period end
-    |
-Find all Factura with estado = CAEA_PENDIENTE_INFORMAR for the expired period
-    |
-FECAEAInformar with those invoices
-    |
-Update Factura.estado to EMITIDA (CAEA confirmed)
-```
-
-### Certificate Upload Flow
-
-```
-ADMIN opens /dashboard/facturador/config (NEW page)
-    |
-Uploads cert.pem + key.pem files (multipart/form-data)
-    |
-POST /afip/config/:profesionalId  (AfipConfigController, @Auth('ADMIN') only)
-    |
-AfipConfigService.upsertConfig(profesionalId, certPem, keyPem, ambiente)
-    |
-EncryptionService.encrypt(certPem) → certPemEncrypted
-EncryptionService.encrypt(keyPem) → keyPemEncrypted
-Parse certExpiresAt from cert (node crypto — X.509 notAfter field)
-    |
-prisma.configuracionAFIP.upsert({ profesionalId, cuit, certPemEncrypted,
-  keyPemEncrypted, certExpiresAt, ambiente })
-    |
-Return { certExpiresAt, ambiente } — NEVER return encrypted fields
-```
-
----
-
-## Database Schema Changes
-
-### New Model: ConfiguracionAFIP
-
-```prisma
-model ConfiguracionAFIP {
-  id                String       @id @default(uuid())
-  profesionalId     String       @unique
-  cuit              String       // CUIT the cert was issued for (no hyphens)
-  certPemEncrypted  String       // AES-256-GCM: iv:authTag:ciphertext — NEVER in API responses
-  keyPemEncrypted   String       // AES-256-GCM: iv:authTag:ciphertext — NEVER in API responses
-  certExpiresAt     DateTime     // Parsed from cert's notAfter field
-  ambiente          AmbienteAFIP @default(HOMOLOGACION)
-  createdAt         DateTime     @default(now())
-  updatedAt         DateTime     @updatedAt
-  profesional       Profesional  @relation(fields: [profesionalId], references: [id])
-}
-
-enum AmbienteAFIP {
-  HOMOLOGACION
-  PRODUCCION
-}
-```
-
-### New Model: CaeaVigente
-
-```prisma
-model CaeaVigente {
-  id            String      @id @default(uuid())
-  profesionalId String
-  periodo       String      // "YYYYMM"
-  orden         Int         // 1 = first half (days 1-15), 2 = second half (days 16-end)
-  caea          String      // The authorization code — store as plaintext (not a secret, unlike certs)
-  fchVigDesde   String      // YYYYMMDD
-  fchVigHasta   String      // YYYYMMDD
-  fchTopeInf    String      // YYYYMMDD — last date to inform invoices under this CAEA
-  createdAt     DateTime    @default(now())
-  profesional   Profesional @relation(fields: [profesionalId], references: [id])
-
-  @@unique([profesionalId, periodo, orden])
-}
-```
-
-### Modified Model: Factura (additions only)
-
-```prisma
-// Add to existing Factura model:
-cae             String?     // 14-digit CAE from AFIP — null until EMITIDA
-caeFchVto       String?     // YYYYMMDD CAE expiry — null until EMITIDA
-qrData          String?     // Base64 QR content per AFIP spec — null until EMITIDA
-ptoVta          Int?        // AFIP punto de venta used for this invoice
-nroComprobante  Int?        // Sequential invoice number confirmed by AFIP
-```
-
-New `EstadoFactura` enum value needed:
-
-```prisma
-enum EstadoFactura {
-  EMITIDA
-  ANULADA
-  CAEA_PENDIENTE_INFORMAR  // NEW: emitted under CAEA, awaiting inform call
-}
-```
-
----
-
-## Advisory Lock: Concrete NestJS/Prisma Pattern
-
-This is required for correctness. Two concurrent requests for the same professional + punto de venta + tipo comprobante must not both query `FECompUltimoAutorizado` and submit with the same sequence number.
-
-The lock must wrap the sequence `FECompUltimoAutorizado → FECAESolicitar` inside a single Prisma interactive transaction (`$transaction(async tx => ...)`). The `pg_advisory_xact_lock` releases automatically at transaction end.
-
-```typescript
-// In Wsfev1Service (backend/src/modules/finanzas/afip/wsfev1.service.ts):
-
-async emitir(
-  params: EmitirComprobanteParams,
-  auth: { token: string; sign: string; cuit: string },
-): Promise<EmitirComprobanteResult> {
-  return this.prisma.$transaction(async (tx) => {
-    // Lock key: deterministic integer from (profesionalId, ptoVta, cbteTipo)
-    // hashtext() is PostgreSQL's built-in string hash → int4
-    await tx.$executeRaw`
-      SELECT pg_advisory_xact_lock(
-        hashtext(${params.cuitEmisor} || ':' || ${params.puntoVenta}::text || ':' || ${params.tipoComprobante}::text)
-      )
-    `;
-
-    // Safely read last authorized number AFTER lock is held
-    const lastNum = await this.callFECompUltimoAutorizado(
-      params.puntoVenta,
-      params.tipoComprobante,
-      auth,
-    );
-
-    const cbteDesde = lastNum + 1;
-    const cbteHasta = cbteDesde; // single invoice
-
-    // Submit to AFIP — if this throws, lock releases and transaction rolls back
-    return this.callFECAESolicitar({ ...params, cbteDesde, cbteHasta }, auth);
-    // pg_advisory_xact_lock releases here (transaction commit)
+const etapasIniciales: (EtapaCRM | null)[] = [null, EtapaCRM.NUEVO_LEAD];
+if (etapasIniciales.includes(pacienteCRM?.etapaCRM ?? null)) {
+  await this.prisma.paciente.update({
+    where: { id: dto.pacienteId },
+    data: { etapaCRM: EtapaCRM.TURNO_AGENDADO },
   });
 }
 ```
+Fires for ANY new turno when patient is in null/NUEVO_LEAD. Does NOT inspect `tipoTurnoId`. This is the primary integration point for `flujo` auto-update — the flujo update must be added here.
 
-Key constraints:
-- The entire method must run inside `prisma.$transaction(async tx => ...)` — not a batch transaction.
-- `tx.$executeRaw` (not `this.prisma.$executeRaw`) to ensure the lock is within the same connection.
-- The AFIP SOAP calls (`callFECompUltimoAutorizado`, `callFECAESolicitar`) happen inside the transaction scope but are external HTTP calls — Prisma's transaction timeout must be set high enough (default is 5s; AFIP can take 3-8s).
-
-Set Prisma transaction timeout in the call:
-
+**Site 2 — `cerrarSesion()`, lines 731–759:**
 ```typescript
-return this.prisma.$transaction(async (tx) => { ... }, { timeout: 15000 }); // 15 seconds
+if (turnoInfo.esCirugia) {
+  nuevaEtapa = EtapaCRM.PROCEDIMIENTO_REALIZADO;
+} else if (turnoInfo.paciente.etapaCRM === EtapaCRM.TURNO_AGENDADO) {
+  nuevaEtapa = EtapaCRM.CONSULTADO;
+}
 ```
+Fires when session closes. Uses `turno.esCirugia` boolean, not `tipoTurno.rol`. CIRUGIA-flow consultations (non-surgery turnos) correctly advance to CONSULTADO here. No change needed for `flujo`.
+
+### Kanban query (current)
+
+`pacientes.service.ts getKanban()`: `prisma.paciente.findMany({ where: { profesionalId } })` — returns ALL patients of the professional regardless of flow. Must be filtered to `flujo: CIRUGIA` after migration.
+
+### Lista-acción query (current)
+
+`pacientes.service.ts getListaAccion()`: `prisma.paciente.findMany({ where: { profesionalId, etapaCRM: { notIn: [CONFIRMADO, PERDIDO] } } })` — same issue; needs `flujo: CIRUGIA` filter.
 
 ---
 
-## WSAA Token Caching: Redis Pattern
+## Recommended Architecture for v1.4
 
-The in-memory Map from AFIP-INTEGRATION.md section 2 works for single-instance but not horizontal scaling. Since Redis is already configured for BullMQ, use it for token caching.
+### New enum: FlujoPaciente
 
+```prisma
+enum FlujoPaciente {
+  PENDIENTE    // default — not yet classified
+  CIRUGIA      // surgery conversion funnel
+  TRATAMIENTO  // in-office treatment track
+}
 ```
-Redis key:   "wsaa:{cuit}:{service}"      e.g. "wsaa:20123456789:wsfe"
-Redis value: JSON.stringify({ token, sign })
-Redis TTL:   (expiration.getTime() - Date.now() - 5*60*1000) / 1000  seconds
+
+`PENDIENTE` as DB default (not nullable) is safer than null: eliminates null-checks throughout the codebase and makes migration backfill fully explicit and complete.
+
+### New field on Paciente
+
+```prisma
+model Paciente {
+  // ... existing fields ...
+  flujo    FlujoPaciente  @default(PENDIENTE)
+
+  @@index([profesionalId, flujo])  // add this index
+}
 ```
 
-The cache is a plain `redis` client (already in `package.json` as `"redis": "^5.9.0"`). Use `cache-manager-redis-yet` (already in package.json) or the raw `redis` client directly in `WsaaService`. Do not add a new Redis client — reuse the existing connection.
+### New enum + field on TipoTurno
 
-Multi-instance safe: all instances share the same Redis key. First instance to miss cache calls WSAA and sets the key. Subsequent instances hit the cache.
+```prisma
+enum RolTipoTurno {
+  GENERAL               // no special flow meaning (Control, Pre-operatorio)
+  CLASIFICA_CIRUGIA     // sets patient flujo = CIRUGIA
+  CLASIFICA_TRATAMIENTO // sets patient flujo = TRATAMIENTO
+  CLASIFICA_PENDIENTE   // resets patient flujo = PENDIENTE
+}
 
-Race condition between two instances both missing cache simultaneously is acceptable — both call WSAA, last writer wins in Redis. AFIP does not reject duplicate TRA calls for the same CUIT+service as long as `uniqueId` (unix timestamp) differs slightly (it will, since they run milliseconds apart).
+model TipoTurno {
+  // ... existing fields ...
+  rol    RolTipoTurno  @default(GENERAL)
+}
+```
+
+The `rol` enum approach is preferred over `flujoDestino?: FlujoPaciente?` because it makes the dispatch logic a single pattern match rather than a nullable field check, and is extensible without schema changes.
+
+The 5 new tipo-turno rows map as:
+
+| Nombre | rol |
+|--------|-----|
+| Consulta para cirugía | CLASIFICA_CIRUGIA |
+| Consulta para tratamiento en consultorio | CLASIFICA_TRATAMIENTO |
+| Consulta pendiente | CLASIFICA_PENDIENTE |
+| Pre-operatorio | GENERAL |
+| Control | GENERAL |
 
 ---
 
-## QR Code Generation
+## Component Map: New vs Modified Files
 
-AFIP requires a QR code on printed/digital comprobantes per RG 5616/2024. The QR encodes a URL pointing to AFIP's verification portal with a base64-encoded JSON payload.
+### Backend — MODIFIED files
 
-### QR Data Format
+| File | What changes |
+|------|-------------|
+| `backend/src/prisma/schema.prisma` | Add `FlujoPaciente` enum + `RolTipoTurno` enum; add `flujo` field to `Paciente`; add `rol` field to `TipoTurno`; add `@@index([profesionalId, flujo])` |
+| `backend/src/modules/turnos/turnos.service.ts` | `crearTurno()`: expand `tipoTurno` select to include `rol`; add Step 5b flujo auto-update block; optionally merge into single `paciente.update` call |
+| `backend/src/modules/pacientes/pacientes.service.ts` | `getKanban()`: add `flujo: FlujoPaciente.CIRUGIA` filter; `getListaAccion()`: same filter; `updatePacienteSection()`: add `'flujo'` section case |
+
+### Backend — NEW files
+
+| File | Purpose |
+|------|---------|
+| `backend/src/prisma/migrations/YYYYMMDDHHMMSS_v14_flujo/migration.sql` | Adds enums, columns, backfill UPDATE, composite index |
+
+### Backend — files to audit (may need minor changes)
+
+| File | Reason |
+|------|--------|
+| CRM metrics service (check for raw Paciente aggregation queries) | Any query computing funnel counts must also filter to `flujo = CIRUGIA` |
+| `pacientes.controller.ts` | Add `GET /pacientes/tratamientos` route; verify existing routes don't expose unfiltered kanban path |
+
+### Frontend — MODIFIED files
+
+| File | What changes |
+|------|-------------|
+| `frontend/src/store/live-turno.store.ts` | Add `pacienteFlujo?: FlujoPaciente` to `LiveTurnoSession` interface |
+| Hook that calls `iniciarSesion` (wherever backend response populates store session) | Map `turno.paciente.flujo` into `session.pacienteFlujo` |
+| `frontend/src/app/dashboard/pacientes/page.tsx` | Add third `Vista` option `"tratamientos"`; add button in toggle group; conditionally render `TratamientosTab` |
+
+### Frontend — NEW files
+
+| File | Purpose |
+|------|---------|
+| `frontend/src/components/live-turno/ClasificacionBanner.tsx` | Banner shown in `LiveTurnoPanel` when `session.pacienteFlujo === 'PENDIENTE'`; two action buttons |
+| `frontend/src/hooks/useClasificarFlujo.ts` | Mutation hook: PATCH `section: 'flujo'`; invalidates `live-turno` session + `crm-kanban` query |
+| `frontend/src/app/dashboard/pacientes/components/TratamientosTab.tsx` | Monthly list of TRATAMIENTO patients; filter dropdown by tratamiento from catalog |
+| `frontend/src/hooks/useListaTratamientos.ts` | TanStack Query hook for `GET /pacientes/tratamientos` |
+
+---
+
+## Build Order (dependency-respecting)
+
+### Phase 1 — Schema + Migration (blocks everything else)
+
+1. Add `FlujoPaciente` and `RolTipoTurno` enums to `schema.prisma`
+2. Add `flujo FlujoPaciente @default(PENDIENTE)` to `Paciente`
+3. Add `rol RolTipoTurno @default(GENERAL)` to `TipoTurno`
+4. Add `@@index([profesionalId, flujo])` to `Paciente`
+5. Write migration SQL with backfill (see Migration Path section)
+6. Run `npx prisma migrate dev` — Prisma client regenerated with new enum types
+7. Seed or admin-update the 5 new TipoTurno rows with correct `rol` values
+
+### Phase 2 — Backend service changes (requires Phase 1)
+
+1. `turnos.service.ts`: expand tipoTurno select, add Step 5b flujo block
+2. `pacientes.service.ts`: add `flujo: CIRUGIA` filter to `getKanban` and `getListaAccion`; add `flujo` section to `updatePacienteSection`
+3. Add `GET /pacientes/tratamientos` service method + controller route
+4. Audit and patch any CRM metrics queries that aggregate paciente counts
+
+### Phase 3 — Frontend LiveTurno banner (requires Phase 1 + Phase 2)
+
+1. Update `LiveTurnoSession` type to include `pacienteFlujo`
+2. Verify `iniciarSesion` backend response includes `paciente.flujo` (already included — see note below)
+3. Map `paciente.flujo` into store `session` on session start
+4. Build `ClasificacionBanner` component
+5. Integrate into `LiveTurnoPanel` — render above tabs when `session.pacienteFlujo === 'PENDIENTE'`
+6. Build `useClasificarFlujo` mutation hook
+
+### Phase 4 — Frontend Tratamientos tab (requires Phase 1 + Phase 2)
+
+1. Build `useListaTratamientos` query hook
+2. Build `TratamientosTab` component (monthly list, date navigation, tratamiento filter)
+3. Add "Tratamientos" button + `vista === 'tratamientos'` branch to `pacientes/page.tsx`
+
+### Phase 5 — Validate migration + PENDIENTE queue visibility
+
+1. Confirm Kanban shows CIRUGIA patients after backfill
+2. Confirm PENDIENTE patients appear in some surface (banner counter or dedicated view)
+3. Provide coordinator workflow to process PENDIENTE queue
+
+---
+
+## Integration Points Between flujo and Existing CRM Logic
+
+### Integration Point 1 — crearTurno: merge two paciente updates into one
+
+The existing CRM transition (TURNO_AGENDADO) and the new flujo update both call `prisma.paciente.update`. They can be merged into a single DB write:
 
 ```typescript
-// Content to encode in the QR (AFIP spec):
-const qrPayload = {
-  ver: 1,
-  fecha: cbteFch,           // "YYYY-MM-DD"
-  cuit: cuitEmisor,         // number
-  ptoVta: puntoVenta,       // number
-  tipoCmp: tipoComprobante, // number
-  nroCmp: nroComprobante,   // number
-  importe: importeTotal,    // number
-  moneda: monId,            // "PES" or "DOL"
-  ctz: monCotiz,            // number
-  tipoDocRec: docTipo,      // number
-  nroDocRec: docNro,        // number (parse to int for non-CUIT types)
-  tipoCodAut: 'E',          // "E" for CAE, "A" for CAEA
-  codAut: cae,              // number
+const updateData: Prisma.PacienteUpdateInput = {};
+
+// existing CRM logic
+const etapasIniciales: (EtapaCRM | null)[] = [null, EtapaCRM.NUEVO_LEAD];
+if (etapasIniciales.includes(pacienteCRM?.etapaCRM ?? null)) {
+  updateData.etapaCRM = EtapaCRM.TURNO_AGENDADO;
+}
+
+// new flujo logic
+const flujoMap: Partial<Record<RolTipoTurno, FlujoPaciente>> = {
+  CLASIFICA_CIRUGIA: FlujoPaciente.CIRUGIA,
+  CLASIFICA_TRATAMIENTO: FlujoPaciente.TRATAMIENTO,
+  CLASIFICA_PENDIENTE: FlujoPaciente.PENDIENTE,
 };
+const nuevoFlujo = flujoMap[tipoTurno.rol];
+if (nuevoFlujo !== undefined) {
+  updateData.flujo = nuevoFlujo;
+}
 
-const qrData = Buffer.from(JSON.stringify(qrPayload)).toString('base64');
-const qrUrl = `https://www.afip.gob.ar/fe/qr/?p=${qrData}`;
+if (Object.keys(updateData).length > 0) {
+  await this.prisma.paciente.update({ where: { id: dto.pacienteId }, data: updateData });
+}
 ```
 
-### Generation Strategy: At Emission Time, Synchronous
+This reduces two round-trips to one when a classificatory turno is created for a new patient.
 
-Generate `qrData` synchronously in `FinanzasService.emitirAfip()` immediately after receiving the CAE from AfipRealService. Store the `qrData` string in `Factura.qrData`. No async QR image rendering is needed on the backend — the frontend or PDF service generates the actual scannable image from this string.
+### Integration Point 2 — cerrarSesion: no changes needed
 
-For the PDF (`FacturaPdfService`), use `qrcode` npm package (`npm install qrcode @types/qrcode`) to render the QR image into the PDFKit document. The `qrData` column stores the URL string; PDFKit renders it as a QR image using the qrcode library.
+The `cerrarSesion` CRM logic (CONSULTADO / PROCEDIMIENTO_REALIZADO) operates on `turno.esCirugia` and `paciente.etapaCRM`. The `flujo` field is set at booking time and is not modified on session close. These two concerns are cleanly separated.
+
+TRATAMIENTO patients who reach `cerrarSesion` will have `esCirugia = false` and may be at `etapaCRM = TURNO_AGENDADO`. The cerrarSesion logic would advance them to CONSULTADO — which is harmless (TRATAMIENTO patients are excluded from the Kanban filter anyway, so this stale etapaCRM value is invisible in the surgery funnel). Alternatively, the cerrarSesion block can be guarded by `flujo`:
 
 ```typescript
-// In FacturaPdfService:
-import * as QRCode from 'qrcode';
-
-const qrImageBuffer: Buffer = await QRCode.toBuffer(factura.qrData, {
-  width: 80,
-  margin: 1,
-});
-doc.image(qrImageBuffer, { width: 80 });
+// Optional guard — only apply CRM transitions for CIRUGIA patients
+if (turnoInfo.paciente.flujo === FlujoPaciente.CIRUGIA && !turnoInfo.esCirugia &&
+    turnoInfo.paciente.etapaCRM === EtapaCRM.TURNO_AGENDADO) {
+  nuevaEtapa = EtapaCRM.CONSULTADO;
+}
 ```
 
----
+This is a polish improvement, not a blocker. Mark as a follow-up if the initial implementation is simpler without the guard.
 
-## Certificate Storage: Per-Tenant Isolation
+### Integration Point 3 — Kanban PROCEDIMIENTO_REALIZADO column
 
-Each `Profesional` has at most one `ConfiguracionAFIP` record (`@unique` on `profesionalId`). This maps 1:1 to a CUIT — each professional has their own CUIT and therefore their own AFIP certificate.
+`getKanban()` currently redirects PROCEDIMIENTO_REALIZADO patients to `SIN_CLASIFICAR`. After adding `flujo: CIRUGIA` filter, TRATAMIENTO and PENDIENTE patients are excluded entirely — their PROCEDIMIENTO_REALIZADO data (if any) is invisible. This is correct behavior.
 
-Security rules (enforced in `AfipConfigService`):
-1. `certPemEncrypted` and `keyPemEncrypted` are NEVER included in any `select` clause that feeds a DTO response.
-2. Decryption happens only inside `AfipConfigService.getDecryptedCredentials()`, called only by `WsaaService`.
-3. The upload endpoint (`POST /afip/config/:profesionalId`) is `@Auth('ADMIN')` only — no FACTURADOR or PROFESIONAL access.
-4. Certificate files are never written to disk permanently — they arrive as multipart upload, are processed in memory, and the temp file (if any) is deleted immediately after encryption.
+### Integration Point 4 — iniciarSesion returns flujo without code change
 
-The `@unique` constraint on `profesionalId` means upsert semantics: uploading a new cert replaces the old one. No versioning — if key rotation is needed, replace in full.
+`iniciarSesion()` in `turnos.service.ts` uses:
+```typescript
+paciente: { include: { obraSocial: true } }
+```
+Because this uses `include` (not `select`), Prisma returns ALL scalar fields on Paciente by default, including `flujo` once the migration adds the column. The frontend only needs to declare `pacienteFlujo` in the `LiveTurnoSession` type and map `turno.paciente.flujo` to it.
 
----
+### Integration Point 5 — etapaCRM remains valid only for CIRUGIA flow
 
-## Frontend Changes
-
-The frontend surface area for v1.2 is small. The existing emission flow already exists (AfipStubService returned a fake CAE). What changes is:
-
-### 1. Factura detail view: show real CAE and QR
-
-The existing factura table/detail does not yet render CAE or QR (stub returns a fake CAE that is not stored). After v1.2:
-- Factura row shows CAE badge (14-digit number) when `cae` is not null.
-- Factura detail panel shows QR code (rendered from `qrData`).
-
-**Frontend QR rendering:** Use `qrcode.react` (`npm install qrcode.react`) in the frontend. The backend stores the `qrData` string (the URL). The frontend renders it as a QR image with `<QRCodeSVG value={factura.qrData} size={80} />`.
-
-No backend change to the emission endpoint URL or response shape — just the data is real now.
-
-### 2. Certificate upload page: ADMIN only
-
-New page at `/dashboard/facturador/config` (or `/dashboard/configuracion/afip`). Accessible only to ADMIN role. Contains:
-- File inputs for `cert.pem` and `key.pem`.
-- Dropdown for `ambiente` (HOMOLOGACION / PRODUCCION).
-- CUIT text field.
-- Submit button: `POST /afip/config/:profesionalId` as `multipart/form-data`.
-- Display of current cert expiry (from `GET /afip/config/:profesionalId`).
-
-### 3. No new hooks beyond the above
-
-The emission hook (`useEmitirAfip`) already exists and calls `POST /finanzas/facturas/:id/emitir-afip`. No structural change. Two new hooks needed:
-- `useAfipConfig(profesionalId)` — GET cert expiry status.
-- `useUploadAfipConfig()` — POST cert upload mutation.
+After this milestone, `etapaCRM` is conceptually meaningful only for `flujo = CIRUGIA` patients. TRATAMIENTO patients retain whatever `etapaCRM` value they had before classification, but since `getKanban` and `getListaAccion` both filter by `flujo`, this stale data is invisible in CRM surfaces. No data cleanup required; just document the convention.
 
 ---
 
-## Suggested Build Order
+## Migration Path for Existing Patients
 
-Dependencies are strict: DB schema must exist before any backend code that references new fields, AfipModule must exist before FinanzasModule imports it, WSAA must work before WSFEv1 can be tested.
+All existing patients will default to `flujo = PENDIENTE` after migration. This means the Kanban will be empty (filter: `flujo = CIRUGIA`) until patients are reclassified.
 
-### Step 1: Database migration (blocks everything else)
+Recommended migration SQL that infers flujo from existing etapaCRM data:
 
-- Add `ConfiguracionAFIP` model and `AmbienteAFIP` enum to `schema.prisma`.
-- Add `CaeaVigente` model to `schema.prisma`.
-- Add nullable fields to `Factura`: `cae`, `caeFchVto`, `qrData`, `ptoVta`, `nroComprobante`.
-- Add `CAEA_PENDIENTE_INFORMAR` to `EstadoFactura` enum.
-- Run `npx prisma migrate dev --name afip_real_v1` from `backend/`.
-- Run `npx prisma generate`.
+```sql
+-- Backfill: patients clearly in surgery funnel → CIRUGIA
+UPDATE "Paciente"
+SET flujo = 'CIRUGIA'
+WHERE "etapaCRM" IN (
+  'CONFIRMADO',
+  'PRESUPUESTO_ENVIADO',
+  'CONSULTADO',
+  'TURNO_AGENDADO',
+  'PROCEDIMIENTO_REALIZADO'
+);
 
-No data migration needed — all new fields are nullable with no backfill requirement.
+-- Patients with null etapaCRM or NUEVO_LEAD stay PENDIENTE (the @default handles new rows)
+-- No action needed for them
+```
 
-### Step 2: AfipModule skeleton + DI token (unblocks Steps 3-6)
+This heuristic backfills ~80% of patients correctly: patients in the surgery funnel stages are almost certainly surgery patients. The remaining PENDIENTE patients (no etapaCRM or NUEVO_LEAD) will be processed via the LiveTurno banner the next time they have a session.
 
-- Create `backend/src/modules/finanzas/afip/afip.module.ts` with empty providers.
-- Add `export const AFIP_SERVICE = 'AFIP_SERVICE'` to `afip.interfaces.ts`.
-- Update `FinanzasModule`: remove `AfipStubService` from providers/exports, add `AfipModule` to imports.
-- Update `FinanzasService` constructor: `@Inject(AFIP_SERVICE) private readonly afipService: AfipService`.
-- Register `AfipStubService` as `{ provide: AFIP_SERVICE, useClass: AfipStubService }` in AfipModule initially — keeps existing behavior while building the real services.
+Add a comment in the migration file documenting this heuristic and that it is intentionally incomplete.
 
-Verify: `npm run start:dev` must still boot and existing stub endpoint must still work.
-
-### Step 3: AfipConfigService + Controller + cert upload endpoint
-
-- Create `AfipConfigService`: `upsertConfig()`, `getConfig()` (returns decrypted for internal use), `getConfigPublic()` (returns expiry only for API response).
-- Import `WhatsappModule` in `AfipModule` to get `EncryptionService`.
-- Create `AfipConfigController` with `POST /afip/config/:profesionalId` (multipart) and `GET /afip/config/:profesionalId`.
-- Add to `AppModule` imports if controller has its own route prefix.
-
-At this point: certificates can be uploaded and stored for a professional. WSAA not yet wired.
-
-### Step 4: WsaaService + Redis token cache
-
-- Implement `WsaaService`: `buildTRA()`, `signTRA()` (openssl subprocess), `callWsaa()` (axios SOAP), `extractCredentials()` (regex), `getAccessTicket()` (Redis cache).
-- Add `WsaaService` to `AfipModule` providers.
-- Add integration test: with a test cert (self-signed), call `getAccessTicket()` against AFIP homologacion. Verify token is returned and cached.
-
-This step requires a real AFIP homologacion certificate to test. Use a throwaway self-signed cert against `wsaahomo.afip.gov.ar`.
-
-### Step 5: Wsfev1Service + advisory lock
-
-- Implement `Wsfev1Service`: `callFECompUltimoAutorizado()`, `callFECAESolicitar()`, `emitir()` with `prisma.$transaction` and `pg_advisory_xact_lock`.
-- Add `Wsfev1Service` to `AfipModule` providers.
-- Set Prisma transaction timeout to 15000ms in the `$transaction` call.
-- Test with AFIP homologacion (test CUIT): submit a B invoice for Consumidor Final.
-
-### Step 6: AfipRealService (orchestrator) + swap DI token
-
-- Create `AfipRealService` implementing `AfipService` interface.
-- It calls: `AfipConfigService.getConfig()` → `WsaaService.getAccessTicket()` → `Wsfev1Service.emitir()`.
-- On `AfipUnavailableException`: call `CaeaService.getActiveCaea()` (stub implementation for now — CAEA comes in Step 7).
-- Update `AfipModule`: change `{ provide: AFIP_SERVICE, useClass: AfipStubService }` to `{ provide: AFIP_SERVICE, useClass: AfipRealService }`.
-
-At this point: the end-to-end emission flow works for CAE (no CAEA fallback yet).
-
-### Step 7: FinanzasService post-emission logic + QR generation
-
-- After `afipService.emitirComprobante()` returns, build `qrData` URL string.
-- `prisma.factura.update()` with `cae`, `caeFchVto`, `qrData`, `nroComprobante`, `ptoVta`.
-- Install `qrcode` package (`npm install qrcode @types/qrcode`).
-- Implement `FacturaPdfService.generateFacturaPdf()` using PDFKit + qrcode.
-
-### Step 8: CAEA service + pre-fetch cron
-
-- Implement `CaeaService`: `prefetchCaea()` (cron), `getActiveCaea()` (contingency fallback), `informCaea()` (post-period inform).
-- Register `@nestjs/schedule` `ScheduleModule.forRoot()` in `AppModule` (already installed in package.json — check if registered; add if missing).
-- Cron expression: `'0 6 27,11,12 * *'` (6 AM ART on days 27, 11, 12).
-
-### Step 9: Frontend — CAE/QR display in factura views
-
-- Install `qrcode.react` in frontend (`npm install qrcode.react`).
-- Add `cae`, `caeFchVto`, `qrData` to the Factura type in `frontend/src/types/finanzas.ts`.
-- Add QR display in factura detail panel (existing component).
-- Add CAE badge in factura table row (existing component).
-
-### Step 10: Frontend — Certificate upload page (ADMIN only)
-
-- New page at `/dashboard/configuracion/afip` or `/dashboard/facturador/config`.
-- Add to `ROUTE_PERMISSIONS` in `permissions.ts` (ADMIN only).
-- Build form: file inputs + CUIT + ambiente dropdown + submit.
-- Display current `certExpiresAt` with warning if < 30 days.
-
----
-
-## Integration Points Summary
-
-| Boundary | Communication | New vs Existing |
-|----------|---------------|-----------------|
-| `FinanzasModule` → `AfipModule` | NestJS module import + `AFIP_SERVICE` token | NEW |
-| `AfipModule` → `WhatsappModule` | Import for `EncryptionService` | NEW |
-| `AfipModule` → `PrismaService` | `@Global()` PrismaModule — no explicit import needed | EXISTING |
-| `WsaaService` → Redis | `redis` package client (already installed) — new usage in new module | NEW |
-| `Wsfev1Service` → PostgreSQL | `pg_advisory_xact_lock` via `prisma.$executeRaw` | NEW |
-| `WsaaService` → AFIP WSAA | SOAP 1.1 via axios (already installed) | NEW (external) |
-| `Wsfev1Service` → AFIP WSFEv1 | SOAP 1.1 via axios | NEW (external) |
-| `CaeaService` → `@nestjs/schedule` | `ScheduleModule.forRoot()` in AppModule | NEW (package already installed) |
-| `AfipConfigController` → `EncryptionService` | Via `AfipConfigService` | NEW |
-| Frontend `useEmitirAfip` | No change — same endpoint URL, response now has real data | EXISTING |
-| Frontend `useAfipConfig` | `GET /afip/config/:profesionalId` | NEW |
-| Frontend `useUploadAfipConfig` | `POST /afip/config/:profesionalId` | NEW |
-
----
-
-## Patterns to Follow
-
-### Pattern 1: AfipModule as isolated sub-module (not inline in FinanzasModule)
-
-**What:** All AFIP-specific services (`WsaaService`, `Wsfev1Service`, `CaeaService`, `AfipConfigService`) live in `AfipModule`. `FinanzasModule` imports `AfipModule` and injects via `AFIP_SERVICE` token. No AFIP-specific code bleeds into `FinanzasService` beyond the single `emitirComprobante()` call.
-
-**Why:** AFIP services have their own infrastructure concerns (Redis, subprocess signing, SOAP, cron). Keeping them isolated from the financial billing logic prevents coupling and makes the stub-to-real swap clean.
-
-**Boundary:** `FinanzasService` knows nothing about WSAA, tokens, or certs. It only knows `AfipService.emitirComprobante(params)`.
-
-### Pattern 2: openssl smime subprocess over node-forge
-
-**Decision:** Use `openssl smime -sign` subprocess for CMS/PKCS#7 signing.
-
-**Why:** No new npm dependency. `openssl` binary is standard on Linux. More battle-tested against AFIP's specific CMS requirements. The subprocess has ~20ms latency, which is negligible compared to the WSAA SOAP round trip (~200-500ms). Temp files are written to `os.tmpdir()` with mode `0o600` and deleted in a `finally` block.
-
-**Implication:** The deployment environment (Docker image or server) must have the `openssl` binary. Standard on any Debian/Ubuntu/Alpine base image. Add `RUN which openssl` to CI to verify.
-
-### Pattern 3: Manual BNA rate entry for USD invoices
-
-**Decision:** FACTURADOR enters the BNA exchange rate manually when creating a USD invoice.
-
-**Why:** The BNA does not have a public API. Scraping is fragile and an audit liability. Manual entry is explicit, auditable, and immune to third-party failures. A link to `https://www.bna.com.ar/Personas` is shown next to the field as reference.
-
-**When USD invoices are created:** The `CreateFacturaDto` already has `tipoCambio` and `moneda` fields from v1.1. The emission flow maps `Factura.moneda` to `MonId` and `Factura.tipoCambio` to `MonCotiz` using the lookup objects from AFIP-INTEGRATION.md section 3.
-
-### Pattern 4: CondicionIVA mapping at emission time (not stored as AFIP integer)
-
-**What:** `Factura.condicionIVAReceptor` stores the Prisma enum value (e.g., `CONSUMIDOR_FINAL`). The AFIP integer ID (e.g., `5`) is derived at emission time via a static lookup map in `Wsfev1Service`.
-
-**Why:** AFIP codes may change with new regulations. Storing the semantic enum keeps the data meaningful independent of AFIP's numbering scheme. The lookup map is the single place to update if AFIP adds new IDs.
+If the Kanban must not be empty at go-live, consider a one-time admin script that bulk-sets active funnel patients to CIRUGIA — to be run manually by the Admin role before announcing the feature to coordinators.
 
 ---
 
 ## Anti-Patterns to Avoid
 
-### Anti-Pattern 1: Hardcoding the certificate path on the filesystem
+### Anti-Pattern 1: Encoding flujo as new EtapaCRM values
 
-**What goes wrong:** Storing cert.pem and key.pem as files in the repo or on a shared filesystem path.
+**What:** Adding CIRUGIA/TRATAMIENTO/PENDIENTE as new values to the `EtapaCRM` enum.
+**Why bad:** Conflates two orthogonal axes — "which funnel" vs. "where in the funnel". Breaks Kanban column logic, scoring, and all existing CRM automation.
+**Instead:** Separate `flujo` field on a different enum, as designed above.
 
-**Why bad:** Certs are credentials. File system paths break in multi-instance deployments. No per-tenant isolation.
+### Anti-Pattern 2: Filtering Kanban on the frontend only
 
-**Instead:** Store encrypted in `ConfiguracionAFIP.certPemEncrypted` using the existing `EncryptionService`. Decrypt in memory at call time. Never touch the filesystem for persistent storage.
+**What:** Backend returns all patients; frontend renders only `flujo === 'CIRUGIA'` ones.
+**Why bad:** All patient records hydrate into React Query cache and network. CRM metrics (funnel counts) would be wrong. Pagination breaks.
+**Instead:** Filter at the DB query level in `getKanban()` and `getListaAccion()`.
 
-### Anti-Pattern 2: Calling FECAESolicitar without pg_advisory_xact_lock
+### Anti-Pattern 3: Separate endpoint for clasificar (rather than extending updatePacienteSection)
 
-**What goes wrong:** Two concurrent requests for the same professional + punto de venta + tipo comprobante may read the same last authorized number and submit with the same sequence number. AFIP rejects both (or produces a gap in sequence).
+**What:** Adding `PATCH /pacientes/:id/flujo` as a new endpoint.
+**Why less ideal:** Adds controller surface. The existing `updatePacienteSection` pattern handles scoped updates with a single patch endpoint.
+**Instead:** Add `case 'flujo'` to `updatePacienteSection` switch. Consistent with how `estado`, `contacto`, etc. are handled.
 
-**Why bad:** Sequence errors are hard to recover — AFIP does not allow retroactive re-numbering.
+### Anti-Pattern 4: Making flujo immutable after first classification
 
-**Instead:** The advisory lock in `Wsfev1Service.emitir()` (Step 5) is mandatory, not optional.
-
-### Anti-Pattern 3: Using the same DI class name (AfipStubService) for the real implementation
-
-**What goes wrong:** If `AfipRealService` is named `AfipStubService` (overwriting the stub), toggling back for local dev requires a code change.
-
-**Instead:** Keep both classes. The DI token `AFIP_SERVICE` determines which is active. Switch by changing `useClass` in `AfipModule`. No other code changes.
-
-### Anti-Pattern 4: Generating QR as a server-side image and storing it in the DB
-
-**What goes wrong:** Storing a large PNG/SVG blob in PostgreSQL. Increases row size. Requires regeneration if QR spec changes.
-
-**Instead:** Store the `qrData` string (the URL, ~300 chars). Render the QR image in the PDF service (at PDF generation time) and in the frontend (at display time). The data string is stable and small.
-
-### Anti-Pattern 5: Using CAEA as the primary invoicing path
-
-**What goes wrong:** Violates RG 5782/2025 (effective June 2026), which restricts CAEA to contingency only. Could trigger AFIP penalties.
-
-**Instead:** Always attempt CAE first. Only fall back to CAEA when `FECAESolicitar` returns a network timeout or HTTP 5xx. The contingency branch must be clearly logged and the invoice marked `CAEA_PENDIENTE_INFORMAR` for the inform step.
+**What:** Throwing an error if a patient is already CIRUGIA and someone tries to set TRATAMIENTO.
+**Why bad:** Misclassification happens. The LiveTurno banner must allow re-classification.
+**Instead:** Allow any flujo value to overwrite any other. No guard beyond auth.
 
 ---
 
 ## Scalability Considerations
 
-| Concern | Current scale (single clinic) | 50+ tenants | Notes |
-|---------|-------------------------------|-------------|-------|
-| WSAA token calls | 1 token per 12h per CUIT — negligible | Redis cache shared across instances — already solved | No action needed |
-| Advisory lock contention | Zero — single professional, sequential invoicing | Lock is per (cuit, ptoVta, cbteTipo) — parallel emission for different professionals is safe | Acceptable |
-| AFIP latency per emission | 3-8s round trip (WSAA + WSFEv1) — synchronous | At 50+ simultaneous emissions: queue-based async emission to avoid HTTP timeout on frontend | Out of scope for v1.2 |
-| CAEA cron | Runs for all professionals — O(N) AFIP calls | At 100+ tenants: add jitter to cron (stagger calls by 1-5s per tenant) to avoid rate-limiting | Note for future |
-| Cert expiry monitoring | Check on each WSAA call (already done via certExpiresAt comparison) | Add dedicated cron for 30-day warning email to ADMIN | Nice to have in v1.2 |
+| Query | Index after migration |
+|-------|----------------------|
+| `getKanban` filtered by profesionalId + flujo | `@@index([profesionalId, flujo])` covers both — efficient |
+| `getListaAccion` filtered by profesionalId + flujo + etapaCRM | Consider `@@index([profesionalId, flujo, etapaCRM])` if lista-acción is slow at scale |
+| Tratamientos tab monthly list | `@@index([profesionalId, flujo])` + range scan on `turno.inicio` — adequate for single-clinic volumes |
+
+No scaling concerns at current tenant size. The composite index is the only performance addition needed for this milestone.
 
 ---
 
 ## Sources
 
-All findings are HIGH confidence — derived entirely from direct codebase inspection and the pre-researched AFIP-INTEGRATION.md reference document.
+All findings based on direct inspection of:
+- `backend/src/prisma/schema.prisma` (full schema — Paciente model lines 145–210, TipoTurno lines 759–785, Turno lines 787–820, EtapaCRM lines 1041–1049)
+- `backend/src/modules/turnos/turnos.service.ts` (crearTurno lines 31–152, cerrarSesion lines 687–763, iniciarSesion lines 624–685)
+- `backend/src/modules/pacientes/pacientes.service.ts` (getKanban lines 616–707, getListaAccion lines 798–852, updatePacienteSection lines 377–400)
+- `backend/src/modules/tipos-turno/tipos-turno.service.ts`
+- `frontend/src/app/dashboard/pacientes/page.tsx`
+- `frontend/src/store/live-turno.store.ts`
+- `frontend/src/components/live-turno/LiveTurnoPanel.tsx`
+- `frontend/src/hooks/useCRMKanban.ts`
+- `backend/src/modules/pacientes/pacientes.controller.ts`
+- `.planning/PROJECT.md`
 
-- `backend/src/modules/finanzas/afip/afip.interfaces.ts` — existing TypeScript contract
-- `backend/src/modules/finanzas/afip/afip-stub.service.ts` — existing stub (DI baseline)
-- `backend/src/modules/finanzas/finanzas.module.ts` — current DI wiring
-- `backend/src/modules/finanzas/finanzas.service.ts` — emitirAfip call site
-- `backend/src/modules/whatsapp/whatsapp.module.ts` — EncryptionService export pattern
-- `backend/src/modules/whatsapp/crypto/encryption.service.ts` — AES-256-GCM interface
-- `backend/src/prisma/schema.prisma` — Factura model, CondicionIVA enum, MonedaFactura enum
-- `backend/src/app.module.ts` — module registration pattern, BullMQ, Redis wiring
-- `backend/package.json` — confirmed: `@nestjs/schedule`, `pdfkit`, `redis`, `axios` already installed; `xml2js`, `node-forge`, `qrcode` NOT installed
-- `.planning/research/AFIP-INTEGRATION.md` — WSAA, WSFEv1, CAEA, advisory lock, signing options, QR spec
-
----
-
-*Architecture research for: CLINICAL SaaS v1.2 — AFIP Real Implementation*
-*Researched: 2026-03-16*
-*Supersedes: v1.1 ARCHITECTURE.md sections on AfipStubService placement*
+Confidence: HIGH — all integration points verified from source code, zero training-data assertions.

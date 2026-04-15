@@ -1,32 +1,35 @@
 # Feature Research
 
-**Domain:** AFIP/ARCA Electronic Invoicing (CAE real) — v1.2 milestone for Argentine aesthetic surgery clinic SaaS
-**Researched:** 2026-03-16
-**Confidence:** HIGH (technical spec from AFIP-INTEGRATION.md, codebase analysis) / MEDIUM (UX flow conventions for Argentine facturador role)
+**Domain:** Patient flow classification and treatment list — v1.4 milestone for Argentine aesthetic surgery clinic SaaS
+**Researched:** 2026-04-15
+**Confidence:** HIGH (codebase analysis, domain patterns from clinical SaaS conventions) / MEDIUM (UX patterns for classification alerts — based on clinical software conventions and general SaaS research)
 
-> **Scope:** This document covers ONLY features needed for v1.2 — real CAE emission and management.
-> Everything built in v1.1 (stub, dashboard, settlement workflow, schema prep) is already shipped and is NOT re-researched here.
+> **Scope:** This document covers ONLY features needed for v1.4 — patient segmentation (CIRUGIA / TRATAMIENTO / PENDIENTE), CRM funnel filtering, LiveTurno classification banner, and the new "Tratamientos" tab.
+> Everything built in v1.0–v1.3 (CRM funnel, LiveTurno session, patient list, kanban board, appointment booking, TipoTurno) is already shipped and is NOT re-researched here.
 
 ---
 
-## Context: What v1.1 Already Built (Do Not Re-Build)
+## Context: What Already Exists (Do Not Re-Build)
 
-The following exists and works:
+The following is live in the codebase and must be extended, not replaced:
 
-- `/dashboard/facturador` — dedicated FACTURADOR home with KPIs by OS, monthly cap progress bar, config limit
-- `/dashboard/facturador/liquidar/[obraSocialId]` — settlement flow: inline `montoPagado` editing, `CerrarLoteModal`, atomic `LiquidacionObraSocial` creation
-- `AfipStubService` — implements `AfipService` interface, returns fake CAE (`74397704790943`)
-- `Factura` model with `condicionIVAReceptor` (CondicionIVA enum), `tipoCambio` (Decimal 10,4), `moneda` (MonedaFactura enum)
-- `EmitirComprobanteParams` / `EmitirComprobanteResult` interfaces in `afip.interfaces.ts`
-- `LimiteFacturacionMensual` model and config UI
+- `TipoTurno` model with `esCirugia` boolean, `TipoTurnoProfesional` per-professional config
+- `Turno` model with `tipoTurnoId` FK
+- `Paciente` model with `etapaCRM`, `temperatura`, `scoreConversion` — no `flujo` field yet
+- `LiveTurnoPanel` — full-screen overlay (`fixed inset-0 z-50`) with Header / Tabs / Footer structure
+- `LiveTurnoHeader` — shows `session.tipoTurno` name badge, patient info, timer
+- `/dashboard/pacientes` page — "Embudo" (kanban) and "Lista" (data table) views, toggle buttons in header
+- `KanbanBoard` + `CRMMetricsBar` — CRM embudo across all 6 stages, currently unfiltered by patient flow
+- `Tratamiento` model — per-professional catalog (id, nombre, descripcion, precio, duracionMinutos, activo)
+- `TratamientoCatalogo` model — shared catalog entries for lookup/autocomplete
 
-What is NOT in the schema yet (v1.2 must add):
-- `Factura.cae` — the real CAE number from AFIP
-- `Factura.caeFchVto` — CAE expiry date
-- `Factura.nroComprobante` — confirmed invoice number from AFIP sequence
-- `ConfiguracionAFIP` model — per-professional encrypted certificate storage
-- `CAEA` model — pre-fetched contingency authorization codes
-- `AmbienteAFIP` enum — HOMOLOGACION / PRODUCCION
+What does NOT exist yet (v1.4 must add):
+
+- `flujo` enum (`CIRUGIA | TRATAMIENTO | PENDIENTE`) on `Paciente`
+- Auto-assignment logic: creating a turno with a flow-classifying `TipoTurno` sets `Paciente.flujo`
+- CRM kanban and metrics filtered to `flujo = CIRUGIA` patients only
+- Classification alert in LiveTurno for `flujo = PENDIENTE` patients
+- "Tratamientos" tab on `/dashboard/pacientes` with monthly list, per-treatment filter
 
 ---
 
@@ -34,121 +37,120 @@ What is NOT in the schema yet (v1.2 must add):
 
 ### Table Stakes (Users Expect These)
 
-Features the FACTURADOR role expects once CAE emission is announced. Missing these = the feature is unusable in production.
+Features the Secretaria/Coordinadora and Profesional expect once patient flow classification is announced. Missing these = the feature is misleading or incomplete.
 
 | Feature | Why Expected | Complexity | Notes |
 |---------|--------------|------------|-------|
-| Real CAE returned and stored on Factura | The entire point of v1.2. Without a real CAE stored against the Factura, the comprobante has no legal validity. Facturador expects to see the 14-digit CAE after emitting. | HIGH | Requires WSFEv1 `FECAESolicitar` + advisory lock + schema migration to add `cae`, `caeFchVto`, `nroComprobante` columns to `Factura`. Swaps `AfipStubService` for real `WsfevService`. |
-| Certificate upload by ADMIN for each professional | Someone must put the X.509 certificate into the system before any CAE can be issued. FACTURADOR cannot do their job without this being set up first. | MEDIUM | Secure file upload endpoint (ADMIN-only). Encrypts cert+key using existing `EncryptionService` (AES-256-GCM). Creates `ConfiguracionAFIP` record. FACTURADOR never touches certs — only ADMIN. |
-| Certificate status indicator visible to FACTURADOR | FACTURADOR needs to know whether the certificate is configured and valid before attempting to emit. If cert is missing or expired, they must be told immediately — not after a failed CAE request. | LOW | Banner or badge on facturador home: "Certificado AFIP: configurado / vencido en X días / no configurado." Reads from `ConfiguracionAFIP.certExpiresAt`. No cert data exposed. |
-| AFIP environment selector (homologacion vs produccion) per tenant | Every tenant must test in homologacion before going live. If the environment is not configurable, the facturador cannot validate the integration before processing real comprobantes. | LOW | `AmbienteAFIP` enum on `ConfiguracionAFIP`. ADMIN sets it. Displayed prominently in FACTURADOR home: "Modo: HOMOLOGACION" badge. Prevents accidental production submission during testing. |
-| Invoice number (nroComprobante) visible on Factura after emission | Argentine accountants and OS auditors ask for the comprobante number. Facturador must see it on screen and it must match what AFIP registered. | LOW | Store `cbtDesde` from `EmitirComprobanteResult` as `Factura.nroComprobante`. Display alongside CAE in Factura detail. |
-| Error feedback when AFIP rejects or is unreachable | AFIP returns rejection codes with Spanish descriptions. Facturador needs to know specifically what went wrong ("CUIT no autorizado", "Numeración duplicada") not a generic error toast. | MEDIUM | Map AFIP rejection codes to user-readable Spanish messages. Show in a modal or alert with the raw AFIP observation. Log full AFIP response server-side. |
-| CAE expiry date displayed on Factura | Argentine regulation: a comprobante is only valid until the CAE expires. Facturador must see `caeFchVto` and ideally be warned if a comprobante is approaching expiry without being delivered. | LOW | Display `caeFchVto` on Factura card/row in YYYY-MM-DD format. No action required — informational. |
-| "Emitir Comprobante AFIP" action wired to real service | The `CerrarLoteModal` currently calls the stub. The FACTURADOR's primary action — closing a settlement batch — must trigger real CAE emission. Must be clearly labeled as "Emitir con CAE" in production vs "Modo prueba" in homologacion. | MEDIUM | Replace `AfipStubService` injection with real `WsfevService` behind NestJS DI token. Frontend label conditional on ambiente. |
+| `flujo` field auto-set when booking specific appointment types | The entire value of the feature is that flow is inferred without manual entry. If the user must manually tag every patient, adoption will be near zero — the secretary who books appointments is not going to open each patient record separately. | MEDIUM | Backend: `TipoTurno` needs a `flujoAsignado` enum field (`CIRUGIA \| TRATAMIENTO \| null`). On `Turno` creation, if `flujoAsignado` is set and the patient's current `flujo` is `PENDIENTE` or `null`, update `Paciente.flujo` to that value. Atomic in the same `$transaction` as the turno insert. |
+| CRM kanban and embudo metrics show only `CIRUGIA` patients | The core complaint this milestone solves: treatment patients (botox, peeling, fillers) pollute conversion funnel metrics. A surgeon with 200 treatment patients and 10 surgery candidates needs to see 10 in the funnel, not 210. Missing this filter makes the v1.4 milestone pointless. | LOW | Backend: add `flujo: 'CIRUGIA'` filter to CRM kanban query and metrics aggregation. Frontend: no change to UI — filter is transparent to the user. Add an explanatory subtext "Solo pacientes de cirugía" near the funnel header. |
+| Classification banner in LiveTurno for PENDIENTE patients | The Profesional is the most reliable classification point — they are the one who knows after the consultation whether the patient is a surgery candidate or a treatment patient. Without a prompt in the session, PENDIENTE patients accumulate indefinitely. | MEDIUM | Non-blocking banner inside `LiveTurnoPanel` (not a modal blocking the workflow). Shows when `session.pacienteFlujo === 'PENDIENTE'`. Two buttons: "Paciente de cirugía" and "Paciente de tratamiento". Dismissible. Calls a PATCH endpoint to update `Paciente.flujo`. No navigation required — session continues normally. |
+| "Tratamientos" tab in `/dashboard/pacientes` — monthly list | Treatment patients generate recurring revenue but are invisible in the current CRM funnel. The Secretaria needs to see who came in this month for treatments, sorted by day, to chase pending patients and manage scheduling. Without this view, treatment volume is completely dark. | MEDIUM | New tab alongside "Lista" and "Embudo". Fetches turnos where the associated `TipoTurno.flujoAsignado = 'TRATAMIENTO'`, grouped/paginated by month. Default to current month. |
+| Treatment list: patient name, date/time, treatment type | Minimum useful row — without these three columns the list is not actionable. The secretary must be able to identify who came, when, and for what. | LOW | Columns: fecha (date + time), paciente (name, clickable to patient drawer), tipoTurno (name badge), estado (turno state badge). |
+| Treatment list: filter by appointment type / treatment | The professional's catalog may have 10+ treatment types (laser, botox, peeling, fillers, etc.). Without filtering, the list becomes noise. Common clinical SaaS pattern: dropdown filter by treatment type, multi-select or single. | LOW | Filter uses existing `TipoTurno` names from the professional's configured types with `flujoAsignado = 'TRATAMIENTO'`. Single-select dropdown ("Todos" default). Client-side filter on the fetched month's data is acceptable given expected monthly volume (< 200 rows). |
+| Treatment list: month navigation (prev/next) | Monthly pagination is standard for clinical practice management. It maps to how clinics think about their schedule and billing. A flat infinite scroll with no temporal grouping is unusable in practice. | LOW | "< Mes anterior" / "Mes actual" / "Mes siguiente" nav buttons. Display formatted as "Marzo 2026". Fetch data per month via query param `?month=2026-03&flujo=TRATAMIENTO`. |
+| The 5 new appointment types seeded in DB | Without the seed data, no auto-classification works and the calendar booking flow has no new types to offer. This is the foundation of the entire milestone. | LOW | DB seed / migration: "Consulta para cirugía" (`flujoAsignado: CIRUGIA`), "Consulta para tratamiento en consultorio" (`flujoAsignado: TRATAMIENTO`), "Pre-operatorio" (`flujoAsignado: CIRUGIA`), "Control" (`flujoAsignado: null` — intentionally ambiguous), "Consulta pendiente" (`flujoAsignado: null`). The `null` types do not update `Paciente.flujo`. |
+| PENDIENTE patients excluded from CRM surgery funnel | If PENDIENTE patients appear in the funnel alongside CIRUGIA patients, coordinators will waste time following up on patients who may end up being treatment-only. The funnel should represent only patients explicitly classified as surgery candidates. | LOW | Same backend filter as "CRM kanban shows only CIRUGIA" — trivial once `flujo` field exists. |
 
 ### Differentiators (Competitive Advantage)
 
-Features that distinguish this from manually calling AFIP or using a generic billing tool.
+Features that go beyond basic segmentation and create meaningful operational value for the clinic.
 
 | Feature | Value Proposition | Complexity | Notes |
 |---------|-------------------|------------|-------|
-| Certificate expiry warning 30 days before (email or dashboard alert) | AFIP certs expire every 2 years. Missing renewal = all billing stops for that tenant with no warning. A 30-day alert turns a catastrophic surprise into a scheduled task. | LOW | Cron job or check on WSAA call: if `certExpiresAt < now + 30d`, create a banner on FACTURADOR home and optionally notify ADMIN by email. |
-| CAEA contingency mode: silent fallback when AFIP is down | AFIP production outages are real (fiscal year-end, month-end congestion). If the system falls back to CAEA automatically, billing continues without the facturador needing to call their accountant. | HIGH | Pre-fetch CAEA via cron (`0 6 27,11,12 * *`). On `FECAESolicitar` timeout/5xx, assign CAEA code to invoice. Facturador sees "Emitido en modo contingencia — CAEA" badge. Requires `FECAEAInformar` batch job within 30 days after period end. **Verify RG 5782/2025 against Boletín Oficial before implementing.** |
-| QR code embedded in Factura PDF | RG 5616/2024 mandates QR codes on electronic comprobantes. Including it makes the PDF legally compliant and eliminates a manual step. The FACTURADOR never needs to know how it is generated — it just appears on the PDF. | MEDIUM | QR encodes the AFIP-specified URL: `https://www.afip.gob.ar/fe/qr/?p=BASE64({json})`. JSON fields: ver, fecha, cuit, ptoVta, tipoCbte, nroCbte, importe, moneda, ctz, tipoDocRec, nroDocRec, tipoCodAut ("E" for CAE), codAut (CAE number). Generate with `qrcode` npm package. Embed in existing PDF generation flow. |
-| Advisory-locked sequential numbering (transparent to user) | Duplicate sequence errors from concurrent CAE requests crash the billing flow. With advisory locking, concurrent requests for the same professional always get the correct next number. Facturador never sees this work — they just never get a "duplicate comprobante" error. | MEDIUM | `pg_advisory_xact_lock` within Prisma `$transaction` wrapping `FECompUltimoAutorizado → FECAESolicitar`. Fully described in AFIP-INTEGRATION.md Section 3. |
-| BNA exchange rate field with link to official source for USD invoices | When a clinic invoices in USD (some OS agreements or private patients), RG 5616/2024 requires the BNA selling rate for the prior business day. Providing a direct link to `bna.com.ar` and a pre-filled input avoids the facturador needing to find the rate manually. | LOW | `tipoCambio` field already in schema. In "Nuevo Comprobante" modal, show the field when `moneda = USD` with a link: "Ver cotización BNA". Manual entry — no scraping. |
-| Punto de Venta (PtoVta) configured per professional with validation | Argentine AFIP requires a registered PtoVta number. If it's wrong, all CAE requests fail. Storing and validating it per professional (not per request) means the facturador never has to remember or type it. | LOW | Add `ptoVta` to `ConfiguracionAFIP`. Validate it's a positive integer on save. Display in ADMIN cert config screen. |
+| "Classify later" badge on PENDIENTE patients in the patient list | Coordinators can see at a glance which patients still need classification without entering each patient record. One column in the existing patient list showing a "Pendiente clasificar" badge helps the secretary triage efficiently. | LOW | Add a `flujo` badge column to the existing `PacientesDataTable` columns: "Cirugía" (blue), "Tratamiento" (green), "Sin clasificar" (amber). Amber rows are the secretary's task queue. No new page required. |
+| Automatic CRM stage assignment when `flujo` changes to CIRUGIA | When a PENDIENTE patient is classified as CIRUGIA (either via LiveTurno banner or manually), their CRM stage should auto-advance to at least `CONSULTADO` if it was still `TURNO_AGENDADO`. Without this, classified surgery patients silently enter the funnel at the wrong stage. | MEDIUM | On `Paciente.flujo` update to `CIRUGIA`: if `etapaCRM === 'TURNO_AGENDADO'`, promote to `CONSULTADO`. This matches the existing logic: booking a "Consulta para cirugía" implies the consultation happened or is in progress. Implement in the PATCH `/pacientes/:id/flujo` endpoint. |
+| Treatment list shows accumulated revenue per patient in the month | Clinics doing treatments want to see not just who came but how much each patient spent. A "monto" column on the treatment list surfaces this without requiring navigation to the financial module. | MEDIUM | Requires joining `Turno → Cobro/Factura`. Optional for v1.4. Worth including if the financial data is already associated with turnos (which it is via `CobrarConsultaTab` in LiveTurno). |
+| Monthly treatment count KPI in page header | A simple "X tratamientos este mes" counter at the top of the Tratamientos tab gives the secretary immediate context. Clinical SaaS products with scheduling + CRM universally include this type of at-a-glance summary. | LOW | Count of rows in the current month's fetch. Static text: "23 tratamientos en Marzo 2026". Computed from the same query, no separate endpoint. |
 
 ### Anti-Features (Commonly Requested, Often Problematic)
 
 | Feature | Why Requested | Why Problematic | Alternative |
 |---------|---------------|-----------------|-------------|
-| Auto-fetch BNA exchange rate via scraping | Facturadores want the current rate pre-filled automatically | BNA has no official API. Scraping breaks when BNA changes their HTML (happened multiple times). A broken scraper silently fills in `0` or last-known rate — causing incorrect invoices. | Manual entry with prominent link to `bna.com.ar/Personas`. Audit-friendly: facturador explicitly confirmed the rate. |
-| Automatic CAEA as primary invoicing path (before June 2026) | CAEA avoids real-time AFIP call — faster emission | RG 5782/2025 restricts CAEA to contingency-only from June 2026. Building CAEA as primary now creates a regulatory violation and requires a full rewrite by June. | Always attempt `FECAESolicitar` first. CAEA only on confirmed AFIP failure. |
-| Let facturador upload their own certificate | Reduces ADMIN friction | Certificate + private key are secrets. Giving upload access to FACTURADOR role violates the principle of least privilege. If the key leaks, all electronic signatures are compromised. | ADMIN-only upload. FACTURADOR sees status only (configured/expiring/missing). |
-| Multi-comprobante batch CAE in a single FECAESolicitar | Seems efficient — one AFIP call for the whole settlement batch | `CbteDesde ≠ CbteHasta` batches are valid in WSFEv1 but require all invoices to have identical header fields (same recipient, same IVA condition). OS liquidations often mix practice types. One comprobante per liquidacion batch is safer and maps correctly to the existing `LiquidacionObraSocial` model. | One `FECAESolicitar` per settlement batch (CbteDesde = CbteHasta). The advisory lock already handles sequencing. |
-| Storing decrypted certificate in memory for the session | Reduces latency — cert already decrypted after first WSAA call | If the process crashes or is forked, decrypted key material is in memory with no TTL. | Decrypt only at the moment of the WSAA call. Cache the ACCESS TICKET (token+sign), not the key. Token cache has 12h TTL with 5-minute buffer. |
-| Factura PDF generated by the frontend | Some SPA patterns generate PDFs client-side | PDF with QR requires CAE + sequence number — data that only exists server-side after the AFIP call. Generating client-side would require exposing the full AFIP response to the browser. | PDF generated server-side (existing pattern for presupuesto PDFs). Served as download via `/finanzas/facturas/:id/pdf`. |
+| Manual `flujo` selector on every patient form | Feels thorough — admins want control over every field | Creates a "please fill this field" UX tax on every new patient creation, which happens dozens of times per day. Users will skip it or fill it wrong. Classification is more accurate when it comes from the appointment type at booking time. | Auto-classify via `TipoTurno.flujoAsignado` at turno creation. Offer reclassification only via the LiveTurno banner (at the point of care) and an optional override in the patient drawer for edge cases. |
+| Separate CRM funnel for TRATAMIENTO patients | Product managers instinctively want two funnels — one for surgery, one for treatment | Treatment patients are recurring and do not follow the same lifecycle (TURNO_AGENDADO → CONSULTADO → PRESUPUESTO_ENVIADO → CONFIRMADO → PROCEDIMIENTO_REALIZADO). A treatment funnel would need entirely different stages, different KPIs, and different follow-up logic. It's a separate product, not a tab. | The "Tratamientos" monthly list IS the treatment management view. It is date-centric, not stage-centric, which matches how treatment revenue actually works. |
+| Blocking modal in LiveTurno forcing classification before closing session | Ensures no PENDIENTE patients slip through | This breaks the LiveTurno UX contract. Professionals who are mid-consultation with another patient, or closing a session for a patient with a complex record, will be frustrated by a forced interruption. | Non-blocking inline banner in LiveTurnoPanel. The professional can dismiss it and classify later. PENDIENTE badge on patient list is the fallback reminder. |
+| Treatment list with infinite scroll and date range picker | Feels more powerful | Monthly pagination maps to how clinical practice billing and scheduling actually works — by month. A date range picker adds configuration complexity without real value at this stage. Infinite scroll makes it impossible to reason about "how many treatments this month". | Month-by-month navigation with a clear current month indicator. Simple, predictable. |
+| Retroactively re-classify all existing patients via bulk action | Seems necessary to clean up legacy data | Most existing patients have `flujo = null` (not PENDIENTE). A bulk classification screen requires UI, confirmation flows, and audit logging. It is a separate feature with real UX requirements. | Existing patients without `flujo` should display as "Sin clasificar" with an amber badge. They are classified naturally as they book new appointments or are seen by the professional. No bulk action needed for v1.4. |
 
 ---
 
 ## Feature Dependencies
 
 ```
-[Real CAE Emission]
-    └──requires──> [ConfiguracionAFIP model in schema]
-                       └──requires──> [ADMIN cert upload endpoint]
-                       └──requires──> [AmbienteAFIP enum]
-    └──requires──> [Factura.cae + caeFchVto + nroComprobante columns (migration)]
-    └──requires──> [Advisory lock pattern in WsfevService]
-                       └──wraps──> [FECompUltimoAutorizado + FECAESolicitar]
-    └──requires──> [WsaaService — token management + TRA signing]
-                       └──depends on──> [CMS signing: openssl smime subprocess decision]
+[5 New TipoTurno seed records with flujoAsignado]
+    └──required by──> [flujo auto-set on Turno creation]
+    └──required by──> [Treatment list filter uses TRATAMIENTO types]
 
-[QR Code in PDF]
-    └──requires──> [Real CAE Emission] (CAE number must exist before PDF can encode it)
-    └──requires──> [Factura.nroComprobante + Factura.cae stored]
-    └──enhances──> [existing PDF generation flow (presupuesto pattern)]
+[flujo enum on Paciente + migration]
+    └──required by──> [CRM kanban filter to CIRUGIA]
+    └──required by──> [LiveTurno PENDIENTE banner]
+    └──required by──> [flujo badge in patient list]
+    └──required by──> [automatic CRM stage advance on flujo→CIRUGIA]
 
-[Certificate Expiry Warning]
-    └──requires──> [ConfiguracionAFIP.certExpiresAt stored at upload time]
-    └──enhances──> [FACTURADOR home dashboard (v1.1 already built)]
+[flujo auto-set on Turno creation (backend)]
+    └──requires──> [flujo field on Paciente]
+    └──requires──> [flujoAsignado on TipoTurno]
+    └──enhances──> [Existing NewAppointmentModal — no frontend change needed]
 
-[CAEA Contingency Mode]
-    └──requires──> [Real CAE Emission] (CAEA is the fallback, not the primary)
-    └──requires──> [CAEA model in schema: caea, fchVigDesde, fchVigHasta, fchTopeInf, profesionalId]
-    └──requires──> [@nestjs/schedule cron job for pre-request]
-    └──requires──> [FECAEAInformar batch job within 30d after period end]
-    └──requires──> [RG 5782/2025 verification against Boletín Oficial before implementing]
+[LiveTurno PENDIENTE classification banner]
+    └──requires──> [flujo field on Paciente]
+    └──requires──> [session object exposes pacienteFlujo]
+    └──requires──> [PATCH /pacientes/:id/flujo endpoint]
+    └──enhances──> [LiveTurnoPanel — inserted between Header and Tabs]
 
-[BNA Rate Field for USD Invoices]
-    └──requires──> [Factura.tipoCambio already in schema — v1.1 done]
-    └──requires──> [moneda=USD UI path in Nuevo Comprobante modal]
+[CRM kanban + metrics filter to CIRUGIA]
+    └──requires──> [flujo field on Paciente]
+    └──independent──> [LiveTurno banner — no coupling]
 
-[Environment Badge on FACTURADOR Home]
-    └──requires──> [ConfiguracionAFIP.ambiente readable by FACTURADOR (without exposing cert)]
+["Tratamientos" tab in /dashboard/pacientes]
+    └──requires──> [flujoAsignado on TipoTurno]
+    └──requires──> [new GET endpoint: turnos by month + flujo=TRATAMIENTO]
+    └──independent──> [flujo field on Paciente — tab queries turnos, not Paciente.flujo directly]
+
+[Auto CRM stage advance on flujo→CIRUGIA]
+    └──requires──> [PATCH /pacientes/:id/flujo]
+    └──requires──> [flujo field on Paciente]
+    └──enhances──> [Existing CRM stage machine — same logic as auto-CONSULTADO on LiveTurno close]
 ```
 
 ### Dependency Notes
 
-- **Certificate upload is the gate for everything.** No cert = no WSAA token = no CAE. ADMIN must complete onboarding before FACTURADOR can emit. Certificate status display on FACTURADOR home is the user-visible indicator of this gate.
-- **Schema migration must land before service swap.** Adding `cae`, `caeFchVto`, `nroComprobante` to `Factura` and creating `ConfiguracionAFIP` must be in a migration that deploys before the real `WsfevService` is activated. The stub can still run after the migration is applied.
-- **CAEA depends on CAE path being stable first.** Do not build CAEA until the primary CAE flow is working in homologacion. Contingency mode that is never tested against a working primary is itself a source of bugs.
-- **QR code cannot precede CAE.** QR encodes the CAE number. The PDF generation must happen after `FECAESolicitar` returns successfully and the CAE is persisted.
-- **CMS signing decision (openssl vs node-forge) must be made before WsaaService is built.** This is a team decision with no wrong answer, but it affects the Docker image (openssl binary present on server) and has no backtracking path without rewriting the signing logic.
+- **Schema migration is the hard gate.** `flujo` enum on `Paciente` and `flujoAsignado` nullable enum on `TipoTurno` must be in the same migration. Everything else is additive. The 5 new TipoTurno records can be in the seed after the migration.
+- **Treatment list queries turnos, not Paciente.flujo.** This is intentional. A treatment patient is defined by booking a TRATAMIENTO-type appointment, not by having `flujo = TRATAMIENTO`. This avoids a stale-classification problem: if a patient changes flow, their past treatment turnos remain in the treatment list.
+- **LiveTurno banner needs `pacienteFlujo` in the session object.** The `useLiveTurnoStore` session already holds patient details (nombre, telefono, obraSocial). Adding `flujo` to the session DTO is a minor backend change but must be done before the banner can render conditionally.
+- **CRM filter is transparent to the user.** The Kanban and metrics endpoints add a backend `WHERE flujo = 'CIRUGIA'` filter. No UI change is required in `KanbanBoard` or `CRMMetricsBar` — they receive the already-filtered data. A subtext label "Solo pacientes de cirugía" is the only frontend change.
+- **`flujoAsignado: null` on "Control" and "Consulta pendiente" is intentional.** These types should NOT auto-classify because "Control" applies to both surgery follow-ups and treatment checkups. Let the existing classification persist.
 
 ---
 
 ## MVP Definition
 
-### Launch With (v1.2)
+### Launch With (v1.4)
 
-Minimum scope to replace the stub with a real CAE that is legally valid in Argentina.
+Minimum scope to make the segmentation useful in production.
 
-- [ ] Schema migration: `ConfiguracionAFIP` model + `AmbienteAFIP` enum + `Factura.cae` + `Factura.caeFchVto` + `Factura.nroComprobante` + `ConfiguracionAFIP.ptoVta`
-- [ ] ADMIN cert upload endpoint — encrypts cert.pem + key.pem via `EncryptionService`, stores in `ConfiguracionAFIP`
-- [ ] `WsaaService` — `buildTRA()`, CMS signing (openssl smime subprocess), token cache with 12h TTL and 5-min buffer
-- [ ] `WsfevService` — `FECompUltimoAutorizado()`, `FECAESolicitar()` within `pg_advisory_xact_lock` Prisma transaction, AFIP rejection code mapping to Spanish messages
-- [ ] Swap `AfipStubService` for real service in NestJS DI (keep stub available for test environment via env var toggle)
-- [ ] Store real CAE + nroComprobante + caeFchVto on `Factura` after successful emission
-- [ ] Certificate status indicator on FACTURADOR home (configured / expiring / missing / ambiente badge)
-- [ ] BNA rate field in "Nuevo Comprobante" modal when moneda=USD, with link to bna.com.ar
-- [ ] QR code in Factura PDF (encode AFIP JSON spec, generate via `qrcode` package)
-- [ ] Error feedback UI: map AFIP rejection codes to readable messages, show in modal not generic toast
-- [ ] ADMIN configuration screen for `ConfiguracionAFIP` (upload cert, set ptoVta, toggle ambiente)
+- [ ] Schema migration: `FlujoPaciente` enum (`CIRUGIA | TRATAMIENTO | PENDIENTE`), `flujo FlujoPaciente?` on `Paciente` (nullable, default null = legacy "sin clasificar"), `flujoAsignado FlujoPaciente?` on `TipoTurno`
+- [ ] Seed 5 new TipoTurno records with correct `flujoAsignado` values
+- [ ] Backend: auto-set `Paciente.flujo` in turno creation transaction when `TipoTurno.flujoAsignado` is non-null and patient `flujo` is null or PENDIENTE
+- [ ] Backend: PATCH `/pacientes/:id/flujo` endpoint (PROFESIONAL + SECRETARIA + ADMIN roles) with optional CRM stage auto-advance
+- [ ] Backend: CRM kanban + metrics queries filter to `flujo = CIRUGIA` (or null-but-has-CRM-stage for legacy patients)
+- [ ] Backend: new GET endpoint for tratamientos list — turnos by professional + month + `tipoTurno.flujoAsignado = TRATAMIENTO`
+- [ ] Frontend: `flujo` badge column in `PacientesDataTable` (azul / verde / ámbar)
+- [ ] Frontend: LiveTurno PENDIENTE classification banner in `LiveTurnoPanel` (non-blocking, dismissible, two action buttons)
+- [ ] Frontend: "Solo pacientes de cirugía" subtext on CRM embudo view
+- [ ] Frontend: "Tratamientos" tab in `/dashboard/pacientes` — monthly list, month nav, type filter
 
-### Add After Validation (v1.2.x)
+### Add After Validation (v1.4.x)
 
-- [ ] Certificate expiry warning cron + email to ADMIN (30-day notice) — add once cert upload is working in production
-- [ ] CAEA contingency mode — add after primary CAE flow is stable in production AND RG 5782/2025 is verified against Boletín Oficial
-- [ ] `FECAEAInformar` batch job — add together with CAEA mode (they are one feature)
+- [ ] Accumulated monthly revenue per patient in the treatment list (requires joining cobros/facturas — add once basic list is stable)
+- [ ] Treatment list export to CSV — add once professional has expressed need (likely when accountant asks for monthly summary)
+- [ ] Bulk reclassification screen for existing PENDIENTE patients — add if manual accumulation of PENDIENTE badges becomes operationally painful
 
 ### Future Consideration (v2+)
 
-- [ ] Liquidation history per OS with amount variance tracking (authorized vs paid) — deferred from v1.1
-- [ ] Multi-professional certificate management (bulk upload, status dashboard for all tenants) — SaaS operator tooling, not clinic-facing
-- [ ] OS portal submission (Webcred integration) — requires individual OS business agreements
+- [ ] Treatment scheduling patterns (recurring frequency, reminders) — separate product feature
+- [ ] Treatment plan (series of sessions) — requires new data model
+- [ ] Surgery vs treatment split in financial reports — depends on v2 executive reports milestone
 
 ---
 
@@ -156,94 +158,136 @@ Minimum scope to replace the stub with a real CAE that is legally valid in Argen
 
 | Feature | User Value | Implementation Cost | Priority |
 |---------|------------|---------------------|----------|
-| Schema migration (ConfiguracionAFIP + Factura CAE fields) | HIGH | LOW (migration only) | P1 |
-| ADMIN cert upload endpoint | HIGH | MEDIUM | P1 |
-| WsaaService (TRA + signing + token cache) | HIGH | HIGH | P1 |
-| WsfevService (FECAESolicitar + advisory lock) | HIGH | HIGH | P1 |
-| NestJS DI swap: stub → real | HIGH | LOW | P1 |
-| Store CAE + nroComprobante on Factura | HIGH | LOW | P1 |
-| AFIP rejection code mapping to Spanish messages | HIGH | MEDIUM | P1 |
-| Certificate status indicator on FACTURADOR home | HIGH | LOW | P1 |
-| ADMIN config screen for ConfiguracionAFIP | HIGH | MEDIUM | P1 |
-| QR code in Factura PDF | MEDIUM | MEDIUM | P1 |
-| BNA rate field for USD invoices | MEDIUM | LOW | P1 |
-| Environment (homologacion/produccion) badge | MEDIUM | LOW | P1 |
-| Certificate expiry warning (30-day cron) | HIGH | LOW | P2 |
-| CAEA contingency mode | HIGH | HIGH | P2 |
-| FECAEAInformar batch job | HIGH | MEDIUM | P2 (with CAEA) |
-| Liquidation history with variance tracking | MEDIUM | MEDIUM | P3 |
+| Schema migration + TipoTurno seed | HIGH | LOW | P1 |
+| Auto-set `Paciente.flujo` on turno creation | HIGH | LOW | P1 |
+| PATCH `/pacientes/:id/flujo` endpoint | HIGH | LOW | P1 |
+| CRM kanban + metrics filter to CIRUGIA | HIGH | LOW | P1 |
+| LiveTurno PENDIENTE classification banner | HIGH | MEDIUM | P1 |
+| "Tratamientos" tab — monthly list | HIGH | MEDIUM | P1 |
+| flujo badge in patient list | MEDIUM | LOW | P1 |
+| "Solo pacientes de cirugía" subtext in embudo | LOW | LOW | P1 |
+| Auto CRM stage advance on flujo→CIRUGIA | MEDIUM | LOW | P1 |
+| Monthly KPI counter in Tratamientos header | MEDIUM | LOW | P1 |
+| Treatment type filter (dropdown) | MEDIUM | LOW | P1 |
+| Accumulated revenue in treatment list | MEDIUM | MEDIUM | P2 |
+| Treatment list CSV export | LOW | LOW | P2 |
+| Bulk reclassification screen | LOW | HIGH | P3 |
 
 **Priority key:**
-- P1: Must have for v1.2 launch (real CAE, legally compliant PDF)
-- P2: Add after v1.2 is stable in production
-- P3: Future milestone
+- P1: Must have for v1.4 launch — needed for classification to work at all
+- P2: Add once P1 is validated in production
+- P3: Separate milestone
 
 ---
 
-## User Journey: FACTURADOR Perspective
+## Treatment List: Required Columns
 
-### Before First CAE Emission (Onboarding)
+This is the primary deliverable for the downstream roadmap consumer.
 
-1. **Accountant / professional generates CSR** using their CUIT as CN. Submits to AFIP homologacion portal (WSASS). Downloads `.pem` certificate.
-2. **ADMIN uploads cert** via a new "Configuracion AFIP" section. Uploads `cert.pem` + `key.pem`. System shows: "Certificado configurado. Vence: 2028-03-15. Ambiente: HOMOLOGACION."
-3. **ADMIN configures PtoVta** — the registered Point of Sale number from AFIP portal. One-time entry.
-4. **FACTURADOR sees on their home:** green "Certificado AFIP: Activo" badge and "Modo: HOMOLOGACION" warning banner. They know they are ready to test.
+### Minimum Viable Columns (v1.4 launch)
 
-### Emitting a CAE (Primary Flow — User's Perspective)
+| Column | Data Source | Display | Notes |
+|--------|-------------|---------|-------|
+| Fecha | `Turno.inicio` | "Mar 15 · 10:30" | Date + time, sorted ascending within month |
+| Paciente | `Paciente.nombre + apellido` | Clickable → opens `PatientDrawer` | Existing drawer pattern |
+| Tipo de turno | `TipoTurno.nombre` | Badge with color from `TipoTurnoProfesional.colorHex` | Uses existing per-professional color config |
+| Estado | `Turno.estado` | Status badge (AGENDADO / EN_CURSO / FINALIZADO / CANCELADO) | Existing state enum |
 
-1. FACTURADOR opens settlement for OS "OSDE — 3 practicas — $45.000".
-2. Edits `montoPagado` inline for each practice if needed.
-3. Opens `CerrarLoteModal`. Sees total, confirms condicionIVA receptor, tipoCambio if USD.
-4. Clicks "Emitir Comprobante con CAE".
-5. System calls AFIP (1-3 seconds). Button shows spinner: "Solicitando CAE..."
-6. On success: modal closes, toast: "Comprobante emitido. CAE: 74397704790943. Vence: 2026-03-23."
-7. Factura row in `ComprobantesTab` shows: number, CAE badge, vencimiento, monto.
-8. PDF available for download includes the QR code. Legally valid.
+### Secondary Columns (add if space permits, or in v1.4.x)
 
-### Error States (What FACTURADOR Sees)
+| Column | Data Source | Notes |
+|--------|-------------|-------|
+| Monto cobrado | `Cobro.monto` (if exists) | JOIN to cobros — adds query complexity |
+| Obra Social | `Paciente.obraSocial.nombre` | Useful for billing context |
 
-| Situation | What FACTURADOR Sees | What They Should Do |
-|-----------|---------------------|---------------------|
-| AFIP rejects (wrong CUIT in condicionIVA mapping) | Modal: "AFIP rechazó el comprobante: Código 10015 — El receptor debe ser Responsable Inscripto para Factura A. Revisá la condición de IVA del receptor." | Change condicionIVAReceptor and retry |
-| AFIP unreachable (timeout, HTTP 5xx) — CAE mode, no CAEA configured | Toast error: "AFIP no respondió. Reintentá en unos minutos o contactá a tu contador." | Wait and retry manually |
-| AFIP unreachable — CAEA configured and valid | Badge on emitted invoice: "Emitido en modo contingencia (CAEA)". Flow continues normally. | Nothing — system handled it |
-| Certificate expired | Banner on home: "Certificado AFIP vencido el 2026-03-15. No podés emitir comprobantes. Solicitá uno nuevo a tu contador." | Contact accountant to generate new CSR |
-| Certificate not yet uploaded | Banner on home: "Certificado AFIP no configurado. Pedile al administrador que lo suba." | Notify ADMIN |
-| Duplicate sequence (edge case, advisory lock prevents this) | If somehow reached: "Error de secuencia AFIP. El equipo de soporte fue notificado." Sentry alert server-side. | Support handles — user cannot fix |
+### Columns to Explicitly NOT Include in v1.4
 
-### After CAE Emission
-
-- FACTURADOR can download PDF with QR from ComprobantesTab.
-- Factura shows CAE number, sequence number, vencimiento.
-- At period end (if CAEA was used): system runs `FECAEAInformar` automatically — user sees no action required.
+| Column | Reason to Exclude |
+|--------|------------------|
+| Historia clínica notes | Sensitive, belongs in patient drawer, not in list view |
+| Patient contact info (phone, email) | Privacy — visible on drawer, not in paginated list |
+| Presupuesto data | Treatment patients rarely have presupuestos; this is CRM funnel logic |
 
 ---
 
-## Argentine Regulatory Notes for v1.2
+## Classification Banner UX Pattern: Justified Decision
 
-**RG 5616/2024 — Full enforcement from April 1, 2026.** From that date, `FECAESolicitar` rejects invoices missing `CondicionIVAReceptorId` or `MonCotiz` (for foreign currency). The schema already has `condicionIVAReceptor` and `tipoCambio`. The WSFEv1 service must map them to AFIP integer IDs at submission time. No schema change needed for this compliance requirement.
+**Chosen pattern: Non-blocking inline banner at the top of LiveTurnoPanel content area, dismissible.**
 
-**RG 5782/2025 — CAEA contingency-only from June 2026.** Community-sourced finding. MUST be verified against Boletín Oficial before CAEA is implemented. If confirmed, CAEA is always a fallback path only — not an optimization. Design requires `FECAESolicitar` to always be attempted first.
+### Why Not a Modal
 
-**IVA treatment for aesthetic surgery and obras sociales.** Medical services to obras sociales are typically `IVA_SUJETO_EXENTO` (AFIP ID 4) or `CONSUMIDOR_FINAL` (ID 5) depending on the OS's legal status. This is not a system decision — it must be validated with the clinic's accountant before go-live. The `condicionIVAReceptor` field already allows per-Factura configuration. Document this requirement clearly in the ADMIN cert config screen.
+A blocking modal in LiveTurno would interrupt the professional mid-consultation. LiveTurno is a full-screen, time-sensitive workflow (it shows a running timer). Forced interruptions in clinical software create friction that leads to professionals skipping the entire flow. Clinical SaaS conventions (EMR systems like eClinicalWorks, Kareo, Elation) consistently use inline alerts rather than blocking modals for "complete this later" classification tasks.
 
-**Clock synchronization.** WSAA validates `generationTime` against its own clock. Server NTP sync is a deployment prerequisite. Add an NTP check or at minimum document it in the deployment runbook. Clock drift causes cryptic WSAA rejections.
+### Why Not a Toast
+
+Toasts are transient (disappear after 3-5 seconds). The classification decision requires deliberate action (CIRUGIA vs TRATAMIENTO). A transient notification will be missed or dismissed accidentally, defeating the purpose.
+
+### Recommended Implementation
+
+```
+[ LiveTurnoHeader ]  ← existing, unchanged
+
+[ CLASSIFICATION BANNER — only if session.pacienteFlujo === 'PENDIENTE' ]
+┌──────────────────────────────────────────────────────────────────────┐
+│  ⚠  Este paciente no tiene flujo asignado todavía.                   │
+│  ¿Es paciente de cirugía o de tratamiento?                           │
+│  [ Cirugía ]  [ Tratamiento ]                            [ × ]      │
+└──────────────────────────────────────────────────────────────────────┘
+
+[ LiveTurnoTabs ]   ← existing, unchanged
+[ Tab Content ]     ← existing, unchanged
+[ LiveTurnoFooter ] ← existing, unchanged
+```
+
+- Background: amber-50, border amber-200, icon amber warning (consistent with shadcn/ui alert pattern)
+- Two action buttons: primary style for "Cirugía", secondary for "Tratamiento"
+- Dismiss (×) button: hides for this session only — does NOT permanently classify. Patient remains PENDIENTE.
+- On button click: calls PATCH `/pacientes/:id/flujo`, updates store, banner disappears.
+- If patient is already CIRUGIA or TRATAMIENTO: banner never renders.
+
+### Why Amber, Not Red
+
+Red suggests an error. Classification is a data enrichment task, not an error state. Amber ("attention, but not broken") is the correct severity level for clinical SaaS. Red is reserved for session errors (sync failure, timeout) which already exist in `LiveTurnoSyncChecker`.
+
+---
+
+## Legacy Patient Handling
+
+Patients created before v1.4 have `flujo = null`. These are NOT the same as `flujo = PENDIENTE`.
+
+- `null` = legacy / unclassified. Show as "Sin clasificar" with a gray badge (not amber). Do not include in the PENDIENTE classification count.
+- `PENDIENTE` = explicitly set by booking a "Consulta pendiente" appointment type. Show amber badge. These are the patients the LiveTurno banner targets.
+
+This distinction prevents the banner from firing for every existing patient on upgrade, which would be overwhelming. Only patients who explicitly booked a PENDIENTE appointment type will see the classification prompt in LiveTurno.
+
+---
+
+## CRM Funnel Filter: Edge Cases
+
+| Patient State | In Funnel? | Rationale |
+|---------------|------------|-----------|
+| `flujo = CIRUGIA` | YES | Core funnel target |
+| `flujo = TRATAMIENTO` | NO | Has separate Tratamientos tab |
+| `flujo = PENDIENTE` | NO | Not yet classified as surgery candidate — including them distorts conversion metrics |
+| `flujo = null` (legacy) | YES, if has a CRM stage | Legacy patients already in the funnel should not vanish. Filter: `flujo = CIRUGIA OR (flujo IS NULL AND etapaCRM IS NOT NULL)` |
+| `flujo = null`, no CRM stage | NO | No history in the system — not in funnel |
+
+This nuanced filter is critical. A naive `WHERE flujo = 'CIRUGIA'` would silently drop all pre-v1.4 patients from the CRM funnel, which is a data loss regression for existing users.
 
 ---
 
 ## Sources
 
-- `.planning/research/AFIP-INTEGRATION.md` — complete technical reference (WSAA, WSFEv1, CAEA, RG 5616/2024, RG 5782/2025) — HIGH confidence
-- `backend/src/prisma/schema.prisma` — current schema state, existing `Factura` fields — HIGH confidence
-- `backend/src/modules/finanzas/afip/afip.interfaces.ts` — contract interface between stub and real service — HIGH confidence
-- `backend/src/modules/finanzas/afip/afip-stub.service.ts` — existing stub behavior — HIGH confidence
-- `frontend/src/app/dashboard/facturador/page.tsx`, `liquidar/[obraSocialId]/page.tsx` — existing FACTURADOR UI — HIGH confidence
-- `.planning/PROJECT.md` — milestone scope, deferred items, technical decisions — HIGH confidence
-- AFIP RG 5616/2024: [ARCA official documentation](https://www.afip.gob.ar/ws/documentacion/ws-factura-electronica.asp) — MEDIUM confidence (verified via AFIP-INTEGRATION.md research)
-- RG 5782/2025 CAEA restriction — LOW confidence (community sources only, must verify against Boletín Oficial)
+- `.planning/PROJECT.md` — v1.4 milestone scope, existing features, constraints — HIGH confidence
+- `backend/src/prisma/schema.prisma` — current `TipoTurno`, `Paciente`, `Turno`, `Tratamiento` models — HIGH confidence
+- `frontend/src/components/live-turno/LiveTurnoPanel.tsx` — existing panel structure — HIGH confidence
+- `frontend/src/components/live-turno/LiveTurnoHeader.tsx` — session object shape, existing badge patterns — HIGH confidence
+- `frontend/src/app/dashboard/pacientes/page.tsx` — existing tabs, toggle pattern, component structure — HIGH confidence
+- `frontend/src/app/dashboard/pacientes/components/PacientesDataTable.tsx` — existing column pattern — HIGH confidence
+- Clinical SaaS UX conventions (eClinicalWorks, Kareo, Elation EMR) — inline alert vs modal for classification tasks — MEDIUM confidence (industry pattern, not directly verified)
 
 ---
 
-*Feature research for: v1.2 AFIP Real — CAE emission, certificate management, QR PDF compliance*
-*Researched: 2026-03-16*
-*Supersedes: v1.1 FEATURES.md entries for "Future Consideration (v2+): AFIP/ARCA CAE issuance"*
+*Feature research for: v1.4 Flujo de Pacientes — patient flow classification (CIRUGIA / TRATAMIENTO / PENDIENTE)*
+*Researched: 2026-04-15*
+*Supersedes: previous FEATURES.md scoped to v1.2 AFIP/CAE*

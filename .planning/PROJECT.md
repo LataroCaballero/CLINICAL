@@ -70,6 +70,11 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 
 ### Active
 
+- [ ] Nuevos tipos de turno (5 tipos: Consulta para cirugía, Consulta para tratamiento, Pre-operatorio, Control, Consulta pendiente) — v1.4
+- [ ] Campo `flujo` (CIRUGIA | TRATAMIENTO | PENDIENTE) en Paciente con auto-update al crear turno — v1.4
+- [ ] Embudo CRM filtrado a pacientes CIRUGIA únicamente — v1.4
+- [ ] Banner LiveTurno para clasificar pacientes PENDIENTE — v1.4
+- [ ] Tab "Tratamientos" en /dashboard/pacientes — lista mensual, filtros por tratamiento — v1.4
 - [ ] Reportes ejecutivos exportables (comparativas entre períodos) — v2
 - [ ] Historial de liquidaciones por OS con comparativa autorizado vs. pagado — v2
 
@@ -152,17 +157,20 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 
 16/16 requisitos completados en 50 días (2026-02-09 → 2026-03-31). 8 fases, 24 planes. Ver `.planning/milestones/v1.2-ROADMAP.md` para detalles completos.
 
-## Current Milestone: v1.3 Historial de Consultas
+## Shipped: v1.3 Historial de Consultas ✅
 
-**Goal:** Expandir el widget "Turnos del día" para que el profesional pueda navegar a cualquier día y ver el historial de consultas con sus entradas de HC asociadas, y agregar entradas retroactivas usando el mismo formato que LiveTurno.
+2 phases (20–21), 4 plans. Widget agenda-first con navegación día a día, métricas del día, botón "Ver HC" por turno FINALIZADO, modal HC retroactivo con fecha histórica. Ver `.planning/milestones/v1.3-ROADMAP.md` para detalles.
+
+## Current Milestone: v1.4 Flujo de Pacientes
+
+**Goal:** Clasificar pacientes en flujos independientes (cirugía vs. tratamiento en consultorio) al momento de dar el turno, separando el embudo CRM de la lista de tratamientos para que las estadísticas de conversión no sean distorsionadas por procedimientos de consultorio.
 
 **Target features:**
-- Widget agenda-first (hoy por defecto vía `/turnos/agenda`, no `/proximos`)
-- Selector de calendario para navegar a cualquier día pasado o futuro
-- Métricas del día para días pasados/hoy (total, finalizados, cirugías, ausentes, cancelados)
-- Botón "Ver HC" por turno FINALIZADO → modal con entradas read-only + agregar nueva
-- Modal HC con mismo formato que HistoriaClinicaTab (tipo selector + PrimeraConsultaForm / Textarea)
-- Entradas retroactivas: backend acepta `fecha` opcional para datar la entrada en el día histórico
+- 5 nuevos tipos de turno: "Consulta para cirugía", "Consulta para tratamiento en consultorio", "Pre-operatorio", "Control", "Consulta pendiente"
+- Campo `flujo` (CIRUGIA | TRATAMIENTO | PENDIENTE) en `Paciente`, auto-actualizado al crear turno clasificatorio
+- Embudo CRM filtrado exclusivamente a pacientes con flujo = CIRUGIA
+- Banner en LiveTurno para clasificar pacientes con flujo = PENDIENTE (→ CIRUGIA o → TRATAMIENTO)
+- Nuevo tab "Tratamientos" en `/dashboard/pacientes` — lista mensual ordenada por día, filtros por tratamiento del catálogo del profesional
 
 ## Next Milestone: v2.0 (TBD)
 
@@ -173,4 +181,4 @@ Planning pendiente. Candidatos para el próximo milestone:
 - IVA matrix para cirugía estética (blocker de go-live AFIP producción)
 
 ---
-*Last updated: 2026-04-02 after v1.3 milestone start — Historial de Consultas*
+*Last updated: 2026-04-15 after v1.4 milestone start — Flujo de Pacientes*

@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Flujo de Pacientes
-status: in-progress
-stopped_at: "Completed 22-03-PLAN.md"
-last_updated: "2026-04-15T22:45:00Z"
-last_activity: 2026-04-15 — Plan 22-03 complete — PATCH /pacientes/:id/flujo endpoint with role restriction (FACTURADOR excluded)
+status: executing
+stopped_at: Completed 22-03-PLAN.md
+last_updated: "2026-04-15T22:31:13.775Z"
+last_activity: "2026-04-15 — Plan 22-03 complete — PATCH /pacientes/:id/flujo endpoint with FACTURADOR exclusion via method-level @Auth override"
 progress:
   total_phases: 4
   completed_phases: 1

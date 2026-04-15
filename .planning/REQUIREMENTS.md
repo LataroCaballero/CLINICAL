@@ -8,7 +8,7 @@
 ### Tipos de Turno
 
 - [x] **TIPOS-01**: El sistema cuenta con 5 tipos de turno disponibles: "Consulta para cirugía", "Consulta para tratamiento en consultorio", "Pre-operatorio", "Control", "Consulta pendiente"
-- [ ] **TIPOS-02**: Al crear un turno, la secretaria/profesional selecciona el tipo de turno de la lista actualizada con los 5 tipos
+- [x] **TIPOS-02**: Al crear un turno, la secretaria/profesional selecciona el tipo de turno de la lista actualizada con los 5 tipos
 
 ### Flujo del Paciente
 
@@ -68,7 +68,7 @@
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | TIPOS-01 | Phase 22 | Complete |
-| TIPOS-02 | Phase 22 | Pending |
+| TIPOS-02 | Phase 22 | Complete |
 | FLUJO-01 | Phase 23 | Pending |
 | FLUJO-02 | Phase 23 | Pending |
 | FLUJO-03 | Phase 23 | Pending |

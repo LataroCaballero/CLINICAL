@@ -5,7 +5,8 @@
 - ✅ **v1.0 CRM Conversión** — Fases 1–7 (shipped 2026-03-03)
 - ✅ **v1.1 Vista del Facturador** — Fases 8–11 (shipped 2026-03-16)
 - ✅ **v1.2 AFIP Real** — Fases 12–19 (shipped 2026-03-31)
-- 🚧 **v1.3 Historial de Consultas** — Fases 20–21 (in progress)
+- ✅ **v1.3 Historial de Consultas** — Fases 20–21 (shipped 2026-04-09)
+- 🚧 **v1.4 Flujo de Pacientes** — Fases 22–25 (in progress)
 - 📋 **v2.0 TBD** — (planned)
 
 ## Phases
@@ -55,45 +56,71 @@ Full details: `.planning/milestones/v1.2-ROADMAP.md`
 
 </details>
 
-### 🚧 v1.3 Historial de Consultas (In Progress)
+<details>
+<summary>✅ v1.3 Historial de Consultas (Fases 20–21) — SHIPPED 2026-04-09</summary>
 
-**Milestone Goal:** Expandir el widget "Turnos del día" para que el profesional pueda navegar a cualquier día, ver la agenda completa con métricas, y agregar entradas de HC retroactivas a turnos finalizados usando el mismo formato que LiveTurno.
+- [x] Phase 20: Backend Data Fixes (1/1 plan) — completado 2026-04-02
+- [x] Phase 21: Agenda Widget + Modal HC (3/3 planes) — completado 2026-04-09
 
-- [x] **Phase 20: Backend Data Fixes** — Corregir selects de Prisma en turnos.service.ts y agregar soporte de fecha retroactiva en HC (completed 2026-04-02)
-- [x] **Phase 21: Agenda Widget + Modal HC** — Reescribir UpcomingAppointments.tsx con enfoque agenda-first y TurnoHCModal.tsx con formato LiveTurno (completed 2026-04-09)
+Full details: `.planning/milestones/v1.3-ROADMAP.md`
+
+</details>
+
+### 🚧 v1.4 Flujo de Pacientes (In Progress)
+
+**Milestone Goal:** Clasificar pacientes en flujos independientes (cirugía vs. tratamiento en consultorio) al momento de dar el turno, separando el embudo CRM de la lista de tratamientos para que las estadísticas de conversión no sean distorsionadas por procedimientos de consultorio.
+
+- [ ] **Phase 22: Schema Foundation** — Enum FlujoPaciente + Paciente.flujo + TipoTurno.flujoPaciente + migración con backfill SQL + seed 5 TipoTurno + PATCH /pacientes/:id/flujo
+- [ ] **Phase 23: Backend Logic** — Auto-update flujo al crear turno + guards CRM + 5+ queries crm-dashboard filtradas a CIRUGIA
+- [ ] **Phase 24: LiveTurno Banner** — pacienteFlujo en session DTO + ClasificacionBanner + useClasificarFlujo
+- [ ] **Phase 25: Tratamientos Tab** — useTratamientosMes + TratamientosTab + badge flujo en PacientesDataTable
 
 ## Phase Details
 
-### Phase 20: Backend Data Fixes
-**Goal**: Los endpoints de turnos exponen todos los campos que el frontend necesita, y el backend acepta entradas HC con fecha histórica
-**Depends on**: Nothing (first phase of v1.3)
-**Requirements**: BACK-01, BACK-02, BACK-03
+### Phase 22: Schema Foundation
+**Goal**: El schema expone FlujoPaciente y TipoTurno listos para que toda la lógica de negocio construya sobre ellos, con datos existentes migrados correctamente para que el embudo CRM no se vacíe
+**Depends on**: Nothing (first phase of v1.4)
+**Requirements**: TIPOS-01, TIPOS-02, FLUJO-06
 **Success Criteria** (what must be TRUE):
-  1. `GET /turnos/agenda` devuelve `diagnostico` y `tratamiento` del paciente en cada turno
-  2. `GET /turnos/proximos` devuelve `esCirugia` y `entradaHCId` en cada turno, sin error de compilación Prisma
-  3. `POST /pacientes/:id/historia-clinica/entradas` acepta campo `fecha` opcional y la entrada queda registrada con esa fecha en la DB
-  4. Intentar crear una entrada HC con fecha futura retorna error de validación (400)
-**Plans**: 1 plan
-Plans:
-- [ ] 20-01-PLAN.md — Fixes quirúrgicos en turnos.service.ts y soporte fecha retroactiva en HC
+  1. Los 5 nuevos tipos de turno aparecen en el selector al crear un turno (Consulta para cirugía, Consulta para tratamiento en consultorio, Pre-operatorio, Control, Consulta pendiente)
+  2. Los pacientes existentes con historial de cirugía (Turno.esCirugia = true) tienen flujo = CIRUGIA tras la migración; los pacientes con etapaCRM activo también tienen flujo = CIRUGIA
+  3. Los pacientes sin historial de cirugía ni etapaCRM activo tienen flujo = null (sin clasificar) tras la migración — no se vacía el kanban CRM
+  4. El endpoint PATCH /pacientes/:id/flujo acepta { flujo: 'CIRUGIA' | 'TRATAMIENTO' | 'PENDIENTE' } y persiste el valor correctamente
+**Plans**: TBD
 
-### Phase 21: Agenda Widget + Modal HC
-**Goal**: El profesional puede navegar día a día desde el dashboard, ver la agenda completa con métricas, y agregar entradas HC retroactivas a cualquier turno finalizado
-**Depends on**: Phase 20
-**Requirements**: DASH-01, DASH-02, DASH-03, DASH-04, DASH-05, HC-01, HC-02, HC-03
+### Phase 23: Backend Logic
+**Goal**: El flujo del paciente se actualiza automáticamente al crear turnos clasificatorios, y todas las vistas CRM (kanban, lista de acción, dashboard) muestran únicamente pacientes de cirugía sin romper datos legacy
+**Depends on**: Phase 22
+**Requirements**: FLUJO-01, FLUJO-02, FLUJO-03, FLUJO-04, CRM-01, CRM-02, CRM-03
 **Success Criteria** (what must be TRUE):
-  1. Al abrir el dashboard, el widget muestra los turnos del día actual (todos, no solo futuros)
-  2. El profesional puede navegar al día anterior y siguiente con botones de flecha, y la lista de turnos se actualiza
-  3. El profesional puede seleccionar cualquier fecha pasada o futura con un selector de calendario y la lista se actualiza
-  4. Para el día de hoy y días pasados, el widget muestra métricas del día (total, finalizados, cirugías, ausentes, cancelados)
-  5. Cada turno FINALIZADO muestra un botón "Ver HC" que abre un modal con las entradas HC del turno en modo solo-lectura
-  6. El modal permite agregar una nueva entrada HC con el selector de tipo (Primera Consulta / Pre Quirúrgico / Control / Práctica) y el formulario correspondiente
-  7. La nueva entrada retroactiva queda fechada en el día del turno seleccionado, no en la fecha actual
-**Plans**: 3 planes
-Plans:
-- [ ] 21-01-PLAN.md — Fecha retroactiva en /hc/entries: backend DTO + service + tipo frontend
-- [ ] 21-02-PLAN.md — UpcomingAppointments agenda-first: hoy por defecto, nav día-a-día, métricas, Ver HC
-- [ ] 21-03-PLAN.md — TurnoHCModal wiring de fecha + checkpoint verificación humana
+  1. Al crear un turno "Consulta para cirugía" para un paciente PENDIENTE, su flujo cambia a CIRUGIA automáticamente; crear el mismo turno para un paciente TRATAMIENTO no cambia su flujo
+  2. Al crear un turno "Consulta para tratamiento en consultorio" para un paciente PENDIENTE, su flujo cambia a TRATAMIENTO automáticamente
+  3. Al crear un turno "Pre-operatorio" para un paciente PENDIENTE, su flujo cambia a CIRUGIA automáticamente; "Control" y "Consulta pendiente" no modifican el flujo en ningún caso
+  4. El kanban CRM muestra pacientes con flujo = CIRUGIA y pacientes legacy (flujo IS NULL con etapaCRM activo); pacientes con flujo = TRATAMIENTO no aparecen
+  5. La lista de acción diaria muestra solo pacientes CIRUGIA y legacy con etapaCRM activo; los KPIs del dashboard reflejan solo ese conjunto
+**Plans**: TBD
+
+### Phase 24: LiveTurno Banner
+**Goal**: El profesional puede clasificar pacientes PENDIENTE directamente desde la consulta en vivo, sin interrumpir el flujo de atención
+**Depends on**: Phase 23
+**Requirements**: LIVT-01, LIVT-02, LIVT-03
+**Success Criteria** (what must be TRUE):
+  1. Al abrir LiveTurno para un paciente con flujo = PENDIENTE, aparece un banner amber no bloqueante indicando que el paciente debe clasificarse
+  2. Al hacer clic en "Cirugía" o "Tratamiento" en el banner, el flujo del paciente queda guardado, el banner desaparece y no vuelve a mostrarse en esa sesión
+  3. Al descartar el banner (dismiss), el paciente permanece PENDIENTE y el banner reaparece al abrir LiveTurno en una nueva sesión
+  4. Los pacientes con flujo = null (legacy sin clasificar) no muestran el banner en LiveTurno
+**Plans**: TBD
+
+### Phase 25: Tratamientos Tab
+**Goal**: La secretaria y el profesional tienen visibilidad completa de los tratamientos del mes, con navegación por período y filtrado por tipo, y la lista de pacientes muestra el flujo de cada uno de un vistazo
+**Depends on**: Phase 23
+**Requirements**: FLUJO-05, TRAT-01, TRAT-02, TRAT-03, TRAT-04, TRAT-05, TRAT-06
+**Success Criteria** (what must be TRUE):
+  1. La página /dashboard/pacientes tiene un tab "Tratamientos" junto a "Embudo" y "Lista"; al hacer clic muestra los turnos del mes actual con flujo TRATAMIENTO
+  2. La lista de tratamientos puede navegarse por mes (botones anterior/siguiente) y el total del mes aparece en el header del tab
+  3. La lista es filtrable por tipo de turno de tratamiento desde un dropdown; cada fila muestra fecha+hora, paciente (clickable al drawer), tipo de turno y estado
+  4. Cada paciente en la tabla general de pacientes muestra un badge de flujo: CIRUGIA (azul), TRATAMIENTO (verde), PENDIENTE (amber), sin clasificar (gris)
+**Plans**: TBD
 
 ### 📋 v2.0 TBD (Planned)
 
@@ -125,7 +152,11 @@ Plans:
 | 18. CAE-03 Error Display Fixes | v1.2 | 2/2 | Complete | 2026-03-31 |
 | 19. getCierreMensual facturaId Extension | v1.2 | 2/2 | Complete | 2026-03-31 |
 | 20. Backend Data Fixes | v1.3 | 1/1 | Complete | 2026-04-02 |
-| 21. Agenda Widget + Modal HC | 3/3 | Complete   | 2026-04-09 | - |
+| 21. Agenda Widget + Modal HC | v1.3 | 3/3 | Complete | 2026-04-09 |
+| 22. Schema Foundation | v1.4 | 0/TBD | Not started | - |
+| 23. Backend Logic | v1.4 | 0/TBD | Not started | - |
+| 24. LiveTurno Banner | v1.4 | 0/TBD | Not started | - |
+| 25. Tratamientos Tab | v1.4 | 0/TBD | Not started | - |
 
 ---
-*Roadmap initialized: 2026-02-23 | v1.0 shipped: 2026-03-03 | v1.1 shipped: 2026-03-16 | v1.2 shipped: 2026-03-31 | v1.3 started: 2026-04-02*
+*Roadmap initialized: 2026-02-23 | v1.0 shipped: 2026-03-03 | v1.1 shipped: 2026-03-16 | v1.2 shipped: 2026-03-31 | v1.3 shipped: 2026-04-09 | v1.4 started: 2026-04-15*

@@ -21,7 +21,8 @@ import { PacienteListaDto } from './dto/paciente-lista.dto';
 import { PrismaService } from '@/src/prisma/prisma.service';
 import { UpdatePacienteSectionDto } from './dto/update-paciente-section.dto';
 import { Auth } from '../auth/decorators/auth.decorator';
-import { EtapaCRM, TemperaturaPaciente, MotivoPerdidaCRM } from '@prisma/client';
+import { EtapaCRM, TemperaturaPaciente, FlujoPaciente, MotivoPerdidaCRM } from '@prisma/client';
+import { UpdateFlujoDto } from './dto/update-flujo.dto';
 import { UpdateWhatsappOptInDto } from './dto/update-whatsapp-opt-in.dto';
 import { CreateContactoDto } from './dto/create-contacto.dto';
 import { UpdateListaEsperaDto } from './dto/update-lista-espera.dto';
@@ -204,5 +205,15 @@ export class PacientesController {
     @Body() dto: UpdateWhatsappOptInDto,
   ) {
     return this.pacientesService.updateWhatsappOptIn(id, dto.optIn);
+  }
+
+  // Flujo — Clasificar o reclasificar el flujo del paciente
+  @Auth('ADMIN', 'PROFESIONAL', 'SECRETARIA')
+  @Patch(':id/flujo')
+  updateFlujo(
+    @Param('id') id: string,
+    @Body() dto: UpdateFlujoDto,
+  ) {
+    return this.pacientesService.updateFlujo(id, dto.flujo);
   }
 }

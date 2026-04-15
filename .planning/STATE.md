@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Flujo de Pacientes
-status: ready_to_plan
-stopped_at: ""
-last_updated: "2026-04-15T00:00:00.000Z"
-last_activity: 2026-04-15 — Roadmap v1.4 created (4 phases, 20 requirements mapped)
+status: planning
+stopped_at: Phase 22 context gathered
+last_updated: "2026-04-15T21:40:50.766Z"
+last_activity: 2026-04-15 — Roadmap created, 4 phases (22–25), 20/20 requirements mapped
 progress:
   total_phases: 4
   completed_phases: 0
@@ -69,6 +69,6 @@ Last activity: 2026-04-15 — Roadmap created, 4 phases (22–25), 20/20 require
 
 ## Session Continuity
 
-Last session: 2026-04-15T00:00:00.000Z
-Stopped at: Roadmap created — ready to plan Phase 22
-Resume file: None
+Last session: 2026-04-15T21:40:50.762Z
+Stopped at: Phase 22 context gathered
+Resume file: .planning/phases/22-schema-foundation/22-CONTEXT.md

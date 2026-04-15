@@ -86,7 +86,10 @@ Full details: `.planning/milestones/v1.3-ROADMAP.md`
   2. Los pacientes existentes con historial de cirugía (Turno.esCirugia = true) tienen flujo = CIRUGIA tras la migración; los pacientes con etapaCRM activo también tienen flujo = CIRUGIA
   3. Los pacientes sin historial de cirugía ni etapaCRM activo tienen flujo = null (sin clasificar) tras la migración — no se vacía el kanban CRM
   4. El endpoint PATCH /pacientes/:id/flujo acepta { flujo: 'CIRUGIA' | 'TRATAMIENTO' | 'PENDIENTE' } y persiste el valor correctamente
-**Plans**: TBD
+**Plans**: 3 planes
+- [ ] 22-01-PLAN.md — Schema DDL: enum FlujoPaciente + Paciente.flujo + TipoTurno.flujoPaciente + migration.sql
+- [ ] 22-02-PLAN.md — Aplicar migración + actualizar seed + TiposTurnoService.findAll()
+- [ ] 22-03-PLAN.md — PATCH /pacientes/:id/flujo (DTO + service + controller)
 
 ### Phase 23: Backend Logic
 **Goal**: El flujo del paciente se actualiza automáticamente al crear turnos clasificatorios, y todas las vistas CRM (kanban, lista de acción, dashboard) muestran únicamente pacientes de cirugía sin romper datos legacy
@@ -153,7 +156,7 @@ Full details: `.planning/milestones/v1.3-ROADMAP.md`
 | 19. getCierreMensual facturaId Extension | v1.2 | 2/2 | Complete | 2026-03-31 |
 | 20. Backend Data Fixes | v1.3 | 1/1 | Complete | 2026-04-02 |
 | 21. Agenda Widget + Modal HC | v1.3 | 3/3 | Complete | 2026-04-09 |
-| 22. Schema Foundation | v1.4 | 0/TBD | Not started | - |
+| 22. Schema Foundation | v1.4 | 0/3 | Planning | - |
 | 23. Backend Logic | v1.4 | 0/TBD | Not started | - |
 | 24. LiveTurno Banner | v1.4 | 0/TBD | Not started | - |
 | 25. Tratamientos Tab | v1.4 | 0/TBD | Not started | - |

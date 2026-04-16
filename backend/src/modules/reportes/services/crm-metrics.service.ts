@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
-import { EtapaCRM, EstadoPresupuesto } from '@prisma/client';
+import { EtapaCRM, EstadoPresupuesto, FlujoPaciente } from '@prisma/client';
 
 @Injectable()
 export class CrmMetricsService {
@@ -23,7 +23,10 @@ export class CrmMetricsService {
 
     // Pacientes del profesional con datos CRM
     const pacientes = await this.prisma.paciente.findMany({
-      where: { profesionalId },
+      where: {
+        profesionalId,
+        OR: [{ flujo: FlujoPaciente.CIRUGIA }, { flujo: null }],
+      },
       select: {
         id: true,
         etapaCRM: true,

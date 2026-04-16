@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
-import { EtapaCRM, TemperaturaPaciente, EstadoPresupuesto } from '@prisma/client';
+import { EtapaCRM, TemperaturaPaciente, EstadoPresupuesto, FlujoPaciente } from '@prisma/client';
 
 const ETAPAS_FUNNEL: EtapaCRM[] = [
   EtapaCRM.NUEVO_LEAD,
@@ -51,7 +51,10 @@ export class CrmDashboardService {
     // Group all patients by CRM stage
     const grupos = await this.prisma.paciente.groupBy({
       by: ['etapaCRM'],
-      where: { profesionalId },
+      where: {
+        profesionalId,
+        OR: [{ flujo: FlujoPaciente.CIRUGIA }, { flujo: null }],
+      },
       _count: { id: true },
     });
 
@@ -89,6 +92,7 @@ export class CrmDashboardService {
         profesionalId,
         etapaCRM: EtapaCRM.PERDIDO,
         motivoPerdida: { not: null },
+        OR: [{ flujo: FlujoPaciente.CIRUGIA }, { flujo: null }],
       },
       _count: { id: true },
     });
@@ -114,6 +118,7 @@ export class CrmDashboardService {
         where: {
           profesionalId,
           createdAt: { gte: inicio, lte: fin },
+          OR: [{ flujo: FlujoPaciente.CIRUGIA }, { flujo: null }],
         },
       }),
       this.prisma.paciente.count({
@@ -121,12 +126,14 @@ export class CrmDashboardService {
           profesionalId,
           etapaCRM: EtapaCRM.CONFIRMADO,
           updatedAt: { gte: inicio, lte: fin },
+          OR: [{ flujo: FlujoPaciente.CIRUGIA }, { flujo: null }],
         },
       }),
       this.prisma.paciente.count({
         where: {
           profesionalId,
           etapaCRM: { not: EtapaCRM.PERDIDO },
+          OR: [{ flujo: FlujoPaciente.CIRUGIA }, { flujo: null }],
         },
       }),
     ]);
@@ -154,6 +161,7 @@ export class CrmDashboardService {
         profesionalId,
         etapaCRM: EtapaCRM.PERDIDO,
         updatedAt: { gte: inicio, lte: fin },
+        OR: [{ flujo: FlujoPaciente.CIRUGIA }, { flujo: null }],
       },
       _count: { id: true },
       orderBy: { _count: { id: 'desc' } },
@@ -180,7 +188,10 @@ export class CrmDashboardService {
         profesionalId,
         estado: EstadoPresupuesto.ENVIADO,
         fechaEnviado: { gte: inicio, lte: fin },
-        paciente: { temperatura: TemperaturaPaciente.CALIENTE },
+        paciente: {
+          temperatura: TemperaturaPaciente.CALIENTE,
+          OR: [{ flujo: FlujoPaciente.CIRUGIA }, { flujo: null }],
+        },
       },
       select: { total: true },
     });
@@ -200,6 +211,7 @@ export class CrmDashboardService {
       where: {
         profesionalId,
         fecha: { gte: inicio, lte: fin },
+        paciente: { OR: [{ flujo: FlujoPaciente.CIRUGIA }, { flujo: null }] },
       },
       select: {
         pacienteId: true,

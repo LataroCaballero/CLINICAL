@@ -101,7 +101,9 @@ Full details: `.planning/milestones/v1.3-ROADMAP.md`
   3. Al crear un turno "Pre-operatorio" para un paciente PENDIENTE, su flujo cambia a CIRUGIA automáticamente; "Control" y "Consulta pendiente" no modifican el flujo en ningún caso
   4. El kanban CRM muestra pacientes con flujo = CIRUGIA y pacientes legacy (flujo IS NULL con etapaCRM activo); pacientes con flujo = TRATAMIENTO no aparecen
   5. La lista de acción diaria muestra solo pacientes CIRUGIA y legacy con etapaCRM activo; los KPIs del dashboard reflejan solo ese conjunto
-**Plans**: TBD
+**Plans**: 2 planes
+- [ ] 23-01-PLAN.md — flujo auto-update step 5.5 en crearTurno() (FLUJO-01–04)
+- [ ] 23-02-PLAN.md — filtro CRM en pacientes.service.ts + crm-dashboard.service.ts + crm-metrics.service.ts (CRM-01–03)
 
 ### Phase 24: LiveTurno Banner
 **Goal**: El profesional puede clasificar pacientes PENDIENTE directamente desde la consulta en vivo, sin interrumpir el flujo de atención
@@ -156,8 +158,8 @@ Full details: `.planning/milestones/v1.3-ROADMAP.md`
 | 19. getCierreMensual facturaId Extension | v1.2 | 2/2 | Complete | 2026-03-31 |
 | 20. Backend Data Fixes | v1.3 | 1/1 | Complete | 2026-04-02 |
 | 21. Agenda Widget + Modal HC | v1.3 | 3/3 | Complete | 2026-04-09 |
-| 22. Schema Foundation | 3/3 | Complete    | 2026-04-15 | - |
-| 23. Backend Logic | v1.4 | 0/TBD | Not started | - |
+| 22. Schema Foundation | v1.4 | 3/3 | Complete | 2026-04-15 |
+| 23. Backend Logic | v1.4 | 0/2 | Not started | - |
 | 24. LiveTurno Banner | v1.4 | 0/TBD | Not started | - |
 | 25. Tratamientos Tab | v1.4 | 0/TBD | Not started | - |
 

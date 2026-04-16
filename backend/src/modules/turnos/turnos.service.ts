@@ -139,6 +139,20 @@ export class TurnosService {
       });
     }
 
+    // 5.5) Flujo auto-update (best-effort — no bloquea creación del turno)
+    if (tipoTurno.flujoPaciente && pacienteCRM?.flujo === FlujoPaciente.PENDIENTE) {
+      this.prisma.paciente
+        .update({
+          where: { id: dto.pacienteId },
+          data: { flujo: tipoTurno.flujoPaciente },
+        })
+        .catch((err: unknown) =>
+          this.logger.warn(
+            `flujo auto-update failed — turnoId=${turno.id} pacienteId=${dto.pacienteId}: ${String(err)}`,
+          ),
+        );
+    }
+
     // Auto-contacto: turno creado
     const profIdParaContacto = dto.profesionalId ?? pacienteCRM?.profesionalId;
     if (profIdParaContacto) {

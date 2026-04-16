@@ -616,7 +616,10 @@ export class PacientesService {
 
   async getKanban(profesionalId: string) {
     const pacientes = await this.prisma.paciente.findMany({
-      where: { profesionalId },
+      where: {
+        profesionalId,
+        OR: [{ flujo: FlujoPaciente.CIRUGIA }, { flujo: null }],
+      },
       select: {
         id: true,
         nombreCompleto: true,
@@ -816,6 +819,7 @@ export class PacientesService {
         NOT: {
           contactos: { some: { fecha: { gte: hoyInicio } } },
         },
+        OR: [{ flujo: FlujoPaciente.CIRUGIA }, { flujo: null }],
       },
       include: {
         contactos: {

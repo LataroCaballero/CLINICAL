@@ -114,7 +114,9 @@ Full details: `.planning/milestones/v1.3-ROADMAP.md`
   2. Al hacer clic en "Cirugía" o "Tratamiento" en el banner, el flujo del paciente queda guardado, el banner desaparece y no vuelve a mostrarse en esa sesión
   3. Al descartar el banner (dismiss), el paciente permanece PENDIENTE y el banner reaparece al abrir LiveTurno en una nueva sesión
   4. Los pacientes con flujo = null (legacy sin clasificar) no muestran el banner en LiveTurno
-**Plans**: TBD
+**Plans**: 2 planes
+- [ ] 24-01-PLAN.md — Store extension: pacienteFlujo + bannerDismissed + dismissBanner(); wire flujo into IniciarSesionResponse
+- [ ] 24-02-PLAN.md — LiveTurnoFlujoBanner component + mount in LiveTurnoPanel
 
 ### Phase 25: Tratamientos Tab
 **Goal**: La secretaria y el profesional tienen visibilidad completa de los tratamientos del mes, con navegación por período y filtrado por tipo, y la lista de pacientes muestra el flujo de cada uno de un vistazo
@@ -159,8 +161,8 @@ Full details: `.planning/milestones/v1.3-ROADMAP.md`
 | 20. Backend Data Fixes | v1.3 | 1/1 | Complete | 2026-04-02 |
 | 21. Agenda Widget + Modal HC | v1.3 | 3/3 | Complete | 2026-04-09 |
 | 22. Schema Foundation | v1.4 | 3/3 | Complete | 2026-04-15 |
-| 23. Backend Logic | 2/2 | Complete    | 2026-04-16 | - |
-| 24. LiveTurno Banner | v1.4 | 0/TBD | Not started | - |
+| 23. Backend Logic | v1.4 | 2/2 | Complete | 2026-04-16 |
+| 24. LiveTurno Banner | v1.4 | 0/2 | Not started | - |
 | 25. Tratamientos Tab | v1.4 | 0/TBD | Not started | - |
 
 ---

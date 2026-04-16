@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Flujo de Pacientes
 status: executing
-stopped_at: Completed 22-03-PLAN.md
-last_updated: "2026-04-15T22:31:13.775Z"
+stopped_at: Phase 23 context gathered
+last_updated: "2026-04-16T12:05:36.177Z"
 last_activity: "2026-04-15 — Plan 22-03 complete — PATCH /pacientes/:id/flujo endpoint with FACTURADOR exclusion via method-level @Auth override"
 progress:
   total_phases: 4
@@ -75,6 +75,6 @@ Last activity: 2026-04-15 — Plan 22-03 complete — PATCH /pacientes/:id/flujo
 
 ## Session Continuity
 
-Last session: 2026-04-15T22:45:00Z
-Stopped at: Completed 22-03-PLAN.md
-Resume file: .planning/phases/22-schema-foundation/22-03-SUMMARY.md
+Last session: 2026-04-16T12:05:36.173Z
+Stopped at: Phase 23 context gathered
+Resume file: .planning/phases/23-backend-logic/23-CONTEXT.md

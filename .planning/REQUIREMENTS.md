@@ -21,9 +21,9 @@
 
 ### CRM / Embudo
 
-- [ ] **CRM-01**: El embudo CRM (kanban) muestra únicamente pacientes con flujo = CIRUGIA y pacientes legacy (flujo IS NULL con etapaCRM activo)
-- [ ] **CRM-02**: La lista de acción diaria muestra únicamente pacientes con flujo = CIRUGIA y pacientes legacy con etapaCRM activo
-- [ ] **CRM-03**: Los KPIs del dashboard CRM (embudo, conversión, motivos de pérdida, ingreso potencial, performance coordinador) reflejan solo pacientes de cirugía
+- [x] **CRM-01**: El embudo CRM (kanban) muestra únicamente pacientes con flujo = CIRUGIA y pacientes legacy (flujo IS NULL con etapaCRM activo)
+- [x] **CRM-02**: La lista de acción diaria muestra únicamente pacientes con flujo = CIRUGIA y pacientes legacy con etapaCRM activo
+- [x] **CRM-03**: Los KPIs del dashboard CRM (embudo, conversión, motivos de pérdida, ingreso potencial, performance coordinador) reflejan solo pacientes de cirugía
 
 ### LiveTurno — Clasificación Pendiente
 
@@ -75,9 +75,9 @@
 | FLUJO-04 | Phase 23 | Complete |
 | FLUJO-05 | Phase 25 | Pending |
 | FLUJO-06 | Phase 22 | Complete |
-| CRM-01 | Phase 23 | Pending |
-| CRM-02 | Phase 23 | Pending |
-| CRM-03 | Phase 23 | Pending |
+| CRM-01 | Phase 23 | Complete |
+| CRM-02 | Phase 23 | Complete |
+| CRM-03 | Phase 23 | Complete |
 | LIVT-01 | Phase 24 | Pending |
 | LIVT-02 | Phase 24 | Pending |
 | LIVT-03 | Phase 24 | Pending |

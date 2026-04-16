@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Flujo de Pacientes
 status: executing
-stopped_at: Completed 23-01-PLAN.md
-last_updated: "2026-04-16T12:40:35.919Z"
-last_activity: "2026-04-15 — Plan 22-03 complete — PATCH /pacientes/:id/flujo endpoint with FACTURADOR exclusion via method-level @Auth override"
+stopped_at: Completed 23-02-PLAN.md
+last_updated: "2026-04-16T12:50:00.000Z"
+last_activity: "2026-04-16 — Plan 23-02 complete — flujo CRM filter (OR CIRUGIA|null) across 8 call sites in 3 services"
 progress:
   total_phases: 4
   completed_phases: 1
   total_plans: 5
-  completed_plans: 4
-  percent: 33
+  completed_plans: 5
+  percent: 50
 ---
 
 # Project State
@@ -28,12 +28,12 @@ See: .planning/PROJECT.md (updated 2026-04-15)
 ```
 Milestone: v1.4 Flujo de Pacientes
 Phase:     23 of 25 (Backend Logic) — In Progress
-Plan:      1 of 2 complete
-Status:    In progress
-Progress:  [█████████░] 94%
+Plan:      2 of 2 complete
+Status:    Phase complete
+Progress:  [██████████] 100% (phase 23 done)
 ```
 
-Last activity: 2026-04-16 — Plan 23-01 complete — crearTurno() step 5.5 flujo auto-update best-effort fire-and-forget
+Last activity: 2026-04-16 — Plan 23-02 complete — flujo CRM filter OR[CIRUGIA|null] across 8 call sites in pacientes.service, crm-dashboard.service, crm-metrics.service
 
 ## Milestone Summary
 
@@ -64,6 +64,8 @@ Last activity: 2026-04-16 — Plan 23-01 complete — crearTurno() step 5.5 fluj
 - [22-03] UpdateFlujoDto does not accept null; future "clear flujo" will require a separate endpoint
 - [23-01] Step 5.5 in crearTurno() uses .catch() without await — flujo update is best-effort, never blocks HTTP response
 - [23-01] Double-gated guard: tipoTurno.flujoPaciente non-null AND paciente.flujo === PENDIENTE — TipoTurno without flujoPaciente (Control, Consulta pendiente) are no-ops
+- [23-02] CRM flujo filter implemented as OR: [{flujo: CIRUGIA}, {flujo: null}] — NOT the earlier research suggestion of AND etapaCRM IS NOT NULL; simpler and correct since legacy row retention is the goal
+- [23-02] Relation-filtered queries (ContactoLog, Presupuesto) use nested paciente: { OR: [...] } pattern; direct Paciente queries use top-level OR
 
 ### Decisions (carry-forward from v1.3)
 - Future date boundary uses `hoy.setHours(23, 59, 59, 999)` so today is not rejected in HC entries
@@ -77,6 +79,6 @@ Last activity: 2026-04-16 — Plan 23-01 complete — crearTurno() step 5.5 fluj
 
 ## Session Continuity
 
-Last session: 2026-04-16T12:40:35.917Z
-Stopped at: Completed 23-01-PLAN.md
+Last session: 2026-04-16T12:50:00.000Z
+Stopped at: Completed 23-02-PLAN.md
 Resume file: None

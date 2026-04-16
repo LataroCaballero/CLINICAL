@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Flujo de Pacientes
-status: completed
-stopped_at: Phase 24 context gathered
-last_updated: "2026-04-16T14:13:04.724Z"
-last_activity: 2026-04-16 — Plan 23-02 complete — flujo CRM filter OR[CIRUGIA|null] across 8 call sites in pacientes.service, crm-dashboard.service, crm-metrics.service
+status: in-progress
+stopped_at: Completed 24-01-PLAN.md
+last_updated: "2026-04-16T15:16:34Z"
+last_activity: 2026-04-16 — Plan 24-01 complete — LiveTurno store extended with pacienteFlujo + bannerDismissed for PENDIENTE classification banner
 progress:
   total_phases: 4
   completed_phases: 2
-  total_plans: 5
-  completed_plans: 5
-  percent: 100
+  total_plans: 7
+  completed_plans: 6
+  percent: 43
 ---
 
 # Project State
@@ -21,19 +21,19 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-15)
 
 **Core value:** Que un cirujano plástico cierre más cirugías — el sistema hace visible qué pacientes seguir, cuándo y cómo, de la manera más automatizada posible
-**Current focus:** v1.4 Flujo de Pacientes — Phase 23: Backend Logic
+**Current focus:** v1.4 Flujo de Pacientes — Phase 24: LiveTurno Banner
 
 ## Current Position
 
 ```
 Milestone: v1.4 Flujo de Pacientes
-Phase:     23 of 25 (Backend Logic) — In Progress
-Plan:      2 of 2 complete
-Status:    Phase complete
-Progress:  [██████████] 100% (phase 23 done)
+Phase:     24 of 25 (LiveTurno Banner) — In Progress
+Plan:      1 of 2 complete
+Status:    Plan 01 complete
+Progress:  [████░░░░░░] 43% (phase 24 plan 01 done)
 ```
 
-Last activity: 2026-04-16 — Plan 23-02 complete — flujo CRM filter OR[CIRUGIA|null] across 8 call sites in pacientes.service, crm-dashboard.service, crm-metrics.service
+Last activity: 2026-04-16 — Plan 24-01 complete — LiveTurno store extended with pacienteFlujo + bannerDismissed for PENDIENTE classification banner
 
 ## Milestone Summary
 
@@ -66,6 +66,9 @@ Last activity: 2026-04-16 — Plan 23-02 complete — flujo CRM filter OR[CIRUGI
 - [23-01] Double-gated guard: tipoTurno.flujoPaciente non-null AND paciente.flujo === PENDIENTE — TipoTurno without flujoPaciente (Control, Consulta pendiente) are no-ops
 - [23-02] CRM flujo filter implemented as OR: [{flujo: CIRUGIA}, {flujo: null}] — NOT the earlier research suggestion of AND etapaCRM IS NOT NULL; simpler and correct since legacy row retention is the goal
 - [23-02] Relation-filtered queries (ContactoLog, Presupuesto) use nested paciente: { OR: [...] } pattern; direct Paciente queries use top-level OR
+- [24-01] pacienteFlujo is part of LiveTurnoSession (persisted via partialize session object) — survives recovery dialog; bannerDismissed is NOT in partialize (session-only lifetime, resets on startSession)
+- [24-01] startSession() explicitly resets bannerDismissed: false — banner always shows at start of a new PENDIENTE session
+- [24-01] LiveTurnoSyncChecker passes pacienteFlujo: null for recovered sessions — flujo unknown on recovery, no banner shown
 
 ### Decisions (carry-forward from v1.3)
 - Future date boundary uses `hoy.setHours(23, 59, 59, 999)` so today is not rejected in HC entries

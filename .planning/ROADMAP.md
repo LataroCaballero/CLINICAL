@@ -162,7 +162,7 @@ Full details: `.planning/milestones/v1.3-ROADMAP.md`
 | 21. Agenda Widget + Modal HC | v1.3 | 3/3 | Complete | 2026-04-09 |
 | 22. Schema Foundation | v1.4 | 3/3 | Complete | 2026-04-15 |
 | 23. Backend Logic | v1.4 | 2/2 | Complete | 2026-04-16 |
-| 24. LiveTurno Banner | v1.4 | 0/2 | Not started | - |
+| 24. LiveTurno Banner | 1/2 | In Progress|  | - |
 | 25. Tratamientos Tab | v1.4 | 0/TBD | Not started | - |
 
 ---

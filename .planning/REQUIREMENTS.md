@@ -27,9 +27,9 @@
 
 ### LiveTurno — Clasificación Pendiente
 
-- [ ] **LIVT-01**: En LiveTurno, si el paciente tiene flujo = PENDIENTE, aparece un banner amber no bloqueante indicando que debe clasificarse
-- [ ] **LIVT-02**: Desde el banner, el profesional puede clasificar al paciente como "Cirugía" o "Tratamiento"; el banner desaparece tras la acción y el flujo del paciente queda guardado
-- [ ] **LIVT-03**: El banner es dismissible por sesión (desaparece sin clasificar); el paciente permanece PENDIENTE y el banner vuelve a aparecer en la próxima sesión LiveTurno
+- [x] **LIVT-01**: En LiveTurno, si el paciente tiene flujo = PENDIENTE, aparece un banner amber no bloqueante indicando que debe clasificarse
+- [x] **LIVT-02**: Desde el banner, el profesional puede clasificar al paciente como "Cirugía" o "Tratamiento"; el banner desaparece tras la acción y el flujo del paciente queda guardado
+- [x] **LIVT-03**: El banner es dismissible por sesión (desaparece sin clasificar); el paciente permanece PENDIENTE y el banner vuelve a aparecer en la próxima sesión LiveTurno
 
 ### Lista de Tratamientos
 
@@ -78,9 +78,9 @@
 | CRM-01 | Phase 23 | Complete |
 | CRM-02 | Phase 23 | Complete |
 | CRM-03 | Phase 23 | Complete |
-| LIVT-01 | Phase 24 | Pending |
-| LIVT-02 | Phase 24 | Pending |
-| LIVT-03 | Phase 24 | Pending |
+| LIVT-01 | Phase 24 | Complete |
+| LIVT-02 | Phase 24 | Complete |
+| LIVT-03 | Phase 24 | Complete |
 | TRAT-01 | Phase 25 | Pending |
 | TRAT-02 | Phase 25 | Pending |
 | TRAT-03 | Phase 25 | Pending |

@@ -58,6 +58,7 @@ export function LiveTurnoSyncChecker() {
       tipoTurnoId: '', // No lo tenemos, pero no es crítico
       startedAt: sesionHuerfana.inicioReal,
       scheduledStart: sesionHuerfana.inicioReal,
+      pacienteFlujo: null, // Sesión recuperada: flujo desconocido, no se muestra banner
     });
     setShowDialog(false);
   };

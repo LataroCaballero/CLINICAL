@@ -14,6 +14,7 @@ export interface LiveTurnoSession {
   tipoTurnoId: string;
   startedAt: string; // ISO string
   scheduledStart: string; // Original turno.inicio
+  pacienteFlujo: 'PENDIENTE' | 'CIRUGIA' | 'TRATAMIENTO' | null;
 }
 
 export interface HCFormDraft {
@@ -60,6 +61,10 @@ interface LiveTurnoState {
   showRecoveryDialog: boolean;
   _hasHydrated: boolean;
 
+  // Banner state
+  bannerDismissed: boolean;
+  dismissBanner: () => void;
+
   // Actions
   startSession: (session: LiveTurnoSession) => void;
   endSession: () => void;
@@ -94,6 +99,7 @@ const initialState = {
   activeTab: 'hc' as LiveTurnoTab,
   showRecoveryDialog: false,
   _hasHydrated: false,
+  bannerDismissed: false,
 };
 
 export const useLiveTurnoStore = create<LiveTurnoState>()(
@@ -109,6 +115,7 @@ export const useLiveTurnoStore = create<LiveTurnoState>()(
           activeTab: 'hc',
           draftData: {},
           showRecoveryDialog: false,
+          bannerDismissed: false,
         });
       },
 
@@ -155,6 +162,8 @@ export const useLiveTurnoStore = create<LiveTurnoState>()(
       acknowledgeRecovery: () => {
         set({ showRecoveryDialog: false, isPanelOpen: true });
       },
+
+      dismissBanner: () => set({ bannerDismissed: true }),
 
       discardRecovery: () => {
         set({

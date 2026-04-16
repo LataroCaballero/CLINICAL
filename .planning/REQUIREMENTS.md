@@ -12,10 +12,10 @@
 
 ### Flujo del Paciente
 
-- [ ] **FLUJO-01**: Al crear un turno de tipo "Consulta para cirugía", el flujo del paciente se actualiza automáticamente a CIRUGIA (solo si el paciente está en PENDIENTE — no sobreescribe clasificaciones existentes)
-- [ ] **FLUJO-02**: Al crear un turno de tipo "Consulta para tratamiento en consultorio", el flujo del paciente se actualiza automáticamente a TRATAMIENTO (solo si el paciente está en PENDIENTE)
-- [ ] **FLUJO-03**: Al crear un turno de tipo "Pre-operatorio", el flujo del paciente se actualiza a CIRUGIA (solo si está en PENDIENTE)
-- [ ] **FLUJO-04**: Los tipos "Control" y "Consulta pendiente" no modifican el flujo del paciente
+- [x] **FLUJO-01**: Al crear un turno de tipo "Consulta para cirugía", el flujo del paciente se actualiza automáticamente a CIRUGIA (solo si el paciente está en PENDIENTE — no sobreescribe clasificaciones existentes)
+- [x] **FLUJO-02**: Al crear un turno de tipo "Consulta para tratamiento en consultorio", el flujo del paciente se actualiza automáticamente a TRATAMIENTO (solo si el paciente está en PENDIENTE)
+- [x] **FLUJO-03**: Al crear un turno de tipo "Pre-operatorio", el flujo del paciente se actualiza a CIRUGIA (solo si está en PENDIENTE)
+- [x] **FLUJO-04**: Los tipos "Control" y "Consulta pendiente" no modifican el flujo del paciente
 - [ ] **FLUJO-05**: La lista de pacientes muestra un badge de flujo por paciente: CIRUGIA (azul), TRATAMIENTO (verde), PENDIENTE (amber), sin clasificar/legacy (gris)
 - [x] **FLUJO-06**: Los pacientes existentes en el embudo CRM migran a flujo = CIRUGIA en base a historial de turnos (Turno.esCirugia / etapaCRM activo); pacientes sin historial quedan como null (sin clasificar — no aparecen en embudo ni en lista de tratamientos)
 
@@ -69,10 +69,10 @@
 |-------------|-------|--------|
 | TIPOS-01 | Phase 22 | Complete |
 | TIPOS-02 | Phase 22 | Complete |
-| FLUJO-01 | Phase 23 | Pending |
-| FLUJO-02 | Phase 23 | Pending |
-| FLUJO-03 | Phase 23 | Pending |
-| FLUJO-04 | Phase 23 | Pending |
+| FLUJO-01 | Phase 23 | Complete |
+| FLUJO-02 | Phase 23 | Complete |
+| FLUJO-03 | Phase 23 | Complete |
+| FLUJO-04 | Phase 23 | Complete |
 | FLUJO-05 | Phase 25 | Pending |
 | FLUJO-06 | Phase 22 | Complete |
 | CRM-01 | Phase 23 | Pending |

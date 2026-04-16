@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Flujo de Pacientes
 status: executing
-stopped_at: Phase 23 context gathered
-last_updated: "2026-04-16T12:05:36.177Z"
+stopped_at: Completed 23-01-PLAN.md
+last_updated: "2026-04-16T12:40:35.919Z"
 last_activity: "2026-04-15 — Plan 22-03 complete — PATCH /pacientes/:id/flujo endpoint with FACTURADOR exclusion via method-level @Auth override"
 progress:
   total_phases: 4
   completed_phases: 1
-  total_plans: 3
-  completed_plans: 3
+  total_plans: 5
+  completed_plans: 4
   percent: 33
 ---
 
@@ -21,19 +21,19 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-15)
 
 **Core value:** Que un cirujano plástico cierre más cirugías — el sistema hace visible qué pacientes seguir, cuándo y cómo, de la manera más automatizada posible
-**Current focus:** v1.4 Flujo de Pacientes — Phase 22: Schema Foundation
+**Current focus:** v1.4 Flujo de Pacientes — Phase 23: Backend Logic
 
 ## Current Position
 
 ```
 Milestone: v1.4 Flujo de Pacientes
-Phase:     22 of 25 (Schema Foundation) — COMPLETE
-Plan:      3 of 3 complete
-Status:    In progress (Phase 23 next)
-Progress:  [███░░░░░░░] 33%
+Phase:     23 of 25 (Backend Logic) — In Progress
+Plan:      1 of 2 complete
+Status:    In progress
+Progress:  [█████████░] 94%
 ```
 
-Last activity: 2026-04-15 — Plan 22-03 complete — PATCH /pacientes/:id/flujo endpoint with FACTURADOR exclusion via method-level @Auth override
+Last activity: 2026-04-16 — Plan 23-01 complete — crearTurno() step 5.5 flujo auto-update best-effort fire-and-forget
 
 ## Milestone Summary
 
@@ -62,6 +62,8 @@ Last activity: 2026-04-15 — Plan 22-03 complete — PATCH /pacientes/:id/flujo
 - [22-02] DB has 6 TipoTurno records (5 new + pre-existing Cirugia); seed creates only the 5 new types for dev environments
 - [22-03] RolesGuard.getAllAndOverride([handler, class]) — method-level @Auth takes priority over class-level; PATCH /pacientes/:id/flujo restricts to ADMIN+PROFESIONAL+SECRETARIA excluding FACTURADOR
 - [22-03] UpdateFlujoDto does not accept null; future "clear flujo" will require a separate endpoint
+- [23-01] Step 5.5 in crearTurno() uses .catch() without await — flujo update is best-effort, never blocks HTTP response
+- [23-01] Double-gated guard: tipoTurno.flujoPaciente non-null AND paciente.flujo === PENDIENTE — TipoTurno without flujoPaciente (Control, Consulta pendiente) are no-ops
 
 ### Decisions (carry-forward from v1.3)
 - Future date boundary uses `hoy.setHours(23, 59, 59, 999)` so today is not rejected in HC entries
@@ -75,6 +77,6 @@ Last activity: 2026-04-15 — Plan 22-03 complete — PATCH /pacientes/:id/flujo
 
 ## Session Continuity
 
-Last session: 2026-04-16T12:05:36.173Z
-Stopped at: Phase 23 context gathered
-Resume file: .planning/phases/23-backend-logic/23-CONTEXT.md
+Last session: 2026-04-16T12:40:35.917Z
+Stopped at: Completed 23-01-PLAN.md
+Resume file: None

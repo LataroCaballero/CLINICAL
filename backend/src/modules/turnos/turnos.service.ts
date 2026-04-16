@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -14,6 +15,7 @@ import {
   EstadoCirugia,
   EtapaCRM,
   TipoContacto,
+  FlujoPaciente,
 } from '@prisma/client';
 import { getDayRange } from '@/src/common/utils/date-range';
 import { ReprogramarTurnoDto } from './dto/reprogramar-turno.dto';
@@ -23,6 +25,8 @@ import { CuentasCorrientesService } from '../cuentas-corrientes/cuentas-corrient
 
 @Injectable()
 export class TurnosService {
+  private readonly logger = new Logger(TurnosService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly cuentasCorrientesService: CuentasCorrientesService,
@@ -46,7 +50,7 @@ export class TurnosService {
       }),
       this.prisma.tipoTurno.findUnique({
         where: { id: dto.tipoTurnoId },
-        select: { id: true, duracionDefault: true },
+        select: { id: true, duracionDefault: true, flujoPaciente: true },
       }),
     ]);
 
@@ -125,7 +129,7 @@ export class TurnosService {
     // 5) CRM auto-transition: avanzar a TURNO_AGENDADO si el paciente está en etapa inicial
     const pacienteCRM = await this.prisma.paciente.findUnique({
       where: { id: dto.pacienteId },
-      select: { etapaCRM: true, profesionalId: true },
+      select: { etapaCRM: true, profesionalId: true, flujo: true },
     });
     const etapasIniciales: (EtapaCRM | null)[] = [null, EtapaCRM.NUEVO_LEAD];
     if (etapasIniciales.includes(pacienteCRM?.etapaCRM ?? null)) {

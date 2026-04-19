@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Flujo de Pacientes
 status: in-progress
-stopped_at: Completed 24-01-PLAN.md
-last_updated: "2026-04-16T15:16:34Z"
-last_activity: 2026-04-16 — Plan 24-01 complete — LiveTurno store extended with pacienteFlujo + bannerDismissed for PENDIENTE classification banner
+stopped_at: Completed 24-02-PLAN.md
+last_updated: "2026-04-16T16:00:00Z"
+last_activity: 2026-04-16 — Plan 24-02 complete — LiveTurnoFlujoBanner amber classification banner component created and mounted in LiveTurnoPanel
 progress:
   total_phases: 4
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 7
-  completed_plans: 6
-  percent: 43
+  completed_plans: 7
+  percent: 57
 ---
 
 # Project State
@@ -27,13 +27,13 @@ See: .planning/PROJECT.md (updated 2026-04-15)
 
 ```
 Milestone: v1.4 Flujo de Pacientes
-Phase:     24 of 25 (LiveTurno Banner) — In Progress
-Plan:      1 of 2 complete
-Status:    Plan 01 complete
-Progress:  [████░░░░░░] 43% (phase 24 plan 01 done)
+Phase:     24 of 25 (LiveTurno Banner) — Complete
+Plan:      2 of 2 complete
+Status:    Phase 24 complete
+Progress:  [██████░░░░] 57% (phase 24 complete)
 ```
 
-Last activity: 2026-04-16 — Plan 24-01 complete — LiveTurno store extended with pacienteFlujo + bannerDismissed for PENDIENTE classification banner
+Last activity: 2026-04-16 — Plan 24-02 complete — LiveTurnoFlujoBanner amber classification banner component created and mounted in LiveTurnoPanel
 
 ## Milestone Summary
 
@@ -69,6 +69,10 @@ Last activity: 2026-04-16 — Plan 24-01 complete — LiveTurno store extended w
 - [24-01] pacienteFlujo is part of LiveTurnoSession (persisted via partialize session object) — survives recovery dialog; bannerDismissed is NOT in partialize (session-only lifetime, resets on startSession)
 - [24-01] startSession() explicitly resets bannerDismissed: false — banner always shows at start of a new PENDIENTE session
 - [24-01] LiveTurnoSyncChecker passes pacienteFlujo: null for recovered sessions — flujo unknown on recovery, no banner shown
+- [24-02] Banner visibility gate uses strict === 'PENDIENTE' — null (legacy) and CIRUGIA/TRATAMIENTO never trigger the banner
+- [24-02] handleClassify transitions phase immediately (optimistic) before async PATCH — best-effort with silent catch, never blocks UI
+- [24-02] handleDismiss calls dismissBanner() only — no setPhase needed; store flag causes early return on next render
+- [24-02] Banner is a flex-column sibling (NOT inside scrollable div) — stays fixed while tab content scrolls
 
 ### Decisions (carry-forward from v1.3)
 - Future date boundary uses `hoy.setHours(23, 59, 59, 999)` so today is not rejected in HC entries
@@ -82,6 +86,6 @@ Last activity: 2026-04-16 — Plan 24-01 complete — LiveTurno store extended w
 
 ## Session Continuity
 
-Last session: 2026-04-16T14:13:04.721Z
-Stopped at: Phase 24 context gathered
-Resume file: .planning/phases/24-liveturno-banner/24-CONTEXT.md
+Last session: 2026-04-16T16:00:00Z
+Stopped at: Completed 24-02-PLAN.md — Phase 24 LiveTurno Banner complete
+Resume file: .planning/phases/24-liveturno-banner/24-02-SUMMARY.md

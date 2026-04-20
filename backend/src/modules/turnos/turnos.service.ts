@@ -399,6 +399,7 @@ export class TurnosService {
           select: {
             id: true,
             nombre: true,
+            flujoPaciente: true,
           },
         },
       },

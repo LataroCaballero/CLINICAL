@@ -21,6 +21,7 @@ export interface PacienteListItem {
   indicacionesEnviadas?: boolean;
   estudiosPendientes: number;
   presupuestoEstado?: string | null;
+  flujo?: 'CIRUGIA' | 'TRATAMIENTO' | 'PENDIENTE' | null;
 }
 
 export interface ObraSocialRef {
@@ -54,4 +55,5 @@ export interface PacienteDetalle {
   | "PRESUPUESTO"
   | "PRIMERA"
   | "PRACTICA_CONSULTORIO";
+  flujo?: 'CIRUGIA' | 'TRATAMIENTO' | 'PENDIENTE' | null;
 }

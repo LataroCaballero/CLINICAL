@@ -16,7 +16,7 @@
 - [x] **FLUJO-02**: Al crear un turno de tipo "Consulta para tratamiento en consultorio", el flujo del paciente se actualiza automáticamente a TRATAMIENTO (solo si el paciente está en PENDIENTE)
 - [x] **FLUJO-03**: Al crear un turno de tipo "Pre-operatorio", el flujo del paciente se actualiza a CIRUGIA (solo si está en PENDIENTE)
 - [x] **FLUJO-04**: Los tipos "Control" y "Consulta pendiente" no modifican el flujo del paciente
-- [ ] **FLUJO-05**: La lista de pacientes muestra un badge de flujo por paciente: CIRUGIA (azul), TRATAMIENTO (verde), PENDIENTE (amber), sin clasificar/legacy (gris)
+- [x] **FLUJO-05**: La lista de pacientes muestra un badge de flujo por paciente: CIRUGIA (azul), TRATAMIENTO (verde), PENDIENTE (amber), sin clasificar/legacy (gris)
 - [x] **FLUJO-06**: Los pacientes existentes en el embudo CRM migran a flujo = CIRUGIA en base a historial de turnos (Turno.esCirugia / etapaCRM activo); pacientes sin historial quedan como null (sin clasificar — no aparecen en embudo ni en lista de tratamientos)
 
 ### CRM / Embudo
@@ -34,7 +34,7 @@
 ### Lista de Tratamientos
 
 - [ ] **TRAT-01**: La página de pacientes tiene un nuevo tab "Tratamientos" junto a "Embudo" y "Lista"
-- [ ] **TRAT-02**: El tab muestra todos los turnos del mes con tipo de flujo TRATAMIENTO del profesional, ordenados por día
+- [x] **TRAT-02**: El tab muestra todos los turnos del mes con tipo de flujo TRATAMIENTO del profesional, ordenados por día
 - [ ] **TRAT-03**: La lista es navegable por mes (botones anterior / actual / siguiente), con el mes actual como default
 - [ ] **TRAT-04**: La lista es filtrable por tipo de turno de tratamiento (dropdown, "Todos" por defecto)
 - [ ] **TRAT-05**: Cada fila muestra: fecha+hora, nombre del paciente (clickable al drawer), tipo de turno, estado del turno
@@ -73,7 +73,7 @@
 | FLUJO-02 | Phase 23 | Complete |
 | FLUJO-03 | Phase 23 | Complete |
 | FLUJO-04 | Phase 23 | Complete |
-| FLUJO-05 | Phase 25 | Pending |
+| FLUJO-05 | Phase 25 | Complete |
 | FLUJO-06 | Phase 22 | Complete |
 | CRM-01 | Phase 23 | Complete |
 | CRM-02 | Phase 23 | Complete |
@@ -82,7 +82,7 @@
 | LIVT-02 | Phase 24 | Complete |
 | LIVT-03 | Phase 24 | Complete |
 | TRAT-01 | Phase 25 | Pending |
-| TRAT-02 | Phase 25 | Pending |
+| TRAT-02 | Phase 25 | Complete |
 | TRAT-03 | Phase 25 | Pending |
 | TRAT-04 | Phase 25 | Pending |
 | TRAT-05 | Phase 25 | Pending |

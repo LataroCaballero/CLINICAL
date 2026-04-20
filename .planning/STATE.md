@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Flujo de Pacientes
 status: completed
-stopped_at: Phase 25 context gathered
-last_updated: "2026-04-20T00:49:37.727Z"
-last_activity: 2026-04-16 — Plan 24-02 complete — LiveTurnoFlujoBanner amber classification banner component created and mounted in LiveTurnoPanel
+stopped_at: "Completed 25-01-PLAN.md"
+last_updated: "2026-04-20T14:48:39Z"
+last_activity: 2026-04-20 — Plan 25-01 complete — flujo field in PacienteListaDto and flujoPaciente in TurnoRango select; frontend types updated
 progress:
   total_phases: 4
   completed_phases: 3
-  total_plans: 7
-  completed_plans: 7
-  percent: 57
+  total_plans: 8
+  completed_plans: 8
+  percent: 64
 ---
 
 # Project State
@@ -27,13 +27,13 @@ See: .planning/PROJECT.md (updated 2026-04-15)
 
 ```
 Milestone: v1.4 Flujo de Pacientes
-Phase:     24 of 25 (LiveTurno Banner) — Complete
-Plan:      2 of 2 complete
-Status:    Phase 24 complete
-Progress:  [██████░░░░] 57% (phase 24 complete)
+Phase:     25 of 25 (Tratamientos Tab) — In Progress
+Plan:      1 of 3 complete
+Status:    Phase 25 in progress — Plan 25-01 complete
+Progress:  [███████░░░] 64% (plan 25-01 complete)
 ```
 
-Last activity: 2026-04-16 — Plan 24-02 complete — LiveTurnoFlujoBanner amber classification banner component created and mounted in LiveTurnoPanel
+Last activity: 2026-04-20 — Plan 25-01 complete — flujo field in PacienteListaDto and flujoPaciente in TurnoRango select; frontend types updated
 
 ## Milestone Summary
 
@@ -73,6 +73,9 @@ Last activity: 2026-04-16 — Plan 24-02 complete — LiveTurnoFlujoBanner amber
 - [24-02] handleClassify transitions phase immediately (optimistic) before async PATCH — best-effort with silent catch, never blocks UI
 - [24-02] handleDismiss calls dismissBanner() only — no setPhase needed; store flag causes early return on next render
 - [24-02] Banner is a flex-column sibling (NOT inside scrollable div) — stays fixed while tab content scrolls
+- [25-01] flujo added as string | null to PacienteListaDto (not enum import) to avoid circular-import risk
+- [25-01] flujoPaciente in TurnoRango.tipoTurno typed as string | null in frontend hook — keeps hooks decoupled from backend enum types
+- [25-01] flujo added to both PacienteListItem and PacienteDetalle so Plan 02 (flujo badge) has the field available for both list and drawer
 
 ### Decisions (carry-forward from v1.3)
 - Future date boundary uses `hoy.setHours(23, 59, 59, 999)` so today is not rejected in HC entries

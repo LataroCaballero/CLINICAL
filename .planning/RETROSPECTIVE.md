@@ -95,6 +95,49 @@
 
 ---
 
+## Milestone: v1.4 — Flujo de Pacientes
+
+**Shipped:** 2026-04-20
+**Phases:** 4 (22–25) | **Plans:** 10 | **Timeline:** 5 days (2026-04-15 → 2026-04-20)
+
+### What Was Built
+- Schema FlujoPaciente: enum PostgreSQL + Paciente.flujo + TipoTurno.flujoPaciente con migración transaccional y backfill de pacientes existentes (null = legacy, PENDIENTE = nuevos inserts)
+- 5 nuevos tipos de turno con semántica de flujo explícita reemplazando 3 tipos legacy (UPDATE en lugar de INSERT por UNIQUE constraint en nombre)
+- Auto-clasificación en crearTurno() como step 5.5 best-effort: guard PENDIENTE-only preserva clasificaciones manuales previas
+- CRM filtrado a CIRUGIA: getKanban, getListaAccion, crm-dashboard, crm-metrics — pacientes legacy (flujo IS NULL + etapaCRM) preservados
+- LiveTurnoFlujoBanner: store extension con bannerDismissed por sesión, PATCH /pacientes/:id/flujo, clasificación in-situ sin interrumpir el flujo de atención
+- TratamientosTab: useTratamientosMes hook, tabla con navegación mensual y filtro por tipo, FlujoBadge component reutilizable en tabla de pacientes y drawer
+
+### What Worked
+- **Milestone más rápido hasta la fecha**: 4 fases + 10 planes en 5 días — la claridad del objetivo (separar dos funnels) se tradujo en planes sin ambigüedad
+- **Audit pre-completion**: tener el audit hecho antes de iniciar el archivado eliminó sorpresas; 20/20 satisfechos sin rondas de fix
+- **Guard PENDIENTE-only** como regla simple: en lugar de lógica compleja de "cuándo sobreescribir", la regla "solo si PENDIENTE" simplificó el código y la comunicación al equipo
+- **Phase 22 como fundación sólida**: invertir en la migración SQL correcta (DDL + data migration transaccional + backfill) eliminó cualquier issue de datos en las fases siguientes
+
+### What Was Inefficient
+- **Tech debt conocido al cerrar**: `(paciente.flujo as any)` cast en PacienteDetails.tsx — el componente recibe `paciente` como any; corregible con un tipo explícito en el DTO de drawer
+- **MILESTONES.md accomplishments vacíos** (recurrente): el CLI gsd-tools no extrae `one_liner` porque los SUMMARY.md no usan ese campo — sigue requiriendo edición manual
+- **Walk-in patients sin auto-clasificación TRATAMIENTO**: el diseño conservador (guard PENDIENTE-only excluye flujo=null) es correcto pero implica que pacientes walk-in quedan sin clasificar hasta acción manual; documentado como deuda
+
+### Patterns Established
+- `FlujoPaciente enum` colocated con enums CRM en schema.prisma — agrupar por dominio de negocio, no por tipo técnico
+- Migración split: DDL fuera de BEGIN/COMMIT (restricción PostgreSQL), data migration dentro de transacción
+- Best-effort update pattern: side effects de negocio (actualizar flujo) que no deben bloquear la operación principal (crear turno) van en try/catch con Logger.error
+- PATCH endpoint restrictivo con `@Auth(Role.PROFESIONAL, Role.ADMIN)` para operaciones de reclasificación manual
+
+### Key Lessons
+1. **Separar el "qué" del embudo del "qué" de la lista**: el insight de que cirugías y tratamientos tienen KPIs incompatibles (tasa de conversión vs. volumen mensual) fue el driver correcto; dos vistas distintas en lugar de filtrar una
+2. **Null semántico vs. null técnico**: usar null = legacy (no PENDIENTE) fue la decisión correcta para no vaciar el kanban CRM post-migración; documentar esta distinción explícitamente en el schema comment
+3. **Banner dismissible sin DB write**: resistir la tentación de persistir el dismiss en DB simplificó el backend y la UX (el profesional puede siempre volver a ver el banner en nueva sesión si lo olvidó)
+4. **Audit antes de archivar** (validado de nuevo): tener el AUDIT.md con 20/20 antes de correr `/gsd:complete-milestone` hizo el archivado lineal sin retrocesos
+
+### Cost Observations
+- Model: claude-sonnet-4-6 (balanced profile)
+- Sessions: ~10 plan executions + 1 audit (pre-completion)
+- Notable: v1.4 fue el milestone con mejor ratio plans/days de todos — objetivo bien acotado + schema sólido = ejecución fluida
+
+---
+
 ## Cross-Milestone Trends
 
 ### Process Evolution
@@ -104,6 +147,8 @@
 | v1.0 CRM Conversión | 9 | 23 | 8 días | ~21min | Baseline |
 | v1.1 Vista Facturador | 4 | 9 | 3 días | ~6min est. | Planes más pequeños y focalizados |
 | v1.2 AFIP Real | 8 | 24 | 50 días | ~variable | Complejidad regulatoria + audit rounds; 2 gap-closure phases |
+| v1.3 Historial Consultas | 2 | 4 | 7 días | ~variable | Milestone corto, widget-focused |
+| v1.4 Flujo de Pacientes | 4 | 10 | 5 días | ~variable | Mejor ratio plans/days — objetivo acotado y schema sólido |
 
 ### Cumulative Quality
 
@@ -112,11 +157,13 @@
 | v1.0 | ~minimal | <6% | BullMQ (ya existía) |
 | v1.1 | 9 TDD tests (timezone + service) | <6% | ninguna |
 | v1.2 | ~40+ TDD tests (WSAA, AfipReal, CAEA, processor) | <10% | node-forge 1.3.3, qrcode 1.5.4, async-mutex |
+| v1.3 | ~minimal | <10% | ninguna |
+| v1.4 | ~minimal | <10% | ninguna |
 
 ### Recurring Process Debt
 
 | Issue | v1.0 | v1.1 | v1.2 | Fix |
 |-------|------|------|------|-----|
-| MILESTONES.md accomplishments vacíos | — | ✗ | ✗ | Actualizar formato SUMMARY.md con `one_liner:` field |
-| STATE.md progress desactualizado durante ejecución | — | ✗ | parcial | GSD executor actualiza STATE al final de cada plan |
-| Integration bugs detectados tarde (audit, no verify) | — | — | ✗ | Correr integration checker en verify de cada phase |
+| MILESTONES.md accomplishments vacíos | — | ✗ | ✗ | ✗ | Actualizar formato SUMMARY.md con `one_liner:` field |
+| STATE.md progress desactualizado durante ejecución | — | ✗ | parcial | parcial | GSD executor actualiza STATE al final de cada plan |
+| Integration bugs detectados tarde (audit, no verify) | — | — | ✗ | ✓ audit pre-archivado | Audit antes de complete-milestone elimina retrabajo |

@@ -4,7 +4,7 @@ milestone: v1.4
 milestone_name: Flujo de Pacientes
 status: completed
 stopped_at: Completed 25-03-PLAN.md
-last_updated: "2026-04-20T15:03:43.913Z"
+last_updated: "2026-04-20T16:48:59.799Z"
 last_activity: 2026-04-20 — Plan 25-03 complete — TratamientosTab component + third pill view on pacientes page; v1.4 milestone complete
 progress:
   total_phases: 4
@@ -18,10 +18,10 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-04-15)
+See: .planning/PROJECT.md (updated 2026-04-20)
 
 **Core value:** Que un cirujano plástico cierre más cirugías — el sistema hace visible qué pacientes seguir, cuándo y cómo, de la manera más automatizada posible
-**Current focus:** v1.4 Flujo de Pacientes — Phase 24: LiveTurno Banner
+**Current focus:** Planning next milestone (v2.0 TBD)
 
 ## Current Position
 

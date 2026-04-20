@@ -1,5 +1,20 @@
 # Milestones
 
+## v1.4 Flujo de Pacientes (Shipped: 2026-04-20)
+
+**Phases completed:** 4 phases (22–25), 10 plans
+**Stats:** 5 días (2026-04-15 → 2026-04-20) | 51 archivos | +5,197 / -77 líneas | 82,500 LOC TypeScript total
+
+**Key accomplishments:**
+1. Schema FlujoPaciente: enum PostgreSQL + Paciente.flujo + TipoTurno.flujoPaciente con migración transaccional y backfill de pacientes existentes (CIRUGIA para pacientes con historial de cirugía, null para el resto)
+2. 5 nuevos tipos de turno (Consulta para cirugía, Consulta para tratamiento en consultorio, Pre-operatorio, Control, Consulta pendiente) reemplazando los 3 tipos legacy
+3. Auto-clasificación en booking: crearTurno() actualiza flujo a CIRUGIA/TRATAMIENTO según tipo de turno (guard PENDIENTE-only preserva clasificaciones existentes)
+4. CRM/kanban filtrado a cirugía: getKanban, getListaAccion y todos los KPIs del dashboard excluyen pacientes TRATAMIENTO; pacientes legacy (flujo IS NULL con etapaCRM activo) preservados
+5. LiveTurno classification banner: banner amber no bloqueante para pacientes PENDIENTE con botones Cirugía/Tratamiento, dismissible por sesión
+6. Tratamientos Tab: nuevo tab mensual en /dashboard/pacientes con navegación por mes, filtro por tipo de tratamiento, y FlujoBadge por paciente en la tabla general
+
+---
+
 ## v1.2 AFIP Real (Shipped: 2026-03-31)
 
 **Phases completed:** 8 phases (12–19), 24 plans

@@ -67,14 +67,14 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 - ✓ CAEA contingency mode para cuando ARCA no responde — v1.2
 - ✓ QR AFIP en PDF de comprobantes (RG 5616/2024, 13 campos) — v1.2
 - ✓ Errores AFIP en español en modal con error panel (BUG-1 + BUG-2 corregidos) — v1.2
+- ✓ 5 tipos de turno con semántica de flujo (Consulta para cirugía, Consulta para tratamiento, Pre-operatorio, Control, Consulta pendiente) — v1.4
+- ✓ Campo `flujo` (CIRUGIA | TRATAMIENTO | PENDIENTE) en Paciente con auto-update al crear turno (guard PENDIENTE-only) — v1.4
+- ✓ Embudo CRM filtrado exclusivamente a pacientes CIRUGIA; legacy (flujo IS NULL con etapaCRM) preservados — v1.4
+- ✓ Banner LiveTurno amber no bloqueante para clasificar pacientes PENDIENTE (dismissible por sesión) — v1.4
+- ✓ Tab "Tratamientos" en /dashboard/pacientes — lista mensual navegable, filtro por tipo, FlujoBadge por paciente — v1.4
 
 ### Active
 
-- [ ] Nuevos tipos de turno (5 tipos: Consulta para cirugía, Consulta para tratamiento, Pre-operatorio, Control, Consulta pendiente) — v1.4
-- [ ] Campo `flujo` (CIRUGIA | TRATAMIENTO | PENDIENTE) en Paciente con auto-update al crear turno — v1.4
-- [ ] Embudo CRM filtrado a pacientes CIRUGIA únicamente — v1.4
-- [ ] Banner LiveTurno para clasificar pacientes PENDIENTE — v1.4
-- [ ] Tab "Tratamientos" en /dashboard/pacientes — lista mensual, filtros por tratamiento — v1.4
 - [ ] Reportes ejecutivos exportables (comparativas entre períodos) — v2
 - [ ] Historial de liquidaciones por OS con comparativa autorizado vs. pagado — v2
 
@@ -94,7 +94,7 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 
 ## Context
 
-**Estado actual (post-v1.2):** El módulo de facturación electrónica AFIP/ARCA está completo. El Facturador puede emitir comprobantes electrónicos reales (CAE), ver el QR obligatorio RG 5616/2024 en el PDF, configurar el certificado digital por tenant, y el sistema maneja automáticamente el modo contingencia CAEA cuando ARCA no está disponible. 16/16 requisitos del milestone v1.2 satisfechos.
+**Estado actual (post-v1.4):** El sistema diferencia pacientes de cirugía de pacientes de tratamiento en consultorio. El embudo CRM muestra solo pacientes CIRUGIA; los pacientes TRATAMIENTO aparecen en el nuevo tab Tratamientos. Los profesionales pueden clasificar pacientes PENDIENTE directamente desde LiveTurno. 20/20 requisitos del milestone v1.4 satisfechos en 5 días (4 fases, 10 planes).
 
 **Stack:** NestJS + Prisma + PostgreSQL (backend) | Next.js 16 + React 19 + TypeScript (frontend) | BullMQ + Redis (async) | WhatsApp Cloud API | node-forge (firma CMS WSAA) | qrcode 1.5.4 + PDFKit (QR en PDF).
 
@@ -148,6 +148,11 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 | FECAEAInformar + deadline alerts en mismo milestone — v1.2 | CAEA sin inform tracking es riesgo regulatorio (multas) | ✓ Correcto — 72 reintentos en 8 días + email alert antes de vencimiento |
 | afipError persist incondicional en onFailed (BUG-1 fix) — v1.2 | Guard attemptsMade >= maxAttempts impedía persist para UnrecoverableError (attemptsMade=1) | ✓ Correcto — update antes del guard; Test 9 GREEN |
 | Modal condition: EMISION_PENDIENTE \|\| CAEA_PENDIENTE_INFORMAR (BUG-2 fix) — v1.2 | EMISION_PENDIENTE solo dejaba error invisible tras CAEA fallback | ✓ Correcto — ambas rutas de error muestran panel rojo |
+| Paciente.flujo sin SQL DEFAULT (null = legacy) — v1.4 | Backfill CIRUGIA para pacientes activos; null distingue legacy de PENDIENTE sin vaciar el kanban CRM | ✓ Correcto — kanban CRM preservado completamente post-migración |
+| Auto-update flujo en crearTurno() best-effort (step 5.5) — v1.4 | No bloquear creación del turno si el update de flujo falla; resilience > exactitud | ✓ Correcto — clasificación correcta en todos los casos sin regressions |
+| Guard PENDIENTE-only para auto-clasificación — v1.4 | No sobreescribir clasificaciones existentes (CIRUGIA/TRATAMIENTO) al agregar más turnos | ✓ Correcto — pacientes reclasificados manualmente vía banner o PATCH se respetan |
+| Banner LiveTurno dismissible por sesión (no persist en DB) — v1.4 | UX no bloqueante; paciente permanece PENDIENTE hasta que el profesional clasifique explícitamente | ✓ Correcto — banner vuelve a mostrarse en nueva sesión sin DB write extra |
+| Walk-in patients (flujo=null) excluidos del auto-update TRATAMIENTO — v1.4 | Preservar semántica legacy; flujo=null + etapaCRM activo = paciente CRM válido que no debe convertirse en tratamiento | ✓ Correcto — clasificación manual disponible vía banner o PATCH endpoint |
 
 ## Shipped: v1.1 Vista del Facturador ✅
 
@@ -161,16 +166,9 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 
 2 phases (20–21), 4 plans. Widget agenda-first con navegación día a día, métricas del día, botón "Ver HC" por turno FINALIZADO, modal HC retroactivo con fecha histórica. Ver `.planning/milestones/v1.3-ROADMAP.md` para detalles.
 
-## Current Milestone: v1.4 Flujo de Pacientes
+## Shipped: v1.4 Flujo de Pacientes ✅
 
-**Goal:** Clasificar pacientes en flujos independientes (cirugía vs. tratamiento en consultorio) al momento de dar el turno, separando el embudo CRM de la lista de tratamientos para que las estadísticas de conversión no sean distorsionadas por procedimientos de consultorio.
-
-**Target features:**
-- 5 nuevos tipos de turno: "Consulta para cirugía", "Consulta para tratamiento en consultorio", "Pre-operatorio", "Control", "Consulta pendiente"
-- Campo `flujo` (CIRUGIA | TRATAMIENTO | PENDIENTE) en `Paciente`, auto-actualizado al crear turno clasificatorio
-- Embudo CRM filtrado exclusivamente a pacientes con flujo = CIRUGIA
-- Banner en LiveTurno para clasificar pacientes con flujo = PENDIENTE (→ CIRUGIA o → TRATAMIENTO)
-- Nuevo tab "Tratamientos" en `/dashboard/pacientes` — lista mensual ordenada por día, filtros por tratamiento del catálogo del profesional
+20/20 requisitos completados en 5 días (2026-04-15 → 2026-04-20). 4 fases, 10 planes. Ver `.planning/milestones/v1.4-ROADMAP.md` para detalles.
 
 ## Next Milestone: v2.0 (TBD)
 
@@ -181,4 +179,4 @@ Planning pendiente. Candidatos para el próximo milestone:
 - IVA matrix para cirugía estética (blocker de go-live AFIP producción)
 
 ---
-*Last updated: 2026-04-15 after v1.4 milestone start — Flujo de Pacientes*
+*Last updated: 2026-04-20 after v1.4 milestone — Flujo de Pacientes*

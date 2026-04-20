@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/tooltip";
 import { MedicalChips } from "@/components/ui/MedicalChips";
 import { getPatientAlerts } from "./columns";
+import { FlujoBadge } from "./FlujoBadge";
 import { WhatsappOptInToggle } from "./WhatsappOptInToggle";
 import SendWAMessageModal from "@/components/whatsapp/SendWAMessageModal";
 
@@ -103,6 +104,10 @@ export default function PacienteDetails({ paciente, onAction }: { paciente: any;
             <p className="text-gray-600 flex items-center gap-2">
               <Calendar className="w-4 h-4" /> Edad: {edad} años
             </p>
+
+            <div className="mt-1.5">
+              <FlujoBadge flujo={(paciente.flujo as any) ?? null} />
+            </div>
           </div>
         </div>
         {/* BLOQUE DERECHO – ALERTAS MÉDICAS */}

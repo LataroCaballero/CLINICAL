@@ -3,6 +3,7 @@
 import ObjectionSelect from "@/components/ObjectionSelect";
 import { ColumnDef } from "@tanstack/react-table";
 import { Check, X } from "lucide-react";
+import { FlujoBadge } from "./FlujoBadge";
 
 import { EstadoPresupuesto } from "@/types/presupuesto";
 import EstadoPresupuestoChip from "../../components/presupuestos/EstadoPresupuestoChip";
@@ -144,6 +145,13 @@ export function createPacienteColumns(
         </span>
       );
     },
+  },
+
+  // FLUJO
+  {
+    accessorKey: "flujo",
+    header: "Flujo",
+    cell: ({ row }) => <FlujoBadge flujo={row.original.flujo ?? null} />,
   },
 
   // ÚLTIMO TURNO

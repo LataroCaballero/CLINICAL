@@ -161,6 +161,7 @@ export class PacientesService {
               nombre: p.objecion.nombre,
             }
           : null,
+        flujo: p.flujo ?? null,
       } satisfies PacienteListaDto;
     });
 

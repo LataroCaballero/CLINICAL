@@ -4,13 +4,13 @@ milestone: v1.4
 milestone_name: Flujo de Pacientes
 status: completed
 stopped_at: Completed 25-03-PLAN.md
-last_updated: "2026-04-20T14:57:00Z"
+last_updated: "2026-04-20T15:03:43.913Z"
 last_activity: 2026-04-20 — Plan 25-03 complete — TratamientosTab component + third pill view on pacientes page; v1.4 milestone complete
 progress:
   total_phases: 4
   completed_phases: 4
-  total_plans: 11
-  completed_plans: 11
+  total_plans: 10
+  completed_plans: 10
   percent: 100
 ---
 

@@ -127,7 +127,10 @@ Full details: `.planning/milestones/v1.3-ROADMAP.md`
   2. La lista de tratamientos puede navegarse por mes (botones anterior/siguiente) y el total del mes aparece en el header del tab
   3. La lista es filtrable por tipo de turno de tratamiento desde un dropdown; cada fila muestra fecha+hora, paciente (clickable al drawer), tipo de turno y estado
   4. Cada paciente en la tabla general de pacientes muestra un badge de flujo: CIRUGIA (azul), TRATAMIENTO (verde), PENDIENTE (amber), sin clasificar (gris)
-**Plans**: TBD
+**Plans**: 3 planes
+- [ ] 25-01-PLAN.md — Backend DTO + types: flujo en PacienteListaDto/service + flujoPaciente en obtenerTurnosPorRango + frontend types
+- [ ] 25-02-PLAN.md — FlujoBadge component + flujo column en createPacienteColumns + badge en PacienteDetails drawer
+- [ ] 25-03-PLAN.md — TratamientosTab component + wire into pacientes page (Vista type + 3rd pill button)
 
 ### 📋 v2.0 TBD (Planned)
 
@@ -162,8 +165,8 @@ Full details: `.planning/milestones/v1.3-ROADMAP.md`
 | 21. Agenda Widget + Modal HC | v1.3 | 3/3 | Complete | 2026-04-09 |
 | 22. Schema Foundation | v1.4 | 3/3 | Complete | 2026-04-15 |
 | 23. Backend Logic | v1.4 | 2/2 | Complete | 2026-04-16 |
-| 24. LiveTurno Banner | 2/2 | Complete    | 2026-04-19 | - |
-| 25. Tratamientos Tab | v1.4 | 0/TBD | Not started | - |
+| 24. LiveTurno Banner | v1.4 | 2/2 | Complete | 2026-04-19 |
+| 25. Tratamientos Tab | v1.4 | 0/3 | Not started | - |
 
 ---
 *Roadmap initialized: 2026-02-23 | v1.0 shipped: 2026-03-03 | v1.1 shipped: 2026-03-16 | v1.2 shipped: 2026-03-31 | v1.3 shipped: 2026-04-09 | v1.4 started: 2026-04-15*

@@ -33,12 +33,12 @@
 
 ### Lista de Tratamientos
 
-- [ ] **TRAT-01**: La página de pacientes tiene un nuevo tab "Tratamientos" junto a "Embudo" y "Lista"
+- [x] **TRAT-01**: La página de pacientes tiene un nuevo tab "Tratamientos" junto a "Embudo" y "Lista"
 - [x] **TRAT-02**: El tab muestra todos los turnos del mes con tipo de flujo TRATAMIENTO del profesional, ordenados por día
-- [ ] **TRAT-03**: La lista es navegable por mes (botones anterior / actual / siguiente), con el mes actual como default
-- [ ] **TRAT-04**: La lista es filtrable por tipo de turno de tratamiento (dropdown, "Todos" por defecto)
-- [ ] **TRAT-05**: Cada fila muestra: fecha+hora, nombre del paciente (clickable al drawer), tipo de turno, estado del turno
-- [ ] **TRAT-06**: El header del tab muestra el total de tratamientos del mes seleccionado
+- [x] **TRAT-03**: La lista es navegable por mes (botones anterior / actual / siguiente), con el mes actual como default
+- [x] **TRAT-04**: La lista es filtrable por tipo de turno de tratamiento (dropdown, "Todos" por defecto)
+- [x] **TRAT-05**: Cada fila muestra: fecha+hora, nombre del paciente (clickable al drawer), tipo de turno, estado del turno
+- [x] **TRAT-06**: El header del tab muestra el total de tratamientos del mes seleccionado
 
 ## v2 Requirements (Deferred)
 
@@ -81,12 +81,12 @@
 | LIVT-01 | Phase 24 | Complete |
 | LIVT-02 | Phase 24 | Complete |
 | LIVT-03 | Phase 24 | Complete |
-| TRAT-01 | Phase 25 | Pending |
+| TRAT-01 | Phase 25 | Complete |
 | TRAT-02 | Phase 25 | Complete |
-| TRAT-03 | Phase 25 | Pending |
-| TRAT-04 | Phase 25 | Pending |
-| TRAT-05 | Phase 25 | Pending |
-| TRAT-06 | Phase 25 | Pending |
+| TRAT-03 | Phase 25 | Complete |
+| TRAT-04 | Phase 25 | Complete |
+| TRAT-05 | Phase 25 | Complete |
+| TRAT-06 | Phase 25 | Complete |
 
 **Coverage:**
 - v1.4 requirements: 20 total

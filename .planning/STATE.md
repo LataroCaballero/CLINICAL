@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Flujo de Pacientes
 status: completed
-stopped_at: "Completed 25-02-PLAN.md"
-last_updated: "2026-04-20T14:58:00Z"
-last_activity: 2026-04-20 — Plan 25-01 complete — flujo field in PacienteListaDto and flujoPaciente in TurnoRango select; frontend types updated
+stopped_at: Completed 25-03-PLAN.md
+last_updated: "2026-04-20T14:57:00Z"
+last_activity: 2026-04-20 — Plan 25-03 complete — TratamientosTab component + third pill view on pacientes page; v1.4 milestone complete
 progress:
   total_phases: 4
-  completed_phases: 3
-  total_plans: 8
-  completed_plans: 8
-  percent: 64
+  completed_phases: 4
+  total_plans: 11
+  completed_plans: 11
+  percent: 100
 ---
 
 # Project State
@@ -27,13 +27,13 @@ See: .planning/PROJECT.md (updated 2026-04-15)
 
 ```
 Milestone: v1.4 Flujo de Pacientes
-Phase:     25 of 25 (Tratamientos Tab) — In Progress
-Plan:      2 of 3 complete
-Status:    Phase 25 in progress — Plan 25-02 complete
-Progress:  [████████░░] 72% (plan 25-02 complete)
+Phase:     25 of 25 (Tratamientos Tab) — COMPLETE
+Plan:      3 of 3 complete
+Status:    Phase 25 complete — v1.4 milestone complete
+Progress:  [██████████] 100% (all plans complete)
 ```
 
-Last activity: 2026-04-20 — Plan 25-02 complete — FlujoBadge component + flujo column in pacientes table + badge in patient drawer header
+Last activity: 2026-04-20 — Plan 25-03 complete — TratamientosTab component + third pill view on pacientes page; v1.4 milestone complete
 
 ## Milestone Summary
 
@@ -78,6 +78,8 @@ Last activity: 2026-04-20 — Plan 25-02 complete — FlujoBadge component + flu
 - [25-01] flujo added to both PacienteListItem and PacienteDetalle so Plan 02 (flujo badge) has the field available for both list and drawer
 - [25-02] FlujoBadge uses plain Tailwind span (no shadcn Badge) — matches the existing estado column pattern in columns.tsx
 - [25-02] Badge always shown including null (grey "—") per locked CONTEXT.md decision; flujo column placed after estado, before ultimoTurno
+- [25-03] Dropdown options derived from tratamientoTurnos instead of useTiposTurno — useTiposTurno.TipoTurno lacks flujoPaciente field; deriving from turno data guarantees only tipos present in current month appear
+- [25-03] Month navigation clears filterTipoId to prevent stale filter when switching months
 
 ### Decisions (carry-forward from v1.3)
 - Future date boundary uses `hoy.setHours(23, 59, 59, 999)` so today is not rejected in HC entries
@@ -91,6 +93,6 @@ Last activity: 2026-04-20 — Plan 25-02 complete — FlujoBadge component + flu
 
 ## Session Continuity
 
-Last session: 2026-04-20T00:49:37.723Z
-Stopped at: Phase 25 context gathered
-Resume file: .planning/phases/25-tratamientos-tab/25-CONTEXT.md
+Last session: 2026-04-20T14:56:01.644Z
+Stopped at: Completed 25-03-PLAN.md
+Resume file: None

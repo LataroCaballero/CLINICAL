@@ -166,7 +166,7 @@ Full details: `.planning/milestones/v1.3-ROADMAP.md`
 | 22. Schema Foundation | v1.4 | 3/3 | Complete | 2026-04-15 |
 | 23. Backend Logic | v1.4 | 2/2 | Complete | 2026-04-16 |
 | 24. LiveTurno Banner | v1.4 | 2/2 | Complete | 2026-04-19 |
-| 25. Tratamientos Tab | 1/3 | In Progress|  | - |
+| 25. Tratamientos Tab | 2/3 | In Progress|  | - |
 
 ---
 *Roadmap initialized: 2026-02-23 | v1.0 shipped: 2026-03-03 | v1.1 shipped: 2026-03-16 | v1.2 shipped: 2026-03-31 | v1.3 shipped: 2026-04-09 | v1.4 started: 2026-04-15*

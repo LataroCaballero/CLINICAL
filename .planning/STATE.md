@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Flujo de Pacientes
 status: completed
-stopped_at: "Completed 25-01-PLAN.md"
-last_updated: "2026-04-20T14:48:39Z"
+stopped_at: "Completed 25-02-PLAN.md"
+last_updated: "2026-04-20T14:58:00Z"
 last_activity: 2026-04-20 — Plan 25-01 complete — flujo field in PacienteListaDto and flujoPaciente in TurnoRango select; frontend types updated
 progress:
   total_phases: 4
@@ -28,12 +28,12 @@ See: .planning/PROJECT.md (updated 2026-04-15)
 ```
 Milestone: v1.4 Flujo de Pacientes
 Phase:     25 of 25 (Tratamientos Tab) — In Progress
-Plan:      1 of 3 complete
-Status:    Phase 25 in progress — Plan 25-01 complete
-Progress:  [███████░░░] 64% (plan 25-01 complete)
+Plan:      2 of 3 complete
+Status:    Phase 25 in progress — Plan 25-02 complete
+Progress:  [████████░░] 72% (plan 25-02 complete)
 ```
 
-Last activity: 2026-04-20 — Plan 25-01 complete — flujo field in PacienteListaDto and flujoPaciente in TurnoRango select; frontend types updated
+Last activity: 2026-04-20 — Plan 25-02 complete — FlujoBadge component + flujo column in pacientes table + badge in patient drawer header
 
 ## Milestone Summary
 
@@ -76,6 +76,8 @@ Last activity: 2026-04-20 — Plan 25-01 complete — flujo field in PacienteLis
 - [25-01] flujo added as string | null to PacienteListaDto (not enum import) to avoid circular-import risk
 - [25-01] flujoPaciente in TurnoRango.tipoTurno typed as string | null in frontend hook — keeps hooks decoupled from backend enum types
 - [25-01] flujo added to both PacienteListItem and PacienteDetalle so Plan 02 (flujo badge) has the field available for both list and drawer
+- [25-02] FlujoBadge uses plain Tailwind span (no shadcn Badge) — matches the existing estado column pattern in columns.tsx
+- [25-02] Badge always shown including null (grey "—") per locked CONTEXT.md decision; flujo column placed after estado, before ultimoTurno
 
 ### Decisions (carry-forward from v1.3)
 - Future date boundary uses `hoy.setHours(23, 59, 59, 999)` so today is not rejected in HC entries

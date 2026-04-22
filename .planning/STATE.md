@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Catálogos Clínicos y Flujos de Atención
 status: executing
-stopped_at: Completed 26-03-PLAN.md
-last_updated: "2026-04-22T21:19:27.761Z"
-last_activity: "2026-04-22 — Plan 26-02 complete; insumos management endpoints (PUT :id/insumos, POST :id/recalcular-precio) added to tratamientos module"
+stopped_at: Completed 26-04-PLAN.md
+last_updated: "2026-04-22T21:20:00Z"
+last_activity: "2026-04-22 — Plan 26-04 complete; frontend TypeScript types (TratamientoConInsumos, CirugiaCatalogo) and TanStack Query hooks (useCirugiasCatalogo + 5 mutations) established"
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 7
   completed_plans: 4
-  percent: 29
+  percent: 57
 ---
 
 # Project State
@@ -28,17 +28,18 @@ See: .planning/PROJECT.md (updated 2026-04-22)
 ```
 Milestone: v1.5 Catálogos Clínicos y Flujos de Atención
 Phase:     26 of 31 (Schema Foundation + Catalog CRUD)
-Plan:      3 of 7
+Plan:      5 of 7
 Status:    In progress
-Progress:  [██░░░░░░░░] 29%
+Progress:  [█████░░░░░] 57%
 ```
 
-Last activity: 2026-04-22 — Plan 26-02 complete; insumos management endpoints (PUT :id/insumos, POST :id/recalcular-precio) added to tratamientos module
+Last activity: 2026-04-22 — Plan 26-04 complete; frontend TypeScript types (TratamientoConInsumos, CirugiaCatalogo) and TanStack Query hooks (useCirugiasCatalogo + 5 mutations) established
 
 ## Accumulated Context
 
 ### Key Decisions for v1.5 (from research)
 
+- **26-04 api named export:** `{ api }` is a named export from `@/lib/api`, not a default export — all hooks must use `import { api } from '@/lib/api'`.
 - **26-02 setInsumos transaction pattern:** Uses `$transaction([deleteMany, ...creates])` for atomic insumos replacement — prevents partial state; client sends full desired list.
 - **26-02 null costoBase:** Treated as 0 via `?? 0` in recalcularPrecioBase reduce — products with no cost set are treated as free, not NaN.
 - **26-01 Migration workaround:** Used `prisma db push` + `migrate resolve` instead of `migrate dev` — Supabase pgBouncer shadow DB cannot replay migration 20260415221758_flujo_paciente. Live DB is correct.
@@ -62,6 +63,6 @@ Last activity: 2026-04-22 — Plan 26-02 complete; insumos management endpoints 
 
 ## Session Continuity
 
-Last session: 2026-04-22T21:19:27.759Z
-Stopped at: Completed 26-03-PLAN.md
+Last session: 2026-04-22T21:20:00Z
+Stopped at: Completed 26-04-PLAN.md
 Resume file: None

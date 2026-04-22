@@ -1,310 +1,223 @@
-# Stack Research
+# Stack Research — v1.5 Catálogos Clínicos y Flujos de Atención
 
-**Domain:** Medical clinic SaaS — v1.4 Patient Flow Classification (CIRUGIA | TRATAMIENTO | PENDIENTE)
-**Researched:** 2026-04-15
-**Confidence:** HIGH (all decisions are purely internal schema evolution — no new third-party libraries required)
+**Domain:** Clinical SaaS — catalog extensions, stock-linked items, optimistic UI
+**Researched:** 2026-04-22
+**Confidence:** HIGH
 
----
+## Summary
 
-## Milestone Scope
-
-v1.4 adds patient flow classification on top of the existing TipoTurno + Turno + Paciente models. The entire
-milestone is a **schema extension + service logic change** — no new npm packages needed. The only external
-question is the safest Prisma migration pattern for adding a PostgreSQL enum to an already-populated table,
-which is documented below.
+v1.5 requires zero new npm packages. Every capability needed — multi-select catalog
+pickers, optimistic mutations, many-to-many Prisma relations with quantities, pending
+consumption orders — is already covered by the installed stack. The work is schema
+additions + service composition + hook patterns, not dependency acquisition.
 
 ---
 
-## No New npm Packages Required
+## New Dependencies: None
 
-This milestone does not require any new dependencies. Everything needed is already installed:
+All v1.5 features map cleanly to existing installed libraries:
 
-| Already In Place | Why Sufficient |
-|-----------------|----------------|
-| Prisma 6.x + `@prisma/client` | Enum support, `$transaction`, atomic `UPDATE` |
-| NestJS service pattern | Auto-classification logic drops directly into `TurnosService.crearTurno()` |
-| TanStack Query | New tab in `/dashboard/pacientes` uses same query pattern as existing tabs |
-| Zustand | `useProfessionalContext` store needs no changes |
-| shadcn/ui `Tabs` component | Already used in patient drawer; reuse for new "Tratamientos" tab |
+| Feature | Mechanism | Already Installed |
+|---------|-----------|-------------------|
+| Catalog item → stock linking (m-n with quantity) | Prisma explicit join table | @prisma/client ^6.1.0 |
+| Pending stock consumption orders | New Prisma model + enum | @prisma/client ^6.1.0 |
+| Budget items from catalog (auto-fill price) | PresupuestoItem FK extension + NestJS endpoint | @nestjs/common ^10 |
+| Multi-select catalog picker | cmdk ^1.1.1 + Radix Popover + Command | cmdk ^1.1.1 (installed) |
+| Optimistic UI with rollback | TanStack Query v5 onMutate / onError | @tanstack/react-query ^5.90.6 |
+| Error toasts | sonner ^2.0.7 | sonner ^2.0.7 (installed) |
+| Catalog forms with validation | React Hook Form + Zod | both installed |
 
 **Installation:** nothing.
 
 ---
 
-## Schema Changes Required
+## Recommended Stack (existing, confirmed from package.json inspection)
 
-### 1. New Enum `FlujoPaciente`
+### Core Technologies
+
+| Technology | Version | Role in v1.5 |
+|------------|---------|--------------|
+| Prisma | ^6.1.0 | New explicit join table `TratamientoInsumo`; new models `CatalogoCirugia`, `CatalogoCirugiaInsumo`, `OrdenConsumo`, `OrdenConsumoItem`; new enum `EstadoOrdenConsumo`; optional FK on `PresupuestoItem` |
+| NestJS | ^10.0.0 | New `catalogos-cirugia` module; extend `tratamientos` service with insumo relations; extend `presupuestos` service for catalog-linked items |
+| @tanstack/react-query | ^5.90.6 | Optimistic mutations via `onMutate` / `cancelQueries` (async) / `setQueryData` / `onError` rollback for flujo change in PatientDrawer |
+| cmdk | ^1.1.1 | Multi-select catalog picker comboboxes — same Popover + Command + CommandInput pattern used in `DiagnosticoCombobox.tsx` and `PlanCombobox.tsx`, extended to multi-select with checkbox state |
+| sonner | ^2.0.7 | Error toasts on mutation failure (`toast.error()`); already wired in `useLiveTurnoActions.ts`, `useCerrarLote.ts`, `useFacturadorDashboard.ts` |
+| Zod | ^4.1.13 | DTO schemas for catalog items, insumo arrays with quantities |
+| React Hook Form | ^7.68.0 | LiveTurno HC "Tratamiento en Consultorio" section: catalog selector + insumo checklist |
+| @radix-ui/react-checkbox | ^1.3.3 | Per-insumo checkboxes inside HC treatment section |
+
+### Supporting Libraries (already installed, newly applied)
+
+| Library | Version | New Usage |
+|---------|---------|-----------|
+| @radix-ui/react-popover | ^1.1.15 | Wrap `Command` for catalog picker dropdown anchor |
+| @radix-ui/react-dialog | ^1.1.15 | PatientDrawer flujo-change confirmation prompt |
+| lucide-react | ^0.553.0 | FlaskConical (insumos), Stethoscope (tratamientos), Scissors (cirugías) icons in catalog UI |
+| date-fns | ^4.1.0 | "Último tratamiento" date formatting in Tratamientos tab column |
+| @tanstack/react-table | ^8.21.3 | Insumo table inside catalog item edit form (already used in stock module) |
+
+---
+
+## Patterns to Apply
+
+### 1. Many-to-Many Tratamiento ↔ Producto with Quantity
+
+Use an explicit Prisma join table (not implicit m-n) because the relation needs a
+`cantidad` field. Prisma implicit m-n tables cannot carry extra data.
 
 ```prisma
-enum FlujoPaciente {
-  CIRUGIA
-  TRATAMIENTO
+model TratamientoInsumo {
+  id            String      @id @default(uuid())
+  tratamientoId String
+  productoId    String
+  cantidad      Int         @default(1)
+  tratamiento   Tratamiento @relation(fields: [tratamientoId], references: [id], onDelete: Cascade)
+  producto      Producto    @relation(fields: [productoId], references: [id])
+
+  @@unique([tratamientoId, productoId])
+  @@index([tratamientoId])
+}
+```
+
+Same pattern applies to `CatalogoCirugiaInsumo` (many-to-many between `CatalogoCirugia`
+and `Producto`).
+
+### 2. Pending Consumption Orders
+
+New model with status enum rather than writing `MovimientoStock` (SALIDA) directly from
+HC. This mirrors the existing `OrdenCompra` → `MovimientoStock` decoupled pattern:
+
+```prisma
+enum EstadoOrdenConsumo {
   PENDIENTE
+  CONFIRMADA
+  CANCELADA
+}
+
+model OrdenConsumo {
+  id          String             @id @default(uuid())
+  entradaHCId String
+  profesionalId String
+  estado      EstadoOrdenConsumo @default(PENDIENTE)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  items       OrdenConsumoItem[]
+  entradaHC   HistoriaClinicaEntrada @relation(fields: [entradaHCId], references: [id])
+  profesional Profesional        @relation(fields: [profesionalId], references: [id])
+}
+
+model OrdenConsumoItem {
+  id             String       @id @default(uuid())
+  ordenConsumoId String
+  productoId     String
+  cantidad       Int
+  ordenConsumo   OrdenConsumo @relation(fields: [ordenConsumoId], references: [id], onDelete: Cascade)
+  producto       Producto     @relation(fields: [productoId], references: [id])
 }
 ```
 
-Add to `schema.prisma` alongside the other CRM enums (after `EtapaCRM` block).
+The HC write path creates `OrdenConsumo` with `estado = PENDIENTE`. The stock module
+confirms it (transitions to `CONFIRMADA`) and writes the actual `MovimientoStock` SALIDA
+entry then. This is the same audit pattern as `OrdenCompra`.
 
-### 2. Add `flujo` Field to `Paciente`
+### 3. Optimistic UI — TanStack Query v5 Pattern
+
+The codebase currently uses only `invalidateQueries` on success — no optimistic updates
+exist yet. The flujo-change action in PatientDrawer warrants optimistic handling because
+it's a user-initiated toggle on a visible field:
+
+```typescript
+const mutation = useMutation({
+  mutationFn: (flujo: FlujoPaciente) =>
+    api.patch(`/pacientes/${id}/flujo`, { flujo }),
+  onMutate: async (flujo) => {
+    // v5: cancelQueries is async — must be awaited
+    await queryClient.cancelQueries({ queryKey: ['paciente', id] });
+    const prev = queryClient.getQueryData(['paciente', id]);
+    queryClient.setQueryData(['paciente', id], (old: any) => ({ ...old, flujo }));
+    return { prev };
+  },
+  onError: (_err, _vars, context) => {
+    queryClient.setQueryData(['paciente', id], context?.prev);
+    toast.error('Error al cambiar el flujo del paciente');
+  },
+  onSettled: () => {
+    queryClient.invalidateQueries({ queryKey: ['paciente', id] });
+    queryClient.invalidateQueries({ queryKey: ['pacientes'] });
+  },
+});
+```
+
+Key v5 difference: `cancelQueries` returns a Promise and must be awaited inside
+`onMutate`. In TanStack Query v4 it was fire-and-forget. Getting this wrong means
+the optimistic write races with an in-flight refetch.
+
+### 4. Multi-Select Catalog Picker
+
+The existing `cmdk` 1.1.1 + `Popover` + `Command` pattern (used in `DiagnosticoCombobox.tsx`,
+`PlanCombobox.tsx`, `CategoriaProductoCombobox.tsx`) is extended for multi-select by
+maintaining a `string[]` state and preventing auto-close on item selection:
+
+```typescript
+// Pseudocode — no new library, just state management
+const [selected, setSelected] = useState<string[]>([]);
+// In CommandItem onClick: toggle id in/out of selected[]
+// In PopoverTrigger: display selected count or names
+// Keep Popover open until explicit "Done" or outside click
+```
+
+For budget item selection (single catalog entry auto-filling price): single-select,
+same pattern as existing `PlanCombobox.tsx`.
+
+### 5. Catalog-Linked Budget Items
+
+Extend `PresupuestoItem` with optional FK columns to catalog sources. The backend
+service auto-fills `descripcion` and `precioTotal` from catalog when a `catalogoId` is
+provided; `descripcion` remains free-text for manual items (existing behavior):
 
 ```prisma
-model Paciente {
-  // ... existing fields ...
-  flujo   FlujoPaciente  @default(PENDIENTE)
-  // ... existing indices ...
-  @@index([profesionalId, flujo])   // new — needed for CRM filter + Tratamientos list
+model PresupuestoItem {
+  // ... existing fields unchanged ...
+  tratamientoId   String?   // nullable: sourced from tratamiento catalog
+  cirugiaId       String?   // nullable: sourced from cirugia catalog
+  precioUSD       Decimal?  @db.Decimal(10, 2) // NEW: USD price for dual-currency display
 }
 ```
 
-**Why `@default(PENDIENTE)` not nullable:** A nullable `flujo` would require null-checks throughout the CRM
-filter, LiveTurno banner, and Tratamientos list. Using `PENDIENTE` as the semantic "not yet classified"
-state means the field is always present and always meaningful. Backfill of existing patients to `PENDIENTE`
-is a single UPDATE (see migration strategy below).
+The frontend catalog picker calls a new `GET /presupuestos/catalogo` endpoint that
+returns combined tratamientos + cirugias list with both ARS and USD prices. Selecting
+an entry pre-populates the item form. Existing free-text item entry path is unchanged.
 
-**New index:** `@@index([profesionalId, flujo])` is required because:
-- The CRM embudo query filters `WHERE profesionalId = $1 AND flujo = 'CIRUGIA'`
-- The Tratamientos tab queries `WHERE profesionalId = $1 AND flujo = 'TRATAMIENTO'` with date range
-- Without the index both queries do a full `Paciente` table scan
+### 6. New CatalogoCirugia Module
 
-### 3. New Enum `FlujoPacienteTurno` on `TipoTurno`
+New NestJS module `catalogos-cirugia` scoped per-profesional (same pattern as
+`tratamientos` module with `profesionalId` from JWT or query param for SECRETARIA role):
 
-Replace the existing `esCirugia: Boolean` field on `TipoTurno` with a typed `flujoPaciente` field that
-carries the classification intent of each appointment type.
-
-```prisma
-model TipoTurno {
-  id                  String                   @id @default(uuid())
-  nombre              String                   @unique
-  descripcion         String?
-  mensajeBase         String?
-  instrucciones       String?
-  duracionDefault     Int?
-  esCirugia           Boolean                  @default(false)   // KEEP — see rationale below
-  flujoPaciente       FlujoPaciente?           // NEW — nullable until seeded
-  turnos              Turno[]
-  configProfesionales TipoTurnoProfesional[]
-}
+```
+backend/src/modules/catalogos-cirugia/
+├── catalogos-cirugia.module.ts
+├── catalogos-cirugia.controller.ts
+├── catalogos-cirugia.service.ts
+└── dto/
+    ├── create-catalogo-cirugia.dto.ts
+    └── update-catalogo-cirugia.dto.ts
 ```
 
-**Why keep `esCirugia` and add `flujoPaciente` in parallel instead of replacing:**
-- `esCirugia` is read in `TurnosService.cerrarSesion()` to trigger the `PROCEDIMIENTO_REALIZADO` CRM
-  transition. Removing it requires changing that logic simultaneously — that is Phase-2 work, not schema
-  migration work.
-- The safest migration is: add `flujoPaciente` nullable → seed values → use `flujoPaciente` in new code →
-  deprecate `esCirugia` in a later cleanup phase.
-- **Confidence: HIGH** — this is the established Prisma pattern for non-breaking column additions.
-
-### 4. The 5 New TipoTurno Seed Entries
-
-These are data migrations, not schema migrations. They go in the migration SQL as `INSERT ... ON CONFLICT DO NOTHING`:
-
-| `nombre` | `flujoPaciente` | `esCirugia` | `duracionDefault` |
-|----------|-----------------|-------------|-------------------|
-| Consulta para cirugía | CIRUGIA | false | 30 |
-| Consulta para tratamiento en consultorio | TRATAMIENTO | false | 30 |
-| Pre-operatorio | CIRUGIA | false | 60 |
-| Control | null (neutral) | false | 20 |
-| Consulta pendiente | PENDIENTE | false | 30 |
-
-**"Control" gets `null` for `flujoPaciente`:** A control visit does not reclassify the patient — it just
-updates the existing patient's journey. Setting `flujoPaciente = null` in TipoTurno signals the auto-update
-logic: "do not touch `Paciente.flujo` when this type of appointment is created."
+Frontend hooks follow the existing `useTratamientosProfesional.ts` pattern:
+`useCatalogosCirugia`, `useCreateCatalogoCirugia`, `useUpdateCatalogoCirugia`.
 
 ---
 
-## Migration Strategy
+## What NOT to Add
 
-### Pattern: Additive Nullable → Backfill → NOT NULL
-
-This is the same pattern used in `20260313100019_facturador_v1` for `condicionIVAReceptor`. It is safe for
-production tables with existing rows.
-
-```sql
--- Step 1: Create enum (PostgreSQL requires explicit enum creation)
-CREATE TYPE "FlujoPaciente" AS ENUM ('CIRUGIA', 'TRATAMIENTO', 'PENDIENTE');
-
--- Step 2: Add column as nullable first (no lock escalation — DDL-only)
-ALTER TABLE "Paciente"
-  ADD COLUMN "flujo" "FlujoPaciente";
-
--- Step 3: Add column to TipoTurno as nullable
-ALTER TABLE "TipoTurno"
-  ADD COLUMN "flujoPaciente" "FlujoPaciente";
-
--- Step 4: Backfill ALL existing patients to PENDIENTE
--- This is a full-table UPDATE. On a large table consider batching,
--- but for current scale (< 10K patients) a single UPDATE is safe.
-UPDATE "Paciente"
-SET "flujo" = 'PENDIENTE'
-WHERE "flujo" IS NULL;
-
--- Step 5: Apply NOT NULL + DEFAULT now that all rows are populated
-ALTER TABLE "Paciente"
-  ALTER COLUMN "flujo" SET NOT NULL,
-  ALTER COLUMN "flujo" SET DEFAULT 'PENDIENTE';
-
--- Step 6: Add index for CRM filter and Tratamientos list queries
-CREATE INDEX "Paciente_profesionalId_flujo_idx"
-  ON "Paciente"("profesionalId", "flujo");
-
--- Step 7: Seed the 5 new TipoTurno entries (idempotent)
-INSERT INTO "TipoTurno" ("id", "nombre", "descripcion", "duracionDefault", "esCirugia", "flujoPaciente")
-VALUES
-  (gen_random_uuid(), 'Consulta para cirugía',                      'Consulta inicial para cirugía',            30,  false, 'CIRUGIA'),
-  (gen_random_uuid(), 'Consulta para tratamiento en consultorio',   'Consulta inicial para tratamiento',        30,  false, 'TRATAMIENTO'),
-  (gen_random_uuid(), 'Pre-operatorio',                             'Consulta pre-operatoria',                  60,  false, 'CIRUGIA'),
-  (gen_random_uuid(), 'Control',                                    'Control post-intervención',                20,  false, NULL),
-  (gen_random_uuid(), 'Consulta pendiente',                         'Consulta de clasificación pendiente',      30,  false, 'PENDIENTE')
-ON CONFLICT ("nombre") DO UPDATE SET
-  "flujoPaciente" = EXCLUDED."flujoPaciente",
-  "duracionDefault" = EXCLUDED."duracionDefault";
-```
-
-**Why `ON CONFLICT ("nombre") DO UPDATE`:** `TipoTurno.nombre` has a `@unique` constraint. If any of these
-names already exist (e.g., "Control" created manually by a user), the conflict updates `flujoPaciente`
-without failing. This makes the migration re-runnable safely.
-
-**Lock risk:** Step 4 (full-table UPDATE) acquires a row-level exclusive lock on every row. For a table with
-< 10K rows this completes in milliseconds. If table is larger, replace with:
-```sql
-UPDATE "Paciente" SET "flujo" = 'PENDIENTE'
-WHERE "flujo" IS NULL AND ctid = ANY(
-  ARRAY(SELECT ctid FROM "Paciente" WHERE "flujo" IS NULL LIMIT 1000)
-);
--- repeat until 0 rows updated
-```
-At current scale a single-pass UPDATE is the correct call.
-
----
-
-## Auto-Classification Hook: Integration Point in `TurnosService`
-
-The `crearTurno()` method already has a CRM auto-transition block at step 5 (lines 125–136). The
-`FlujoPaciente` auto-update slots in at the same point, **after** the turno is created and **alongside** the
-existing CRM transition:
-
-```typescript
-// In TurnosService.crearTurno(), after turno is created (step 5 area):
-
-// 5a) Existing: CRM auto-transition (unchanged)
-const pacienteCRM = await this.prisma.paciente.findUnique({
-  where: { id: dto.pacienteId },
-  select: { etapaCRM: true, flujo: true, profesionalId: true },  // add flujo to select
-});
-const etapasIniciales: (EtapaCRM | null)[] = [null, EtapaCRM.NUEVO_LEAD];
-if (etapasIniciales.includes(pacienteCRM?.etapaCRM ?? null)) {
-  await this.prisma.paciente.update({
-    where: { id: dto.pacienteId },
-    data: { etapaCRM: EtapaCRM.TURNO_AGENDADO },
-  });
-}
-
-// 5b) NEW: FlujoPaciente auto-update
-// Only update if TipoTurno.flujoPaciente is set AND patient is still PENDIENTE
-// A CIRUGIA or TRATAMIENTO patient is never reclassified by a subsequent turno.
-const tipoTurnoFlujo = await this.prisma.tipoTurno.findUnique({
-  where: { id: dto.tipoTurnoId },
-  select: { flujoPaciente: true },
-});
-const flujoDeTurno = tipoTurnoFlujo?.flujoPaciente;
-if (
-  flujoDeTurno &&
-  flujoDeTurno !== 'PENDIENTE' &&
-  pacienteCRM?.flujo === 'PENDIENTE'
-) {
-  await this.prisma.paciente.update({
-    where: { id: dto.pacienteId },
-    data: { flujo: flujoDeTurno },
-  });
-}
-```
-
-**Rules encoded:**
-1. Only `TipoTurno` entries with `flujoPaciente = CIRUGIA` or `flujoPaciente = TRATAMIENTO` trigger an
-   update. `null` (Control) and `PENDIENTE` (Consulta pendiente) do not reclassify.
-2. A patient already classified as `CIRUGIA` or `TRATAMIENTO` is **never downgraded** by a new turno.
-   The guard `pacienteCRM?.flujo === 'PENDIENTE'` ensures this.
-3. Manual reclassification from the LiveTurno banner (banner for `PENDIENTE` patients) takes a separate
-   dedicated endpoint — it bypasses this guard intentionally since it's an explicit human action.
-
-**Optimization note:** The `pacienteCRM` query (step 5a) already reads from the DB. In the final
-implementation, add `flujo: true` to that single `select` to avoid a second DB round-trip for step 5b.
-
----
-
-## CRM Embudo Filter Change
-
-The CRM embudo query (in `PacientesService` or wherever `getEmbudo()` / `getDashboardCRM()` lives) needs a
-single added filter:
-
-```typescript
-// Before (all patients):
-where: { profesionalId, etapaCRM: { not: null } }
-
-// After (CIRUGIA patients only):
-where: { profesionalId, etapaCRM: { not: null }, flujo: 'CIRUGIA' }
-```
-
-No new index needed — the composite `(profesionalId, flujo)` index added in the migration covers this.
-
----
-
-## Tratamientos Tab: Query Shape
-
-The new tab queries patients with `flujo = TRATAMIENTO` for a given month. The expected query shape:
-
-```typescript
-// backend: GET /pacientes/tratamientos?profesionalId=X&mes=2026-04
-// (or filtered via existing pacientes endpoint with new query params)
-
-this.prisma.paciente.findMany({
-  where: {
-    profesionalId,
-    flujo: 'TRATAMIENTO',
-    turnos: {
-      some: {
-        inicio: { gte: startOfMonth, lt: startOfNextMonth },
-        estado: { not: EstadoTurno.CANCELADO },
-      },
-    },
-  },
-  include: {
-    turnos: {
-      where: {
-        inicio: { gte: startOfMonth, lt: startOfNextMonth },
-        estado: { not: EstadoTurno.CANCELADO },
-      },
-      include: { tipoTurno: { select: { id: true, nombre: true } } },
-      orderBy: { inicio: 'asc' },
-    },
-  },
-  orderBy: { nombreCompleto: 'asc' },
-})
-```
-
-Frontend hook: new `useTratamientosMes(profesionalId, year, month)` in `frontend/src/hooks/` — same TanStack
-Query pattern as `usePacientes`.
-
----
-
-## Frontend Component Reuse
-
-| New Surface | Reuse | Notes |
-|-------------|-------|-------|
-| Tratamientos tab in `/dashboard/pacientes` | shadcn/ui `Tabs` (already used in patient drawer) | Add as sibling tab next to existing "Pacientes" list |
-| LiveTurno classification banner | `ActiveSessionBanner` pattern already exists in `frontend/src/app/dashboard/components/` | Banner visibility: `turno.paciente.flujo === 'PENDIENTE'` |
-| FlujoPaciente badge on patient card | `Badge` from shadcn/ui (already installed) | Color: CIRUGIA=blue, TRATAMIENTO=green, PENDIENTE=yellow |
-
----
-
-## What NOT to Change
-
-| Thing | Why Not |
-|-------|---------|
-| `esCirugia` on `TipoTurno` | Still used by `cerrarSesion()` to trigger `PROCEDIMIENTO_REALIZADO`. Remove in a future cleanup phase only after verifying all callers use `flujoPaciente` instead. |
-| `esCirugia` on `Turno` | Currently set only in `crearCirugiaTurno()` (the surgical operation flow). Leave as-is — it tracks whether this specific appointment record is a surgery, which is different from the patient's classification. |
-| `EtapaCRM` and CRM transitions | The existing auto-transitions (`TURNO_AGENDADO`, `CONSULTADO`, `PROCEDIMIENTO_REALIZADO`) remain unchanged. `FlujoPaciente` is a parallel classification, not a replacement for CRM stages. |
-| `Paciente.etapaCRM` filtering logic | The CRM embudo gets a new `flujo = 'CIRUGIA'` filter but the stage machine itself does not change. |
+| Avoid | Why | Use Instead |
+|-------|-----|-------------|
+| react-select / downshift | ~350KB extra for multi-select already covered by cmdk 1.1.1 | cmdk + Popover (installed, pattern proven in 4 components) |
+| Zustand store for catalog picker selection | Ephemeral form state does not belong in global store | Local `useState` inside picker component |
+| SWR optimistic helpers | Redundant — TanStack Query v5 has native `onMutate` | TanStack Query v5 native optimistic pattern |
+| Direct MovimientoStock SALIDA from HC save | Bypasses stock module confirmation UX, breaks audit trail | OrdenConsumo model with PENDIENTE state |
+| `@tanstack/react-table` for new catalog list UIs | Overkill for simple catalog management lists | Mapped `<div>` rows (pattern used in tratamientos page) — use react-table only if existing stock module integration requires it |
+| Global event bus for HC → stock communication | Adds complexity, bypasses Prisma transaction boundary | OrdenConsumo creation inside HC save service call, stock module reads from it |
 
 ---
 
@@ -312,10 +225,23 @@ Query pattern as `usePacientes`.
 
 | Recommended | Alternative | Why Not |
 |-------------|-------------|---------|
-| `FlujoPaciente` enum with `PENDIENTE` default | Nullable `flujo` field | Nullable adds null-guards everywhere (CRM filter, LiveTurno banner, badge display). The `PENDIENTE` default is semantically equivalent and simpler. |
-| Add `flujoPaciente` to `TipoTurno`, keep `esCirugia` | Remove `esCirugia` in same migration | `esCirugia` has active callers in `cerrarSesion()`. Removing it in the same PR risks a logic regression in the CRM `PROCEDIMIENTO_REALIZADO` transition. Two-phase approach is safer. |
-| Auto-update `flujo` only for `PENDIENTE` patients | Always overwrite `flujo` on new turno | A patient confirmed as `CIRUGIA` who books a `TRATAMIENTO` consult should not be reclassified. The "only update if PENDIENTE" guard prevents silent data corruption. |
-| Separate `TratamientoPaciente` model | Re-use `Turno` + `flujo` filter | Introducing a new model adds schema complexity without benefit — the `flujo` flag on `Paciente` combined with the existing `Turno` model is sufficient. No join-table needed. |
+| Explicit `TratamientoInsumo` join table | Prisma implicit m-n | Implicit m-n tables cannot carry `cantidad` field — this is a Prisma hard limitation |
+| `OrdenConsumo` pending model | Write `MovimientoStock` SALIDA directly from HC | Tight coupling; stock movements need confirmation step per UX requirement; breaks existing stock audit trail pattern |
+| cmdk multi-select (existing) | react-select | 350KB dependency for a capability already implemented via cmdk; inconsistent UX with existing comboboxes |
+| TanStack Query v5 `onMutate` pattern | Zustand local optimistic state | TanStack already owns server state cache; mixing Zustand adds sync complexity on error rollback |
+| Optional FK on `PresupuestoItem` (nullable) | Separate `PresupuestoItemCatalogo` table | Nullable FK on existing table is simpler; the join table adds no value when one-to-one per item |
+
+---
+
+## Version Compatibility
+
+| Package | Version | Notes |
+|---------|---------|-------|
+| @prisma/client | ^6.1.0 | Explicit join tables with extra fields: supported since Prisma 4. `onDelete: Cascade` required on the owning side of the join table relation. |
+| @tanstack/react-query | ^5.90.6 | `cancelQueries` in v5 is **async** (returns `Promise<void>`) and must be awaited inside `onMutate`. This is a breaking change from v4 where it was fire-and-forget. Project is already on v5. |
+| cmdk | ^1.1.1 | Multi-select is controlled state in userland, not a cmdk API flag. No version constraints. |
+| sonner | ^2.0.7 | `toast.error(message)` API unchanged since v1. |
+| zod | ^4.1.13 | Project is on Zod 4. New schemas must use Zod 4 API (`.optional()` chains, error handling differ from Zod 3). Do not copy Zod 3 patterns from older files. |
 
 ---
 
@@ -323,40 +249,37 @@ Query pattern as `usePacientes`.
 
 Follow existing convention: `YYYYMMDDHHMMSS_descripcion_snake_case`
 
-Suggested: `20260415000000_add_flujo_paciente_v14`
+Suggested: `20260422000000_catalogos_clinicos_v15`
 
-Run with:
+Contents (additive, no destructive changes):
+1. `CREATE TYPE "EstadoOrdenConsumo" AS ENUM ('PENDIENTE', 'CONFIRMADA', 'CANCELADA')`
+2. `CREATE TABLE "TratamientoInsumo"` (explicit join table)
+3. `CREATE TABLE "CatalogoCirugia"` (new catalog per-profesional)
+4. `CREATE TABLE "CatalogoCirugiaInsumo"` (explicit join table with cantidad)
+5. `CREATE TABLE "OrdenConsumo"` + `"OrdenConsumoItem"` (consumption orders)
+6. `ALTER TABLE "PresupuestoItem" ADD COLUMN "tratamientoId" TEXT, ADD COLUMN "cirugiaId" TEXT, ADD COLUMN "precioUSD" DECIMAL(10,2)` (nullable, no backfill needed)
+
 ```bash
-# From backend/ directory — use migrate deploy (non-interactive, prod-safe)
-npx prisma migrate deploy
-
-# After migration, regenerate client:
+# From backend/ directory
+npx prisma migrate dev --name catalogos_clinicos_v15
+# After migration:
 npx prisma generate
 ```
 
 ---
 
-## Version Compatibility
-
-No new packages = no version compatibility concerns. Existing stack versions:
-
-| Package | Version | Notes |
-|---------|---------|-------|
-| Prisma | 6.x | PostgreSQL enum support confirmed. `CREATE TYPE ... AS ENUM` is the generated SQL pattern. |
-| `@prisma/client` | 6.x | Regenerate after schema change with `npx prisma generate` to pick up `FlujoPaciente` enum type. |
-| PostgreSQL | 14+ (assumed) | `gen_random_uuid()` available without extension since PG 13. |
-
----
-
 ## Sources
 
-- `backend/src/prisma/schema.prisma` — confirmed `TipoTurno.esCirugia`, `Turno.esCirugia`, `Paciente.etapaCRM`, absence of any existing `flujo` field (HIGH — direct inspection)
-- `backend/src/modules/turnos/turnos.service.ts` — confirmed CRM auto-transition hook location at step 5 of `crearTurno()`, `esCirugia` usage in `cerrarSesion()` (HIGH — direct inspection)
-- `.planning/research/STACK.md` (v1.2) — confirmed `prisma migrate deploy` as production migration command; confirmed additive-nullable-then-NOT-NULL pattern from `20260313100019_facturador_v1` (HIGH — project history)
-- `.planning/PROJECT.md` — confirmed v1.4 feature list: 5 TipoTurno entries, `flujo` field, CRM filter, LiveTurno banner, Tratamientos tab (HIGH — project source of truth)
+- Codebase inspection: `frontend/package.json`, `backend/package.json` — confirmed all installed versions (HIGH)
+- Codebase inspection: `frontend/src/components/DiagnosticoCombobox.tsx`, `PlanCombobox.tsx`, `CategoriaProductoCombobox.tsx` — confirmed existing cmdk multi-select pattern (HIGH)
+- Codebase inspection: `backend/src/prisma/schema.prisma` — confirmed `OrdenCompra`/`MovimientoStock` decoupled pattern as consumption order precedent; confirmed `TratamientoInsumo` does not yet exist; confirmed `PresupuestoItem` structure (HIGH)
+- Codebase inspection: `frontend/src/hooks/useLiveTurnoActions.ts`, `useCerrarLote.ts` — confirmed `sonner` toast pattern; confirmed no existing `onMutate` optimistic updates anywhere in hooks/ (HIGH)
+- Codebase inspection: `frontend/src/hooks/useTratamientosProfesional.ts` — confirmed module structure to replicate for CatalogoCirugia (HIGH)
+- TanStack Query v5 official docs — `cancelQueries` async behavior, `onMutate` + `onError` rollback contract (HIGH — v5 is the installed major version)
+- Prisma docs — explicit join table required for m-n relations with extra fields; `onDelete: Cascade` on relation field (HIGH)
 
 ---
 
-*Stack research for: CLINICAL v1.4 — Flujo de Pacientes*
-*Researched: 2026-04-15*
-*Supersedes: v1.2 STACK.md (2026-03-16) for this milestone only*
+*Stack research for: CLINICAL v1.5 — Catálogos Clínicos y Flujos de Atención*
+*Researched: 2026-04-22*
+*Supersedes: v1.4 STACK.md (2026-04-15) for this milestone*

@@ -1,371 +1,401 @@
-# Architecture Patterns — v1.4 Flujo de Pacientes
+# Architecture Research
 
-**Domain:** Patient flow classification added to existing NestJS + Prisma + Next.js clinical SaaS
-**Researched:** 2026-04-15
-**Overall confidence:** HIGH — based on direct code inspection of all integration points
-
----
-
-## Current System Map (what exists today)
-
-### Backend modules relevant to this milestone
-
-| Module | Key files | Current role |
-|--------|-----------|-------------|
-| `turnos` | `turnos.service.ts` | Creates turnos; houses CRM auto-transition logic (crearTurno step 5 and cerrarSesion) |
-| `pacientes` | `pacientes.service.ts`, `pacientes.controller.ts` | Kanban query, lista-acción, CRM update; no `flujo` field yet |
-| `tipos-turno` | `tipos-turno.service.ts` | CRUD + per-profesional duration/color config; no `clasificatorio` concept yet |
-| `historia-clinica` | (not changed in this milestone) | Linked via `entradaHCId` on Turno |
-
-### Schema: Paciente model (current state)
-
-```
-Paciente {
-  etapaCRM          EtapaCRM?        // drives Kanban + lista-acción
-  temperatura       TemperaturaPaciente?
-  scoreConversion   Int
-  motivoPerdida     MotivoPerdidaCRM?
-  // NO flujo field — to be added
-}
-```
-
-### Schema: TipoTurno model (current state)
-
-```
-TipoTurno {
-  id              String  @id
-  nombre          String  @unique
-  descripcion     String?
-  duracionDefault Int?
-  esCirugia       Boolean @default(false)
-  // NO rol/clasificatorio flag — to be added
-}
-```
-
-### CRM auto-transition logic (exact locations)
-
-Two transition sites in `turnos.service.ts`:
-
-**Site 1 — `crearTurno()`, lines 126–136:**
-```typescript
-const etapasIniciales: (EtapaCRM | null)[] = [null, EtapaCRM.NUEVO_LEAD];
-if (etapasIniciales.includes(pacienteCRM?.etapaCRM ?? null)) {
-  await this.prisma.paciente.update({
-    where: { id: dto.pacienteId },
-    data: { etapaCRM: EtapaCRM.TURNO_AGENDADO },
-  });
-}
-```
-Fires for ANY new turno when patient is in null/NUEVO_LEAD. Does NOT inspect `tipoTurnoId`. This is the primary integration point for `flujo` auto-update — the flujo update must be added here.
-
-**Site 2 — `cerrarSesion()`, lines 731–759:**
-```typescript
-if (turnoInfo.esCirugia) {
-  nuevaEtapa = EtapaCRM.PROCEDIMIENTO_REALIZADO;
-} else if (turnoInfo.paciente.etapaCRM === EtapaCRM.TURNO_AGENDADO) {
-  nuevaEtapa = EtapaCRM.CONSULTADO;
-}
-```
-Fires when session closes. Uses `turno.esCirugia` boolean, not `tipoTurno.rol`. CIRUGIA-flow consultations (non-surgery turnos) correctly advance to CONSULTADO here. No change needed for `flujo`.
-
-### Kanban query (current)
-
-`pacientes.service.ts getKanban()`: `prisma.paciente.findMany({ where: { profesionalId } })` — returns ALL patients of the professional regardless of flow. Must be filtered to `flujo: CIRUGIA` after migration.
-
-### Lista-acción query (current)
-
-`pacientes.service.ts getListaAccion()`: `prisma.paciente.findMany({ where: { profesionalId, etapaCRM: { notIn: [CONFIRMADO, PERDIDO] } } })` — same issue; needs `flujo: CIRUGIA` filter.
+**Domain:** Catalog-driven clinical workflows (v1.5 Catálogos Clínicos y Flujos de Atención)
+**Researched:** 2026-04-22
+**Confidence:** HIGH — derived entirely from reading the actual codebase (schema, services, controllers, components)
 
 ---
 
-## Recommended Architecture for v1.4
+## System Overview
 
-### New enum: FlujoPaciente
-
-```prisma
-enum FlujoPaciente {
-  PENDIENTE    // default — not yet classified
-  CIRUGIA      // surgery conversion funnel
-  TRATAMIENTO  // in-office treatment track
-}
 ```
-
-`PENDIENTE` as DB default (not nullable) is safer than null: eliminates null-checks throughout the codebase and makes migration backfill fully explicit and complete.
-
-### New field on Paciente
-
-```prisma
-model Paciente {
-  // ... existing fields ...
-  flujo    FlujoPaciente  @default(PENDIENTE)
-
-  @@index([profesionalId, flujo])  // add this index
-}
+┌──────────────────────────────────────────────────────────────────────┐
+│                        Next.js Frontend                               │
+│                                                                        │
+│  ┌──────────────┐  ┌────────────────┐  ┌─────────────────────────┐   │
+│  │ /pacientes   │  │ /turnos        │  │ /stock + /finanzas      │   │
+│  │  page.tsx    │  │  page.tsx      │  │  (existing pages)       │   │
+│  │  TratamTab   │  │  LiveTurnoPanel│  │                         │   │
+│  └──────┬───────┘  └───────┬────────┘  └──────────┬──────────────┘   │
+│         │                  │                       │                  │
+│  ┌──────▼──────────────────▼───────────────────────▼──────────────┐  │
+│  │              TanStack Query hooks (frontend/src/hooks/)         │  │
+│  │   useTratamientosProfesional · useCirugias · useOrdenConsumo   │  │
+│  │   useCreatePresupuesto · useCreateHistoriaClinicaEntry          │  │
+│  └─────────────────────────────────────────────────────────────────┘  │
+└──────────────────────────────────────────────────────────────────────┘
+                              │ HTTP/JSON (axios + JWT)
+┌──────────────────────────────────────────────────────────────────────┐
+│                        NestJS Backend                                  │
+│                                                                        │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐                │
+│  │ tratamientos │  │  cirugias-   │  │historia-clin │                │
+│  │  module      │  │  catalogo    │  │  module      │                │
+│  │  (modified)  │  │  (NEW)       │  │  (modified)  │                │
+│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘                │
+│         │                  │                  │                       │
+│  ┌──────▼──────────────────▼──────────────────▼───────────────────┐  │
+│  │   presupuestos · stock · pacientes · ordenes-consumo (NEW)      │  │
+│  └─────────────────────────────────────────────────────────────────┘  │
+│                              │                                        │
+│  ┌────────────────────────────────────────────────────────────────┐   │
+│  │                      PrismaService                              │   │
+│  └────────────────────────────────────────────────────────────────┘   │
+└──────────────────────────────────────────────────────────────────────┘
+                              │
+┌──────────────────────────────────────────────────────────────────────┐
+│                     PostgreSQL (via PgBouncer)                         │
+│                                                                        │
+│  Tratamiento · TratamientoInsumo(NEW) · CirugiasCatalogo(NEW)         │
+│  CirugiaInsumo(NEW) · HistoriaClinicaEntrada(modified)                │
+│  OrdenConsumo(NEW) · PresupuestoItem(modified) · Paciente(modified)   │
+└──────────────────────────────────────────────────────────────────────┘
 ```
-
-### New enum + field on TipoTurno
-
-```prisma
-enum RolTipoTurno {
-  GENERAL               // no special flow meaning (Control, Pre-operatorio)
-  CLASIFICA_CIRUGIA     // sets patient flujo = CIRUGIA
-  CLASIFICA_TRATAMIENTO // sets patient flujo = TRATAMIENTO
-  CLASIFICA_PENDIENTE   // resets patient flujo = PENDIENTE
-}
-
-model TipoTurno {
-  // ... existing fields ...
-  rol    RolTipoTurno  @default(GENERAL)
-}
-```
-
-The `rol` enum approach is preferred over `flujoDestino?: FlujoPaciente?` because it makes the dispatch logic a single pattern match rather than a nullable field check, and is extensible without schema changes.
-
-The 5 new tipo-turno rows map as:
-
-| Nombre | rol |
-|--------|-----|
-| Consulta para cirugía | CLASIFICA_CIRUGIA |
-| Consulta para tratamiento en consultorio | CLASIFICA_TRATAMIENTO |
-| Consulta pendiente | CLASIFICA_PENDIENTE |
-| Pre-operatorio | GENERAL |
-| Control | GENERAL |
 
 ---
 
-## Component Map: New vs Modified Files
+## Existing Architecture: What Already Exists
 
-### Backend — MODIFIED files
+### Backend modules (confirmed from filesystem)
 
-| File | What changes |
-|------|-------------|
-| `backend/src/prisma/schema.prisma` | Add `FlujoPaciente` enum + `RolTipoTurno` enum; add `flujo` field to `Paciente`; add `rol` field to `TipoTurno`; add `@@index([profesionalId, flujo])` |
-| `backend/src/modules/turnos/turnos.service.ts` | `crearTurno()`: expand `tipoTurno` select to include `rol`; add Step 5b flujo auto-update block; optionally merge into single `paciente.update` call |
-| `backend/src/modules/pacientes/pacientes.service.ts` | `getKanban()`: add `flujo: FlujoPaciente.CIRUGIA` filter; `getListaAccion()`: same filter; `updatePacienteSection()`: add `'flujo'` section case |
+| Module | Path | Current State |
+|--------|------|---------------|
+| `tratamientos` | `backend/src/modules/tratamientos/` | Exists. CRUD for `Tratamiento` per-profesional (nombre, descripcion, precio, duracionMinutos, activo). Also has legacy `TratamientoCatalogo` (global, unused going forward). |
+| `presupuestos` | `backend/src/modules/presupuestos/` | Exists. `PresupuestoItem` has only `descripcion` + `precioTotal` — no catalog FK. PDF + email services present. |
+| `historia-clinica` | `backend/src/modules/historia-clinica/` | Exists. `crearEntrada()` builds JSONB `contenido` field. `tratamientos` in HC stored as free `TratamientoItemDto[]` in JSON, not FK. `turnoId` relationship is via `Turno.entradaHCId` (turno → entrada, not entrada → turno). |
+| `stock` | `backend/src/modules/stock/` | Exists. Split into 5 services: inventario, productos, proveedores, ordenes-compra, ventas-producto. `Inventario` is `productoId + profesionalId`. No `OrdenConsumo` model yet. |
+| `pacientes` | `backend/src/modules/pacientes/` | Exists. Has `PATCH /:id/flujo` endpoint using `UpdateFlujoDto`. No `ultimoTratamientoId` field yet. |
+| `turnos` | `backend/src/modules/turnos/` | Exists. `Turno` has `cirugiaId?` (FK to surgery session), `entradaHCId?`, `esCirugia` boolean. |
+| `tipos-turno` | `backend/src/modules/tipos-turno/` | Exists. `TipoTurno` has `flujoPaciente: FlujoPaciente?` (used to filter TRATAMIENTO turnos in TratamientosTab). |
 
-### Backend — NEW files
+### Key existing model facts (from schema.prisma)
 
-| File | Purpose |
-|------|---------|
-| `backend/src/prisma/migrations/YYYYMMDDHHMMSS_v14_flujo/migration.sql` | Adds enums, columns, backfill UPDATE, composite index |
+- `Cirugia` already exists but is a **surgery session** (per-patient: fecha, procedimiento, quirofano, etc.) — NOT a catalog. v1.5 adds a **CirugiasCatalogo** concept (per-profesional: nombre, precioARS, precioUSD, duracion, insumos).
+- `Tratamiento` already exists as a per-profesional catalog with pricing. Missing: `insumos` join table (TratamientoInsumo → Producto/Inventario).
+- `PresupuestoItem` is currently free-text only (`descripcion` + `precioTotal`). Missing: `catalogItemId`, `catalogItemType` enum.
+- `HistoriaClinicaEntrada` stores treatments in JSONB `contenido`. The `turnoId` association is inverted — Turno holds `entradaHCId?`, making HC entry the owner. `turnoId` becoming optional on HistoriaClinicaEntrada is already effectively true since Turno can exist without an HC entry — adding HC from PatientDrawer (without a turno) only requires ensuring `historiaClinica.crearEntrada()` does not require a turnoId.
+- `Paciente` has no `ultimoTratamientoId` FK yet.
 
-### Backend — files to audit (may need minor changes)
+### Frontend components (confirmed from filesystem)
 
-| File | Reason |
+| Component | Path | Current State |
+|-----------|------|---------------|
+| `TratamientosTab` | `frontend/src/app/dashboard/pacientes/components/TratamientosTab.tsx` | Exists. Shows TRATAMIENTO-type turnos grouped by month. No "último tratamiento" column. |
+| `PrimeraConsultaForm` | `frontend/src/components/live-turno/tabs/hc/PrimeraConsultaForm.tsx` | Exists. Uses chip UI from `ZONAS`/`CATEGORIAS_TRATAMIENTO` constants + `useTratamientosProfesional` hook for catalog. Treatments stored as free `{ nombre, precio }` objects, not FK. |
+| `HistorialClinicoPanel` | `frontend/src/components/live-turno/tabs/hc/HistorialClinicoPanel.tsx` | Exists. Read-only display of HC entries. |
+| `PatientDrawer` | `frontend/src/app/dashboard/pacientes/components/PatientDrawer.tsx` | Exists as page-level component. Views under `frontend/src/components/patient/PatientDrawer/views/` (PresupuestosView, etc.) — no flujo-change action yet, no HC creator. |
+| `GenerarPresupuestoModal` | `frontend/src/components/live-turno/tabs/hc/GenerarPresupuestoModal.tsx` | Exists inside LiveTurno HC tab. Free-text item entry only. |
+| `LiveTurnoPanel` | `frontend/src/components/live-turno/LiveTurnoPanel.tsx` | Root panel component. Has tabs via `LiveTurnoTabs.tsx`. |
+
+---
+
+## New vs Modified Components
+
+### Schema Changes
+
+**NEW models to add via Prisma migration:**
+
+| Model | Purpose | Key Fields |
+|-------|---------|------------|
+| `TratamientoInsumo` | Join table: Tratamiento ↔ Producto (stock) with quantity | `tratamientoId`, `productoId`, `cantidad: Int` |
+| `CirugiasCatalogo` | Per-profesional surgery catalog | `profesionalId`, `nombre`, `precioARS`, `precioUSD`, `duracionEstimada`, `activo: Boolean` |
+| `CirugiaInsumo` | Join table: CirugiasCatalogo ↔ Producto with quantity | `cirugiasCatalogoId`, `productoId`, `cantidad: Int` |
+| `OrdenConsumo` | Stock consumption order from HC | `pacienteId`, `profesionalId`, `entradaHCId?`, `fecha`, `estado: EstadoOrdenConsumo`, `insumos: Json` (snapshot) |
+
+**NEW enums to add:**
+
+| Enum | Values |
 |------|--------|
-| CRM metrics service (check for raw Paciente aggregation queries) | Any query computing funnel counts must also filter to `flujo = CIRUGIA` |
-| `pacientes.controller.ts` | Add `GET /pacientes/tratamientos` route; verify existing routes don't expose unfiltered kanban path |
+| `EstadoOrdenConsumo` | `PENDIENTE`, `CONFIRMADA`, `CANCELADA` |
+| `CatalogItemType` | `CIRUGIA`, `TRATAMIENTO` |
 
-### Frontend — MODIFIED files
+**MODIFIED models:**
 
-| File | What changes |
-|------|-------------|
-| `frontend/src/store/live-turno.store.ts` | Add `pacienteFlujo?: FlujoPaciente` to `LiveTurnoSession` interface |
-| Hook that calls `iniciarSesion` (wherever backend response populates store session) | Map `turno.paciente.flujo` into `session.pacienteFlujo` |
-| `frontend/src/app/dashboard/pacientes/page.tsx` | Add third `Vista` option `"tratamientos"`; add button in toggle group; conditionally render `TratamientosTab` |
+| Model | Change | Why |
+|-------|--------|-----|
+| `Tratamiento` | Add `insumos TratamientoInsumo[]` relation | Connects catalog item to stock products |
+| `PresupuestoItem` | Add `catalogItemId: String?`, `catalogItemType: CatalogItemType?` | Enables auto-populate from catalog; backward-compatible (optional) |
+| `HistoriaClinicaEntrada` | Add `consumirInsumos: Boolean @default(false)`, `tratamientoIds: String[]` (Postgres array) | Tracks which catalog treatments were applied; triggers OrdenConsumo creation |
+| `Paciente` | Add `ultimoTratamientoId: String?` FK to `Tratamiento` | Powers "último tratamiento" column in TratamientosTab |
 
-### Frontend — NEW files
+**Note on `turnoId` on HistoriaClinicaEntrada:** The association currently runs `Turno.entradaHCId?` → `HistoriaClinicaEntrada`. HC entries created from PatientDrawer (without a turno) simply have no Turno pointing at them — no schema change needed. The `crearEntrada()` service already does not require a turnoId.
 
-| File | Purpose |
-|------|---------|
-| `frontend/src/components/live-turno/ClasificacionBanner.tsx` | Banner shown in `LiveTurnoPanel` when `session.pacienteFlujo === 'PENDIENTE'`; two action buttons |
-| `frontend/src/hooks/useClasificarFlujo.ts` | Mutation hook: PATCH `section: 'flujo'`; invalidates `live-turno` session + `crm-kanban` query |
-| `frontend/src/app/dashboard/pacientes/components/TratamientosTab.tsx` | Monthly list of TRATAMIENTO patients; filter dropdown by tratamiento from catalog |
-| `frontend/src/hooks/useListaTratamientos.ts` | TanStack Query hook for `GET /pacientes/tratamientos` |
+### Backend New/Modified
 
----
+| Item | Type | Change |
+|------|------|--------|
+| `cirugias-catalogo` | NEW module | Full NestJS module: `CirugiasCatalogo.module/controller/service` + DTOs. CRUD scoped to `profesionalId`. Endpoints: `GET /cirugias-catalogo`, `POST`, `PATCH/:id`, `DELETE/:id` (soft-delete). |
+| `tratamientos.service.ts` | MODIFIED | Add `findAllWithInsumos()` (include TratamientoInsumo → Producto). Add `updateInsumos()` mutation. |
+| `tratamientos.controller.ts` | MODIFIED | Add `GET /tratamientos/:id/insumos`, `PUT /tratamientos/:id/insumos`. |
+| `historia-clinica.service.ts` | MODIFIED | `crearEntrada()`: accept `tratamientoIds[]` + `consumirInsumos: boolean`. When `consumirInsumos = true`, create `OrdenConsumo` in same transaction. Update `Paciente.ultimoTratamientoId` when `tratamientoIds` non-empty. |
+| `historia-clinica/dto/crear-entrada.dto.ts` | MODIFIED | Add `tratamientoIds?: string[]`, `consumirInsumos?: boolean`. `turnoId` is already optional (not in DTO). |
+| `presupuestos.service.ts` | MODIFIED | `create()`: accept `catalogItemId?` + `catalogItemType?` per item. Auto-populate `descripcion` + `precioTotal` from catalog if provided and not overridden. |
+| `presupuestos/dto/create-presupuesto.dto.ts` | MODIFIED | Add optional `catalogItemId?: string`, `catalogItemType?: string` to `PresupuestoItemDto`. |
+| `ordenes-consumo` | NEW module | Lightweight module for stock team. `GET /ordenes-consumo?profesionalId=&estado=PENDIENTE`, `PATCH /ordenes-consumo/:id/confirmar` (triggers MovimientoStock SALIDA). |
+| `pacientes.service.ts` | MODIFIED | Add `updateUltimoTratamiento(pacienteId, tratamientoId)` called from HC service. |
 
-## Build Order (dependency-respecting)
+### Frontend New/Modified
 
-### Phase 1 — Schema + Migration (blocks everything else)
-
-1. Add `FlujoPaciente` and `RolTipoTurno` enums to `schema.prisma`
-2. Add `flujo FlujoPaciente @default(PENDIENTE)` to `Paciente`
-3. Add `rol RolTipoTurno @default(GENERAL)` to `TipoTurno`
-4. Add `@@index([profesionalId, flujo])` to `Paciente`
-5. Write migration SQL with backfill (see Migration Path section)
-6. Run `npx prisma migrate dev` — Prisma client regenerated with new enum types
-7. Seed or admin-update the 5 new TipoTurno rows with correct `rol` values
-
-### Phase 2 — Backend service changes (requires Phase 1)
-
-1. `turnos.service.ts`: expand tipoTurno select, add Step 5b flujo block
-2. `pacientes.service.ts`: add `flujo: CIRUGIA` filter to `getKanban` and `getListaAccion`; add `flujo` section to `updatePacienteSection`
-3. Add `GET /pacientes/tratamientos` service method + controller route
-4. Audit and patch any CRM metrics queries that aggregate paciente counts
-
-### Phase 3 — Frontend LiveTurno banner (requires Phase 1 + Phase 2)
-
-1. Update `LiveTurnoSession` type to include `pacienteFlujo`
-2. Verify `iniciarSesion` backend response includes `paciente.flujo` (already included — see note below)
-3. Map `paciente.flujo` into store `session` on session start
-4. Build `ClasificacionBanner` component
-5. Integrate into `LiveTurnoPanel` — render above tabs when `session.pacienteFlujo === 'PENDIENTE'`
-6. Build `useClasificarFlujo` mutation hook
-
-### Phase 4 — Frontend Tratamientos tab (requires Phase 1 + Phase 2)
-
-1. Build `useListaTratamientos` query hook
-2. Build `TratamientosTab` component (monthly list, date navigation, tratamiento filter)
-3. Add "Tratamientos" button + `vista === 'tratamientos'` branch to `pacientes/page.tsx`
-
-### Phase 5 — Validate migration + PENDIENTE queue visibility
-
-1. Confirm Kanban shows CIRUGIA patients after backfill
-2. Confirm PENDIENTE patients appear in some surface (banner counter or dedicated view)
-3. Provide coordinator workflow to process PENDIENTE queue
+| Item | Type | Change |
+|------|------|--------|
+| `useCirugiasCatalogo.ts` | NEW hook | `GET /cirugias-catalogo?profesionalId=` — list for selector dropdowns. |
+| `useCreateCirugiasCatalogo.ts` | NEW hook | `POST /cirugias-catalogo` mutation. |
+| `useTratamientosConInsumos.ts` | NEW hook | `GET /tratamientos?includeInsumos=true` — enhanced version of existing hook. |
+| `useOrdenesConsumo.ts` | NEW hook | `GET /ordenes-consumo?profesionalId=&estado=PENDIENTE`. |
+| `useConfirmarOrdenConsumo.ts` | NEW hook | `PATCH /ordenes-consumo/:id/confirmar`. |
+| `useUpdateFlujo.ts` | NEW hook | `PATCH /pacientes/:id/flujo` with optimistic update. |
+| `PrimeraConsultaForm.tsx` | MODIFIED | Replace free `TratamientoItemDto[]` chip UI with catalog combobox (`useTratamientosProfesional`). Add `consumirInsumos` checkbox. Pass `tratamientoIds[]` to `useCreateHistoriaClinicaEntry`. |
+| `GenerarPresupuestoModal.tsx` | MODIFIED | Add "seleccionar del catálogo" button/panel. CirugiasCatalogo + Tratamiento selectors pre-populate description and price. |
+| `TratamientosTab.tsx` | MODIFIED | Add "Último tratamiento" column — read `Paciente.ultimoTratamientoId` → `Tratamiento.nombre`. Fetch via backend include, not N+1. |
+| `PatientDrawer` (views) | MODIFIED | Add flujo-change action button/dropdown → calls `useUpdateFlujo` with optimistic update. Add HC creator panel using the same `PrimeraConsultaForm` (wrapped in modal). |
+| `GestionTratamientos.tsx` | MODIFIED | Add insumos management section per tratamiento (product combobox + quantity input). Exists at `frontend/src/app/dashboard/configuracion/components/GestionTratamientos.tsx`. |
+| `CirugiasCatalogoSection` | NEW | UI for CRUD of CirugiasCatalogo per profesional. Lives under `/dashboard/configuracion`. |
+| Stock ordenes-consumo view | NEW | Table of OrdenConsumo with PENDIENTE filter and confirm button. Lives under `/dashboard/stock/ordenes-consumo`. |
 
 ---
 
-## Integration Points Between flujo and Existing CRM Logic
+## Data Flow Changes
 
-### Integration Point 1 — crearTurno: merge two paciente updates into one
+### Flow 1: HC Entry with Catalog Tratamientos (LiveTurno or PatientDrawer)
 
-The existing CRM transition (TURNO_AGENDADO) and the new flujo update both call `prisma.paciente.update`. They can be merged into a single DB write:
-
-```typescript
-const updateData: Prisma.PacienteUpdateInput = {};
-
-// existing CRM logic
-const etapasIniciales: (EtapaCRM | null)[] = [null, EtapaCRM.NUEVO_LEAD];
-if (etapasIniciales.includes(pacienteCRM?.etapaCRM ?? null)) {
-  updateData.etapaCRM = EtapaCRM.TURNO_AGENDADO;
-}
-
-// new flujo logic
-const flujoMap: Partial<Record<RolTipoTurno, FlujoPaciente>> = {
-  CLASIFICA_CIRUGIA: FlujoPaciente.CIRUGIA,
-  CLASIFICA_TRATAMIENTO: FlujoPaciente.TRATAMIENTO,
-  CLASIFICA_PENDIENTE: FlujoPaciente.PENDIENTE,
-};
-const nuevoFlujo = flujoMap[tipoTurno.rol];
-if (nuevoFlujo !== undefined) {
-  updateData.flujo = nuevoFlujo;
-}
-
-if (Object.keys(updateData).length > 0) {
-  await this.prisma.paciente.update({ where: { id: dto.pacienteId }, data: updateData });
-}
+```
+User selects tratamientos from catalog combobox + checks "Consumir insumos"
+    ↓
+PrimeraConsultaForm.onChange({ tratamientoIds: ['uuid1', 'uuid2'], consumirInsumos: true, ... })
+    ↓
+useCreateHistoriaClinicaEntry.mutate({ pacienteId, tratamientoIds, consumirInsumos, ... })
+    ↓
+POST /historia-clinica/:pacienteId/entradas
+    ↓
+HistoriaClinicaService.crearEntrada() [transaction]:
+  1. Resolve or create HistoriaClinica record
+  2. Create HistoriaClinicaEntrada (with tratamientoIds[], consumirInsumos)
+  3. If consumirInsumos = true:
+     - Fetch TratamientoInsumo records for each tratamientoId
+     - Build insumos snapshot
+     - Create OrdenConsumo { estado: PENDIENTE, insumos: snapshot }
+  4. Update Paciente.ultimoTratamientoId = tratamientoIds[last]
+  5. Update Paciente.diagnostico/tratamiento strings (existing behavior)
+    ↓
+Frontend: invalidate ['historia-clinica', pacienteId], ['pacientes'] queries
 ```
 
-This reduces two round-trips to one when a classificatory turno is created for a new patient.
+### Flow 2: Presupuesto with Catalog Items
 
-### Integration Point 2 — cerrarSesion: no changes needed
-
-The `cerrarSesion` CRM logic (CONSULTADO / PROCEDIMIENTO_REALIZADO) operates on `turno.esCirugia` and `paciente.etapaCRM`. The `flujo` field is set at booking time and is not modified on session close. These two concerns are cleanly separated.
-
-TRATAMIENTO patients who reach `cerrarSesion` will have `esCirugia = false` and may be at `etapaCRM = TURNO_AGENDADO`. The cerrarSesion logic would advance them to CONSULTADO — which is harmless (TRATAMIENTO patients are excluded from the Kanban filter anyway, so this stale etapaCRM value is invisible in the surgery funnel). Alternatively, the cerrarSesion block can be guarded by `flujo`:
-
-```typescript
-// Optional guard — only apply CRM transitions for CIRUGIA patients
-if (turnoInfo.paciente.flujo === FlujoPaciente.CIRUGIA && !turnoInfo.esCirugia &&
-    turnoInfo.paciente.etapaCRM === EtapaCRM.TURNO_AGENDADO) {
-  nuevaEtapa = EtapaCRM.CONSULTADO;
-}
+```
+User clicks "Agregar del catálogo" in GenerarPresupuestoModal
+    ↓
+CirugiasCatalogo or Tratamiento selector populates item row:
+  { descripcion: catalogItem.nombre, precioTotal: catalogItem.precio, catalogItemId, catalogItemType }
+    ↓
+useCreatePresupuesto.mutate({ ..., items: [{ descripcion, precioTotal, catalogItemId, catalogItemType }] })
+    ↓
+POST /presupuestos
+    ↓
+PresupuestosService.create(): existing total calculation + stores catalogItemId/catalogItemType on PresupuestoItem
+    ↓
+PDF generation uses existing descripcion field (no catalog-aware changes needed in PDF service)
 ```
 
-This is a polish improvement, not a blocker. Mark as a follow-up if the initial implementation is simpler without the guard.
+### Flow 3: Flujo Change from PatientDrawer
 
-### Integration Point 3 — Kanban PROCEDIMIENTO_REALIZADO column
-
-`getKanban()` currently redirects PROCEDIMIENTO_REALIZADO patients to `SIN_CLASIFICAR`. After adding `flujo: CIRUGIA` filter, TRATAMIENTO and PENDIENTE patients are excluded entirely — their PROCEDIMIENTO_REALIZADO data (if any) is invisible. This is correct behavior.
-
-### Integration Point 4 — iniciarSesion returns flujo without code change
-
-`iniciarSesion()` in `turnos.service.ts` uses:
-```typescript
-paciente: { include: { obraSocial: true } }
 ```
-Because this uses `include` (not `select`), Prisma returns ALL scalar fields on Paciente by default, including `flujo` once the migration adds the column. The frontend only needs to declare `pacienteFlujo` in the `LiveTurnoSession` type and map `turno.paciente.flujo` to it.
+Coordinator clicks flujo badge in PatientDrawer header
+    ↓
+FlujoSelector dropdown (CIRUGIA | TRATAMIENTO | PENDIENTE) — optimistic update immediately changes badge
+    ↓
+useUpdateFlujo.mutate({ pacienteId, flujo })
+    ↓
+PATCH /pacientes/:id/flujo (existing endpoint + service from v1.4)
+    ↓
+Existing CRM side effects in pacientesService.updateFlujo()
+    ↓
+Rollback on error (TanStack Query onError)
+```
 
-### Integration Point 5 — etapaCRM remains valid only for CIRUGIA flow
+### Flow 4: Stock Consumption Confirmation
 
-After this milestone, `etapaCRM` is conceptually meaningful only for `flujo = CIRUGIA` patients. TRATAMIENTO patients retain whatever `etapaCRM` value they had before classification, but since `getKanban` and `getListaAccion` both filter by `flujo`, this stale data is invisible in CRM surfaces. No data cleanup required; just document the convention.
+```
+Stock user navigates to /dashboard/stock/ordenes-consumo
+    ↓
+useOrdenesConsumo fetches PENDIENTE orders
+    ↓
+User reviews insumos snapshot and clicks "Confirmar"
+    ↓
+useConfirmarOrdenConsumo.mutate({ ordenConsumoId })
+    ↓
+PATCH /ordenes-consumo/:id/confirmar
+    ↓
+OrdenesConsumoService.confirmar() [transaction]:
+  1. For each insumo in snapshot:
+     - Find Inventario { productoId, profesionalId }
+     - Create MovimientoStock { tipo: SALIDA, cantidad, motivo: 'Orden de consumo HC' }
+     - Decrement inventario.stockActual
+  2. Update OrdenConsumo.estado = CONFIRMADA
+```
 
 ---
 
-## Migration Path for Existing Patients
+## Component Boundaries
 
-All existing patients will default to `flujo = PENDIENTE` after migration. This means the Kanban will be empty (filter: `flujo = CIRUGIA`) until patients are reclassified.
+| Boundary | Communication | Notes |
+|----------|---------------|-------|
+| `historia-clinica` → `stock` | Service injection at module level | HistoriaClinicaModule imports StockModule to create OrdenConsumo. Direct injection is simpler and already the pattern in this codebase (no EventEmitter needed). |
+| `historia-clinica` → `pacientes` | Service injection | PacientesService.updateUltimoTratamiento() called from HC service inside same transaction scope. |
+| `presupuestos` → `tratamientos` catalog | Direct Prisma query | Presupuestos already injects PrismaService — can query Tratamiento table without importing TratamientosModule. |
+| `presupuestos` → `cirugias-catalogo` | Direct Prisma query | Same pattern as above — no module import needed for read-only catalog lookup. |
+| `ordenes-consumo` → `stock` | Service injection or Prisma direct | OrdenesConsumoService needs to create MovimientoStock. Either import InventarioService from StockModule or use PrismaService directly for the two queries needed. |
+| Frontend hooks → Backend | HTTP via axios | All via `frontend/src/lib/api.ts` with JWT interceptor. No changes to auth flow. |
 
-Recommended migration SQL that infers flujo from existing etapaCRM data:
+---
 
-```sql
--- Backfill: patients clearly in surgery funnel → CIRUGIA
-UPDATE "Paciente"
-SET flujo = 'CIRUGIA'
-WHERE "etapaCRM" IN (
-  'CONFIRMADO',
-  'PRESUPUESTO_ENVIADO',
-  'CONSULTADO',
-  'TURNO_AGENDADO',
-  'PROCEDIMIENTO_REALIZADO'
-);
+## Suggested Build Order (Phase Dependencies)
 
--- Patients with null etapaCRM or NUEVO_LEAD stay PENDIENTE (the @default handles new rows)
--- No action needed for them
+### Phase A: Schema + Catalog Foundation
+
+**No UI dependency. Every subsequent feature depends on these models.**
+
+1. Prisma migration: `TratamientoInsumo`, `CirugiasCatalogo`, `CirugiaInsumo`, `OrdenConsumo`, `EstadoOrdenConsumo` enum, `CatalogItemType` enum.
+2. Modified models: `PresupuestoItem` (optional catalog FKs), `HistoriaClinicaEntrada` (`tratamientoIds String[]`, `consumirInsumos`), `Paciente` (`ultimoTratamientoId`).
+3. New `cirugias-catalogo` NestJS module (CRUD only, no frontend yet).
+4. Extend `tratamientos` service with `findAllWithInsumos()` and insumos endpoints.
+5. New configuracion UI sections (GestionTratamientos insumos + CirugiasCatalogoSection).
+
+**Schema design note for `tratamientoIds` on HistoriaClinicaEntrada:** Use `String[]` (Postgres array) rather than a join table. The data is primarily written once and read for display. A join table (TratamientoEntrada) is only needed if future reporting requires "all patients who received tratamiento X" — that is a v2 reporting concern. Postgres array with `@db.array` is sufficient at this scale.
+
+### Phase B: HC Integration
+
+**Depends on Phase A. Core of v1.5.**
+
+1. Modify `crearEntrada()` in `historia-clinica.service.ts`: accept `tratamientoIds`, `consumirInsumos`, create OrdenConsumo in transaction, update `Paciente.ultimoTratamientoId`.
+2. Modify `PrimeraConsultaForm.tsx`: replace chip-based tratamiento UI with catalog combobox.
+3. Wire updated form state to `useCreateHistoriaClinicaEntry` hook.
+4. Add HC creator to PatientDrawer (reuse `PrimeraConsultaForm` in a modal, no duplication).
+
+### Phase C: Presupuestos with Catalog
+
+**Depends on Phase A only. Can run parallel with Phase B.**
+
+1. Modify `PresupuestosService.create()`: handle optional `catalogItemId` + `catalogItemType` on items.
+2. Modify `GenerarPresupuestoModal.tsx`: add catalog selector panel.
+3. Update `CreatePresupuestoDto` with optional catalog fields.
+
+### Phase D: PatientDrawer Flujo Action
+
+**Independent — `PATCH /pacientes/:id/flujo` already exists from v1.4. Frontend only.**
+
+1. Add flujo-change button/selector to PatientDrawer.
+2. `useUpdateFlujo` hook with optimistic update + rollback.
+
+### Phase E: TratamientosTab "Último Tratamiento" Column
+
+**Depends on Phase A (field exists) + Phase B (field gets populated).**
+
+1. Include `ultimoTratamiento: { nombre }` in turno/paciente query response from backend.
+2. Add column to `TratamientosTab.tsx`.
+
+### Phase F: Stock Ordenes de Consumo UI
+
+**Depends on Phase A (model exists) + Phase B (records created).**
+
+1. New `ordenes-consumo` NestJS module (GET list + PATCH confirm).
+2. `useOrdenesConsumo` + `useConfirmarOrdenConsumo` hooks.
+3. Stock page `/dashboard/stock/ordenes-consumo` with PENDIENTE table + confirm action.
+
+**Recommended parallel execution:**
 ```
-
-This heuristic backfills ~80% of patients correctly: patients in the surgery funnel stages are almost certainly surgery patients. The remaining PENDIENTE patients (no etapaCRM or NUEVO_LEAD) will be processed via the LiveTurno banner the next time they have a session.
-
-Add a comment in the migration file documenting this heuristic and that it is intentionally incomplete.
-
-If the Kanban must not be empty at go-live, consider a one-time admin script that bulk-sets active funnel patients to CIRUGIA — to be run manually by the Admin role before announcing the feature to coordinators.
+Phase A (schema + catalog CRUD)
+    ↓
+Phase B (HC integration) ─────── Phase C (presupuestos catalog) ─── parallel
+Phase D (drawer flujo)   ─── can even go before Phase A (pure frontend to existing endpoint)
+    ↓ (after B completes)
+Phase E (último tratamiento column)
+Phase F (stock ordenes UI)
+```
 
 ---
 
 ## Anti-Patterns to Avoid
 
-### Anti-Pattern 1: Encoding flujo as new EtapaCRM values
+### Anti-Pattern 1: Reusing the existing `Cirugia` model as a catalog
 
-**What:** Adding CIRUGIA/TRATAMIENTO/PENDIENTE as new values to the `EtapaCRM` enum.
-**Why bad:** Conflates two orthogonal axes — "which funnel" vs. "where in the funnel". Breaks Kanban column logic, scoring, and all existing CRM automation.
-**Instead:** Separate `flujo` field on a different enum, as designed above.
+**What happens:** Extending `Cirugia` (which is a per-patient surgery session with fecha, quirofano, anestesiologo) to also serve as a catalog entry.
 
-### Anti-Pattern 2: Filtering Kanban on the frontend only
+**Why it's wrong:** `Cirugia` is a clinical event record — a surgery that happened. Adding catalog fields to it mixes semantics, breaks surgical scheduling reports, and makes the catalog dependent on having a patient attached.
 
-**What:** Backend returns all patients; frontend renders only `flujo === 'CIRUGIA'` ones.
-**Why bad:** All patient records hydrate into React Query cache and network. CRM metrics (funnel counts) would be wrong. Pagination breaks.
-**Instead:** Filter at the DB query level in `getKanban()` and `getListaAccion()`.
+**Do this instead:** Create a separate `CirugiasCatalogo` model. Keep `Cirugia` (surgery session) entirely untouched.
 
-### Anti-Pattern 3: Separate endpoint for clasificar (rather than extending updatePacienteSection)
+### Anti-Pattern 2: Storing catalog FKs inside `contenido` JSONB
 
-**What:** Adding `PATCH /pacientes/:id/flujo` as a new endpoint.
-**Why less ideal:** Adds controller surface. The existing `updatePacienteSection` pattern handles scoped updates with a single patch endpoint.
-**Instead:** Add `case 'flujo'` to `updatePacienteSection` switch. Consistent with how `estado`, `contacto`, etc. are handled.
+**What happens:** Continuing to store treatment references inside the `contenido: Json?` blob on `HistoriaClinicaEntrada`.
 
-### Anti-Pattern 4: Making flujo immutable after first classification
+**Why it's wrong:** JSONB fields are opaque to Postgres indexes and Prisma relations. You cannot query "all entries that used tratamiento X" without full table scans and application-level parsing. Reporting and the "último tratamiento" feature both need queryable data.
 
-**What:** Throwing an error if a patient is already CIRUGIA and someone tries to set TRATAMIENTO.
-**Why bad:** Misclassification happens. The LiveTurno banner must allow re-classification.
-**Instead:** Allow any flujo value to overwrite any other. No guard beyond auth.
+**Do this instead:** Add `tratamientoIds: String[]` as a proper Postgres array column. Keep JSONB for display/narrative content only.
+
+### Anti-Pattern 3: Decrementing stock directly inside `crearEntrada()`
+
+**What happens:** The HC service tries to decrement `Inventario.stockActual` directly at entry creation time.
+
+**Why it's wrong:** Stock consumption requires confirmation by a stock-responsible user. Automatic decrement at HC save removes the review step and corrupts inventory if entries are created in error.
+
+**Do this instead:** HC service creates `OrdenConsumo { estado: PENDIENTE }` only — a record of intent. The actual `MovimientoStock` creation happens only when the stock user confirms via the dedicated endpoint.
+
+### Anti-Pattern 4: N+1 queries for "último tratamiento" in TratamientosTab
+
+**What happens:** For each turno row in TratamientosTab, making a separate request to resolve the patient's último tratamiento.
+
+**Why it's wrong:** TratamientosTab already loads turnos in bulk by month. Per-patient fetches create N requests for N patients.
+
+**Do this instead:** Include `paciente: { select: { ultimoTratamiento: { select: { nombre: true } } } }` in the existing turno query response. One query covers all rows.
+
+### Anti-Pattern 5: Duplicating PrimeraConsultaForm logic for PatientDrawer
+
+**What happens:** Building a separate similar HC creator component for PatientDrawer instead of reusing the LiveTurno form.
+
+**Why it's wrong:** Both surfaces must produce identical `CreateEntradaDto` shapes. Separate implementations diverge, causing subtle differences in what gets saved.
+
+**Do this instead:** `PrimeraConsultaForm` is already context-agnostic (receives `onChange` + `onGenerarPresupuesto` + `obraSocialId` props). Wrap it in a modal for PatientDrawer use. Same component, two call sites.
 
 ---
 
-## Scalability Considerations
+## Scaling Considerations
 
-| Query | Index after migration |
-|-------|----------------------|
-| `getKanban` filtered by profesionalId + flujo | `@@index([profesionalId, flujo])` covers both — efficient |
-| `getListaAccion` filtered by profesionalId + flujo + etapaCRM | Consider `@@index([profesionalId, flujo, etapaCRM])` if lista-acción is slow at scale |
-| Tratamientos tab monthly list | `@@index([profesionalId, flujo])` + range scan on `turno.inicio` — adequate for single-clinic volumes |
+| Scale | Architecture Notes |
+|-------|-------------------|
+| Current (1-10 clinics) | All synchronous service injections are fine. OrdenConsumo PENDIENTE list will be short (< 50/day per clinic). |
+| 100+ clinics | `Inventario` lookups per OrdenConsumo confirmation may slow down. `@@unique([productoId, profesionalId])` on Inventario already covers the index — no additional index needed. |
+| High OrdenConsumo volume | Plan cursor-based pagination from the start in `GET /ordenes-consumo`. A simple `take/skip` is fine now but the endpoint contract should include pagination params to avoid a breaking change later. |
 
-No scaling concerns at current tenant size. The composite index is the only performance addition needed for this milestone.
+---
+
+## Integration Points Summary
+
+| New Feature | Integrates With | Mechanism |
+|-------------|-----------------|-----------|
+| TratamientoInsumo | `Producto` (stock) | Prisma FK `productoId` |
+| CirugiasCatalogo | `Profesional` | Scoped by `profesionalId` — same tenant-isolation pattern as Tratamiento |
+| HC entry → OrdenConsumo | `stock` module | HistoriaClinicaModule imports PrismaService (already present) or StockModule |
+| HC entry → `ultimoTratamientoId` | `pacientes` module | `prisma.paciente.update()` inside HC transaction |
+| PresupuestoItem → catalog | `tratamientos` + `cirugias-catalogo` | Optional FK fields; catalog lookup at creation time via direct Prisma query |
+| PatientDrawer flujo action | `pacientes` endpoint | Existing `PATCH /pacientes/:id/flujo` — CRM side effects already implemented in v1.4 |
+| TratamientosTab "último tratamiento" | `Paciente.ultimoTratamientoId` | Include in turno query response (backend change); read-only display (frontend) |
+| OrdenConsumo confirm → MovimientoStock | `inventario.service.ts` / Prisma direct | Transaction: inventory lookup + MovimientoStock create + stockActual decrement |
 
 ---
 
 ## Sources
 
-All findings based on direct inspection of:
-- `backend/src/prisma/schema.prisma` (full schema — Paciente model lines 145–210, TipoTurno lines 759–785, Turno lines 787–820, EtapaCRM lines 1041–1049)
-- `backend/src/modules/turnos/turnos.service.ts` (crearTurno lines 31–152, cerrarSesion lines 687–763, iniciarSesion lines 624–685)
-- `backend/src/modules/pacientes/pacientes.service.ts` (getKanban lines 616–707, getListaAccion lines 798–852, updatePacienteSection lines 377–400)
-- `backend/src/modules/tipos-turno/tipos-turno.service.ts`
-- `frontend/src/app/dashboard/pacientes/page.tsx`
-- `frontend/src/store/live-turno.store.ts`
-- `frontend/src/components/live-turno/LiveTurnoPanel.tsx`
-- `frontend/src/hooks/useCRMKanban.ts`
-- `backend/src/modules/pacientes/pacientes.controller.ts`
-- `.planning/PROJECT.md`
+- `backend/src/prisma/schema.prisma` — full schema inspected (confirmed all model shapes and existing relations)
+- `backend/src/modules/tratamientos/tratamientos.service.ts` — confirmed Tratamiento CRUD pattern
+- `backend/src/modules/presupuestos/dto/create-presupuesto.dto.ts` — confirmed PresupuestoItem has no catalog FK
+- `backend/src/modules/historia-clinica/historia-clinica.service.ts` — confirmed crearEntrada() signature and JSONB pattern
+- `frontend/src/components/live-turno/tabs/hc/PrimeraConsultaForm.tsx` — confirmed tratamiento chip UI stores free objects, not FKs
+- `frontend/src/app/dashboard/pacientes/components/TratamientosTab.tsx` — confirmed current tab state (no último tratamiento column)
+- `frontend/src/hooks/` directory listing — confirmed full existing hooks inventory
+- `.planning/PROJECT.md` — milestone context, validated requirements, and existing Key Decisions
 
-Confidence: HIGH — all integration points verified from source code, zero training-data assertions.
+---
+
+*Architecture research for: v1.5 Catálogos Clínicos y Flujos de Atención — NestJS + Prisma + Next.js clinic SaaS*
+*Researched: 2026-04-22*

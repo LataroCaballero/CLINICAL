@@ -1,35 +1,34 @@
 # Feature Research
 
-**Domain:** Patient flow classification and treatment list — v1.4 milestone for Argentine aesthetic surgery clinic SaaS
-**Researched:** 2026-04-15
-**Confidence:** HIGH (codebase analysis, domain patterns from clinical SaaS conventions) / MEDIUM (UX patterns for classification alerts — based on clinical software conventions and general SaaS research)
+**Domain:** Clinical catalogs + clinical workflow integration — v1.5 Catálogos Clínicos y Flujos de Atención for Argentine aesthetic surgery clinic SaaS
+**Researched:** 2026-04-22
+**Confidence:** HIGH (codebase analysis, Prisma schema inspection, competitor patterns from Pabau, Zenoti, Nubimed, PatientNow) / MEDIUM (UX patterns for pending stock orders — inferred from domain conventions, not directly observed in source code)
 
-> **Scope:** This document covers ONLY features needed for v1.4 — patient segmentation (CIRUGIA / TRATAMIENTO / PENDIENTE), CRM funnel filtering, LiveTurno classification banner, and the new "Tratamientos" tab.
-> Everything built in v1.0–v1.3 (CRM funnel, LiveTurno session, patient list, kanban board, appointment booking, TipoTurno) is already shipped and is NOT re-researched here.
+> **Scope:** This document covers ONLY features for v1.5. Everything shipped through v1.4 is not re-researched.
+> v1.5 goal: connect treatment/surgery catalogs with LiveTurno HC, presupuestos, and stock; improve flujo/HC flows from PatientDrawer.
 
 ---
 
-## Context: What Already Exists (Do Not Re-Build)
+## Context: What Exists Today (Post-v1.4)
 
-The following is live in the codebase and must be extended, not replaced:
+### Existing Catalog Model
+`Tratamiento` model per-profesional has: nombre, descripcion, precio, indicaciones, procedimiento, duracionMinutos, activo. No relation to stock Productos. No FK from HC entries. No surgery-specific catalog.
 
-- `TipoTurno` model with `esCirugia` boolean, `TipoTurnoProfesional` per-professional config
-- `Turno` model with `tipoTurnoId` FK
-- `Paciente` model with `etapaCRM`, `temperatura`, `scoreConversion` — no `flujo` field yet
-- `LiveTurnoPanel` — full-screen overlay (`fixed inset-0 z-50`) with Header / Tabs / Footer structure
-- `LiveTurnoHeader` — shows `session.tipoTurno` name badge, patient info, timer
-- `/dashboard/pacientes` page — "Embudo" (kanban) and "Lista" (data table) views, toggle buttons in header
-- `KanbanBoard` + `CRMMetricsBar` — CRM embudo across all 6 stages, currently unfiltered by patient flow
-- `Tratamiento` model — per-professional catalog (id, nombre, descripcion, precio, duracionMinutos, activo)
-- `TratamientoCatalogo` model — shared catalog entries for lookup/autocomplete
+### Existing Stock Model
+`Producto` + `Inventario` (per profesional) + `MovimientoStock` (with motivo, tipo enum). `MovimientoStock.practicaId` links to `PracticaRealizada` (OS billing). No link from `MovimientoStock` to `HistoriaClinicaEntrada` or `Tratamiento`. Stock deduction is currently triggered at billing/practica layer, not at clinical documentation layer.
 
-What does NOT exist yet (v1.4 must add):
+### Existing Presupuesto Model
+`PresupuestoItem` has: descripcion (free text), precioTotal, orden. No FK to any catalog — entirely free text.
 
-- `flujo` enum (`CIRUGIA | TRATAMIENTO | PENDIENTE`) on `Paciente`
-- Auto-assignment logic: creating a turno with a flow-classifying `TipoTurno` sets `Paciente.flujo`
-- CRM kanban and metrics filtered to `flujo = CIRUGIA` patients only
-- Classification alert in LiveTurno for `flujo = PENDIENTE` patients
-- "Tratamientos" tab on `/dashboard/pacientes` with monthly list, per-treatment filter
+### Existing HC Entry
+`HistoriaClinicaEntrada` has: contenido (JSONB), answers (JSONB), template FK, status. No FK to `Tratamiento` catalog. LiveTurno HC tab uses a wizard/creator UI.
+
+### What Competitors Do (Confirmed, MEDIUM confidence)
+- **Pabau**: Links services to consumables; deducts inventory automatically when treatment is administered. Practitioner selects units used during charting session.
+- **Zenoti**: AI-assisted charting, service-linked forms, product deduction tied to invoice/checkout.
+- **Nubimed** (Argentine market): "Generate quick quotes from treatment catalog" — catalog-driven presupuesto creation.
+- **PatientNow**: Unified EMR + inventory + billing purpose-built for plastic surgery; catalog drives quote, quote drives booking, booking drives chart, chart drives billing.
+- Industry norm: catalog → quote → consent → clinical note → stock deduction → billing. This is the expected flow in aesthetic/plastic surgery SaaS.
 
 ---
 
@@ -37,120 +36,104 @@ What does NOT exist yet (v1.4 must add):
 
 ### Table Stakes (Users Expect These)
 
-Features the Secretaria/Coordinadora and Profesional expect once patient flow classification is announced. Missing these = the feature is misleading or incomplete.
+Features users assume exist given what the system already does. Missing these = system feels disconnected and incomplete.
 
 | Feature | Why Expected | Complexity | Notes |
 |---------|--------------|------------|-------|
-| `flujo` field auto-set when booking specific appointment types | The entire value of the feature is that flow is inferred without manual entry. If the user must manually tag every patient, adoption will be near zero — the secretary who books appointments is not going to open each patient record separately. | MEDIUM | Backend: `TipoTurno` needs a `flujoAsignado` enum field (`CIRUGIA \| TRATAMIENTO \| null`). On `Turno` creation, if `flujoAsignado` is set and the patient's current `flujo` is `PENDIENTE` or `null`, update `Paciente.flujo` to that value. Atomic in the same `$transaction` as the turno insert. |
-| CRM kanban and embudo metrics show only `CIRUGIA` patients | The core complaint this milestone solves: treatment patients (botox, peeling, fillers) pollute conversion funnel metrics. A surgeon with 200 treatment patients and 10 surgery candidates needs to see 10 in the funnel, not 210. Missing this filter makes the v1.4 milestone pointless. | LOW | Backend: add `flujo: 'CIRUGIA'` filter to CRM kanban query and metrics aggregation. Frontend: no change to UI — filter is transparent to the user. Add an explanatory subtext "Solo pacientes de cirugía" near the funnel header. |
-| Classification banner in LiveTurno for PENDIENTE patients | The Profesional is the most reliable classification point — they are the one who knows after the consultation whether the patient is a surgery candidate or a treatment patient. Without a prompt in the session, PENDIENTE patients accumulate indefinitely. | MEDIUM | Non-blocking banner inside `LiveTurnoPanel` (not a modal blocking the workflow). Shows when `session.pacienteFlujo === 'PENDIENTE'`. Two buttons: "Paciente de cirugía" and "Paciente de tratamiento". Dismissible. Calls a PATCH endpoint to update `Paciente.flujo`. No navigation required — session continues normally. |
-| "Tratamientos" tab in `/dashboard/pacientes` — monthly list | Treatment patients generate recurring revenue but are invisible in the current CRM funnel. The Secretaria needs to see who came in this month for treatments, sorted by day, to chase pending patients and manage scheduling. Without this view, treatment volume is completely dark. | MEDIUM | New tab alongside "Lista" and "Embudo". Fetches turnos where the associated `TipoTurno.flujoAsignado = 'TRATAMIENTO'`, grouped/paginated by month. Default to current month. |
-| Treatment list: patient name, date/time, treatment type | Minimum useful row — without these three columns the list is not actionable. The secretary must be able to identify who came, when, and for what. | LOW | Columns: fecha (date + time), paciente (name, clickable to patient drawer), tipoTurno (name badge), estado (turno state badge). |
-| Treatment list: filter by appointment type / treatment | The professional's catalog may have 10+ treatment types (laser, botox, peeling, fillers, etc.). Without filtering, the list becomes noise. Common clinical SaaS pattern: dropdown filter by treatment type, multi-select or single. | LOW | Filter uses existing `TipoTurno` names from the professional's configured types with `flujoAsignado = 'TRATAMIENTO'`. Single-select dropdown ("Todos" default). Client-side filter on the fetched month's data is acceptable given expected monthly volume (< 200 rows). |
-| Treatment list: month navigation (prev/next) | Monthly pagination is standard for clinical practice management. It maps to how clinics think about their schedule and billing. A flat infinite scroll with no temporal grouping is unusable in practice. | LOW | "< Mes anterior" / "Mes actual" / "Mes siguiente" nav buttons. Display formatted as "Marzo 2026". Fetch data per month via query param `?month=2026-03&flujo=TRATAMIENTO`. |
-| The 5 new appointment types seeded in DB | Without the seed data, no auto-classification works and the calendar booking flow has no new types to offer. This is the foundation of the entire milestone. | LOW | DB seed / migration: "Consulta para cirugía" (`flujoAsignado: CIRUGIA`), "Consulta para tratamiento en consultorio" (`flujoAsignado: TRATAMIENTO`), "Pre-operatorio" (`flujoAsignado: CIRUGIA`), "Control" (`flujoAsignado: null` — intentionally ambiguous), "Consulta pendiente" (`flujoAsignado: null`). The `null` types do not update `Paciente.flujo`. |
-| PENDIENTE patients excluded from CRM surgery funnel | If PENDIENTE patients appear in the funnel alongside CIRUGIA patients, coordinators will waste time following up on patients who may end up being treatment-only. The funnel should represent only patients explicitly classified as surgery candidates. | LOW | Same backend filter as "CRM kanban shows only CIRUGIA" — trivial once `flujo` field exists. |
+| Insumos (stock products) linked to `Tratamiento` catalog with quantities | Every aesthetic clinic software links consumables to services (Pabau, Zenoti, Nubimed). Without this, precio is meaningless and stock tracking is broken. | MEDIUM | N:N join table `TratamientoInsumo` (tratamientoId, productoId, cantidad). Precio base = sum(costoBase × cantidad) from Inventario. |
+| Surgery catalog per profesional (name, ARS/USD prices, insumos, estimated duration) | System already has `Cirugia` model (surgical event record) but no reusable catalog for "types of surgeries I perform." Users expect to define their procedure menu once and reuse it in quotes. | MEDIUM | New model `CirugiaCatalogo` per profesional. Separate from `Cirugia` (the actual event). N:N with Productos for insumos. |
+| Presupuesto: pick from catalog with price auto-filled | Nubimed, PatientNow, all plastic surgery PM software do this. Without it, coordinators manually type prices every time — error-prone and slow. | MEDIUM | Add optional `tratamientoId`/`cirugiaId` FK to `PresupuestoItem`. Frontend: combobox that populates descripcion + precioTotal. Keep free-text option for custom items. |
+| HC entry "Tratamiento en Consultorio" section: multi-select from Tratamiento catalog | Without catalog linkage in the clinical note, the "Tab Tratamientos → last treatment" feature (already promised in v1.4) has nothing to link to. This closes the loop. | MEDIUM | New optional field(s) on `HistoriaClinicaEntrada`: `tratamientosCatalogo` (JSON array of tratamientoIds + nombre + free text). |
+| Tab Tratamientos: "Último tratamiento" column | Promised in v1.4 scope. The tab already shows monthly patient list — without a last-treatment column it feels incomplete. | LOW-MEDIUM | Requires a denormalized FK on `Paciente` or a query to latest HC entry with tratamientos. Prisma-level query, no new model needed if stored as column. |
+| Cambio de flujo desde PatientDrawer (optimistic, con modal confirmación) | Users classify patients via LiveTurno banner already. Doing it from the profile drawer is the logical complement — not adding it feels like a regression. Triggers CRM state + contact log. | MEDIUM | PATCH endpoint already exists. Frontend: confirmation modal + optimistic update + invalidate queries. CRM side effects already coded in backend. |
+| HC entry creator from PatientDrawer (sin turno activo) | Clinicians need to document retroactive entries (post-op notes, follow-up call notes, manual entries). All competitor systems allow this. Without it, LiveTurno is the only path to HC entry — creates artificial constraint. | MEDIUM | Reuse existing HC wizard component. Pass `turnoId: undefined`, date defaults to today. Backend `crearEntrada` already doesn't require a turno. |
 
 ### Differentiators (Competitive Advantage)
 
-Features that go beyond basic segmentation and create meaningful operational value for the clinic.
+Features that align with the core value prop (close more surgeries, simpler ops) and go beyond what competitors offer out of the box for Argentine plastic surgery clinics.
 
 | Feature | Value Proposition | Complexity | Notes |
 |---------|-------------------|------------|-------|
-| "Classify later" badge on PENDIENTE patients in the patient list | Coordinators can see at a glance which patients still need classification without entering each patient record. One column in the existing patient list showing a "Pendiente clasificar" badge helps the secretary triage efficiently. | LOW | Add a `flujo` badge column to the existing `PacientesDataTable` columns: "Cirugía" (blue), "Tratamiento" (green), "Sin clasificar" (amber). Amber rows are the secretary's task queue. No new page required. |
-| Automatic CRM stage assignment when `flujo` changes to CIRUGIA | When a PENDIENTE patient is classified as CIRUGIA (either via LiveTurno banner or manually), their CRM stage should auto-advance to at least `CONSULTADO` if it was still `TURNO_AGENDADO`. Without this, classified surgery patients silently enter the funnel at the wrong stage. | MEDIUM | On `Paciente.flujo` update to `CIRUGIA`: if `etapaCRM === 'TURNO_AGENDADO'`, promote to `CONSULTADO`. This matches the existing logic: booking a "Consulta para cirugía" implies the consultation happened or is in progress. Implement in the PATCH `/pacientes/:id/flujo` endpoint. |
-| Treatment list shows accumulated revenue per patient in the month | Clinics doing treatments want to see not just who came but how much each patient spent. A "monto" column on the treatment list surfaces this without requiring navigation to the financial module. | MEDIUM | Requires joining `Turno → Cobro/Factura`. Optional for v1.4. Worth including if the financial data is already associated with turnos (which it is via `CobrarConsultaTab` in LiveTurno). |
-| Monthly treatment count KPI in page header | A simple "X tratamientos este mes" counter at the top of the Tratamientos tab gives the secretary immediate context. Clinical SaaS products with scheduling + CRM universally include this type of at-a-glance summary. | LOW | Count of rows in the current month's fetch. Static text: "23 tratamientos en Marzo 2026". Computed from the same query, no separate endpoint. |
+| Stock consumption orders (pending confirmation) from HC — not instant deduction | Argentine clinic context: stock module managed separately by admin, not by the doctor doing the HC. Generating a "pending consumption order" rather than instantly deducting respects the operational role separation (PROFESIONAL documents → Admin/stock confirms). | HIGH | New model needed: `OrdenConsumo` (with status PENDIENTE/CONFIRMADA/CANCELADA, FK to HC entry, pacienteId, fecha, items with productoId+cantidad). Stock module gets a confirmation UI. This matches how Argentine clinics actually operate. |
+| Precio base calculated from insumos (not just manual entry) | Shows real cost of each treatment. Helps clinic understand margin. Competitors show this, but Argentine-market systems like Nubimed don't emphasize it. Makes catalog more valuable. | LOW | Derived field: sum(inventario.precioActual × cantidad) for each insumo in the tratamiento. Read-only in UI, recalculated on demand. |
+| HC section "consume insumos" checkbox per treatment selected | Granular control per clinical session: "I used these treatments but did NOT consume stock this time" (e.g., consultation, evaluation, pre-op). Avoids phantom consumption orders. | LOW | Boolean per HC tratamiento entry. Only generate OrdenConsumo if checked. |
+| CirugiaCatalogo priced in ARS + USD | Surgery prices change with exchange rate. Having dual-currency in the catalog avoids updating the catalog constantly. Consistent with existing presupuesto dual-currency support. | LOW | Already modeled in presupuesto (moneda field). Catalog needs both fields. |
 
 ### Anti-Features (Commonly Requested, Often Problematic)
 
 | Feature | Why Requested | Why Problematic | Alternative |
 |---------|---------------|-----------------|-------------|
-| Manual `flujo` selector on every patient form | Feels thorough — admins want control over every field | Creates a "please fill this field" UX tax on every new patient creation, which happens dozens of times per day. Users will skip it or fill it wrong. Classification is more accurate when it comes from the appointment type at booking time. | Auto-classify via `TipoTurno.flujoAsignado` at turno creation. Offer reclassification only via the LiveTurno banner (at the point of care) and an optional override in the patient drawer for edge cases. |
-| Separate CRM funnel for TRATAMIENTO patients | Product managers instinctively want two funnels — one for surgery, one for treatment | Treatment patients are recurring and do not follow the same lifecycle (TURNO_AGENDADO → CONSULTADO → PRESUPUESTO_ENVIADO → CONFIRMADO → PROCEDIMIENTO_REALIZADO). A treatment funnel would need entirely different stages, different KPIs, and different follow-up logic. It's a separate product, not a tab. | The "Tratamientos" monthly list IS the treatment management view. It is date-centric, not stage-centric, which matches how treatment revenue actually works. |
-| Blocking modal in LiveTurno forcing classification before closing session | Ensures no PENDIENTE patients slip through | This breaks the LiveTurno UX contract. Professionals who are mid-consultation with another patient, or closing a session for a patient with a complex record, will be frustrated by a forced interruption. | Non-blocking inline banner in LiveTurnoPanel. The professional can dismiss it and classify later. PENDIENTE badge on patient list is the fallback reminder. |
-| Treatment list with infinite scroll and date range picker | Feels more powerful | Monthly pagination maps to how clinical practice billing and scheduling actually works — by month. A date range picker adds configuration complexity without real value at this stage. Infinite scroll makes it impossible to reason about "how many treatments this month". | Month-by-month navigation with a clear current month indicator. Simple, predictable. |
-| Retroactively re-classify all existing patients via bulk action | Seems necessary to clean up legacy data | Most existing patients have `flujo = null` (not PENDIENTE). A bulk classification screen requires UI, confirmation flows, and audit logging. It is a separate feature with real UX requirements. | Existing patients without `flujo` should display as "Sin clasificar" with an amber badge. They are classified naturally as they book new appointments or are seen by the professional. No bulk action needed for v1.4. |
+| Instant stock deduction from HC (no confirmation step) | Simpler, fewer clicks | In Argentine multi-role clinics, the professional doing the HC is not the stock admin. Instant deduction bypasses stock validation (stockMinimo, lote tracking, admin oversight). Creates reconciliation nightmares. | Pending `OrdenConsumo` that stock module admin confirms. |
+| Full surgery planning inside LiveTurno | Consultations often discuss surgery — seems natural | LiveTurno is a consultorio session tool, not a surgical planning tool. Mixing surgery planning workflow (anesthesiologist, quirofano, ayudante) into a consult session creates scope explosion. | Surgery catalog for quoting. `Cirugia` record creation stays in separate flow. |
+| Replacing free-text presupuesto items entirely with catalog items | Uniformity | Users always need custom items (e.g., "traslado", "gastos de sanatorio", one-off extras). Removing free text breaks real workflows. | Keep free-text; catalog items are additive (prefill descripcion + precio, editable before save). |
+| Complex pricing rules (tiered pricing, member discounts, package bundles) | Sophisticated pricing seems valuable | Massively increases catalog complexity and coordinator training burden. Argentine plastic surgery practices price ad hoc per patient. | Manual precio override on PresupuestoItem after catalog prefill. |
+| Automatic CRM stage advance when HC entry is created from PatientDrawer | Seems like natural automation | HC entry from drawer may be a post-op follow-up note — does not imply a new CRM stage. Stage logic tied to turno lifecycle is already well-defined. Adding drawer HC → CRM advance creates unexpected side effects. | Keep CRM transitions tied to turno events only. Flujo change from drawer does affect CRM (already scoped). |
 
 ---
 
 ## Feature Dependencies
 
 ```
-[5 New TipoTurno seed records with flujoAsignado]
-    └──required by──> [flujo auto-set on Turno creation]
-    └──required by──> [Treatment list filter uses TRATAMIENTO types]
+[CirugiaCatalogo model]
+    └──required by──> [Presupuesto: catalog item selection (cirugías)]
+    └──required by──> [OrdenConsumo: knows which insumos to consume]
 
-[flujo enum on Paciente + migration]
-    └──required by──> [CRM kanban filter to CIRUGIA]
-    └──required by──> [LiveTurno PENDIENTE banner]
-    └──required by──> [flujo badge in patient list]
-    └──required by──> [automatic CRM stage advance on flujo→CIRUGIA]
+[TratamientoInsumo join table (extend existing Tratamiento)]
+    └──required by──> [Presupuesto: catalog item selection (tratamientos) with precio base]
+    └──required by──> [HC "Tratamiento en Consultorio" section: drives insumo list]
+    └──required by──> [OrdenConsumo: knows which insumos tratamiento uses]
 
-[flujo auto-set on Turno creation (backend)]
-    └──requires──> [flujo field on Paciente]
-    └──requires──> [flujoAsignado on TipoTurno]
-    └──enhances──> [Existing NewAppointmentModal — no frontend change needed]
+[HC "Tratamiento en Consultorio" section]
+    └──required by──> [OrdenConsumo generation]
+    └──required by──> [Tab Tratamientos: "Último tratamiento" column] (needs tratamientoId stored on HC entry)
 
-[LiveTurno PENDIENTE classification banner]
-    └──requires──> [flujo field on Paciente]
-    └──requires──> [session object exposes pacienteFlujo]
-    └──requires──> [PATCH /pacientes/:id/flujo endpoint]
-    └──enhances──> [LiveTurnoPanel — inserted between Header and Tabs]
+[OrdenConsumo model]
+    └──required by──> [Stock module: confirmation UI]
+    └──enhances──> [HC section "consume insumos" checkbox] (checkbox controls whether order is generated)
 
-[CRM kanban + metrics filter to CIRUGIA]
-    └──requires──> [flujo field on Paciente]
-    └──independent──> [LiveTurno banner — no coupling]
+[Cambio de flujo desde PatientDrawer]
+    └──uses──> [existing PATCH /pacientes/:id + CRM side effects] (already built)
+    └──independent from──> [HC entry creator from PatientDrawer]
 
-["Tratamientos" tab in /dashboard/pacientes]
-    └──requires──> [flujoAsignado on TipoTurno]
-    └──requires──> [new GET endpoint: turnos by month + flujo=TRATAMIENTO]
-    └──independent──> [flujo field on Paciente — tab queries turnos, not Paciente.flujo directly]
-
-[Auto CRM stage advance on flujo→CIRUGIA]
-    └──requires──> [PATCH /pacientes/:id/flujo]
-    └──requires──> [flujo field on Paciente]
-    └──enhances──> [Existing CRM stage machine — same logic as auto-CONSULTADO on LiveTurno close]
+[HC entry creator from PatientDrawer]
+    └──reuses──> [LiveTurno HC wizard component] (must be extracted into shared component)
+    └──independent from──> [Cambio de flujo desde PatientDrawer]
 ```
 
 ### Dependency Notes
 
-- **Schema migration is the hard gate.** `flujo` enum on `Paciente` and `flujoAsignado` nullable enum on `TipoTurno` must be in the same migration. Everything else is additive. The 5 new TipoTurno records can be in the seed after the migration.
-- **Treatment list queries turnos, not Paciente.flujo.** This is intentional. A treatment patient is defined by booking a TRATAMIENTO-type appointment, not by having `flujo = TRATAMIENTO`. This avoids a stale-classification problem: if a patient changes flow, their past treatment turnos remain in the treatment list.
-- **LiveTurno banner needs `pacienteFlujo` in the session object.** The `useLiveTurnoStore` session already holds patient details (nombre, telefono, obraSocial). Adding `flujo` to the session DTO is a minor backend change but must be done before the banner can render conditionally.
-- **CRM filter is transparent to the user.** The Kanban and metrics endpoints add a backend `WHERE flujo = 'CIRUGIA'` filter. No UI change is required in `KanbanBoard` or `CRMMetricsBar` — they receive the already-filtered data. A subtext label "Solo pacientes de cirugía" is the only frontend change.
-- **`flujoAsignado: null` on "Control" and "Consulta pendiente" is intentional.** These types should NOT auto-classify because "Control" applies to both surgery follow-ups and treatment checkups. Let the existing classification persist.
+- **CirugiaCatalogo is new and foundational**: It has no existing analog in the schema. Needs to be defined first before presupuesto and HC integration can reference it.
+- **TratamientoInsumo extends existing Tratamiento**: Lower risk than CirugiaCatalogo — it's additive. Tratamiento can function without insumos (backward compatible).
+- **HC wizard shared component**: LiveTurno currently uses the HC creator inline. For PatientDrawer to reuse it, the component must be lifted into a shared location (not duplicated). This is a refactor dependency.
+- **OrdenConsumo depends on HC section**: No point building the stock confirmation UI before the HC section that generates the orders exists.
+- **"Último tratamiento" column**: Needs either a denormalized FK on `Paciente.ultimoTratamientoId` (maintained on HC save) or a join query. If denormalized FK approach: needs a migration + service update in HC save path.
 
 ---
 
-## MVP Definition
+## MVP Definition for v1.5
 
-### Launch With (v1.4)
+### Launch With (v1.5 core)
 
-Minimum scope to make the segmentation useful in production.
+Minimum that makes v1.5 coherent and usable end-to-end.
 
-- [ ] Schema migration: `FlujoPaciente` enum (`CIRUGIA | TRATAMIENTO | PENDIENTE`), `flujo FlujoPaciente?` on `Paciente` (nullable, default null = legacy "sin clasificar"), `flujoAsignado FlujoPaciente?` on `TipoTurno`
-- [ ] Seed 5 new TipoTurno records with correct `flujoAsignado` values
-- [ ] Backend: auto-set `Paciente.flujo` in turno creation transaction when `TipoTurno.flujoAsignado` is non-null and patient `flujo` is null or PENDIENTE
-- [ ] Backend: PATCH `/pacientes/:id/flujo` endpoint (PROFESIONAL + SECRETARIA + ADMIN roles) with optional CRM stage auto-advance
-- [ ] Backend: CRM kanban + metrics queries filter to `flujo = CIRUGIA` (or null-but-has-CRM-stage for legacy patients)
-- [ ] Backend: new GET endpoint for tratamientos list — turnos by professional + month + `tipoTurno.flujoAsignado = TRATAMIENTO`
-- [ ] Frontend: `flujo` badge column in `PacientesDataTable` (azul / verde / ámbar)
-- [ ] Frontend: LiveTurno PENDIENTE classification banner in `LiveTurnoPanel` (non-blocking, dismissible, two action buttons)
-- [ ] Frontend: "Solo pacientes de cirugía" subtext on CRM embudo view
-- [ ] Frontend: "Tratamientos" tab in `/dashboard/pacientes` — monthly list, month nav, type filter
+- [ ] `TratamientoInsumo` join table — extend existing catalog with insumos + precio base derived field
+- [ ] `CirugiaCatalogo` model per profesional with ARS/USD prices, insumos, duration
+- [ ] HC "Tratamiento en Consultorio" section — multi-select from catalog + free text annotation + "consume insumos" checkbox
+- [ ] `OrdenConsumo` model + pending orders list in stock module (confirmation UI)
+- [ ] Presupuesto: catalog item picker (tratamientos + cirugías) with price auto-fill, keep free text
+- [ ] Tab Tratamientos: "Último tratamiento" column (FK or query from latest HC entry)
+- [ ] Cambio de flujo desde PatientDrawer (optimistic + modal + CRM side effect)
+- [ ] HC entry creator from PatientDrawer (shared component, date = today)
 
-### Add After Validation (v1.4.x)
+### Add After Validation (v1.5.x)
 
-- [ ] Accumulated monthly revenue per patient in the treatment list (requires joining cobros/facturas — add once basic list is stable)
-- [ ] Treatment list export to CSV — add once professional has expressed need (likely when accountant asks for monthly summary)
-- [ ] Bulk reclassification screen for existing PENDIENTE patients — add if manual accumulation of PENDIENTE badges becomes operationally painful
+- [ ] Bulk confirmation of OrdenConsumo (confirm multiple orders at once in stock module) — trigger when stock admin reports friction
+- [ ] OrdenConsumo linked to Lote (batch tracking per insumo consumed) — trigger when clinic has traceable injectables
 
 ### Future Consideration (v2+)
 
-- [ ] Treatment scheduling patterns (recurring frequency, reminders) — separate product feature
-- [ ] Treatment plan (series of sessions) — requires new data model
-- [ ] Surgery vs treatment split in financial reports — depends on v2 executive reports milestone
+- [ ] Surgery planning: link `CirugiaCatalogo` to actual `Cirugia` (surgical event) record with pre-populated insumos — only when surgical workflow is a product priority
+- [ ] Package bundles: multiple tratamientos/cirugías priced together as a package — only with clear commercial demand
 
 ---
 
@@ -158,136 +141,47 @@ Minimum scope to make the segmentation useful in production.
 
 | Feature | User Value | Implementation Cost | Priority |
 |---------|------------|---------------------|----------|
-| Schema migration + TipoTurno seed | HIGH | LOW | P1 |
-| Auto-set `Paciente.flujo` on turno creation | HIGH | LOW | P1 |
-| PATCH `/pacientes/:id/flujo` endpoint | HIGH | LOW | P1 |
-| CRM kanban + metrics filter to CIRUGIA | HIGH | LOW | P1 |
-| LiveTurno PENDIENTE classification banner | HIGH | MEDIUM | P1 |
-| "Tratamientos" tab — monthly list | HIGH | MEDIUM | P1 |
-| flujo badge in patient list | MEDIUM | LOW | P1 |
-| "Solo pacientes de cirugía" subtext in embudo | LOW | LOW | P1 |
-| Auto CRM stage advance on flujo→CIRUGIA | MEDIUM | LOW | P1 |
-| Monthly KPI counter in Tratamientos header | MEDIUM | LOW | P1 |
-| Treatment type filter (dropdown) | MEDIUM | LOW | P1 |
-| Accumulated revenue in treatment list | MEDIUM | MEDIUM | P2 |
-| Treatment list CSV export | LOW | LOW | P2 |
-| Bulk reclassification screen | LOW | HIGH | P3 |
-
-**Priority key:**
-- P1: Must have for v1.4 launch — needed for classification to work at all
-- P2: Add once P1 is validated in production
-- P3: Separate milestone
+| CirugiaCatalogo model + CRUD | HIGH (surgery quotes are the core conversion tool) | MEDIUM (new model, scoped CRUD) | P1 |
+| TratamientoInsumo + precio base | HIGH (closes the stock-catalog gap) | LOW-MEDIUM (additive migration + service layer) | P1 |
+| Presupuesto catalog picker | HIGH (daily use by secretaria) | MEDIUM (frontend combobox + PresupuestoItem FK) | P1 |
+| HC "Tratamiento en Consultorio" section | HIGH (clinical documentation + stock trigger) | MEDIUM (new HC section UI + backend field) | P1 |
+| OrdenConsumo pending + stock confirmation UI | HIGH (stock integrity) | HIGH (new model + new UI surface in stock module) | P1 |
+| Tab Tratamientos "Último tratamiento" column | MEDIUM (nice-to-have, promised in v1.4) | LOW-MEDIUM (query or denormalized FK) | P1 |
+| Cambio de flujo desde PatientDrawer | MEDIUM (ergonomics, not blocking) | LOW (reuses existing PATCH + confirmation modal) | P2 |
+| HC creator from PatientDrawer | MEDIUM (retroactive docs, follow-up notes) | MEDIUM (component extraction + drawer integration) | P2 |
+| Precio base auto-calculated from insumos | MEDIUM (margin visibility) | LOW (derived, no new model) | P2 |
+| "Consume insumos" checkbox in HC | HIGH (prevents phantom orders) | LOW (boolean field on HC entry JSON) | P1 — bundled with HC section |
 
 ---
 
-## Treatment List: Required Columns
+## Competitor Feature Analysis
 
-This is the primary deliverable for the downstream roadmap consumer.
+| Feature | Pabau | PatientNow | Nubimed (AR) | Our Approach |
+|---------|-------|------------|--------------|--------------|
+| Treatment catalog linked to consumables | Yes — auto-deduct at checkout | Yes — tied to invoice | Basic catalog, no insumos linkage found | Full N:N with quantities, precio base derived |
+| Surgery catalog | Not specialty-specific | Yes — procedure library | Yes — presupuesto from catalog | New `CirugiaCatalogo` per profesional |
+| Catalog-based quoting | Yes | Yes | Yes ("quick quotes from catalog") | PresupuestoItem with optional catalog FK + price prefill |
+| Stock deduction from clinical note | Yes — at checkout/admin | Yes | Unknown | Pending `OrdenConsumo` — confirmed by stock admin (fits Argentine role separation) |
+| HC entry without appointment | Yes (progress notes) | Yes | Unknown | HC creator reused from LiveTurno, accessible from PatientDrawer |
+| Patient classification change | CRM stage change | Not applicable | Not applicable | Flujo change from PatientDrawer with CRM side effects (already built) |
 
-### Minimum Viable Columns (v1.4 launch)
+### Differentiation Note
 
-| Column | Data Source | Display | Notes |
-|--------|-------------|---------|-------|
-| Fecha | `Turno.inicio` | "Mar 15 · 10:30" | Date + time, sorted ascending within month |
-| Paciente | `Paciente.nombre + apellido` | Clickable → opens `PatientDrawer` | Existing drawer pattern |
-| Tipo de turno | `TipoTurno.nombre` | Badge with color from `TipoTurnoProfesional.colorHex` | Uses existing per-professional color config |
-| Estado | `Turno.estado` | Status badge (AGENDADO / EN_CURSO / FINALIZADO / CANCELADO) | Existing state enum |
-
-### Secondary Columns (add if space permits, or in v1.4.x)
-
-| Column | Data Source | Notes |
-|--------|-------------|-------|
-| Monto cobrado | `Cobro.monto` (if exists) | JOIN to cobros — adds query complexity |
-| Obra Social | `Paciente.obraSocial.nombre` | Useful for billing context |
-
-### Columns to Explicitly NOT Include in v1.4
-
-| Column | Reason to Exclude |
-|--------|------------------|
-| Historia clínica notes | Sensitive, belongs in patient drawer, not in list view |
-| Patient contact info (phone, email) | Privacy — visible on drawer, not in paginated list |
-| Presupuesto data | Treatment patients rarely have presupuestos; this is CRM funnel logic |
-
----
-
-## Classification Banner UX Pattern: Justified Decision
-
-**Chosen pattern: Non-blocking inline banner at the top of LiveTurnoPanel content area, dismissible.**
-
-### Why Not a Modal
-
-A blocking modal in LiveTurno would interrupt the professional mid-consultation. LiveTurno is a full-screen, time-sensitive workflow (it shows a running timer). Forced interruptions in clinical software create friction that leads to professionals skipping the entire flow. Clinical SaaS conventions (EMR systems like eClinicalWorks, Kareo, Elation) consistently use inline alerts rather than blocking modals for "complete this later" classification tasks.
-
-### Why Not a Toast
-
-Toasts are transient (disappear after 3-5 seconds). The classification decision requires deliberate action (CIRUGIA vs TRATAMIENTO). A transient notification will be missed or dismissed accidentally, defeating the purpose.
-
-### Recommended Implementation
-
-```
-[ LiveTurnoHeader ]  ← existing, unchanged
-
-[ CLASSIFICATION BANNER — only if session.pacienteFlujo === 'PENDIENTE' ]
-┌──────────────────────────────────────────────────────────────────────┐
-│  ⚠  Este paciente no tiene flujo asignado todavía.                   │
-│  ¿Es paciente de cirugía o de tratamiento?                           │
-│  [ Cirugía ]  [ Tratamiento ]                            [ × ]      │
-└──────────────────────────────────────────────────────────────────────┘
-
-[ LiveTurnoTabs ]   ← existing, unchanged
-[ Tab Content ]     ← existing, unchanged
-[ LiveTurnoFooter ] ← existing, unchanged
-```
-
-- Background: amber-50, border amber-200, icon amber warning (consistent with shadcn/ui alert pattern)
-- Two action buttons: primary style for "Cirugía", secondary for "Tratamiento"
-- Dismiss (×) button: hides for this session only — does NOT permanently classify. Patient remains PENDIENTE.
-- On button click: calls PATCH `/pacientes/:id/flujo`, updates store, banner disappears.
-- If patient is already CIRUGIA or TRATAMIENTO: banner never renders.
-
-### Why Amber, Not Red
-
-Red suggests an error. Classification is a data enrichment task, not an error state. Amber ("attention, but not broken") is the correct severity level for clinical SaaS. Red is reserved for session errors (sync failure, timeout) which already exist in `LiveTurnoSyncChecker`.
-
----
-
-## Legacy Patient Handling
-
-Patients created before v1.4 have `flujo = null`. These are NOT the same as `flujo = PENDIENTE`.
-
-- `null` = legacy / unclassified. Show as "Sin clasificar" with a gray badge (not amber). Do not include in the PENDIENTE classification count.
-- `PENDIENTE` = explicitly set by booking a "Consulta pendiente" appointment type. Show amber badge. These are the patients the LiveTurno banner targets.
-
-This distinction prevents the banner from firing for every existing patient on upgrade, which would be overwhelming. Only patients who explicitly booked a PENDIENTE appointment type will see the classification prompt in LiveTurno.
-
----
-
-## CRM Funnel Filter: Edge Cases
-
-| Patient State | In Funnel? | Rationale |
-|---------------|------------|-----------|
-| `flujo = CIRUGIA` | YES | Core funnel target |
-| `flujo = TRATAMIENTO` | NO | Has separate Tratamientos tab |
-| `flujo = PENDIENTE` | NO | Not yet classified as surgery candidate — including them distorts conversion metrics |
-| `flujo = null` (legacy) | YES, if has a CRM stage | Legacy patients already in the funnel should not vanish. Filter: `flujo = CIRUGIA OR (flujo IS NULL AND etapaCRM IS NOT NULL)` |
-| `flujo = null`, no CRM stage | NO | No history in the system — not in funnel |
-
-This nuanced filter is critical. A naive `WHERE flujo = 'CIRUGIA'` would silently drop all pre-v1.4 patients from the CRM funnel, which is a data loss regression for existing users.
+The most distinctive design decision for this project versus competitors is the **pending consumption order** (OrdenConsumo) pattern instead of instant stock deduction. This is driven by Argentine clinic operational reality: the professional documenting the HC is not the same person managing stock. The two-step pattern (generate → confirm) is standard in pharmaceutical/hospital contexts but uncommon in medspa SaaS. It is the correct approach for this user base. Confidence: MEDIUM (domain inference from operational patterns, not verified via competitive feature docs).
 
 ---
 
 ## Sources
 
-- `.planning/PROJECT.md` — v1.4 milestone scope, existing features, constraints — HIGH confidence
-- `backend/src/prisma/schema.prisma` — current `TipoTurno`, `Paciente`, `Turno`, `Tratamiento` models — HIGH confidence
-- `frontend/src/components/live-turno/LiveTurnoPanel.tsx` — existing panel structure — HIGH confidence
-- `frontend/src/components/live-turno/LiveTurnoHeader.tsx` — session object shape, existing badge patterns — HIGH confidence
-- `frontend/src/app/dashboard/pacientes/page.tsx` — existing tabs, toggle pattern, component structure — HIGH confidence
-- `frontend/src/app/dashboard/pacientes/components/PacientesDataTable.tsx` — existing column pattern — HIGH confidence
-- Clinical SaaS UX conventions (eClinicalWorks, Kareo, Elation EMR) — inline alert vs modal for classification tasks — MEDIUM confidence (industry pattern, not directly verified)
+- Pabau stock management: [Stock Management | Pabau Practice Management Software](https://pabau.com/features/stock-management/)
+- Pabau inventory: [Inventory Management Software for Clinics & Med Spas](https://pabau.com/features/inventory-management-software/)
+- Pabau plastic surgery: [5 Best Plastic Surgery Software Solutions in 2026 | Pabau](https://pabau.com/blog/best-plastic-surgery-software/)
+- Pabau medical spa inventory: [8 Best Medical Spa Inventory Software Solutions for 2026 | Pabau](https://pabau.com/blog/medical-spa-inventory-software/)
+- Nubimed Argentina: [Software para Clínicas de Estética y Cirugía Plástica | Nubimed](https://www.nubimed.com/software-cirugia-plastica/)
+- PatientNow plastics: [Medical Aesthetics & Plastic Surgery Software | PatientNow](https://www.patientnow.com/medical-aesthetics/)
+- Nextech plastic surgery PM: [Plastic Surgery Practice Management Software | Nextech](https://www.nextech.com/plastic-surgery/practice-management-software)
+- Codebase analysis: `backend/src/prisma/schema.prisma`, `backend/src/modules/tratamientos/tratamientos.service.ts`, `backend/src/modules/historia-clinica/historia-clinica.service.ts`, `backend/src/modules/presupuestos/presupuestos.service.ts`, `frontend/src/types/tratamiento.ts`, `frontend/src/components/live-turno/LiveTurnoTabs.tsx`
 
 ---
-
-*Feature research for: v1.4 Flujo de Pacientes — patient flow classification (CIRUGIA / TRATAMIENTO / PENDIENTE)*
-*Researched: 2026-04-15*
-*Supersedes: previous FEATURES.md scoped to v1.2 AFIP/CAE*
+*Feature research for: v1.5 Catálogos Clínicos y Flujos de Atención — aesthetic surgery clinic SaaS (Argentina)*
+*Researched: 2026-04-22*

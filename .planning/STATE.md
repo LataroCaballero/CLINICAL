@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Catálogos Clínicos y Flujos de Atención
 status: executing
-stopped_at: Completed 26-04-PLAN.md
-last_updated: "2026-04-22T21:20:00Z"
-last_activity: "2026-04-22 — Plan 26-04 complete; frontend TypeScript types (TratamientoConInsumos, CirugiaCatalogo) and TanStack Query hooks (useCirugiasCatalogo + 5 mutations) established"
+stopped_at: Completed 26-05-PLAN.md
+last_updated: "2026-04-22T21:23:00Z"
+last_activity: "2026-04-22 — Plan 26-05 complete; InsumosEditor shared combobox+table component created, useTratamientosProfesional updated to TratamientoConInsumos with new insumos mutation hooks"
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 7
-  completed_plans: 4
-  percent: 57
+  completed_plans: 5
+  percent: 71
 ---
 
 # Project State
@@ -28,17 +28,19 @@ See: .planning/PROJECT.md (updated 2026-04-22)
 ```
 Milestone: v1.5 Catálogos Clínicos y Flujos de Atención
 Phase:     26 of 31 (Schema Foundation + Catalog CRUD)
-Plan:      5 of 7
+Plan:      6 of 7
 Status:    In progress
-Progress:  [█████░░░░░] 57%
+Progress:  [███████░░░] 71%
 ```
 
-Last activity: 2026-04-22 — Plan 26-04 complete; frontend TypeScript types (TratamientoConInsumos, CirugiaCatalogo) and TanStack Query hooks (useCirugiasCatalogo + 5 mutations) established
+Last activity: 2026-04-22 — Plan 26-05 complete; InsumosEditor shared combobox+table component created, useTratamientosProfesional updated to TratamientoConInsumos with new insumos mutation hooks
 
 ## Accumulated Context
 
 ### Key Decisions for v1.5 (from research)
 
+- **26-05 useInventario no profesionalId param:** `useInventario()` reads professional context internally via `useEffectiveProfessionalId` — do not pass profesionalId to it; InsumosEditor keeps the prop for API compatibility only.
+- **26-05 InsumosEditor uncontrolled:** Component manages its own state; parent passes `initialInsumos` + `onChange` callback. `useEffect` syncs on initialInsumos change for modal reset pattern.
 - **26-04 api named export:** `{ api }` is a named export from `@/lib/api`, not a default export — all hooks must use `import { api } from '@/lib/api'`.
 - **26-02 setInsumos transaction pattern:** Uses `$transaction([deleteMany, ...creates])` for atomic insumos replacement — prevents partial state; client sends full desired list.
 - **26-02 null costoBase:** Treated as 0 via `?? 0` in recalcularPrecioBase reduce — products with no cost set are treated as free, not NaN.
@@ -63,6 +65,6 @@ Last activity: 2026-04-22 — Plan 26-04 complete; frontend TypeScript types (Tr
 
 ## Session Continuity
 
-Last session: 2026-04-22T21:20:00Z
-Stopped at: Completed 26-04-PLAN.md
+Last session: 2026-04-22T21:23:00Z
+Stopped at: Completed 26-05-PLAN.md
 Resume file: None

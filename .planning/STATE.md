@@ -4,7 +4,7 @@ milestone: v1.5
 milestone_name: Catálogos Clínicos y Flujos de Atención
 status: verifying
 stopped_at: Completed 26-07-PLAN.md human verification approved
-last_updated: "2026-04-22T23:03:57.722Z"
+last_updated: "2026-04-22T23:09:41.985Z"
 last_activity: 2026-04-22 — Plan 26-07 complete; GestionCirugias built with full CRUD + InsumosEditor + Recalcular, Cirugías tab wired in Configuración for PROFESIONAL and SECRETARIA
 progress:
   total_phases: 6

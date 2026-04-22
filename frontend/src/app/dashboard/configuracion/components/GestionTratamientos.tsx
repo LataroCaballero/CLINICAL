@@ -42,7 +42,7 @@ import {
   useDeleteTratamiento,
   useRestoreTratamiento,
 } from '@/hooks/useTratamientosProfesional';
-import type { Tratamiento, CreateTratamientoDto } from '@/types/tratamiento';
+import type { TratamientoConInsumos, CreateTratamientoDto } from '@/types/tratamiento';
 
 interface TratamientoFormData {
   nombre: string;
@@ -66,7 +66,7 @@ export default function GestionTratamientos({ profesionalId }: { profesionalId?:
   const [showInactive, setShowInactive] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [selectedTratamiento, setSelectedTratamiento] = useState<Tratamiento | null>(null);
+  const [selectedTratamiento, setSelectedTratamiento] = useState<TratamientoConInsumos | null>(null);
   const [formData, setFormData] = useState<TratamientoFormData>(emptyFormData);
 
   const { data: tratamientos, isLoading, error } = useTratamientosProfesional(showInactive, profesionalId);
@@ -75,7 +75,7 @@ export default function GestionTratamientos({ profesionalId }: { profesionalId?:
   const deleteMutation = useDeleteTratamiento(profesionalId);
   const restoreMutation = useRestoreTratamiento(profesionalId);
 
-  const handleOpenModal = (tratamiento?: Tratamiento) => {
+  const handleOpenModal = (tratamiento?: TratamientoConInsumos) => {
     if (tratamiento) {
       setSelectedTratamiento(tratamiento);
       setFormData({
@@ -208,6 +208,7 @@ export default function GestionTratamientos({ profesionalId }: { profesionalId?:
                   <TableHead>Nombre</TableHead>
                   <TableHead>Descripción</TableHead>
                   <TableHead className="text-right">Precio</TableHead>
+                  <TableHead className="text-right">Costo insumos</TableHead>
                   <TableHead className="text-center">Duración</TableHead>
                   <TableHead className="text-center">Estado</TableHead>
                   <TableHead className="w-[100px]"></TableHead>
@@ -222,6 +223,11 @@ export default function GestionTratamientos({ profesionalId }: { profesionalId?:
                     </TableCell>
                     <TableCell className="text-right">
                       {formatCurrency(t.precio)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {t.precioBase !== null && t.precioBase !== undefined
+                        ? `$${Number(t.precioBase).toLocaleString('es-AR', { minimumFractionDigits: 2 })}`
+                        : '—'}
                     </TableCell>
                     <TableCell className="text-center">
                       {t.duracionMinutos ? `${t.duracionMinutos} min` : '-'}

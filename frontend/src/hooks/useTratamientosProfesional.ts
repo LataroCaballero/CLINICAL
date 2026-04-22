@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import type {
   Tratamiento,
+  TratamientoConInsumos,
   CreateTratamientoDto,
   UpdateTratamientoDto,
 } from '@/types/tratamiento';
@@ -13,7 +14,7 @@ export function useTratamientosProfesional(
   includeInactive = false,
   profesionalId?: string,
 ) {
-  return useQuery<Tratamiento[], Error>({
+  return useQuery<TratamientoConInsumos[], Error>({
     queryKey: [QUERY_KEY, includeInactive, profesionalId],
     queryFn: async () => {
       const { data } = await api.get('/tratamientos/me', {
@@ -100,5 +101,31 @@ export function useRestoreTratamiento(profesionalId?: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
     },
+  });
+}
+
+export function useSetInsumosTratamiento(profesionalId?: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, insumos }: { id: string; insumos: { productoId: string; cantidad: number }[] }) => {
+      const { data } = await api.put(`/tratamientos/${id}/insumos`, { insumos }, {
+        params: profesionalId ? { profesionalId } : undefined,
+      });
+      return data;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['tratamientos'] }),
+  });
+}
+
+export function useRecalcularPrecioTratamiento(profesionalId?: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { data } = await api.post(`/tratamientos/${id}/recalcular-precio`, {}, {
+        params: profesionalId ? { profesionalId } : undefined,
+      });
+      return data;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['tratamientos'] }),
   });
 }

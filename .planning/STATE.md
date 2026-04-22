@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Catálogos Clínicos y Flujos de Atención
-status: planning
-stopped_at: Phase 26 context gathered
-last_updated: "2026-04-22T20:29:14.903Z"
-last_activity: 2026-04-22 — Roadmap v1.5 created; 6 phases (26–31), 27/27 requirements mapped
+status: in-progress
+stopped_at: Completed 26-01-PLAN.md
+last_updated: "2026-04-22T21:30:00.000Z"
+last_activity: 2026-04-22 — Plan 26-01 complete; schema migrated with TratamientoInsumo, CirugiaCatalogo, CirugiaInsumo
 progress:
   total_phases: 6
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
-  percent: 0
+  total_plans: 7
+  completed_plans: 1
+  percent: 14
 ---
 
 # Project State
@@ -28,17 +28,18 @@ See: .planning/PROJECT.md (updated 2026-04-22)
 ```
 Milestone: v1.5 Catálogos Clínicos y Flujos de Atención
 Phase:     26 of 31 (Schema Foundation + Catalog CRUD)
-Plan:      — (not yet planned)
-Status:    Ready to plan
-Progress:  [░░░░░░░░░░] 0%
+Plan:      2 of 7
+Status:    In progress
+Progress:  [█░░░░░░░░░] 14%
 ```
 
-Last activity: 2026-04-22 — Roadmap v1.5 created; 6 phases (26–31), 27/27 requirements mapped
+Last activity: 2026-04-22 — Plan 26-01 complete; schema migrated with TratamientoInsumo, CirugiaCatalogo, CirugiaInsumo models
 
 ## Accumulated Context
 
 ### Key Decisions for v1.5 (from research)
 
+- **26-01 Migration workaround:** Used `prisma db push` + `migrate resolve` instead of `migrate dev` — Supabase pgBouncer shadow DB cannot replay migration 20260415221758_flujo_paciente. Live DB is correct.
 - **Price snapshot on PresupuestoItem:** Add `precioUnitario Decimal` + `cantidad Int @default(1)` in Phase 26 migration. Never re-read price from catalog for financial documents.
 - **ultimoTratamientoId design:** Use query-on-read (ORDER BY fecha DESC LIMIT 1 join) rather than denormalized FK — prevents corruption from retroactive entries.
 - **OrdenConsumo pattern:** HC save creates OrdenConsumo { estado: PENDIENTE } only. Actual MovimientoStock SALIDA happens at explicit stock admin confirmation.
@@ -59,6 +60,6 @@ Last activity: 2026-04-22 — Roadmap v1.5 created; 6 phases (26–31), 27/27 re
 
 ## Session Continuity
 
-Last session: 2026-04-22T20:29:14.900Z
-Stopped at: Phase 26 context gathered
-Resume file: .planning/phases/26-schema-foundation-catalog-crud/26-CONTEXT.md
+Last session: 2026-04-22T21:15:32.807Z
+Stopped at: Completed 26-01-PLAN.md
+Resume file: None

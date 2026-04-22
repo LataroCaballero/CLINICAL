@@ -7,12 +7,12 @@
 
 ### CATLOG — Catálogos Clínicos
 
-- [ ] **CATLOG-01**: El profesional puede vincular insumos del stock a un tratamiento del catálogo (relación n:n con cantidad por insumo)
-- [ ] **CATLOG-02**: El tratamiento del catálogo muestra un precio base calculado a partir del costo de los insumos vinculados (campo estático actualizable con botón "Recalcular", no recalculo automático)
-- [ ] **CATLOG-03**: El profesional puede crear, editar y eliminar cirugías propias desde la sección de Configuración
-- [ ] **CATLOG-04**: Una cirugía tiene: nombre, precio ARS, precio USD, insumos con cantidades (FK a stock), duración estimada
-- [ ] **CATLOG-05**: El precio base de una cirugía se muestra calculado a partir de los insumos asociados
-- [ ] **CATLOG-06**: Cada profesional ve y gestiona únicamente sus propias cirugías
+- [x] **CATLOG-01**: El profesional puede vincular insumos del stock a un tratamiento del catálogo (relación n:n con cantidad por insumo)
+- [x] **CATLOG-02**: El tratamiento del catálogo muestra un precio base calculado a partir del costo de los insumos vinculados (campo estático actualizable con botón "Recalcular", no recalculo automático)
+- [x] **CATLOG-03**: El profesional puede crear, editar y eliminar cirugías propias desde la sección de Configuración
+- [x] **CATLOG-04**: Una cirugía tiene: nombre, precio ARS, precio USD, insumos con cantidades (FK a stock), duración estimada
+- [x] **CATLOG-05**: El precio base de una cirugía se muestra calculado a partir de los insumos asociados
+- [x] **CATLOG-06**: Cada profesional ve y gestiona únicamente sus propias cirugías
 
 ### LIVHC — LiveTurno HC (Tratamiento en Consultorio)
 
@@ -77,12 +77,12 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CATLOG-01 | Phase 26 | Pending |
-| CATLOG-02 | Phase 26 | Pending |
-| CATLOG-03 | Phase 26 | Pending |
-| CATLOG-04 | Phase 26 | Pending |
-| CATLOG-05 | Phase 26 | Pending |
-| CATLOG-06 | Phase 26 | Pending |
+| CATLOG-01 | Phase 26 | Complete |
+| CATLOG-02 | Phase 26 | Complete |
+| CATLOG-03 | Phase 26 | Complete |
+| CATLOG-04 | Phase 26 | Complete |
+| CATLOG-05 | Phase 26 | Complete |
+| CATLOG-06 | Phase 26 | Complete |
 | LIVHC-01 | Phase 27 | Pending |
 | LIVHC-02 | Phase 27 | Pending |
 | LIVHC-03 | Phase 27 | Pending |

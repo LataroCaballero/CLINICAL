@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Catálogos Clínicos y Flujos de Atención
 status: executing
-stopped_at: Completed 26-06-PLAN.md
-last_updated: "2026-04-22T21:27:42.132Z"
-last_activity: 2026-04-22 — Plan 26-06 complete; GestionTratamientos extended with Costo insumos column, InsumosEditor in edit modal, Recalcular button, and insumos persistence on save
+stopped_at: Completed 26-07-PLAN.md
+last_updated: "2026-04-22T21:31:26.804Z"
+last_activity: 2026-04-22 — Plan 26-05 complete; InsumosEditor shared combobox+table component created, useTratamientosProfesional updated to TratamientoConInsumos with new insumos mutation hooks
 progress:
   total_phases: 6
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 7
-  completed_plans: 6
-  percent: 71
+  completed_plans: 7
+  percent: 100
 ---
 
 # Project State
@@ -28,17 +28,18 @@ See: .planning/PROJECT.md (updated 2026-04-22)
 ```
 Milestone: v1.5 Catálogos Clínicos y Flujos de Atención
 Phase:     26 of 31 (Schema Foundation + Catalog CRUD)
-Plan:      6 of 7
-Status:    In progress
-Progress:  [███████░░░] 71%
+Plan:      7 of 7
+Status:    Awaiting human verify (checkpoint)
+Progress:  [██████████] 100%
 ```
 
-Last activity: 2026-04-22 — Plan 26-05 complete; InsumosEditor shared combobox+table component created, useTratamientosProfesional updated to TratamientoConInsumos with new insumos mutation hooks
+Last activity: 2026-04-22 — Plan 26-07 complete; GestionCirugias built with full CRUD + InsumosEditor + Recalcular, Cirugías tab wired in Configuración for PROFESIONAL and SECRETARIA
 
 ## Accumulated Context
 
 ### Key Decisions for v1.5 (from research)
 
+- **26-07 GestionCirugias InsumosEditor both modes:** InsumosEditor shown in create and edit modals — createMutation returns id immediately, so setInsumosCirugia can be called in the same save handler. Recalcular button restricted to edit mode only.
 - **26-06 InsumosEditor edit-only:** InsumosEditor section is shown only in edit modal (selectedTratamiento != null) — new tratamiento has no id yet so set-insumos requires an existing record.
 - **26-05 useInventario no profesionalId param:** `useInventario()` reads professional context internally via `useEffectiveProfessionalId` — do not pass profesionalId to it; InsumosEditor keeps the prop for API compatibility only.
 - **26-05 InsumosEditor uncontrolled:** Component manages its own state; parent passes `initialInsumos` + `onChange` callback. `useEffect` syncs on initialInsumos change for modal reset pattern.
@@ -66,6 +67,6 @@ Last activity: 2026-04-22 — Plan 26-05 complete; InsumosEditor shared combobox
 
 ## Session Continuity
 
-Last session: 2026-04-22T21:27:42.131Z
-Stopped at: Completed 26-06-PLAN.md
+Last session: 2026-04-22T21:31:26.802Z
+Stopped at: Completed 26-07-PLAN.md
 Resume file: None

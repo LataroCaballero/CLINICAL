@@ -83,7 +83,7 @@ Full details: `.planning/milestones/v1.4-ROADMAP.md`
 
 **Milestone Goal:** Conectar catálogos de tratamientos y cirugías con LiveTurno, presupuestos y stock; mejorar flujos de clasificación y HC desde el perfil del paciente.
 
-- [ ] **Phase 26: Schema Foundation + Catalog CRUD** — Nuevos modelos Prisma + CRUD de catálogos en Configuración
+- [x] **Phase 26: Schema Foundation + Catalog CRUD** — Nuevos modelos Prisma + CRUD de catálogos en Configuración (completed 2026-04-22)
 - [ ] **Phase 27: HC Integration — LiveTurno + PatientDrawer** — Selector de catálogo en HC y entrada de HC desde perfil
 - [ ] **Phase 28: Presupuestos Catalog Integration** — Selector de ítems del catálogo al armar presupuestos
 - [ ] **Phase 29: PatientDrawer Flujo Action** — Cambio de flujo desde perfil con efectos CRM
@@ -202,7 +202,7 @@ Plans:
 | 23. Backend Logic | v1.4 | 2/2 | Complete | 2026-04-16 |
 | 24. LiveTurno Banner | v1.4 | 2/2 | Complete | 2026-04-19 |
 | 25. Tratamientos Tab | v1.4 | 3/3 | Complete | 2026-04-20 |
-| 26. Schema Foundation + Catalog CRUD | 6/7 | In Progress|  | - |
+| 26. Schema Foundation + Catalog CRUD | 7/7 | Complete   | 2026-04-22 | - |
 | 27. HC Integration — LiveTurno + PatientDrawer | v1.5 | 0/TBD | Not started | - |
 | 28. Presupuestos Catalog Integration | v1.5 | 0/TBD | Not started | - |
 | 29. PatientDrawer Flujo Action | v1.5 | 0/TBD | Not started | - |

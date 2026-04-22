@@ -35,6 +35,8 @@ key-decisions:
   - "GestionCirugias shows InsumosEditor in both create and edit modals (cirugías have id returned from createMutation, so insumos can be set immediately after creation)"
   - "Recalcular button only shown in edit mode (requires existing id for POST /recalcular-precio)"
   - "PROFESIONAL grid-cols-9 → grid-cols-10; SECRETARIA grid-cols-4 → grid-cols-5"
+  - "recalcularPrecioBase uses Inventario.precioActual (per-profesional price) not Producto.costoBase — ensures multi-tenant cost isolation"
+  - "Skip setInsumos call on create when insumosLocal is empty — avoids redundant API round-trip and slow spinner"
 
 patterns-established:
   - "Cirugías CRUD pattern: create → setInsumos in same save handler using returned id"
@@ -70,8 +72,11 @@ completed: 2026-04-22
 ## Task Commits
 
 1. **Task 1: Build GestionCirugias.tsx + wire page.tsx** - `33674e4` (feat)
+2. **Task 2: checkpoint:human-verify** - approved (no code commit)
 
-**Plan metadata:** (docs commit follows)
+**Bug fixes (post-task):** `aa977db` — use Inventario.precioActual for cost recalculation + skip setInsumos when no insumos on create
+
+**Plan metadata:** `10dff06` (docs: complete GestionCirugias plan)
 
 ## Files Created/Modified
 - `frontend/src/app/dashboard/configuracion/components/GestionCirugias.tsx` - Full cirugías CRUD UI with InsumosEditor inline
@@ -83,7 +88,28 @@ completed: 2026-04-22
 
 ## Deviations from Plan
 
-None - plan executed exactly as written.
+### Auto-fixed Issues
+
+**1. [Rule 1 - Bug] recalcularPrecioBase used wrong price source**
+- **Found during:** Post-Task 1 bug discovery (before verification)
+- **Issue:** `recalcularPrecioBase` was using `Producto.costoBase` (global catalog baseline) instead of `Inventario.precioActual` (the professional's own per-tenant inventory price). This would produce incorrect cost estimates in multi-tenant setups.
+- **Fix:** Updated backend to look up `Inventario.precioActual` per insumo when recalculating.
+- **Files modified:** Backend cirugías service (recalcular endpoint)
+- **Verification:** Recalcular button in GestionCirugias updates Costo insumos column using inventory prices correctly.
+- **Committed in:** `aa977db`
+
+**2. [Rule 1 - Bug] GestionCirugias create called setInsumos even with empty insumos list**
+- **Found during:** Post-Task 1 bug discovery (before verification)
+- **Issue:** `setInsumosMutation.mutateAsync` was always called after create even when `insumosLocal` was empty — causing a redundant API round-trip and leaving the modal spinner active unnecessarily.
+- **Fix:** Added guard: `setInsumosMutation.mutateAsync` only called when `insumosLocal.length > 0`.
+- **Files modified:** `frontend/src/app/dashboard/configuracion/components/GestionCirugias.tsx`
+- **Verification:** Creating a cirugía with no insumos completes immediately without spinner delay.
+- **Committed in:** `aa977db`
+
+---
+
+**Total deviations:** 2 auto-fixed (2 Rule 1 — bug fixes)
+**Impact on plan:** Both fixes required for correctness and UX. No scope creep.
 
 ## Issues Encountered
 None
@@ -92,9 +118,9 @@ None
 None - no external service configuration required.
 
 ## Next Phase Readiness
-- Phase 26 complete: all 7 plans delivered (schema migrations, backend services, InsumosEditor, tratamientos UI, cirugías UI)
-- Phases 27/28/29 can run in parallel now that Phase 26 is the strict prerequisite satisfied
-- Awaiting human verification checkpoint before advancing STATE
+- Phase 26 complete: all 7 plans delivered (schema migrations, backend services, InsumosEditor, tratamientos UI, cirugías UI). Human verification passed.
+- Phases 27/28/29 can run in parallel now that Phase 26 strict prerequisite is satisfied
+- `CirugiaCatalogo` and `TratamientoCatalogo` queryable by id and profesionalId for use in turnos, presupuestos, and HC entries
 
 ---
 *Phase: 26-schema-foundation-catalog-crud*

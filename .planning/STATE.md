@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Catálogos Clínicos y Flujos de Atención
-status: executing
-stopped_at: Completed 26-07-PLAN.md
-last_updated: "2026-04-22T21:31:26.804Z"
-last_activity: 2026-04-22 — Plan 26-05 complete; InsumosEditor shared combobox+table component created, useTratamientosProfesional updated to TratamientoConInsumos with new insumos mutation hooks
+status: verifying
+stopped_at: Completed 26-07-PLAN.md human verification approved
+last_updated: "2026-04-22T23:03:57.722Z"
+last_activity: 2026-04-22 — Plan 26-07 complete; GestionCirugias built with full CRUD + InsumosEditor + Recalcular, Cirugías tab wired in Configuración for PROFESIONAL and SECRETARIA
 progress:
   total_phases: 6
   completed_phases: 1
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-04-22)
 Milestone: v1.5 Catálogos Clínicos y Flujos de Atención
 Phase:     26 of 31 (Schema Foundation + Catalog CRUD)
 Plan:      7 of 7
-Status:    Awaiting human verify (checkpoint)
+Status:    Phase 26 complete — human verification approved
 Progress:  [██████████] 100%
 ```
 
@@ -39,6 +39,8 @@ Last activity: 2026-04-22 — Plan 26-07 complete; GestionCirugias built with fu
 
 ### Key Decisions for v1.5 (from research)
 
+- **26-07 recalcularPrecioBase uses Inventario.precioActual:** Per-profesional inventory price used for cost recalculation (not Producto.costoBase global baseline) — ensures multi-tenant cost isolation in cirugías.
+- **26-07 skip setInsumos on empty create:** GestionCirugias skips setInsumosMutation call when insumosLocal is empty on create — avoids redundant API round-trip and spinner delay.
 - **26-07 GestionCirugias InsumosEditor both modes:** InsumosEditor shown in create and edit modals — createMutation returns id immediately, so setInsumosCirugia can be called in the same save handler. Recalcular button restricted to edit mode only.
 - **26-06 InsumosEditor edit-only:** InsumosEditor section is shown only in edit modal (selectedTratamiento != null) — new tratamiento has no id yet so set-insumos requires an existing record.
 - **26-05 useInventario no profesionalId param:** `useInventario()` reads professional context internally via `useEffectiveProfessionalId` — do not pass profesionalId to it; InsumosEditor keeps the prop for API compatibility only.
@@ -67,6 +69,6 @@ Last activity: 2026-04-22 — Plan 26-07 complete; GestionCirugias built with fu
 
 ## Session Continuity
 
-Last session: 2026-04-22T21:31:26.802Z
-Stopped at: Completed 26-07-PLAN.md
+Last session: 2026-04-22T23:03:57.721Z
+Stopped at: Completed 26-07-PLAN.md human verification approved
 Resume file: None

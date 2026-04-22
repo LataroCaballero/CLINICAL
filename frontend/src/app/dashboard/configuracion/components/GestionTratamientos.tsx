@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { InsumosEditor, type InsumoLocal } from './InsumosEditor';
 import { Plus, Pencil, Trash2, RotateCcw, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -41,6 +42,8 @@ import {
   useUpdateTratamiento,
   useDeleteTratamiento,
   useRestoreTratamiento,
+  useSetInsumosTratamiento,
+  useRecalcularPrecioTratamiento,
 } from '@/hooks/useTratamientosProfesional';
 import type { TratamientoConInsumos, CreateTratamientoDto } from '@/types/tratamiento';
 
@@ -68,12 +71,15 @@ export default function GestionTratamientos({ profesionalId }: { profesionalId?:
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedTratamiento, setSelectedTratamiento] = useState<TratamientoConInsumos | null>(null);
   const [formData, setFormData] = useState<TratamientoFormData>(emptyFormData);
+  const [insumosLocal, setInsumosLocal] = useState<InsumoLocal[]>([]);
 
   const { data: tratamientos, isLoading, error } = useTratamientosProfesional(showInactive, profesionalId);
   const createMutation = useCreateTratamiento(profesionalId);
   const updateMutation = useUpdateTratamiento(profesionalId);
   const deleteMutation = useDeleteTratamiento(profesionalId);
   const restoreMutation = useRestoreTratamiento(profesionalId);
+  const setInsumosMutation = useSetInsumosTratamiento(profesionalId);
+  const recalcularMutation = useRecalcularPrecioTratamiento(profesionalId);
 
   const handleOpenModal = (tratamiento?: TratamientoConInsumos) => {
     if (tratamiento) {
@@ -86,9 +92,19 @@ export default function GestionTratamientos({ profesionalId }: { profesionalId?:
         procedimiento: tratamiento.procedimiento || '',
         duracionMinutos: tratamiento.duracionMinutos ? String(tratamiento.duracionMinutos) : '',
       });
+      setInsumosLocal(
+        (tratamiento.insumos ?? []).map((i) => ({
+          productoId: i.productoId,
+          nombre: i.producto.nombre,
+          cantidad: Number(i.cantidad),
+          costoBase: i.producto.costoBase !== null ? Number(i.producto.costoBase) : null,
+          unidadMedida: i.producto.unidadMedida ?? null,
+        })),
+      );
     } else {
       setSelectedTratamiento(null);
       setFormData(emptyFormData);
+      setInsumosLocal([]);
     }
     setIsModalOpen(true);
   };
@@ -97,6 +113,7 @@ export default function GestionTratamientos({ profesionalId }: { profesionalId?:
     setIsModalOpen(false);
     setSelectedTratamiento(null);
     setFormData(emptyFormData);
+    setInsumosLocal([]);
   };
 
   const handleSubmit = async () => {
@@ -117,6 +134,10 @@ export default function GestionTratamientos({ profesionalId }: { profesionalId?:
     try {
       if (selectedTratamiento) {
         await updateMutation.mutateAsync({ id: selectedTratamiento.id, dto });
+        await setInsumosMutation.mutateAsync({
+          id: selectedTratamiento.id,
+          insumos: insumosLocal.map((i) => ({ productoId: i.productoId, cantidad: i.cantidad })),
+        });
         toast.success('Tratamiento actualizado');
       } else {
         await createMutation.mutateAsync(dto);
@@ -283,7 +304,7 @@ export default function GestionTratamientos({ profesionalId }: { profesionalId?:
 
         {/* Create/Edit Modal */}
         <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-          <DialogContent className="max-w-lg">
+          <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
                 {selectedTratamiento ? 'Editar Tratamiento' : 'Nuevo Tratamiento'}
@@ -376,6 +397,38 @@ export default function GestionTratamientos({ profesionalId }: { profesionalId?:
                   rows={3}
                 />
               </div>
+
+              {selectedTratamiento && (
+                <>
+                  <div className="space-y-2">
+                    <Label>Insumos</Label>
+                    <InsumosEditor
+                      profesionalId={profesionalId}
+                      initialInsumos={insumosLocal}
+                      onChange={setInsumosLocal}
+                    />
+                  </div>
+
+                  {insumosLocal.some((i) => i.costoBase === null) && (
+                    <p className="text-xs text-amber-600">
+                      Algunos insumos no tienen costo base configurado. Se usará $0 para esos ítems al recalcular.
+                    </p>
+                  )}
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={recalcularMutation.isPending || insumosLocal.length === 0}
+                    onClick={async () => {
+                      if (!selectedTratamiento) return;
+                      await recalcularMutation.mutateAsync(selectedTratamiento.id);
+                    }}
+                  >
+                    {recalcularMutation.isPending ? 'Calculando...' : 'Recalcular desde insumos'}
+                  </Button>
+                </>
+              )}
             </div>
 
             <DialogFooter>

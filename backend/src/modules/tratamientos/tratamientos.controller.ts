@@ -4,6 +4,7 @@ import {
   Get,
   Param,
   Post,
+  Put,
   Patch,
   Query,
   Body,
@@ -13,6 +14,7 @@ import {
 import { TratamientosService } from './tratamientos.service';
 import { CreateTratamientoDto } from './dto/create-tratamiento.dto';
 import { UpdateTratamientoDto } from './dto/update-tratamiento.dto';
+import { SetInsumosTratamientoDto } from './dto/set-insumos-tratamiento.dto';
 import { Auth } from '../auth/decorators/auth.decorator';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { RolUsuario } from '@prisma/client';
@@ -140,5 +142,26 @@ export class TratamientosController {
   ) {
     const pid = await this.getProfesionalId(req.user, profesionalId);
     return this.tratamientosService.restore(id, pid);
+  }
+
+  @Put(':id/insumos')
+  async setInsumos(
+    @Req() req: any,
+    @Param('id') id: string,
+    @Body() dto: SetInsumosTratamientoDto,
+    @Query('profesionalId') profesionalId?: string,
+  ) {
+    const pid = await this.getProfesionalId(req.user, profesionalId);
+    return this.tratamientosService.setInsumos(id, pid, dto.insumos);
+  }
+
+  @Post(':id/recalcular-precio')
+  async recalcularPrecio(
+    @Req() req: any,
+    @Param('id') id: string,
+    @Query('profesionalId') profesionalId?: string,
+  ) {
+    const pid = await this.getProfesionalId(req.user, profesionalId);
+    return this.tratamientosService.recalcularPrecioBase(id, pid);
   }
 }

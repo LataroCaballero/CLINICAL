@@ -142,15 +142,23 @@ export class CirugiasCatalogoService {
       where: { cirugiaId: id },
       include: {
         producto: {
-          select: { costoBase: true },
+          select: {
+            costoBase: true,
+            inventarios: {
+              where: { profesionalId },
+              select: { precioActual: true },
+            },
+          },
         },
       },
     });
 
     const precioBase = cirugiaInsumos.reduce((sum, insumo) => {
-      const costo = Number(insumo.producto.costoBase ?? 0);
-      const cantidad = Number(insumo.cantidad);
-      return sum + costo * cantidad;
+      const precio =
+        insumo.producto.inventarios[0]?.precioActual ??
+        insumo.producto.costoBase ??
+        0;
+      return sum + Number(precio) * Number(insumo.cantidad);
     }, 0);
 
     return this.prisma.cirugiaCatalogo.update({

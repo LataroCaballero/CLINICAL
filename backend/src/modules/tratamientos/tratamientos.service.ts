@@ -246,14 +246,26 @@ export class TratamientosService {
 
     const insumos = await this.prisma.tratamientoInsumo.findMany({
       where: { tratamientoId: id },
-      include: { producto: { select: { costoBase: true } } },
+      include: {
+        producto: {
+          select: {
+            costoBase: true,
+            inventarios: {
+              where: { profesionalId },
+              select: { precioActual: true },
+            },
+          },
+        },
+      },
     });
 
-    const precioBase = insumos.reduce(
-      (sum, item) =>
-        sum + Number(item.producto.costoBase ?? 0) * Number(item.cantidad),
-      0,
-    );
+    const precioBase = insumos.reduce((sum, item) => {
+      const precio =
+        item.producto.inventarios[0]?.precioActual ??
+        item.producto.costoBase ??
+        0;
+      return sum + Number(precio) * Number(item.cantidad);
+    }, 0);
 
     return this.prisma.tratamiento.update({
       where: { id },

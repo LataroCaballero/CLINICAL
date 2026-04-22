@@ -147,12 +147,14 @@ export default function GestionCirugias({ profesionalId }: GestionCirugiaProps =
         toast.success('Cirugía creada');
       }
 
-      await setInsumosMutation.mutateAsync({
-        id: savedId,
-        dto: {
-          insumos: insumosLocal.map((i) => ({ productoId: i.productoId, cantidad: i.cantidad })),
-        },
-      });
+      if (insumosLocal.length > 0 || editingCirugia) {
+        await setInsumosMutation.mutateAsync({
+          id: savedId,
+          dto: {
+            insumos: insumosLocal.map((i) => ({ productoId: i.productoId, cantidad: i.cantidad })),
+          },
+        });
+      }
 
       handleCloseModal();
     } catch {

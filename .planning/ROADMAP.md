@@ -102,7 +102,15 @@ Full details: `.planning/milestones/v1.4-ROADMAP.md`
   3. El profesional puede crear, editar y eliminar cirugías propias (nombre, precio ARS/USD, insumos con cantidades, duración estimada)
   4. El precio base de una cirugía se muestra calculado a partir de sus insumos asociados
   5. Cada profesional ve y puede gestionar únicamente sus propias cirugías (aislamiento multi-profesional verificado)
-**Plans**: TBD
+**Plans**: 7 plans
+Plans:
+- [ ] 26-01-PLAN.md — Schema migration: TratamientoInsumo, precioBase, CirugiaCatalogo, CirugiaInsumo
+- [ ] 26-02-PLAN.md — Backend: tratamientos insumos endpoints + recalcular-precio
+- [ ] 26-03-PLAN.md — Backend: cirugias-catalogo full NestJS module (7 endpoints)
+- [ ] 26-04-PLAN.md — Frontend: TypeScript types + TanStack Query hooks for cirugías catalog
+- [ ] 26-05-PLAN.md — Frontend: InsumosEditor shared component + useTratamientosProfesional extensions
+- [ ] 26-06-PLAN.md — Frontend: GestionTratamientos extended with insumos column + modal section
+- [ ] 26-07-PLAN.md — Frontend: GestionCirugias component + Configuración tab wiring
 
 ### Phase 27: HC Integration — LiveTurno + PatientDrawer
 **Goal**: Los profesionales pueden seleccionar tratamientos del catálogo en la sección de HC de LiveTurno, generar órdenes de consumo de insumos, y crear entradas de HC directamente desde el perfil del paciente sin turno activo
@@ -194,7 +202,7 @@ Full details: `.planning/milestones/v1.4-ROADMAP.md`
 | 23. Backend Logic | v1.4 | 2/2 | Complete | 2026-04-16 |
 | 24. LiveTurno Banner | v1.4 | 2/2 | Complete | 2026-04-19 |
 | 25. Tratamientos Tab | v1.4 | 3/3 | Complete | 2026-04-20 |
-| 26. Schema Foundation + Catalog CRUD | v1.5 | 0/TBD | Not started | - |
+| 26. Schema Foundation + Catalog CRUD | v1.5 | 0/7 | Not started | - |
 | 27. HC Integration — LiveTurno + PatientDrawer | v1.5 | 0/TBD | Not started | - |
 | 28. Presupuestos Catalog Integration | v1.5 | 0/TBD | Not started | - |
 | 29. PatientDrawer Flujo Action | v1.5 | 0/TBD | Not started | - |

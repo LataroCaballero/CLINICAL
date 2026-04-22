@@ -130,6 +130,7 @@ model Profesional {
   limitesFacturacion LimiteFacturacionMensual[]
   configuracionAFIP  ConfiguracionAFIP?
   caeaVigentes       CaeaVigente[]
+  cirugiasCatalogo   CirugiaCatalogo[]
 }
 
 model Secretaria {
@@ -601,11 +602,13 @@ model Producto {
   precioSugerido    Decimal?            @db.Decimal(10, 2)
   requiereLote      Boolean             @default(false)
   descuentaStock    Boolean             @default(true)
-  inventarios       Inventario[]
-  lotes             Lote[]
-  OrdenCompraItem   OrdenCompraItem[]
-  proveedores       ProductoProveedor[]
-  VentaProductoItem VentaProductoItem[]
+  inventarios        Inventario[]
+  lotes              Lote[]
+  OrdenCompraItem    OrdenCompraItem[]
+  proveedores        ProductoProveedor[]
+  VentaProductoItem  VentaProductoItem[]
+  tratamientoInsumos TratamientoInsumo[]
+  cirugiaInsumos     CirugiaInsumo[]
 }
 
 model Inventario {
@@ -892,9 +895,53 @@ model Tratamiento {
   activo          Boolean     @default(true)
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
+  precioBase      Decimal?    @db.Decimal(10, 2)
+  insumos         TratamientoInsumo[]
 
   @@unique([nombre, profesionalId])
   @@index([profesionalId, activo])
+}
+
+model TratamientoInsumo {
+  id            String      @id @default(uuid())
+  tratamientoId String
+  productoId    String
+  cantidad      Decimal     @db.Decimal(10, 3)
+  tratamiento   Tratamiento @relation(fields: [tratamientoId], references: [id], onDelete: Cascade)
+  producto      Producto    @relation(fields: [productoId], references: [id])
+
+  @@unique([tratamientoId, productoId])
+  @@index([tratamientoId])
+}
+
+model CirugiaCatalogo {
+  id              String          @id @default(uuid())
+  nombre          String
+  precioARS       Decimal?        @db.Decimal(10, 2)
+  precioUSD       Decimal?        @db.Decimal(10, 2)
+  precioBase      Decimal?        @db.Decimal(10, 2)
+  duracionMinutos Int?
+  profesionalId   String
+  activo          Boolean         @default(true)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  profesional     Profesional     @relation(fields: [profesionalId], references: [id])
+  insumos         CirugiaInsumo[]
+
+  @@unique([nombre, profesionalId])
+  @@index([profesionalId, activo])
+}
+
+model CirugiaInsumo {
+  id         String          @id @default(uuid())
+  cirugiaId  String
+  productoId String
+  cantidad   Decimal         @db.Decimal(10, 3)
+  cirugia    CirugiaCatalogo @relation(fields: [cirugiaId], references: [id], onDelete: Cascade)
+  producto   Producto        @relation(fields: [productoId], references: [id])
+
+  @@unique([cirugiaId, productoId])
+  @@index([cirugiaId])
 }
 
 model Objection {

@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Catálogos Clínicos y Flujos de Atención
-status: in-progress
-stopped_at: Completed 26-01-PLAN.md
-last_updated: "2026-04-22T21:30:00.000Z"
-last_activity: 2026-04-22 — Plan 26-01 complete; schema migrated with TratamientoInsumo, CirugiaCatalogo, CirugiaInsumo
+status: executing
+stopped_at: Completed 26-03-PLAN.md
+last_updated: "2026-04-22T21:19:27.761Z"
+last_activity: "2026-04-22 — Plan 26-02 complete; insumos management endpoints (PUT :id/insumos, POST :id/recalcular-precio) added to tratamientos module"
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 7
-  completed_plans: 1
-  percent: 14
+  completed_plans: 4
+  percent: 29
 ---
 
 # Project State
@@ -28,17 +28,19 @@ See: .planning/PROJECT.md (updated 2026-04-22)
 ```
 Milestone: v1.5 Catálogos Clínicos y Flujos de Atención
 Phase:     26 of 31 (Schema Foundation + Catalog CRUD)
-Plan:      2 of 7
+Plan:      3 of 7
 Status:    In progress
-Progress:  [█░░░░░░░░░] 14%
+Progress:  [██░░░░░░░░] 29%
 ```
 
-Last activity: 2026-04-22 — Plan 26-01 complete; schema migrated with TratamientoInsumo, CirugiaCatalogo, CirugiaInsumo models
+Last activity: 2026-04-22 — Plan 26-02 complete; insumos management endpoints (PUT :id/insumos, POST :id/recalcular-precio) added to tratamientos module
 
 ## Accumulated Context
 
 ### Key Decisions for v1.5 (from research)
 
+- **26-02 setInsumos transaction pattern:** Uses `$transaction([deleteMany, ...creates])` for atomic insumos replacement — prevents partial state; client sends full desired list.
+- **26-02 null costoBase:** Treated as 0 via `?? 0` in recalcularPrecioBase reduce — products with no cost set are treated as free, not NaN.
 - **26-01 Migration workaround:** Used `prisma db push` + `migrate resolve` instead of `migrate dev` — Supabase pgBouncer shadow DB cannot replay migration 20260415221758_flujo_paciente. Live DB is correct.
 - **Price snapshot on PresupuestoItem:** Add `precioUnitario Decimal` + `cantidad Int @default(1)` in Phase 26 migration. Never re-read price from catalog for financial documents.
 - **ultimoTratamientoId design:** Use query-on-read (ORDER BY fecha DESC LIMIT 1 join) rather than denormalized FK — prevents corruption from retroactive entries.
@@ -60,6 +62,6 @@ Last activity: 2026-04-22 — Plan 26-01 complete; schema migrated with Tratamie
 
 ## Session Continuity
 
-Last session: 2026-04-22T21:15:32.807Z
-Stopped at: Completed 26-01-PLAN.md
+Last session: 2026-04-22T21:19:27.759Z
+Stopped at: Completed 26-03-PLAN.md
 Resume file: None

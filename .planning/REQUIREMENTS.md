@@ -1,98 +1,115 @@
-# Requirements: CLINICAL — v1.4 Flujo de Pacientes
+# Requirements: CLINICAL v1.5
 
-**Defined:** 2026-04-15
+**Defined:** 2026-04-22
 **Core Value:** Que un cirujano plástico cierre más cirugías — el sistema hace visible qué pacientes seguir, cuándo y cómo, de la manera más automatizada posible
 
-## v1.4 Requirements
+## v1.5 Requirements
 
-### Tipos de Turno
+### CATLOG — Catálogos Clínicos
 
-- [x] **TIPOS-01**: El sistema cuenta con 5 tipos de turno disponibles: "Consulta para cirugía", "Consulta para tratamiento en consultorio", "Pre-operatorio", "Control", "Consulta pendiente"
-- [x] **TIPOS-02**: Al crear un turno, la secretaria/profesional selecciona el tipo de turno de la lista actualizada con los 5 tipos
+- [ ] **CATLOG-01**: El profesional puede vincular insumos del stock a un tratamiento del catálogo (relación n:n con cantidad por insumo)
+- [ ] **CATLOG-02**: El tratamiento del catálogo muestra un precio base calculado a partir del costo de los insumos vinculados (campo estático actualizable con botón "Recalcular", no recalculo automático)
+- [ ] **CATLOG-03**: El profesional puede crear, editar y eliminar cirugías propias desde la sección de Configuración
+- [ ] **CATLOG-04**: Una cirugía tiene: nombre, precio ARS, precio USD, insumos con cantidades (FK a stock), duración estimada
+- [ ] **CATLOG-05**: El precio base de una cirugía se muestra calculado a partir de los insumos asociados
+- [ ] **CATLOG-06**: Cada profesional ve y gestiona únicamente sus propias cirugías
 
-### Flujo del Paciente
+### LIVHC — LiveTurno HC (Tratamiento en Consultorio)
 
-- [x] **FLUJO-01**: Al crear un turno de tipo "Consulta para cirugía", el flujo del paciente se actualiza automáticamente a CIRUGIA (solo si el paciente está en PENDIENTE — no sobreescribe clasificaciones existentes)
-- [x] **FLUJO-02**: Al crear un turno de tipo "Consulta para tratamiento en consultorio", el flujo del paciente se actualiza automáticamente a TRATAMIENTO (solo si el paciente está en PENDIENTE)
-- [x] **FLUJO-03**: Al crear un turno de tipo "Pre-operatorio", el flujo del paciente se actualiza a CIRUGIA (solo si está en PENDIENTE)
-- [x] **FLUJO-04**: Los tipos "Control" y "Consulta pendiente" no modifican el flujo del paciente
-- [x] **FLUJO-05**: La lista de pacientes muestra un badge de flujo por paciente: CIRUGIA (azul), TRATAMIENTO (verde), PENDIENTE (amber), sin clasificar/legacy (gris)
-- [x] **FLUJO-06**: Los pacientes existentes en el embudo CRM migran a flujo = CIRUGIA en base a historial de turnos (Turno.esCirugia / etapaCRM activo); pacientes sin historial quedan como null (sin clasificar — no aparecen en embudo ni en lista de tratamientos)
+- [ ] **LIVHC-01**: La sección "Práctica" en LiveTurno HC se renombra a "Tratamiento en Consultorio"
+- [ ] **LIVHC-02**: El profesional puede seleccionar uno o más tratamientos del catálogo en la sección (multi-select)
+- [ ] **LIVHC-03**: El campo de texto libre se mantiene como opción complementaria al selector de tratamientos
+- [ ] **LIVHC-04**: La sección muestra un checkbox "Consumir insumos del stock" (visible solo cuando el tratamiento seleccionado tiene insumos vinculados)
+- [ ] **LIVHC-05**: Al guardar la HC con tratamientos seleccionados, el último tratamiento del paciente se actualiza (derivado en lectura desde la última entrada con tratamiento asignado)
 
-### CRM / Embudo
+### STOCK — Órdenes de Consumo
 
-- [x] **CRM-01**: El embudo CRM (kanban) muestra únicamente pacientes con flujo = CIRUGIA y pacientes legacy (flujo IS NULL con etapaCRM activo)
-- [x] **CRM-02**: La lista de acción diaria muestra únicamente pacientes con flujo = CIRUGIA y pacientes legacy con etapaCRM activo
-- [x] **CRM-03**: Los KPIs del dashboard CRM (embudo, conversión, motivos de pérdida, ingreso potencial, performance coordinador) reflejan solo pacientes de cirugía
+- [ ] **STOCK-01**: Al guardar una HC con el checkbox de insumos activado, se genera automáticamente una orden de consumo con estado PENDIENTE en el módulo de stock
+- [ ] **STOCK-02**: La orden de consumo incluye: nombre del paciente, fecha de la sesión, tratamiento(s) realizados, e insumos con cantidades a consumir
+- [ ] **STOCK-03**: El responsable de stock puede ver la lista de órdenes de consumo pendientes y confirmarlas una a una
+- [ ] **STOCK-04**: Al confirmar una orden, se registra el movimiento SALIDA en el stock correspondiente dentro de una transacción atómica
 
-### LiveTurno — Clasificación Pendiente
+### PRESUP — Presupuestos con Catálogo
 
-- [x] **LIVT-01**: En LiveTurno, si el paciente tiene flujo = PENDIENTE, aparece un banner amber no bloqueante indicando que debe clasificarse
-- [x] **LIVT-02**: Desde el banner, el profesional puede clasificar al paciente como "Cirugía" o "Tratamiento"; el banner desaparece tras la acción y el flujo del paciente queda guardado
-- [x] **LIVT-03**: El banner es dismissible por sesión (desaparece sin clasificar); el paciente permanece PENDIENTE y el banner vuelve a aparecer en la próxima sesión LiveTurno
+- [ ] **PRESUP-01**: Al armar un presupuesto, el usuario puede seleccionar ítems desde el catálogo de cirugías del profesional
+- [ ] **PRESUP-02**: Al armar un presupuesto, el usuario puede seleccionar ítems desde el catálogo de tratamientos
+- [ ] **PRESUP-03**: Al seleccionar un ítem del catálogo, se auto-completan nombre y precio (ARS/USD) como snapshot en el momento de la selección
+- [ ] **PRESUP-04**: Se pueden seguir agregando ítems de texto libre al presupuesto (comportamiento actual sin cambios)
 
-### Lista de Tratamientos
+### PAC — Mejoras en Vista de Pacientes
 
-- [x] **TRAT-01**: La página de pacientes tiene un nuevo tab "Tratamientos" junto a "Embudo" y "Lista"
-- [x] **TRAT-02**: El tab muestra todos los turnos del mes con tipo de flujo TRATAMIENTO del profesional, ordenados por día
-- [x] **TRAT-03**: La lista es navegable por mes (botones anterior / actual / siguiente), con el mes actual como default
-- [x] **TRAT-04**: La lista es filtrable por tipo de turno de tratamiento (dropdown, "Todos" por defecto)
-- [x] **TRAT-05**: Cada fila muestra: fecha+hora, nombre del paciente (clickable al drawer), tipo de turno, estado del turno
-- [x] **TRAT-06**: El header del tab muestra el total de tratamientos del mes seleccionado
+- [ ] **PAC-01**: El tab Tratamientos muestra una columna con el último tratamiento registrado por paciente (nombre del tratamiento del catálogo)
+- [ ] **PAC-02**: El profesional puede cambiar el flujo de un paciente desde el PatientDrawer mediante un modal de confirmación
+- [ ] **PAC-03**: El cambio de flujo en PatientDrawer es optimista — se aplica de inmediato en UI, con toast de error si el endpoint falla
+- [ ] **PAC-04**: Al cambiar el flujo, el paciente se asigna automáticamente a la etapa CRM "Sin Clasificar" en la misma transacción
+- [ ] **PAC-05**: Al cambiar el flujo, se registra automáticamente un contacto con nota "Paciente pendiente de clasificación"
 
-## v2 Requirements (Deferred)
+### HCDR — Entrada de HC desde PatientDrawer
 
-### Tratamientos — Funcionalidad Futura
+- [ ] **HCDR-01**: Desde el PatientDrawer se puede crear una nueva entrada de HC usando el mismo creator que se usa en LiveTurno
+- [ ] **HCDR-02**: La entrada creada desde PatientDrawer no requiere turno activo (se crea sin turnoId asociado)
+- [ ] **HCDR-03**: La fecha de la entrada es hoy por defecto pero permite seleccionar una fecha retroactiva
 
-- **TRAT-07**: Lista de tratamientos muestra monto cobrado por paciente en el mes (requiere join Cobro/Factura)
-- **TRAT-08**: Export CSV de la lista de tratamientos del mes
-- **TRAT-09**: Pantalla de reclasificación masiva de pacientes PENDIENTE
+## v2+ Requirements (Deferred)
 
-### Reportes
+### Catálogos
 
-- **REP-01**: Reportes ejecutivos exportables con comparativas entre períodos
-- **REP-02**: Historial de liquidaciones por OS con comparativa autorizado vs. pagado
+- Estudios pre-quirúrgicos por cirugía (checklist por paciente, solicitud desde presupuesto)
+- Indicaciones post-procedimiento por tratamiento/cirugía (exportable a PDF)
+- Paquetes/bundles de ítems en presupuesto
+- Tracking de lote (batch) por insumo inyectable (compliance)
+
+### Stock
+
+- Confirmación masiva de órdenes de consumo (bulk confirm)
+- Vinculación OrdenConsumo a Lote específico de producto
 
 ## Out of Scope
 
 | Feature | Reason |
 |---------|--------|
-| Selector manual de flujo en formulario de nuevo paciente | Clasificación automática vía tipo de turno es más precisa y sin overhead; manual en paciente-form crea UX tax innecesaria |
-| Embudo CRM separado para TRATAMIENTO | Tratamientos son recurrentes y no siguen el mismo ciclo de vida (CONSULTADO → PRESUPUESTO → CONFIRMADO); la lista mensual es el view correcto |
-| Link a stock al realizar tratamiento | Deferido — requiere módulo separado con lógica de consumo por procedimiento |
-| Link a finanzas/presupuestos para tratamientos | Deferido — tratamientos de consultorio raramente tienen presupuesto previo |
-| Reclasificación en bulk de pacientes existentes | Deferido — clasificación natural vía nuevos turnos es suficiente para v1.4 |
+| Deducción inmediata de stock desde HC | Race condition con escrituras concurrentes; modelo pending→confirm es el correcto para separación de roles (PROFESIONAL documenta, Admin confirma) |
+| Recalculo automático de precio base al editar insumos | Quote drift — los presupuestos históricos quedarían con precios incorrectos; botón explícito "Recalcular" es el diseño correcto |
+| ultimoTratamientoId como columna desnormalizada en Paciente | Corrupción con entradas retroactivas y escrituras concurrentes; query-on-read (ORDER BY fecha DESC) es más robusto |
+| App móvil nativa | Web-first, mobile a futuro |
 
 ## Traceability
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| TIPOS-01 | Phase 22 | Complete |
-| TIPOS-02 | Phase 22 | Complete |
-| FLUJO-01 | Phase 23 | Complete |
-| FLUJO-02 | Phase 23 | Complete |
-| FLUJO-03 | Phase 23 | Complete |
-| FLUJO-04 | Phase 23 | Complete |
-| FLUJO-05 | Phase 25 | Complete |
-| FLUJO-06 | Phase 22 | Complete |
-| CRM-01 | Phase 23 | Complete |
-| CRM-02 | Phase 23 | Complete |
-| CRM-03 | Phase 23 | Complete |
-| LIVT-01 | Phase 24 | Complete |
-| LIVT-02 | Phase 24 | Complete |
-| LIVT-03 | Phase 24 | Complete |
-| TRAT-01 | Phase 25 | Complete |
-| TRAT-02 | Phase 25 | Complete |
-| TRAT-03 | Phase 25 | Complete |
-| TRAT-04 | Phase 25 | Complete |
-| TRAT-05 | Phase 25 | Complete |
-| TRAT-06 | Phase 25 | Complete |
+| CATLOG-01 | Phase 26 | Pending |
+| CATLOG-02 | Phase 26 | Pending |
+| CATLOG-03 | Phase 26 | Pending |
+| CATLOG-04 | Phase 26 | Pending |
+| CATLOG-05 | Phase 26 | Pending |
+| CATLOG-06 | Phase 26 | Pending |
+| LIVHC-01 | Phase 27 | Pending |
+| LIVHC-02 | Phase 27 | Pending |
+| LIVHC-03 | Phase 27 | Pending |
+| LIVHC-04 | Phase 27 | Pending |
+| LIVHC-05 | Phase 27 | Pending |
+| STOCK-01 | Phase 27 | Pending |
+| STOCK-02 | Phase 27 | Pending |
+| STOCK-03 | Phase 31 | Pending |
+| STOCK-04 | Phase 31 | Pending |
+| PRESUP-01 | Phase 28 | Pending |
+| PRESUP-02 | Phase 28 | Pending |
+| PRESUP-03 | Phase 28 | Pending |
+| PRESUP-04 | Phase 28 | Pending |
+| PAC-01 | Phase 30 | Pending |
+| PAC-02 | Phase 29 | Pending |
+| PAC-03 | Phase 29 | Pending |
+| PAC-04 | Phase 29 | Pending |
+| PAC-05 | Phase 29 | Pending |
+| HCDR-01 | Phase 27 | Pending |
+| HCDR-02 | Phase 27 | Pending |
+| HCDR-03 | Phase 27 | Pending |
 
 **Coverage:**
-- v1.4 requirements: 20 total
-- Mapped to phases: 20
+- v1.5 requirements: 27 total
+- Mapped to phases: 27
 - Unmapped: 0 ✓
 
 ---
-*Requirements defined: 2026-04-15*
-*Last updated: 2026-04-15 — traceability confirmed after roadmap creation*
+*Requirements defined: 2026-04-22*
+*Last updated: 2026-04-22 after initial definition*

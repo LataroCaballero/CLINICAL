@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Catálogos Clínicos y Flujos de Atención
 status: executing
-stopped_at: Completed 26-05-PLAN.md
-last_updated: "2026-04-22T21:23:00Z"
-last_activity: "2026-04-22 — Plan 26-05 complete; InsumosEditor shared combobox+table component created, useTratamientosProfesional updated to TratamientoConInsumos with new insumos mutation hooks"
+stopped_at: Completed 26-06-PLAN.md
+last_updated: "2026-04-22T21:27:42.132Z"
+last_activity: 2026-04-22 — Plan 26-06 complete; GestionTratamientos extended with Costo insumos column, InsumosEditor in edit modal, Recalcular button, and insumos persistence on save
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 7
-  completed_plans: 5
+  completed_plans: 6
   percent: 71
 ---
 
@@ -39,6 +39,7 @@ Last activity: 2026-04-22 — Plan 26-05 complete; InsumosEditor shared combobox
 
 ### Key Decisions for v1.5 (from research)
 
+- **26-06 InsumosEditor edit-only:** InsumosEditor section is shown only in edit modal (selectedTratamiento != null) — new tratamiento has no id yet so set-insumos requires an existing record.
 - **26-05 useInventario no profesionalId param:** `useInventario()` reads professional context internally via `useEffectiveProfessionalId` — do not pass profesionalId to it; InsumosEditor keeps the prop for API compatibility only.
 - **26-05 InsumosEditor uncontrolled:** Component manages its own state; parent passes `initialInsumos` + `onChange` callback. `useEffect` syncs on initialInsumos change for modal reset pattern.
 - **26-04 api named export:** `{ api }` is a named export from `@/lib/api`, not a default export — all hooks must use `import { api } from '@/lib/api'`.
@@ -65,6 +66,6 @@ Last activity: 2026-04-22 — Plan 26-05 complete; InsumosEditor shared combobox
 
 ## Session Continuity
 
-Last session: 2026-04-22T21:23:00Z
-Stopped at: Completed 26-05-PLAN.md
+Last session: 2026-04-22T21:27:42.131Z
+Stopped at: Completed 26-06-PLAN.md
 Resume file: None

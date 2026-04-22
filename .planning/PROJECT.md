@@ -75,6 +75,15 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 
 ### Active
 
+<!-- v1.5 Catálogos Clínicos y Flujos de Atención -->
+- [ ] Catálogo de tratamientos extendido con insumos del stock y precio base calculado
+- [ ] Catálogo de cirugías por profesional (nombre, precios ARS/USD, insumos, duración)
+- [ ] LiveTurno HC: sección "Tratamiento en Consultorio" con selector de catálogo, texto libre y checkbox de insumos
+- [ ] Órdenes de consumo de stock generadas desde HC (pendientes de confirmación en módulo stock)
+- [ ] Presupuestos con selección de ítems desde catálogo de cirugías y tratamientos
+- [ ] Tab Tratamientos: columna "Último tratamiento" por paciente
+- [ ] Cambio de flujo desde PatientDrawer (optimistic, con efectos CRM)
+- [ ] Entrada de HC desde PatientDrawer usando mismo creator que LiveTurno
 - [ ] Reportes ejecutivos exportables (comparativas entre períodos) — v2
 - [ ] Historial de liquidaciones por OS con comparativa autorizado vs. pagado — v2
 
@@ -170,13 +179,16 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 
 20/20 requisitos completados en 5 días (2026-04-15 → 2026-04-20). 4 fases, 10 planes. Ver `.planning/milestones/v1.4-ROADMAP.md` para detalles.
 
-## Next Milestone: v2.0 (TBD)
+## Current Milestone: v1.5 Catálogos Clínicos y Flujos de Atención
 
-Planning pendiente. Candidatos para el próximo milestone:
-- Reportes ejecutivos exportables (comparativas entre períodos)
-- Historial de liquidaciones por OS con comparativa autorizado vs. pagado
-- Dashboard multi-profesional de estado de certificados (SaaS admin)
-- IVA matrix para cirugía estética (blocker de go-live AFIP producción)
+**Goal:** Conectar catálogos de tratamientos y cirugías con LiveTurno, presupuestos y stock; mejorar flujos de clasificación y HC desde el perfil del paciente.
+
+**Target features:**
+- Catálogos clínicos: tratamientos con insumos + nuevo catálogo de cirugías por profesional
+- LiveTurno HC: selector de tratamientos del catálogo + órdenes de consumo de stock
+- Presupuestos: selección de ítems desde catálogo con precios auto-completados
+- PatientDrawer: cambio de flujo + nueva entrada HC con mismo creator que LiveTurno
+- Tab Tratamientos: columna de último tratamiento por paciente
 
 ---
-*Last updated: 2026-04-20 after v1.4 milestone — Flujo de Pacientes*
+*Last updated: 2026-04-22 after v1.5 milestone start — Catálogos Clínicos y Flujos de Atención*

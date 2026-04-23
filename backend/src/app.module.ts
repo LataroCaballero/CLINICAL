@@ -28,6 +28,7 @@ import { WhatsappModule } from './modules/whatsapp/whatsapp.module';
 import { AutorizacionesModule } from './modules/autorizaciones/autorizaciones.module';
 import { WsaaModule } from './modules/wsaa/wsaa.module';
 import { AfipConfigModule } from './modules/afip-config/afip-config.module';
+import { OrdenesConsumoModule } from './modules/ordenes-consumo/ordenes-consumo.module';
 
 @Module({
   imports: [
@@ -61,6 +62,7 @@ import { AfipConfigModule } from './modules/afip-config/afip-config.module';
     DiagnosticosModule,
     TratamientosModule,
     CirugiasCatalogoModule,
+    OrdenesConsumoModule,
     HistoriaClinicaModule,
     HCTemplatesModule,
     TurnosModule,

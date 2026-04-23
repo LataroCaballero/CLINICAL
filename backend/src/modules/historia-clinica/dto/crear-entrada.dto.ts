@@ -1,4 +1,10 @@
-import { IsOptional, IsDateString } from 'class-validator';
+import {
+  IsOptional,
+  IsDateString,
+  IsArray,
+  IsBoolean,
+  IsString,
+} from 'class-validator';
 
 export class DiagnosticoDto {
   zonas: string[];
@@ -25,7 +31,14 @@ export class AutorizacionEntradaDto {
 }
 
 export class CreateEntradaDto {
-  tipo: 'primera_vez' | 'pre_quirurgico' | 'control' | 'practica' | 'libre';
+  tipo:
+    | 'primera_vez'
+    | 'pre_quirurgico'
+    | 'control'
+    | 'practica'
+    | 'tratamiento_en_consultorio'
+    | 'libre';
+
   // Para primera_vez
   diagnostico?: DiagnosticoDto;
   tratamientos?: TratamientoItemDto[];
@@ -33,10 +46,24 @@ export class CreateEntradaDto {
   presupuestoId?: string;
   presupuestoTotal?: number;
   autorizaciones?: AutorizacionEntradaDto[];
+
   // Para tipos libres
   texto?: string;
 
   @IsOptional()
   @IsDateString()
   fecha?: string; // ISO date string para entradas retroactivas (YYYY-MM-DD o ISO 8601 completo)
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  tratamientoIds?: string[]; // IDs of selected Tratamiento catalog items
+
+  @IsOptional()
+  @IsBoolean()
+  consumirInsumos?: boolean; // Whether to create OrdenConsumo
+
+  @IsOptional()
+  @IsString()
+  turnoId?: string; // Present when called from LiveTurno, null from PatientDrawer
 }

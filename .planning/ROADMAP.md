@@ -122,7 +122,11 @@ Plans:
   3. Cuando el tratamiento seleccionado tiene insumos, aparece un checkbox "Consumir insumos del stock"; al guardar con el checkbox activo, se crea una OrdenConsumo con estado PENDIENTE
   4. El último tratamiento del paciente queda registrado tras guardar la HC con tratamientos seleccionados del catálogo
   5. Desde el PatientDrawer, el profesional puede abrir un creator de HC (mismo componente que LiveTurno) sin requerir turno activo, con fecha retroactiva seleccionable
-**Plans**: TBD
+**Plans**: 3 plans
+Plans:
+- [ ] 27-01-PLAN.md — Schema OrdenConsumo + backend HC service extension + ordenes-consumo module
+- [ ] 27-02-PLAN.md — Frontend: HCCreatorForm extraction + Tratamiento en Consultorio multi-select
+- [ ] 27-03-PLAN.md — Frontend: PatientDrawer HC creator button + HCCreatorDialog
 
 ### Phase 28: Presupuestos Catalog Integration
 **Goal**: Los usuarios pueden agregar ítems del catálogo de cirugías y tratamientos al armar un presupuesto, con nombre y precio auto-completados como snapshot inmutable, sin perder la capacidad de agregar ítems de texto libre
@@ -202,8 +206,8 @@ Plans:
 | 23. Backend Logic | v1.4 | 2/2 | Complete | 2026-04-16 |
 | 24. LiveTurno Banner | v1.4 | 2/2 | Complete | 2026-04-19 |
 | 25. Tratamientos Tab | v1.4 | 3/3 | Complete | 2026-04-20 |
-| 26. Schema Foundation + Catalog CRUD | 7/7 | Complete    | 2026-04-22 | - |
-| 27. HC Integration — LiveTurno + PatientDrawer | v1.5 | 0/TBD | Not started | - |
+| 26. Schema Foundation + Catalog CRUD | v1.5 | 7/7 | Complete | 2026-04-22 |
+| 27. HC Integration — LiveTurno + PatientDrawer | v1.5 | 0/3 | Not started | - |
 | 28. Presupuestos Catalog Integration | v1.5 | 0/TBD | Not started | - |
 | 29. PatientDrawer Flujo Action | v1.5 | 0/TBD | Not started | - |
 | 30. Tab Tratamientos Último Tratamiento | v1.5 | 0/TBD | Not started | - |

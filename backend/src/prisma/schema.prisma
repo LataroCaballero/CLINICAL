@@ -131,6 +131,7 @@ model Profesional {
   configuracionAFIP  ConfiguracionAFIP?
   caeaVigentes       CaeaVigente[]
   cirugiasCatalogo   CirugiaCatalogo[]
+  ordenesConsumo     OrdenConsumo[]
 }
 
 model Secretaria {
@@ -203,6 +204,7 @@ model Paciente {
   comentarioListaEspera      String?
   fechaListaEspera           DateTime?
   autorizaciones             AutorizacionObraSocial[]
+  ordenesConsumo             OrdenConsumo[]
 
   @@index([dni(ops: raw("gin_trgm_ops"))], map: "idx_paciente_dni_trgm", type: Gin)
   @@index([telefono(ops: raw("gin_trgm_ops"))], map: "idx_paciente_telefono_trgm", type: Gin)
@@ -607,8 +609,9 @@ model Producto {
   OrdenCompraItem    OrdenCompraItem[]
   proveedores        ProductoProveedor[]
   VentaProductoItem  VentaProductoItem[]
-  tratamientoInsumos TratamientoInsumo[]
-  cirugiaInsumos     CirugiaInsumo[]
+  tratamientoInsumos    TratamientoInsumo[]
+  cirugiaInsumos        CirugiaInsumo[]
+  ordenesConsumoInsumos OrdenConsumoInsumo[]
 }
 
 model Inventario {
@@ -942,6 +945,45 @@ model CirugiaInsumo {
 
   @@unique([cirugiaId, productoId])
   @@index([cirugiaId])
+}
+
+enum EstadoOrdenConsumo {
+  PENDIENTE
+  CONFIRMADA
+  CANCELADA
+}
+
+model OrdenConsumo {
+  id                       String             @id @default(uuid())
+  pacienteId               String
+  profesionalId            String
+  turnoId                  String?
+  historiaClinicaEntradaId String
+  fechaSesion              DateTime
+  estado                   EstadoOrdenConsumo @default(PENDIENTE)
+  tratamientosSnapshot     Json
+  createdAt                DateTime           @default(now())
+  updatedAt                DateTime           @updatedAt
+
+  paciente    Paciente             @relation(fields: [pacienteId], references: [id])
+  profesional Profesional          @relation(fields: [profesionalId], references: [id])
+  insumos     OrdenConsumoInsumo[]
+
+  @@index([profesionalId, estado])
+  @@index([pacienteId])
+}
+
+model OrdenConsumoInsumo {
+  id             String       @id @default(uuid())
+  ordenConsumoId String
+  productoId     String
+  cantidad       Decimal      @db.Decimal(10, 3)
+
+  ordenConsumo OrdenConsumo @relation(fields: [ordenConsumoId], references: [id], onDelete: Cascade)
+  producto     Producto     @relation(fields: [productoId], references: [id])
+
+  @@unique([ordenConsumoId, productoId])
+  @@index([ordenConsumoId])
 }
 
 model Objection {

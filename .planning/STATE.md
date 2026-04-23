@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Catálogos Clínicos y Flujos de Atención
 status: verifying
-stopped_at: Completed 27-01-PLAN.md — OrdenConsumo schema + HC service extension
-last_updated: "2026-04-23T21:36:47.864Z"
+stopped_at: Completed 27-02-PLAN.md — HCCreatorForm + HistoriaClinicaTab refactor
+last_updated: "2026-04-23T21:41:00Z"
 last_activity: 2026-04-22 — Plan 26-07 complete; GestionCirugias built with full CRUD + InsumosEditor + Recalcular, Cirugías tab wired in Configuración for PROFESIONAL and SECRETARIA
 progress:
   total_phases: 6
@@ -28,12 +28,12 @@ See: .planning/PROJECT.md (updated 2026-04-22)
 ```
 Milestone: v1.5 Catálogos Clínicos y Flujos de Atención
 Phase:     27 of 31 (HC Integration LiveTurno + PatientDrawer)
-Plan:      1 of 3 complete
-Status:    Plan 27-01 complete — OrdenConsumo schema + HC backend done
+Plan:      2 of 3 complete
+Status:    Plan 27-02 complete — HCCreatorForm (reusable) + HistoriaClinicaTab thin wrapper
 Progress:  [█████████░] 91%
 ```
 
-Last activity: 2026-04-23 — Plan 27-01 complete; OrdenConsumo schema live in DB, HC service extended to create stock consumption orders atomically
+Last activity: 2026-04-23 — Plan 27-02 complete; HCCreatorForm autonomous component with Tratamiento en Consultorio multi-select, insumos checkbox, free-text toggle; HistoriaClinicaTab refactored as thin wrapper
 
 ## Accumulated Context
 
@@ -58,6 +58,9 @@ Last activity: 2026-04-23 — Plan 27-01 complete; OrdenConsumo schema live in D
 - **Flujo change CRM side effects:** updateFlujo() must run etapaCRM assignment inside $transaction; frontend must invalidate ['kanban'], ['tratamientos'], ['listaAccion'] caches.
 - **TratamientoInsumo / CirugiaInsumo:** Explicit join tables required (implicit M2M cannot carry `cantidad` field).
 - **Phase ordering:** Phase 26 is strict prerequisite; Phases 27/28/29 can run in parallel after it; Phases 30/31 require Phase 27 output.
+- **27-02 HCCreatorForm autonomous:** HCCreatorForm receives all context via props (pacienteId, profesionalId, turnoId?, obraSocialId?, showDatePicker?, onSaved?) — does not import useLiveTurnoStore, enabling reuse from PatientDrawer.
+- **27-02 anyHasInsumos guard:** consumirInsumos checkbox only shown when at least one selected tratamiento has insumos — prevents UI confusion when no stock consumption is possible.
+- **27-02 tratamiento_en_consultorio free text collapsed:** Free text textarea for tratamiento_en_consultorio is hidden by default behind "+ Agregar notas libres" toggle — keeps UI clean for the primary multi-select use case.
 
 ### Carry-forward Decisions (v1.4)
 - Paciente.flujo: null = legacy, PENDIENTE = unclassified, CIRUGIA/TRATAMIENTO = classified

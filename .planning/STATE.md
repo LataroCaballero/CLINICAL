@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Catálogos Clínicos y Flujos de Atención
 status: verifying
-stopped_at: Completed 27-02-PLAN.md — HCCreatorForm + HistoriaClinicaTab refactor
-last_updated: "2026-04-23T21:41:00Z"
+stopped_at: Completed 27-03-PLAN.md — HCCreatorDialog + PatientDrawer Nueva HC button (checkpoint:human-verify pending)
+last_updated: "2026-04-23T22:02:00Z"
 last_activity: 2026-04-22 — Plan 26-07 complete; GestionCirugias built with full CRUD + InsumosEditor + Recalcular, Cirugías tab wired in Configuración for PROFESIONAL and SECRETARIA
 progress:
   total_phases: 6
   completed_phases: 1
   total_plans: 10
-  completed_plans: 8
+  completed_plans: 9
   percent: 100
 ---
 
@@ -28,12 +28,12 @@ See: .planning/PROJECT.md (updated 2026-04-22)
 ```
 Milestone: v1.5 Catálogos Clínicos y Flujos de Atención
 Phase:     27 of 31 (HC Integration LiveTurno + PatientDrawer)
-Plan:      2 of 3 complete
-Status:    Plan 27-02 complete — HCCreatorForm (reusable) + HistoriaClinicaTab thin wrapper
+Plan:      3 of 3 complete
+Status:    Plan 27-03 complete — HCCreatorDialog + PatientDrawer Nueva HC button (human-verify checkpoint reached)
 Progress:  [█████████░] 91%
 ```
 
-Last activity: 2026-04-23 — Plan 27-02 complete; HCCreatorForm autonomous component with Tratamiento en Consultorio multi-select, insumos checkbox, free-text toggle; HistoriaClinicaTab refactored as thin wrapper
+Last activity: 2026-04-23 — Plan 27-03 complete; HCCreatorDialog wraps HCCreatorForm in Dialog; PatientDrawer header gets '+ Nueva HC' button; all HCDR requirements met (HCDR-01, HCDR-02, HCDR-03)
 
 ## Accumulated Context
 
@@ -61,6 +61,8 @@ Last activity: 2026-04-23 — Plan 27-02 complete; HCCreatorForm autonomous comp
 - **27-02 HCCreatorForm autonomous:** HCCreatorForm receives all context via props (pacienteId, profesionalId, turnoId?, obraSocialId?, showDatePicker?, onSaved?) — does not import useLiveTurnoStore, enabling reuse from PatientDrawer.
 - **27-02 anyHasInsumos guard:** consumirInsumos checkbox only shown when at least one selected tratamiento has insumos — prevents UI confusion when no stock consumption is possible.
 - **27-02 tratamiento_en_consultorio free text collapsed:** Free text textarea for tratamiento_en_consultorio is hidden by default behind "+ Agregar notas libres" toggle — keeps UI clean for the primary multi-select use case.
+- **27-03 HCCreatorDialog no turnoId:** turnoId intentionally omitted from HCCreatorDialog — creates HC entry without turno context (HCDR-02). onSaved closes the dialog.
+- **27-03 obraSocialId via (paciente as any):** Field exposed via API but not in typed Paciente interface — cast consistent with existing AutorizacionesPacienteSection usage in PatientDrawer.tsx.
 
 ### Carry-forward Decisions (v1.4)
 - Paciente.flujo: null = legacy, PENDIENTE = unclassified, CIRUGIA/TRATAMIENTO = classified
@@ -75,6 +77,6 @@ Last activity: 2026-04-23 — Plan 27-02 complete; HCCreatorForm autonomous comp
 
 ## Session Continuity
 
-Last session: 2026-04-23T21:36:47.862Z
-Stopped at: Completed 27-01-PLAN.md — OrdenConsumo schema + HC service extension
+Last session: 2026-04-23T22:02:00Z
+Stopped at: Completed 27-03-PLAN.md — HCCreatorDialog + PatientDrawer Nueva HC button (checkpoint:human-verify pending)
 Resume file: None

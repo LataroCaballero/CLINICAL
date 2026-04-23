@@ -16,10 +16,10 @@
 
 ### LIVHC — LiveTurno HC (Tratamiento en Consultorio)
 
-- [ ] **LIVHC-01**: La sección "Práctica" en LiveTurno HC se renombra a "Tratamiento en Consultorio"
-- [ ] **LIVHC-02**: El profesional puede seleccionar uno o más tratamientos del catálogo en la sección (multi-select)
-- [ ] **LIVHC-03**: El campo de texto libre se mantiene como opción complementaria al selector de tratamientos
-- [ ] **LIVHC-04**: La sección muestra un checkbox "Consumir insumos del stock" (visible solo cuando el tratamiento seleccionado tiene insumos vinculados)
+- [x] **LIVHC-01**: La sección "Práctica" en LiveTurno HC se renombra a "Tratamiento en Consultorio"
+- [x] **LIVHC-02**: El profesional puede seleccionar uno o más tratamientos del catálogo en la sección (multi-select)
+- [x] **LIVHC-03**: El campo de texto libre se mantiene como opción complementaria al selector de tratamientos
+- [x] **LIVHC-04**: La sección muestra un checkbox "Consumir insumos del stock" (visible solo cuando el tratamiento seleccionado tiene insumos vinculados)
 - [x] **LIVHC-05**: Al guardar la HC con tratamientos seleccionados, el último tratamiento del paciente se actualiza (derivado en lectura desde la última entrada con tratamiento asignado)
 
 ### STOCK — Órdenes de Consumo
@@ -46,9 +46,9 @@
 
 ### HCDR — Entrada de HC desde PatientDrawer
 
-- [ ] **HCDR-01**: Desde el PatientDrawer se puede crear una nueva entrada de HC usando el mismo creator que se usa en LiveTurno
-- [ ] **HCDR-02**: La entrada creada desde PatientDrawer no requiere turno activo (se crea sin turnoId asociado)
-- [ ] **HCDR-03**: La fecha de la entrada es hoy por defecto pero permite seleccionar una fecha retroactiva
+- [x] **HCDR-01**: Desde el PatientDrawer se puede crear una nueva entrada de HC usando el mismo creator que se usa en LiveTurno
+- [x] **HCDR-02**: La entrada creada desde PatientDrawer no requiere turno activo (se crea sin turnoId asociado)
+- [x] **HCDR-03**: La fecha de la entrada es hoy por defecto pero permite seleccionar una fecha retroactiva
 
 ## v2+ Requirements (Deferred)
 
@@ -83,10 +83,10 @@
 | CATLOG-04 | Phase 26 | Complete |
 | CATLOG-05 | Phase 26 | Complete |
 | CATLOG-06 | Phase 26 | Complete |
-| LIVHC-01 | Phase 27 | Pending |
-| LIVHC-02 | Phase 27 | Pending |
-| LIVHC-03 | Phase 27 | Pending |
-| LIVHC-04 | Phase 27 | Pending |
+| LIVHC-01 | Phase 27 | Complete |
+| LIVHC-02 | Phase 27 | Complete |
+| LIVHC-03 | Phase 27 | Complete |
+| LIVHC-04 | Phase 27 | Complete |
 | LIVHC-05 | Phase 27 | Complete |
 | STOCK-01 | Phase 27 | Complete |
 | STOCK-02 | Phase 27 | Complete |
@@ -101,9 +101,9 @@
 | PAC-03 | Phase 29 | Pending |
 | PAC-04 | Phase 29 | Pending |
 | PAC-05 | Phase 29 | Pending |
-| HCDR-01 | Phase 27 | Pending |
-| HCDR-02 | Phase 27 | Pending |
-| HCDR-03 | Phase 27 | Pending |
+| HCDR-01 | Phase 27 | Complete |
+| HCDR-02 | Phase 27 | Complete |
+| HCDR-03 | Phase 27 | Complete |
 
 **Coverage:**
 - v1.5 requirements: 27 total

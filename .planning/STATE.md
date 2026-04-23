@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Catálogos Clínicos y Flujos de Atención
 status: verifying
-stopped_at: Completed 26-07-PLAN.md human verification approved
-last_updated: "2026-04-22T23:09:41.985Z"
+stopped_at: Phase 27 context gathered
+last_updated: "2026-04-23T20:52:29.328Z"
 last_activity: 2026-04-22 — Plan 26-07 complete; GestionCirugias built with full CRUD + InsumosEditor + Recalcular, Cirugías tab wired in Configuración for PROFESIONAL and SECRETARIA
 progress:
   total_phases: 6
@@ -69,6 +69,6 @@ Last activity: 2026-04-22 — Plan 26-07 complete; GestionCirugias built with fu
 
 ## Session Continuity
 
-Last session: 2026-04-22T23:03:57.721Z
-Stopped at: Completed 26-07-PLAN.md human verification approved
-Resume file: None
+Last session: 2026-04-23T20:52:29.325Z
+Stopped at: Phase 27 context gathered
+Resume file: .planning/phases/27-hc-integration-liveturno-patientdrawer/27-CONTEXT.md

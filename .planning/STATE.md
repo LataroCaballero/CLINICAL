@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Catálogos Clínicos y Flujos de Atención
 status: verifying
-stopped_at: Phase 27 context gathered
-last_updated: "2026-04-23T20:52:29.328Z"
+stopped_at: Completed 27-01-PLAN.md — OrdenConsumo schema + HC service extension
+last_updated: "2026-04-23T21:36:47.864Z"
 last_activity: 2026-04-22 — Plan 26-07 complete; GestionCirugias built with full CRUD + InsumosEditor + Recalcular, Cirugías tab wired in Configuración for PROFESIONAL and SECRETARIA
 progress:
   total_phases: 6
   completed_phases: 1
-  total_plans: 7
-  completed_plans: 7
+  total_plans: 10
+  completed_plans: 8
   percent: 100
 ---
 
@@ -21,19 +21,19 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-22)
 
 **Core value:** Que un cirujano plástico cierre más cirugías — el sistema hace visible qué pacientes seguir, cuándo y cómo, de la manera más automatizada posible
-**Current focus:** Phase 26 — Schema Foundation + Catalog CRUD
+**Current focus:** Phase 27 — HC Integration LiveTurno + PatientDrawer
 
 ## Current Position
 
 ```
 Milestone: v1.5 Catálogos Clínicos y Flujos de Atención
-Phase:     26 of 31 (Schema Foundation + Catalog CRUD)
-Plan:      7 of 7
-Status:    Phase 26 complete — human verification approved
-Progress:  [██████████] 100%
+Phase:     27 of 31 (HC Integration LiveTurno + PatientDrawer)
+Plan:      1 of 3 complete
+Status:    Plan 27-01 complete — OrdenConsumo schema + HC backend done
+Progress:  [█████████░] 91%
 ```
 
-Last activity: 2026-04-22 — Plan 26-07 complete; GestionCirugias built with full CRUD + InsumosEditor + Recalcular, Cirugías tab wired in Configuración for PROFESIONAL and SECRETARIA
+Last activity: 2026-04-23 — Plan 27-01 complete; OrdenConsumo schema live in DB, HC service extended to create stock consumption orders atomically
 
 ## Accumulated Context
 
@@ -51,6 +51,9 @@ Last activity: 2026-04-22 — Plan 26-07 complete; GestionCirugias built with fu
 - **26-01 Migration workaround:** Used `prisma db push` + `migrate resolve` instead of `migrate dev` — Supabase pgBouncer shadow DB cannot replay migration 20260415221758_flujo_paciente. Live DB is correct.
 - **Price snapshot on PresupuestoItem:** Add `precioUnitario Decimal` + `cantidad Int @default(1)` in Phase 26 migration. Never re-read price from catalog for financial documents.
 - **ultimoTratamientoId design:** Use query-on-read (ORDER BY fecha DESC LIMIT 1 join) rather than denormalized FK — prevents corruption from retroactive entries.
+- **27-01 OrdenConsumo atomic creation:** crearEntrada() pre-fetches insumos outside $transaction (pgBouncer pattern), aggregates quantities by productoId via Map, then creates OrdenConsumo inside the same $transaction as the HC entry — no orphaned orders possible.
+- **27-01 consumirInsumos backward compat:** consumirInsumos=false or empty tratamientoIds skips OrdenConsumo creation entirely; existing HC entry creation paths unaffected.
+- **27-01 turnoId nullable pattern:** turnoId present = call from LiveTurno context, absent = call from PatientDrawer — same API endpoint serves both flows.
 - **OrdenConsumo pattern:** HC save creates OrdenConsumo { estado: PENDIENTE } only. Actual MovimientoStock SALIDA happens at explicit stock admin confirmation.
 - **Flujo change CRM side effects:** updateFlujo() must run etapaCRM assignment inside $transaction; frontend must invalidate ['kanban'], ['tratamientos'], ['listaAccion'] caches.
 - **TratamientoInsumo / CirugiaInsumo:** Explicit join tables required (implicit M2M cannot carry `cantidad` field).
@@ -69,6 +72,6 @@ Last activity: 2026-04-22 — Plan 26-07 complete; GestionCirugias built with fu
 
 ## Session Continuity
 
-Last session: 2026-04-23T20:52:29.325Z
-Stopped at: Phase 27 context gathered
-Resume file: .planning/phases/27-hc-integration-liveturno-patientdrawer/27-CONTEXT.md
+Last session: 2026-04-23T21:36:47.862Z
+Stopped at: Completed 27-01-PLAN.md — OrdenConsumo schema + HC service extension
+Resume file: None

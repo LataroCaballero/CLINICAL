@@ -20,12 +20,12 @@
 - [ ] **LIVHC-02**: El profesional puede seleccionar uno o más tratamientos del catálogo en la sección (multi-select)
 - [ ] **LIVHC-03**: El campo de texto libre se mantiene como opción complementaria al selector de tratamientos
 - [ ] **LIVHC-04**: La sección muestra un checkbox "Consumir insumos del stock" (visible solo cuando el tratamiento seleccionado tiene insumos vinculados)
-- [ ] **LIVHC-05**: Al guardar la HC con tratamientos seleccionados, el último tratamiento del paciente se actualiza (derivado en lectura desde la última entrada con tratamiento asignado)
+- [x] **LIVHC-05**: Al guardar la HC con tratamientos seleccionados, el último tratamiento del paciente se actualiza (derivado en lectura desde la última entrada con tratamiento asignado)
 
 ### STOCK — Órdenes de Consumo
 
-- [ ] **STOCK-01**: Al guardar una HC con el checkbox de insumos activado, se genera automáticamente una orden de consumo con estado PENDIENTE en el módulo de stock
-- [ ] **STOCK-02**: La orden de consumo incluye: nombre del paciente, fecha de la sesión, tratamiento(s) realizados, e insumos con cantidades a consumir
+- [x] **STOCK-01**: Al guardar una HC con el checkbox de insumos activado, se genera automáticamente una orden de consumo con estado PENDIENTE en el módulo de stock
+- [x] **STOCK-02**: La orden de consumo incluye: nombre del paciente, fecha de la sesión, tratamiento(s) realizados, e insumos con cantidades a consumir
 - [ ] **STOCK-03**: El responsable de stock puede ver la lista de órdenes de consumo pendientes y confirmarlas una a una
 - [ ] **STOCK-04**: Al confirmar una orden, se registra el movimiento SALIDA en el stock correspondiente dentro de una transacción atómica
 
@@ -87,9 +87,9 @@
 | LIVHC-02 | Phase 27 | Pending |
 | LIVHC-03 | Phase 27 | Pending |
 | LIVHC-04 | Phase 27 | Pending |
-| LIVHC-05 | Phase 27 | Pending |
-| STOCK-01 | Phase 27 | Pending |
-| STOCK-02 | Phase 27 | Pending |
+| LIVHC-05 | Phase 27 | Complete |
+| STOCK-01 | Phase 27 | Complete |
+| STOCK-02 | Phase 27 | Complete |
 | STOCK-03 | Phase 31 | Pending |
 | STOCK-04 | Phase 31 | Pending |
 | PRESUP-01 | Phase 28 | Pending |

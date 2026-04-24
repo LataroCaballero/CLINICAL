@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Catálogos Clínicos y Flujos de Atención
-status: complete
-stopped_at: Completed 27-03-PLAN.md — HCCreatorDialog + PatientDrawer Nueva HC button (human-verify confirmed)
-last_updated: "2026-04-23T22:10:00Z"
-last_activity: 2026-04-22 — Plan 26-07 complete; GestionCirugias built with full CRUD + InsumosEditor + Recalcular, Cirugías tab wired in Configuración for PROFESIONAL and SECRETARIA
+status: verifying
+stopped_at: Completed Phase 27 — HC Integration LiveTurno + PatientDrawer (all plans complete, human-verify confirmed)
+last_updated: "2026-04-24T21:10:06.994Z"
+last_activity: 2026-04-23 — Plan 27-03 complete; HCCreatorDialog wraps HCCreatorForm in Dialog; PatientDrawer header gets '+ Nueva HC' button; all HCDR requirements met (HCDR-01, HCDR-02, HCDR-03)
 progress:
   total_phases: 6
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 10
-  completed_plans: 9
-  percent: 100
+  completed_plans: 10
+  percent: 91
 ---
 
 # Project State

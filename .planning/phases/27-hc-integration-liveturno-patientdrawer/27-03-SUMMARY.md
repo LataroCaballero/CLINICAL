@@ -50,7 +50,7 @@ completed: 2026-04-23
 - **Duration:** ~12 min
 - **Started:** 2026-04-23T21:50:00Z
 - **Completed:** 2026-04-23T22:02:00Z
-- **Tasks:** 1 of 1 auto task complete (checkpoint pending human verify)
+- **Tasks:** 2 of 2 complete (auto + human-verify checkpoint confirmed)
 - **Files modified:** 2
 
 ## Accomplishments
@@ -62,6 +62,7 @@ completed: 2026-04-23
 ## Task Commits
 
 1. **Task 1: Create HCCreatorDialog.tsx + wire button into PatientDrawer** - `e4f408d` (feat)
+2. **Task 2: Human-verify checkpoint** - approved by user (visual verification of UI, dialog, DatePicker, and LiveTurno integration)
 
 ## Files Created/Modified
 - `frontend/src/components/patient/PatientDrawer/views/HCCreatorDialog.tsx` — Dialog wrapper for HCCreatorForm with showDatePicker=true and no turnoId
@@ -83,7 +84,7 @@ None - no external service configuration required.
 
 ## Next Phase Readiness
 - All 3 HCDR requirements met (HCDR-01, HCDR-02, HCDR-03)
-- Phase 27 complete pending human-verify checkpoint confirmation
+- Phase 27 fully complete — human-verify checkpoint confirmed
 - Ready for Phase 28+ (parallel phases can proceed)
 
 ---

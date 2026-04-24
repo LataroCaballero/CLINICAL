@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Catálogos Clínicos y Flujos de Atención
-status: verifying
-stopped_at: Completed 27-03-PLAN.md — HCCreatorDialog + PatientDrawer Nueva HC button (checkpoint:human-verify pending)
-last_updated: "2026-04-23T22:02:00Z"
+status: complete
+stopped_at: Completed 27-03-PLAN.md — HCCreatorDialog + PatientDrawer Nueva HC button (human-verify confirmed)
+last_updated: "2026-04-23T22:10:00Z"
 last_activity: 2026-04-22 — Plan 26-07 complete; GestionCirugias built with full CRUD + InsumosEditor + Recalcular, Cirugías tab wired in Configuración for PROFESIONAL and SECRETARIA
 progress:
   total_phases: 6
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-04-22)
 Milestone: v1.5 Catálogos Clínicos y Flujos de Atención
 Phase:     27 of 31 (HC Integration LiveTurno + PatientDrawer)
 Plan:      3 of 3 complete
-Status:    Plan 27-03 complete — HCCreatorDialog + PatientDrawer Nueva HC button (human-verify checkpoint reached)
+Status:    Plan 27-03 complete — HCCreatorDialog + PatientDrawer Nueva HC button (human-verify confirmed)
 Progress:  [█████████░] 91%
 ```
 
@@ -77,6 +77,6 @@ Last activity: 2026-04-23 — Plan 27-03 complete; HCCreatorDialog wraps HCCreat
 
 ## Session Continuity
 
-Last session: 2026-04-23T22:02:00Z
-Stopped at: Completed 27-03-PLAN.md — HCCreatorDialog + PatientDrawer Nueva HC button (checkpoint:human-verify pending)
+Last session: 2026-04-23T22:10:00Z
+Stopped at: Completed Phase 27 — HC Integration LiveTurno + PatientDrawer (all plans complete, human-verify confirmed)
 Resume file: None

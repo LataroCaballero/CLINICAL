@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Catálogos Clínicos y Flujos de Atención
 status: verifying
-stopped_at: Completed Phase 27 — HC Integration LiveTurno + PatientDrawer (all plans complete, human-verify confirmed)
-last_updated: "2026-04-24T21:10:06.994Z"
+stopped_at: Phase 28 context gathered
+last_updated: "2026-04-25T13:50:08.649Z"
 last_activity: 2026-04-23 — Plan 27-03 complete; HCCreatorDialog wraps HCCreatorForm in Dialog; PatientDrawer header gets '+ Nueva HC' button; all HCDR requirements met (HCDR-01, HCDR-02, HCDR-03)
 progress:
   total_phases: 6
@@ -77,6 +77,6 @@ Last activity: 2026-04-23 — Plan 27-03 complete; HCCreatorDialog wraps HCCreat
 
 ## Session Continuity
 
-Last session: 2026-04-23T22:10:00Z
-Stopped at: Completed Phase 27 — HC Integration LiveTurno + PatientDrawer (all plans complete, human-verify confirmed)
-Resume file: None
+Last session: 2026-04-25T13:50:08.645Z
+Stopped at: Phase 28 context gathered
+Resume file: .planning/phases/28-presupuestos-catalog-integration/28-CONTEXT.md

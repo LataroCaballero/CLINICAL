@@ -137,7 +137,9 @@ Plans:
   2. Al armar un presupuesto, el usuario puede seleccionar tratamientos del catálogo desde el mismo panel
   3. Al seleccionar un ítem del catálogo, nombre y precio (ARS/USD) se auto-completan como snapshot en el ítem del presupuesto
   4. Se pueden seguir agregando ítems de texto libre al presupuesto sin restricciones (comportamiento anterior preservado)
-**Plans**: TBD
+**Plans**: 1 plan
+Plans:
+- [ ] 28-01-PLAN.md — GenerarPresupuestoModal catalog selector (Popover/Command with Cirugías + Tratamientos groups, snapshot pricing, badge)
 
 ### Phase 29: PatientDrawer Flujo Action
 **Goal**: Los profesionales pueden cambiar el flujo de un paciente directamente desde el PatientDrawer con efectos CRM automáticos y feedback inmediato

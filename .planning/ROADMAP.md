@@ -150,7 +150,10 @@ Plans:
   2. El cambio de flujo se aplica de inmediato en la UI (optimista) y muestra un toast de error si el endpoint falla
   3. Al cambiar el flujo, el paciente queda asignado automáticamente a la etapa CRM "Sin Clasificar" en la misma transacción
   4. Un contacto con nota "Paciente pendiente de clasificación" queda registrado automáticamente al cambiar el flujo
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 29-01-PLAN.md — Backend: updateFlujo() $transaction extension (flujo + etapaCRM null + ContactoLog)
+- [ ] 29-02-PLAN.md — Frontend: useUpdateFlujo hook + CambiarFlujoModal + PencilLine trigger en PacienteDetails
 
 ### Phase 30: Tab Tratamientos Último Tratamiento
 **Goal**: El tab Tratamientos muestra la columna "Último tratamiento" por paciente, reflejando el nombre del tratamiento de catálogo más reciente registrado en HC
@@ -211,7 +214,7 @@ Plans:
 | 26. Schema Foundation + Catalog CRUD | v1.5 | 7/7 | Complete | 2026-04-22 |
 | 27. HC Integration — LiveTurno + PatientDrawer | 3/3 | Complete    | 2026-04-24 | - |
 | 28. Presupuestos Catalog Integration | 1/1 | Complete    | 2026-04-29 | - |
-| 29. PatientDrawer Flujo Action | v1.5 | 0/TBD | Not started | - |
+| 29. PatientDrawer Flujo Action | v1.5 | 0/2 | Not started | - |
 | 30. Tab Tratamientos Último Tratamiento | v1.5 | 0/TBD | Not started | - |
 | 31. Stock Órdenes de Consumo UI | v1.5 | 0/TBD | Not started | - |
 

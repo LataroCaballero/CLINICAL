@@ -950,15 +950,29 @@ export class PacientesService {
   }
 
   async updateFlujo(id: string, flujo: FlujoPaciente) {
-    const exists = await this.prisma.paciente.findUnique({
+    const paciente = await this.prisma.paciente.findUnique({
       where: { id },
-      select: { id: true },
+      select: { id: true, profesionalId: true },
     });
-    if (!exists) throw new NotFoundException('Paciente no encontrado');
+    if (!paciente) throw new NotFoundException('Paciente no encontrado');
 
-    return this.prisma.paciente.update({
-      where: { id },
-      data: { flujo },
-    });
+    return this.prisma.$transaction([
+      this.prisma.paciente.update({
+        where: { id },
+        data: { flujo, etapaCRM: null },
+      }),
+      ...(paciente.profesionalId
+        ? [
+            this.prisma.contactoLog.create({
+              data: {
+                pacienteId: id,
+                profesionalId: paciente.profesionalId,
+                tipo: TipoContacto.SISTEMA,
+                nota: 'Paciente pendiente de clasificación',
+              },
+            }),
+          ]
+        : []),
+    ]);
   }
 }

@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Catálogos Clínicos y Flujos de Atención
 status: verifying
-stopped_at: Phase 29 context gathered
-last_updated: "2026-04-29T23:40:04.845Z"
+stopped_at: Completed 29-01-PLAN.md
+last_updated: "2026-04-29T23:57:07.740Z"
 last_activity: 2026-04-29 — Plan 28-01 complete; GenerarPresupuestoModal extended with Popover/Command catalog selector, snapshot pricing, Catalogo badge, dual currency (ARS/USD); requirements PRESUP-01 through PRESUP-04 satisfied
 progress:
   total_phases: 6
   completed_phases: 3
-  total_plans: 11
-  completed_plans: 11
+  total_plans: 13
+  completed_plans: 12
   percent: 93
 ---
 
@@ -27,13 +27,13 @@ See: .planning/PROJECT.md (updated 2026-04-22)
 
 ```
 Milestone: v1.5 Catálogos Clínicos y Flujos de Atención
-Phase:     28 of 31 (Presupuestos Catalog Integration)
-Plan:      1 of 1 complete
-Status:    Plan 28-01 complete — GenerarPresupuestoModal catalog selector (human-verify confirmed)
-Progress:  [█████████░] 93%
+Phase:     29 of 31 (PatientDrawer Flujo Action)
+Plan:      1 of 2 complete
+Status:    Plan 29-01 complete — updateFlujo() extended with $transaction (flujo + etapaCRM:null + ContactoLog)
+Progress:  [██████████] 96%
 ```
 
-Last activity: 2026-04-29 — Plan 28-01 complete; GenerarPresupuestoModal extended with Popover/Command catalog selector, snapshot pricing, Catalogo badge, dual currency (ARS/USD); requirements PRESUP-01 through PRESUP-04 satisfied
+Last activity: 2026-04-29 — Plan 29-01 complete; updateFlujo() extended with Prisma $transaction for atomic CRM side effects; requirements PAC-04 and PAC-05 satisfied
 
 ## Accumulated Context
 
@@ -63,6 +63,8 @@ Last activity: 2026-04-29 — Plan 28-01 complete; GenerarPresupuestoModal exten
 - **27-02 tratamiento_en_consultorio free text collapsed:** Free text textarea for tratamiento_en_consultorio is hidden by default behind "+ Agregar notas libres" toggle — keeps UI clean for the primary multi-select use case.
 - **27-03 HCCreatorDialog no turnoId:** turnoId intentionally omitted from HCCreatorDialog — creates HC entry without turno context (HCDR-02). onSaved closes the dialog.
 - **27-03 obraSocialId via (paciente as any):** Field exposed via API but not in typed Paciente interface — cast consistent with existing AutorizacionesPacienteSection usage in PatientDrawer.tsx.
+- **29-01 updateFlujo etapaCRM: null:** updateFlujo() sets etapaCRM: null (not 'SIN_CLASIFICAR' string) — DB enum has no SIN_CLASIFICAR value; kanban maps null to that label at read time.
+- **29-01 ContactoLog in updateFlujo guarded by profesionalId:** ContactoLog creation inside updateFlujo $transaction is guarded by profesionalId non-null check — legacy patients still get their flujo updated without error.
 
 ### Carry-forward Decisions (v1.4)
 - Paciente.flujo: null = legacy, PENDIENTE = unclassified, CIRUGIA/TRATAMIENTO = classified
@@ -77,6 +79,6 @@ Last activity: 2026-04-29 — Plan 28-01 complete; GenerarPresupuestoModal exten
 
 ## Session Continuity
 
-Last session: 2026-04-29T23:40:04.842Z
-Stopped at: Phase 29 context gathered
-Resume file: .planning/phases/29-patientdrawer-flujo-action/29-CONTEXT.md
+Last session: 2026-04-29T23:57:07.737Z
+Stopped at: Completed 29-01-PLAN.md
+Resume file: None

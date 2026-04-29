@@ -85,7 +85,7 @@ Full details: `.planning/milestones/v1.4-ROADMAP.md`
 
 - [x] **Phase 26: Schema Foundation + Catalog CRUD** — Nuevos modelos Prisma + CRUD de catálogos en Configuración (completed 2026-04-22)
 - [x] **Phase 27: HC Integration — LiveTurno + PatientDrawer** — Selector de catálogo en HC y entrada de HC desde perfil (completed 2026-04-23)
-- [ ] **Phase 28: Presupuestos Catalog Integration** — Selector de ítems del catálogo al armar presupuestos
+- [x] **Phase 28: Presupuestos Catalog Integration** — Selector de ítems del catálogo al armar presupuestos (completed 2026-04-29)
 - [ ] **Phase 29: PatientDrawer Flujo Action** — Cambio de flujo desde perfil con efectos CRM
 - [ ] **Phase 30: Tab Tratamientos Último Tratamiento** — Columna de último tratamiento en el tab mensual
 - [ ] **Phase 31: Stock Órdenes de Consumo UI** — Superficie de confirmación de órdenes de consumo pendientes
@@ -210,7 +210,7 @@ Plans:
 | 25. Tratamientos Tab | v1.4 | 3/3 | Complete | 2026-04-20 |
 | 26. Schema Foundation + Catalog CRUD | v1.5 | 7/7 | Complete | 2026-04-22 |
 | 27. HC Integration — LiveTurno + PatientDrawer | 3/3 | Complete    | 2026-04-24 | - |
-| 28. Presupuestos Catalog Integration | v1.5 | 0/TBD | Not started | - |
+| 28. Presupuestos Catalog Integration | 1/1 | Complete   | 2026-04-29 | - |
 | 29. PatientDrawer Flujo Action | v1.5 | 0/TBD | Not started | - |
 | 30. Tab Tratamientos Último Tratamiento | v1.5 | 0/TBD | Not started | - |
 | 31. Stock Órdenes de Consumo UI | v1.5 | 0/TBD | Not started | - |

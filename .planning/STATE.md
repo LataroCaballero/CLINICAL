@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Catálogos Clínicos y Flujos de Atención
-status: verifying
-stopped_at: Phase 28 context gathered
-last_updated: "2026-04-25T13:50:08.649Z"
+status: active
+stopped_at: Phase 28-01 complete — human verification approved
+last_updated: "2026-04-29T20:30:00.000Z"
 last_activity: 2026-04-23 — Plan 27-03 complete; HCCreatorDialog wraps HCCreatorForm in Dialog; PatientDrawer header gets '+ Nueva HC' button; all HCDR requirements met (HCDR-01, HCDR-02, HCDR-03)
 progress:
   total_phases: 6
-  completed_phases: 2
-  total_plans: 10
-  completed_plans: 10
+  completed_phases: 3
+  total_plans: 11
+  completed_plans: 11
   percent: 91
 ---
 
@@ -27,13 +27,13 @@ See: .planning/PROJECT.md (updated 2026-04-22)
 
 ```
 Milestone: v1.5 Catálogos Clínicos y Flujos de Atención
-Phase:     27 of 31 (HC Integration LiveTurno + PatientDrawer)
-Plan:      3 of 3 complete
-Status:    Plan 27-03 complete — HCCreatorDialog + PatientDrawer Nueva HC button (human-verify confirmed)
-Progress:  [█████████░] 91%
+Phase:     28 of 31 (Presupuestos Catalog Integration)
+Plan:      1 of 1 complete
+Status:    Plan 28-01 complete — GenerarPresupuestoModal catalog selector (human-verify confirmed)
+Progress:  [█████████░] 93%
 ```
 
-Last activity: 2026-04-23 — Plan 27-03 complete; HCCreatorDialog wraps HCCreatorForm in Dialog; PatientDrawer header gets '+ Nueva HC' button; all HCDR requirements met (HCDR-01, HCDR-02, HCDR-03)
+Last activity: 2026-04-29 — Plan 28-01 complete; GenerarPresupuestoModal extended with Popover/Command catalog selector, snapshot pricing, Catalogo badge, dual currency (ARS/USD); requirements PRESUP-01 through PRESUP-04 satisfied
 
 ## Accumulated Context
 
@@ -77,6 +77,6 @@ Last activity: 2026-04-23 — Plan 27-03 complete; HCCreatorDialog wraps HCCreat
 
 ## Session Continuity
 
-Last session: 2026-04-25T13:50:08.645Z
-Stopped at: Phase 28 context gathered
-Resume file: .planning/phases/28-presupuestos-catalog-integration/28-CONTEXT.md
+Last session: 2026-04-29T20:30:00.000Z
+Stopped at: Phase 28-01 complete — human verification approved; PRESUP-01 through PRESUP-04 satisfied
+Resume file: None

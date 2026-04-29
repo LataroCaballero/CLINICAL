@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Catálogos Clínicos y Flujos de Atención
 status: verifying
-stopped_at: Phase 28-01 complete — human verification approved; PRESUP-01 through PRESUP-04 satisfied
-last_updated: "2026-04-29T23:12:39.099Z"
+stopped_at: Phase 29 context gathered
+last_updated: "2026-04-29T23:40:04.845Z"
 last_activity: 2026-04-29 — Plan 28-01 complete; GenerarPresupuestoModal extended with Popover/Command catalog selector, snapshot pricing, Catalogo badge, dual currency (ARS/USD); requirements PRESUP-01 through PRESUP-04 satisfied
 progress:
   total_phases: 6
@@ -77,6 +77,6 @@ Last activity: 2026-04-29 — Plan 28-01 complete; GenerarPresupuestoModal exten
 
 ## Session Continuity
 
-Last session: 2026-04-29T20:30:00.000Z
-Stopped at: Phase 28-01 complete — human verification approved; PRESUP-01 through PRESUP-04 satisfied
-Resume file: None
+Last session: 2026-04-29T23:40:04.842Z
+Stopped at: Phase 29 context gathered
+Resume file: .planning/phases/29-patientdrawer-flujo-action/29-CONTEXT.md

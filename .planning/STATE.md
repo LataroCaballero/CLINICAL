@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Catálogos Clínicos y Flujos de Atención
-status: active
-stopped_at: Phase 28-01 complete — human verification approved
-last_updated: "2026-04-29T20:30:00.000Z"
-last_activity: 2026-04-23 — Plan 27-03 complete; HCCreatorDialog wraps HCCreatorForm in Dialog; PatientDrawer header gets '+ Nueva HC' button; all HCDR requirements met (HCDR-01, HCDR-02, HCDR-03)
+status: verifying
+stopped_at: Phase 28-01 complete — human verification approved; PRESUP-01 through PRESUP-04 satisfied
+last_updated: "2026-04-29T23:12:39.099Z"
+last_activity: 2026-04-29 — Plan 28-01 complete; GenerarPresupuestoModal extended with Popover/Command catalog selector, snapshot pricing, Catalogo badge, dual currency (ARS/USD); requirements PRESUP-01 through PRESUP-04 satisfied
 progress:
   total_phases: 6
   completed_phases: 3
   total_plans: 11
   completed_plans: 11
-  percent: 91
+  percent: 93
 ---
 
 # Project State

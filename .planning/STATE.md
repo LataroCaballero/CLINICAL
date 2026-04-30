@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Catálogos Clínicos y Flujos de Atención
-status: verifying
-stopped_at: Completed 29-01-PLAN.md
-last_updated: "2026-04-29T23:57:07.740Z"
-last_activity: 2026-04-29 — Plan 28-01 complete; GenerarPresupuestoModal extended with Popover/Command catalog selector, snapshot pricing, Catalogo badge, dual currency (ARS/USD); requirements PRESUP-01 through PRESUP-04 satisfied
+status: completed
+stopped_at: Completed 29-02-PLAN.md — awaiting human-verify checkpoint
+last_updated: "2026-04-30T00:01:35.822Z"
+last_activity: 2026-04-29 — Plan 29-02 complete; CambiarFlujoModal + PencilLine trigger added to PatientDrawer with optimistic update; requirements PAC-02 and PAC-03 satisfied; awaiting human-verify checkpoint
 progress:
   total_phases: 6
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 13
-  completed_plans: 12
-  percent: 93
+  completed_plans: 13
+  percent: 100
 ---
 
 # Project State
@@ -28,12 +28,12 @@ See: .planning/PROJECT.md (updated 2026-04-22)
 ```
 Milestone: v1.5 Catálogos Clínicos y Flujos de Atención
 Phase:     29 of 31 (PatientDrawer Flujo Action)
-Plan:      1 of 2 complete
-Status:    Plan 29-01 complete — updateFlujo() extended with $transaction (flujo + etapaCRM:null + ContactoLog)
-Progress:  [██████████] 96%
+Plan:      2 of 2 complete (awaiting human-verify checkpoint)
+Status:    Plan 29-02 complete — CambiarFlujoModal + PencilLine trigger, optimistic update, sonner toast with CRM action
+Progress:  [██████████] 100%
 ```
 
-Last activity: 2026-04-29 — Plan 29-01 complete; updateFlujo() extended with Prisma $transaction for atomic CRM side effects; requirements PAC-04 and PAC-05 satisfied
+Last activity: 2026-04-29 — Plan 29-02 complete; CambiarFlujoModal + PencilLine trigger added to PatientDrawer with optimistic update; requirements PAC-02 and PAC-03 satisfied
 
 ## Accumulated Context
 
@@ -65,6 +65,8 @@ Last activity: 2026-04-29 — Plan 29-01 complete; updateFlujo() extended with P
 - **27-03 obraSocialId via (paciente as any):** Field exposed via API but not in typed Paciente interface — cast consistent with existing AutorizacionesPacienteSection usage in PatientDrawer.tsx.
 - **29-01 updateFlujo etapaCRM: null:** updateFlujo() sets etapaCRM: null (not 'SIN_CLASIFICAR' string) — DB enum has no SIN_CLASIFICAR value; kanban maps null to that label at read time.
 - **29-01 ContactoLog in updateFlujo guarded by profesionalId:** ContactoLog creation inside updateFlujo $transaction is guarded by profesionalId non-null check — legacy patients still get their flujo updated without error.
+- **29-02 CambiarFlujoModal pre-close pattern:** onOptimisticUpdate + onOpenChange(false) fire before mutation.mutate so UI updates immediately without waiting for network.
+- **29-02 onRevert sets optimisticFlujo to null:** displayFlujo falls back to paciente.flujo from TanStack Query server cache on error — no manual cache manipulation needed.
 
 ### Carry-forward Decisions (v1.4)
 - Paciente.flujo: null = legacy, PENDIENTE = unclassified, CIRUGIA/TRATAMIENTO = classified
@@ -79,6 +81,6 @@ Last activity: 2026-04-29 — Plan 29-01 complete; updateFlujo() extended with P
 
 ## Session Continuity
 
-Last session: 2026-04-29T23:57:07.737Z
-Stopped at: Completed 29-01-PLAN.md
+Last session: 2026-04-30T00:01:35.820Z
+Stopped at: Completed 29-02-PLAN.md — awaiting human-verify checkpoint
 Resume file: None

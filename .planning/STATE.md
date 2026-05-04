@@ -4,7 +4,7 @@ milestone: v1.5
 milestone_name: Catálogos Clínicos y Flujos de Atención
 status: completed
 stopped_at: Completed 29-02-PLAN.md — human-verify checkpoint approved
-last_updated: "2026-05-04T21:43:56.587Z"
+last_updated: "2026-05-04T21:49:20.798Z"
 last_activity: 2026-04-29 — Plan 29-02 complete; CambiarFlujoModal + PencilLine trigger added to PatientDrawer with optimistic update; requirements PAC-02 and PAC-03 satisfied
 progress:
   total_phases: 6

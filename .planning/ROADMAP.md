@@ -214,7 +214,7 @@ Plans:
 | 26. Schema Foundation + Catalog CRUD | v1.5 | 7/7 | Complete | 2026-04-22 |
 | 27. HC Integration — LiveTurno + PatientDrawer | 3/3 | Complete    | 2026-04-24 | - |
 | 28. Presupuestos Catalog Integration | 1/1 | Complete    | 2026-04-29 | - |
-| 29. PatientDrawer Flujo Action | 2/2 | Complete   | 2026-05-04 | - |
+| 29. PatientDrawer Flujo Action | 2/2 | Complete    | 2026-05-04 | - |
 | 30. Tab Tratamientos Último Tratamiento | v1.5 | 0/TBD | Not started | - |
 | 31. Stock Órdenes de Consumo UI | v1.5 | 0/TBD | Not started | - |
 

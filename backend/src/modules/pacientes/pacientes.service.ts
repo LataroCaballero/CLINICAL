@@ -17,6 +17,7 @@ import {
   RolUsuario,
   EtapaCRM,
   TemperaturaPaciente,
+  FlujoPaciente,
   MotivoPerdidaCRM,
   TipoTareaSeguimiento,
   TipoContacto,
@@ -160,6 +161,7 @@ export class PacientesService {
               nombre: p.objecion.nombre,
             }
           : null,
+        flujo: p.flujo ?? null,
       } satisfies PacienteListaDto;
     });
 
@@ -615,7 +617,10 @@ export class PacientesService {
 
   async getKanban(profesionalId: string) {
     const pacientes = await this.prisma.paciente.findMany({
-      where: { profesionalId },
+      where: {
+        profesionalId,
+        OR: [{ flujo: FlujoPaciente.CIRUGIA }, { flujo: null }],
+      },
       select: {
         id: true,
         nombreCompleto: true,
@@ -815,6 +820,7 @@ export class PacientesService {
         NOT: {
           contactos: { some: { fecha: { gte: hoyInicio } } },
         },
+        OR: [{ flujo: FlujoPaciente.CIRUGIA }, { flujo: null }],
       },
       include: {
         contactos: {
@@ -941,5 +947,32 @@ export class PacientesService {
       ...p,
       obraSocialNombre: p.obraSocial?.nombre ?? null,
     }));
+  }
+
+  async updateFlujo(id: string, flujo: FlujoPaciente) {
+    const paciente = await this.prisma.paciente.findUnique({
+      where: { id },
+      select: { id: true, profesionalId: true },
+    });
+    if (!paciente) throw new NotFoundException('Paciente no encontrado');
+
+    return this.prisma.$transaction([
+      this.prisma.paciente.update({
+        where: { id },
+        data: { flujo, etapaCRM: null },
+      }),
+      ...(paciente.profesionalId
+        ? [
+            this.prisma.contactoLog.create({
+              data: {
+                pacienteId: id,
+                profesionalId: paciente.profesionalId,
+                tipo: TipoContacto.SISTEMA,
+                nota: 'Paciente pendiente de clasificación',
+              },
+            }),
+          ]
+        : []),
+    ]);
   }
 }

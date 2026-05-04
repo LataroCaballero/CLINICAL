@@ -7,6 +7,7 @@ import {
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateTratamientoDto } from './dto/create-tratamiento.dto';
 import { UpdateTratamientoDto } from './dto/update-tratamiento.dto';
+import { InsumoItemDto } from './dto/set-insumos-tratamiento.dto';
 
 @Injectable()
 export class TratamientosService {
@@ -66,6 +67,20 @@ export class TratamientosService {
         ...(includeInactive ? {} : { activo: true }),
       },
       orderBy: { nombre: 'asc' },
+      include: {
+        insumos: {
+          include: {
+            producto: {
+              select: {
+                id: true,
+                nombre: true,
+                costoBase: true,
+                unidadMedida: true,
+              },
+            },
+          },
+        },
+      },
     });
   }
 
@@ -184,6 +199,91 @@ export class TratamientosService {
     return this.prisma.tratamiento.update({
       where: { id },
       data: { activo: true },
+    });
+  }
+
+  // =====================
+  // Insumos management
+  // =====================
+
+  async setInsumos(id: string, profesionalId: string, insumos: InsumoItemDto[]) {
+    await this.findById(id, profesionalId);
+
+    await this.prisma.$transaction([
+      this.prisma.tratamientoInsumo.deleteMany({ where: { tratamientoId: id } }),
+      ...insumos.map((item) =>
+        this.prisma.tratamientoInsumo.create({
+          data: {
+            tratamientoId: id,
+            productoId: item.productoId,
+            cantidad: item.cantidad,
+          },
+        }),
+      ),
+    ]);
+
+    return this.prisma.tratamiento.findUnique({
+      where: { id },
+      include: {
+        insumos: {
+          include: {
+            producto: {
+              select: {
+                id: true,
+                nombre: true,
+                costoBase: true,
+                unidadMedida: true,
+              },
+            },
+          },
+        },
+      },
+    });
+  }
+
+  async recalcularPrecioBase(id: string, profesionalId: string) {
+    await this.findById(id, profesionalId);
+
+    const insumos = await this.prisma.tratamientoInsumo.findMany({
+      where: { tratamientoId: id },
+      include: {
+        producto: {
+          select: {
+            costoBase: true,
+            inventarios: {
+              where: { profesionalId },
+              select: { precioActual: true },
+            },
+          },
+        },
+      },
+    });
+
+    const precioBase = insumos.reduce((sum, item) => {
+      const precio =
+        item.producto.inventarios[0]?.precioActual ??
+        item.producto.costoBase ??
+        0;
+      return sum + Number(precio) * Number(item.cantidad);
+    }, 0);
+
+    return this.prisma.tratamiento.update({
+      where: { id },
+      data: { precioBase },
+      include: {
+        insumos: {
+          include: {
+            producto: {
+              select: {
+                id: true,
+                nombre: true,
+                costoBase: true,
+                unidadMedida: true,
+              },
+            },
+          },
+        },
+      },
     });
   }
 }

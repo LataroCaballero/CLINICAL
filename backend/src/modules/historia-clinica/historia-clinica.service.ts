@@ -87,6 +87,12 @@ export class HistoriaClinicaService {
         presupuestoId: dto.presupuestoId ?? null,
         presupuestoTotal: dto.presupuestoTotal ?? 0,
       };
+    } else if (dto.tipo === 'tratamiento_en_consultorio') {
+      contenido = {
+        tipo: 'tratamiento_en_consultorio',
+        tratamientos: [], // will be filled after insumos pre-fetch below
+        texto: dto.texto ?? '',
+      };
     } else {
       contenido = { tipo: dto.tipo, texto: dto.texto ?? '' };
     }
@@ -134,6 +140,41 @@ export class HistoriaClinicaService {
           select: { nombre: true },
         });
         autorizacionesMeta.push({ obraSocialNombre: os?.nombre ?? 'Obra Social', autIdx: i });
+      }
+    }
+
+    // Pre-fetch insumos for OrdenConsumo (outside tx — pgBouncer pattern)
+    let insumosAgregados: Array<{ productoId: string; cantidad: number }> = [];
+    let tratamientosSnapshot: Array<{ id: string; nombre: string }> = [];
+
+    if (dto.consumirInsumos && dto.tratamientoIds?.length) {
+      const tratamientosConInsumos = await this.prisma.tratamiento.findMany({
+        where: { id: { in: dto.tratamientoIds }, profesionalId, activo: true },
+        select: {
+          id: true,
+          nombre: true,
+          insumos: { select: { productoId: true, cantidad: true } },
+        },
+      });
+
+      tratamientosSnapshot = tratamientosConInsumos.map((t) => ({ id: t.id, nombre: t.nombre }));
+
+      // Aggregate quantities by productoId across all treatments (prevent duplicate rows)
+      const insumosMap = new Map<string, number>();
+      for (const t of tratamientosConInsumos) {
+        for (const ins of t.insumos) {
+          const prev = insumosMap.get(ins.productoId) ?? 0;
+          insumosMap.set(ins.productoId, prev + Number(ins.cantidad));
+        }
+      }
+      insumosAgregados = Array.from(insumosMap.entries()).map(([productoId, cantidad]) => ({
+        productoId,
+        cantidad,
+      }));
+
+      // Update tratamiento_en_consultorio contenido with snapshot
+      if (dto.tipo === 'tratamiento_en_consultorio') {
+        contenido.tratamientos = tratamientosSnapshot;
       }
     }
 
@@ -190,6 +231,24 @@ export class HistoriaClinicaService {
             },
           });
         }
+      }
+
+      // Create OrdenConsumo if consumirInsumos requested and treatments have insumos
+      if (dto.consumirInsumos && insumosAgregados.length > 0) {
+        await tx.ordenConsumo.create({
+          data: {
+            pacienteId,
+            profesionalId,
+            turnoId: dto.turnoId ?? null,
+            historiaClinicaEntradaId: entrada.id,
+            fechaSesion: fechaFinal ?? new Date(),
+            estado: 'PENDIENTE',
+            tratamientosSnapshot,
+            insumos: {
+              create: insumosAgregados,
+            },
+          },
+        });
       }
 
       return entrada;

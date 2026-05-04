@@ -13,7 +13,7 @@ export interface TratamientoItemDto {
   precio: number;
 }
 
-export type TipoEntrada = 'primera_vez' | 'pre_quirurgico' | 'control' | 'practica' | 'libre';
+export type TipoEntrada = 'primera_vez' | 'pre_quirurgico' | 'control' | 'practica' | 'tratamiento_en_consultorio' | 'libre';
 
 export interface CodigoPracticaEntradaDto {
   codigo: string;
@@ -40,6 +40,10 @@ export interface CreateEntradaDto {
   texto?: string;
   // fecha retroactiva (YYYY-MM-DD)
   fecha?: string;
+  // tratamiento_en_consultorio
+  tratamientoIds?: string[];   // IDs of selected catalog treatments
+  consumirInsumos?: boolean;   // Whether to create OrdenConsumo on save
+  turnoId?: string;            // Present from LiveTurno, absent from PatientDrawer
 }
 
 export function useCreateHistoriaClinicaEntry() {

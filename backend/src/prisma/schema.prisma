@@ -130,6 +130,8 @@ model Profesional {
   limitesFacturacion LimiteFacturacionMensual[]
   configuracionAFIP  ConfiguracionAFIP?
   caeaVigentes       CaeaVigente[]
+  cirugiasCatalogo   CirugiaCatalogo[]
+  ordenesConsumo     OrdenConsumo[]
 }
 
 model Secretaria {
@@ -191,6 +193,7 @@ model Paciente {
   temperatura                TemperaturaPaciente?
   scoreConversion            Int               @default(0)
   motivoPerdida              MotivoPerdidaCRM?
+  flujo                      FlujoPaciente?    @default(PENDIENTE)
   notasComerciales           String?
   tareasSeguimiento          TareaSeguimiento[]
   whatsappOptIn              Boolean           @default(false)
@@ -201,12 +204,15 @@ model Paciente {
   comentarioListaEspera      String?
   fechaListaEspera           DateTime?
   autorizaciones             AutorizacionObraSocial[]
+  ordenesConsumo             OrdenConsumo[]
 
   @@index([dni(ops: raw("gin_trgm_ops"))], map: "idx_paciente_dni_trgm", type: Gin)
   @@index([telefono(ops: raw("gin_trgm_ops"))], map: "idx_paciente_telefono_trgm", type: Gin)
   @@index([etapaCRM])
   @@index([profesionalId, etapaCRM])
   @@index([profesionalId, enListaEspera])
+  @@index([flujo])
+  @@index([profesionalId, flujo])
 }
 
 model MensajeInterno {
@@ -598,11 +604,14 @@ model Producto {
   precioSugerido    Decimal?            @db.Decimal(10, 2)
   requiereLote      Boolean             @default(false)
   descuentaStock    Boolean             @default(true)
-  inventarios       Inventario[]
-  lotes             Lote[]
-  OrdenCompraItem   OrdenCompraItem[]
-  proveedores       ProductoProveedor[]
-  VentaProductoItem VentaProductoItem[]
+  inventarios        Inventario[]
+  lotes              Lote[]
+  OrdenCompraItem    OrdenCompraItem[]
+  proveedores        ProductoProveedor[]
+  VentaProductoItem  VentaProductoItem[]
+  tratamientoInsumos    TratamientoInsumo[]
+  cirugiaInsumos        CirugiaInsumo[]
+  ordenesConsumoInsumos OrdenConsumoInsumo[]
 }
 
 model Inventario {
@@ -764,6 +773,7 @@ model TipoTurno {
   instrucciones   String?
   duracionDefault Int?
   esCirugia       Boolean                 @default(false)
+  flujoPaciente   FlujoPaciente?
   turnos          Turno[]
   configProfesionales TipoTurnoProfesional[]
 }
@@ -888,9 +898,92 @@ model Tratamiento {
   activo          Boolean     @default(true)
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
+  precioBase      Decimal?    @db.Decimal(10, 2)
+  insumos         TratamientoInsumo[]
 
   @@unique([nombre, profesionalId])
   @@index([profesionalId, activo])
+}
+
+model TratamientoInsumo {
+  id            String      @id @default(uuid())
+  tratamientoId String
+  productoId    String
+  cantidad      Decimal     @db.Decimal(10, 3)
+  tratamiento   Tratamiento @relation(fields: [tratamientoId], references: [id], onDelete: Cascade)
+  producto      Producto    @relation(fields: [productoId], references: [id])
+
+  @@unique([tratamientoId, productoId])
+  @@index([tratamientoId])
+}
+
+model CirugiaCatalogo {
+  id              String          @id @default(uuid())
+  nombre          String
+  precioARS       Decimal?        @db.Decimal(10, 2)
+  precioUSD       Decimal?        @db.Decimal(10, 2)
+  precioBase      Decimal?        @db.Decimal(10, 2)
+  duracionMinutos Int?
+  profesionalId   String
+  activo          Boolean         @default(true)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  profesional     Profesional     @relation(fields: [profesionalId], references: [id])
+  insumos         CirugiaInsumo[]
+
+  @@unique([nombre, profesionalId])
+  @@index([profesionalId, activo])
+}
+
+model CirugiaInsumo {
+  id         String          @id @default(uuid())
+  cirugiaId  String
+  productoId String
+  cantidad   Decimal         @db.Decimal(10, 3)
+  cirugia    CirugiaCatalogo @relation(fields: [cirugiaId], references: [id], onDelete: Cascade)
+  producto   Producto        @relation(fields: [productoId], references: [id])
+
+  @@unique([cirugiaId, productoId])
+  @@index([cirugiaId])
+}
+
+enum EstadoOrdenConsumo {
+  PENDIENTE
+  CONFIRMADA
+  CANCELADA
+}
+
+model OrdenConsumo {
+  id                       String             @id @default(uuid())
+  pacienteId               String
+  profesionalId            String
+  turnoId                  String?
+  historiaClinicaEntradaId String
+  fechaSesion              DateTime
+  estado                   EstadoOrdenConsumo @default(PENDIENTE)
+  tratamientosSnapshot     Json
+  createdAt                DateTime           @default(now())
+  updatedAt                DateTime           @updatedAt
+
+  paciente    Paciente             @relation(fields: [pacienteId], references: [id])
+  profesional Profesional          @relation(fields: [profesionalId], references: [id])
+  insumos     OrdenConsumoInsumo[]
+
+  @@index([profesionalId, estado])
+  @@index([pacienteId])
+}
+
+model OrdenConsumoInsumo {
+  id             String       @id @default(uuid())
+  ordenConsumoId String
+  productoId     String
+  cantidad       Decimal      @db.Decimal(10, 3)
+
+  ordenConsumo OrdenConsumo @relation(fields: [ordenConsumoId], references: [id], onDelete: Cascade)
+  producto     Producto     @relation(fields: [productoId], references: [id])
+
+  @@unique([ordenConsumoId, productoId])
+  @@index([ordenConsumoId])
 }
 
 model Objection {
@@ -1062,6 +1155,12 @@ enum MotivoPerdidaCRM {
   NO_CANDIDATO_MEDICO
   NO_RESPONDIO
   OTRO
+}
+
+enum FlujoPaciente {
+  CIRUGIA
+  TRATAMIENTO
+  PENDIENTE
 }
 
 enum TipoTareaSeguimiento {

@@ -4,6 +4,7 @@ import { useLiveTurnoStore } from '@/store/live-turno.store';
 import { LiveTurnoHeader } from './LiveTurnoHeader';
 import { LiveTurnoFooter } from './LiveTurnoFooter';
 import { LiveTurnoTabs } from './LiveTurnoTabs';
+import { LiveTurnoFlujoBanner } from './LiveTurnoFlujoBanner';
 import { HistoriaClinicaTab } from './tabs/HistoriaClinicaTab';
 import { DatosPacienteTab } from './tabs/DatosPacienteTab';
 import { NuevoTurnoTab } from './tabs/NuevoTurnoTab';
@@ -22,6 +23,9 @@ export function LiveTurnoPanel() {
 
         {/* Tabs Navigation */}
         <LiveTurnoTabs />
+
+        {/* Classification Banner */}
+        <LiveTurnoFlujoBanner />
 
         {/* Tab Content */}
         <div className="flex-1 overflow-auto p-6">

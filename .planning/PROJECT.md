@@ -67,9 +67,23 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 - ✓ CAEA contingency mode para cuando ARCA no responde — v1.2
 - ✓ QR AFIP en PDF de comprobantes (RG 5616/2024, 13 campos) — v1.2
 - ✓ Errores AFIP en español en modal con error panel (BUG-1 + BUG-2 corregidos) — v1.2
+- ✓ 5 tipos de turno con semántica de flujo (Consulta para cirugía, Consulta para tratamiento, Pre-operatorio, Control, Consulta pendiente) — v1.4
+- ✓ Campo `flujo` (CIRUGIA | TRATAMIENTO | PENDIENTE) en Paciente con auto-update al crear turno (guard PENDIENTE-only) — v1.4
+- ✓ Embudo CRM filtrado exclusivamente a pacientes CIRUGIA; legacy (flujo IS NULL con etapaCRM) preservados — v1.4
+- ✓ Banner LiveTurno amber no bloqueante para clasificar pacientes PENDIENTE (dismissible por sesión) — v1.4
+- ✓ Tab "Tratamientos" en /dashboard/pacientes — lista mensual navegable, filtro por tipo, FlujoBadge por paciente — v1.4
 
 ### Active
 
+<!-- v1.5 Catálogos Clínicos y Flujos de Atención -->
+- [ ] Catálogo de tratamientos extendido con insumos del stock y precio base calculado
+- [ ] Catálogo de cirugías por profesional (nombre, precios ARS/USD, insumos, duración)
+- [ ] LiveTurno HC: sección "Tratamiento en Consultorio" con selector de catálogo, texto libre y checkbox de insumos
+- [ ] Órdenes de consumo de stock generadas desde HC (pendientes de confirmación en módulo stock)
+- [ ] Presupuestos con selección de ítems desde catálogo de cirugías y tratamientos
+- [ ] Tab Tratamientos: columna "Último tratamiento" por paciente
+- [ ] Cambio de flujo desde PatientDrawer (optimistic, con efectos CRM)
+- [ ] Entrada de HC desde PatientDrawer usando mismo creator que LiveTurno
 - [ ] Reportes ejecutivos exportables (comparativas entre períodos) — v2
 - [ ] Historial de liquidaciones por OS con comparativa autorizado vs. pagado — v2
 
@@ -89,7 +103,7 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 
 ## Context
 
-**Estado actual (post-v1.2):** El módulo de facturación electrónica AFIP/ARCA está completo. El Facturador puede emitir comprobantes electrónicos reales (CAE), ver el QR obligatorio RG 5616/2024 en el PDF, configurar el certificado digital por tenant, y el sistema maneja automáticamente el modo contingencia CAEA cuando ARCA no está disponible. 16/16 requisitos del milestone v1.2 satisfechos.
+**Estado actual (post-v1.4):** El sistema diferencia pacientes de cirugía de pacientes de tratamiento en consultorio. El embudo CRM muestra solo pacientes CIRUGIA; los pacientes TRATAMIENTO aparecen en el nuevo tab Tratamientos. Los profesionales pueden clasificar pacientes PENDIENTE directamente desde LiveTurno. 20/20 requisitos del milestone v1.4 satisfechos en 5 días (4 fases, 10 planes).
 
 **Stack:** NestJS + Prisma + PostgreSQL (backend) | Next.js 16 + React 19 + TypeScript (frontend) | BullMQ + Redis (async) | WhatsApp Cloud API | node-forge (firma CMS WSAA) | qrcode 1.5.4 + PDFKit (QR en PDF).
 
@@ -143,6 +157,11 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 | FECAEAInformar + deadline alerts en mismo milestone — v1.2 | CAEA sin inform tracking es riesgo regulatorio (multas) | ✓ Correcto — 72 reintentos en 8 días + email alert antes de vencimiento |
 | afipError persist incondicional en onFailed (BUG-1 fix) — v1.2 | Guard attemptsMade >= maxAttempts impedía persist para UnrecoverableError (attemptsMade=1) | ✓ Correcto — update antes del guard; Test 9 GREEN |
 | Modal condition: EMISION_PENDIENTE \|\| CAEA_PENDIENTE_INFORMAR (BUG-2 fix) — v1.2 | EMISION_PENDIENTE solo dejaba error invisible tras CAEA fallback | ✓ Correcto — ambas rutas de error muestran panel rojo |
+| Paciente.flujo sin SQL DEFAULT (null = legacy) — v1.4 | Backfill CIRUGIA para pacientes activos; null distingue legacy de PENDIENTE sin vaciar el kanban CRM | ✓ Correcto — kanban CRM preservado completamente post-migración |
+| Auto-update flujo en crearTurno() best-effort (step 5.5) — v1.4 | No bloquear creación del turno si el update de flujo falla; resilience > exactitud | ✓ Correcto — clasificación correcta en todos los casos sin regressions |
+| Guard PENDIENTE-only para auto-clasificación — v1.4 | No sobreescribir clasificaciones existentes (CIRUGIA/TRATAMIENTO) al agregar más turnos | ✓ Correcto — pacientes reclasificados manualmente vía banner o PATCH se respetan |
+| Banner LiveTurno dismissible por sesión (no persist en DB) — v1.4 | UX no bloqueante; paciente permanece PENDIENTE hasta que el profesional clasifique explícitamente | ✓ Correcto — banner vuelve a mostrarse en nueva sesión sin DB write extra |
+| Walk-in patients (flujo=null) excluidos del auto-update TRATAMIENTO — v1.4 | Preservar semántica legacy; flujo=null + etapaCRM activo = paciente CRM válido que no debe convertirse en tratamiento | ✓ Correcto — clasificación manual disponible vía banner o PATCH endpoint |
 
 ## Shipped: v1.1 Vista del Facturador ✅
 
@@ -152,25 +171,24 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 
 16/16 requisitos completados en 50 días (2026-02-09 → 2026-03-31). 8 fases, 24 planes. Ver `.planning/milestones/v1.2-ROADMAP.md` para detalles completos.
 
-## Current Milestone: v1.3 Historial de Consultas
+## Shipped: v1.3 Historial de Consultas ✅
 
-**Goal:** Expandir el widget "Turnos del día" para que el profesional pueda navegar a cualquier día y ver el historial de consultas con sus entradas de HC asociadas, y agregar entradas retroactivas usando el mismo formato que LiveTurno.
+2 phases (20–21), 4 plans. Widget agenda-first con navegación día a día, métricas del día, botón "Ver HC" por turno FINALIZADO, modal HC retroactivo con fecha histórica. Ver `.planning/milestones/v1.3-ROADMAP.md` para detalles.
+
+## Shipped: v1.4 Flujo de Pacientes ✅
+
+20/20 requisitos completados en 5 días (2026-04-15 → 2026-04-20). 4 fases, 10 planes. Ver `.planning/milestones/v1.4-ROADMAP.md` para detalles.
+
+## Current Milestone: v1.5 Catálogos Clínicos y Flujos de Atención
+
+**Goal:** Conectar catálogos de tratamientos y cirugías con LiveTurno, presupuestos y stock; mejorar flujos de clasificación y HC desde el perfil del paciente.
 
 **Target features:**
-- Widget agenda-first (hoy por defecto vía `/turnos/agenda`, no `/proximos`)
-- Selector de calendario para navegar a cualquier día pasado o futuro
-- Métricas del día para días pasados/hoy (total, finalizados, cirugías, ausentes, cancelados)
-- Botón "Ver HC" por turno FINALIZADO → modal con entradas read-only + agregar nueva
-- Modal HC con mismo formato que HistoriaClinicaTab (tipo selector + PrimeraConsultaForm / Textarea)
-- Entradas retroactivas: backend acepta `fecha` opcional para datar la entrada en el día histórico
-
-## Next Milestone: v2.0 (TBD)
-
-Planning pendiente. Candidatos para el próximo milestone:
-- Reportes ejecutivos exportables (comparativas entre períodos)
-- Historial de liquidaciones por OS con comparativa autorizado vs. pagado
-- Dashboard multi-profesional de estado de certificados (SaaS admin)
-- IVA matrix para cirugía estética (blocker de go-live AFIP producción)
+- Catálogos clínicos: tratamientos con insumos + nuevo catálogo de cirugías por profesional
+- LiveTurno HC: selector de tratamientos del catálogo + órdenes de consumo de stock
+- Presupuestos: selección de ítems desde catálogo con precios auto-completados
+- PatientDrawer: cambio de flujo + nueva entrada HC con mismo creator que LiveTurno
+- Tab Tratamientos: columna de último tratamiento por paciente
 
 ---
-*Last updated: 2026-04-02 after v1.3 milestone start — Historial de Consultas*
+*Last updated: 2026-04-22 after v1.5 milestone start — Catálogos Clínicos y Flujos de Atención*

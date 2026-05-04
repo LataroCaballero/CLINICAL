@@ -1,32 +1,34 @@
 # Feature Research
 
-**Domain:** AFIP/ARCA Electronic Invoicing (CAE real) — v1.2 milestone for Argentine aesthetic surgery clinic SaaS
-**Researched:** 2026-03-16
-**Confidence:** HIGH (technical spec from AFIP-INTEGRATION.md, codebase analysis) / MEDIUM (UX flow conventions for Argentine facturador role)
+**Domain:** Clinical catalogs + clinical workflow integration — v1.5 Catálogos Clínicos y Flujos de Atención for Argentine aesthetic surgery clinic SaaS
+**Researched:** 2026-04-22
+**Confidence:** HIGH (codebase analysis, Prisma schema inspection, competitor patterns from Pabau, Zenoti, Nubimed, PatientNow) / MEDIUM (UX patterns for pending stock orders — inferred from domain conventions, not directly observed in source code)
 
-> **Scope:** This document covers ONLY features needed for v1.2 — real CAE emission and management.
-> Everything built in v1.1 (stub, dashboard, settlement workflow, schema prep) is already shipped and is NOT re-researched here.
+> **Scope:** This document covers ONLY features for v1.5. Everything shipped through v1.4 is not re-researched.
+> v1.5 goal: connect treatment/surgery catalogs with LiveTurno HC, presupuestos, and stock; improve flujo/HC flows from PatientDrawer.
 
 ---
 
-## Context: What v1.1 Already Built (Do Not Re-Build)
+## Context: What Exists Today (Post-v1.4)
 
-The following exists and works:
+### Existing Catalog Model
+`Tratamiento` model per-profesional has: nombre, descripcion, precio, indicaciones, procedimiento, duracionMinutos, activo. No relation to stock Productos. No FK from HC entries. No surgery-specific catalog.
 
-- `/dashboard/facturador` — dedicated FACTURADOR home with KPIs by OS, monthly cap progress bar, config limit
-- `/dashboard/facturador/liquidar/[obraSocialId]` — settlement flow: inline `montoPagado` editing, `CerrarLoteModal`, atomic `LiquidacionObraSocial` creation
-- `AfipStubService` — implements `AfipService` interface, returns fake CAE (`74397704790943`)
-- `Factura` model with `condicionIVAReceptor` (CondicionIVA enum), `tipoCambio` (Decimal 10,4), `moneda` (MonedaFactura enum)
-- `EmitirComprobanteParams` / `EmitirComprobanteResult` interfaces in `afip.interfaces.ts`
-- `LimiteFacturacionMensual` model and config UI
+### Existing Stock Model
+`Producto` + `Inventario` (per profesional) + `MovimientoStock` (with motivo, tipo enum). `MovimientoStock.practicaId` links to `PracticaRealizada` (OS billing). No link from `MovimientoStock` to `HistoriaClinicaEntrada` or `Tratamiento`. Stock deduction is currently triggered at billing/practica layer, not at clinical documentation layer.
 
-What is NOT in the schema yet (v1.2 must add):
-- `Factura.cae` — the real CAE number from AFIP
-- `Factura.caeFchVto` — CAE expiry date
-- `Factura.nroComprobante` — confirmed invoice number from AFIP sequence
-- `ConfiguracionAFIP` model — per-professional encrypted certificate storage
-- `CAEA` model — pre-fetched contingency authorization codes
-- `AmbienteAFIP` enum — HOMOLOGACION / PRODUCCION
+### Existing Presupuesto Model
+`PresupuestoItem` has: descripcion (free text), precioTotal, orden. No FK to any catalog — entirely free text.
+
+### Existing HC Entry
+`HistoriaClinicaEntrada` has: contenido (JSONB), answers (JSONB), template FK, status. No FK to `Tratamiento` catalog. LiveTurno HC tab uses a wizard/creator UI.
+
+### What Competitors Do (Confirmed, MEDIUM confidence)
+- **Pabau**: Links services to consumables; deducts inventory automatically when treatment is administered. Practitioner selects units used during charting session.
+- **Zenoti**: AI-assisted charting, service-linked forms, product deduction tied to invoice/checkout.
+- **Nubimed** (Argentine market): "Generate quick quotes from treatment catalog" — catalog-driven presupuesto creation.
+- **PatientNow**: Unified EMR + inventory + billing purpose-built for plastic surgery; catalog drives quote, quote drives booking, booking drives chart, chart drives billing.
+- Industry norm: catalog → quote → consent → clinical note → stock deduction → billing. This is the expected flow in aesthetic/plastic surgery SaaS.
 
 ---
 
@@ -34,121 +36,104 @@ What is NOT in the schema yet (v1.2 must add):
 
 ### Table Stakes (Users Expect These)
 
-Features the FACTURADOR role expects once CAE emission is announced. Missing these = the feature is unusable in production.
+Features users assume exist given what the system already does. Missing these = system feels disconnected and incomplete.
 
 | Feature | Why Expected | Complexity | Notes |
 |---------|--------------|------------|-------|
-| Real CAE returned and stored on Factura | The entire point of v1.2. Without a real CAE stored against the Factura, the comprobante has no legal validity. Facturador expects to see the 14-digit CAE after emitting. | HIGH | Requires WSFEv1 `FECAESolicitar` + advisory lock + schema migration to add `cae`, `caeFchVto`, `nroComprobante` columns to `Factura`. Swaps `AfipStubService` for real `WsfevService`. |
-| Certificate upload by ADMIN for each professional | Someone must put the X.509 certificate into the system before any CAE can be issued. FACTURADOR cannot do their job without this being set up first. | MEDIUM | Secure file upload endpoint (ADMIN-only). Encrypts cert+key using existing `EncryptionService` (AES-256-GCM). Creates `ConfiguracionAFIP` record. FACTURADOR never touches certs — only ADMIN. |
-| Certificate status indicator visible to FACTURADOR | FACTURADOR needs to know whether the certificate is configured and valid before attempting to emit. If cert is missing or expired, they must be told immediately — not after a failed CAE request. | LOW | Banner or badge on facturador home: "Certificado AFIP: configurado / vencido en X días / no configurado." Reads from `ConfiguracionAFIP.certExpiresAt`. No cert data exposed. |
-| AFIP environment selector (homologacion vs produccion) per tenant | Every tenant must test in homologacion before going live. If the environment is not configurable, the facturador cannot validate the integration before processing real comprobantes. | LOW | `AmbienteAFIP` enum on `ConfiguracionAFIP`. ADMIN sets it. Displayed prominently in FACTURADOR home: "Modo: HOMOLOGACION" badge. Prevents accidental production submission during testing. |
-| Invoice number (nroComprobante) visible on Factura after emission | Argentine accountants and OS auditors ask for the comprobante number. Facturador must see it on screen and it must match what AFIP registered. | LOW | Store `cbtDesde` from `EmitirComprobanteResult` as `Factura.nroComprobante`. Display alongside CAE in Factura detail. |
-| Error feedback when AFIP rejects or is unreachable | AFIP returns rejection codes with Spanish descriptions. Facturador needs to know specifically what went wrong ("CUIT no autorizado", "Numeración duplicada") not a generic error toast. | MEDIUM | Map AFIP rejection codes to user-readable Spanish messages. Show in a modal or alert with the raw AFIP observation. Log full AFIP response server-side. |
-| CAE expiry date displayed on Factura | Argentine regulation: a comprobante is only valid until the CAE expires. Facturador must see `caeFchVto` and ideally be warned if a comprobante is approaching expiry without being delivered. | LOW | Display `caeFchVto` on Factura card/row in YYYY-MM-DD format. No action required — informational. |
-| "Emitir Comprobante AFIP" action wired to real service | The `CerrarLoteModal` currently calls the stub. The FACTURADOR's primary action — closing a settlement batch — must trigger real CAE emission. Must be clearly labeled as "Emitir con CAE" in production vs "Modo prueba" in homologacion. | MEDIUM | Replace `AfipStubService` injection with real `WsfevService` behind NestJS DI token. Frontend label conditional on ambiente. |
+| Insumos (stock products) linked to `Tratamiento` catalog with quantities | Every aesthetic clinic software links consumables to services (Pabau, Zenoti, Nubimed). Without this, precio is meaningless and stock tracking is broken. | MEDIUM | N:N join table `TratamientoInsumo` (tratamientoId, productoId, cantidad). Precio base = sum(costoBase × cantidad) from Inventario. |
+| Surgery catalog per profesional (name, ARS/USD prices, insumos, estimated duration) | System already has `Cirugia` model (surgical event record) but no reusable catalog for "types of surgeries I perform." Users expect to define their procedure menu once and reuse it in quotes. | MEDIUM | New model `CirugiaCatalogo` per profesional. Separate from `Cirugia` (the actual event). N:N with Productos for insumos. |
+| Presupuesto: pick from catalog with price auto-filled | Nubimed, PatientNow, all plastic surgery PM software do this. Without it, coordinators manually type prices every time — error-prone and slow. | MEDIUM | Add optional `tratamientoId`/`cirugiaId` FK to `PresupuestoItem`. Frontend: combobox that populates descripcion + precioTotal. Keep free-text option for custom items. |
+| HC entry "Tratamiento en Consultorio" section: multi-select from Tratamiento catalog | Without catalog linkage in the clinical note, the "Tab Tratamientos → last treatment" feature (already promised in v1.4) has nothing to link to. This closes the loop. | MEDIUM | New optional field(s) on `HistoriaClinicaEntrada`: `tratamientosCatalogo` (JSON array of tratamientoIds + nombre + free text). |
+| Tab Tratamientos: "Último tratamiento" column | Promised in v1.4 scope. The tab already shows monthly patient list — without a last-treatment column it feels incomplete. | LOW-MEDIUM | Requires a denormalized FK on `Paciente` or a query to latest HC entry with tratamientos. Prisma-level query, no new model needed if stored as column. |
+| Cambio de flujo desde PatientDrawer (optimistic, con modal confirmación) | Users classify patients via LiveTurno banner already. Doing it from the profile drawer is the logical complement — not adding it feels like a regression. Triggers CRM state + contact log. | MEDIUM | PATCH endpoint already exists. Frontend: confirmation modal + optimistic update + invalidate queries. CRM side effects already coded in backend. |
+| HC entry creator from PatientDrawer (sin turno activo) | Clinicians need to document retroactive entries (post-op notes, follow-up call notes, manual entries). All competitor systems allow this. Without it, LiveTurno is the only path to HC entry — creates artificial constraint. | MEDIUM | Reuse existing HC wizard component. Pass `turnoId: undefined`, date defaults to today. Backend `crearEntrada` already doesn't require a turno. |
 
 ### Differentiators (Competitive Advantage)
 
-Features that distinguish this from manually calling AFIP or using a generic billing tool.
+Features that align with the core value prop (close more surgeries, simpler ops) and go beyond what competitors offer out of the box for Argentine plastic surgery clinics.
 
 | Feature | Value Proposition | Complexity | Notes |
 |---------|-------------------|------------|-------|
-| Certificate expiry warning 30 days before (email or dashboard alert) | AFIP certs expire every 2 years. Missing renewal = all billing stops for that tenant with no warning. A 30-day alert turns a catastrophic surprise into a scheduled task. | LOW | Cron job or check on WSAA call: if `certExpiresAt < now + 30d`, create a banner on FACTURADOR home and optionally notify ADMIN by email. |
-| CAEA contingency mode: silent fallback when AFIP is down | AFIP production outages are real (fiscal year-end, month-end congestion). If the system falls back to CAEA automatically, billing continues without the facturador needing to call their accountant. | HIGH | Pre-fetch CAEA via cron (`0 6 27,11,12 * *`). On `FECAESolicitar` timeout/5xx, assign CAEA code to invoice. Facturador sees "Emitido en modo contingencia — CAEA" badge. Requires `FECAEAInformar` batch job within 30 days after period end. **Verify RG 5782/2025 against Boletín Oficial before implementing.** |
-| QR code embedded in Factura PDF | RG 5616/2024 mandates QR codes on electronic comprobantes. Including it makes the PDF legally compliant and eliminates a manual step. The FACTURADOR never needs to know how it is generated — it just appears on the PDF. | MEDIUM | QR encodes the AFIP-specified URL: `https://www.afip.gob.ar/fe/qr/?p=BASE64({json})`. JSON fields: ver, fecha, cuit, ptoVta, tipoCbte, nroCbte, importe, moneda, ctz, tipoDocRec, nroDocRec, tipoCodAut ("E" for CAE), codAut (CAE number). Generate with `qrcode` npm package. Embed in existing PDF generation flow. |
-| Advisory-locked sequential numbering (transparent to user) | Duplicate sequence errors from concurrent CAE requests crash the billing flow. With advisory locking, concurrent requests for the same professional always get the correct next number. Facturador never sees this work — they just never get a "duplicate comprobante" error. | MEDIUM | `pg_advisory_xact_lock` within Prisma `$transaction` wrapping `FECompUltimoAutorizado → FECAESolicitar`. Fully described in AFIP-INTEGRATION.md Section 3. |
-| BNA exchange rate field with link to official source for USD invoices | When a clinic invoices in USD (some OS agreements or private patients), RG 5616/2024 requires the BNA selling rate for the prior business day. Providing a direct link to `bna.com.ar` and a pre-filled input avoids the facturador needing to find the rate manually. | LOW | `tipoCambio` field already in schema. In "Nuevo Comprobante" modal, show the field when `moneda = USD` with a link: "Ver cotización BNA". Manual entry — no scraping. |
-| Punto de Venta (PtoVta) configured per professional with validation | Argentine AFIP requires a registered PtoVta number. If it's wrong, all CAE requests fail. Storing and validating it per professional (not per request) means the facturador never has to remember or type it. | LOW | Add `ptoVta` to `ConfiguracionAFIP`. Validate it's a positive integer on save. Display in ADMIN cert config screen. |
+| Stock consumption orders (pending confirmation) from HC — not instant deduction | Argentine clinic context: stock module managed separately by admin, not by the doctor doing the HC. Generating a "pending consumption order" rather than instantly deducting respects the operational role separation (PROFESIONAL documents → Admin/stock confirms). | HIGH | New model needed: `OrdenConsumo` (with status PENDIENTE/CONFIRMADA/CANCELADA, FK to HC entry, pacienteId, fecha, items with productoId+cantidad). Stock module gets a confirmation UI. This matches how Argentine clinics actually operate. |
+| Precio base calculated from insumos (not just manual entry) | Shows real cost of each treatment. Helps clinic understand margin. Competitors show this, but Argentine-market systems like Nubimed don't emphasize it. Makes catalog more valuable. | LOW | Derived field: sum(inventario.precioActual × cantidad) for each insumo in the tratamiento. Read-only in UI, recalculated on demand. |
+| HC section "consume insumos" checkbox per treatment selected | Granular control per clinical session: "I used these treatments but did NOT consume stock this time" (e.g., consultation, evaluation, pre-op). Avoids phantom consumption orders. | LOW | Boolean per HC tratamiento entry. Only generate OrdenConsumo if checked. |
+| CirugiaCatalogo priced in ARS + USD | Surgery prices change with exchange rate. Having dual-currency in the catalog avoids updating the catalog constantly. Consistent with existing presupuesto dual-currency support. | LOW | Already modeled in presupuesto (moneda field). Catalog needs both fields. |
 
 ### Anti-Features (Commonly Requested, Often Problematic)
 
 | Feature | Why Requested | Why Problematic | Alternative |
 |---------|---------------|-----------------|-------------|
-| Auto-fetch BNA exchange rate via scraping | Facturadores want the current rate pre-filled automatically | BNA has no official API. Scraping breaks when BNA changes their HTML (happened multiple times). A broken scraper silently fills in `0` or last-known rate — causing incorrect invoices. | Manual entry with prominent link to `bna.com.ar/Personas`. Audit-friendly: facturador explicitly confirmed the rate. |
-| Automatic CAEA as primary invoicing path (before June 2026) | CAEA avoids real-time AFIP call — faster emission | RG 5782/2025 restricts CAEA to contingency-only from June 2026. Building CAEA as primary now creates a regulatory violation and requires a full rewrite by June. | Always attempt `FECAESolicitar` first. CAEA only on confirmed AFIP failure. |
-| Let facturador upload their own certificate | Reduces ADMIN friction | Certificate + private key are secrets. Giving upload access to FACTURADOR role violates the principle of least privilege. If the key leaks, all electronic signatures are compromised. | ADMIN-only upload. FACTURADOR sees status only (configured/expiring/missing). |
-| Multi-comprobante batch CAE in a single FECAESolicitar | Seems efficient — one AFIP call for the whole settlement batch | `CbteDesde ≠ CbteHasta` batches are valid in WSFEv1 but require all invoices to have identical header fields (same recipient, same IVA condition). OS liquidations often mix practice types. One comprobante per liquidacion batch is safer and maps correctly to the existing `LiquidacionObraSocial` model. | One `FECAESolicitar` per settlement batch (CbteDesde = CbteHasta). The advisory lock already handles sequencing. |
-| Storing decrypted certificate in memory for the session | Reduces latency — cert already decrypted after first WSAA call | If the process crashes or is forked, decrypted key material is in memory with no TTL. | Decrypt only at the moment of the WSAA call. Cache the ACCESS TICKET (token+sign), not the key. Token cache has 12h TTL with 5-minute buffer. |
-| Factura PDF generated by the frontend | Some SPA patterns generate PDFs client-side | PDF with QR requires CAE + sequence number — data that only exists server-side after the AFIP call. Generating client-side would require exposing the full AFIP response to the browser. | PDF generated server-side (existing pattern for presupuesto PDFs). Served as download via `/finanzas/facturas/:id/pdf`. |
+| Instant stock deduction from HC (no confirmation step) | Simpler, fewer clicks | In Argentine multi-role clinics, the professional doing the HC is not the stock admin. Instant deduction bypasses stock validation (stockMinimo, lote tracking, admin oversight). Creates reconciliation nightmares. | Pending `OrdenConsumo` that stock module admin confirms. |
+| Full surgery planning inside LiveTurno | Consultations often discuss surgery — seems natural | LiveTurno is a consultorio session tool, not a surgical planning tool. Mixing surgery planning workflow (anesthesiologist, quirofano, ayudante) into a consult session creates scope explosion. | Surgery catalog for quoting. `Cirugia` record creation stays in separate flow. |
+| Replacing free-text presupuesto items entirely with catalog items | Uniformity | Users always need custom items (e.g., "traslado", "gastos de sanatorio", one-off extras). Removing free text breaks real workflows. | Keep free-text; catalog items are additive (prefill descripcion + precio, editable before save). |
+| Complex pricing rules (tiered pricing, member discounts, package bundles) | Sophisticated pricing seems valuable | Massively increases catalog complexity and coordinator training burden. Argentine plastic surgery practices price ad hoc per patient. | Manual precio override on PresupuestoItem after catalog prefill. |
+| Automatic CRM stage advance when HC entry is created from PatientDrawer | Seems like natural automation | HC entry from drawer may be a post-op follow-up note — does not imply a new CRM stage. Stage logic tied to turno lifecycle is already well-defined. Adding drawer HC → CRM advance creates unexpected side effects. | Keep CRM transitions tied to turno events only. Flujo change from drawer does affect CRM (already scoped). |
 
 ---
 
 ## Feature Dependencies
 
 ```
-[Real CAE Emission]
-    └──requires──> [ConfiguracionAFIP model in schema]
-                       └──requires──> [ADMIN cert upload endpoint]
-                       └──requires──> [AmbienteAFIP enum]
-    └──requires──> [Factura.cae + caeFchVto + nroComprobante columns (migration)]
-    └──requires──> [Advisory lock pattern in WsfevService]
-                       └──wraps──> [FECompUltimoAutorizado + FECAESolicitar]
-    └──requires──> [WsaaService — token management + TRA signing]
-                       └──depends on──> [CMS signing: openssl smime subprocess decision]
+[CirugiaCatalogo model]
+    └──required by──> [Presupuesto: catalog item selection (cirugías)]
+    └──required by──> [OrdenConsumo: knows which insumos to consume]
 
-[QR Code in PDF]
-    └──requires──> [Real CAE Emission] (CAE number must exist before PDF can encode it)
-    └──requires──> [Factura.nroComprobante + Factura.cae stored]
-    └──enhances──> [existing PDF generation flow (presupuesto pattern)]
+[TratamientoInsumo join table (extend existing Tratamiento)]
+    └──required by──> [Presupuesto: catalog item selection (tratamientos) with precio base]
+    └──required by──> [HC "Tratamiento en Consultorio" section: drives insumo list]
+    └──required by──> [OrdenConsumo: knows which insumos tratamiento uses]
 
-[Certificate Expiry Warning]
-    └──requires──> [ConfiguracionAFIP.certExpiresAt stored at upload time]
-    └──enhances──> [FACTURADOR home dashboard (v1.1 already built)]
+[HC "Tratamiento en Consultorio" section]
+    └──required by──> [OrdenConsumo generation]
+    └──required by──> [Tab Tratamientos: "Último tratamiento" column] (needs tratamientoId stored on HC entry)
 
-[CAEA Contingency Mode]
-    └──requires──> [Real CAE Emission] (CAEA is the fallback, not the primary)
-    └──requires──> [CAEA model in schema: caea, fchVigDesde, fchVigHasta, fchTopeInf, profesionalId]
-    └──requires──> [@nestjs/schedule cron job for pre-request]
-    └──requires──> [FECAEAInformar batch job within 30d after period end]
-    └──requires──> [RG 5782/2025 verification against Boletín Oficial before implementing]
+[OrdenConsumo model]
+    └──required by──> [Stock module: confirmation UI]
+    └──enhances──> [HC section "consume insumos" checkbox] (checkbox controls whether order is generated)
 
-[BNA Rate Field for USD Invoices]
-    └──requires──> [Factura.tipoCambio already in schema — v1.1 done]
-    └──requires──> [moneda=USD UI path in Nuevo Comprobante modal]
+[Cambio de flujo desde PatientDrawer]
+    └──uses──> [existing PATCH /pacientes/:id + CRM side effects] (already built)
+    └──independent from──> [HC entry creator from PatientDrawer]
 
-[Environment Badge on FACTURADOR Home]
-    └──requires──> [ConfiguracionAFIP.ambiente readable by FACTURADOR (without exposing cert)]
+[HC entry creator from PatientDrawer]
+    └──reuses──> [LiveTurno HC wizard component] (must be extracted into shared component)
+    └──independent from──> [Cambio de flujo desde PatientDrawer]
 ```
 
 ### Dependency Notes
 
-- **Certificate upload is the gate for everything.** No cert = no WSAA token = no CAE. ADMIN must complete onboarding before FACTURADOR can emit. Certificate status display on FACTURADOR home is the user-visible indicator of this gate.
-- **Schema migration must land before service swap.** Adding `cae`, `caeFchVto`, `nroComprobante` to `Factura` and creating `ConfiguracionAFIP` must be in a migration that deploys before the real `WsfevService` is activated. The stub can still run after the migration is applied.
-- **CAEA depends on CAE path being stable first.** Do not build CAEA until the primary CAE flow is working in homologacion. Contingency mode that is never tested against a working primary is itself a source of bugs.
-- **QR code cannot precede CAE.** QR encodes the CAE number. The PDF generation must happen after `FECAESolicitar` returns successfully and the CAE is persisted.
-- **CMS signing decision (openssl vs node-forge) must be made before WsaaService is built.** This is a team decision with no wrong answer, but it affects the Docker image (openssl binary present on server) and has no backtracking path without rewriting the signing logic.
+- **CirugiaCatalogo is new and foundational**: It has no existing analog in the schema. Needs to be defined first before presupuesto and HC integration can reference it.
+- **TratamientoInsumo extends existing Tratamiento**: Lower risk than CirugiaCatalogo — it's additive. Tratamiento can function without insumos (backward compatible).
+- **HC wizard shared component**: LiveTurno currently uses the HC creator inline. For PatientDrawer to reuse it, the component must be lifted into a shared location (not duplicated). This is a refactor dependency.
+- **OrdenConsumo depends on HC section**: No point building the stock confirmation UI before the HC section that generates the orders exists.
+- **"Último tratamiento" column**: Needs either a denormalized FK on `Paciente.ultimoTratamientoId` (maintained on HC save) or a join query. If denormalized FK approach: needs a migration + service update in HC save path.
 
 ---
 
-## MVP Definition
+## MVP Definition for v1.5
 
-### Launch With (v1.2)
+### Launch With (v1.5 core)
 
-Minimum scope to replace the stub with a real CAE that is legally valid in Argentina.
+Minimum that makes v1.5 coherent and usable end-to-end.
 
-- [ ] Schema migration: `ConfiguracionAFIP` model + `AmbienteAFIP` enum + `Factura.cae` + `Factura.caeFchVto` + `Factura.nroComprobante` + `ConfiguracionAFIP.ptoVta`
-- [ ] ADMIN cert upload endpoint — encrypts cert.pem + key.pem via `EncryptionService`, stores in `ConfiguracionAFIP`
-- [ ] `WsaaService` — `buildTRA()`, CMS signing (openssl smime subprocess), token cache with 12h TTL and 5-min buffer
-- [ ] `WsfevService` — `FECompUltimoAutorizado()`, `FECAESolicitar()` within `pg_advisory_xact_lock` Prisma transaction, AFIP rejection code mapping to Spanish messages
-- [ ] Swap `AfipStubService` for real service in NestJS DI (keep stub available for test environment via env var toggle)
-- [ ] Store real CAE + nroComprobante + caeFchVto on `Factura` after successful emission
-- [ ] Certificate status indicator on FACTURADOR home (configured / expiring / missing / ambiente badge)
-- [ ] BNA rate field in "Nuevo Comprobante" modal when moneda=USD, with link to bna.com.ar
-- [ ] QR code in Factura PDF (encode AFIP JSON spec, generate via `qrcode` package)
-- [ ] Error feedback UI: map AFIP rejection codes to readable messages, show in modal not generic toast
-- [ ] ADMIN configuration screen for `ConfiguracionAFIP` (upload cert, set ptoVta, toggle ambiente)
+- [ ] `TratamientoInsumo` join table — extend existing catalog with insumos + precio base derived field
+- [ ] `CirugiaCatalogo` model per profesional with ARS/USD prices, insumos, duration
+- [ ] HC "Tratamiento en Consultorio" section — multi-select from catalog + free text annotation + "consume insumos" checkbox
+- [ ] `OrdenConsumo` model + pending orders list in stock module (confirmation UI)
+- [ ] Presupuesto: catalog item picker (tratamientos + cirugías) with price auto-fill, keep free text
+- [ ] Tab Tratamientos: "Último tratamiento" column (FK or query from latest HC entry)
+- [ ] Cambio de flujo desde PatientDrawer (optimistic + modal + CRM side effect)
+- [ ] HC entry creator from PatientDrawer (shared component, date = today)
 
-### Add After Validation (v1.2.x)
+### Add After Validation (v1.5.x)
 
-- [ ] Certificate expiry warning cron + email to ADMIN (30-day notice) — add once cert upload is working in production
-- [ ] CAEA contingency mode — add after primary CAE flow is stable in production AND RG 5782/2025 is verified against Boletín Oficial
-- [ ] `FECAEAInformar` batch job — add together with CAEA mode (they are one feature)
+- [ ] Bulk confirmation of OrdenConsumo (confirm multiple orders at once in stock module) — trigger when stock admin reports friction
+- [ ] OrdenConsumo linked to Lote (batch tracking per insumo consumed) — trigger when clinic has traceable injectables
 
 ### Future Consideration (v2+)
 
-- [ ] Liquidation history per OS with amount variance tracking (authorized vs paid) — deferred from v1.1
-- [ ] Multi-professional certificate management (bulk upload, status dashboard for all tenants) — SaaS operator tooling, not clinic-facing
-- [ ] OS portal submission (Webcred integration) — requires individual OS business agreements
+- [ ] Surgery planning: link `CirugiaCatalogo` to actual `Cirugia` (surgical event) record with pre-populated insumos — only when surgical workflow is a product priority
+- [ ] Package bundles: multiple tratamientos/cirugías priced together as a package — only with clear commercial demand
 
 ---
 
@@ -156,94 +141,47 @@ Minimum scope to replace the stub with a real CAE that is legally valid in Argen
 
 | Feature | User Value | Implementation Cost | Priority |
 |---------|------------|---------------------|----------|
-| Schema migration (ConfiguracionAFIP + Factura CAE fields) | HIGH | LOW (migration only) | P1 |
-| ADMIN cert upload endpoint | HIGH | MEDIUM | P1 |
-| WsaaService (TRA + signing + token cache) | HIGH | HIGH | P1 |
-| WsfevService (FECAESolicitar + advisory lock) | HIGH | HIGH | P1 |
-| NestJS DI swap: stub → real | HIGH | LOW | P1 |
-| Store CAE + nroComprobante on Factura | HIGH | LOW | P1 |
-| AFIP rejection code mapping to Spanish messages | HIGH | MEDIUM | P1 |
-| Certificate status indicator on FACTURADOR home | HIGH | LOW | P1 |
-| ADMIN config screen for ConfiguracionAFIP | HIGH | MEDIUM | P1 |
-| QR code in Factura PDF | MEDIUM | MEDIUM | P1 |
-| BNA rate field for USD invoices | MEDIUM | LOW | P1 |
-| Environment (homologacion/produccion) badge | MEDIUM | LOW | P1 |
-| Certificate expiry warning (30-day cron) | HIGH | LOW | P2 |
-| CAEA contingency mode | HIGH | HIGH | P2 |
-| FECAEAInformar batch job | HIGH | MEDIUM | P2 (with CAEA) |
-| Liquidation history with variance tracking | MEDIUM | MEDIUM | P3 |
-
-**Priority key:**
-- P1: Must have for v1.2 launch (real CAE, legally compliant PDF)
-- P2: Add after v1.2 is stable in production
-- P3: Future milestone
+| CirugiaCatalogo model + CRUD | HIGH (surgery quotes are the core conversion tool) | MEDIUM (new model, scoped CRUD) | P1 |
+| TratamientoInsumo + precio base | HIGH (closes the stock-catalog gap) | LOW-MEDIUM (additive migration + service layer) | P1 |
+| Presupuesto catalog picker | HIGH (daily use by secretaria) | MEDIUM (frontend combobox + PresupuestoItem FK) | P1 |
+| HC "Tratamiento en Consultorio" section | HIGH (clinical documentation + stock trigger) | MEDIUM (new HC section UI + backend field) | P1 |
+| OrdenConsumo pending + stock confirmation UI | HIGH (stock integrity) | HIGH (new model + new UI surface in stock module) | P1 |
+| Tab Tratamientos "Último tratamiento" column | MEDIUM (nice-to-have, promised in v1.4) | LOW-MEDIUM (query or denormalized FK) | P1 |
+| Cambio de flujo desde PatientDrawer | MEDIUM (ergonomics, not blocking) | LOW (reuses existing PATCH + confirmation modal) | P2 |
+| HC creator from PatientDrawer | MEDIUM (retroactive docs, follow-up notes) | MEDIUM (component extraction + drawer integration) | P2 |
+| Precio base auto-calculated from insumos | MEDIUM (margin visibility) | LOW (derived, no new model) | P2 |
+| "Consume insumos" checkbox in HC | HIGH (prevents phantom orders) | LOW (boolean field on HC entry JSON) | P1 — bundled with HC section |
 
 ---
 
-## User Journey: FACTURADOR Perspective
+## Competitor Feature Analysis
 
-### Before First CAE Emission (Onboarding)
+| Feature | Pabau | PatientNow | Nubimed (AR) | Our Approach |
+|---------|-------|------------|--------------|--------------|
+| Treatment catalog linked to consumables | Yes — auto-deduct at checkout | Yes — tied to invoice | Basic catalog, no insumos linkage found | Full N:N with quantities, precio base derived |
+| Surgery catalog | Not specialty-specific | Yes — procedure library | Yes — presupuesto from catalog | New `CirugiaCatalogo` per profesional |
+| Catalog-based quoting | Yes | Yes | Yes ("quick quotes from catalog") | PresupuestoItem with optional catalog FK + price prefill |
+| Stock deduction from clinical note | Yes — at checkout/admin | Yes | Unknown | Pending `OrdenConsumo` — confirmed by stock admin (fits Argentine role separation) |
+| HC entry without appointment | Yes (progress notes) | Yes | Unknown | HC creator reused from LiveTurno, accessible from PatientDrawer |
+| Patient classification change | CRM stage change | Not applicable | Not applicable | Flujo change from PatientDrawer with CRM side effects (already built) |
 
-1. **Accountant / professional generates CSR** using their CUIT as CN. Submits to AFIP homologacion portal (WSASS). Downloads `.pem` certificate.
-2. **ADMIN uploads cert** via a new "Configuracion AFIP" section. Uploads `cert.pem` + `key.pem`. System shows: "Certificado configurado. Vence: 2028-03-15. Ambiente: HOMOLOGACION."
-3. **ADMIN configures PtoVta** — the registered Point of Sale number from AFIP portal. One-time entry.
-4. **FACTURADOR sees on their home:** green "Certificado AFIP: Activo" badge and "Modo: HOMOLOGACION" warning banner. They know they are ready to test.
+### Differentiation Note
 
-### Emitting a CAE (Primary Flow — User's Perspective)
-
-1. FACTURADOR opens settlement for OS "OSDE — 3 practicas — $45.000".
-2. Edits `montoPagado` inline for each practice if needed.
-3. Opens `CerrarLoteModal`. Sees total, confirms condicionIVA receptor, tipoCambio if USD.
-4. Clicks "Emitir Comprobante con CAE".
-5. System calls AFIP (1-3 seconds). Button shows spinner: "Solicitando CAE..."
-6. On success: modal closes, toast: "Comprobante emitido. CAE: 74397704790943. Vence: 2026-03-23."
-7. Factura row in `ComprobantesTab` shows: number, CAE badge, vencimiento, monto.
-8. PDF available for download includes the QR code. Legally valid.
-
-### Error States (What FACTURADOR Sees)
-
-| Situation | What FACTURADOR Sees | What They Should Do |
-|-----------|---------------------|---------------------|
-| AFIP rejects (wrong CUIT in condicionIVA mapping) | Modal: "AFIP rechazó el comprobante: Código 10015 — El receptor debe ser Responsable Inscripto para Factura A. Revisá la condición de IVA del receptor." | Change condicionIVAReceptor and retry |
-| AFIP unreachable (timeout, HTTP 5xx) — CAE mode, no CAEA configured | Toast error: "AFIP no respondió. Reintentá en unos minutos o contactá a tu contador." | Wait and retry manually |
-| AFIP unreachable — CAEA configured and valid | Badge on emitted invoice: "Emitido en modo contingencia (CAEA)". Flow continues normally. | Nothing — system handled it |
-| Certificate expired | Banner on home: "Certificado AFIP vencido el 2026-03-15. No podés emitir comprobantes. Solicitá uno nuevo a tu contador." | Contact accountant to generate new CSR |
-| Certificate not yet uploaded | Banner on home: "Certificado AFIP no configurado. Pedile al administrador que lo suba." | Notify ADMIN |
-| Duplicate sequence (edge case, advisory lock prevents this) | If somehow reached: "Error de secuencia AFIP. El equipo de soporte fue notificado." Sentry alert server-side. | Support handles — user cannot fix |
-
-### After CAE Emission
-
-- FACTURADOR can download PDF with QR from ComprobantesTab.
-- Factura shows CAE number, sequence number, vencimiento.
-- At period end (if CAEA was used): system runs `FECAEAInformar` automatically — user sees no action required.
-
----
-
-## Argentine Regulatory Notes for v1.2
-
-**RG 5616/2024 — Full enforcement from April 1, 2026.** From that date, `FECAESolicitar` rejects invoices missing `CondicionIVAReceptorId` or `MonCotiz` (for foreign currency). The schema already has `condicionIVAReceptor` and `tipoCambio`. The WSFEv1 service must map them to AFIP integer IDs at submission time. No schema change needed for this compliance requirement.
-
-**RG 5782/2025 — CAEA contingency-only from June 2026.** Community-sourced finding. MUST be verified against Boletín Oficial before CAEA is implemented. If confirmed, CAEA is always a fallback path only — not an optimization. Design requires `FECAESolicitar` to always be attempted first.
-
-**IVA treatment for aesthetic surgery and obras sociales.** Medical services to obras sociales are typically `IVA_SUJETO_EXENTO` (AFIP ID 4) or `CONSUMIDOR_FINAL` (ID 5) depending on the OS's legal status. This is not a system decision — it must be validated with the clinic's accountant before go-live. The `condicionIVAReceptor` field already allows per-Factura configuration. Document this requirement clearly in the ADMIN cert config screen.
-
-**Clock synchronization.** WSAA validates `generationTime` against its own clock. Server NTP sync is a deployment prerequisite. Add an NTP check or at minimum document it in the deployment runbook. Clock drift causes cryptic WSAA rejections.
+The most distinctive design decision for this project versus competitors is the **pending consumption order** (OrdenConsumo) pattern instead of instant stock deduction. This is driven by Argentine clinic operational reality: the professional documenting the HC is not the same person managing stock. The two-step pattern (generate → confirm) is standard in pharmaceutical/hospital contexts but uncommon in medspa SaaS. It is the correct approach for this user base. Confidence: MEDIUM (domain inference from operational patterns, not verified via competitive feature docs).
 
 ---
 
 ## Sources
 
-- `.planning/research/AFIP-INTEGRATION.md` — complete technical reference (WSAA, WSFEv1, CAEA, RG 5616/2024, RG 5782/2025) — HIGH confidence
-- `backend/src/prisma/schema.prisma` — current schema state, existing `Factura` fields — HIGH confidence
-- `backend/src/modules/finanzas/afip/afip.interfaces.ts` — contract interface between stub and real service — HIGH confidence
-- `backend/src/modules/finanzas/afip/afip-stub.service.ts` — existing stub behavior — HIGH confidence
-- `frontend/src/app/dashboard/facturador/page.tsx`, `liquidar/[obraSocialId]/page.tsx` — existing FACTURADOR UI — HIGH confidence
-- `.planning/PROJECT.md` — milestone scope, deferred items, technical decisions — HIGH confidence
-- AFIP RG 5616/2024: [ARCA official documentation](https://www.afip.gob.ar/ws/documentacion/ws-factura-electronica.asp) — MEDIUM confidence (verified via AFIP-INTEGRATION.md research)
-- RG 5782/2025 CAEA restriction — LOW confidence (community sources only, must verify against Boletín Oficial)
+- Pabau stock management: [Stock Management | Pabau Practice Management Software](https://pabau.com/features/stock-management/)
+- Pabau inventory: [Inventory Management Software for Clinics & Med Spas](https://pabau.com/features/inventory-management-software/)
+- Pabau plastic surgery: [5 Best Plastic Surgery Software Solutions in 2026 | Pabau](https://pabau.com/blog/best-plastic-surgery-software/)
+- Pabau medical spa inventory: [8 Best Medical Spa Inventory Software Solutions for 2026 | Pabau](https://pabau.com/blog/medical-spa-inventory-software/)
+- Nubimed Argentina: [Software para Clínicas de Estética y Cirugía Plástica | Nubimed](https://www.nubimed.com/software-cirugia-plastica/)
+- PatientNow plastics: [Medical Aesthetics & Plastic Surgery Software | PatientNow](https://www.patientnow.com/medical-aesthetics/)
+- Nextech plastic surgery PM: [Plastic Surgery Practice Management Software | Nextech](https://www.nextech.com/plastic-surgery/practice-management-software)
+- Codebase analysis: `backend/src/prisma/schema.prisma`, `backend/src/modules/tratamientos/tratamientos.service.ts`, `backend/src/modules/historia-clinica/historia-clinica.service.ts`, `backend/src/modules/presupuestos/presupuestos.service.ts`, `frontend/src/types/tratamiento.ts`, `frontend/src/components/live-turno/LiveTurnoTabs.tsx`
 
 ---
-
-*Feature research for: v1.2 AFIP Real — CAE emission, certificate management, QR PDF compliance*
-*Researched: 2026-03-16*
-*Supersedes: v1.1 FEATURES.md entries for "Future Consideration (v2+): AFIP/ARCA CAE issuance"*
+*Feature research for: v1.5 Catálogos Clínicos y Flujos de Atención — aesthetic surgery clinic SaaS (Argentina)*
+*Researched: 2026-04-22*

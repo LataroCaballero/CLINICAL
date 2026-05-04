@@ -12,6 +12,7 @@ import HorariosSemana from "./components/HorariosSemana";
 import CalendarioDisponibilidad from "./components/CalendarioDisponibilidad";
 import GestionUsuarios from "./components/GestionUsuarios";
 import GestionTratamientos from "./components/GestionTratamientos";
+import GestionCirugias from "./components/GestionCirugias";
 import SuscripcionesReportes from "./components/SuscripcionesReportes";
 import { GestionPlantillasHC } from "@/components/hc-templates/builder";
 import GestionProveedores from "./components/GestionProveedores";
@@ -103,11 +104,12 @@ export default function ConfiguracionPage() {
         <h1 className="text-2xl font-semibold">Configuración</h1>
 
         <Tabs defaultValue="datos" className="w-full">
-          <TabsList className="grid w-full grid-cols-9 max-w-5xl">
+          <TabsList className="grid w-full grid-cols-10 max-w-5xl">
             <TabsTrigger value="datos">Datos</TabsTrigger>
             <TabsTrigger value="horarios">Horarios</TabsTrigger>
             <TabsTrigger value="calendario">Calendario</TabsTrigger>
             <TabsTrigger value="tratamientos">Tratamientos</TabsTrigger>
+            <TabsTrigger value="cirugias">Cirugías</TabsTrigger>
             <TabsTrigger value="plantillas">Plantillas HC</TabsTrigger>
             <TabsTrigger value="proveedores">Proveedores</TabsTrigger>
             <TabsTrigger value="whatsapp">WhatsApp</TabsTrigger>
@@ -129,6 +131,10 @@ export default function ConfiguracionPage() {
 
           <TabsContent value="tratamientos" className="mt-6">
             <GestionTratamientos />
+          </TabsContent>
+
+          <TabsContent value="cirugias" className="mt-6">
+            <GestionCirugias />
           </TabsContent>
 
           <TabsContent value="plantillas" className="mt-6">
@@ -196,11 +202,12 @@ export default function ConfiguracionPage() {
         </h1>
 
         <Tabs defaultValue="tipos-turno" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 max-w-2xl">
+          <TabsList className="grid w-full grid-cols-5 max-w-2xl">
             <TabsTrigger value="tipos-turno">Datos y tipos</TabsTrigger>
             <TabsTrigger value="horarios">Horarios</TabsTrigger>
             <TabsTrigger value="calendario">Calendario</TabsTrigger>
             <TabsTrigger value="tratamientos">Tratamientos</TabsTrigger>
+            <TabsTrigger value="cirugias">Cirugías</TabsTrigger>
           </TabsList>
 
           <TabsContent value="tipos-turno" className="mt-6">
@@ -217,6 +224,10 @@ export default function ConfiguracionPage() {
 
           <TabsContent value="tratamientos" className="mt-6">
             <GestionTratamientos profesionalId={selectedProfesional.id} />
+          </TabsContent>
+
+          <TabsContent value="cirugias" className="mt-6">
+            <GestionCirugias profesionalId={selectedProfesional.id} />
           </TabsContent>
         </Tabs>
       </div>

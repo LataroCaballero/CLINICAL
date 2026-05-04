@@ -17,6 +17,7 @@ import {
   MessageSquare,
   Wallet,
   Receipt,
+  PencilLine,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,11 +27,16 @@ import {
 } from "@/components/ui/tooltip";
 import { MedicalChips } from "@/components/ui/MedicalChips";
 import { getPatientAlerts } from "./columns";
+import { FlujoBadge } from "./FlujoBadge";
+import { CambiarFlujoModal } from "./CambiarFlujoModal";
 import { WhatsappOptInToggle } from "./WhatsappOptInToggle";
 import SendWAMessageModal from "@/components/whatsapp/SendWAMessageModal";
 
 export default function PacienteDetails({ paciente, onAction }: { paciente: any; onAction?: (view: "default" | "datos" | "historia" | "turnos" | "mensajes" | "cuenta" | "presupuestos") => void }) {
   const [waModalOpen, setWaModalOpen] = useState(false);
+  const [cambiarFlujoOpen, setCambiarFlujoOpen] = useState(false);
+  const [optimisticFlujo, setOptimisticFlujo] = useState<"CIRUGIA" | "TRATAMIENTO" | "PENDIENTE" | null>(null);
+  const displayFlujo = optimisticFlujo ?? (paciente.flujo as any) ?? null;
 
   if (!paciente) return null;
 
@@ -103,6 +109,17 @@ export default function PacienteDetails({ paciente, onAction }: { paciente: any;
             <p className="text-gray-600 flex items-center gap-2">
               <Calendar className="w-4 h-4" /> Edad: {edad} años
             </p>
+
+            <div className="mt-1.5 flex items-center gap-1.5">
+              <FlujoBadge flujo={displayFlujo} />
+              <button
+                onClick={() => setCambiarFlujoOpen(true)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+                title="Cambiar flujo"
+              >
+                <PencilLine className="w-3 h-3" />
+              </button>
+            </div>
           </div>
         </div>
         {/* BLOQUE DERECHO – ALERTAS MÉDICAS */}
@@ -316,6 +333,15 @@ export default function PacienteDetails({ paciente, onAction }: { paciente: any;
         pacienteId={paciente.id}
         open={waModalOpen}
         onClose={() => setWaModalOpen(false)}
+      />
+
+      <CambiarFlujoModal
+        open={cambiarFlujoOpen}
+        onOpenChange={setCambiarFlujoOpen}
+        pacienteId={paciente.id}
+        currentFlujo={displayFlujo}
+        onOptimisticUpdate={(flujo) => setOptimisticFlujo(flujo)}
+        onRevert={() => setOptimisticFlujo(null)}
       />
     </div>
   );

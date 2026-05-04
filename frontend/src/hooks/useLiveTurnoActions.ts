@@ -14,6 +14,7 @@ interface IniciarSesionResponse {
     email?: string;
     plan?: string; // String field, not a relation
     obraSocial?: { id: string; nombre: string };
+    flujo: 'PENDIENTE' | 'CIRUGIA' | 'TRATAMIENTO' | null;
   };
   profesional: {
     id: string;
@@ -56,6 +57,7 @@ export function useLiveTurnoActions() {
         tipoTurnoId: data.tipoTurno.id,
         startedAt: data.inicioReal,
         scheduledStart: data.inicio,
+        pacienteFlujo: data.paciente.flujo ?? null,
       };
       startSession(sessionData);
       qc.invalidateQueries({ queryKey: ['turnos'] });

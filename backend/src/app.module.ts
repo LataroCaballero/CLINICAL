@@ -10,6 +10,7 @@ import { ObrasSocialesModule } from './modules/obras-sociales/obras-sociales.mod
 import { ProfesionalesModule } from './modules/profesionales/profesionales.module';
 import { DiagnosticosModule } from './diagnosticos/diagnosticos.module';
 import { TratamientosModule } from './modules/tratamientos/tratamientos.module';
+import { CirugiasCatalogoModule } from './modules/cirugias-catalogo/cirugias-catalogo.module';
 import { HistoriaClinicaModule } from './modules/historia-clinica/historia-clinica.module';
 import { TurnosModule } from './modules/turnos/turnos.module';
 import { TiposTurnoModule } from './modules/tipos-turno/tipos-turno.module';
@@ -27,6 +28,7 @@ import { WhatsappModule } from './modules/whatsapp/whatsapp.module';
 import { AutorizacionesModule } from './modules/autorizaciones/autorizaciones.module';
 import { WsaaModule } from './modules/wsaa/wsaa.module';
 import { AfipConfigModule } from './modules/afip-config/afip-config.module';
+import { OrdenesConsumoModule } from './modules/ordenes-consumo/ordenes-consumo.module';
 
 @Module({
   imports: [
@@ -59,6 +61,8 @@ import { AfipConfigModule } from './modules/afip-config/afip-config.module';
     ProfesionalesModule,
     DiagnosticosModule,
     TratamientosModule,
+    CirugiasCatalogoModule,
+    OrdenesConsumoModule,
     HistoriaClinicaModule,
     HCTemplatesModule,
     TurnosModule,

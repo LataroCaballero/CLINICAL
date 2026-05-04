@@ -14,12 +14,13 @@ import { useCRMMetrics } from "@/hooks/useCRMMetrics";
 import { useEffectiveProfessionalId } from "@/hooks/useEffectiveProfessionalId";
 import { useWAUnread } from "@/hooks/useWAThread";
 import { Button } from "@/components/ui/button";
-import { LayoutList, Kanban } from "lucide-react";
+import { LayoutList, Kanban, Syringe } from "lucide-react";
+import { TratamientosTab } from "./components/TratamientosTab";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useUIStore } from "@/lib/stores/useUIStore";
 import { cn } from "@/lib/utils";
 
-type Vista = "lista" | "embudo";
+type Vista = "lista" | "embudo" | "tratamientos";
 const STORAGE_KEY = "pacientes-vista";
 
 export default function PacientesPage() {
@@ -96,6 +97,18 @@ export default function PacientesPage() {
             <LayoutList size={15} />
             Lista
           </Button>
+          <Button
+            variant={vista === "tratamientos" ? "default" : "ghost"}
+            size="sm"
+            className={cn(
+              "h-8 gap-1.5",
+              vista !== "tratamientos" && fm && "text-[var(--fc-text-secondary)] hover:bg-[var(--fc-bg-hover)] hover:text-[var(--fc-text-primary)]"
+            )}
+            onClick={() => cambiarVista("tratamientos")}
+          >
+            <Syringe size={15} />
+            Tratamientos
+          </Button>
         </div>
       </div>
 
@@ -134,6 +147,11 @@ export default function PacientesPage() {
           )}
         </div>
       )}
+      {/* Vista Tratamientos */}
+      {vista === "tratamientos" && (
+        <TratamientosTab profesionalId={efectiveProfesionalId} />
+      )}
+
       <ListaEsperaSheet
         open={listaEsperaOpen}
         onOpenChange={setListaEsperaOpen}

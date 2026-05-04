@@ -14,6 +14,8 @@ export class TiposTurnoService {
         nombre: true,
         descripcion: true,
         duracionDefault: true,
+        flujoPaciente: true,  // needed for Phase 23 auto-update logic
+        esCirugia: true,      // needed for cerrarSesion() and Phase 23
       },
     });
   }

@@ -53,3 +53,23 @@ export interface BudgetData {
   descuentos: number;
   total: number;
 }
+
+export interface TratamientoInsumoProducto {
+  id: string;
+  nombre: string;
+  costoBase: number | null;
+  unidadMedida: string | null;
+}
+
+export interface TratamientoInsumo {
+  id: string;
+  tratamientoId: string;
+  productoId: string;
+  cantidad: number;
+  producto: TratamientoInsumoProducto;
+}
+
+export interface TratamientoConInsumos extends Tratamiento {
+  precioBase: number | null;
+  insumos: TratamientoInsumo[];
+}

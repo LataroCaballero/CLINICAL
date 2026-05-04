@@ -8,7 +8,7 @@ export type TurnoRango = {
   estado: string;
   observaciones?: string | null;
   paciente: { id: string; nombreCompleto: string };
-  tipoTurno: { id: string; nombre: string };
+  tipoTurno: { id: string; nombre: string; flujoPaciente?: string | null };
 };
 
 export function useTurnosRango(

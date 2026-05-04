@@ -21,6 +21,7 @@ import PresupuestosView from "@/components/patient/PatientDrawer/views/Presupues
 import MensajesView from "@/components/patient/PatientDrawer/views/MensajesView";
 import { ContactosSection } from "./ContactosSection";
 import { AutorizacionesPacienteSection } from "./AutorizacionesPacienteSection";
+import { HCCreatorDialog } from "@/components/patient/PatientDrawer/views/HCCreatorDialog";
 
 type DrawerView = "default" | "datos" | "historia" | "turnos" | "mensajes" | "cuenta" | "presupuestos";
 
@@ -37,6 +38,7 @@ export default function PatientDrawer({
 }) {
   const { data: paciente, isLoading, isError } = usePaciente(pacienteId);
   const [view, setView] = useState<DrawerView>(initialView);
+  const [hcDialogOpen, setHcDialogOpen] = useState(false);
 
   // Reset to initialView every time the drawer opens
   useEffect(() => {
@@ -49,9 +51,23 @@ export default function PatientDrawer({
 
         {/* HEADER */}
         <DrawerHeader className="border-b">
-          <DrawerTitle className="text-lg font-semibold text-center">
-            Información del paciente
-          </DrawerTitle>
+          <div className="flex items-center justify-between">
+            <div className="w-16" />
+            <DrawerTitle className="text-lg font-semibold">
+              Información del paciente
+            </DrawerTitle>
+            <div className="flex items-center gap-2">
+              {paciente && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setHcDialogOpen(true)}
+                >
+                  + Nueva HC
+                </Button>
+              )}
+            </div>
+          </div>
         </DrawerHeader>
 
         {/* CONTENIDO SCROLLEABLE */}
@@ -129,6 +145,17 @@ export default function PatientDrawer({
             }
           </div>
         </div>
+
+        {/* HC CREATOR DIALOG */}
+        {paciente && (
+          <HCCreatorDialog
+            open={hcDialogOpen}
+            onOpenChange={setHcDialogOpen}
+            pacienteId={paciente.id}
+            profesionalId={(paciente as any).profesionalId ?? ''}
+            obraSocialId={(paciente as any).obraSocialId}
+          />
+        )}
 
         {/* FOOTER FIJO */}
         <div className="border-t p-4 bg-white">

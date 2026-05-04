@@ -19,6 +19,7 @@ import {
   EstadoOrdenCompra,
   HistoriaClinica,
   HistoriaClinicaEntrada,
+  FlujoPaciente,
 } from '@prisma/client';
 import { fakerES as faker } from '@faker-js/faker';
 
@@ -260,14 +261,18 @@ async function main() {
   console.log('📆 Creando tipos de turno...');
 
   const tiposTurno = await batchInsert(
-    ['Consulta Inicial', 'Control', 'Post-Operatorio', 'Procedimiento'].map(
-      (nombre) => ({
-        nombre,
-        descripcion: faker.lorem.sentence(),
-        duracionDefault: random([20, 30, 45, 60]),
-      }),
-    ),
-    4,
+    [
+      { nombre: 'Consulta para cirugía',                    flujoPaciente: 'CIRUGIA' as FlujoPaciente,      esCirugia: false },
+      { nombre: 'Consulta para tratamiento en consultorio', flujoPaciente: 'TRATAMIENTO' as FlujoPaciente,  esCirugia: false },
+      { nombre: 'Pre-operatorio',                           flujoPaciente: 'CIRUGIA' as FlujoPaciente,      esCirugia: false },
+      { nombre: 'Control',                                  flujoPaciente: null,                             esCirugia: false },
+      { nombre: 'Consulta pendiente',                       flujoPaciente: null,                             esCirugia: false },
+    ].map((t) => ({
+      ...t,
+      descripcion: faker.lorem.sentence(),
+      duracionDefault: random([20, 30, 45, 60]),
+    })),
+    5,
     (data) => prisma.tipoTurno.create({ data }),
   );
 

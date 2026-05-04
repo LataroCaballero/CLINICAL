@@ -21,4 +21,5 @@ export class PacienteListaDto {
     id: string;
     nombre: string;
   } | null;
+  flujo?: string | null;
 }

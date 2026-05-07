@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Catálogos Clínicos y Flujos de Atención
 status: completed
-stopped_at: Completed 29-02-PLAN.md — human-verify checkpoint approved
-last_updated: "2026-05-04T21:49:20.798Z"
+stopped_at: Phase 30 context gathered
+last_updated: "2026-05-07T18:50:51.651Z"
 last_activity: 2026-04-29 — Plan 29-02 complete; CambiarFlujoModal + PencilLine trigger added to PatientDrawer with optimistic update; requirements PAC-02 and PAC-03 satisfied
 progress:
   total_phases: 6
@@ -81,6 +81,6 @@ Last activity: 2026-04-29 — Plan 29-02 complete; CambiarFlujoModal + PencilLin
 
 ## Session Continuity
 
-Last session: 2026-05-04T21:43:56.585Z
-Stopped at: Completed 29-02-PLAN.md — human-verify checkpoint approved
-Resume file: None
+Last session: 2026-05-07T18:50:51.649Z
+Stopped at: Phase 30 context gathered
+Resume file: .planning/phases/30-tab-tratamientos-ultimo-tratamiento/30-CONTEXT.md

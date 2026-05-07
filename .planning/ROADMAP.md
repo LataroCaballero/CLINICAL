@@ -163,7 +163,9 @@ Plans:
   1. El tab Tratamientos muestra una columna "Último tratamiento" con el nombre del tratamiento de catálogo más reciente de cada paciente
   2. La columna se actualiza tras guardar una nueva entrada de HC con tratamiento seleccionado, sin requerir recarga manual
   3. Para pacientes sin tratamientos registrados en catálogo, la columna muestra un estado vacío sin errores
-**Plans**: TBD
+**Plans**: 1 plan
+Plans:
+- [ ] 30-01-PLAN.md — Backend enrichment + frontend 5th column + cache invalidation for ultimo tratamiento
 
 ### Phase 31: Stock Órdenes de Consumo UI
 **Goal**: El responsable de stock puede ver y confirmar las órdenes de consumo pendientes generadas por la HC, con descuento atómico del inventario al confirmar

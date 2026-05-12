@@ -38,7 +38,7 @@
 
 ### PAC — Mejoras en Vista de Pacientes
 
-- [ ] **PAC-01**: El tab Tratamientos muestra una columna con el último tratamiento registrado por paciente (nombre del tratamiento del catálogo)
+- [x] **PAC-01**: El tab Tratamientos muestra una columna con el último tratamiento registrado por paciente (nombre del tratamiento del catálogo)
 - [x] **PAC-02**: El profesional puede cambiar el flujo de un paciente desde el PatientDrawer mediante un modal de confirmación
 - [x] **PAC-03**: El cambio de flujo en PatientDrawer es optimista — se aplica de inmediato en UI, con toast de error si el endpoint falla
 - [x] **PAC-04**: Al cambiar el flujo, el paciente se asigna automáticamente a la etapa CRM "Sin Clasificar" en la misma transacción
@@ -96,7 +96,7 @@
 | PRESUP-02 | Phase 28 | Pending |
 | PRESUP-03 | Phase 28 | Pending |
 | PRESUP-04 | Phase 28 | Pending |
-| PAC-01 | Phase 30 | Pending |
+| PAC-01 | Phase 30 | Complete |
 | PAC-02 | Phase 29 | Complete |
 | PAC-03 | Phase 29 | Complete |
 | PAC-04 | Phase 29 | Complete |

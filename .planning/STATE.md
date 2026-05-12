@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Catálogos Clínicos y Flujos de Atención
 status: completed
-stopped_at: Phase 30 context gathered
-last_updated: "2026-05-07T18:50:51.651Z"
+stopped_at: Completed 30-01-PLAN.md — awaiting human-verify checkpoint (Task 3)
+last_updated: "2026-05-12T22:03:15.959Z"
 last_activity: 2026-04-29 — Plan 29-02 complete; CambiarFlujoModal + PencilLine trigger added to PatientDrawer with optimistic update; requirements PAC-02 and PAC-03 satisfied
 progress:
   total_phases: 6
-  completed_phases: 4
-  total_plans: 13
-  completed_plans: 13
+  completed_phases: 5
+  total_plans: 14
+  completed_plans: 14
   percent: 100
 ---
 
@@ -27,13 +27,13 @@ See: .planning/PROJECT.md (updated 2026-04-22)
 
 ```
 Milestone: v1.5 Catálogos Clínicos y Flujos de Atención
-Phase:     29 of 31 (PatientDrawer Flujo Action)
-Plan:      2 of 2 complete (awaiting human-verify checkpoint)
-Status:    Plan 29-02 complete — CambiarFlujoModal + PencilLine trigger, optimistic update, sonner toast with CRM action
+Phase:     30 of 31 (Tab Tratamientos — Último Tratamiento)
+Plan:      1 of 1 complete (awaiting human-verify checkpoint — Task 3)
+Status:    Plan 30-01 complete — Último tratamiento column added to TratamientosTab; batch HC query + cache invalidation wired
 Progress:  [██████████] 100%
 ```
 
-Last activity: 2026-04-29 — Plan 29-02 complete; CambiarFlujoModal + PencilLine trigger added to PatientDrawer with optimistic update; requirements PAC-02 and PAC-03 satisfied
+Last activity: 2026-05-12 — Plan 30-01 complete; ultimoTratamiento batch sub-query in backend, 5th column in TratamientosTab, auto-refresh invalidations added to HC mutation hooks; requirement PAC-01 satisfied
 
 ## Accumulated Context
 
@@ -67,6 +67,9 @@ Last activity: 2026-04-29 — Plan 29-02 complete; CambiarFlujoModal + PencilLin
 - **29-01 ContactoLog in updateFlujo guarded by profesionalId:** ContactoLog creation inside updateFlujo $transaction is guarded by profesionalId non-null check — legacy patients still get their flujo updated without error.
 - **29-02 CambiarFlujoModal pre-close pattern:** onOptimisticUpdate + onOpenChange(false) fire before mutation.mutate so UI updates immediately without waiting for network.
 - **29-02 onRevert sets optimisticFlujo to null:** displayFlujo falls back to paciente.flujo from TanStack Query server cache on error — no manual cache manipulation needed.
+- **30-01 ultimoTratamiento batch query:** ONE historiaClinica.findMany for all pacienteIds with take:10 on entradas (desc), then JS-side filter on contenido.tratamientos — avoids N+1 and avoids unsupported Prisma JSON path equals operator at runtime.
+- **30-01 prefix invalidation ['turnos', 'rango']:** Invalidates all rango queries across all profesional/date combos on any HC save; wired to useCreateHistoriaClinicaEntry, useCreateHCEntry, useFinalizeHCEntry.
+- **30-01 drawerInitialView pattern:** State variable tracks intended DrawerView before opening PatientDrawer; patient name click sets "default", treatment name click sets "historia" — no changes needed to PatientDrawer itself.
 
 ### Carry-forward Decisions (v1.4)
 - Paciente.flujo: null = legacy, PENDIENTE = unclassified, CIRUGIA/TRATAMIENTO = classified
@@ -81,6 +84,6 @@ Last activity: 2026-04-29 — Plan 29-02 complete; CambiarFlujoModal + PencilLin
 
 ## Session Continuity
 
-Last session: 2026-05-07T18:50:51.649Z
-Stopped at: Phase 30 context gathered
-Resume file: .planning/phases/30-tab-tratamientos-ultimo-tratamiento/30-CONTEXT.md
+Last session: 2026-05-12T22:03:15.957Z
+Stopped at: Completed 30-01-PLAN.md — awaiting human-verify checkpoint (Task 3)
+Resume file: None

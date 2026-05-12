@@ -4,7 +4,7 @@ milestone: v1.5
 milestone_name: Catálogos Clínicos y Flujos de Atención
 status: completed
 stopped_at: Completed 30-01-PLAN.md — Phase 30 complete, PAC-01 satisfied
-last_updated: "2026-05-12T22:06:25.757Z"
+last_updated: "2026-05-12T23:55:46.848Z"
 last_activity: 2026-05-12 — Plan 30-01 complete; ultimoTratamiento batch sub-query in backend, 5th column in TratamientosTab, auto-refresh invalidations added to HC mutation hooks; requirement PAC-01 satisfied
 progress:
   total_phases: 6

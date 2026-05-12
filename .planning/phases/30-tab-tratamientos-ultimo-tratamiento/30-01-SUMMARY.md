@@ -52,7 +52,7 @@ patterns-established:
 requirements-completed: [PAC-01]
 
 # Metrics
-duration: 2min
+duration: 6min
 completed: 2026-05-12
 ---
 
@@ -62,16 +62,17 @@ completed: 2026-05-12
 
 ## Performance
 
-- **Duration:** 2 min
+- **Duration:** 6 min
 - **Started:** 2026-05-12T22:00:06Z
-- **Completed:** 2026-05-12T22:02:19Z
-- **Tasks:** 2 (+ 1 checkpoint awaiting verification)
+- **Completed:** 2026-05-12T22:05:48Z
+- **Tasks:** 3 of 3 complete (including human-verify — approved)
 - **Files modified:** 5
 
 ## Accomplishments
 - Backend: `obtenerTurnosPorRango` enriched with `ultimoTratamiento: string | null` per turno via a single batch HistoriaClinica query with JS-side filtering on `contenido.tratamientos`
 - Frontend: TratamientosTab now renders 5 columns; 5th column shows clickable treatment name (opens PatientDrawer on Historia tab) or "—" muted for patients with no catalog treatments
 - Auto-refresh wired: `['turnos', 'rango']` prefix invalidation added to `useCreateHistoriaClinicaEntry`, `useCreateHCEntry`, and `useFinalizeHCEntry`
+- Task 3 (human-verify checkpoint): user manually verified all UX checks and approved — column renders correctly, click-to-HC-drawer works, auto-refresh confirmed
 
 ## Task Commits
 
@@ -79,6 +80,7 @@ Each task was committed atomically:
 
 1. **Task 1: Backend — Enrich obtenerTurnosPorRango** - `c42cc33` (feat)
 2. **Task 2: Frontend — Extend TurnoRango type, 5th column, cache invalidations** - `ecdde1c` (feat)
+3. **Task 3: Verify — Último tratamiento column UX and auto-refresh** - human-verify approved
 
 ## Files Created/Modified
 - `backend/src/modules/turnos/turnos.service.ts` - obtenerTurnosPorRango now returns ultimoTratamiento per turno via batch sub-query
@@ -103,8 +105,7 @@ None.
 None - no external service configuration required.
 
 ## Next Phase Readiness
-- Task 3 (checkpoint:human-verify) awaits manual verification at http://localhost:3000
-- Once approved, Phase 30 is complete and requirement PAC-01 is satisfied
+- Phase 30 is complete; requirement PAC-01 is satisfied
 - No blockers for subsequent phases
 
 ---

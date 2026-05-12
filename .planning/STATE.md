@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Catálogos Clínicos y Flujos de Atención
 status: completed
-stopped_at: Completed 30-01-PLAN.md — awaiting human-verify checkpoint (Task 3)
-last_updated: "2026-05-12T22:03:15.959Z"
-last_activity: 2026-04-29 — Plan 29-02 complete; CambiarFlujoModal + PencilLine trigger added to PatientDrawer with optimistic update; requirements PAC-02 and PAC-03 satisfied
+stopped_at: Completed 30-01-PLAN.md — Phase 30 complete, PAC-01 satisfied
+last_updated: "2026-05-12T22:06:25.757Z"
+last_activity: 2026-05-12 — Plan 30-01 complete; ultimoTratamiento batch sub-query in backend, 5th column in TratamientosTab, auto-refresh invalidations added to HC mutation hooks; requirement PAC-01 satisfied
 progress:
   total_phases: 6
   completed_phases: 5
@@ -28,8 +28,8 @@ See: .planning/PROJECT.md (updated 2026-04-22)
 ```
 Milestone: v1.5 Catálogos Clínicos y Flujos de Atención
 Phase:     30 of 31 (Tab Tratamientos — Último Tratamiento)
-Plan:      1 of 1 complete (awaiting human-verify checkpoint — Task 3)
-Status:    Plan 30-01 complete — Último tratamiento column added to TratamientosTab; batch HC query + cache invalidation wired
+Plan:      1 of 1 complete (all tasks done — human-verify approved)
+Status:    Phase 30 complete — Último tratamiento column added to TratamientosTab; batch HC query + cache invalidation wired; PAC-01 satisfied
 Progress:  [██████████] 100%
 ```
 
@@ -84,6 +84,6 @@ Last activity: 2026-05-12 — Plan 30-01 complete; ultimoTratamiento batch sub-q
 
 ## Session Continuity
 
-Last session: 2026-05-12T22:03:15.957Z
-Stopped at: Completed 30-01-PLAN.md — awaiting human-verify checkpoint (Task 3)
+Last session: 2026-05-12T22:06:25.755Z
+Stopped at: Completed 30-01-PLAN.md — Phase 30 complete, PAC-01 satisfied
 Resume file: None

@@ -145,6 +145,7 @@ export default function Sidebar() {
         { href: "/dashboard/stock/ventas", label: "Ventas" },
         { href: "/dashboard/stock/catalogo", label: "Catálogo" },
         { href: "/dashboard/stock/ordenes", label: "Órdenes de Compra" },
+        { href: "/dashboard/stock/consumo", label: "Órdenes de Consumo" },
       ],
     },
     {

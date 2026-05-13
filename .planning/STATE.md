@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.6
 milestone_name: Agenda Operativa
-status: useTurnoEstadoActions hook live — marcarEnEspera, marcarAusente, reactivar mutations with cache invalidation
-stopped_at: Phase 33, Plan 01 complete
-last_updated: "2026-05-13T23:25:00.000Z"
-last_activity: "2026-05-13 — Plan 33-01 complete: useTurnoEstadoActions hook with 3 PATCH mutations + TurnoEstado type"
+status: UpcomingAppointments operational daily tool live — column reorder, patient name drawer, contextual state DropdownMenu, EN_ESPERA/SIENDO_ATENDIDO badges
+stopped_at: Phase 33, Plan 02 complete (UpcomingAppointments operational upgrade)
+last_updated: "2026-05-13T23:49:32.000Z"
+last_activity: "2026-05-13 — Plan 33-02 complete: UpcomingAppointments upgraded with column reorder, PatientDrawer, DropdownMenu state actions"
 progress:
   total_phases: 3
-  completed_phases: 1
-  total_plans: 3
-  completed_plans: 3
+  completed_phases: 2
+  total_plans: 4
+  completed_plans: 4
   percent: 100
 ---
 
@@ -27,20 +27,20 @@ See: .planning/PROJECT.md (updated 2026-05-13)
 
 ```
 Milestone: v1.6 Agenda Operativa
-Phase:     33 — Widget Agenda Operativo (IN PROGRESS)
-Plan:      01 complete (1/N plans done)
-Status:    useTurnoEstadoActions hook live — marcarEnEspera, marcarAusente, reactivar mutations with cache invalidation
-Progress:  [██████████] 100% (32/32 plans across all milestones)
+Phase:     33 — Widget Agenda Operativo (COMPLETE)
+Plan:      02 complete (2/2 plans done)
+Status:    UpcomingAppointments operational daily tool live — column reorder, PatientDrawer, DropdownMenu, EN_ESPERA/SIENDO_ATENDIDO badges
+Progress:  [██████████] 100% (33/33 plans across all milestones)
 ```
 
-Last activity: 2026-05-13 — Plan 33-01 complete: useTurnoEstadoActions hook with 3 PATCH mutations + TurnoEstado type
+Last activity: 2026-05-13 — Plan 33-02 complete: UpcomingAppointments upgraded with column reorder, PatientDrawer, contextual DropdownMenu state actions
 
 ## Phase Map
 
 | Phase | Name | Requirements | Status |
 |-------|------|--------------|--------|
 | 32 | Schema + Backend Estados Extendidos | EST-01..05 | Complete (2/2 plans) |
-| 33 | Widget Agenda Operativo | WID-01..06 | In Progress (1/N plans done) |
+| 33 | Widget Agenda Operativo | WID-01..06 | Complete (2/2 plans) |
 | 34 | LiveTurno Simplificado | LT-01..03 | Not started |
 
 ## Accumulated Context
@@ -58,9 +58,12 @@ Last activity: 2026-05-13 — Plan 33-01 complete: useTurnoEstadoActions hook wi
 - iniciarSesion establece SIENDO_ATENDIDO (no CONFIRMADO) — sesion activa != cita confirmada (DONE - Plan 32-02)
 - QuickAppointment.tsx usa TurnoRango.estado: string (no inline union) — no requiere actualizacion de tipo (Plan 32-02)
 - SIENDO_ATENDIDO rechazado como origen de marcarEnEspera — en sesion activa primero cerrar-sesion (Plan 32-02)
-- El menú contextual del widget muestra acciones segun estado (pendiente para Phase 33)
+- El menú contextual del widget muestra acciones segun estado (DONE - Plan 33-02)
 - useTurnoEstadoActions: mutations-only hook (no optimistic update) — Plan 02 maneja feedback visual via isPending en el componente (Plan 33-01)
 - TurnoEstado type exportado desde useTurnoEstadoActions para que Plan 02 lo importe sin redefinirlo (Plan 33-01)
+- DropdownMenu trigger opacity-0 group-hover:opacity-100 — Acciones column stays clean by default (Plan 33-02)
+- SIENDO_ATENDIDO excluded from DropdownMenu — active session must be closed before state changes (Plan 33-02)
+- EN_ESPERA gets menu but "En espera" item is disabled (already in that state) — user can still Ausentarlo (Plan 33-02)
 - Exit sin HC en LiveTurno llama cerrar-sesion → FINALIZADO (nunca queda turno en estado abierto, pendiente Phase 34)
 - El timer de consulta se elimina de la UI pero duracionRealMinutos se preserva en backend (pendiente Phase 34)
 
@@ -74,7 +77,7 @@ Last activity: 2026-05-13 — Plan 33-01 complete: useTurnoEstadoActions hook wi
 
 ## Session Continuity
 
-Last session: 2026-05-13T23:25:00.000Z
-Stopped at: Phase 33, Plan 01 complete (useTurnoEstadoActions hook)
-Resume file: .planning/phases/33-widget-agenda-operativo/33-01-SUMMARY.md
-Next action: `/gsd:execute-phase 33` (Phase 33 Plan 02: UpcomingAppointments widget upgrade)
+Last session: 2026-05-13T23:49:32.000Z
+Stopped at: Phase 33, Plan 02 complete (UpcomingAppointments operational upgrade)
+Resume file: .planning/phases/33-widget-agenda-operativo/33-02-SUMMARY.md
+Next action: Phase 34 — LiveTurno Simplificado (LT-01..03)

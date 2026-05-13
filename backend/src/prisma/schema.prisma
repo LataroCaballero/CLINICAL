@@ -1097,6 +1097,8 @@ enum EstadoTurno {
   CANCELADO
   AUSENTE
   FINALIZADO
+  EN_ESPERA
+  SIENDO_ATENDIDO
 }
 
 enum EstadoPlantillaHC {

@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.6
 milestone_name: Agenda Operativa
 status: planning
-stopped_at: Phase 32 context gathered
-last_updated: "2026-05-13T19:43:35.429Z"
+stopped_at: Completed 32-01-PLAN.md (schema + migration + Prisma generate)
+last_updated: "2026-05-13T20:12:54.663Z"
 last_activity: "2026-05-13 — Roadmap v1.6 created (3 phases: 32–34, 14 requirements mapped)"
 progress:
   total_phases: 3
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_plans: 2
+  completed_plans: 1
   percent: 0
 ---
 
@@ -27,19 +27,19 @@ See: .planning/PROJECT.md (updated 2026-05-13)
 
 ```
 Milestone: v1.6 Agenda Operativa
-Phase:     32 — Schema + Backend Estados Extendidos (not started)
-Plan:      —
-Status:    Roadmap ready, planning phase 32
-Progress:  [░░░░░░░░░░] 0% (0/3 phases)
+Phase:     32 — Schema + Backend Estados Extendidos (in progress)
+Plan:      01 complete (1/2 plans done)
+Status:    EstadoTurno enum extendido, cliente Prisma regenerado, build OK
+Progress:  [██████████] 97% (30/31 plans across all milestones)
 ```
 
-Last activity: 2026-05-13 — Roadmap v1.6 created (3 phases: 32–34, 14 requirements mapped)
+Last activity: 2026-05-13 — Plan 32-01 complete: EstadoTurno enum + migration SQL + Prisma client regenerado
 
 ## Phase Map
 
 | Phase | Name | Requirements | Status |
 |-------|------|--------------|--------|
-| 32 | Schema + Backend Estados Extendidos | EST-01..05 | Not started |
+| 32 | Schema + Backend Estados Extendidos | EST-01..05 | In Progress (1/2 plans) |
 | 33 | Widget Agenda Operativo | WID-01..06 | Not started |
 | 34 | LiveTurno Simplificado | LT-01..03 | Not started |
 
@@ -53,7 +53,8 @@ Last activity: 2026-05-13 — Roadmap v1.6 created (3 phases: 32–34, 14 requir
 - Guard PENDIENTE-only: no sobreescribe clasificaciones existentes
 
 ### v1.6 Key Decisions (to be recorded as phases complete)
-- EN_ESPERA y SIENDO_ATENDIDO se agregan al enum EstadoTurno existente
+- EN_ESPERA y SIENDO_ATENDIDO se agregan al enum EstadoTurno existente (DONE - Plan 32-01)
+- Migration SQL creada manualmente: Supabase pgbouncer (6543) bloquea schema engine; aplicar con prisma migrate deploy o SQL editor (Plan 32-01)
 - iniciarSesion cambia de establecer CONFIRMADO a SIENDO_ATENDIDO
 - El menú ⋮ en el widget es contextual: acciones disponibles dependen del estado actual del turno
 - Exit sin HC en LiveTurno llama cerrar-sesion → FINALIZADO (nunca queda turno en estado abierto)
@@ -69,7 +70,7 @@ Last activity: 2026-05-13 — Roadmap v1.6 created (3 phases: 32–34, 14 requir
 
 ## Session Continuity
 
-Last session: 2026-05-13T19:43:35.428Z
-Stopped at: Phase 32 context gathered
-Resume file: .planning/phases/32-schema-backend-estados-extendidos/32-CONTEXT.md
-Next action: `/gsd:plan-phase 32`
+Last session: 2026-05-13T20:12:54.662Z
+Stopped at: Completed 32-01-PLAN.md (schema + migration + Prisma generate)
+Resume file: .planning/phases/32-schema-backend-estados-extendidos/32-01-SUMMARY.md
+Next action: `/gsd:execute-phase 32` (Plan 32-02 pending)

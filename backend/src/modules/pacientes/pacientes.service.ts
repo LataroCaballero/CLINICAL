@@ -64,62 +64,47 @@ export class PacientesService {
   async obtenerListaPacientes(profesionalId?: string): Promise<PacienteListaDto[]> {
     const ahora = new Date();
 
-    const pacientes = await this.prisma.paciente.findMany({
-      where: profesionalId ? { profesionalId } : undefined,
-      orderBy: { createdAt: 'desc' },
-      include: {
-        usuario: {
-          select: {
-            fotoUrl: true,
+    const [pacientes, turnoStats] = await Promise.all([
+      this.prisma.paciente.findMany({
+        where: profesionalId ? { profesionalId } : undefined,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          usuario: { select: { fotoUrl: true } },
+          cuentaCorriente: { select: { saldoActual: true } },
+          obraSocial: { select: { nombre: true } },
+          estudios: { select: { estado: true } },
+          presupuestos: {
+            select: { estado: true, fechaValidez: true },
+            orderBy: { createdAt: 'desc' },
+            take: 1,
           },
+          objecion: true,
         },
-        cuentaCorriente: {
-          select: {
-            saldoActual: true,
-          },
-        },
-        obraSocial: {
-          select: {
-            nombre: true,
-          },
-        },
-        estudios: {
-          select: {
-            estado: true,
-          },
-        },
-        turnos: {
-          select: {
-            inicio: true,
-          },
-          orderBy: {
-            inicio: 'desc',
-          },
-        },
-        presupuestos: {
-          select: {
-            estado: true,
-            fechaValidez: true,
-          },
-          orderBy: { createdAt: 'desc' },
-          take: 1,
-        },
-        objecion: true,
-      },
-    });
+      }),
+      profesionalId
+        ? this.prisma.$queryRaw<{ pacienteId: string; ultimoTurno: Date | null; proximoTurno: Date | null }[]>`
+            SELECT "pacienteId",
+              MAX(CASE WHEN inicio < ${ahora} THEN inicio END) AS "ultimoTurno",
+              MIN(CASE WHEN inicio >= ${ahora} THEN inicio END) AS "proximoTurno"
+            FROM "Turno"
+            WHERE "profesionalId" = ${profesionalId}
+            GROUP BY "pacienteId"
+          `
+        : this.prisma.$queryRaw<{ pacienteId: string; ultimoTurno: Date | null; proximoTurno: Date | null }[]>`
+            SELECT "pacienteId",
+              MAX(CASE WHEN inicio < ${ahora} THEN inicio END) AS "ultimoTurno",
+              MIN(CASE WHEN inicio >= ${ahora} THEN inicio END) AS "proximoTurno"
+            FROM "Turno"
+            GROUP BY "pacienteId"
+          `,
+    ]);
+
+    const turnoMap = new Map(turnoStats.map((t) => [t.pacienteId, t]));
 
     const lista: PacienteListaDto[] = pacientes.map((p) => {
-      const turnosOrdenados = p.turnos.sort(
-        (a, b) => a.inicio.getTime() - b.inicio.getTime(),
-      );
-
-      const pasado = turnosOrdenados.filter((t) => t.inicio < ahora);
-      const futuro = turnosOrdenados.filter((t) => t.inicio >= ahora);
-
-      const ultimoTurno = pasado.length
-        ? pasado[pasado.length - 1].inicio
-        : null;
-      const proximoTurno = futuro.length ? futuro[0].inicio : null;
+      const tStats = turnoMap.get(p.id);
+      const ultimoTurno = tStats?.ultimoTurno ?? null;
+      const proximoTurno = tStats?.proximoTurno ?? null;
 
       const estudiosPendientes = p.estudios.filter(
         (e) => e.estado !== true,

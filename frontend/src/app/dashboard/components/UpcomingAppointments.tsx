@@ -41,7 +41,7 @@ type Props = {
 type TurnoAgenda = {
   id: string;
   inicio: string;
-  estado: "PENDIENTE" | "CONFIRMADO" | "CANCELADO" | "AUSENTE" | "FINALIZADO";
+  estado: "PENDIENTE" | "CONFIRMADO" | "CANCELADO" | "AUSENTE" | "FINALIZADO" | "EN_ESPERA" | "SIENDO_ATENDIDO";
   observaciones?: string | null;
   entradaHCId?: string | null;
   esCirugia?: boolean;

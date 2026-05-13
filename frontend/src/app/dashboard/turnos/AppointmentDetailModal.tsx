@@ -57,7 +57,7 @@ interface CalendarEvent {
   start: Date;
   end: Date;
   tipo: string;
-  estado: "PENDIENTE" | "CONFIRMADO" | "CANCELADO" | "AUSENTE" | "FINALIZADO";
+  estado: "PENDIENTE" | "CONFIRMADO" | "CANCELADO" | "AUSENTE" | "FINALIZADO" | "EN_ESPERA" | "SIENDO_ATENDIDO";
   observaciones?: string;
 }
 

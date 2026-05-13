@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.6
 milestone_name: Agenda Operativa
-status: 3 state-transition endpoints live, iniciarSesion → SIENDO_ATENDIDO, frontend types extended
-stopped_at: Phase 33 context gathered
-last_updated: "2026-05-13T23:15:44.428Z"
-last_activity: "2026-05-13 — Plan 32-02 complete: marcarEnEspera, marcarAusente, reactivar endpoints + iniciarSesion → SIENDO_ATENDIDO + frontend types in 5 files"
+status: useTurnoEstadoActions hook live — marcarEnEspera, marcarAusente, reactivar mutations with cache invalidation
+stopped_at: Phase 33, Plan 01 complete
+last_updated: "2026-05-13T23:25:00.000Z"
+last_activity: "2026-05-13 — Plan 33-01 complete: useTurnoEstadoActions hook with 3 PATCH mutations + TurnoEstado type"
 progress:
   total_phases: 3
   completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
+  total_plans: 3
+  completed_plans: 3
   percent: 100
 ---
 
@@ -27,20 +27,20 @@ See: .planning/PROJECT.md (updated 2026-05-13)
 
 ```
 Milestone: v1.6 Agenda Operativa
-Phase:     32 — Schema + Backend Estados Extendidos (COMPLETE)
-Plan:      02 complete (2/2 plans done)
-Status:    3 state-transition endpoints live, iniciarSesion → SIENDO_ATENDIDO, frontend types extended
-Progress:  [██████████] 100% (31/31 plans across all milestones)
+Phase:     33 — Widget Agenda Operativo (IN PROGRESS)
+Plan:      01 complete (1/N plans done)
+Status:    useTurnoEstadoActions hook live — marcarEnEspera, marcarAusente, reactivar mutations with cache invalidation
+Progress:  [██████████] 100% (32/32 plans across all milestones)
 ```
 
-Last activity: 2026-05-13 — Plan 32-02 complete: marcarEnEspera, marcarAusente, reactivar endpoints + iniciarSesion → SIENDO_ATENDIDO + frontend types in 5 files
+Last activity: 2026-05-13 — Plan 33-01 complete: useTurnoEstadoActions hook with 3 PATCH mutations + TurnoEstado type
 
 ## Phase Map
 
 | Phase | Name | Requirements | Status |
 |-------|------|--------------|--------|
 | 32 | Schema + Backend Estados Extendidos | EST-01..05 | Complete (2/2 plans) |
-| 33 | Widget Agenda Operativo | WID-01..06 | Not started |
+| 33 | Widget Agenda Operativo | WID-01..06 | In Progress (1/N plans done) |
 | 34 | LiveTurno Simplificado | LT-01..03 | Not started |
 
 ## Accumulated Context
@@ -59,6 +59,8 @@ Last activity: 2026-05-13 — Plan 32-02 complete: marcarEnEspera, marcarAusente
 - QuickAppointment.tsx usa TurnoRango.estado: string (no inline union) — no requiere actualizacion de tipo (Plan 32-02)
 - SIENDO_ATENDIDO rechazado como origen de marcarEnEspera — en sesion activa primero cerrar-sesion (Plan 32-02)
 - El menú contextual del widget muestra acciones segun estado (pendiente para Phase 33)
+- useTurnoEstadoActions: mutations-only hook (no optimistic update) — Plan 02 maneja feedback visual via isPending en el componente (Plan 33-01)
+- TurnoEstado type exportado desde useTurnoEstadoActions para que Plan 02 lo importe sin redefinirlo (Plan 33-01)
 - Exit sin HC en LiveTurno llama cerrar-sesion → FINALIZADO (nunca queda turno en estado abierto, pendiente Phase 34)
 - El timer de consulta se elimina de la UI pero duracionRealMinutos se preserva en backend (pendiente Phase 34)
 
@@ -72,7 +74,7 @@ Last activity: 2026-05-13 — Plan 32-02 complete: marcarEnEspera, marcarAusente
 
 ## Session Continuity
 
-Last session: 2026-05-13T23:15:44.426Z
-Stopped at: Phase 33 context gathered
-Resume file: .planning/phases/33-widget-agenda-operativo/33-CONTEXT.md
-Next action: `/gsd:execute-phase 33` (Phase 33: Widget Agenda Operativo)
+Last session: 2026-05-13T23:25:00.000Z
+Stopped at: Phase 33, Plan 01 complete (useTurnoEstadoActions hook)
+Resume file: .planning/phases/33-widget-agenda-operativo/33-01-SUMMARY.md
+Next action: `/gsd:execute-phase 33` (Phase 33 Plan 02: UpcomingAppointments widget upgrade)

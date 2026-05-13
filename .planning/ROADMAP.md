@@ -180,7 +180,7 @@ Plans:
 | 30. Tab Tratamientos Último Tratamiento | v1.5 | 1/1 | Complete | 2026-05-12 |
 | 31. Stock Órdenes de Consumo UI | v1.5 | 2/2 | Complete | 2026-05-13 |
 | 32. Schema + Backend Estados Extendidos | 2/2 | Complete    | 2026-05-13 | - |
-| 33. Widget Agenda Operativo | v1.6 | 0/2 | Not started | - |
+| 33. Widget Agenda Operativo | 1/2 | In Progress|  | - |
 | 34. LiveTurno Simplificado | v1.6 | 0/? | Not started | - |
 
 ---

@@ -17,9 +17,9 @@
 
 - [ ] **WID-01**: Columna "Tipo de Turno" aparece antes que "Tratamiento" en la tabla de agenda
 - [ ] **WID-02**: Click en el nombre del paciente abre su PatientDrawer
-- [ ] **WID-03**: Cada turno activo (no FINALIZADO/CANCELADO) muestra botón "Iniciar" + menú ⋮ con acciones contextuales
-- [ ] **WID-04**: Menú ⋮ contiene "En espera", "Ausente" y "Llamar" (placeholder) según estado del turno
-- [ ] **WID-05**: Turno en estado `AUSENTE` muestra opción "Reactivar" en el menú ⋮
+- [x] **WID-03**: Cada turno activo (no FINALIZADO/CANCELADO) muestra botón "Iniciar" + menú ⋮ con acciones contextuales
+- [x] **WID-04**: Menú ⋮ contiene "En espera", "Ausente" y "Llamar" (placeholder) según estado del turno
+- [x] **WID-05**: Turno en estado `AUSENTE` muestra opción "Reactivar" en el menú ⋮
 - [ ] **WID-06**: Estados `EN_ESPERA` y `SIENDO_ATENDIDO` se muestran correctamente en columna Estado
 
 ### LiveTurno Simplificado
@@ -58,9 +58,9 @@
 | EST-05 | Phase 32 | Complete |
 | WID-01 | Phase 33 | Pending |
 | WID-02 | Phase 33 | Pending |
-| WID-03 | Phase 33 | Pending |
-| WID-04 | Phase 33 | Pending |
-| WID-05 | Phase 33 | Pending |
+| WID-03 | Phase 33 | Complete |
+| WID-04 | Phase 33 | Complete |
+| WID-05 | Phase 33 | Complete |
 | WID-06 | Phase 33 | Pending |
 | LT-01 | Phase 34 | Pending |
 | LT-02 | Phase 34 | Pending |

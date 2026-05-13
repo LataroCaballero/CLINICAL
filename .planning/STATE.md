@@ -4,7 +4,7 @@ milestone: v1.5
 milestone_name: Catálogos Clínicos y Flujos de Atención
 status: completed
 stopped_at: Completed 31-02-PLAN.md
-last_updated: "2026-05-13T12:31:59.147Z"
+last_updated: "2026-05-13T12:34:41.863Z"
 last_activity: 2026-05-13 — Plan 31-02 complete; consumption orders frontend page + TanStack Query hooks + sidebar sub-link; human verification approved; STOCK-03 and STOCK-04 fully satisfied end-to-end
 progress:
   total_phases: 6

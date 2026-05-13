@@ -221,7 +221,7 @@ Plans:
 | 28. Presupuestos Catalog Integration | 1/1 | Complete    | 2026-04-29 | - |
 | 29. PatientDrawer Flujo Action | 2/2 | Complete    | 2026-05-04 | - |
 | 30. Tab Tratamientos Último Tratamiento | 1/1 | Complete    | 2026-05-12 | - |
-| 31. Stock Órdenes de Consumo UI | 2/2 | Complete   | 2026-05-13 | - |
+| 31. Stock Órdenes de Consumo UI | 2/2 | Complete    | 2026-05-13 | - |
 
 ---
 *Roadmap initialized: 2026-02-23 | v1.0 shipped: 2026-03-03 | v1.1 shipped: 2026-03-16 | v1.2 shipped: 2026-03-31 | v1.3 shipped: 2026-04-09 | v1.4 shipped: 2026-04-20 | v1.5 started: 2026-04-22*

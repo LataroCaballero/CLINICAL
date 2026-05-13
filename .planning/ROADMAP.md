@@ -88,7 +88,7 @@ Full details: `.planning/milestones/v1.4-ROADMAP.md`
 - [x] **Phase 28: Presupuestos Catalog Integration** — Selector de ítems del catálogo al armar presupuestos (completed 2026-04-29)
 - [x] **Phase 29: PatientDrawer Flujo Action** — Cambio de flujo desde perfil con efectos CRM (completed 2026-04-30)
 - [x] **Phase 30: Tab Tratamientos Último Tratamiento** — Columna de último tratamiento en el tab mensual (completed 2026-05-12)
-- [ ] **Phase 31: Stock Órdenes de Consumo UI** — Superficie de confirmación de órdenes de consumo pendientes
+- [x] **Phase 31: Stock Órdenes de Consumo UI** — Superficie de confirmación de órdenes de consumo pendientes (completed 2026-05-13)
 
 ## Phase Details
 
@@ -221,7 +221,7 @@ Plans:
 | 28. Presupuestos Catalog Integration | 1/1 | Complete    | 2026-04-29 | - |
 | 29. PatientDrawer Flujo Action | 2/2 | Complete    | 2026-05-04 | - |
 | 30. Tab Tratamientos Último Tratamiento | 1/1 | Complete    | 2026-05-12 | - |
-| 31. Stock Órdenes de Consumo UI | 1/2 | In Progress|  | - |
+| 31. Stock Órdenes de Consumo UI | 2/2 | Complete   | 2026-05-13 | - |
 
 ---
 *Roadmap initialized: 2026-02-23 | v1.0 shipped: 2026-03-03 | v1.1 shipped: 2026-03-16 | v1.2 shipped: 2026-03-31 | v1.3 shipped: 2026-04-09 | v1.4 shipped: 2026-04-20 | v1.5 started: 2026-04-22*

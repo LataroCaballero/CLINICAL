@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Catálogos Clínicos y Flujos de Atención
-status: completed
-stopped_at: Completed 31-01-PLAN.md
-last_updated: "2026-05-13T12:23:00.751Z"
-last_activity: 2026-05-13 — Plan 31-01 complete; enriched GET /ordenes-consumo + atomic POST /ordenes-consumo/:id/confirmar with pgBouncer-safe $transaction; requirements STOCK-03 and STOCK-04 satisfied
+status: executing
+stopped_at: "Paused at Task 3 checkpoint:human-verify in 31-02-PLAN.md"
+last_updated: "2026-05-13T12:23:47.956Z"
+last_activity: 2026-05-13 — Plan 31-01 complete; enriched findPendientesByProfesional with paciente + producto includes, confirmarOrden() atomic $transaction with idempotency guard and stock validation; requirements STOCK-03 and STOCK-04 satisfied
 progress:
   total_phases: 6
-  completed_phases: 5
+  completed_phases: 6
   total_plans: 16
-  completed_plans: 15
-  percent: 100
+  completed_plans: 16
+  percent: 97
 ---
 
 # Project State
@@ -87,6 +87,6 @@ Last activity: 2026-05-13 — Plan 31-01 complete; enriched findPendientesByProf
 
 ## Session Continuity
 
-Last session: 2026-05-13T12:23:00.749Z
-Stopped at: Completed 31-01-PLAN.md
+Last session: 2026-05-13T12:23:47.955Z
+Stopped at: Paused at Task 3 checkpoint:human-verify in 31-02-PLAN.md
 Resume file: None

@@ -126,7 +126,10 @@ Plans:
   3. Cada turno activo muestra un botón "Iniciar" y un menú ⋮ al final de la fila
   4. El menú ⋮ ofrece "En espera" y "Ausente" para turnos PENDIENTE/EN_ESPERA, y "Reactivar" para turnos AUSENTE
   5. Los estados EN_ESPERA y SIENDO_ATENDIDO se muestran con etiquetas/badges visibles en la columna Estado
-**Plans**: TBD
+**Plans**: 2 planes
+Plans:
+- [ ] 33-01-PLAN.md — Hook useTurnoEstadoActions: mutations marcarEnEspera, marcarAusente, reactivar
+- [ ] 33-02-PLAN.md — UpcomingAppointments: reorden columnas, nombre clickeable, DropdownMenu ⋮, nuevos badges
 
 ### Phase 34: LiveTurno Simplificado
 **Goal**: Abrir y cerrar una consulta en LiveTurno es sin fricción — sin timer visible, sin bloqueos que requieran fuerza bruta, y salir sin HC registrada es una operación válida que cierra el turno limpiamente
@@ -177,7 +180,7 @@ Plans:
 | 30. Tab Tratamientos Último Tratamiento | v1.5 | 1/1 | Complete | 2026-05-12 |
 | 31. Stock Órdenes de Consumo UI | v1.5 | 2/2 | Complete | 2026-05-13 |
 | 32. Schema + Backend Estados Extendidos | 2/2 | Complete    | 2026-05-13 | - |
-| 33. Widget Agenda Operativo | v1.6 | 0/? | Not started | - |
+| 33. Widget Agenda Operativo | v1.6 | 0/2 | Not started | - |
 | 34. LiveTurno Simplificado | v1.6 | 0/? | Not started | - |
 
 ---

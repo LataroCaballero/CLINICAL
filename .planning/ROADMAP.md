@@ -176,7 +176,10 @@ Plans:
   2. El responsable de stock puede confirmar cada orden individualmente; al confirmar, el movimiento SALIDA queda registrado en el stock correspondiente
   3. Una orden confirmada desaparece de la lista de pendientes y el stock actualizado es visible de inmediato
   4. El descuento de stock ocurre dentro de una transacción atómica (nunca se descuenta stock sin que la orden quede confirmada)
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 31-01-PLAN.md — Backend: enriched GET + confirmarOrden() atomic $transaction + POST :id/confirmar controller
+- [ ] 31-02-PLAN.md — Frontend: OrdenConsumo types + useOrdenesConsumo hooks + /dashboard/stock/consumo page + Sidebar link
 
 ### 📋 v2.0 TBD (Planned)
 
@@ -218,7 +221,7 @@ Plans:
 | 28. Presupuestos Catalog Integration | 1/1 | Complete    | 2026-04-29 | - |
 | 29. PatientDrawer Flujo Action | 2/2 | Complete    | 2026-05-04 | - |
 | 30. Tab Tratamientos Último Tratamiento | 1/1 | Complete    | 2026-05-12 | - |
-| 31. Stock Órdenes de Consumo UI | v1.5 | 0/TBD | Not started | - |
+| 31. Stock Órdenes de Consumo UI | v1.5 | 0/2 | Not started | - |
 
 ---
 *Roadmap initialized: 2026-02-23 | v1.0 shipped: 2026-03-03 | v1.1 shipped: 2026-03-16 | v1.2 shipped: 2026-03-31 | v1.3 shipped: 2026-04-09 | v1.4 shipped: 2026-04-20 | v1.5 started: 2026-04-22*

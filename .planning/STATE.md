@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.6
 milestone_name: Agenda Operativa
-status: roadmap_ready
-stopped_at: Phase 32 — not started
-last_updated: "2026-05-13T00:00:00.000Z"
-last_activity: 2026-05-13 — Roadmap created for v1.6 (3 phases, 14 requirements)
+status: planning
+stopped_at: Phase 32 context gathered
+last_updated: "2026-05-13T19:43:35.429Z"
+last_activity: "2026-05-13 — Roadmap v1.6 created (3 phases: 32–34, 14 requirements mapped)"
 progress:
   total_phases: 3
   completed_phases: 0
@@ -69,7 +69,7 @@ Last activity: 2026-05-13 — Roadmap v1.6 created (3 phases: 32–34, 14 requir
 
 ## Session Continuity
 
-Last session: 2026-05-13
-Stopped at: Roadmap v1.6 created — ready to plan Phase 32
-Resume file: None
+Last session: 2026-05-13T19:43:35.428Z
+Stopped at: Phase 32 context gathered
+Resume file: .planning/phases/32-schema-backend-estados-extendidos/32-CONTEXT.md
 Next action: `/gsd:plan-phase 32`

@@ -1,5 +1,25 @@
 # Milestones
 
+## v1.5 Catálogos Clínicos y Flujos de Atención (Shipped: 2026-05-13)
+
+**Phases completed:** 6 phases (26–31), 16 plans
+**Stats:** 21 días (2026-04-22 → 2026-05-13) | 120 archivos | +10,444 / -6,571 líneas
+
+**Key accomplishments:**
+1. Schema extendido con TratamientoInsumo, CirugiaCatalogo y CirugiaInsumo; full CRUD de catálogos de cirugías por profesional en Configuración con precios ARS/USD, insumos y cálculo de precio base desde inventario
+2. HCCreatorForm extraído como componente reutilizable; LiveTurno HC recibe selector multi-catálogo "Tratamiento en Consultorio" con checkbox de insumos — al guardar, crea OrdenConsumo PENDIENTE en $transaction atómica
+3. PatientDrawer: botón "+ Nueva HC" lanza el mismo HCCreatorForm sin turno activo, con DatePicker retroactivo; unificación total del creator de HC en un único componente
+4. GenerarPresupuestoModal: panel Popover/Command con grupos Cirugías y Tratamientos del catálogo del profesional; snapshot de nombre y precio (ARS/USD) inmutable al momento de selección; ítems libres preservados
+5. CambiarFlujoModal desde PatientDrawer: update optimista del FlujoBadge, etapaCRM reset a null + ContactoLog "Paciente pendiente de clasificación" en la misma $transaction; toast con link al CRM
+6. Tab Tratamientos: 5ta columna "Último tratamiento" via batch subquery en getTurnosPorRango, invalidación de caché al guardar HC nueva
+7. Consumo de stock end-to-end: POST /ordenes-consumo/:id/confirmar con guard de idempotencia, validación de stock suficiente, MovimientoStock SALIDA + stockActual decrementado en $transaction; página /dashboard/stock/consumo con skeleton/error/empty states
+
+**Known gaps (tech debt accepted):**
+- LIVHC-05/PAC-01: `contenido.tratamientos` snapshot no se escribe cuando `consumirInsumos=false`; columna "Último tratamiento" muestra `—` para tratamientos sin insumos
+- STOCK-03: backend `@Auth` excluye FACTURADOR de ordenes-consumo (frontend sí le da acceso)
+
+---
+
 ## v1.4 Flujo de Pacientes (Shipped: 2026-04-20)
 
 **Phases completed:** 4 phases (22–25), 10 plans

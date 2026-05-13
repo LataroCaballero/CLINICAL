@@ -72,18 +72,17 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 - ✓ Embudo CRM filtrado exclusivamente a pacientes CIRUGIA; legacy (flujo IS NULL con etapaCRM) preservados — v1.4
 - ✓ Banner LiveTurno amber no bloqueante para clasificar pacientes PENDIENTE (dismissible por sesión) — v1.4
 - ✓ Tab "Tratamientos" en /dashboard/pacientes — lista mensual navegable, filtro por tipo, FlujoBadge por paciente — v1.4
+- ✓ Catálogo de tratamientos extendido con insumos del stock y precio base calculado (TratamientoInsumo n:n, recalcular-precio, InsumosEditor) — v1.5
+- ✓ Catálogo de cirugías por profesional con precios ARS/USD, insumos con cantidades y cálculo de costo desde inventario — v1.5
+- ✓ LiveTurno HC: "Tratamiento en Consultorio" con multi-selector de catálogo, texto libre como complemento, checkbox de insumos condicional — v1.5
+- ✓ Órdenes de consumo de stock creadas atomicamente al guardar HC con insumos; confirmación end-to-end en /dashboard/stock/consumo — v1.5
+- ✓ Presupuestos con panel de selección de catálogo (cirugías + tratamientos), snapshot de precio al seleccionar, ítems libres preservados — v1.5
+- ✓ Tab Tratamientos: columna "Último tratamiento" por paciente via batch subquery — v1.5
+- ✓ Cambio de flujo desde PatientDrawer con update optimista, etapaCRM reset y ContactoLog automático — v1.5
+- ✓ Entrada de HC desde PatientDrawer usando HCCreatorForm reutilizable, sin turno activo, con fecha retroactiva — v1.5
 
 ### Active
 
-<!-- v1.5 Catálogos Clínicos y Flujos de Atención -->
-- [ ] Catálogo de tratamientos extendido con insumos del stock y precio base calculado
-- [ ] Catálogo de cirugías por profesional (nombre, precios ARS/USD, insumos, duración)
-- [ ] LiveTurno HC: sección "Tratamiento en Consultorio" con selector de catálogo, texto libre y checkbox de insumos
-- [ ] Órdenes de consumo de stock generadas desde HC (pendientes de confirmación en módulo stock)
-- [ ] Presupuestos con selección de ítems desde catálogo de cirugías y tratamientos
-- [ ] Tab Tratamientos: columna "Último tratamiento" por paciente
-- [ ] Cambio de flujo desde PatientDrawer (optimistic, con efectos CRM)
-- [ ] Entrada de HC desde PatientDrawer usando mismo creator que LiveTurno
 - [ ] Reportes ejecutivos exportables (comparativas entre períodos) — v2
 - [ ] Historial de liquidaciones por OS con comparativa autorizado vs. pagado — v2
 
@@ -103,7 +102,7 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 
 ## Context
 
-**Estado actual (post-v1.4):** El sistema diferencia pacientes de cirugía de pacientes de tratamiento en consultorio. El embudo CRM muestra solo pacientes CIRUGIA; los pacientes TRATAMIENTO aparecen en el nuevo tab Tratamientos. Los profesionales pueden clasificar pacientes PENDIENTE directamente desde LiveTurno. 20/20 requisitos del milestone v1.4 satisfechos en 5 días (4 fases, 10 planes).
+**Estado actual (post-v1.5):** Los catálogos clínicos (tratamientos y cirugías) están integrados con LiveTurno HC, presupuestos y stock. Un profesional puede documentar un tratamiento en HC seleccionando del catálogo → genera automáticamente una OrdenConsumo PENDIENTE → el responsable de stock la confirma en /dashboard/stock/consumo → el inventario se descuenta atomicamente. Presupuestos con snapshot pricing desde catálogo, "Último tratamiento" en tab mensual, y cambio de flujo desde PatientDrawer con efectos CRM. 27/27 requisitos del milestone v1.5 satisfechos en 21 días (6 fases, 16 planes). Tech debt aceptado: snapshot de tratamientos no se escribe sin consumirInsumos=true; FACTURADOR excluido del backend de ordenes-consumo.
 
 **Stack:** NestJS + Prisma + PostgreSQL (backend) | Next.js 16 + React 19 + TypeScript (frontend) | BullMQ + Redis (async) | WhatsApp Cloud API | node-forge (firma CMS WSAA) | qrcode 1.5.4 + PDFKit (QR en PDF).
 
@@ -162,6 +161,10 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 | Guard PENDIENTE-only para auto-clasificación — v1.4 | No sobreescribir clasificaciones existentes (CIRUGIA/TRATAMIENTO) al agregar más turnos | ✓ Correcto — pacientes reclasificados manualmente vía banner o PATCH se respetan |
 | Banner LiveTurno dismissible por sesión (no persist en DB) — v1.4 | UX no bloqueante; paciente permanece PENDIENTE hasta que el profesional clasifique explícitamente | ✓ Correcto — banner vuelve a mostrarse en nueva sesión sin DB write extra |
 | Walk-in patients (flujo=null) excluidos del auto-update TRATAMIENTO — v1.4 | Preservar semántica legacy; flujo=null + etapaCRM activo = paciente CRM válido que no debe convertirse en tratamiento | ✓ Correcto — clasificación manual disponible vía banner o PATCH endpoint |
+| HCCreatorForm extraído como componente único compartido — v1.5 | Evitar divergencia entre el creator de LiveTurno y el del PatientDrawer; misma lógica, misma UX | ✓ Correcto — HCCreatorDialog wraps HCCreatorForm; ambos contextos idénticos |
+| OrdenConsumo PENDIENTE→CONFIRMADA (dos-step, no descuento inmediato) — v1.5 | Separación de roles: PROFESIONAL documenta, Admin/stock confirma; evita race conditions con escrituras concurrentes | ✓ Correcto — modelo pending→confirm funcional end-to-end |
+| tratamientosSnapshot en OrdenConsumo.contenido (no Paciente desnormalizado) — v1.5 | Query-on-read más robusto que columna desnormalizada con entradas retroactivas | ✓ Correcto — pero expuso gap: snapshot no escrito sin consumirInsumos=true (tech debt aceptado) |
+| Snapshot de precio al seleccionar ítem del catálogo en presupuesto — v1.5 | Immutabilidad del presupuesto: el precio del catálogo puede cambiar pero el presupuesto histórico queda intacto | ✓ Correcto — fromCatalog flag stripped antes de enviar al backend |
 
 ## Shipped: v1.1 Vista del Facturador ✅
 
@@ -179,16 +182,9 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 
 20/20 requisitos completados en 5 días (2026-04-15 → 2026-04-20). 4 fases, 10 planes. Ver `.planning/milestones/v1.4-ROADMAP.md` para detalles.
 
-## Current Milestone: v1.5 Catálogos Clínicos y Flujos de Atención
+## Shipped: v1.5 Catálogos Clínicos y Flujos de Atención ✅
 
-**Goal:** Conectar catálogos de tratamientos y cirugías con LiveTurno, presupuestos y stock; mejorar flujos de clasificación y HC desde el perfil del paciente.
-
-**Target features:**
-- Catálogos clínicos: tratamientos con insumos + nuevo catálogo de cirugías por profesional
-- LiveTurno HC: selector de tratamientos del catálogo + órdenes de consumo de stock
-- Presupuestos: selección de ítems desde catálogo con precios auto-completados
-- PatientDrawer: cambio de flujo + nueva entrada HC con mismo creator que LiveTurno
-- Tab Tratamientos: columna de último tratamiento por paciente
+27/27 requisitos completados en 21 días (2026-04-22 → 2026-05-13). 6 fases, 16 planes. Tech debt aceptado: snapshot de tratamientos sin consumirInsumos y rol FACTURADOR en ordenes-consumo. Ver `.planning/milestones/v1.5-ROADMAP.md` para detalles.
 
 ---
-*Last updated: 2026-04-22 after v1.5 milestone start — Catálogos Clínicos y Flujos de Atención*
+*Last updated: 2026-05-13 after v1.5 milestone — Catálogos Clínicos y Flujos de Atención*

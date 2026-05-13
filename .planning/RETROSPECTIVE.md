@@ -4,6 +4,36 @@
 
 ---
 
+## Milestone: v1.5 — Catálogos Clínicos y Flujos de Atención
+
+**Shipped:** 2026-05-13
+**Phases:** 6 (26–31) | **Plans:** 16 | **Timeline:** 21 days
+
+### What Was Built
+- Schema TratamientoInsumo + CirugiaCatalogo + CirugiaInsumo; full CRUD catálogos de cirugías con precios ARS/USD y costo desde inventario
+- HCCreatorForm extraído como componente único; LiveTurno HC con multi-selector de catálogo, OrdenConsumo PENDIENTE atómica al guardar
+- PatientDrawer: "+ Nueva HC" sin turno activo usando el mismo creator; DatePicker retroactivo
+- GenerarPresupuestoModal con panel Popover/Command, snapshot de precio al seleccionar del catálogo, ítems libres preservados
+- CambiarFlujoModal optimista desde PatientDrawer; etapaCRM reset + ContactoLog en $transaction
+- Tab Tratamientos: 5ta columna "Último tratamiento" via batch subquery
+- Consumo de stock end-to-end: confirmarOrden con idempotencia + guard de stock insuficiente + /dashboard/stock/consumo
+
+### What Worked
+- **Wave parallelization**: ejecutar 31-01 (backend) y 31-02 (frontend) en paralelo ahorró tiempo en la fase final
+- **HCCreatorForm component extraction**: refactor previo en Phase 27 pagó dividendos en Phase 28 y 30 (misma lógica sin duplicar)
+- **pgBouncer-safe two-step pattern**: pre-fetch outside $transaction, re-fetch inside como idempotency guard — patrón reutilizable para futuras confirmaciones
+
+### What Was Inefficient
+- **PRESUP-01-04 stale in REQUIREMENTS.md**: el estado "Pending" no se actualizó al completar Phase 28 — requirió corrección manual en el cierre del milestone
+- **Treatment snapshot gap**: el guard `consumirInsumos` ocultó el bug de LIVHC-05/PAC-01 hasta el audit de integración — debería haberse detectado en Phase 27
+
+### Key Lessons
+- Separar el snapshot de tratamientos del guard de consumirInsumos desde el diseño inicial; son dos concerns independientes
+- Verificar roles en @Auth() contra frontend permissions.ts antes de hacer PR — el FACTURADOR gap era visible con una simple comparación
+- El componente reutilizable (HCCreatorForm) vale más que un componente específico; extraer desde el inicio cuando se vislumbra re-uso
+
+---
+
 ## Milestone: v1.1 — Vista del Facturador
 
 **Shipped:** 2026-03-16

@@ -8,10 +8,10 @@
 ### Estados de Turno
 
 - [x] **EST-01**: Schema migrado con `EN_ESPERA` y `SIENDO_ATENDIDO` en el enum `EstadoTurno` de Prisma
-- [ ] **EST-02**: Endpoint disponible para marcar turno como `EN_ESPERA` (SECRETARIA / PROFESIONAL / ADMIN)
-- [ ] **EST-03**: `iniciarSesion` establece el estado del turno a `SIENDO_ATENDIDO` (en lugar de `CONFIRMADO`)
-- [ ] **EST-04**: Endpoint disponible para marcar turno como `AUSENTE`
-- [ ] **EST-05**: Endpoint disponible para reactivar turno: `AUSENTE → PENDIENTE`
+- [x] **EST-02**: Endpoint disponible para marcar turno como `EN_ESPERA` (SECRETARIA / PROFESIONAL / ADMIN)
+- [x] **EST-03**: `iniciarSesion` establece el estado del turno a `SIENDO_ATENDIDO` (en lugar de `CONFIRMADO`)
+- [x] **EST-04**: Endpoint disponible para marcar turno como `AUSENTE`
+- [x] **EST-05**: Endpoint disponible para reactivar turno: `AUSENTE → PENDIENTE`
 
 ### Widget Agenda
 
@@ -52,10 +52,10 @@
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | EST-01 | Phase 32 | Complete |
-| EST-02 | Phase 32 | Pending |
-| EST-03 | Phase 32 | Pending |
-| EST-04 | Phase 32 | Pending |
-| EST-05 | Phase 32 | Pending |
+| EST-02 | Phase 32 | Complete |
+| EST-03 | Phase 32 | Complete |
+| EST-04 | Phase 32 | Complete |
+| EST-05 | Phase 32 | Complete |
 | WID-01 | Phase 33 | Pending |
 | WID-02 | Phase 33 | Pending |
 | WID-03 | Phase 33 | Pending |

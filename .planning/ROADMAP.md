@@ -95,7 +95,7 @@ Full details: `.planning/milestones/v1.5-ROADMAP.md`
 
 ### 🚧 v1.6 Agenda Operativa (Fases 32–34)
 
-- [ ] **Phase 32: Schema + Backend Estados Extendidos** — Migración de enum y 3 nuevos endpoints de transición de estado
+- [x] **Phase 32: Schema + Backend Estados Extendidos** — Migración de enum y 3 nuevos endpoints de transición de estado (completed 2026-05-13)
 - [ ] **Phase 33: Widget Agenda Operativo** — Columna reordenada, paciente clickeable, menú ⋮ con acciones contextuales, estados visibles
 - [ ] **Phase 34: LiveTurno Simplificado** — Sin timer, sin bloqueo, exit sin HC finaliza turno
 
@@ -176,7 +176,7 @@ Plans:
 | 29. PatientDrawer Flujo Action | v1.5 | 2/2 | Complete | 2026-04-30 |
 | 30. Tab Tratamientos Último Tratamiento | v1.5 | 1/1 | Complete | 2026-05-12 |
 | 31. Stock Órdenes de Consumo UI | v1.5 | 2/2 | Complete | 2026-05-13 |
-| 32. Schema + Backend Estados Extendidos | 1/2 | In Progress|  | - |
+| 32. Schema + Backend Estados Extendidos | 2/2 | Complete   | 2026-05-13 | - |
 | 33. Widget Agenda Operativo | v1.6 | 0/? | Not started | - |
 | 34. LiveTurno Simplificado | v1.6 | 0/? | Not started | - |
 

@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.6
 milestone_name: Agenda Operativa
-status: planning
-stopped_at: Completed 32-01-PLAN.md (schema + migration + Prisma generate)
-last_updated: "2026-05-13T20:12:54.663Z"
-last_activity: "2026-05-13 — Roadmap v1.6 created (3 phases: 32–34, 14 requirements mapped)"
+status: Phase 32 complete — 3 state-transition endpoints live, frontend types extended
+stopped_at: Completed 32-02-PLAN.md (state-transition endpoints + frontend type sync)
+last_updated: "2026-05-13T20:18:01.609Z"
+last_activity: "2026-05-13 — Plan 32-02 complete: marcarEnEspera, marcarAusente, reactivar endpoints + iniciarSesion → SIENDO_ATENDIDO + frontend types"
 progress:
   total_phases: 3
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 2
-  completed_plans: 1
-  percent: 0
+  completed_plans: 2
+  percent: 100
 ---
 
 # Project State
@@ -27,19 +27,19 @@ See: .planning/PROJECT.md (updated 2026-05-13)
 
 ```
 Milestone: v1.6 Agenda Operativa
-Phase:     32 — Schema + Backend Estados Extendidos (in progress)
-Plan:      01 complete (1/2 plans done)
-Status:    EstadoTurno enum extendido, cliente Prisma regenerado, build OK
-Progress:  [██████████] 97% (30/31 plans across all milestones)
+Phase:     32 — Schema + Backend Estados Extendidos (COMPLETE)
+Plan:      02 complete (2/2 plans done)
+Status:    3 state-transition endpoints live, iniciarSesion → SIENDO_ATENDIDO, frontend types extended
+Progress:  [██████████] 100% (31/31 plans across all milestones)
 ```
 
-Last activity: 2026-05-13 — Plan 32-01 complete: EstadoTurno enum + migration SQL + Prisma client regenerado
+Last activity: 2026-05-13 — Plan 32-02 complete: marcarEnEspera, marcarAusente, reactivar endpoints + iniciarSesion → SIENDO_ATENDIDO + frontend types in 5 files
 
 ## Phase Map
 
 | Phase | Name | Requirements | Status |
 |-------|------|--------------|--------|
-| 32 | Schema + Backend Estados Extendidos | EST-01..05 | In Progress (1/2 plans) |
+| 32 | Schema + Backend Estados Extendidos | EST-01..05 | Complete (2/2 plans) |
 | 33 | Widget Agenda Operativo | WID-01..06 | Not started |
 | 34 | LiveTurno Simplificado | LT-01..03 | Not started |
 
@@ -52,13 +52,15 @@ Last activity: 2026-05-13 — Plan 32-01 complete: EstadoTurno enum + migration 
 - Paciente.flujo: null = legacy, PENDIENTE = sin clasificar, CIRUGIA/TRATAMIENTO = clasificado
 - Guard PENDIENTE-only: no sobreescribe clasificaciones existentes
 
-### v1.6 Key Decisions (to be recorded as phases complete)
+### v1.6 Key Decisions (Phase 32 recorded)
 - EN_ESPERA y SIENDO_ATENDIDO se agregan al enum EstadoTurno existente (DONE - Plan 32-01)
 - Migration SQL creada manualmente: Supabase pgbouncer (6543) bloquea schema engine; aplicar con prisma migrate deploy o SQL editor (Plan 32-01)
-- iniciarSesion cambia de establecer CONFIRMADO a SIENDO_ATENDIDO
-- El menú ⋮ en el widget es contextual: acciones disponibles dependen del estado actual del turno
-- Exit sin HC en LiveTurno llama cerrar-sesion → FINALIZADO (nunca queda turno en estado abierto)
-- El timer de consulta se elimina de la UI pero duracionRealMinutos se preserva en backend
+- iniciarSesion establece SIENDO_ATENDIDO (no CONFIRMADO) — sesion activa != cita confirmada (DONE - Plan 32-02)
+- QuickAppointment.tsx usa TurnoRango.estado: string (no inline union) — no requiere actualizacion de tipo (Plan 32-02)
+- SIENDO_ATENDIDO rechazado como origen de marcarEnEspera — en sesion activa primero cerrar-sesion (Plan 32-02)
+- El menú contextual del widget muestra acciones segun estado (pendiente para Phase 33)
+- Exit sin HC en LiveTurno llama cerrar-sesion → FINALIZADO (nunca queda turno en estado abierto, pendiente Phase 34)
+- El timer de consulta se elimina de la UI pero duracionRealMinutos se preserva en backend (pendiente Phase 34)
 
 ### Known Tech Debt (carry-forward)
 - LIVHC-05/PAC-01: tratamientos snapshot no se escribe cuando consumirInsumos=false
@@ -70,7 +72,7 @@ Last activity: 2026-05-13 — Plan 32-01 complete: EstadoTurno enum + migration 
 
 ## Session Continuity
 
-Last session: 2026-05-13T20:12:54.662Z
-Stopped at: Completed 32-01-PLAN.md (schema + migration + Prisma generate)
-Resume file: .planning/phases/32-schema-backend-estados-extendidos/32-01-SUMMARY.md
-Next action: `/gsd:execute-phase 32` (Plan 32-02 pending)
+Last session: 2026-05-13T20:18:01.607Z
+Stopped at: Completed 32-02-PLAN.md (state-transition endpoints + frontend type sync)
+Resume file: .planning/phases/32-schema-backend-estados-extendidos/32-02-SUMMARY.md
+Next action: `/gsd:execute-phase 33` (Phase 33: Widget Agenda Operativo)

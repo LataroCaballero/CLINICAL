@@ -1,4 +1,4 @@
-import { Controller, Get, Query, Req, ForbiddenException } from '@nestjs/common';
+import { Controller, Get, Post, Param, Query, Req, ForbiddenException } from '@nestjs/common';
 import { OrdenesConsumoService } from './ordenes-consumo.service';
 import { Auth } from '../auth/decorators/auth.decorator';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -47,5 +47,15 @@ export class OrdenesConsumoController {
   ) {
     const pid = await this.getProfesionalId(req.user, profesionalId);
     return this.ordenesConsumoService.findPendientesByProfesional(pid);
+  }
+
+  @Post(':id/confirmar')
+  async confirmar(
+    @Param('id') id: string,
+    @Req() req: any,
+    @Query('profesionalId') profesionalId?: string,
+  ) {
+    const pid = await this.getProfesionalId(req.user, profesionalId);
+    return this.ordenesConsumoService.confirmarOrden(id, pid, req.user.userId);
   }
 }

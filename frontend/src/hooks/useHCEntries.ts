@@ -62,6 +62,8 @@ export function useCreateHCEntry() {
     onSuccess: (_, variables) => {
       qc.invalidateQueries({ queryKey: ['hc-entries-drafts', variables.pacienteId] });
       qc.invalidateQueries({ queryKey: ['historia-clinica', variables.pacienteId] });
+      // Refrescar columna "Último tratamiento" en TratamientosTab
+      qc.invalidateQueries({ queryKey: ['turnos', 'rango'] });
     },
   });
 }
@@ -115,6 +117,8 @@ export function useFinalizeHCEntry() {
       qc.invalidateQueries({
         queryKey: ['hc-entry', variables.pacienteId, variables.entryId],
       });
+      // Refrescar columna "Último tratamiento" en TratamientosTab
+      qc.invalidateQueries({ queryKey: ['turnos', 'rango'] });
     },
   });
 }

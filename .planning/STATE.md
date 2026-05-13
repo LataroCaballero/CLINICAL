@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Catálogos Clínicos y Flujos de Atención
 status: completed
-stopped_at: Completed 29-02-PLAN.md — awaiting human-verify checkpoint
-last_updated: "2026-04-30T00:01:35.822Z"
-last_activity: 2026-04-29 — Plan 29-02 complete; CambiarFlujoModal + PencilLine trigger added to PatientDrawer with optimistic update; requirements PAC-02 and PAC-03 satisfied; awaiting human-verify checkpoint
+stopped_at: Completed 31-02-PLAN.md
+last_updated: "2026-05-13T16:26:33.950Z"
+last_activity: 2026-05-13 — Plan 31-02 complete; consumption orders frontend page + TanStack Query hooks + sidebar sub-link; human verification approved; STOCK-03 and STOCK-04 fully satisfied end-to-end
 progress:
   total_phases: 6
-  completed_phases: 4
-  total_plans: 13
-  completed_plans: 13
+  completed_phases: 6
+  total_plans: 16
+  completed_plans: 16
   percent: 100
 ---
 
@@ -27,13 +27,13 @@ See: .planning/PROJECT.md (updated 2026-04-22)
 
 ```
 Milestone: v1.5 Catálogos Clínicos y Flujos de Atención
-Phase:     29 of 31 (PatientDrawer Flujo Action)
-Plan:      2 of 2 complete (awaiting human-verify checkpoint)
-Status:    Plan 29-02 complete — CambiarFlujoModal + PencilLine trigger, optimistic update, sonner toast with CRM action
+Phase:     31 of 31 (Stock Ordenes de Consumo UI) — COMPLETE
+Plan:      2 of 2 complete (plan 31-02 done — frontend page, hooks, sidebar sub-link)
+Status:    Phase 31 complete — full consumption orders workflow live end-to-end; STOCK-03 + STOCK-04 satisfied; milestone v1.5 DONE
 Progress:  [██████████] 100%
 ```
 
-Last activity: 2026-04-29 — Plan 29-02 complete; CambiarFlujoModal + PencilLine trigger added to PatientDrawer with optimistic update; requirements PAC-02 and PAC-03 satisfied
+Last activity: 2026-05-13 — Plan 31-02 complete; consumption orders frontend page + TanStack Query hooks + sidebar sub-link; human verification approved; STOCK-03 and STOCK-04 fully satisfied end-to-end
 
 ## Accumulated Context
 
@@ -67,6 +67,12 @@ Last activity: 2026-04-29 — Plan 29-02 complete; CambiarFlujoModal + PencilLin
 - **29-01 ContactoLog in updateFlujo guarded by profesionalId:** ContactoLog creation inside updateFlujo $transaction is guarded by profesionalId non-null check — legacy patients still get their flujo updated without error.
 - **29-02 CambiarFlujoModal pre-close pattern:** onOptimisticUpdate + onOpenChange(false) fire before mutation.mutate so UI updates immediately without waiting for network.
 - **29-02 onRevert sets optimisticFlujo to null:** displayFlujo falls back to paciente.flujo from TanStack Query server cache on error — no manual cache manipulation needed.
+- **30-01 ultimoTratamiento batch query:** ONE historiaClinica.findMany for all pacienteIds with take:10 on entradas (desc), then JS-side filter on contenido.tratamientos — avoids N+1 and avoids unsupported Prisma JSON path equals operator at runtime.
+- **30-01 prefix invalidation ['turnos', 'rango']:** Invalidates all rango queries across all profesional/date combos on any HC save; wired to useCreateHistoriaClinicaEntry, useCreateHCEntry, useFinalizeHCEntry.
+- **30-01 drawerInitialView pattern:** State variable tracks intended DrawerView before opening PatientDrawer; patient name click sets "default", treatment name click sets "historia" — no changes needed to PatientDrawer itself.
+- **31-01 confirmarOrden pgBouncer two-step:** Pre-fetch outside $transaction for fast 404, re-fetch inside tx as race/idempotency guard — same pattern as HC crearEntrada(). ConflictException if orden already confirmed/cancelled.
+- **31-01 inline SALIDA tx logic:** confirmarOrden inlines inventario.update + movimientoStock.create directly inside $transaction — InventarioService.registrarMovimiento() opens its own tx, which pgBouncer forbids when already inside a tx. Pattern matches ordenes-compra.service.ts recibir().
+- **31-01 Inventario auto-create on confirmar:** If no Inventario row for (productoId, profesionalId) exists, create with stockActual=0 then throw BadRequestException — preserves unique constraint, gives clean error for never-stocked products.
 
 ### Carry-forward Decisions (v1.4)
 - Paciente.flujo: null = legacy, PENDIENTE = unclassified, CIRUGIA/TRATAMIENTO = classified
@@ -81,6 +87,6 @@ Last activity: 2026-04-29 — Plan 29-02 complete; CambiarFlujoModal + PencilLin
 
 ## Session Continuity
 
-Last session: 2026-04-30T00:01:35.820Z
-Stopped at: Completed 29-02-PLAN.md — awaiting human-verify checkpoint
+Last session: 2026-05-13T12:31:59.146Z
+Stopped at: Completed 31-02-PLAN.md
 Resume file: None

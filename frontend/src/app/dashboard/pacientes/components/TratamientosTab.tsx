@@ -51,6 +51,7 @@ export function TratamientosTab({ profesionalId }: { profesionalId: string | nul
   });
   const [filterTipoId, setFilterTipoId] = useState<string | null>(null);
   const [selectedPacienteId, setSelectedPacienteId] = useState<string | null>(null);
+  const [drawerInitialView, setDrawerInitialView] = useState<"default" | "historia">("default");
 
   const { desde, hasta } = getMonthRange(selectedMonth);
   const monthLabel = `${MESES[selectedMonth.getMonth()]} ${selectedMonth.getFullYear()}`;
@@ -197,6 +198,9 @@ export function TratamientosTab({ profesionalId }: { profesionalId: string | nul
                 <th className="py-2 px-3 text-left font-medium">Paciente</th>
                 <th className="py-2 px-3 text-left font-medium">Tipo de turno</th>
                 <th className="py-2 px-3 text-left font-medium">Estado</th>
+                <th className={cn("py-2 px-3 text-left font-medium text-sm", fm ? "text-[var(--fc-text-secondary)]" : "text-gray-500")}>
+                  Último tratamiento
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -214,7 +218,10 @@ export function TratamientosTab({ profesionalId }: { profesionalId: string | nul
                   </td>
                   <td className="py-2 px-3">
                     <button
-                      onClick={() => setSelectedPacienteId(turno.paciente.id)}
+                      onClick={() => {
+                        setDrawerInitialView("default");
+                        setSelectedPacienteId(turno.paciente.id);
+                      }}
                       className={cn(
                         "text-left hover:underline font-medium",
                         fm ? "text-[var(--fc-text-primary)]" : "text-gray-800"
@@ -236,6 +243,27 @@ export function TratamientosTab({ profesionalId }: { profesionalId: string | nul
                       {turno.estado}
                     </span>
                   </td>
+                  <td className="py-2 px-3">
+                    {turno.ultimoTratamiento ? (
+                      <button
+                        onClick={() => {
+                          setDrawerInitialView("historia");
+                          setSelectedPacienteId(turno.paciente.id);
+                        }}
+                        className={cn(
+                          "text-left hover:underline font-medium truncate max-w-[200px] block",
+                          fm ? "text-[var(--fc-text-primary)]" : "text-gray-800"
+                        )}
+                        title={turno.ultimoTratamiento}
+                      >
+                        {turno.ultimoTratamiento}
+                      </button>
+                    ) : (
+                      <span className={cn(fm ? "text-[var(--fc-text-secondary)]" : "text-gray-400")}>
+                        —
+                      </span>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -250,6 +278,7 @@ export function TratamientosTab({ profesionalId }: { profesionalId: string | nul
           if (!open) setSelectedPacienteId(null);
         }}
         pacienteId={selectedPacienteId}
+        initialView={drawerInitialView}
       />
     </div>
   );

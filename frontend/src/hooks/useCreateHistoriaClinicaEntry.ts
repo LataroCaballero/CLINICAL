@@ -72,6 +72,8 @@ export function useCreateHistoriaClinicaEntry() {
       // Refrescar kanban y autorizaciones si se crearon inline
       qc.invalidateQueries({ queryKey: ['crm-kanban'] });
       qc.invalidateQueries({ queryKey: ['autorizaciones'] });
+      // Refrescar columna "Último tratamiento" en TratamientosTab
+      qc.invalidateQueries({ queryKey: ['turnos', 'rango'] });
     },
   });
 }

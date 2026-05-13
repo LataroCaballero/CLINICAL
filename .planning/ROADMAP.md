@@ -111,7 +111,10 @@ Full details: `.planning/milestones/v1.5-ROADMAP.md`
   3. La secretaria puede llamar PATCH /marcar-ausente y el turno cambia a AUSENTE
   4. La secretaria puede llamar PATCH /reactivar y el turno cambia de AUSENTE a PENDIENTE
   5. Al iniciar sesión en LiveTurno, el turno cambia a SIENDO_ATENDIDO (no CONFIRMADO)
-**Plans**: TBD
+**Plans**: 2 planes
+Plans:
+- [ ] 32-01-PLAN.md — Migración Prisma: agregar EN_ESPERA y SIENDO_ATENDIDO al enum EstadoTurno
+- [ ] 32-02-PLAN.md — Backend state machine (3 endpoints nuevos + fix iniciarSesion) + tipos frontend
 
 ### Phase 33: Widget Agenda Operativo
 **Goal**: La tabla de agenda es la herramienta de operación diaria: la secretaria ve el estado de cada paciente, puede tomar acciones sin navegar, y puede abrir el perfil del paciente desde el nombre
@@ -173,7 +176,7 @@ Full details: `.planning/milestones/v1.5-ROADMAP.md`
 | 29. PatientDrawer Flujo Action | v1.5 | 2/2 | Complete | 2026-04-30 |
 | 30. Tab Tratamientos Último Tratamiento | v1.5 | 1/1 | Complete | 2026-05-12 |
 | 31. Stock Órdenes de Consumo UI | v1.5 | 2/2 | Complete | 2026-05-13 |
-| 32. Schema + Backend Estados Extendidos | v1.6 | 0/? | Not started | - |
+| 32. Schema + Backend Estados Extendidos | v1.6 | 0/2 | Not started | - |
 | 33. Widget Agenda Operativo | v1.6 | 0/? | Not started | - |
 | 34. LiveTurno Simplificado | v1.6 | 0/? | Not started | - |
 

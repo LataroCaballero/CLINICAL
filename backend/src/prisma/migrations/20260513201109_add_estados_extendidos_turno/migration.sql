@@ -1,0 +1,3 @@
+-- AlterEnum
+ALTER TYPE "EstadoTurno" ADD VALUE 'EN_ESPERA';
+ALTER TYPE "EstadoTurno" ADD VALUE 'SIENDO_ATENDIDO';

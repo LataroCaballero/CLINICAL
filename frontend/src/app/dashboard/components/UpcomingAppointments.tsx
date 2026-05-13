@@ -15,6 +15,12 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { format } from "date-fns";
@@ -28,10 +34,17 @@ import {
   CalendarIcon,
   X,
   FileText,
+  MoreVertical,
+  Clock,
+  UserX,
+  Bell,
+  RefreshCw,
 } from "lucide-react";
 import { useLiveTurnoActions } from "@/hooks/useLiveTurnoActions";
 import { useLiveTurnoStore } from "@/store/live-turno.store";
+import { useTurnoEstadoActions } from "@/hooks/useTurnoEstadoActions";
 import TurnoHCModal from "./TurnoHCModal";
+import PatientDrawer from "@/app/dashboard/pacientes/components/PatientDrawer";
 
 type Props = {
   profesionalId?: string;
@@ -112,6 +125,18 @@ function estadoUi(estado: TurnoAgenda["estado"], focusMode: boolean) {
         text: focusMode ? "text-slate-400" : "text-gray-600",
         label: "Ausente",
       };
+    case "EN_ESPERA":
+      return {
+        dot: "bg-amber-500",
+        text: focusMode ? "text-amber-400" : "text-amber-600",
+        label: "En espera",
+      };
+    case "SIENDO_ATENDIDO":
+      return {
+        dot: "bg-indigo-500 animate-pulse",
+        text: focusMode ? "text-indigo-400" : "text-indigo-600",
+        label: "En atención",
+      };
     case "CANCELADO":
     default:
       return {
@@ -133,6 +158,7 @@ function isCirugia(t: TurnoAgenda) {
 export default function UpcomingAppointments({ profesionalId, focusMode = false }: Props) {
   const { iniciarSesion } = useLiveTurnoActions();
   const session = useLiveTurnoStore((state) => state.session);
+  const { marcarEnEspera, marcarAusente, reactivar } = useTurnoEstadoActions();
 
   // Unified date state — always a concrete date, defaults to today
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -140,6 +166,9 @@ export default function UpcomingAppointments({ profesionalId, focusMode = false 
 
   // HC modal state
   const [hcTurno, setHcTurno] = useState<TurnoAgenda | null>(null);
+
+  // Patient drawer state
+  const [drawerPacienteId, setDrawerPacienteId] = useState<string | null>(null);
 
   // Query: agenda for the selected date — always enabled when profesionalId is available
   const { data: turnos = [], isLoading } = useQuery({
@@ -348,8 +377,8 @@ export default function UpcomingAppointments({ profesionalId, focusMode = false 
                     <tr>
                       <th className="px-4 py-2 font-medium">Horario</th>
                       <th className="px-4 py-2 font-medium">Paciente</th>
-                      <th className="px-4 py-2 font-medium">Tratamiento</th>
                       <th className="px-4 py-2 font-medium">Tipo de Turno</th>
+                      <th className="px-4 py-2 font-medium">Tratamiento</th>
                       <th className="px-4 py-2 font-medium">Estado</th>
                       <th className="px-4 py-2 font-medium">Acciones</th>
                     </tr>
@@ -367,7 +396,12 @@ export default function UpcomingAppointments({ profesionalId, focusMode = false 
                           </td>
                           <td className={`px-4 py-2 ${tdSecCls}`}>
                             <div className="flex items-center gap-1.5">
-                              {t.paciente?.nombreCompleto ?? "-"}
+                              <button
+                                onClick={() => setDrawerPacienteId(t.paciente?.id ?? null)}
+                                className={`text-left underline-offset-2 hover:underline cursor-pointer ${tdSecCls}`}
+                              >
+                                {t.paciente?.nombreCompleto ?? "-"}
+                              </button>
                               {hasObs && (
                                 <MessageSquareText
                                   className={`w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity ${
@@ -376,11 +410,6 @@ export default function UpcomingAppointments({ profesionalId, focusMode = false 
                                 />
                               )}
                             </div>
-                          </td>
-                          <td
-                            className={`px-4 py-2 text-xs max-w-[160px] truncate ${tdMutedCls}`}
-                          >
-                            {t.paciente?.tratamiento || "-"}
                           </td>
                           <td className="px-4 py-2">
                             <span
@@ -391,6 +420,11 @@ export default function UpcomingAppointments({ profesionalId, focusMode = false 
                             >
                               {tipo}
                             </span>
+                          </td>
+                          <td
+                            className={`px-4 py-2 text-xs max-w-[160px] truncate ${tdMutedCls}`}
+                          >
+                            {t.paciente?.tratamiento || "-"}
                           </td>
                           <td className="px-4 py-2">
                             <div className="flex items-center gap-2">
@@ -443,6 +477,68 @@ export default function UpcomingAppointments({ profesionalId, focusMode = false 
                                   )}
                                 </Button>
                               )}
+
+                              {/* Menu contextual — solo para turnos activos no en sesion */}
+                              {t.estado !== "CANCELADO" && t.estado !== "FINALIZADO" && t.estado !== "SIENDO_ATENDIDO" && (
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      className={`h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity ${
+                                        focusMode
+                                          ? "text-slate-400 hover:bg-slate-700 hover:text-slate-200"
+                                          : "text-gray-400 hover:bg-gray-100 hover:text-gray-700"
+                                      }`}
+                                      aria-label="Más acciones"
+                                    >
+                                      <MoreVertical className="w-4 h-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    {/* AUSENTE -> Reactivar */}
+                                    {t.estado === "AUSENTE" && (
+                                      <DropdownMenuItem
+                                        onClick={() => reactivar.mutate(t.id)}
+                                        disabled={reactivar.isPending}
+                                        className="flex items-center gap-2"
+                                      >
+                                        <RefreshCw className="w-4 h-4" />
+                                        Reactivar
+                                      </DropdownMenuItem>
+                                    )}
+                                    {/* PENDIENTE | CONFIRMADO | EN_ESPERA -> En espera, Ausente, Llamar */}
+                                    {(t.estado === "PENDIENTE" || t.estado === "CONFIRMADO" || t.estado === "EN_ESPERA") && (
+                                      <>
+                                        <DropdownMenuItem
+                                          onClick={() => marcarEnEspera.mutate(t.id)}
+                                          disabled={marcarEnEspera.isPending || t.estado === "EN_ESPERA"}
+                                          className="flex items-center gap-2"
+                                        >
+                                          <Clock className="w-4 h-4" />
+                                          En espera
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem
+                                          onClick={() => marcarAusente.mutate(t.id)}
+                                          disabled={marcarAusente.isPending}
+                                          className="flex items-center gap-2"
+                                        >
+                                          <UserX className="w-4 h-4" />
+                                          Ausente
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem
+                                          disabled
+                                          className="flex items-center gap-2 opacity-50 cursor-not-allowed"
+                                          title="Próximamente"
+                                        >
+                                          <Bell className="w-4 h-4" />
+                                          Llamar
+                                        </DropdownMenuItem>
+                                      </>
+                                    )}
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              )}
                             </div>
                           </td>
                         </tr>
@@ -474,6 +570,13 @@ export default function UpcomingAppointments({ profesionalId, focusMode = false 
         open={!!hcTurno}
         onClose={() => setHcTurno(null)}
         selectedDate={selectedDate}
+      />
+
+      {/* Patient Drawer */}
+      <PatientDrawer
+        open={!!drawerPacienteId}
+        onOpenChange={(o) => { if (!o) setDrawerPacienteId(null); }}
+        pacienteId={drawerPacienteId}
       />
     </>
   );

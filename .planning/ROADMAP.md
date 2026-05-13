@@ -8,7 +8,7 @@
 - ✅ **v1.3 Historial de Consultas** — Fases 20–21 (shipped 2026-04-09)
 - ✅ **v1.4 Flujo de Pacientes** — Fases 22–25 (shipped 2026-04-20)
 - ✅ **v1.5 Catálogos Clínicos y Flujos de Atención** — Fases 26–31 (shipped 2026-05-13)
-- 📋 **v2.0 TBD** — (planned)
+- 🚧 **v1.6 Agenda Operativa** — Fases 32–34 (active)
 
 ## Phases
 
@@ -93,9 +93,48 @@ Full details: `.planning/milestones/v1.5-ROADMAP.md`
 
 </details>
 
-### 📋 v2.0 TBD (Planned)
+### 🚧 v1.6 Agenda Operativa (Fases 32–34)
 
-*(Next milestone to be defined via `/gsd:new-milestone`)*
+- [ ] **Phase 32: Schema + Backend Estados Extendidos** — Migración de enum y 3 nuevos endpoints de transición de estado
+- [ ] **Phase 33: Widget Agenda Operativo** — Columna reordenada, paciente clickeable, menú ⋮ con acciones contextuales, estados visibles
+- [ ] **Phase 34: LiveTurno Simplificado** — Sin timer, sin bloqueo, exit sin HC finaliza turno
+
+## Phase Details
+
+### Phase 32: Schema + Backend Estados Extendidos
+**Goal**: El backend puede representar el ciclo operativo completo de un turno — desde que el paciente llega (EN_ESPERA) hasta que está siendo atendido (SIENDO_ATENDIDO), más las transiciones de ausente y reactivación
+**Depends on**: Phase 31 (v1.5 complete)
+**Requirements**: EST-01, EST-02, EST-03, EST-04, EST-05
+**Success Criteria** (what must be TRUE):
+  1. La base de datos acepta turnos con estado EN_ESPERA y SIENDO_ATENDIDO sin errores de constraint
+  2. La secretaria puede llamar PATCH /marcar-en-espera y el turno cambia de PENDIENTE a EN_ESPERA
+  3. La secretaria puede llamar PATCH /marcar-ausente y el turno cambia a AUSENTE
+  4. La secretaria puede llamar PATCH /reactivar y el turno cambia de AUSENTE a PENDIENTE
+  5. Al iniciar sesión en LiveTurno, el turno cambia a SIENDO_ATENDIDO (no CONFIRMADO)
+**Plans**: TBD
+
+### Phase 33: Widget Agenda Operativo
+**Goal**: La tabla de agenda es la herramienta de operación diaria: la secretaria ve el estado de cada paciente, puede tomar acciones sin navegar, y puede abrir el perfil del paciente desde el nombre
+**Depends on**: Phase 32
+**Requirements**: WID-01, WID-02, WID-03, WID-04, WID-05, WID-06
+**Success Criteria** (what must be TRUE):
+  1. La columna "Tipo de Turno" aparece a la izquierda de "Tratamiento" en la tabla de agenda
+  2. Hacer click en el nombre del paciente abre su PatientDrawer sin navegar a otra página
+  3. Cada turno activo muestra un botón "Iniciar" y un menú ⋮ al final de la fila
+  4. El menú ⋮ ofrece "En espera" y "Ausente" para turnos PENDIENTE/EN_ESPERA, y "Reactivar" para turnos AUSENTE
+  5. Los estados EN_ESPERA y SIENDO_ATENDIDO se muestran con etiquetas/badges visibles en la columna Estado
+**Plans**: TBD
+
+### Phase 34: LiveTurno Simplificado
+**Goal**: Abrir y cerrar una consulta en LiveTurno es sin fricción — sin timer visible, sin bloqueos que requieran fuerza bruta, y salir sin HC registrada es una operación válida que cierra el turno limpiamente
+**Depends on**: Phase 33
+**Requirements**: LT-01, LT-02, LT-03
+**Success Criteria** (what must be TRUE):
+  1. El panel de consulta activa no muestra ningún contador de tiempo transcurrido
+  2. Intentar iniciar un segundo turno con uno activo muestra un diálogo de confirmación (no un botón gris deshabilitado)
+  3. Cerrar o descartar el panel sin guardar HC llama al endpoint cerrar-sesion y el turno queda en estado FINALIZADO
+
+**Plans**: TBD
 
 ## Progress
 
@@ -134,6 +173,9 @@ Full details: `.planning/milestones/v1.5-ROADMAP.md`
 | 29. PatientDrawer Flujo Action | v1.5 | 2/2 | Complete | 2026-04-30 |
 | 30. Tab Tratamientos Último Tratamiento | v1.5 | 1/1 | Complete | 2026-05-12 |
 | 31. Stock Órdenes de Consumo UI | v1.5 | 2/2 | Complete | 2026-05-13 |
+| 32. Schema + Backend Estados Extendidos | v1.6 | 0/? | Not started | - |
+| 33. Widget Agenda Operativo | v1.6 | 0/? | Not started | - |
+| 34. LiveTurno Simplificado | v1.6 | 0/? | Not started | - |
 
 ---
-*Roadmap initialized: 2026-02-23 | v1.0 shipped: 2026-03-03 | v1.1 shipped: 2026-03-16 | v1.2 shipped: 2026-03-31 | v1.3 shipped: 2026-04-09 | v1.4 shipped: 2026-04-20 | v1.5 shipped: 2026-05-13*
+*Roadmap initialized: 2026-02-23 | v1.0 shipped: 2026-03-03 | v1.1 shipped: 2026-03-16 | v1.2 shipped: 2026-03-31 | v1.3 shipped: 2026-04-09 | v1.4 shipped: 2026-04-20 | v1.5 shipped: 2026-05-13 | v1.6 started: 2026-05-13*

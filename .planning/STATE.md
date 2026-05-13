@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Catálogos Clínicos y Flujos de Atención
-status: executing
-stopped_at: "Paused at Task 3 checkpoint:human-verify in 31-02-PLAN.md"
-last_updated: "2026-05-13T12:23:47.956Z"
-last_activity: 2026-05-13 — Plan 31-01 complete; enriched findPendientesByProfesional with paciente + producto includes, confirmarOrden() atomic $transaction with idempotency guard and stock validation; requirements STOCK-03 and STOCK-04 satisfied
+status: completed
+stopped_at: Completed 31-02-PLAN.md
+last_updated: "2026-05-13T12:31:59.147Z"
+last_activity: 2026-05-13 — Plan 31-02 complete; consumption orders frontend page + TanStack Query hooks + sidebar sub-link; human verification approved; STOCK-03 and STOCK-04 fully satisfied end-to-end
 progress:
   total_phases: 6
   completed_phases: 6
   total_plans: 16
   completed_plans: 16
-  percent: 97
+  percent: 100
 ---
 
 # Project State
@@ -27,13 +27,13 @@ See: .planning/PROJECT.md (updated 2026-04-22)
 
 ```
 Milestone: v1.5 Catálogos Clínicos y Flujos de Atención
-Phase:     31 of 31 (Stock Ordenes de Consumo UI)
-Plan:      1 of 2 complete (plan 31-01 done — backend enrichment + confirmar endpoint)
-Status:    Phase 31 in progress — enriched GET + atomic POST /ordenes-consumo/:id/confirmar backend complete; STOCK-03 + STOCK-04 satisfied
-Progress:  [██████████] 97%
+Phase:     31 of 31 (Stock Ordenes de Consumo UI) — COMPLETE
+Plan:      2 of 2 complete (plan 31-02 done — frontend page, hooks, sidebar sub-link)
+Status:    Phase 31 complete — full consumption orders workflow live end-to-end; STOCK-03 + STOCK-04 satisfied; milestone v1.5 DONE
+Progress:  [██████████] 100%
 ```
 
-Last activity: 2026-05-13 — Plan 31-01 complete; enriched findPendientesByProfesional with paciente + producto includes, confirmarOrden() atomic $transaction with idempotency guard and stock validation; requirements STOCK-03 and STOCK-04 satisfied
+Last activity: 2026-05-13 — Plan 31-02 complete; consumption orders frontend page + TanStack Query hooks + sidebar sub-link; human verification approved; STOCK-03 and STOCK-04 fully satisfied end-to-end
 
 ## Accumulated Context
 
@@ -87,6 +87,6 @@ Last activity: 2026-05-13 — Plan 31-01 complete; enriched findPendientesByProf
 
 ## Session Continuity
 
-Last session: 2026-05-13T12:23:47.955Z
-Stopped at: Paused at Task 3 checkpoint:human-verify in 31-02-PLAN.md
+Last session: 2026-05-13T12:31:59.146Z
+Stopped at: Completed 31-02-PLAN.md
 Resume file: None

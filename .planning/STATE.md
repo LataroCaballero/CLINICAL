@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.6
 milestone_name: Agenda Operativa
-status: Phase 32 complete — 3 state-transition endpoints live, frontend types extended
+status: 3 state-transition endpoints live, iniciarSesion → SIENDO_ATENDIDO, frontend types extended
 stopped_at: Completed 32-02-PLAN.md (state-transition endpoints + frontend type sync)
-last_updated: "2026-05-13T20:18:01.609Z"
-last_activity: "2026-05-13 — Plan 32-02 complete: marcarEnEspera, marcarAusente, reactivar endpoints + iniciarSesion → SIENDO_ATENDIDO + frontend types"
+last_updated: "2026-05-13T20:22:55.787Z"
+last_activity: "2026-05-13 — Plan 32-02 complete: marcarEnEspera, marcarAusente, reactivar endpoints + iniciarSesion → SIENDO_ATENDIDO + frontend types in 5 files"
 progress:
   total_phases: 3
   completed_phases: 1

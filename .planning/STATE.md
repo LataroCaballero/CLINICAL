@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Catálogos Clínicos y Flujos de Atención
 status: completed
-stopped_at: Completed 30-01-PLAN.md — Phase 30 complete, PAC-01 satisfied
-last_updated: "2026-05-12T23:55:46.848Z"
-last_activity: 2026-05-12 — Plan 30-01 complete; ultimoTratamiento batch sub-query in backend, 5th column in TratamientosTab, auto-refresh invalidations added to HC mutation hooks; requirement PAC-01 satisfied
+stopped_at: Completed 31-01-PLAN.md
+last_updated: "2026-05-13T12:23:00.751Z"
+last_activity: 2026-05-13 — Plan 31-01 complete; enriched GET /ordenes-consumo + atomic POST /ordenes-consumo/:id/confirmar with pgBouncer-safe $transaction; requirements STOCK-03 and STOCK-04 satisfied
 progress:
   total_phases: 6
   completed_phases: 5
-  total_plans: 14
-  completed_plans: 14
+  total_plans: 16
+  completed_plans: 15
   percent: 100
 ---
 
@@ -27,13 +27,13 @@ See: .planning/PROJECT.md (updated 2026-04-22)
 
 ```
 Milestone: v1.5 Catálogos Clínicos y Flujos de Atención
-Phase:     30 of 31 (Tab Tratamientos — Último Tratamiento)
-Plan:      1 of 1 complete (all tasks done — human-verify approved)
-Status:    Phase 30 complete — Último tratamiento column added to TratamientosTab; batch HC query + cache invalidation wired; PAC-01 satisfied
-Progress:  [██████████] 100%
+Phase:     31 of 31 (Stock Ordenes de Consumo UI)
+Plan:      1 of 2 complete (plan 31-01 done — backend enrichment + confirmar endpoint)
+Status:    Phase 31 in progress — enriched GET + atomic POST /ordenes-consumo/:id/confirmar backend complete; STOCK-03 + STOCK-04 satisfied
+Progress:  [██████████] 97%
 ```
 
-Last activity: 2026-05-12 — Plan 30-01 complete; ultimoTratamiento batch sub-query in backend, 5th column in TratamientosTab, auto-refresh invalidations added to HC mutation hooks; requirement PAC-01 satisfied
+Last activity: 2026-05-13 — Plan 31-01 complete; enriched findPendientesByProfesional with paciente + producto includes, confirmarOrden() atomic $transaction with idempotency guard and stock validation; requirements STOCK-03 and STOCK-04 satisfied
 
 ## Accumulated Context
 
@@ -70,6 +70,9 @@ Last activity: 2026-05-12 — Plan 30-01 complete; ultimoTratamiento batch sub-q
 - **30-01 ultimoTratamiento batch query:** ONE historiaClinica.findMany for all pacienteIds with take:10 on entradas (desc), then JS-side filter on contenido.tratamientos — avoids N+1 and avoids unsupported Prisma JSON path equals operator at runtime.
 - **30-01 prefix invalidation ['turnos', 'rango']:** Invalidates all rango queries across all profesional/date combos on any HC save; wired to useCreateHistoriaClinicaEntry, useCreateHCEntry, useFinalizeHCEntry.
 - **30-01 drawerInitialView pattern:** State variable tracks intended DrawerView before opening PatientDrawer; patient name click sets "default", treatment name click sets "historia" — no changes needed to PatientDrawer itself.
+- **31-01 confirmarOrden pgBouncer two-step:** Pre-fetch outside $transaction for fast 404, re-fetch inside tx as race/idempotency guard — same pattern as HC crearEntrada(). ConflictException if orden already confirmed/cancelled.
+- **31-01 inline SALIDA tx logic:** confirmarOrden inlines inventario.update + movimientoStock.create directly inside $transaction — InventarioService.registrarMovimiento() opens its own tx, which pgBouncer forbids when already inside a tx. Pattern matches ordenes-compra.service.ts recibir().
+- **31-01 Inventario auto-create on confirmar:** If no Inventario row for (productoId, profesionalId) exists, create with stockActual=0 then throw BadRequestException — preserves unique constraint, gives clean error for never-stocked products.
 
 ### Carry-forward Decisions (v1.4)
 - Paciente.flujo: null = legacy, PENDIENTE = unclassified, CIRUGIA/TRATAMIENTO = classified
@@ -84,6 +87,6 @@ Last activity: 2026-05-12 — Plan 30-01 complete; ultimoTratamiento batch sub-q
 
 ## Session Continuity
 
-Last session: 2026-05-12T22:06:25.755Z
-Stopped at: Completed 30-01-PLAN.md — Phase 30 complete, PAC-01 satisfied
+Last session: 2026-05-13T12:23:00.749Z
+Stopped at: Completed 31-01-PLAN.md
 Resume file: None

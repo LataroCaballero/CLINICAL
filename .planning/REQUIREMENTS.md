@@ -26,8 +26,8 @@
 
 - [x] **STOCK-01**: Al guardar una HC con el checkbox de insumos activado, se genera automáticamente una orden de consumo con estado PENDIENTE en el módulo de stock
 - [x] **STOCK-02**: La orden de consumo incluye: nombre del paciente, fecha de la sesión, tratamiento(s) realizados, e insumos con cantidades a consumir
-- [ ] **STOCK-03**: El responsable de stock puede ver la lista de órdenes de consumo pendientes y confirmarlas una a una
-- [ ] **STOCK-04**: Al confirmar una orden, se registra el movimiento SALIDA en el stock correspondiente dentro de una transacción atómica
+- [x] **STOCK-03**: El responsable de stock puede ver la lista de órdenes de consumo pendientes y confirmarlas una a una
+- [x] **STOCK-04**: Al confirmar una orden, se registra el movimiento SALIDA en el stock correspondiente dentro de una transacción atómica
 
 ### PRESUP — Presupuestos con Catálogo
 
@@ -90,8 +90,8 @@
 | LIVHC-05 | Phase 27 | Complete |
 | STOCK-01 | Phase 27 | Complete |
 | STOCK-02 | Phase 27 | Complete |
-| STOCK-03 | Phase 31 | Pending |
-| STOCK-04 | Phase 31 | Pending |
+| STOCK-03 | Phase 31 | Complete |
+| STOCK-04 | Phase 31 | Complete |
 | PRESUP-01 | Phase 28 | Pending |
 | PRESUP-02 | Phase 28 | Pending |
 | PRESUP-03 | Phase 28 | Pending |

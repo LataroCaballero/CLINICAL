@@ -284,3 +284,27 @@ export interface ResumenVentas {
     total: number;
   }[];
 }
+
+// OrdenConsumo
+export type EstadoOrdenConsumo = 'PENDIENTE' | 'CONFIRMADA' | 'CANCELADA';
+
+export interface OrdenConsumoInsumo {
+  id: string;
+  productoId: string;
+  cantidad: number;
+  producto?: { id: string; nombre: string; unidadMedida?: string | null };
+}
+
+export interface OrdenConsumo {
+  id: string;
+  pacienteId: string;
+  profesionalId: string;
+  turnoId?: string | null;
+  historiaClinicaEntradaId: string;
+  fechaSesion: string;
+  estado: EstadoOrdenConsumo;
+  tratamientosSnapshot: Array<{ id: string; nombre: string }>;
+  createdAt: string;
+  paciente?: { id: string; nombreCompleto: string };
+  insumos: OrdenConsumoInsumo[];
+}

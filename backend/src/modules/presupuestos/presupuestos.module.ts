@@ -5,7 +5,6 @@ import { PresupuestoPublicController } from './presupuesto-public.controller';
 import { PresupuestosService } from './presupuestos.service';
 import { PresupuestoPdfService } from './presupuesto-pdf.service';
 import { PresupuestoEmailService } from './presupuesto-email.service';
-import { PrismaService } from '../../prisma/prisma.service';
 import { CuentasCorrientesModule } from '../cuentas-corrientes/cuentas-corrientes.module';
 
 @Module({
@@ -15,7 +14,6 @@ import { CuentasCorrientesModule } from '../cuentas-corrientes/cuentas-corriente
     PresupuestosService,
     PresupuestoPdfService,
     PresupuestoEmailService,
-    PrismaService,
   ],
   exports: [PresupuestosService],
 })

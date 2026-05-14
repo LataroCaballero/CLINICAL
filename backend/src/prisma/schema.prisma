@@ -5,8 +5,9 @@ generator client {
 // NOTE: connection_limit=1 & pool_timeout=30 are enforced in PrismaService
 // to avoid MaxClientsInSessionMode errors with pgBouncer (session mode).
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model Permiso {

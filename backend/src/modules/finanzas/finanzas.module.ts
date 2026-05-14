@@ -28,7 +28,6 @@ import { FacturaPdfService } from './factura-pdf.service';
   controllers: [FinanzasController],
   providers: [
     FinanzasService,
-    PrismaService,
     CaeEmissionProcessor,
     CaeaService,
     CaeaPrefetchScheduler,

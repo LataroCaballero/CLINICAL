@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.6
 milestone_name: Agenda Operativa
 status: UpcomingAppointments operational daily tool live — column reorder, PatientDrawer, DropdownMenu, EN_ESPERA/SIENDO_ATENDIDO badges
-stopped_at: Phase 33, Plan 02 complete (UpcomingAppointments operational upgrade)
-last_updated: "2026-05-13T23:55:06.210Z"
+stopped_at: Phase 34 context gathered
+last_updated: "2026-05-14T01:29:59.918Z"
 last_activity: "2026-05-13 — Plan 33-02 complete: UpcomingAppointments upgraded with column reorder, PatientDrawer, contextual DropdownMenu state actions"
 progress:
   total_phases: 3
@@ -77,7 +77,7 @@ Last activity: 2026-05-13 — Plan 33-02 complete: UpcomingAppointments upgraded
 
 ## Session Continuity
 
-Last session: 2026-05-13T23:49:32.000Z
-Stopped at: Phase 33, Plan 02 complete (UpcomingAppointments operational upgrade)
-Resume file: .planning/phases/33-widget-agenda-operativo/33-02-SUMMARY.md
+Last session: 2026-05-14T01:29:59.916Z
+Stopped at: Phase 34 context gathered
+Resume file: .planning/phases/34-liveturno-simplificado/34-CONTEXT.md
 Next action: Phase 34 — LiveTurno Simplificado (LT-01..03)

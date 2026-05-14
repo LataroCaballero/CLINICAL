@@ -140,7 +140,10 @@ Plans:
   2. Intentar iniciar un segundo turno con uno activo muestra un diálogo de confirmación (no un botón gris deshabilitado)
   3. Cerrar o descartar el panel sin guardar HC llama al endpoint cerrar-sesion y el turno queda en estado FINALIZADO
 
-**Plans**: TBD
+**Plans**: 2 planes
+Plans:
+- [ ] 34-01-PLAN.md — LiveTurno panel cleanup: remover timer de Header/Footer/Indicator, eliminar useLiveTurnoTimer.ts, agregar botón "Cerrar sin guardar entrada de HC"
+- [ ] 34-02-PLAN.md — UpcomingAppointments: reemplazar botón Iniciar bloqueado por AlertDialog switch-session
 
 ## Progress
 
@@ -181,7 +184,7 @@ Plans:
 | 31. Stock Órdenes de Consumo UI | v1.5 | 2/2 | Complete | 2026-05-13 |
 | 32. Schema + Backend Estados Extendidos | 2/2 | Complete    | 2026-05-13 | - |
 | 33. Widget Agenda Operativo | 2/2 | Complete    | 2026-05-13 | - |
-| 34. LiveTurno Simplificado | v1.6 | 0/? | Not started | - |
+| 34. LiveTurno Simplificado | v1.6 | 0/2 | Not started | - |
 
 ---
 *Roadmap initialized: 2026-02-23 | v1.0 shipped: 2026-03-03 | v1.1 shipped: 2026-03-16 | v1.2 shipped: 2026-03-31 | v1.3 shipped: 2026-04-09 | v1.4 shipped: 2026-04-20 | v1.5 shipped: 2026-05-13 | v1.6 started: 2026-05-13*

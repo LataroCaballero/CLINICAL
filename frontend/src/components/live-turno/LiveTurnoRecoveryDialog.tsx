@@ -1,6 +1,6 @@
 'use client';
 
-import { Clock, User } from 'lucide-react';
+import { User } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,12 +12,10 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useLiveTurnoStore } from '@/store/live-turno.store';
-import { useLiveTurnoTimer, formatTimer } from '@/hooks/useLiveTurnoTimer';
 
 export function LiveTurnoRecoveryDialog() {
   const { session, showRecoveryDialog, acknowledgeRecovery, discardRecovery } =
     useLiveTurnoStore();
-  const elapsed = useLiveTurnoTimer();
 
   if (!showRecoveryDialog || !session) return null;
 
@@ -26,7 +24,6 @@ export function LiveTurnoRecoveryDialog() {
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle className="flex items-center gap-2">
-            <Clock className="w-5 h-5 text-orange-500" />
             Sesion activa encontrada
           </AlertDialogTitle>
           <AlertDialogDescription asChild>
@@ -38,12 +35,6 @@ export function LiveTurnoRecoveryDialog() {
                 <div className="flex items-center gap-2">
                   <User className="w-4 h-4 text-gray-500" />
                   <span className="font-medium">{session.pacienteNombre}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-gray-500" />
-                  <span>
-                    Duracion: <span className="font-mono">{formatTimer(elapsed)}</span>
-                  </span>
                 </div>
                 <div className="text-sm text-gray-500">
                   Tipo: {session.tipoTurno}

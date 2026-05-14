@@ -21,6 +21,16 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { format } from "date-fns";
@@ -156,8 +166,9 @@ function isCirugia(t: TurnoAgenda) {
 }
 
 export default function UpcomingAppointments({ profesionalId, focusMode = false }: Props) {
-  const { iniciarSesion } = useLiveTurnoActions();
+  const { iniciarSesion, cerrarSesion } = useLiveTurnoActions();
   const session = useLiveTurnoStore((state) => state.session);
+  const draftData = useLiveTurnoStore((state) => state.draftData);
   const { marcarEnEspera, marcarAusente, reactivar } = useTurnoEstadoActions();
 
   // Unified date state — always a concrete date, defaults to today
@@ -169,6 +180,29 @@ export default function UpcomingAppointments({ profesionalId, focusMode = false 
 
   // Patient drawer state
   const [drawerPacienteId, setDrawerPacienteId] = useState<string | null>(null);
+
+  // Switch-session dialog state
+  const [showSwitchDialog, setShowSwitchDialog] = useState(false);
+  const [pendingTurnoId, setPendingTurnoId] = useState<string | null>(null);
+  const [pendingTurnoNombre, setPendingTurnoNombre] = useState<string>('');
+
+  // Switch-session: borrador HC sin guardar
+  const hasDraftHC = !!(draftData.hcFormDraft && !draftData.hcFormDraft.saved);
+
+  // Switch-session: cerrar sesion activa y abrir el nuevo turno
+  const handleConfirmSwitch = async () => {
+    if (!pendingTurnoId) return;
+    try {
+      await cerrarSesion.mutateAsync({});
+    } catch {
+      // cerrarSesion.onError ya maneja el toast de error
+      // No abrir el nuevo turno
+      setShowSwitchDialog(false);
+      return;
+    }
+    setShowSwitchDialog(false);
+    iniciarSesion.mutate(pendingTurnoId);
+  };
 
   // Query: agenda for the selected date — always enabled when profesionalId is available
   const { data: turnos = [], isLoading } = useQuery({
@@ -458,8 +492,16 @@ export default function UpcomingAppointments({ profesionalId, focusMode = false 
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  onClick={() => iniciarSesion.mutate(t.id)}
-                                  disabled={iniciarSesion.isPending || !!session}
+                                  onClick={() => {
+                                    if (session) {
+                                      setPendingTurnoId(t.id);
+                                      setPendingTurnoNombre(t.paciente?.nombreCompleto ?? 'el paciente');
+                                      setShowSwitchDialog(true);
+                                    } else {
+                                      iniciarSesion.mutate(t.id);
+                                    }
+                                  }}
+                                  disabled={iniciarSesion.isPending}
                                   className={`h-7 px-2 text-xs ${
                                     focusMode
                                       ? "bg-transparent border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-slate-100"
@@ -578,6 +620,38 @@ export default function UpcomingAppointments({ profesionalId, focusMode = false 
         onOpenChange={(o) => { if (!o) setDrawerPacienteId(null); }}
         pacienteId={drawerPacienteId}
       />
+
+      {/* Switch-session AlertDialog */}
+      <AlertDialog open={showSwitchDialog} onOpenChange={setShowSwitchDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cambiar sesión activa</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tenés una sesión activa con {session?.pacienteNombre}. ¿Finalizarla y abrir el turno de {pendingTurnoNombre}?
+              {hasDraftHC && (
+                <span className="block mt-2 text-amber-600 font-medium">
+                  La entrada de HC en borrador no se guardará.
+                </span>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleConfirmSwitch();
+              }}
+              disabled={cerrarSesion.isPending}
+            >
+              {cerrarSesion.isPending ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : null}
+              Finalizar y abrir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

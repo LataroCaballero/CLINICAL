@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.6
 milestone_name: Agenda Operativa
-status: UpcomingAppointments operational daily tool live — column reorder, PatientDrawer, DropdownMenu, EN_ESPERA/SIENDO_ATENDIDO badges
-stopped_at: Phase 34 context gathered
-last_updated: "2026-05-14T01:29:59.918Z"
-last_activity: "2026-05-13 — Plan 33-02 complete: UpcomingAppointments upgraded with column reorder, PatientDrawer, contextual DropdownMenu state actions"
+status: LT-02 complete — switch-session AlertDialog en UpcomingAppointments, botón Iniciar clickeable siempre
+stopped_at: Completed 34-02-PLAN.md
+last_updated: "2026-05-14T01:50:00.000Z"
+last_activity: "2026-05-14 — Plan 34-02 complete: switch-session AlertDialog en UpcomingAppointments (LT-02)"
 progress:
   total_phases: 3
   completed_phases: 2
-  total_plans: 4
-  completed_plans: 4
-  percent: 100
+  total_plans: 6
+  completed_plans: 5
+  percent: 97
 ---
 
 # Project State
@@ -27,13 +27,13 @@ See: .planning/PROJECT.md (updated 2026-05-13)
 
 ```
 Milestone: v1.6 Agenda Operativa
-Phase:     33 — Widget Agenda Operativo (COMPLETE)
-Plan:      02 complete (2/2 plans done)
-Status:    UpcomingAppointments operational daily tool live — column reorder, PatientDrawer, DropdownMenu, EN_ESPERA/SIENDO_ATENDIDO badges
-Progress:  [██████████] 100% (33/33 plans across all milestones)
+Phase:     34 — LiveTurno Simplificado (IN PROGRESS)
+Plan:      02 complete (2/? plans done — LT-02 done)
+Status:    LT-02 done — switch-session AlertDialog en UpcomingAppointments
+Progress:  [██████████] 97% (34/35 plans across all milestones)
 ```
 
-Last activity: 2026-05-13 — Plan 33-02 complete: UpcomingAppointments upgraded with column reorder, PatientDrawer, contextual DropdownMenu state actions
+Last activity: 2026-05-14 — Plan 34-02 complete: switch-session AlertDialog en UpcomingAppointments (LT-02)
 
 ## Phase Map
 
@@ -41,7 +41,7 @@ Last activity: 2026-05-13 — Plan 33-02 complete: UpcomingAppointments upgraded
 |-------|------|--------------|--------|
 | 32 | Schema + Backend Estados Extendidos | EST-01..05 | Complete (2/2 plans) |
 | 33 | Widget Agenda Operativo | WID-01..06 | Complete (2/2 plans) |
-| 34 | LiveTurno Simplificado | LT-01..03 | Not started |
+| 34 | LiveTurno Simplificado | LT-01..03 | In progress (LT-02 done) |
 
 ## Accumulated Context
 
@@ -66,6 +66,9 @@ Last activity: 2026-05-13 — Plan 33-02 complete: UpcomingAppointments upgraded
 - EN_ESPERA gets menu but "En espera" item is disabled (already in that state) — user can still Ausentarlo (Plan 33-02)
 - Exit sin HC en LiveTurno llama cerrar-sesion → FINALIZADO (nunca queda turno en estado abierto, pendiente Phase 34)
 - El timer de consulta se elimina de la UI pero duracionRealMinutos se preserva en backend (pendiente Phase 34)
+- AlertDialogAction usa e.preventDefault() para prevenir cierre automatico del dialog durante handleConfirmSwitch async (Plan 34-02)
+- cerrarSesion.mutateAsync({}) sin entradaHCId — no auto-guardar HC draft al cambiar sesion (Plan 34-02)
+- Switch-session pattern: cerrar primero, si falla abortar y no abrir el nuevo turno (Plan 34-02)
 
 ### Known Tech Debt (carry-forward)
 - LIVHC-05/PAC-01: tratamientos snapshot no se escribe cuando consumirInsumos=false
@@ -77,7 +80,7 @@ Last activity: 2026-05-13 — Plan 33-02 complete: UpcomingAppointments upgraded
 
 ## Session Continuity
 
-Last session: 2026-05-14T01:29:59.916Z
-Stopped at: Phase 34 context gathered
-Resume file: .planning/phases/34-liveturno-simplificado/34-CONTEXT.md
-Next action: Phase 34 — LiveTurno Simplificado (LT-01..03)
+Last session: 2026-05-14T01:50:00.000Z
+Stopped at: Completed 34-02-PLAN.md
+Resume file: .planning/phases/34-liveturno-simplificado/34-02-SUMMARY.md
+Next action: Phase 34 — LiveTurno Simplificado (LT-01, LT-03 pending)

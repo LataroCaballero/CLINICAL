@@ -25,7 +25,7 @@
 ### LiveTurno Simplificado
 
 - [ ] **LT-01**: El contador de tiempo (timer) no se muestra en el panel de consulta activa
-- [ ] **LT-02**: Con consulta activa, intentar iniciar otro turno muestra confirmación en lugar de botón deshabilitado
+- [x] **LT-02**: Con consulta activa, intentar iniciar otro turno muestra confirmación en lugar de botón deshabilitado
 - [ ] **LT-03**: Cerrar/descartar el panel sin guardar HC llama al backend cerrar-sesion → turno queda `FINALIZADO`
 
 ## Deferred (v2+)
@@ -63,7 +63,7 @@
 | WID-05 | Phase 33 | Complete |
 | WID-06 | Phase 33 | Complete |
 | LT-01 | Phase 34 | Pending |
-| LT-02 | Phase 34 | Pending |
+| LT-02 | Phase 34 | Complete |
 | LT-03 | Phase 34 | Pending |
 
 **Coverage:**

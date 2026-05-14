@@ -97,7 +97,7 @@ Full details: `.planning/milestones/v1.5-ROADMAP.md`
 
 - [x] **Phase 32: Schema + Backend Estados Extendidos** — Migración de enum y 3 nuevos endpoints de transición de estado (completed 2026-05-13)
 - [x] **Phase 33: Widget Agenda Operativo** — Columna reordenada, paciente clickeable, menú ⋮ con acciones contextuales, estados visibles (completed 2026-05-13)
-- [ ] **Phase 34: LiveTurno Simplificado** — Sin timer, sin bloqueo, exit sin HC finaliza turno
+- [x] **Phase 34: LiveTurno Simplificado** — Sin timer, sin bloqueo, exit sin HC finaliza turno (completed 2026-05-14)
 
 ## Phase Details
 
@@ -184,7 +184,7 @@ Plans:
 | 31. Stock Órdenes de Consumo UI | v1.5 | 2/2 | Complete | 2026-05-13 |
 | 32. Schema + Backend Estados Extendidos | 2/2 | Complete    | 2026-05-13 | - |
 | 33. Widget Agenda Operativo | 2/2 | Complete    | 2026-05-13 | - |
-| 34. LiveTurno Simplificado | v1.6 | 0/2 | Not started | - |
+| 34. LiveTurno Simplificado | 2/2 | Complete   | 2026-05-14 | - |
 
 ---
 *Roadmap initialized: 2026-02-23 | v1.0 shipped: 2026-03-03 | v1.1 shipped: 2026-03-16 | v1.2 shipped: 2026-03-31 | v1.3 shipped: 2026-04-09 | v1.4 shipped: 2026-04-20 | v1.5 shipped: 2026-05-13 | v1.6 started: 2026-05-13*

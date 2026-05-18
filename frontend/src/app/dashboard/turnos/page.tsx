@@ -48,7 +48,7 @@ interface CalendarEvent {
   end: Date;
   tipo: string;
   tipoTurnoId: string;
-  estado: "PENDIENTE" | "CONFIRMADO" | "CANCELADO" | "AUSENTE" | "FINALIZADO";
+  estado: "PENDIENTE" | "CONFIRMADO" | "CANCELADO" | "AUSENTE" | "FINALIZADO" | "EN_ESPERA" | "SIENDO_ATENDIDO";
   observaciones?: string;
   esSobreturno?: boolean;
 }

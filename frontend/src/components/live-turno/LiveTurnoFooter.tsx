@@ -15,14 +15,13 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useLiveTurnoStore } from '@/store/live-turno.store';
 import { useLiveTurnoActions } from '@/hooks/useLiveTurnoActions';
-import { useLiveTurnoTimer, formatTimer } from '@/hooks/useLiveTurnoTimer';
 import { useCreateHistoriaClinicaEntry } from '@/hooks/useCreateHistoriaClinicaEntry';
 
 export function LiveTurnoFooter() {
   const [showEndDialog, setShowEndDialog] = useState(false);
+  const [showCloseNoHcDialog, setShowCloseNoHcDialog] = useState(false);
   const { minimize, draftData, session } = useLiveTurnoStore();
   const { cerrarSesion } = useLiveTurnoActions();
-  const elapsed = useLiveTurnoTimer();
   const createEntry = useCreateHistoriaClinicaEntry();
 
   const handleEndSession = async () => {
@@ -69,41 +68,39 @@ export function LiveTurnoFooter() {
 
   return (
     <>
-      <div className="flex items-center justify-between px-6 py-4 border-t bg-gray-50">
-        <div className="text-sm text-gray-500">
-          Duracion: <span className="font-mono">{formatTimer(elapsed)}</span>
-        </div>
-        <div className="flex items-center gap-3">
-          <Button variant="outline" onClick={minimize}>
-            <Minimize2 className="w-4 h-4 mr-2" />
-            Minimizar
-          </Button>
-          <Button
-            variant="destructive"
-            onClick={() => setShowEndDialog(true)}
-            disabled={cerrarSesion.isPending}
-          >
-            {cerrarSesion.isPending ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            ) : (
-              <Square className="w-4 h-4 mr-2" />
-            )}
-            Finalizar sesion
-          </Button>
-        </div>
+      <div className="flex items-center justify-end gap-3 px-6 py-4 border-t bg-gray-50">
+        <Button variant="outline" onClick={minimize}>
+          <Minimize2 className="w-4 h-4 mr-2" />
+          Minimizar
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => setShowCloseNoHcDialog(true)}
+          disabled={cerrarSesion.isPending}
+        >
+          Cerrar sin guardar entrada de HC
+        </Button>
+        <Button
+          variant="destructive"
+          onClick={() => setShowEndDialog(true)}
+          disabled={cerrarSesion.isPending}
+        >
+          {cerrarSesion.isPending ? (
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+          ) : (
+            <Square className="w-4 h-4 mr-2" />
+          )}
+          Finalizar sesion
+        </Button>
       </div>
 
+      {/* Dialog: Finalizar sesion con auto-guardado HC */}
       <AlertDialog open={showEndDialog} onOpenChange={setShowEndDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Finalizar sesion</AlertDialogTitle>
             <AlertDialogDescription>
-              Estas seguro que deseas finalizar la sesion? El turno se marcara
-              como completado y se registrara la duracion de{' '}
-              <span className="font-mono font-semibold">
-                {formatTimer(elapsed)}
-              </span>
-              .
+              La sesión será finalizada y el turno quedará marcado como completado.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -116,6 +113,36 @@ export function LiveTurnoFooter() {
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               ) : null}
               Finalizar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Dialog: Cerrar sin registrar HC */}
+      <AlertDialog open={showCloseNoHcDialog} onOpenChange={setShowCloseNoHcDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cerrar sin registrar HC</AlertDialogTitle>
+            <AlertDialogDescription>
+              ¿Cerrar la sesión sin registrar entrada de HC? El turno quedará finalizado.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                try {
+                  await cerrarSesion.mutateAsync({});
+                  setShowCloseNoHcDialog(false);
+                } catch {
+                  // toast de error ya manejado por el mutation onError
+                }
+              }}
+            >
+              {cerrarSesion.isPending ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : null}
+              Cerrar sesión
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

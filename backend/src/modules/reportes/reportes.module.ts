@@ -11,7 +11,6 @@ import { ReportesSchedulerService } from './services/reportes-scheduler.service'
 import { EmailService } from './services/email.service';
 import { CrmMetricsService } from './services/crm-metrics.service';
 import { CrmDashboardService } from './services/crm-dashboard.service';
-import { PrismaService } from '../../prisma/prisma.service';
 
 @Module({
   imports: [ScheduleModule.forRoot(), ConfigModule],
@@ -26,7 +25,6 @@ import { PrismaService } from '../../prisma/prisma.service';
     EmailService,
     CrmMetricsService,
     CrmDashboardService,
-    PrismaService,
   ],
   exports: [
     ReportesDashboardService,

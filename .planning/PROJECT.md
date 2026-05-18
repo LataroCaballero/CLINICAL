@@ -83,8 +83,11 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 
 ### Active
 
-- [ ] Reportes ejecutivos exportables (comparativas entre períodos) — v2
-- [ ] Historial de liquidaciones por OS con comparativa autorizado vs. pagado — v2
+- [ ] Estados de turno extendidos: EN_ESPERA y SIENDO_ATENDIDO en schema + endpoints — v1.6
+- [ ] Acciones rápidas por turno en widget agenda (ausente, en espera, reactivar, llamar) — v1.6
+- [ ] Nombre del paciente en agenda abre PatientDrawer directamente — v1.6
+- [ ] LiveTurno simplificado: sin timer, sin bloqueo, exit sin HC finaliza turno — v1.6
+- [ ] Columna "Tipo de Turno" antes que "Tratamiento" en tabla de agenda — v1.6
 
 ### Deferred
 
@@ -99,6 +102,16 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 - Chat en tiempo real entre pacientes y clínica — WhatsApp cubre este caso por ahora
 - Facturación electrónica AFIP real en v1.1 — completada la investigación, implementación real planificada para v1.2
 - Tiers de suscripción con feature flags — deferido a cuando haya clientes reales con necesidades diferenciadas
+
+## Current Milestone: v1.6 Agenda Operativa
+
+**Goal:** Convertir la tabla de turnos del dashboard en la herramienta de operación diaria de la clínica — acciones contextuales por turno, estados visibles, y LiveTurno sin fricción.
+
+**Target features:**
+- Estados EN_ESPERA y SIENDO_ATENDIDO: secretaria marca llegada del paciente, iniciar turno refleja el estado en tiempo real
+- Menú de acciones por turno (⋮): ausente, en espera, llamar (placeholder), reactivar desde ausente
+- Nombre del paciente clickeable → PatientDrawer
+- LiveTurno sin timer ni bloqueo: abre la consulta simple, salir sin guardar HC finaliza el turno
 
 ## Context
 
@@ -187,4 +200,4 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 27/27 requisitos completados en 21 días (2026-04-22 → 2026-05-13). 6 fases, 16 planes. Tech debt aceptado: snapshot de tratamientos sin consumirInsumos y rol FACTURADOR en ordenes-consumo. Ver `.planning/milestones/v1.5-ROADMAP.md` para detalles.
 
 ---
-*Last updated: 2026-05-13 after v1.5 milestone — Catálogos Clínicos y Flujos de Atención*
+*Last updated: 2026-05-13 after v1.6 milestone start — Agenda Operativa*

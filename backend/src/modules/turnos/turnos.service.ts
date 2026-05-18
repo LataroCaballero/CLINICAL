@@ -289,6 +289,114 @@ export class TurnosService {
     });
   }
 
+  async marcarEnEspera(turnoId: string) {
+    const turno = await this.prisma.turno.findUnique({
+      where: { id: turnoId },
+      select: { id: true, estado: true },
+    });
+
+    if (!turno) {
+      throw new NotFoundException('Turno no encontrado.');
+    }
+
+    if (
+      turno.estado === EstadoTurno.CANCELADO ||
+      turno.estado === EstadoTurno.FINALIZADO ||
+      turno.estado === EstadoTurno.EN_ESPERA
+    ) {
+      throw new BadRequestException(
+        `No se puede marcar en espera un turno en estado ${turno.estado}.`,
+      );
+    }
+
+    if (
+      turno.estado !== EstadoTurno.PENDIENTE &&
+      turno.estado !== EstadoTurno.CONFIRMADO
+    ) {
+      throw new BadRequestException(
+        `No se puede marcar en espera un turno en estado ${turno.estado}.`,
+      );
+    }
+
+    return this.prisma.turno.update({
+      where: { id: turnoId },
+      data: {
+        estado: EstadoTurno.EN_ESPERA,
+      },
+    });
+  }
+
+  async marcarAusente(turnoId: string) {
+    const turno = await this.prisma.turno.findUnique({
+      where: { id: turnoId },
+      select: { id: true, estado: true },
+    });
+
+    if (!turno) {
+      throw new NotFoundException('Turno no encontrado.');
+    }
+
+    if (
+      turno.estado === EstadoTurno.CANCELADO ||
+      turno.estado === EstadoTurno.FINALIZADO ||
+      turno.estado === EstadoTurno.AUSENTE
+    ) {
+      throw new BadRequestException(
+        `No se puede marcar ausente un turno en estado ${turno.estado}.`,
+      );
+    }
+
+    if (
+      turno.estado !== EstadoTurno.PENDIENTE &&
+      turno.estado !== EstadoTurno.EN_ESPERA &&
+      turno.estado !== EstadoTurno.CONFIRMADO
+    ) {
+      throw new BadRequestException(
+        `No se puede marcar ausente un turno en estado ${turno.estado}.`,
+      );
+    }
+
+    return this.prisma.turno.update({
+      where: { id: turnoId },
+      data: {
+        estado: EstadoTurno.AUSENTE,
+      },
+    });
+  }
+
+  async reactivar(turnoId: string) {
+    const turno = await this.prisma.turno.findUnique({
+      where: { id: turnoId },
+      select: { id: true, estado: true },
+    });
+
+    if (!turno) {
+      throw new NotFoundException('Turno no encontrado.');
+    }
+
+    if (
+      turno.estado === EstadoTurno.CANCELADO ||
+      turno.estado === EstadoTurno.FINALIZADO
+    ) {
+      throw new BadRequestException(
+        `Solo se puede reactivar un turno en estado AUSENTE. Estado actual: ${turno.estado}.`,
+      );
+    }
+
+    if (turno.estado !== EstadoTurno.AUSENTE) {
+      throw new BadRequestException(
+        `Solo se puede reactivar un turno en estado AUSENTE. Estado actual: ${turno.estado}.`,
+      );
+    }
+
+    return this.prisma.turno.update({
+      where: { id: turnoId },
+      data: {
+        estado: EstadoTurno.PENDIENTE,
+      },
+    });
+  }
+
   async updateObservaciones(turnoId: string, observaciones: string) {
     const turno = await this.prisma.turno.findUnique({
       where: { id: turnoId },
@@ -722,7 +830,7 @@ export class TurnosService {
       where: { id: turnoId },
       data: {
         inicioReal,
-        estado: EstadoTurno.CONFIRMADO,
+        estado: EstadoTurno.SIENDO_ATENDIDO,
       },
       include: {
         paciente: {

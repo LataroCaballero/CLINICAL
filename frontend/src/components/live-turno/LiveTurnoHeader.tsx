@@ -1,13 +1,11 @@
 'use client';
 
-import { User, Clock, Phone, Mail, CreditCard } from 'lucide-react';
+import { User, Phone, CreditCard } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useLiveTurnoStore } from '@/store/live-turno.store';
-import { useLiveTurnoTimer, formatTimer } from '@/hooks/useLiveTurnoTimer';
 
 export function LiveTurnoHeader() {
   const session = useLiveTurnoStore((state) => state.session);
-  const elapsed = useLiveTurnoTimer();
 
   if (!session) return null;
 
@@ -43,7 +41,7 @@ export function LiveTurnoHeader() {
         </div>
       </div>
 
-      {/* Session Status & Timer */}
+      {/* Session Status */}
       <div className="flex items-center gap-6">
         {/* Live Indicator */}
         <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 rounded-full">
@@ -52,14 +50,6 @@ export function LiveTurnoHeader() {
             <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500" />
           </span>
           <span className="text-sm font-medium text-green-700">En curso</span>
-        </div>
-
-        {/* Timer */}
-        <div className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg">
-          <Clock className="w-5 h-5 text-gray-600" />
-          <span className="font-mono text-xl font-semibold text-gray-900">
-            {formatTimer(elapsed)}
-          </span>
         </div>
       </div>
     </div>

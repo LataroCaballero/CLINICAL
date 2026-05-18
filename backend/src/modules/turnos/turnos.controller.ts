@@ -71,6 +71,21 @@ export class TurnosController {
     return this.turnosService.confirmarTurno(id);
   }
 
+  @Patch(':id/marcar-en-espera')
+  marcarEnEspera(@Param('id') id: string) {
+    return this.turnosService.marcarEnEspera(id);
+  }
+
+  @Patch(':id/marcar-ausente')
+  marcarAusente(@Param('id') id: string) {
+    return this.turnosService.marcarAusente(id);
+  }
+
+  @Patch(':id/reactivar')
+  reactivar(@Param('id') id: string) {
+    return this.turnosService.reactivar(id);
+  }
+
   @Patch(':id/reprogramar')
   reprogramar(@Param('id') id: string, @Body() dto: ReprogramarTurnoDto) {
     return this.turnosService.reprogramarTurno(id, dto);

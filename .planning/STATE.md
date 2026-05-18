@@ -1,85 +1,79 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.5
-milestone_name: Catálogos Clínicos y Flujos de Atención
+milestone: v1.6
+milestone_name: Agenda Operativa
 status: completed
-stopped_at: Completed 31-02-PLAN.md
-last_updated: "2026-05-13T16:26:33.950Z"
-last_activity: 2026-05-13 — Plan 31-02 complete; consumption orders frontend page + TanStack Query hooks + sidebar sub-link; human verification approved; STOCK-03 and STOCK-04 fully satisfied end-to-end
+stopped_at: Completed 34-01-PLAN.md
+last_updated: "2026-05-14T01:53:15.530Z"
+last_activity: "2026-05-14 — Plan 34-02 complete: switch-session AlertDialog en UpcomingAppointments (LT-02)"
 progress:
-  total_phases: 6
-  completed_phases: 6
-  total_plans: 16
-  completed_plans: 16
-  percent: 100
+  total_phases: 3
+  completed_phases: 3
+  total_plans: 6
+  completed_plans: 6
+  percent: 97
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-04-22)
+See: .planning/PROJECT.md (updated 2026-05-13)
 
 **Core value:** Que un cirujano plástico cierre más cirugías — el sistema hace visible qué pacientes seguir, cuándo y cómo, de la manera más automatizada posible
-**Current focus:** Phase 27 — HC Integration LiveTurno + PatientDrawer
+**Current focus:** Milestone v1.6 — Agenda Operativa (Phase 32 next)
 
 ## Current Position
 
 ```
-Milestone: v1.5 Catálogos Clínicos y Flujos de Atención
-Phase:     31 of 31 (Stock Ordenes de Consumo UI) — COMPLETE
-Plan:      2 of 2 complete (plan 31-02 done — frontend page, hooks, sidebar sub-link)
-Status:    Phase 31 complete — full consumption orders workflow live end-to-end; STOCK-03 + STOCK-04 satisfied; milestone v1.5 DONE
-Progress:  [██████████] 100%
+Milestone: v1.6 Agenda Operativa
+Phase:     34 — LiveTurno Simplificado (IN PROGRESS)
+Plan:      02 complete (2/? plans done — LT-02 done)
+Status:    LT-02 done — switch-session AlertDialog en UpcomingAppointments
+Progress:  [██████████] 97% (34/35 plans across all milestones)
 ```
 
-Last activity: 2026-05-13 — Plan 31-02 complete; consumption orders frontend page + TanStack Query hooks + sidebar sub-link; human verification approved; STOCK-03 and STOCK-04 fully satisfied end-to-end
+Last activity: 2026-05-14 — Plan 34-02 complete: switch-session AlertDialog en UpcomingAppointments (LT-02)
+
+## Phase Map
+
+| Phase | Name | Requirements | Status |
+|-------|------|--------------|--------|
+| 32 | Schema + Backend Estados Extendidos | EST-01..05 | Complete (2/2 plans) |
+| 33 | Widget Agenda Operativo | WID-01..06 | Complete (2/2 plans) |
+| 34 | LiveTurno Simplificado | LT-01..03 | In progress (LT-01, LT-02 done) |
 
 ## Accumulated Context
 
-### Key Decisions for v1.5 (from research)
+### Carry-forward Decisions (v1.5)
+- HCCreatorForm reutilizable compartido entre LiveTurno y PatientDrawer
+- OrdenConsumo pattern: PENDIENTE → confirmación por stock admin
+- Snapshot de precio en presupuesto (inmutable al momento de selección)
+- Paciente.flujo: null = legacy, PENDIENTE = sin clasificar, CIRUGIA/TRATAMIENTO = clasificado
+- Guard PENDIENTE-only: no sobreescribe clasificaciones existentes
 
-- **26-07 recalcularPrecioBase uses Inventario.precioActual:** Per-profesional inventory price used for cost recalculation (not Producto.costoBase global baseline) — ensures multi-tenant cost isolation in cirugías.
-- **26-07 skip setInsumos on empty create:** GestionCirugias skips setInsumosMutation call when insumosLocal is empty on create — avoids redundant API round-trip and spinner delay.
-- **26-07 GestionCirugias InsumosEditor both modes:** InsumosEditor shown in create and edit modals — createMutation returns id immediately, so setInsumosCirugia can be called in the same save handler. Recalcular button restricted to edit mode only.
-- **26-06 InsumosEditor edit-only:** InsumosEditor section is shown only in edit modal (selectedTratamiento != null) — new tratamiento has no id yet so set-insumos requires an existing record.
-- **26-05 useInventario no profesionalId param:** `useInventario()` reads professional context internally via `useEffectiveProfessionalId` — do not pass profesionalId to it; InsumosEditor keeps the prop for API compatibility only.
-- **26-05 InsumosEditor uncontrolled:** Component manages its own state; parent passes `initialInsumos` + `onChange` callback. `useEffect` syncs on initialInsumos change for modal reset pattern.
-- **26-04 api named export:** `{ api }` is a named export from `@/lib/api`, not a default export — all hooks must use `import { api } from '@/lib/api'`.
-- **26-02 setInsumos transaction pattern:** Uses `$transaction([deleteMany, ...creates])` for atomic insumos replacement — prevents partial state; client sends full desired list.
-- **26-02 null costoBase:** Treated as 0 via `?? 0` in recalcularPrecioBase reduce — products with no cost set are treated as free, not NaN.
-- **26-01 Migration workaround:** Used `prisma db push` + `migrate resolve` instead of `migrate dev` — Supabase pgBouncer shadow DB cannot replay migration 20260415221758_flujo_paciente. Live DB is correct.
-- **Price snapshot on PresupuestoItem:** Add `precioUnitario Decimal` + `cantidad Int @default(1)` in Phase 26 migration. Never re-read price from catalog for financial documents.
-- **ultimoTratamientoId design:** Use query-on-read (ORDER BY fecha DESC LIMIT 1 join) rather than denormalized FK — prevents corruption from retroactive entries.
-- **27-01 OrdenConsumo atomic creation:** crearEntrada() pre-fetches insumos outside $transaction (pgBouncer pattern), aggregates quantities by productoId via Map, then creates OrdenConsumo inside the same $transaction as the HC entry — no orphaned orders possible.
-- **27-01 consumirInsumos backward compat:** consumirInsumos=false or empty tratamientoIds skips OrdenConsumo creation entirely; existing HC entry creation paths unaffected.
-- **27-01 turnoId nullable pattern:** turnoId present = call from LiveTurno context, absent = call from PatientDrawer — same API endpoint serves both flows.
-- **OrdenConsumo pattern:** HC save creates OrdenConsumo { estado: PENDIENTE } only. Actual MovimientoStock SALIDA happens at explicit stock admin confirmation.
-- **Flujo change CRM side effects:** updateFlujo() must run etapaCRM assignment inside $transaction; frontend must invalidate ['kanban'], ['tratamientos'], ['listaAccion'] caches.
-- **TratamientoInsumo / CirugiaInsumo:** Explicit join tables required (implicit M2M cannot carry `cantidad` field).
-- **Phase ordering:** Phase 26 is strict prerequisite; Phases 27/28/29 can run in parallel after it; Phases 30/31 require Phase 27 output.
-- **27-02 HCCreatorForm autonomous:** HCCreatorForm receives all context via props (pacienteId, profesionalId, turnoId?, obraSocialId?, showDatePicker?, onSaved?) — does not import useLiveTurnoStore, enabling reuse from PatientDrawer.
-- **27-02 anyHasInsumos guard:** consumirInsumos checkbox only shown when at least one selected tratamiento has insumos — prevents UI confusion when no stock consumption is possible.
-- **27-02 tratamiento_en_consultorio free text collapsed:** Free text textarea for tratamiento_en_consultorio is hidden by default behind "+ Agregar notas libres" toggle — keeps UI clean for the primary multi-select use case.
-- **27-03 HCCreatorDialog no turnoId:** turnoId intentionally omitted from HCCreatorDialog — creates HC entry without turno context (HCDR-02). onSaved closes the dialog.
-- **27-03 obraSocialId via (paciente as any):** Field exposed via API but not in typed Paciente interface — cast consistent with existing AutorizacionesPacienteSection usage in PatientDrawer.tsx.
-- **29-01 updateFlujo etapaCRM: null:** updateFlujo() sets etapaCRM: null (not 'SIN_CLASIFICAR' string) — DB enum has no SIN_CLASIFICAR value; kanban maps null to that label at read time.
-- **29-01 ContactoLog in updateFlujo guarded by profesionalId:** ContactoLog creation inside updateFlujo $transaction is guarded by profesionalId non-null check — legacy patients still get their flujo updated without error.
-- **29-02 CambiarFlujoModal pre-close pattern:** onOptimisticUpdate + onOpenChange(false) fire before mutation.mutate so UI updates immediately without waiting for network.
-- **29-02 onRevert sets optimisticFlujo to null:** displayFlujo falls back to paciente.flujo from TanStack Query server cache on error — no manual cache manipulation needed.
-- **30-01 ultimoTratamiento batch query:** ONE historiaClinica.findMany for all pacienteIds with take:10 on entradas (desc), then JS-side filter on contenido.tratamientos — avoids N+1 and avoids unsupported Prisma JSON path equals operator at runtime.
-- **30-01 prefix invalidation ['turnos', 'rango']:** Invalidates all rango queries across all profesional/date combos on any HC save; wired to useCreateHistoriaClinicaEntry, useCreateHCEntry, useFinalizeHCEntry.
-- **30-01 drawerInitialView pattern:** State variable tracks intended DrawerView before opening PatientDrawer; patient name click sets "default", treatment name click sets "historia" — no changes needed to PatientDrawer itself.
-- **31-01 confirmarOrden pgBouncer two-step:** Pre-fetch outside $transaction for fast 404, re-fetch inside tx as race/idempotency guard — same pattern as HC crearEntrada(). ConflictException if orden already confirmed/cancelled.
-- **31-01 inline SALIDA tx logic:** confirmarOrden inlines inventario.update + movimientoStock.create directly inside $transaction — InventarioService.registrarMovimiento() opens its own tx, which pgBouncer forbids when already inside a tx. Pattern matches ordenes-compra.service.ts recibir().
-- **31-01 Inventario auto-create on confirmar:** If no Inventario row for (productoId, profesionalId) exists, create with stockActual=0 then throw BadRequestException — preserves unique constraint, gives clean error for never-stocked products.
+### v1.6 Key Decisions (Phase 32 recorded)
+- EN_ESPERA y SIENDO_ATENDIDO se agregan al enum EstadoTurno existente (DONE - Plan 32-01)
+- Migration SQL creada manualmente: Supabase pgbouncer (6543) bloquea schema engine; aplicar con prisma migrate deploy o SQL editor (Plan 32-01)
+- iniciarSesion establece SIENDO_ATENDIDO (no CONFIRMADO) — sesion activa != cita confirmada (DONE - Plan 32-02)
+- QuickAppointment.tsx usa TurnoRango.estado: string (no inline union) — no requiere actualizacion de tipo (Plan 32-02)
+- SIENDO_ATENDIDO rechazado como origen de marcarEnEspera — en sesion activa primero cerrar-sesion (Plan 32-02)
+- El menú contextual del widget muestra acciones segun estado (DONE - Plan 33-02)
+- useTurnoEstadoActions: mutations-only hook (no optimistic update) — Plan 02 maneja feedback visual via isPending en el componente (Plan 33-01)
+- TurnoEstado type exportado desde useTurnoEstadoActions para que Plan 02 lo importe sin redefinirlo (Plan 33-01)
+- DropdownMenu trigger opacity-0 group-hover:opacity-100 — Acciones column stays clean by default (Plan 33-02)
+- SIENDO_ATENDIDO excluded from DropdownMenu — active session must be closed before state changes (Plan 33-02)
+- EN_ESPERA gets menu but "En espera" item is disabled (already in that state) — user can still Ausentarlo (Plan 33-02)
+- Exit sin HC en LiveTurno llama cerrar-sesion → FINALIZADO (nunca queda turno en estado abierto, pendiente Phase 34)
+- Timer UI eliminado de todas las superficies LiveTurno (Header/Footer/Indicator/Banner/RecoveryDialog) — hook useLiveTurnoTimer.ts borrado (Plan 34-01)
+- 'Cerrar sin guardar entrada de HC' llama cerrarSesion.mutateAsync({}) sin entradaHCId — salida limpia sin auto-save HC (Plan 34-01)
+- AlertDialogAction usa e.preventDefault() para prevenir cierre automatico del dialog durante handleConfirmSwitch async (Plan 34-02)
+- cerrarSesion.mutateAsync({}) sin entradaHCId — no auto-guardar HC draft al cambiar sesion (Plan 34-02)
+- Switch-session pattern: cerrar primero, si falla abortar y no abrir el nuevo turno (Plan 34-02)
 
-### Carry-forward Decisions (v1.4)
-- Paciente.flujo: null = legacy, PENDIENTE = unclassified, CIRUGIA/TRATAMIENTO = classified
-- Guard PENDIENTE-only: never overwrites existing CIRUGIA/TRATAMIENTO classifications
-- CRM filter: [{flujo: CIRUGIA}, {flujo: null}] — preserves legacy data
-
-### Known Tech Debt
+### Known Tech Debt (carry-forward)
+- LIVHC-05/PAC-01: tratamientos snapshot no se escribe cuando consumirInsumos=false
+- STOCK-03: FACTURADOR excluido del backend de ordenes-consumo pero accede desde frontend
 - marcarPracticasPagadas deprecado — limpiar cuando no tenga callers externos
 - IVA matrix cirugía estética — validar con contador antes de habilitar producción AFIP
 - EncryptionService dev fallback key — configurar ENCRYPTION_KEY en .env prod
@@ -87,6 +81,7 @@ Last activity: 2026-05-13 — Plan 31-02 complete; consumption orders frontend p
 
 ## Session Continuity
 
-Last session: 2026-05-13T12:31:59.146Z
-Stopped at: Completed 31-02-PLAN.md
+Last session: 2026-05-14T01:48:56.979Z
+Stopped at: Completed 34-01-PLAN.md
 Resume file: None
+Next action: Phase 34 — LiveTurno Simplificado (LT-03 pending)

@@ -1,6 +1,4 @@
 import { Module } from '@nestjs/common';
-import { PrismaService } from 'src/prisma/prisma.service';
-
 // Controllers
 import { ProductosController } from './controllers/productos.controller';
 import { InventarioController } from './controllers/inventario.controller';
@@ -28,7 +26,6 @@ import { CuentasCorrientesProveedoresModule } from '../cuentas-corrientes-provee
     VentasProductoController,
   ],
   providers: [
-    PrismaService,
     ProductosService,
     InventarioService,
     ProveedoresService,

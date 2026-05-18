@@ -2,14 +2,12 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Timer } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { useLiveTurnoStore } from "@/store/live-turno.store";
-import { useLiveTurnoTimer, formatTimer } from "@/hooks/useLiveTurnoTimer";
 
 export default function ActiveSessionBanner() {
   const session = useLiveTurnoStore((state) => state.session);
   const restore = useLiveTurnoStore((state) => state.restore);
-  const elapsed = useLiveTurnoTimer();
 
   if (!session) return null;
 
@@ -34,12 +32,6 @@ export default function ActiveSessionBanner() {
           </div>
         </div>
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-1.5 text-violet-300">
-            <Timer className="w-4 h-4" />
-            <span className="text-sm font-mono font-medium">
-              {formatTimer(elapsed)}
-            </span>
-          </div>
           <Button
             onClick={restore}
             className="bg-violet-600 hover:bg-violet-700 text-white"

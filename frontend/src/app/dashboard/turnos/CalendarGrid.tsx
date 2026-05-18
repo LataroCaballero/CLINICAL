@@ -22,7 +22,7 @@ interface CalendarEvent {
   end: Date;
   tipo: string;
   tipoTurnoId: string;
-  estado: "PENDIENTE" | "CONFIRMADO" | "CANCELADO" | "AUSENTE" | "FINALIZADO";
+  estado: "PENDIENTE" | "CONFIRMADO" | "CANCELADO" | "AUSENTE" | "FINALIZADO" | "EN_ESPERA" | "SIENDO_ATENDIDO";
   observaciones?: string;
   esSobreturno?: boolean;
 }
@@ -134,8 +134,10 @@ function getStatusDotColor(estado: CalendarEvent["estado"]): string {
     case "CONFIRMADO": return "#22C55E"; // green
     case "CANCELADO":  return "#EF4444"; // red
     case "AUSENTE":    return "#9CA3AF"; // gray
-    case "FINALIZADO": return "#3B82F6"; // blue
-    default:           return "#9CA3AF";
+    case "FINALIZADO":      return "#3B82F6"; // blue
+    case "EN_ESPERA":       return "#A78BFA"; // violet
+    case "SIENDO_ATENDIDO": return "#0EA5E9"; // sky blue
+    default:                return "#9CA3AF";
   }
 }
 

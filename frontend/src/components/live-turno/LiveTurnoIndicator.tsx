@@ -3,11 +3,9 @@
 import { Maximize2, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLiveTurnoStore } from '@/store/live-turno.store';
-import { useLiveTurnoTimer, formatTimerCompact } from '@/hooks/useLiveTurnoTimer';
 
 export function LiveTurnoIndicator() {
   const { session, isMinimized, restore } = useLiveTurnoStore();
-  const elapsed = useLiveTurnoTimer();
 
   // Only show when minimized and has active session
   if (!isMinimized || !session) return null;
@@ -29,9 +27,9 @@ export function LiveTurnoIndicator() {
           {session.pacienteNombre}
         </span>
 
-        {/* Timer */}
-        <span className="font-mono text-sm bg-green-700 px-2 py-0.5 rounded">
-          {formatTimerCompact(elapsed)}
+        {/* Appointment type badge */}
+        <span className="text-xs bg-green-700 px-2 py-0.5 rounded font-medium">
+          {session.tipoTurno}
         </span>
 
         {/* Expand icon */}

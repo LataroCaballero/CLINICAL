@@ -84,9 +84,34 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 - ✓ Widget Agenda Operativo: columna Tipo de Turno reordenada, nombre del paciente clickeable abre PatientDrawer, menú ⋮ contextual con acciones por estado — v1.6
 - ✓ LiveTurno simplificado: sin timer, exit sin HC llama cerrarSesion (turno FINALIZADO), switch-session mediante AlertDialog — v1.6
 
+## Current Milestone: v1.7 CRM Flexible
+
+**Goal:** Permitir que la secretaria mueva pacientes entre cualquier etapa del CRM libremente, con warnings contextuales y un sheet de kanban rediseñado con stepper de etapas y acciones rápidas por paso.
+
+**Target features:**
+- Drag-and-drop kanban sin restricciones de negocio (cualquier etapa → cualquier etapa)
+- Toast warnings no bloqueantes cuando faltan prerequisitos (ej. mover a CONFIRMADO sin presupuesto aceptado)
+- Sheet lateral del kanban rediseñado: nombre/flujo + botones compactos + stepper de etapas
+- Stepper clickeable con acciones rápidas por etapa (ver presupuesto, registrar HC, marcar procedimiento)
+- "Registrar contacto" como botón compacto que abre modal pequeño
+- Botón de lista de espera opt-in integrado en el sheet
+
 ### Active
 
-*(sin requirements activos — iniciar /gsd:new-milestone para v1.7)*
+- [ ] CRM-01: El usuario puede mover un paciente a cualquier etapa del kanban mediante drag-and-drop sin restricciones de negocio
+- [ ] CRM-02: Al mover a PRESUPUESTO_ENVIADO sin presupuesto existente, aparece un toast de advertencia no bloqueante
+- [ ] CRM-03: Al mover a CONFIRMADO sin presupuesto aceptado, aparece un toast de advertencia no bloqueante
+- [ ] CRM-04: Las transiciones automáticas del sistema siguen funcionando normalmente
+- [ ] CRM-05: El usuario puede mover un paciente a cualquier etapa usando el stepper del sheet lateral
+- [ ] SHEET-01: El sheet muestra nombre del paciente y badge de flujo en el header
+- [ ] SHEET-02: "Registrar contacto" es un botón compacto que abre un modal pequeño
+- [ ] SHEET-03: Hay un botón compacto para activar/desactivar el opt-in de lista de espera
+- [ ] SHEET-04: El sheet incluye un stepper con las 6 etapas CRM indicando la etapa actual
+- [ ] SHEET-05: Hacer click en una etapa del stepper mueve al paciente a esa etapa
+- [ ] SHEET-06: En la etapa PRESUPUESTO_ENVIADO del stepper aparece "Ver/Crear presupuesto"
+- [ ] SHEET-07: En la etapa CONSULTADO del stepper aparece "Registrar HC" abriendo HCCreatorForm
+- [ ] SHEET-08: En la etapa PROCEDIMIENTO_REALIZADO del stepper aparece "Marcar como realizado"
+- [ ] SHEET-09: El panel de acciones rápidas actual es removido del sheet
 
 ### Deferred
 
@@ -198,4 +223,4 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 27/27 requisitos completados en 21 días (2026-04-22 → 2026-05-13). 6 fases, 16 planes. Tech debt aceptado: snapshot de tratamientos sin consumirInsumos y rol FACTURADOR en ordenes-consumo. Ver `.planning/milestones/v1.5-ROADMAP.md` para detalles.
 
 ---
-*Last updated: 2026-05-23 after v1.6 milestone — Agenda Operativa*
+*Last updated: 2026-05-23 after v1.7 milestone start — CRM Flexible*

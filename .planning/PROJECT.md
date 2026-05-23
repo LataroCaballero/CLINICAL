@@ -80,14 +80,13 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 - ✓ Tab Tratamientos: columna "Último tratamiento" por paciente via batch subquery — v1.5
 - ✓ Cambio de flujo desde PatientDrawer con update optimista, etapaCRM reset y ContactoLog automático — v1.5
 - ✓ Entrada de HC desde PatientDrawer usando HCCreatorForm reutilizable, sin turno activo, con fecha retroactiva — v1.5
+- ✓ EstadoTurno extendido con EN_ESPERA y SIENDO_ATENDIDO; 3 endpoints de transición (marcarEnEspera, marcarAusente, reactivar); iniciarSesion establece SIENDO_ATENDIDO — v1.6
+- ✓ Widget Agenda Operativo: columna Tipo de Turno reordenada, nombre del paciente clickeable abre PatientDrawer, menú ⋮ contextual con acciones por estado — v1.6
+- ✓ LiveTurno simplificado: sin timer, exit sin HC llama cerrarSesion (turno FINALIZADO), switch-session mediante AlertDialog — v1.6
 
 ### Active
 
-- [ ] Estados de turno extendidos: EN_ESPERA y SIENDO_ATENDIDO en schema + endpoints — v1.6
-- [ ] Acciones rápidas por turno en widget agenda (ausente, en espera, reactivar, llamar) — v1.6
-- [ ] Nombre del paciente en agenda abre PatientDrawer directamente — v1.6
-- [ ] LiveTurno simplificado: sin timer, sin bloqueo, exit sin HC finaliza turno — v1.6
-- [ ] Columna "Tipo de Turno" antes que "Tratamiento" en tabla de agenda — v1.6
+*(sin requirements activos — iniciar /gsd:new-milestone para v1.7)*
 
 ### Deferred
 
@@ -103,19 +102,13 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 - Facturación electrónica AFIP real en v1.1 — completada la investigación, implementación real planificada para v1.2
 - Tiers de suscripción con feature flags — deferido a cuando haya clientes reales con necesidades diferenciadas
 
-## Current Milestone: v1.6 Agenda Operativa
+## Shipped: v1.6 Agenda Operativa ✅
 
-**Goal:** Convertir la tabla de turnos del dashboard en la herramienta de operación diaria de la clínica — acciones contextuales por turno, estados visibles, y LiveTurno sin fricción.
-
-**Target features:**
-- Estados EN_ESPERA y SIENDO_ATENDIDO: secretaria marca llegada del paciente, iniciar turno refleja el estado en tiempo real
-- Menú de acciones por turno (⋮): ausente, en espera, llamar (placeholder), reactivar desde ausente
-- Nombre del paciente clickeable → PatientDrawer
-- LiveTurno sin timer ni bloqueo: abre la consulta simple, salir sin guardar HC finaliza el turno
+14/14 requisitos completados en 2 días (2026-05-13 → 2026-05-14). 3 fases, 6 planes. Ver `.planning/milestones/v1.6-ROADMAP.md` para detalles.
 
 ## Context
 
-**Estado actual (post-v1.5):** Los catálogos clínicos (tratamientos y cirugías) están integrados con LiveTurno HC, presupuestos y stock. Un profesional puede documentar un tratamiento en HC seleccionando del catálogo → genera automáticamente una OrdenConsumo PENDIENTE → el responsable de stock la confirma en /dashboard/stock/consumo → el inventario se descuenta atomicamente. Presupuestos con snapshot pricing desde catálogo, "Último tratamiento" en tab mensual, y cambio de flujo desde PatientDrawer con efectos CRM. 27/27 requisitos del milestone v1.5 satisfechos en 21 días (6 fases, 16 planes). Tech debt aceptado: snapshot de tratamientos no se escribe sin consumirInsumos=true; FACTURADOR excluido del backend de ordenes-consumo.
+**Estado actual (post-v1.6):** La tabla de agenda del dashboard es ahora la herramienta de operación diaria completa. La secretaria puede marcar la llegada del paciente (EN_ESPERA), ver quién está siendo atendido (SIENDO_ATENDIDO), marcar ausencias y reactivarlas, y abrir el PatientDrawer desde el nombre del paciente — todo sin salir del dashboard. LiveTurno es sin fricción: sin timer, con opción de cerrar sin guardar HC, y con switch-session seguro cuando el profesional quiere cambiar de paciente. 14/14 requisitos v1.6 completados en 2 días (3 fases, 6 planes). Tech debt acumulado: snapshot de tratamientos no se escribe sin consumirInsumos=true; FACTURADOR excluido del backend de ordenes-consumo; CALL-01 (botón Llamar conectado a pantalla sala de espera) deferido.
 
 **Stack:** NestJS + Prisma + PostgreSQL (backend) | Next.js 16 + React 19 + TypeScript (frontend) | BullMQ + Redis (async) | WhatsApp Cloud API | node-forge (firma CMS WSAA) | qrcode 1.5.4 + PDFKit (QR en PDF).
 
@@ -178,6 +171,11 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 | OrdenConsumo PENDIENTE→CONFIRMADA (dos-step, no descuento inmediato) — v1.5 | Separación de roles: PROFESIONAL documenta, Admin/stock confirma; evita race conditions con escrituras concurrentes | ✓ Correcto — modelo pending→confirm funcional end-to-end |
 | tratamientosSnapshot en OrdenConsumo.contenido (no Paciente desnormalizado) — v1.5 | Query-on-read más robusto que columna desnormalizada con entradas retroactivas | ✓ Correcto — pero expuso gap: snapshot no escrito sin consumirInsumos=true (tech debt aceptado) |
 | Snapshot de precio al seleccionar ítem del catálogo en presupuesto — v1.5 | Immutabilidad del presupuesto: el precio del catálogo puede cambiar pero el presupuesto histórico queda intacto | ✓ Correcto — fromCatalog flag stripped antes de enviar al backend |
+| Migration SQL manual para enum extension — v1.6 | pgBouncer de Supabase (puerto 6543) bloquea el schema engine de Prisma; ALTER TYPE ADD VALUE al final no requiere recrear el tipo | ✓ Correcto — migrate deploy (no dev) como patrón estándar para este entorno |
+| SIENDO_ATENDIDO rechazado como origen de marcarEnEspera — v1.6 | Estado de sesión activa es diferente a estado de sala de espera; transición requiere cerrar sesión primero | ✓ Correcto — state machine predecible sin ambigüedad |
+| DropdownMenu opacity-0 group-hover:opacity-100 — v1.6 | Columna Acciones queda limpia por defecto; el menú aparece en hover sin ocupar espacio visible | ✓ Correcto — UX limpia sin sacrificar accesibilidad |
+| AlertDialogAction con e.preventDefault() para switch-session async — v1.6 | El dialog se cerraría automáticamente antes de que terminen las mutations sin el preventDefault | ✓ Correcto — cierre explícito con setShowSwitchDialog(false) en el handler |
+| cerrarSesion sin entradaHCId al salir sin HC (exit y switch) — v1.6 | No auto-guardar HC draft: el profesional tomó la decisión explícita de salir sin registrar | ✓ Correcto — comportamiento intencional con aviso en el dialog |
 
 ## Shipped: v1.1 Vista del Facturador ✅
 
@@ -200,4 +198,4 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 27/27 requisitos completados en 21 días (2026-04-22 → 2026-05-13). 6 fases, 16 planes. Tech debt aceptado: snapshot de tratamientos sin consumirInsumos y rol FACTURADOR en ordenes-consumo. Ver `.planning/milestones/v1.5-ROADMAP.md` para detalles.
 
 ---
-*Last updated: 2026-05-13 after v1.6 milestone start — Agenda Operativa*
+*Last updated: 2026-05-23 after v1.6 milestone — Agenda Operativa*

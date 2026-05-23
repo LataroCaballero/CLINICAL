@@ -1,5 +1,19 @@
 # Milestones
 
+## v1.6 Agenda Operativa (Shipped: 2026-05-23)
+
+**Phases completed:** 3 phases (32–34), 6 plans
+**Stats:** 2 días (2026-05-13 → 2026-05-14) | 56 archivos | +3,004 / -250 líneas | ~34,600 LOC TypeScript total
+
+**Key accomplishments:**
+1. EstadoTurno extendido con EN_ESPERA y SIENDO_ATENDIDO en schema PostgreSQL/Prisma; migración SQL manual (pgBouncer workaround); 3 endpoints PATCH de transición de estado (marcarEnEspera, marcarAusente, reactivar) + iniciarSesion corregido a SIENDO_ATENDIDO
+2. UpcomingAppointments actualizado a herramienta operativa diaria: columnas reordenadas (Tipo de Turno antes de Tratamiento), nombre del paciente clickeable abre PatientDrawer, badges amber (EN_ESPERA) e indigo+pulse (SIENDO_ATENDIDO)
+3. Menú ⋮ contextual por estado: En espera / Ausente / Reactivar / Llamar (placeholder) según estado del turno; SIENDO_ATENDIDO excluido del menú (debe cerrar sesión primero)
+4. Timer eliminado de todas las superficies LiveTurno (Header, Footer, Indicator, Banner, RecoveryDialog); hook useLiveTurnoTimer.ts borrado; tipoTurno badge en Indicator como reemplazo
+5. Switch-session sin fricción: AlertDialog de confirmación al intentar iniciar otro turno con sesión activa; secuencia cerrar→abrir con aviso de HC borrador si hay draft sin guardar
+
+---
+
 ## v1.5 Catálogos Clínicos y Flujos de Atención (Shipped: 2026-05-13)
 
 **Phases completed:** 6 phases (26–31), 16 plans

@@ -4,6 +4,46 @@
 
 ---
 
+## Milestone: v1.6 — Agenda Operativa
+
+**Shipped:** 2026-05-23
+**Phases:** 3 (32–34) | **Plans:** 6 | **Timeline:** 2 days (2026-05-13 → 2026-05-14)
+
+### What Was Built
+- EstadoTurno extendido con EN_ESPERA y SIENDO_ATENDIDO; migration SQL manual (pgBouncer workaround); 3 endpoints de transición + iniciarSesion corregido
+- useTurnoEstadoActions hook: 3 mutations TanStack Query con cache invalidation y sonner toasts
+- UpcomingAppointments convertido en herramienta operativa: columnas reordenadas, nombre clickeable (PatientDrawer), menú ⋮ contextual con acciones por estado, badges EN_ESPERA/SIENDO_ATENDIDO
+- Timer eliminado de todas las superficies LiveTurno; hook useLiveTurnoTimer.ts borrado; tipoTurno badge como reemplazo en Indicator
+- "Cerrar sin guardar entrada de HC" button en LiveTurnoFooter: AlertDialog → cerrarSesion sin entradaHCId
+- Switch-session: AlertDialog en UpcomingAppointments, secuencia cerrar→abrir async con aviso de HC borrador, e.preventDefault() para controlar cierre manual del dialog
+
+### What Worked
+- **Milestone más corto hasta la fecha**: 6 planes en 2 días — scope muy acotado y requisitos sin ambigüedad de implementación
+- **Mutations-only hook separado (Plan 33-01)**: separar useTurnoEstadoActions del componente que lo usa permitió que Plan 33-02 solo se enfocara en UI, sin lógica de red mezclada
+- **Patrones establecidos en fases anteriores reusados sin fricción**: cerrarSesion/iniciarSesion de useLiveTurnoActions, PatientDrawer drawer-pattern con useState(id), TanStack Query invalidation — todo copy-adaptado sin reimplementar
+- **Todos los requisitos cubiertos en solo 2 planes por fase**: la granularidad fue correcta; ningún plan fue demasiado grande ni demasiado pequeño
+
+### What Was Inefficient
+- **MILESTONES.md accomplishments vacíos (recurrente)**: el CLI gsd-tools sigue sin poder extraer one_liners — requirió edición manual post-archivado
+- **No hay audit de milestone v1.6**: se procedió sin /gsd:audit-milestone; dados los 14/14 requirements completos el riesgo fue bajo, pero el patrón establecido (audit antes de complete-milestone) no se siguió
+
+### Patterns Established
+- `AlertDialogAction + e.preventDefault()` para manejar acciones async en shadcn AlertDialog — sin preventDefault el dialog se cierra antes de que termine la mutation
+- Switch-session pattern: cerrarSesion.mutateAsync primero → si falla, abortar (no abrir nuevo turno); si ok, iniciarSesion.mutate — orden estricto, sin optimistic updates
+- `opacity-0 group-hover:opacity-100` en trigger de DropdownMenu: columna Acciones limpia por defecto
+
+### Key Lessons
+1. **Scope de 2-3 días es el óptimo para milestones operativos** (UI-focused, sin schema changes complejas): suficiente para cerrar una feature completa sin acumular deuda de planificación
+2. **Migration pgBouncer workaround ya es patrón conocido**: documentar la solución una vez y referir al pattern en fases posteriores — no re-investigar cada vez
+3. **La tabla de agenda como herramienta de operación es más usada que LiveTurno**: las mejoras al widget (menú ⋮, PatientDrawer, estados visibles) tienen más impacto diario que refinamientos al panel de consulta
+
+### Cost Observations
+- Model: claude-sonnet-4-6 (balanced profile)
+- Sessions: ~6 plan executions
+- Notable: Plan 33-02 completado en 2 min — cuando el componente objetivo y los hooks ya están listos, la implementación de UI es casi mecánica
+
+---
+
 ## Milestone: v1.5 — Catálogos Clínicos y Flujos de Atención
 
 **Shipped:** 2026-05-13
@@ -179,6 +219,8 @@
 | v1.2 AFIP Real | 8 | 24 | 50 días | ~variable | Complejidad regulatoria + audit rounds; 2 gap-closure phases |
 | v1.3 Historial Consultas | 2 | 4 | 7 días | ~variable | Milestone corto, widget-focused |
 | v1.4 Flujo de Pacientes | 4 | 10 | 5 días | ~variable | Mejor ratio plans/days — objetivo acotado y schema sólido |
+| v1.5 Catálogos Clínicos | 6 | 16 | 21 días | ~variable | Milestone más amplio; component extraction (HCCreatorForm) como patrón clave |
+| v1.6 Agenda Operativa | 3 | 6 | 2 días | ~variable | Milestone más corto — scope UI-focused sin schema compleja, patrones reutilizados |
 
 ### Cumulative Quality
 
@@ -189,11 +231,14 @@
 | v1.2 | ~40+ TDD tests (WSAA, AfipReal, CAEA, processor) | <10% | node-forge 1.3.3, qrcode 1.5.4, async-mutex |
 | v1.3 | ~minimal | <10% | ninguna |
 | v1.4 | ~minimal | <10% | ninguna |
+| v1.5 | ~minimal | <10% | ninguna |
+| v1.6 | ~minimal | <10% | ninguna |
 
 ### Recurring Process Debt
 
-| Issue | v1.0 | v1.1 | v1.2 | Fix |
-|-------|------|------|------|-----|
-| MILESTONES.md accomplishments vacíos | — | ✗ | ✗ | ✗ | Actualizar formato SUMMARY.md con `one_liner:` field |
-| STATE.md progress desactualizado durante ejecución | — | ✗ | parcial | parcial | GSD executor actualiza STATE al final de cada plan |
-| Integration bugs detectados tarde (audit, no verify) | — | — | ✗ | ✓ audit pre-archivado | Audit antes de complete-milestone elimina retrabajo |
+| Issue | v1.1 | v1.2 | v1.4 | v1.5 | v1.6 | Fix |
+|-------|------|------|------|------|------|-----|
+| MILESTONES.md accomplishments vacíos | ✗ | ✗ | ✗ | ✗ | ✗ | Actualizar formato SUMMARY.md con `one_liner:` field |
+| STATE.md progress desactualizado durante ejecución | ✗ | parcial | parcial | parcial | parcial | GSD executor actualiza STATE al final de cada plan |
+| Integration bugs detectados tarde (audit, no verify) | — | ✗ | ✓ | ✓ | sin audit | Audit antes de complete-milestone elimina retrabajo |
+| Audit saltado antes de archivar | — | — | — | — | ✗ | Correr /gsd:audit-milestone antes de /gsd:complete-milestone |

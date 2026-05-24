@@ -607,6 +607,7 @@ export class PacientesService {
         updatedAt: true,
         enListaEspera: true,
         comentarioListaEspera: true,
+        flujo: true,
         presupuestos: {
           select: { total: true, estado: true, fechaEnviado: true },
           orderBy: { createdAt: 'desc' },
@@ -681,6 +682,7 @@ export class PacientesService {
         enListaEspera: p.enListaEspera,
         comentarioListaEspera: p.comentarioListaEspera,
         pendingAutorizaciones: p.autorizaciones.length,
+        flujo: p.flujo ?? null,
       })),
     }));
   }

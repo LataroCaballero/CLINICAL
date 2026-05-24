@@ -107,7 +107,7 @@ Full details: `.planning/milestones/v1.6-ROADMAP.md`
 
 ### v1.7 CRM Flexible (Fases 35–38)
 
-- [ ] **Phase 35: Backend Foundation** — Eliminar guard CONFIRMADO, agregar guards forward-only para auto-transiciones, fix idempotencia, campo flujo en query kanban
+- [x] **Phase 35: Backend Foundation** — Eliminar guard CONFIRMADO, agregar guards forward-only para auto-transiciones, fix idempotencia, campo flujo en query kanban (completed 2026-05-24)
 - [ ] **Phase 36: Drag-and-Drop + Warning Infrastructure** — Helper de warnings, integración en KanbanBoard, fix ghost-card onError, campo flujo wired al tipo frontend
 - [ ] **Phase 37: Sheet Redesign — Layout y Stepper UI** — Header compacto con FlujoBadge, ContactoRapidoModal, toggle lista de espera compacto, EtapaStepper estático, eliminar panel de acciones rápidas
 - [ ] **Phase 38: Stepper Interactions + Contextual Actions** — Stepper clickeable con useUpdateEtapaCRM, PERDIDO abre LossReasonModal, botones de acción contextual por etapa
@@ -212,7 +212,7 @@ Plans:
 | 32. Schema + Backend Estados Extendidos | v1.6 | 2/2 | Complete | 2026-05-13 |
 | 33. Widget Agenda Operativo | v1.6 | 2/2 | Complete | 2026-05-13 |
 | 34. LiveTurno Simplificado | v1.6 | 2/2 | Complete | 2026-05-14 |
-| 35. Backend Foundation | 1/2 | In Progress|  | - |
+| 35. Backend Foundation | 2/2 | Complete   | 2026-05-24 | - |
 | 36. Drag-and-Drop + Warning Infrastructure | v1.7 | 0/? | Not started | - |
 | 37. Sheet Redesign — Layout y Stepper UI | v1.7 | 0/? | Not started | - |
 | 38. Stepper Interactions + Contextual Actions | v1.7 | 0/? | Not started | - |

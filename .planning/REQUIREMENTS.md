@@ -12,7 +12,7 @@ Requirements for milestone v1.7 CRM Flexible. Each maps to roadmap phases.
 - [x] **CRM-01**: El usuario puede mover un paciente a cualquier etapa del kanban mediante drag-and-drop sin restricciones de negocio
 - [ ] **CRM-02**: Al mover a PRESUPUESTO_ENVIADO sin presupuesto existente, aparece toast no bloqueante: "No hay presupuesto enviado a este paciente"
 - [ ] **CRM-03**: Al mover a CONFIRMADO sin presupuesto aceptado, aparece toast no bloqueante: "Ningún presupuesto fue aceptado — verificá antes de confirmar"
-- [ ] **CRM-04**: Las transiciones automáticas del sistema (cerrar sesión, enviar/aceptar presupuesto) no sobreescriben etapas más avanzadas puestas a mano
+- [x] **CRM-04**: Las transiciones automáticas del sistema (cerrar sesión, enviar/aceptar presupuesto) no sobreescriben etapas más avanzadas puestas a mano
 - [ ] **CRM-05**: El usuario puede mover un paciente a cualquier etapa usando el stepper del sheet (mismo warning logic que drag-and-drop)
 
 ### SHEET — Rediseño del sheet lateral del kanban
@@ -55,7 +55,7 @@ Requirements for milestone v1.7 CRM Flexible. Each maps to roadmap phases.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | CRM-01 | Phase 35 | Complete |
-| CRM-04 | Phase 35 | Pending |
+| CRM-04 | Phase 35 | Complete |
 | CRM-02 | Phase 36 | Pending |
 | CRM-03 | Phase 36 | Pending |
 | SHEET-01 | Phase 37 | Pending |

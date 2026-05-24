@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: CRM Flexible
-status: in_progress
-last_updated: "2026-05-24T00:08:00Z"
+status: executing
+last_updated: "2026-05-24T16:12:47.865Z"
 progress:
   total_phases: 4
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 2
-  completed_plans: 1
+  completed_plans: 2
   percent: 0
 ---
 
@@ -77,6 +77,6 @@ Next: 35-02-PLAN.md
 
 **To resume:** Read `.planning/STATE.md` + `.planning/ROADMAP.md` + `.planning/phases/35-backend-foundation/35-02-PLAN.md`.
 
-**Last session:** 2026-05-24 — Completed 35-01-PLAN.md (updateEtapaCRM free movement + getKanban flujo field)
+**Last session:** 2026-05-24T16:12:47.863Z
 
 **Blocked by:** Nothing — ready to execute 35-02-PLAN.md.

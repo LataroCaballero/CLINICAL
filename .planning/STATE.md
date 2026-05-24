@@ -2,15 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: CRM Flexible
-status: roadmap_ready
-stopped_at: Phase 35 — ready to plan
-last_updated: "2026-05-23T00:00:00.000Z"
-last_activity: "2026-05-23 — Roadmap v1.7 created (4 phases, 14 requirements)"
+status: in_progress
+last_updated: "2026-05-24T00:08:00Z"
 progress:
   total_phases: 4
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_plans: 2
+  completed_plans: 1
   percent: 0
 ---
 
@@ -28,18 +26,19 @@ See: .planning/PROJECT.md (updated 2026-05-23)
 ```
 Milestone: v1.7 CRM Flexible
 Phase:     35 — Backend Foundation
-Plan:      Not started
-Status:    Roadmap ready — awaiting plan-phase 35
+Plan:      02 of 02 (plan 01 complete)
+Status:    In progress — 1/2 plans complete in Phase 35
 Progress:  [░░░░░░░░░░░░░░░░░░░░] 0% (0/4 phases)
 
-Next command: /gsd:plan-phase 35
+Last completed: 35-01-PLAN.md (2026-05-24)
+Next: 35-02-PLAN.md
 ```
 
 ## Milestone Overview
 
 | Phase | Name | Requirements | Status |
 |-------|------|--------------|--------|
-| 35 | Backend Foundation | CRM-01 (backend), CRM-04 | Not started |
+| 35 | Backend Foundation | CRM-01 (backend), CRM-04 | In Progress (1/2 plans done) |
 | 36 | Drag-and-Drop + Warning Infrastructure | CRM-01 (frontend), CRM-02, CRM-03 | Not started |
 | 37 | Sheet Redesign — Layout y Stepper UI | SHEET-01, SHEET-02, SHEET-03, SHEET-04, SHEET-09 | Not started |
 | 38 | Stepper Interactions + Contextual Actions | CRM-05, SHEET-05, SHEET-06, SHEET-07, SHEET-08 | Not started |
@@ -63,6 +62,7 @@ Next command: /gsd:plan-phase 35
 - PERDIDO en stepper abre LossReasonModal (componente ya existente en v1.0)
 - HCCreatorForm reutilizado directamente desde SHEET-07 sin duplicar lógica
 - ContactoRapidoModal es un Dialog (no Sheet anidado) para evitar z-index y focus-trap issues
+- [35-01] Remover validación presupuesto ACEPTADO para CONFIRMADO: el profesional puede mover libremente cualquier etapa CRM; solo PERDIDO requiere motivoPerdida
 
 ### Known Tech Debt (carry-forward)
 - LIVHC-05/PAC-01: tratamientos snapshot no se escribe cuando consumirInsumos=false
@@ -75,6 +75,8 @@ Next command: /gsd:plan-phase 35
 
 ## Session Continuity
 
-**To resume:** Read `.planning/STATE.md` + `.planning/ROADMAP.md` + current phase plan (`.planning/phases/phase-35/PLAN.md` when created).
+**To resume:** Read `.planning/STATE.md` + `.planning/ROADMAP.md` + `.planning/phases/35-backend-foundation/35-02-PLAN.md`.
 
-**Blocked by:** Nothing — ready to start Phase 35.
+**Last session:** 2026-05-24 — Completed 35-01-PLAN.md (updateEtapaCRM free movement + getKanban flujo field)
+
+**Blocked by:** Nothing — ready to execute 35-02-PLAN.md.

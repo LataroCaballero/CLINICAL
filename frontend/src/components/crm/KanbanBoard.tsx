@@ -23,6 +23,7 @@ import { CardActionsSheet } from "./CardActionsSheet";
 import { useUpdateEtapaCRM } from "@/hooks/useUpdateEtapaCRM";
 import { MotivoPerdidaCRM } from "@/hooks/useCRMKanban";
 import { toast } from "sonner";
+import { getEtapaWarning } from "@/lib/crm-warnings";
 import PatientDrawer from "@/app/dashboard/pacientes/components/PatientDrawer";
 import { NuevoTurnoModal } from "@/components/patient/PatientDrawer/views/NuevoTurnoModal";
 
@@ -167,6 +168,11 @@ export function KanbanBoard({ columns, unreadMap }: Props) {
 
     // Mover optimistamente
     setPendingMoves((prev) => ({ ...prev, [patient.id]: targetColumn }));
+
+    // Warning no bloqueante — simultáneo con el move optimista (CRM-02, CRM-03)
+    const warning = getEtapaWarning(patient, targetColumn);
+    if (warning) toast.warning(warning);
+
     updateEtapa(
       { pacienteId: patient.id, etapaCRM: targetColumn },
       {
@@ -177,7 +183,7 @@ export function KanbanBoard({ columns, unreadMap }: Props) {
             return next;
           }),
         onError: () =>
-          toast.error("No se pudo mover el paciente. Verificá los requisitos."),
+          toast.error("No se pudo guardar el movimiento. Intentá de nuevo."),
       }
     );
   }

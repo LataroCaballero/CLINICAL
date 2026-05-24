@@ -506,7 +506,7 @@ export class PacientesService {
   ) {
     const paciente = await this.prisma.paciente.findUnique({
       where: { id },
-      select: { id: true, profesionalId: true, presupuestos: { select: { estado: true } } },
+      select: { id: true, profesionalId: true },
     });
     if (!paciente) throw new NotFoundException('Paciente no encontrado');
 
@@ -514,17 +514,6 @@ export class PacientesService {
       throw new BadRequestException(
         'Se requiere motivoPerdida al mover a etapa PERDIDO',
       );
-    }
-
-    if (dto.etapaCRM === EtapaCRM.CONFIRMADO) {
-      const tienePresupuestoAceptado = paciente.presupuestos.some(
-        (p) => p.estado === EstadoPresupuesto.ACEPTADO,
-      );
-      if (!tienePresupuestoAceptado) {
-        throw new BadRequestException(
-          'El paciente debe tener al menos un presupuesto ACEPTADO para pasar a CONFIRMADO',
-        );
-      }
     }
 
     const updated = await this.prisma.paciente.update({

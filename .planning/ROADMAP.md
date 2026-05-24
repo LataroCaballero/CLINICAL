@@ -9,6 +9,7 @@
 - ✅ **v1.4 Flujo de Pacientes** — Fases 22–25 (shipped 2026-04-20)
 - ✅ **v1.5 Catálogos Clínicos y Flujos de Atención** — Fases 26–31 (shipped 2026-05-13)
 - ✅ **v1.6 Agenda Operativa** — Fases 32–34 (shipped 2026-05-23)
+- 🔄 **v1.7 CRM Flexible** — Fases 35–38 (en progreso)
 
 ## Phases
 
@@ -104,6 +105,61 @@ Full details: `.planning/milestones/v1.6-ROADMAP.md`
 
 </details>
 
+### v1.7 CRM Flexible (Fases 35–38)
+
+- [ ] **Phase 35: Backend Foundation** — Eliminar guard CONFIRMADO, agregar guards forward-only para auto-transiciones, fix idempotencia, campo flujo en query kanban
+- [ ] **Phase 36: Drag-and-Drop + Warning Infrastructure** — Helper de warnings, integración en KanbanBoard, fix ghost-card onError, campo flujo wired al tipo frontend
+- [ ] **Phase 37: Sheet Redesign — Layout y Stepper UI** — Header compacto con FlujoBadge, ContactoRapidoModal, toggle lista de espera compacto, EtapaStepper estático, eliminar panel de acciones rápidas
+- [ ] **Phase 38: Stepper Interactions + Contextual Actions** — Stepper clickeable con useUpdateEtapaCRM, PERDIDO abre LossReasonModal, botones de acción contextual por etapa
+
+## Phase Details
+
+### Phase 35: Backend Foundation
+**Goal**: El backend permite mover pacientes a cualquier etapa manualmente sin restricciones, y las auto-transiciones del sistema respetan etapas más avanzadas
+**Depends on**: Phase 34 (v1.6 completo)
+**Requirements**: CRM-01 (parte backend), CRM-04
+**Success Criteria** (what must be TRUE):
+  1. Un PATCH manual a cualquier etapa desde el kanban es aceptado por el backend sin validación de negocio que lo bloquee
+  2. Al enviar un presupuesto, la auto-transición a PRESUPUESTO_ENVIADO no sobreescribe si el paciente ya está en CONFIRMADO o PROCEDIMIENTO_REALIZADO
+  3. Al aceptar un presupuesto, la auto-transición a CONFIRMADO no sobreescribe si el paciente ya está en PROCEDIMIENTO_REALIZADO
+  4. El endpoint GET /kanban incluye el campo flujo (CIRUGIA/TRATAMIENTO/PENDIENTE) en cada paciente de la respuesta
+**Plans**: TBD
+
+### Phase 36: Drag-and-Drop + Warning Infrastructure
+**Goal**: El usuario puede arrastrar y soltar un paciente a cualquier columna del kanban; si faltan prerequisitos, aparece un toast de advertencia no bloqueante
+**Depends on**: Phase 35
+**Requirements**: CRM-01 (parte frontend), CRM-02, CRM-03
+**Success Criteria** (what must be TRUE):
+  1. El usuario puede arrastrar un paciente desde cualquier columna kanban a cualquier otra columna y el movimiento se persiste
+  2. Al soltar en PRESUPUESTO_ENVIADO cuando el paciente no tiene presupuesto, aparece un toast con el texto "No hay presupuesto enviado a este paciente" y el movimiento se realiza igual
+  3. Al soltar en CONFIRMADO cuando el paciente no tiene presupuesto aceptado, aparece un toast con el texto "Ningún presupuesto fue aceptado — verificá antes de confirmar" y el movimiento se realiza igual
+  4. Si el drag falla (error de red), la tarjeta vuelve a su columna original sin quedar en estado fantasma
+**Plans**: TBD
+
+### Phase 37: Sheet Redesign — Layout y Stepper UI
+**Goal**: El sheet lateral del kanban muestra información del paciente de forma compacta y presenta el stepper de etapas CRM como elemento visual principal
+**Depends on**: Phase 35
+**Requirements**: SHEET-01, SHEET-02, SHEET-03, SHEET-04, SHEET-09
+**Success Criteria** (what must be TRUE):
+  1. El header del sheet muestra el nombre del paciente y un FlujoBadge (CIRUGIA/TRATAMIENTO/PENDIENTE) visible sin hacer scroll
+  2. El botón "Registrar contacto" es un elemento compacto que abre un Dialog (no un Sheet anidado) con el formulario de contacto
+  3. El botón de lista de espera es compacto y alterna el opt-in del paciente con un solo click, mostrando el estado actual
+  4. El stepper muestra las 6 etapas CRM en orden, con la etapa actual claramente destacada visualmente
+  5. El panel de acciones rápidas anterior ya no aparece en el sheet
+**Plans**: TBD
+
+### Phase 38: Stepper Interactions + Contextual Actions
+**Goal**: El stepper es interactivo: cada etapa es clickeable y mueve al paciente, con acciones contextuales específicas por etapa que aceleran el flujo de trabajo de la secretaria
+**Depends on**: Phase 36, Phase 37
+**Requirements**: CRM-05, SHEET-05, SHEET-06, SHEET-07, SHEET-08
+**Success Criteria** (what must be TRUE):
+  1. Hacer click en cualquier etapa del stepper mueve al paciente a esa etapa, con los mismos warnings que el drag-and-drop (PRESUPUESTO_ENVIADO y CONFIRMADO)
+  2. Hacer click en PERDIDO en el stepper abre el LossReasonModal para registrar el motivo de pérdida antes de aplicar el movimiento
+  3. En la etapa PRESUPUESTO_ENVIADO del stepper aparece el botón "Ver/Crear presupuesto" que navega al presupuesto del paciente
+  4. En la etapa CONSULTADO del stepper aparece el botón "Registrar HC" que abre el HCCreatorForm del paciente
+  5. En la etapa PROCEDIMIENTO_REALIZADO del stepper aparece el botón "Marcar como realizado" que aplica la transición de etapa como las demás
+**Plans**: TBD
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -144,6 +200,10 @@ Full details: `.planning/milestones/v1.6-ROADMAP.md`
 | 32. Schema + Backend Estados Extendidos | v1.6 | 2/2 | Complete | 2026-05-13 |
 | 33. Widget Agenda Operativo | v1.6 | 2/2 | Complete | 2026-05-13 |
 | 34. LiveTurno Simplificado | v1.6 | 2/2 | Complete | 2026-05-14 |
+| 35. Backend Foundation | v1.7 | 0/? | Not started | - |
+| 36. Drag-and-Drop + Warning Infrastructure | v1.7 | 0/? | Not started | - |
+| 37. Sheet Redesign — Layout y Stepper UI | v1.7 | 0/? | Not started | - |
+| 38. Stepper Interactions + Contextual Actions | v1.7 | 0/? | Not started | - |
 
 ---
-*Roadmap initialized: 2026-02-23 | v1.0 shipped: 2026-03-03 | v1.1 shipped: 2026-03-16 | v1.2 shipped: 2026-03-31 | v1.3 shipped: 2026-04-09 | v1.4 shipped: 2026-04-20 | v1.5 shipped: 2026-05-13 | v1.6 shipped: 2026-05-23*
+*Roadmap initialized: 2026-02-23 | v1.0 shipped: 2026-03-03 | v1.1 shipped: 2026-03-16 | v1.2 shipped: 2026-03-31 | v1.3 shipped: 2026-04-09 | v1.4 shipped: 2026-04-20 | v1.5 shipped: 2026-05-13 | v1.6 shipped: 2026-05-23 | v1.7 started: 2026-05-23*

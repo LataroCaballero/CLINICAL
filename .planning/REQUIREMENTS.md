@@ -76,4 +76,4 @@ Requirements for milestone v1.7 CRM Flexible. Each maps to roadmap phases.
 
 ---
 *Requirements defined: 2026-05-23*
-*Last updated: 2026-05-23 — initial definition*
+*Last updated: 2026-05-23 — traceability confirmed against roadmap (phases 35–38)*

@@ -12,6 +12,31 @@ import { CreatePresupuestoDto } from './dto/create-presupuesto.dto';
 import { EstadoPresupuesto, TipoMovimiento, EtapaCRM, PrioridadMensaje, TipoContacto, TemperaturaPaciente, TipoTareaSeguimiento } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 
+// Constante de orden CRM — PERDIDO excluido intencionalmente (manejo especial)
+// ADVERTENCIA: El enum EtapaCRM en Prisma NO está en orden lógico de avance.
+// NO derivar el orden del enum — usar SIEMPRE ETAPA_ORDEN como fuente de verdad.
+const ETAPA_ORDEN: Record<string, number> = {
+  SIN_CLASIFICAR: 0,
+  NUEVO_LEAD: 1,
+  TURNO_AGENDADO: 2,
+  CONSULTADO: 3,
+  PRESUPUESTO_ENVIADO: 4,
+  CONFIRMADO: 5,
+  PROCEDIMIENTO_REALIZADO: 6,
+};
+
+function etapaOrden(e: EtapaCRM | null | undefined): number {
+  return ETAPA_ORDEN[e ?? 'SIN_CLASIFICAR'] ?? 0;
+}
+
+// Returns true when the auto-transition should be SKIPPED
+function isAutoTransitionBlocked(
+  actual: EtapaCRM | null | undefined,
+  destino: EtapaCRM,
+): boolean {
+  return etapaOrden(actual) >= etapaOrden(destino);
+}
+
 @Injectable()
 export class PresupuestosService {
   constructor(
@@ -163,7 +188,16 @@ export class PresupuestosService {
       },
     );
 
-    // Actualizar estado del presupuesto y etapaCRM del paciente
+    // Leer etapaCRM antes del $transaction para aplicar guard forward-only
+    const pacienteCRM = await this.prisma.paciente.findUnique({
+      where: { id: presupuesto.pacienteId },
+      select: { etapaCRM: true },
+    });
+    const maybeCRMUpdateAceptar = isAutoTransitionBlocked(pacienteCRM?.etapaCRM, EtapaCRM.CONFIRMADO)
+      ? []
+      : [this.prisma.paciente.update({ where: { id: presupuesto.pacienteId }, data: { etapaCRM: EtapaCRM.CONFIRMADO } })];
+
+    // Actualizar estado del presupuesto y etapaCRM del paciente (condicional)
     const [updated] = await this.prisma.$transaction([
       this.prisma.presupuesto.update({
         where: { id },
@@ -177,10 +211,7 @@ export class PresupuestosService {
           paciente: { select: { id: true, nombreCompleto: true } },
         },
       }),
-      this.prisma.paciente.update({
-        where: { id: presupuesto.pacienteId },
-        data: { etapaCRM: EtapaCRM.CONFIRMADO },
-      }),
+      ...maybeCRMUpdateAceptar,
       this.prisma.contactoLog.create({
         data: {
           pacienteId: presupuesto.pacienteId,
@@ -211,6 +242,15 @@ export class PresupuestosService {
       );
     }
 
+    // Leer etapaCRM antes del $transaction para aplicar guard forward-only
+    const pacienteCRMEnviado = await this.prisma.paciente.findUnique({
+      where: { id: presupuesto.pacienteId },
+      select: { etapaCRM: true },
+    });
+    const maybeCRMUpdateEnviado = isAutoTransitionBlocked(pacienteCRMEnviado?.etapaCRM, EtapaCRM.PRESUPUESTO_ENVIADO)
+      ? []
+      : [this.prisma.paciente.update({ where: { id: presupuesto.pacienteId }, data: { etapaCRM: EtapaCRM.PRESUPUESTO_ENVIADO } })];
+
     const [updated] = await this.prisma.$transaction([
       this.prisma.presupuesto.update({
         where: { id },
@@ -224,10 +264,7 @@ export class PresupuestosService {
           paciente: { select: { id: true, nombreCompleto: true } },
         },
       }),
-      this.prisma.paciente.update({
-        where: { id: presupuesto.pacienteId },
-        data: { etapaCRM: EtapaCRM.PRESUPUESTO_ENVIADO },
-      }),
+      ...maybeCRMUpdateEnviado,
       this.prisma.contactoLog.create({
         data: {
           pacienteId: presupuesto.pacienteId,
@@ -556,7 +593,7 @@ export class PresupuestosService {
     });
     const paciente = await this.prisma.paciente.findUnique({
       where: { id: presupuesto.pacienteId },
-      select: { nombreCompleto: true },
+      select: { nombreCompleto: true, etapaCRM: true },
     });
 
     // Create cargo in cuenta corriente
@@ -570,6 +607,10 @@ export class PresupuestosService {
       },
     );
 
+    const maybeCRMUpdateByToken = isAutoTransitionBlocked(paciente?.etapaCRM, EtapaCRM.CONFIRMADO)
+      ? []
+      : [this.prisma.paciente.update({ where: { id: presupuesto.pacienteId }, data: { etapaCRM: EtapaCRM.CONFIRMADO } })];
+
     await this.prisma.$transaction([
       this.prisma.presupuesto.update({
         where: { id: presupuesto.id },
@@ -579,10 +620,7 @@ export class PresupuestosService {
           cargoMovimientoId: movimiento.id,
         },
       }),
-      this.prisma.paciente.update({
-        where: { id: presupuesto.pacienteId },
-        data: { etapaCRM: EtapaCRM.CONFIRMADO },
-      }),
+      ...maybeCRMUpdateByToken,
       this.prisma.mensajeInterno.create({
         data: {
           mensaje: `PRESUPUESTO ACEPTADO — ${paciente?.nombreCompleto ?? 'Paciente'} aceptó el presupuesto por $${Number(presupuesto.total).toLocaleString('es-AR')}. Contactar para agendar cirugía.`,
@@ -623,10 +661,18 @@ export class PresupuestosService {
     });
     const paciente = await this.prisma.paciente.findUnique({
       where: { id: presupuesto.pacienteId },
-      select: { nombreCompleto: true },
+      select: { nombreCompleto: true, etapaCRM: true },
     });
 
     const motivoText = motivoRechazo ?? 'Sin motivo especificado';
+
+    // Guard especial para PERDIDO — PERDIDO no está en ETAPA_ORDEN por diseño.
+    // Solo bloqueamos si el paciente ya está en una etapa avanzada (protegida).
+    const etapasProtegidas: EtapaCRM[] = [EtapaCRM.CONFIRMADO, EtapaCRM.PROCEDIMIENTO_REALIZADO];
+    const bloqueadoRechazarByToken = paciente?.etapaCRM != null && etapasProtegidas.includes(paciente.etapaCRM);
+    const maybeCRMUpdateRechazado = bloqueadoRechazarByToken
+      ? []
+      : [this.prisma.paciente.update({ where: { id: presupuesto.pacienteId }, data: { etapaCRM: EtapaCRM.PERDIDO } })];
 
     await this.prisma.$transaction([
       this.prisma.presupuesto.update({
@@ -637,10 +683,7 @@ export class PresupuestosService {
           motivoRechazo: motivoText,
         },
       }),
-      this.prisma.paciente.update({
-        where: { id: presupuesto.pacienteId },
-        data: { etapaCRM: EtapaCRM.PERDIDO },
-      }),
+      ...maybeCRMUpdateRechazado,
       this.prisma.mensajeInterno.create({
         data: {
           mensaje: `Presupuesto rechazado — ${paciente?.nombreCompleto ?? 'Paciente'} rechazó el presupuesto. Motivo: "${motivoText}". Oportunidad de recuperar al paciente.`,

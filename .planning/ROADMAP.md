@@ -123,7 +123,10 @@ Full details: `.planning/milestones/v1.6-ROADMAP.md`
   2. Al enviar un presupuesto, la auto-transición a PRESUPUESTO_ENVIADO no sobreescribe si el paciente ya está en CONFIRMADO o PROCEDIMIENTO_REALIZADO
   3. Al aceptar un presupuesto, la auto-transición a CONFIRMADO no sobreescribe si el paciente ya está en PROCEDIMIENTO_REALIZADO
   4. El endpoint GET /kanban incluye el campo flujo (CIRUGIA/TRATAMIENTO/PENDIENTE) en cada paciente de la respuesta
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 35-01-PLAN.md — Remove CONFIRMADO guard in updateEtapaCRM + add flujo field to getKanban
+- [ ] 35-02-PLAN.md — Forward-only guard in presupuestos (4 methods) and turnos auto-transitions
 
 ### Phase 36: Drag-and-Drop + Warning Infrastructure
 **Goal**: El usuario puede arrastrar y soltar un paciente a cualquier columna del kanban; si faltan prerequisitos, aparece un toast de advertencia no bloqueante
@@ -134,7 +137,10 @@ Full details: `.planning/milestones/v1.6-ROADMAP.md`
   2. Al soltar en PRESUPUESTO_ENVIADO cuando el paciente no tiene presupuesto, aparece un toast con el texto "No hay presupuesto enviado a este paciente" y el movimiento se realiza igual
   3. Al soltar en CONFIRMADO cuando el paciente no tiene presupuesto aceptado, aparece un toast con el texto "Ningún presupuesto fue aceptado — verificá antes de confirmar" y el movimiento se realiza igual
   4. Si el drag falla (error de red), la tarjeta vuelve a su columna original sin quedar en estado fantasma
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 35-01-PLAN.md — Remove CONFIRMADO guard in updateEtapaCRM + add flujo field to getKanban
+- [ ] 35-02-PLAN.md — Forward-only guard in presupuestos (4 methods) and turnos auto-transitions
 
 ### Phase 37: Sheet Redesign — Layout y Stepper UI
 **Goal**: El sheet lateral del kanban muestra información del paciente de forma compacta y presenta el stepper de etapas CRM como elemento visual principal
@@ -146,7 +152,10 @@ Full details: `.planning/milestones/v1.6-ROADMAP.md`
   3. El botón de lista de espera es compacto y alterna el opt-in del paciente con un solo click, mostrando el estado actual
   4. El stepper muestra las 6 etapas CRM en orden, con la etapa actual claramente destacada visualmente
   5. El panel de acciones rápidas anterior ya no aparece en el sheet
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 35-01-PLAN.md — Remove CONFIRMADO guard in updateEtapaCRM + add flujo field to getKanban
+- [ ] 35-02-PLAN.md — Forward-only guard in presupuestos (4 methods) and turnos auto-transitions
 
 ### Phase 38: Stepper Interactions + Contextual Actions
 **Goal**: El stepper es interactivo: cada etapa es clickeable y mueve al paciente, con acciones contextuales específicas por etapa que aceleran el flujo de trabajo de la secretaria
@@ -158,7 +167,10 @@ Full details: `.planning/milestones/v1.6-ROADMAP.md`
   3. En la etapa PRESUPUESTO_ENVIADO del stepper aparece el botón "Ver/Crear presupuesto" que navega al presupuesto del paciente
   4. En la etapa CONSULTADO del stepper aparece el botón "Registrar HC" que abre el HCCreatorForm del paciente
   5. En la etapa PROCEDIMIENTO_REALIZADO del stepper aparece el botón "Marcar como realizado" que aplica la transición de etapa como las demás
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 35-01-PLAN.md — Remove CONFIRMADO guard in updateEtapaCRM + add flujo field to getKanban
+- [ ] 35-02-PLAN.md — Forward-only guard in presupuestos (4 methods) and turnos auto-transitions
 
 ## Progress
 

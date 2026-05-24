@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: CRM Flexible
 status: executing
-last_updated: "2026-05-24T23:07:37.714Z"
+last_updated: "2026-05-24T23:24:51.888Z"
 progress:
   total_phases: 4
   completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
+  total_plans: 4
+  completed_plans: 3
   percent: 0
 ---
 
@@ -19,19 +19,19 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-23)
 
 **Core value:** Que un cirujano plástico cierre más cirugías — el sistema hace visible qué pacientes seguir, cuándo y cómo, de la manera más automatizada posible
-**Current focus:** Phase 35 — Backend Foundation (v1.7 CRM Flexible)
+**Current focus:** Phase 36 — Drag-and-Drop + Warning Infrastructure (v1.7 CRM Flexible)
 
 ## Current Position
 
 ```
 Milestone: v1.7 CRM Flexible
-Phase:     35 — Backend Foundation
+Phase:     36 — Drag-and-Drop + Warning Infrastructure
 Plan:      02 of 02 (plan 01 complete)
-Status:    In progress — 1/2 plans complete in Phase 35
-Progress:  [░░░░░░░░░░░░░░░░░░░░] 0% (0/4 phases)
+Status:    In progress — 1/2 plans complete in Phase 36
+Progress:  [██████████] 97% (32/33 plans)
 
-Last completed: 35-01-PLAN.md (2026-05-24)
-Next: 35-02-PLAN.md
+Last completed: 36-01-PLAN.md (2026-05-24)
+Next: 36-02-PLAN.md
 ```
 
 ## Milestone Overview
@@ -39,7 +39,7 @@ Next: 35-02-PLAN.md
 | Phase | Name | Requirements | Status |
 |-------|------|--------------|--------|
 | 35 | Backend Foundation | CRM-01 (backend), CRM-04 | In Progress (1/2 plans done) |
-| 36 | Drag-and-Drop + Warning Infrastructure | CRM-01 (frontend), CRM-02, CRM-03 | Not started |
+| 36 | Drag-and-Drop + Warning Infrastructure | CRM-01 (frontend), CRM-02, CRM-03 | In Progress (1/2 plans done) |
 | 37 | Sheet Redesign — Layout y Stepper UI | SHEET-01, SHEET-02, SHEET-03, SHEET-04, SHEET-09 | Not started |
 | 38 | Stepper Interactions + Contextual Actions | CRM-05, SHEET-05, SHEET-06, SHEET-07, SHEET-08 | Not started |
 
@@ -63,6 +63,8 @@ Next: 35-02-PLAN.md
 - HCCreatorForm reutilizado directamente desde SHEET-07 sin duplicar lógica
 - ContactoRapidoModal es un Dialog (no Sheet anidado) para evitar z-index y focus-trap issues
 - [35-01] Remover validación presupuesto ACEPTADO para CONFIRMADO: el profesional puede mover libremente cualquier etapa CRM; solo PERDIDO requiere motivoPerdida
+- [36-01] getEtapaWarning en lib/crm-warnings.ts (no en componente) para que Phase 38 stepper lo importe sin acoplar a KanbanBoard
+- [36-01] CONFIRMADO warning usa optional chaining (presupuesto?.estado !== 'ACEPTADO') cubriendo null y non-ACEPTADO en una sola condición
 
 ### Known Tech Debt (carry-forward)
 - LIVHC-05/PAC-01: tratamientos snapshot no se escribe cuando consumirInsumos=false
@@ -75,8 +77,10 @@ Next: 35-02-PLAN.md
 
 ## Session Continuity
 
-**To resume:** Read `.planning/STATE.md` + `.planning/ROADMAP.md` + `.planning/phases/35-backend-foundation/35-02-PLAN.md`.
+**To resume:** Read `.planning/STATE.md` + `.planning/ROADMAP.md` + `.planning/phases/36-drag-and-drop-warning-infrastructure/36-02-PLAN.md`.
 
-**Last session:** 2026-05-24T23:07:37.710Z
+**Last session:** 2026-05-24T23:28:00Z
 
-**Blocked by:** Nothing — ready to execute 35-02-PLAN.md.
+**Stopped at:** Completed 36-01-PLAN.md
+
+**Blocked by:** Nothing — ready to execute 36-02-PLAN.md.

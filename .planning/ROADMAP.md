@@ -139,8 +139,8 @@ Plans:
   4. Si el drag falla (error de red), la tarjeta vuelve a su columna original sin quedar en estado fantasma
 **Plans**: 2 plans
 Plans:
-- [ ] 35-01-PLAN.md — Remove CONFIRMADO guard in updateEtapaCRM + add flujo field to getKanban
-- [ ] 35-02-PLAN.md — Forward-only guard in presupuestos (4 methods) and turnos auto-transitions
+- [ ] 36-01-PLAN.md — Warning utility (getEtapaWarning) + flujo field in KanbanPatient type
+- [ ] 36-02-PLAN.md — Integrate warning logic in KanbanBoard handleDragEnd + update error text
 
 ### Phase 37: Sheet Redesign — Layout y Stepper UI
 **Goal**: El sheet lateral del kanban muestra información del paciente de forma compacta y presenta el stepper de etapas CRM como elemento visual principal

@@ -213,7 +213,7 @@ Plans:
 | 33. Widget Agenda Operativo | v1.6 | 2/2 | Complete | 2026-05-13 |
 | 34. LiveTurno Simplificado | v1.6 | 2/2 | Complete | 2026-05-14 |
 | 35. Backend Foundation | 2/2 | Complete    | 2026-05-24 | - |
-| 36. Drag-and-Drop + Warning Infrastructure | 2/2 | Complete   | 2026-05-25 | - |
+| 36. Drag-and-Drop + Warning Infrastructure | 2/2 | Complete    | 2026-05-25 | - |
 | 37. Sheet Redesign — Layout y Stepper UI | v1.7 | 0/? | Not started | - |
 | 38. Stepper Interactions + Contextual Actions | v1.7 | 0/? | Not started | - |
 

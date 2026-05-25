@@ -3,13 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: CRM Flexible
 status: executing
-last_updated: "2026-05-24T23:24:51.888Z"
+stopped_at: Completed 36-02-PLAN.md
+last_updated: "2026-05-25T22:21:39.424Z"
 progress:
   total_phases: 4
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 4
-  completed_plans: 3
-  percent: 0
+  completed_plans: 4
+  percent: 100
 ---
 
 # Project State
@@ -25,13 +26,13 @@ See: .planning/PROJECT.md (updated 2026-05-23)
 
 ```
 Milestone: v1.7 CRM Flexible
-Phase:     36 — Drag-and-Drop + Warning Infrastructure
-Plan:      02 of 02 (plan 01 complete)
-Status:    In progress — 1/2 plans complete in Phase 36
-Progress:  [██████████] 97% (32/33 plans)
+Phase:     36 — Drag-and-Drop + Warning Infrastructure — COMPLETE
+Plan:      02 of 02 (all plans complete)
+Status:    Phase 36 complete — 2/2 plans done
+Progress:  [██████████] 100% (33/33 plans)
 
-Last completed: 36-01-PLAN.md (2026-05-24)
-Next: 36-02-PLAN.md
+Last completed: 36-02-PLAN.md (2026-05-25)
+Next: Phase 37 — Sheet Redesign (SHEET-01 through SHEET-04, SHEET-09)
 ```
 
 ## Milestone Overview
@@ -39,7 +40,7 @@ Next: 36-02-PLAN.md
 | Phase | Name | Requirements | Status |
 |-------|------|--------------|--------|
 | 35 | Backend Foundation | CRM-01 (backend), CRM-04 | In Progress (1/2 plans done) |
-| 36 | Drag-and-Drop + Warning Infrastructure | CRM-01 (frontend), CRM-02, CRM-03 | In Progress (1/2 plans done) |
+| 36 | Drag-and-Drop + Warning Infrastructure | CRM-01 (frontend), CRM-02, CRM-03 | Complete (2/2 plans done) |
 | 37 | Sheet Redesign — Layout y Stepper UI | SHEET-01, SHEET-02, SHEET-03, SHEET-04, SHEET-09 | Not started |
 | 38 | Stepper Interactions + Contextual Actions | CRM-05, SHEET-05, SHEET-06, SHEET-07, SHEET-08 | Not started |
 
@@ -65,6 +66,8 @@ Next: 36-02-PLAN.md
 - [35-01] Remover validación presupuesto ACEPTADO para CONFIRMADO: el profesional puede mover libremente cualquier etapa CRM; solo PERDIDO requiere motivoPerdida
 - [36-01] getEtapaWarning en lib/crm-warnings.ts (no en componente) para que Phase 38 stepper lo importe sin acoplar a KanbanBoard
 - [36-01] CONFIRMADO warning usa optional chaining (presupuesto?.estado !== 'ACEPTADO') cubriendo null y non-ACEPTADO en una sola condición
+- [36-02] Toast fires synchronously before updateEtapa call — warning visible even on instant backend response
+- [36-02] onSettled remains sole cleanup point for pendingMoves — snap-back logic unaffected by warning integration
 
 ### Known Tech Debt (carry-forward)
 - LIVHC-05/PAC-01: tratamientos snapshot no se escribe cuando consumirInsumos=false
@@ -77,10 +80,10 @@ Next: 36-02-PLAN.md
 
 ## Session Continuity
 
-**To resume:** Read `.planning/STATE.md` + `.planning/ROADMAP.md` + `.planning/phases/36-drag-and-drop-warning-infrastructure/36-02-PLAN.md`.
+**To resume:** Read `.planning/STATE.md` + `.planning/ROADMAP.md` + Phase 37 plan files.
 
-**Last session:** 2026-05-24T23:28:00Z
+**Last session:** 2026-05-25T22:21:39.423Z
 
-**Stopped at:** Completed 36-01-PLAN.md
+**Stopped at:** Completed 36-02-PLAN.md
 
-**Blocked by:** Nothing — ready to execute 36-02-PLAN.md.
+**Blocked by:** Nothing — Phase 36 complete. Ready to begin Phase 37 (Sheet Redesign).

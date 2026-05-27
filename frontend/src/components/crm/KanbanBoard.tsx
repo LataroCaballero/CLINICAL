@@ -25,7 +25,6 @@ import { MotivoPerdidaCRM } from "@/hooks/useCRMKanban";
 import { toast } from "sonner";
 import { getEtapaWarning } from "@/lib/crm-warnings";
 import PatientDrawer from "@/app/dashboard/pacientes/components/PatientDrawer";
-import { NuevoTurnoModal } from "@/components/patient/PatientDrawer/views/NuevoTurnoModal";
 
 interface Props {
   columns: KanbanColumnType[];
@@ -68,7 +67,6 @@ export function KanbanBoard({ columns, unreadMap }: Props) {
   const [drawerPatientId, setDrawerPatientId] = useState<string | null>(null);
   const [drawerInitialView, setDrawerInitialView] = useState<"default" | "presupuestos">("default");
   const [actionPatient, setActionPatient] = useState<KanbanPatient | null>(null);
-  const [turnoPatientId, setTurnoPatientId] = useState<string | null>(null);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -287,11 +285,6 @@ export function KanbanBoard({ columns, unreadMap }: Props) {
           setDrawerInitialView("default");
           setDrawerPatientId(id);
         }}
-        onOpenNuevoTurno={(id) => setTurnoPatientId(id)}
-        onOpenPresupuestos={(id) => {
-          setDrawerInitialView("presupuestos");
-          setDrawerPatientId(id);
-        }}
       />
 
       <PatientDrawer
@@ -301,13 +294,6 @@ export function KanbanBoard({ columns, unreadMap }: Props) {
         initialView={drawerInitialView}
       />
 
-      {turnoPatientId && (
-        <NuevoTurnoModal
-          open={!!turnoPatientId}
-          onOpenChange={(v) => { if (!v) setTurnoPatientId(null); }}
-          pacienteId={turnoPatientId}
-        />
-      )}
     </>
   );
 }

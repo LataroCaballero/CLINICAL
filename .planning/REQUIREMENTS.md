@@ -25,7 +25,7 @@ Requirements for milestone v1.7 CRM Flexible. Each maps to roadmap phases.
 - [ ] **SHEET-06**: En etapa PRESUPUESTO_ENVIADO del stepper aparece acción "Ver/Crear presupuesto"
 - [ ] **SHEET-07**: En etapa CONSULTADO del stepper aparece acción "Registrar HC" abriendo HCCreatorForm
 - [ ] **SHEET-08**: En etapa PROCEDIMIENTO_REALIZADO del stepper aparece acción "Marcar como realizado" (etapa clickeable como las demás)
-- [ ] **SHEET-09**: El panel de acciones rápidas actual es removido del sheet
+- [x] **SHEET-09**: El panel de acciones rápidas actual es removido del sheet
 
 ## Deferred Requirements
 
@@ -62,7 +62,7 @@ Requirements for milestone v1.7 CRM Flexible. Each maps to roadmap phases.
 | SHEET-02 | Phase 37 | Complete |
 | SHEET-03 | Phase 37 | Complete |
 | SHEET-04 | Phase 37 | Complete |
-| SHEET-09 | Phase 37 | Pending |
+| SHEET-09 | Phase 37 | Complete |
 | CRM-05 | Phase 38 | Pending |
 | SHEET-05 | Phase 38 | Pending |
 | SHEET-06 | Phase 38 | Pending |

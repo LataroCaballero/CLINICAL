@@ -109,7 +109,7 @@ Full details: `.planning/milestones/v1.6-ROADMAP.md`
 
 - [x] **Phase 35: Backend Foundation** — Eliminar guard CONFIRMADO, agregar guards forward-only para auto-transiciones, fix idempotencia, campo flujo en query kanban (completed 2026-05-24)
 - [x] **Phase 36: Drag-and-Drop + Warning Infrastructure** — Helper de warnings, integración en KanbanBoard, fix ghost-card onError, campo flujo wired al tipo frontend (completed 2026-05-25)
-- [ ] **Phase 37: Sheet Redesign — Layout y Stepper UI** — Header compacto con FlujoBadge, ContactoRapidoModal, toggle lista de espera compacto, EtapaStepper estático, eliminar panel de acciones rápidas
+- [x] **Phase 37: Sheet Redesign — Layout y Stepper UI** — Header compacto con FlujoBadge, ContactoRapidoModal, toggle lista de espera compacto, EtapaStepper estático, eliminar panel de acciones rápidas (completed 2026-05-27)
 - [ ] **Phase 38: Stepper Interactions + Contextual Actions** — Stepper clickeable con useUpdateEtapaCRM, PERDIDO abre LossReasonModal, botones de acción contextual por etapa
 
 ## Phase Details
@@ -214,7 +214,7 @@ Plans:
 | 34. LiveTurno Simplificado | v1.6 | 2/2 | Complete | 2026-05-14 |
 | 35. Backend Foundation | 2/2 | Complete    | 2026-05-24 | - |
 | 36. Drag-and-Drop + Warning Infrastructure | 2/2 | Complete    | 2026-05-25 | - |
-| 37. Sheet Redesign — Layout y Stepper UI | 1/2 | In Progress|  | - |
+| 37. Sheet Redesign — Layout y Stepper UI | 2/2 | Complete   | 2026-05-27 | - |
 | 38. Stepper Interactions + Contextual Actions | v1.7 | 0/? | Not started | - |
 
 ---

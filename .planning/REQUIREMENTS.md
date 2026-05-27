@@ -17,10 +17,10 @@ Requirements for milestone v1.7 CRM Flexible. Each maps to roadmap phases.
 
 ### SHEET — Rediseño del sheet lateral del kanban
 
-- [ ] **SHEET-01**: El sheet muestra nombre del paciente y badge de flujo (CIRUGIA/TRATAMIENTO/PENDIENTE) en el header
-- [ ] **SHEET-02**: "Registrar contacto" es un botón compacto que abre un modal pequeño (Dialog, no Sheet nested)
-- [ ] **SHEET-03**: Botón compacto activa/desactiva opt-in de lista de espera del paciente
-- [ ] **SHEET-04**: El sheet incluye un stepper con las 6 etapas CRM indicando la etapa actual
+- [x] **SHEET-01**: El sheet muestra nombre del paciente y badge de flujo (CIRUGIA/TRATAMIENTO/PENDIENTE) en el header
+- [x] **SHEET-02**: "Registrar contacto" es un botón compacto que abre un modal pequeño (Dialog, no Sheet nested)
+- [x] **SHEET-03**: Botón compacto activa/desactiva opt-in de lista de espera del paciente
+- [x] **SHEET-04**: El sheet incluye un stepper con las 6 etapas CRM indicando la etapa actual
 - [ ] **SHEET-05**: Click en etapa del stepper mueve al paciente a esa etapa; PERDIDO abre LossReasonModal
 - [ ] **SHEET-06**: En etapa PRESUPUESTO_ENVIADO del stepper aparece acción "Ver/Crear presupuesto"
 - [ ] **SHEET-07**: En etapa CONSULTADO del stepper aparece acción "Registrar HC" abriendo HCCreatorForm
@@ -58,10 +58,10 @@ Requirements for milestone v1.7 CRM Flexible. Each maps to roadmap phases.
 | CRM-04 | Phase 35 | Complete |
 | CRM-02 | Phase 36 | Complete |
 | CRM-03 | Phase 36 | Complete |
-| SHEET-01 | Phase 37 | Pending |
-| SHEET-02 | Phase 37 | Pending |
-| SHEET-03 | Phase 37 | Pending |
-| SHEET-04 | Phase 37 | Pending |
+| SHEET-01 | Phase 37 | Complete |
+| SHEET-02 | Phase 37 | Complete |
+| SHEET-03 | Phase 37 | Complete |
+| SHEET-04 | Phase 37 | Complete |
 | SHEET-09 | Phase 37 | Pending |
 | CRM-05 | Phase 38 | Pending |
 | SHEET-05 | Phase 38 | Pending |

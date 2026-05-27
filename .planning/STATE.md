@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: CRM Flexible
 status: completed
-stopped_at: Phase 37 context gathered
-last_updated: "2026-05-27T00:37:01.057Z"
+stopped_at: Completed 37-01-PLAN.md
+last_updated: "2026-05-27T11:08:09.149Z"
 progress:
   total_phases: 4
   completed_phases: 2
-  total_plans: 4
-  completed_plans: 4
+  total_plans: 6
+  completed_plans: 5
   percent: 100
 ---
 
@@ -20,19 +20,19 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-23)
 
 **Core value:** Que un cirujano plástico cierre más cirugías — el sistema hace visible qué pacientes seguir, cuándo y cómo, de la manera más automatizada posible
-**Current focus:** Phase 36 — Drag-and-Drop + Warning Infrastructure (v1.7 CRM Flexible)
+**Current focus:** Phase 37 — Sheet Redesign Layout y Stepper UI (v1.7 CRM Flexible)
 
 ## Current Position
 
 ```
 Milestone: v1.7 CRM Flexible
-Phase:     36 — Drag-and-Drop + Warning Infrastructure — COMPLETE
-Plan:      02 of 02 (all plans complete)
-Status:    Phase 36 complete — 2/2 plans done
-Progress:  [██████████] 100% (33/33 plans)
+Phase:     37 — Sheet Redesign Layout y Stepper UI — In Progress
+Plan:      01 of 02 complete
+Status:    37-01 complete — CRM sub-components built
+Progress:  [██████████] 97% (34/35 plans)
 
-Last completed: 36-02-PLAN.md (2026-05-25)
-Next: Phase 37 — Sheet Redesign (SHEET-01 through SHEET-04, SHEET-09)
+Last completed: 37-01-PLAN.md (2026-05-27)
+Next: 37-02 — CardActionsSheet layout refactor wiring the 4 sub-components
 ```
 
 ## Milestone Overview
@@ -41,7 +41,7 @@ Next: Phase 37 — Sheet Redesign (SHEET-01 through SHEET-04, SHEET-09)
 |-------|------|--------------|--------|
 | 35 | Backend Foundation | CRM-01 (backend), CRM-04 | In Progress (1/2 plans done) |
 | 36 | Drag-and-Drop + Warning Infrastructure | CRM-01 (frontend), CRM-02, CRM-03 | Complete (2/2 plans done) |
-| 37 | Sheet Redesign — Layout y Stepper UI | SHEET-01, SHEET-02, SHEET-03, SHEET-04, SHEET-09 | Not started |
+| 37 | Sheet Redesign — Layout y Stepper UI | SHEET-01, SHEET-02, SHEET-03, SHEET-04, SHEET-09 | In Progress (1/2 plans done) |
 | 38 | Stepper Interactions + Contextual Actions | CRM-05, SHEET-05, SHEET-06, SHEET-07, SHEET-08 | Not started |
 
 ## Accumulated Context
@@ -68,6 +68,9 @@ Next: Phase 37 — Sheet Redesign (SHEET-01 through SHEET-04, SHEET-09)
 - [36-01] CONFIRMADO warning usa optional chaining (presupuesto?.estado !== 'ACEPTADO') cubriendo null y non-ACEPTADO en una sola condición
 - [36-02] Toast fires synchronously before updateEtapa call — warning visible even on instant backend response
 - [36-02] onSettled remains sole cleanup point for pendingMoves — snap-back logic unaffected by warning integration
+- [37-01] EtapaStepper has no onClick handlers — interactivity deferred to Phase 38 (CHAIN click + warning)
+- [37-01] CRMFlujoBadge is separate from FlujoBadge in /pacientes/ — both coexist, CRM uses full labels, patients uses abbreviated
+- [37-01] ContactoRapidoModal calls onOpenChange(false) only for its own Dialog; parent Sheet state is independent
 
 ### Known Tech Debt (carry-forward)
 - LIVHC-05/PAC-01: tratamientos snapshot no se escribe cuando consumirInsumos=false
@@ -82,8 +85,8 @@ Next: Phase 37 — Sheet Redesign (SHEET-01 through SHEET-04, SHEET-09)
 
 **To resume:** Read `.planning/STATE.md` + `.planning/ROADMAP.md` + Phase 37 plan files.
 
-**Last session:** 2026-05-27T00:37:01.053Z
+**Last session:** 2026-05-27T11:08:09.147Z
 
-**Stopped at:** Phase 37 context gathered
+**Stopped at:** Completed 37-01-PLAN.md
 
 **Blocked by:** Nothing — Phase 36 complete. Ready to begin Phase 37 (Sheet Redesign).

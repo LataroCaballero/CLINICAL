@@ -154,8 +154,8 @@ Plans:
   5. El panel de acciones rápidas anterior ya no aparece en el sheet
 **Plans**: 2 plans
 Plans:
-- [ ] 35-01-PLAN.md — Remove CONFIRMADO guard in updateEtapaCRM + add flujo field to getKanban
-- [ ] 35-02-PLAN.md — Forward-only guard in presupuestos (4 methods) and turnos auto-transitions
+- [ ] 37-01-PLAN.md — New CRM sub-components: CRMFlujoBadge, EtapaStepper, ContactoRapidoModal, ListaEsperaDialog
+- [ ] 37-02-PLAN.md — Refactor CardActionsSheet to stepper-centric layout + clean up KanbanBoard
 
 ### Phase 38: Stepper Interactions + Contextual Actions
 **Goal**: El stepper es interactivo: cada etapa es clickeable y mueve al paciente, con acciones contextuales específicas por etapa que aceleran el flujo de trabajo de la secretaria

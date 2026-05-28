@@ -231,7 +231,7 @@ Plans:
 | 36. Drag-and-Drop + Warning Infrastructure | 2/2 | Complete    | 2026-05-25 | - |
 | 37. Sheet Redesign — Layout y Stepper UI | 2/2 | Complete    | 2026-05-27 | - |
 | 38. Stepper Interactions + Contextual Actions | 2/2 | Complete    | 2026-05-28 | - |
-| 39. CRM Tech Debt — Guard & Ordering Fixes | 2/2 | Complete   | 2026-05-28 | — |
+| 39. CRM Tech Debt — Guard & Ordering Fixes | 2/2 | Complete    | 2026-05-28 | — |
 
 ---
 *Roadmap initialized: 2026-02-23 | v1.0 shipped: 2026-03-03 | v1.1 shipped: 2026-03-16 | v1.2 shipped: 2026-03-31 | v1.3 shipped: 2026-04-09 | v1.4 shipped: 2026-04-20 | v1.5 shipped: 2026-05-13 | v1.6 shipped: 2026-05-23 | v1.7 started: 2026-05-23*

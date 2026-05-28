@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: CRM Flexible
-status: completed
-stopped_at: Phase 38 context gathered
-last_updated: "2026-05-27T15:45:57.284Z"
+status: in_progress
+stopped_at: "38-01-PLAN.md complete"
+last_updated: "2026-05-28T01:12:00Z"
 progress:
   total_phases: 4
   completed_phases: 3
@@ -26,13 +26,13 @@ See: .planning/PROJECT.md (updated 2026-05-23)
 
 ```
 Milestone: v1.7 CRM Flexible
-Phase:     37 — Sheet Redesign Layout y Stepper UI — Complete
-Plan:      02 of 02 complete
-Status:    37-02 complete — CardActionsSheet refactored, KanbanBoard cleaned up
+Phase:     38 — Stepper Interactions + Contextual Actions — In Progress
+Plan:      01 of 01 complete
+Status:    38-01 complete — EtapaStepper extended with interactivity and contextual buttons
 Progress:  [██████████] 100% (35/35 plans)
 
-Last completed: 37-02-PLAN.md (2026-05-27)
-Next: Phase 38 — Stepper Interactions + Contextual Actions
+Last completed: 38-01-PLAN.md (2026-05-28)
+Next: Phase 38 complete — awaiting further phases
 ```
 
 ## Milestone Overview
@@ -74,6 +74,9 @@ Next: Phase 38 — Stepper Interactions + Contextual Actions
 - [37-02] CardActionsSheet props reduced to 4 fields — onOpenNuevoTurno and onOpenPresupuestos fully removed after NuevoTurnoModal block deleted from KanbanBoard
 - [37-02] Sheet flex-col layout with flex-shrink-0 header/footer and flex-1 overflow-y-auto body — no absolute positioning
 - [37-02] Dialogs mount via Radix DialogPortal in document.body inside Sheet — no z-index or focus-trap conflicts (human-verified)
+- [38-01] STEPPER_CHAIN hardcoded (not derived from ETAPA_ORDER) to include PROCEDIMIENTO_REALIZADO which is intentionally excluded from kanban
+- [38-01] Step clickability guards on etapaActual (real server state), not displayEtapa (optimistic) — display-only optimism, real-state guards interaction
+- [38-01] PERDIDO hover uses bg-red-50 (destructive signal) vs bg-muted/50 for regular steps
 
 ### Known Tech Debt (carry-forward)
 - LIVHC-05/PAC-01: tratamientos snapshot no se escribe cuando consumirInsumos=false
@@ -88,8 +91,8 @@ Next: Phase 38 — Stepper Interactions + Contextual Actions
 
 **To resume:** Read `.planning/STATE.md` + `.planning/ROADMAP.md` + Phase 37 plan files.
 
-**Last session:** 2026-05-27T15:45:57.281Z
+**Last session:** 2026-05-28T01:12:00Z
 
-**Stopped at:** Phase 38 context gathered
+**Stopped at:** Completed 38-01-PLAN.md
 
-**Blocked by:** Nothing — Phase 37 complete. Ready to begin Phase 38 (Stepper Interactions + Contextual Actions).
+**Blocked by:** Nothing — 38-01 complete. EtapaStepper is now interactive with contextual buttons. Ready for next Phase 38 plans (stepper wiring in CardActionsSheet, PERDIDO modal, HC/presupuesto handlers).

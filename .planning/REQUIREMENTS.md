@@ -22,9 +22,9 @@ Requirements for milestone v1.7 CRM Flexible. Each maps to roadmap phases.
 - [x] **SHEET-03**: Botón compacto activa/desactiva opt-in de lista de espera del paciente
 - [x] **SHEET-04**: El sheet incluye un stepper con las 6 etapas CRM indicando la etapa actual
 - [ ] **SHEET-05**: Click en etapa del stepper mueve al paciente a esa etapa; PERDIDO abre LossReasonModal
-- [ ] **SHEET-06**: En etapa PRESUPUESTO_ENVIADO del stepper aparece acción "Ver/Crear presupuesto"
-- [ ] **SHEET-07**: En etapa CONSULTADO del stepper aparece acción "Registrar HC" abriendo HCCreatorForm
-- [ ] **SHEET-08**: En etapa PROCEDIMIENTO_REALIZADO del stepper aparece acción "Marcar como realizado" (etapa clickeable como las demás)
+- [x] **SHEET-06**: En etapa PRESUPUESTO_ENVIADO del stepper aparece acción "Ver/Crear presupuesto"
+- [x] **SHEET-07**: En etapa CONSULTADO del stepper aparece acción "Registrar HC" abriendo HCCreatorForm
+- [x] **SHEET-08**: En etapa PROCEDIMIENTO_REALIZADO del stepper aparece acción "Marcar como realizado" (etapa clickeable como las demás)
 - [x] **SHEET-09**: El panel de acciones rápidas actual es removido del sheet
 
 ## Deferred Requirements
@@ -65,9 +65,9 @@ Requirements for milestone v1.7 CRM Flexible. Each maps to roadmap phases.
 | SHEET-09 | Phase 37 | Complete |
 | CRM-05 | Phase 38 | Pending |
 | SHEET-05 | Phase 38 | Pending |
-| SHEET-06 | Phase 38 | Pending |
-| SHEET-07 | Phase 38 | Pending |
-| SHEET-08 | Phase 38 | Pending |
+| SHEET-06 | Phase 38 | Complete |
+| SHEET-07 | Phase 38 | Complete |
+| SHEET-08 | Phase 38 | Complete |
 
 **Coverage:**
 - v1.7 requirements: 14 total

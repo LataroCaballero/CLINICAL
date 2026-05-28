@@ -23,8 +23,8 @@ import { CardActionsSheet } from "./CardActionsSheet";
 import { useUpdateEtapaCRM } from "@/hooks/useUpdateEtapaCRM";
 import { MotivoPerdidaCRM } from "@/hooks/useCRMKanban";
 import { toast } from "sonner";
+import { getEtapaWarning } from "@/lib/crm-warnings";
 import PatientDrawer from "@/app/dashboard/pacientes/components/PatientDrawer";
-import { NuevoTurnoModal } from "@/components/patient/PatientDrawer/views/NuevoTurnoModal";
 
 interface Props {
   columns: KanbanColumnType[];
@@ -67,7 +67,20 @@ export function KanbanBoard({ columns, unreadMap }: Props) {
   const [drawerPatientId, setDrawerPatientId] = useState<string | null>(null);
   const [drawerInitialView, setDrawerInitialView] = useState<"default" | "presupuestos">("default");
   const [actionPatient, setActionPatient] = useState<KanbanPatient | null>(null);
-  const [turnoPatientId, setTurnoPatientId] = useState<string | null>(null);
+
+  // Keep the open sheet's patient in sync when the query re-renders with new data
+  const actionPatientRef = useRef(actionPatient);
+  actionPatientRef.current = actionPatient;
+  useEffect(() => {
+    if (!actionPatientRef.current) return;
+    for (const col of columns) {
+      const updated = col.pacientes.find((p) => p.id === actionPatientRef.current!.id);
+      if (updated && updated.etapaCRM !== actionPatientRef.current.etapaCRM) {
+        setActionPatient(updated);
+        return;
+      }
+    }
+  }, [columns]);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -167,6 +180,11 @@ export function KanbanBoard({ columns, unreadMap }: Props) {
 
     // Mover optimistamente
     setPendingMoves((prev) => ({ ...prev, [patient.id]: targetColumn }));
+
+    // Warning no bloqueante — simultáneo con el move optimista (CRM-02, CRM-03)
+    const warning = getEtapaWarning(patient, targetColumn);
+    if (warning) toast.warning(warning);
+
     updateEtapa(
       { pacienteId: patient.id, etapaCRM: targetColumn },
       {
@@ -177,7 +195,7 @@ export function KanbanBoard({ columns, unreadMap }: Props) {
             return next;
           }),
         onError: () =>
-          toast.error("No se pudo mover el paciente. Verificá los requisitos."),
+          toast.error("No se pudo guardar el movimiento. Intentá de nuevo."),
       }
     );
   }
@@ -281,9 +299,8 @@ export function KanbanBoard({ columns, unreadMap }: Props) {
           setDrawerInitialView("default");
           setDrawerPatientId(id);
         }}
-        onOpenNuevoTurno={(id) => setTurnoPatientId(id)}
-        onOpenPresupuestos={(id) => {
-          setDrawerInitialView("presupuestos");
+        onOpenDrawerWithView={(id, view) => {
+          setDrawerInitialView(view);
           setDrawerPatientId(id);
         }}
       />
@@ -295,13 +312,6 @@ export function KanbanBoard({ columns, unreadMap }: Props) {
         initialView={drawerInitialView}
       />
 
-      {turnoPatientId && (
-        <NuevoTurnoModal
-          open={!!turnoPatientId}
-          onOpenChange={(v) => { if (!v) setTurnoPatientId(null); }}
-          pacienteId={turnoPatientId}
-        />
-      )}
     </>
   );
 }

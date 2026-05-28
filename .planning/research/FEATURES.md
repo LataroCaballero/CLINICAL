@@ -1,34 +1,20 @@
 # Feature Research
 
-**Domain:** Clinical catalogs + clinical workflow integration — v1.5 Catálogos Clínicos y Flujos de Atención for Argentine aesthetic surgery clinic SaaS
-**Researched:** 2026-04-22
-**Confidence:** HIGH (codebase analysis, Prisma schema inspection, competitor patterns from Pabau, Zenoti, Nubimed, PatientNow) / MEDIUM (UX patterns for pending stock orders — inferred from domain conventions, not directly observed in source code)
-
-> **Scope:** This document covers ONLY features for v1.5. Everything shipped through v1.4 is not re-researched.
-> v1.5 goal: connect treatment/surgery catalogs with LiveTurno HC, presupuestos, and stock; improve flujo/HC flows from PatientDrawer.
+**Domain:** Medical clinic CRM — flexible pipeline stage transitions and redesigned kanban sheet (v1.7)
+**Researched:** 2026-05-23
+**Confidence:** HIGH (existing codebase reviewed end-to-end; UX patterns verified against NN/g, UX Patterns Dev, LogRocket, Foundey)
 
 ---
 
-## Context: What Exists Today (Post-v1.4)
+## Context
 
-### Existing Catalog Model
-`Tratamiento` model per-profesional has: nombre, descripcion, precio, indicaciones, procedimiento, duracionMinutos, activo. No relation to stock Productos. No FK from HC entries. No surgery-specific catalog.
+This is a milestone research file, not a greenfield project. The kanban board, stage system, sheet, and auto-transitions are already built. v1.7 adds: (1) unrestricted drag-and-drop, (2) non-blocking toast warnings for unmet prerequisites, (3) a redesigned sheet with a clickable stage stepper and compact actions. Research answers "what does this ecosystem expect?" for those three domains.
 
-### Existing Stock Model
-`Producto` + `Inventario` (per profesional) + `MovimientoStock` (with motivo, tipo enum). `MovimientoStock.practicaId` links to `PracticaRealizada` (OS billing). No link from `MovimientoStock` to `HistoriaClinicaEntrada` or `Tratamiento`. Stock deduction is currently triggered at billing/practica layer, not at clinical documentation layer.
-
-### Existing Presupuesto Model
-`PresupuestoItem` has: descripcion (free text), precioTotal, orden. No FK to any catalog — entirely free text.
-
-### Existing HC Entry
-`HistoriaClinicaEntrada` has: contenido (JSONB), answers (JSONB), template FK, status. No FK to `Tratamiento` catalog. LiveTurno HC tab uses a wizard/creator UI.
-
-### What Competitors Do (Confirmed, MEDIUM confidence)
-- **Pabau**: Links services to consumables; deducts inventory automatically when treatment is administered. Practitioner selects units used during charting session.
-- **Zenoti**: AI-assisted charting, service-linked forms, product deduction tied to invoice/checkout.
-- **Nubimed** (Argentine market): "Generate quick quotes from treatment catalog" — catalog-driven presupuesto creation.
-- **PatientNow**: Unified EMR + inventory + billing purpose-built for plastic surgery; catalog drives quote, quote drives booking, booking drives chart, chart drives billing.
-- Industry norm: catalog → quote → consent → clinical note → stock deduction → billing. This is the expected flow in aesthetic/plastic surgery SaaS.
+Existing code baseline:
+- `KanbanBoard.tsx` — dnd-kit with optimistic moves, already open to any stage except PERDIDO (which triggers LossReasonModal)
+- `CardActionsSheet.tsx` — full-width sheet with always-visible "Registrar contacto" form, quick action buttons, lista de espera section
+- `ContactoSheet.tsx` — separate fuller sheet with CRM stage selector and follow-up scheduling (used from PatientDrawer)
+- `useUpdateEtapaCRM` — PATCH `/pacientes/:id/etapa-crm`; backend may currently reject moves that skip prerequisites
 
 ---
 
@@ -36,104 +22,125 @@
 
 ### Table Stakes (Users Expect These)
 
-Features users assume exist given what the system already does. Missing these = system feels disconnected and incomplete.
+Features the secretaria assumes exist once the "flexible CRM" framing is presented. Missing any of these = the redesign feels incomplete or untrustworthy.
 
 | Feature | Why Expected | Complexity | Notes |
 |---------|--------------|------------|-------|
-| Insumos (stock products) linked to `Tratamiento` catalog with quantities | Every aesthetic clinic software links consumables to services (Pabau, Zenoti, Nubimed). Without this, precio is meaningless and stock tracking is broken. | MEDIUM | N:N join table `TratamientoInsumo` (tratamientoId, productoId, cantidad). Precio base = sum(costoBase × cantidad) from Inventario. |
-| Surgery catalog per profesional (name, ARS/USD prices, insumos, estimated duration) | System already has `Cirugia` model (surgical event record) but no reusable catalog for "types of surgeries I perform." Users expect to define their procedure menu once and reuse it in quotes. | MEDIUM | New model `CirugiaCatalogo` per profesional. Separate from `Cirugia` (the actual event). N:N with Productos for insumos. |
-| Presupuesto: pick from catalog with price auto-filled | Nubimed, PatientNow, all plastic surgery PM software do this. Without it, coordinators manually type prices every time — error-prone and slow. | MEDIUM | Add optional `tratamientoId`/`cirugiaId` FK to `PresupuestoItem`. Frontend: combobox that populates descripcion + precioTotal. Keep free-text option for custom items. |
-| HC entry "Tratamiento en Consultorio" section: multi-select from Tratamiento catalog | Without catalog linkage in the clinical note, the "Tab Tratamientos → last treatment" feature (already promised in v1.4) has nothing to link to. This closes the loop. | MEDIUM | New optional field(s) on `HistoriaClinicaEntrada`: `tratamientosCatalogo` (JSON array of tratamientoIds + nombre + free text). |
-| Tab Tratamientos: "Último tratamiento" column | Promised in v1.4 scope. The tab already shows monthly patient list — without a last-treatment column it feels incomplete. | LOW-MEDIUM | Requires a denormalized FK on `Paciente` or a query to latest HC entry with tratamientos. Prisma-level query, no new model needed if stored as column. |
-| Cambio de flujo desde PatientDrawer (optimistic, con modal confirmación) | Users classify patients via LiveTurno banner already. Doing it from the profile drawer is the logical complement — not adding it feels like a regression. Triggers CRM state + contact log. | MEDIUM | PATCH endpoint already exists. Frontend: confirmation modal + optimistic update + invalidate queries. CRM side effects already coded in backend. |
-| HC entry creator from PatientDrawer (sin turno activo) | Clinicians need to document retroactive entries (post-op notes, follow-up call notes, manual entries). All competitor systems allow this. Without it, LiveTurno is the only path to HC entry — creates artificial constraint. | MEDIUM | Reuse existing HC wizard component. Pass `turnoId: undefined`, date defaults to today. Backend `crearEntrada` already doesn't require a turno. |
+| Drag any card to any column without hard block | Core premise of v1.7; users already test boundaries with current kanban | LOW | Backend guard removal is the critical path; optimistic move already works client-side |
+| Toast warning when moving without prerequisites met | Industry standard: CRM platforms (HubSpot, Pipedrive) show inline nudges, not hard stops | LOW | `sonner` already imported and used in KanbanBoard.tsx; logic is a client-side check before or after PATCH |
+| Stage stepper in sheet showing all 6 stages | Users need orientation: "where is this patient in the funnel?" is the primary question on open | MEDIUM | shadcn/ui has no built-in stepper; implement with flex + conditional styling using ETAPA_ORDER from useCRMKanban |
+| Clicking a stepper step moves patient to that stage | If the stepper is read-only it confuses users who expect it to be interactive | MEDIUM | Reuses useUpdateEtapaCRM; PERDIDO step must still trigger LossReasonModal |
+| Compact "Registrar contacto" button opening a small modal | Current always-visible form occupies ~40% of sheet height; users expect quick-action CTA, not inline form | MEDIUM | Pattern: use Dialog (not Sheet-within-Sheet); form stays simple (tipo + nota) |
+| Lista de espera as a single toggle button (not a section) | Full section with textarea for optional comment is overbuilt for a binary opt-in | LOW | Compact button with inline state indicator; comment field removed or collapsed behind expansion |
+| Stage-specific contextual action per stepper step | Users expect the sheet to surface "what do I do here?" — this is the core value of the stage stepper UX | MEDIUM | Conditional rendering based on current etapaCRM; reuses HCCreatorForm, existing presupuesto navigation |
+| Flujo badge in sheet header | v1.4 introduced flujo (CIRUGIA/TRATAMIENTO); the CRM kanban only shows CIRUGIA patients; the badge is orientation context | LOW | KanbanPatient already has `procedimiento`; need to add `flujo` field to the kanban API response |
+| Automatic transitions continue working unchanged | Sending a presupuesto still auto-advances to PRESUPUESTO_ENVIADO; accepting still auto-advances to CONFIRMADO | LOW | No changes needed to existing auto-transition logic; only the manual drag guard is relaxed |
 
 ### Differentiators (Competitive Advantage)
 
-Features that align with the core value prop (close more surgeries, simpler ops) and go beyond what competitors offer out of the box for Argentine plastic surgery clinics.
+Features that make this CRM sheet meaningfully better than the current design and better than generic CRM tools.
 
 | Feature | Value Proposition | Complexity | Notes |
 |---------|-------------------|------------|-------|
-| Stock consumption orders (pending confirmation) from HC — not instant deduction | Argentine clinic context: stock module managed separately by admin, not by the doctor doing the HC. Generating a "pending consumption order" rather than instantly deducting respects the operational role separation (PROFESIONAL documents → Admin/stock confirms). | HIGH | New model needed: `OrdenConsumo` (with status PENDIENTE/CONFIRMADA/CANCELADA, FK to HC entry, pacienteId, fecha, items with productoId+cantidad). Stock module gets a confirmation UI. This matches how Argentine clinics actually operate. |
-| Precio base calculated from insumos (not just manual entry) | Shows real cost of each treatment. Helps clinic understand margin. Competitors show this, but Argentine-market systems like Nubimed don't emphasize it. Makes catalog more valuable. | LOW | Derived field: sum(inventario.precioActual × cantidad) for each insumo in the tratamiento. Read-only in UI, recalculated on demand. |
-| HC section "consume insumos" checkbox per treatment selected | Granular control per clinical session: "I used these treatments but did NOT consume stock this time" (e.g., consultation, evaluation, pre-op). Avoids phantom consumption orders. | LOW | Boolean per HC tratamiento entry. Only generate OrdenConsumo if checked. |
-| CirugiaCatalogo priced in ARS + USD | Surgery prices change with exchange rate. Having dual-currency in the catalog avoids updating the catalog constantly. Consistent with existing presupuesto dual-currency support. | LOW | Already modeled in presupuesto (moneda field). Catalog needs both fields. |
+| Stepper as navigation + action surface (not just progress indicator) | Generic CRM tools (Pipedrive, HubSpot) show a dropdown to change stage; a visual stepper that doubles as action shortcuts is materially better UX for non-technical operators | MEDIUM | Each step node should show: completed state, current state, future state — plus the contextual action button only when on that step |
+| Contextual action collapses/expands per active step | Reduces cognitive load: "Registrar HC" only appears when patient is in CONSULTADO, "Ver presupuesto" only in PRESUPUESTO_ENVIADO — users do not need to hunt for the right action | MEDIUM | Conditional rendering inside stepper, not a separate panel; removes the existing "Acciones rapidas" section entirely |
+| Warning toast with specific actionable text | Generic CRMs show "stage requires X"; this system can be specific: "Moviste a CONFIRMADO sin presupuesto aceptado" with a link to create one | LOW | `sonner` supports JSX in toast content; action button inside toast can be added in v1.x |
+| PERDIDO always requires loss reason (unblockable) | All major CRM tools enforce this gate because losing without tagging reason destroys analytics | LOW | Already implemented via LossReasonModal; preserve this as the only hard gate |
+| Optimistic move with visual pending state | Card dims with dashed border during in-flight PATCH (already implemented); users feel the system is fast even over slow connections | LOW | Already built; no change needed |
 
 ### Anti-Features (Commonly Requested, Often Problematic)
 
 | Feature | Why Requested | Why Problematic | Alternative |
 |---------|---------------|-----------------|-------------|
-| Instant stock deduction from HC (no confirmation step) | Simpler, fewer clicks | In Argentine multi-role clinics, the professional doing the HC is not the stock admin. Instant deduction bypasses stock validation (stockMinimo, lote tracking, admin oversight). Creates reconciliation nightmares. | Pending `OrdenConsumo` that stock module admin confirms. |
-| Full surgery planning inside LiveTurno | Consultations often discuss surgery — seems natural | LiveTurno is a consultorio session tool, not a surgical planning tool. Mixing surgery planning workflow (anesthesiologist, quirofano, ayudante) into a consult session creates scope explosion. | Surgery catalog for quoting. `Cirugia` record creation stays in separate flow. |
-| Replacing free-text presupuesto items entirely with catalog items | Uniformity | Users always need custom items (e.g., "traslado", "gastos de sanatorio", one-off extras). Removing free text breaks real workflows. | Keep free-text; catalog items are additive (prefill descripcion + precio, editable before save). |
-| Complex pricing rules (tiered pricing, member discounts, package bundles) | Sophisticated pricing seems valuable | Massively increases catalog complexity and coordinator training burden. Argentine plastic surgery practices price ad hoc per patient. | Manual precio override on PresupuestoItem after catalog prefill. |
-| Automatic CRM stage advance when HC entry is created from PatientDrawer | Seems like natural automation | HC entry from drawer may be a post-op follow-up note — does not imply a new CRM stage. Stage logic tied to turno lifecycle is already well-defined. Adding drawer HC → CRM advance creates unexpected side effects. | Keep CRM transitions tied to turno events only. Flujo change from drawer does affect CRM (already scoped). |
+| Hard blocking all stage skips | "Data integrity" — managers want to enforce process | Creates warning fatigue avoidance: users route around blocks by doing prerequisite actions meaninglessly just to advance the stage. NN/g: hard blocks on workflow steps increase error rates when users are experienced operators who legitimately need to override. | Non-blocking toast warnings that inform without blocking; PERDIDO remains the only hard gate because loss-reason capture has direct analytics value |
+| Modal confirmation for every stage change | Feels "safe" — confirms the user meant to do it | Every kanban drag requiring a confirmation destroys the speed advantage of the kanban view. Users abandon drag-and-drop for a slower list view if each drag produces a popup. | Toast warnings only when prerequisites are actually unmet; silent success when transition is clean |
+| CRM stage selector inside "Registrar contacto" modal | ContactoSheet.tsx already has this; users can update stage when logging contact | Conflates two concerns: "I talked to them" and "I'm advancing the stage". Users get confused about which action triggers the stage change. | Separate the stage change (stepper click) from the contact log (compact modal). Stage change in ContactoSheet becomes optional/advanced; stepper is the primary UX for stage movement |
+| Sheet-within-Sheet for "Registrar contacto" | Seems natural to open another sheet from within the sheet | Radix Sheet nesting has known portal/focus-trap conflicts. ContactoSheet already has `modal={false}` to paper over this. | Use `Dialog` (not `Sheet`) for the compact contact log modal inside the actions sheet |
+| Inline contact form always visible in sheet | Reduces clicks | 40% of vertical space wasted on a form the user may not use on every open. Sheet height is limited, and the stepper needs that space. | Button-triggered compact Dialog; form only appears when user explicitly needs it |
+| Lista de espera comment textarea always visible | Completeness | Optional comment competes with the stepper for vertical space | Toggle/expand: show comment field only after enabling the switch, or move to a secondary edit flow |
+| Adding NUEVO_LEAD or SIN_CLASIFICAR to the stepper | Completeness | These are not actionable conversion stages for a patient who already has a turno. Showing SIN_CLASIFICAR in the stepper creates confusion about what "going back" means. | Stepper shows: TURNO_AGENDADO -> CONSULTADO -> PRESUPUESTO_ENVIADO -> CONFIRMADO -> PROCEDIMIENTO_REALIZADO -> PERDIDO (same 6 stages as the funnel dashboard) |
 
 ---
 
 ## Feature Dependencies
 
 ```
-[CirugiaCatalogo model]
-    └──required by──> [Presupuesto: catalog item selection (cirugías)]
-    └──required by──> [OrdenConsumo: knows which insumos to consume]
+[Unrestricted drag-and-drop (CRM-01)]
+    └──requires──> [Backend guard removal on etapa-crm PATCH]
+                       └──requires──> [Verify no business logic in turnos service depends on CRM gate]
 
-[TratamientoInsumo join table (extend existing Tratamiento)]
-    └──required by──> [Presupuesto: catalog item selection (tratamientos) with precio base]
-    └──required by──> [HC "Tratamiento en Consultorio" section: drives insumo list]
-    └──required by──> [OrdenConsumo: knows which insumos tratamiento uses]
+[Toast warnings (CRM-02, CRM-03)]
+    └──requires──> [Client-side prerequisite check in handleDragEnd]
+    └──enhances──> [Unrestricted drag-and-drop (CRM-01)]
 
-[HC "Tratamiento en Consultorio" section]
-    └──required by──> [OrdenConsumo generation]
-    └──required by──> [Tab Tratamientos: "Último tratamiento" column] (needs tratamientoId stored on HC entry)
+[Stage stepper in sheet (SHEET-04)]
+    └──requires──> [ETAPA_ORDER definition] (exists in useCRMKanban.ts)
+    └──requires──> [Flujo field added to KanbanPatient type + API response]
 
-[OrdenConsumo model]
-    └──required by──> [Stock module: confirmation UI]
-    └──enhances──> [HC section "consume insumos" checkbox] (checkbox controls whether order is generated)
+[Stepper click moves to stage (SHEET-05)]
+    └──requires──> [Stage stepper in sheet (SHEET-04)]
+    └──requires──> [useUpdateEtapaCRM hook] (exists)
+    └──special-case──> [PERDIDO step triggers LossReasonModal instead of direct PATCH]
 
-[Cambio de flujo desde PatientDrawer]
-    └──uses──> [existing PATCH /pacientes/:id + CRM side effects] (already built)
-    └──independent from──> [HC entry creator from PatientDrawer]
+[Stage-specific contextual actions (SHEET-06, SHEET-07, SHEET-08)]
+    └──requires──> [Stage stepper in sheet (SHEET-04)]
+    └──requires──> [HCCreatorForm component] (exists, v1.5)
+    └──requires──> [onOpenPresupuestos callback] (already threaded through KanbanBoard -> CardActionsSheet)
 
-[HC entry creator from PatientDrawer]
-    └──reuses──> [LiveTurno HC wizard component] (must be extracted into shared component)
-    └──independent from──> [Cambio de flujo desde PatientDrawer]
+[Compact "Registrar contacto" modal (SHEET-02)]
+    └──requires──> [useCreateContacto hook] (exists)
+    └──conflicts-with──> [Sheet-within-Sheet pattern] -- use Dialog instead
+
+[Lista de espera compact button (SHEET-03)]
+    └──requires──> [useUpdateListaEspera hook] (exists in CardActionsSheet.tsx)
+
+[Remove quick actions panel (SHEET-09)]
+    └──enables──> [Stage-specific contextual actions (SHEET-06, SHEET-07, SHEET-08)]
+    └──note──> ["Dar un turno" button removed; access via PatientDrawer if needed]
 ```
 
 ### Dependency Notes
 
-- **CirugiaCatalogo is new and foundational**: It has no existing analog in the schema. Needs to be defined first before presupuesto and HC integration can reference it.
-- **TratamientoInsumo extends existing Tratamiento**: Lower risk than CirugiaCatalogo — it's additive. Tratamiento can function without insumos (backward compatible).
-- **HC wizard shared component**: LiveTurno currently uses the HC creator inline. For PatientDrawer to reuse it, the component must be lifted into a shared location (not duplicated). This is a refactor dependency.
-- **OrdenConsumo depends on HC section**: No point building the stock confirmation UI before the HC section that generates the orders exists.
-- **"Último tratamiento" column**: Needs either a denormalized FK on `Paciente.ultimoTratamientoId` (maintained on HC save) or a join query. If denormalized FK approach: needs a migration + service update in HC save path.
+- **Unrestricted drag-and-drop requires backend guard removal:** Client-side optimistic move already works. The backend `PATCH /pacientes/:id/etapa-crm` may enforce business rules (e.g., reject CONFIRMADO without accepted presupuesto). This must be verified; the guard should be softened to a warning-only response or removed entirely.
+- **Toast warnings check prerequisites client-side:** The check needs the patient's presupuesto state, available on `KanbanPatient.presupuesto`. No extra API call needed for the two specified warnings (CRM-02: no presupuesto at all when moving to PRESUPUESTO_ENVIADO; CRM-03: presupuesto.estado !== 'ACEPTADO' when moving to CONFIRMADO).
+- **Stepper conflicts with current ETAPA_ORDER:** `ETAPA_ORDER` in `useCRMKanban.ts` currently excludes PROCEDIMIENTO_REALIZADO (hidden from kanban per v1.0 decision). The stepper should include it (it's a valid CRM milestone), but it should not become a droppable kanban column. These are separate concerns.
+- **Compact contact modal must use Dialog, not Sheet:** Radix Sheet nested inside Sheet has portal conflicts already documented in ContactoSheet.tsx (`modal={false}` workaround). Use `Dialog` for the inner component.
+- **"Dar un turno" quick action is removed (SHEET-09):** Currently in the quick actions panel. Once the panel is removed, turno creation is accessible via PatientDrawer. Verify with product owner before removing.
 
 ---
 
-## MVP Definition for v1.5
+## MVP Definition
 
-### Launch With (v1.5 core)
+### Launch With (v1.7 — all items)
 
-Minimum that makes v1.5 coherent and usable end-to-end.
+All items are explicitly in scope per PROJECT.md CRM-01 through SHEET-09.
 
-- [ ] `TratamientoInsumo` join table — extend existing catalog with insumos + precio base derived field
-- [ ] `CirugiaCatalogo` model per profesional with ARS/USD prices, insumos, duration
-- [ ] HC "Tratamiento en Consultorio" section — multi-select from catalog + free text annotation + "consume insumos" checkbox
-- [ ] `OrdenConsumo` model + pending orders list in stock module (confirmation UI)
-- [ ] Presupuesto: catalog item picker (tratamientos + cirugías) with price auto-fill, keep free text
-- [ ] Tab Tratamientos: "Último tratamiento" column (FK or query from latest HC entry)
-- [ ] Cambio de flujo desde PatientDrawer (optimistic + modal + CRM side effect)
-- [ ] HC entry creator from PatientDrawer (shared component, date = today)
+- [ ] CRM-01: Unrestricted drag-and-drop (any stage -> any stage) — requires backend guard removal
+- [ ] CRM-02: Toast warning when moving to PRESUPUESTO_ENVIADO without existing presupuesto
+- [ ] CRM-03: Toast warning when moving to CONFIRMADO without accepted presupuesto
+- [ ] CRM-04: Auto-transitions continue working (no regression)
+- [ ] CRM-05: Stepper click moves patient to stage (same path as drag-and-drop)
+- [ ] SHEET-01: Sheet header with patient name + flujo badge
+- [ ] SHEET-02: "Registrar contacto" as compact button opening Dialog (not Sheet)
+- [ ] SHEET-03: Lista de espera as compact toggle button
+- [ ] SHEET-04: Stage stepper showing all 6 funnel stages with current stage highlighted
+- [ ] SHEET-05: Clicking stepper step triggers stage transition
+- [ ] SHEET-06: "Ver/Crear presupuesto" action in PRESUPUESTO_ENVIADO step
+- [ ] SHEET-07: "Registrar HC" action in CONSULTADO step (opens HCCreatorForm)
+- [ ] SHEET-08: "Marcar como realizado" action in PROCEDIMIENTO_REALIZADO step
+- [ ] SHEET-09: Remove existing quick actions panel from sheet
 
-### Add After Validation (v1.5.x)
+### Add After Validation (v1.x)
 
-- [ ] Bulk confirmation of OrdenConsumo (confirm multiple orders at once in stock module) — trigger when stock admin reports friction
-- [ ] OrdenConsumo linked to Lote (batch tracking per insumo consumed) — trigger when clinic has traceable injectables
+- [ ] Action-button toast: "Moviste a CONFIRMADO sin presupuesto. Crear uno ->" with JSX button inside sonner toast
+- [ ] Flujo badge in stepper step for TRATAMIENTO patients if kanban ever shows them
+- [ ] Animated stepper transitions (smooth highlight movement between steps)
 
 ### Future Consideration (v2+)
 
-- [ ] Surgery planning: link `CirugiaCatalogo` to actual `Cirugia` (surgical event) record with pre-populated insumos — only when surgical workflow is a product priority
-- [ ] Package bundles: multiple tratamientos/cirugías priced together as a package — only with clear commercial demand
+- [ ] Time-in-stage indicator per stepper step (how many days patient has been in this stage)
+- [ ] Automated follow-up triggers based on stage + days elapsed (deferred in PROJECT.md)
+- [ ] Stage-change audit log visible in sheet (who moved them, when)
 
 ---
 
@@ -141,47 +148,82 @@ Minimum that makes v1.5 coherent and usable end-to-end.
 
 | Feature | User Value | Implementation Cost | Priority |
 |---------|------------|---------------------|----------|
-| CirugiaCatalogo model + CRUD | HIGH (surgery quotes are the core conversion tool) | MEDIUM (new model, scoped CRUD) | P1 |
-| TratamientoInsumo + precio base | HIGH (closes the stock-catalog gap) | LOW-MEDIUM (additive migration + service layer) | P1 |
-| Presupuesto catalog picker | HIGH (daily use by secretaria) | MEDIUM (frontend combobox + PresupuestoItem FK) | P1 |
-| HC "Tratamiento en Consultorio" section | HIGH (clinical documentation + stock trigger) | MEDIUM (new HC section UI + backend field) | P1 |
-| OrdenConsumo pending + stock confirmation UI | HIGH (stock integrity) | HIGH (new model + new UI surface in stock module) | P1 |
-| Tab Tratamientos "Último tratamiento" column | MEDIUM (nice-to-have, promised in v1.4) | LOW-MEDIUM (query or denormalized FK) | P1 |
-| Cambio de flujo desde PatientDrawer | MEDIUM (ergonomics, not blocking) | LOW (reuses existing PATCH + confirmation modal) | P2 |
-| HC creator from PatientDrawer | MEDIUM (retroactive docs, follow-up notes) | MEDIUM (component extraction + drawer integration) | P2 |
-| Precio base auto-calculated from insumos | MEDIUM (margin visibility) | LOW (derived, no new model) | P2 |
-| "Consume insumos" checkbox in HC | HIGH (prevents phantom orders) | LOW (boolean field on HC entry JSON) | P1 — bundled with HC section |
+| Unrestricted drag-and-drop (CRM-01) | HIGH | LOW (client done; backend guard removal) | P1 |
+| Toast warnings (CRM-02, CRM-03) | HIGH | LOW (client-side check + sonner) | P1 |
+| Stage stepper UI (SHEET-04) | HIGH | MEDIUM (custom component; no shadcn stepper) | P1 |
+| Compact "Registrar contacto" modal (SHEET-02) | HIGH | MEDIUM (refactor CardActionsSheet; new Dialog) | P1 |
+| Stepper click -> stage change (SHEET-05) | HIGH | LOW (reuses useUpdateEtapaCRM) | P1 |
+| Contextual step actions (SHEET-06/07/08) | HIGH | LOW (conditional rendering inside stepper) | P1 |
+| Sheet header with name + flujo badge (SHEET-01) | MEDIUM | LOW (minor CardActionsSheet header refactor) | P1 |
+| Lista de espera compact button (SHEET-03) | MEDIUM | LOW (simplify existing section) | P1 |
+| Remove quick actions panel (SHEET-09) | MEDIUM | LOW (delete JSX block) | P1 |
+| Auto-transitions unchanged (CRM-04) | HIGH | LOW (verify, no code change expected) | P1 |
 
 ---
 
 ## Competitor Feature Analysis
 
-| Feature | Pabau | PatientNow | Nubimed (AR) | Our Approach |
-|---------|-------|------------|--------------|--------------|
-| Treatment catalog linked to consumables | Yes — auto-deduct at checkout | Yes — tied to invoice | Basic catalog, no insumos linkage found | Full N:N with quantities, precio base derived |
-| Surgery catalog | Not specialty-specific | Yes — procedure library | Yes — presupuesto from catalog | New `CirugiaCatalogo` per profesional |
-| Catalog-based quoting | Yes | Yes | Yes ("quick quotes from catalog") | PresupuestoItem with optional catalog FK + price prefill |
-| Stock deduction from clinical note | Yes — at checkout/admin | Yes | Unknown | Pending `OrdenConsumo` — confirmed by stock admin (fits Argentine role separation) |
-| HC entry without appointment | Yes (progress notes) | Yes | Unknown | HC creator reused from LiveTurno, accessible from PatientDrawer |
-| Patient classification change | CRM stage change | Not applicable | Not applicable | Flujo change from PatientDrawer with CRM side effects (already built) |
+| Feature | HubSpot Deals | Pipedrive | Our Approach |
+|---------|--------------|-----------|--------------|
+| Stage restriction | Optional hard blocks (admin-configurable per stage) | No hard blocks; any stage -> any stage via drag | Non-blocking toasts only; PERDIDO remains only hard gate (loss reason required) |
+| Stage change UX | Dropdown picker in deal detail sidebar | Drag-and-drop + clickable stage bar at top of deal | Drag-and-drop (existing) + stepper in sheet (new) |
+| Contextual actions per stage | "Required fields" modal per stage | No per-stage actions built-in | Contextual action button rendered inside each stepper step |
+| Log contact / note | Persistent "Activity" section always visible | Activity panel always in deal sidebar | Compact button -> Dialog (removes always-visible form to free vertical space) |
+| Pipeline flexibility | Any deal can skip stages freely | Any deal can skip stages freely | Same: flexible with informational warnings |
 
-### Differentiation Note
+---
 
-The most distinctive design decision for this project versus competitors is the **pending consumption order** (OrdenConsumo) pattern instead of instant stock deduction. This is driven by Argentine clinic operational reality: the professional documenting the HC is not the same person managing stock. The two-step pattern (generate → confirm) is standard in pharmaceutical/hospital contexts but uncommon in medspa SaaS. It is the correct approach for this user base. Confidence: MEDIUM (domain inference from operational patterns, not verified via competitive feature docs).
+## Warning Pattern Specification
+
+The non-blocking warning behavior is the highest-risk UX decision in v1.7 because it replaces a safety mechanism. This section is opinionated to prevent scope creep and warning fatigue.
+
+### When to warn
+
+| Trigger | Warning text | Blocking? |
+|---------|-------------|-----------|
+| Move to PRESUPUESTO_ENVIADO, `patient.presupuesto === null` | "Este paciente no tiene presupuesto creado. Podes crear uno desde el perfil." | No |
+| Move to CONFIRMADO, `patient.presupuesto?.estado !== 'ACEPTADO'` | "Este paciente no tiene presupuesto aceptado. El sistema lo movio de todas formas." | No |
+| Move to PERDIDO (any origin) | LossReasonModal — reason required | Yes (modal gate) |
+| Move to any other stage with any state | No warning | — |
+
+### Why exactly two warnings
+
+More warnings = warning fatigue. NN/g research confirms users trained to dismiss warnings stop reading them after 3-5 occurrences. Two warnings cover the analytically meaningful cases: PRESUPUESTO_ENVIADO without a budget is a data quality issue; CONFIRMADO without accepted budget is a revenue integrity issue. All other stage combinations are routine operations that should be silent.
+
+### Implementation location
+
+Check prerequisites in `handleDragEnd` (KanbanBoard.tsx) after optimistic move is applied. The prerequisite data is on `KanbanPatient` which is already in scope at drag-end. No additional API calls needed. Use `toast.warning()` variant, not `toast.error()` — the move succeeded; this is informational, not a failure. Duration: 6 seconds (default 4s is too short for actionable messages in Spanish).
+
+---
+
+## Stepper Design Specification
+
+Opinionated implementation guidance to reduce ambiguity in planning.
+
+1. **Stages to show (6):** TURNO_AGENDADO -> CONSULTADO -> PRESUPUESTO_ENVIADO -> CONFIRMADO -> PROCEDIMIENTO_REALIZADO -> PERDIDO (mirrors the dashboard funnel; excludes SIN_CLASIFICAR and NUEVO_LEAD)
+2. **Current stage:** filled/highlighted circle node; steps before shown as completed (checkmark or filled); steps after shown as future (empty circle)
+3. **Clickability:** all steps clickable; PERDIDO click triggers LossReasonModal; all others trigger useUpdateEtapaCRM directly
+4. **Contextual action:** renders immediately below the current (active) step node only:
+   - CONSULTADO -> "Registrar HC" (opens HCCreatorForm in a Dialog)
+   - PRESUPUESTO_ENVIADO -> "Ver/Crear presupuesto" (calls `onOpenPresupuestos`)
+   - PROCEDIMIENTO_REALIZADO -> "Marcar como realizado" (calls updateEtapa to PROCEDIMIENTO_REALIZADO if not already there)
+5. **Layout:** horizontal stepper with abbreviated labels fitting `max-w-sm` sheet width; overflow handled with small text or wrapped labels; connector line between nodes
+6. **No shadcn built-in stepper exists** — implement with flex row, conditional classNames per step state (completed/current/future), and a thin connector line between nodes. Estimated 60-80 lines of TSX.
 
 ---
 
 ## Sources
 
-- Pabau stock management: [Stock Management | Pabau Practice Management Software](https://pabau.com/features/stock-management/)
-- Pabau inventory: [Inventory Management Software for Clinics & Med Spas](https://pabau.com/features/inventory-management-software/)
-- Pabau plastic surgery: [5 Best Plastic Surgery Software Solutions in 2026 | Pabau](https://pabau.com/blog/best-plastic-surgery-software/)
-- Pabau medical spa inventory: [8 Best Medical Spa Inventory Software Solutions for 2026 | Pabau](https://pabau.com/blog/medical-spa-inventory-software/)
-- Nubimed Argentina: [Software para Clínicas de Estética y Cirugía Plástica | Nubimed](https://www.nubimed.com/software-cirugia-plastica/)
-- PatientNow plastics: [Medical Aesthetics & Plastic Surgery Software | PatientNow](https://www.patientnow.com/medical-aesthetics/)
-- Nextech plastic surgery PM: [Plastic Surgery Practice Management Software | Nextech](https://www.nextech.com/plastic-surgery/practice-management-software)
-- Codebase analysis: `backend/src/prisma/schema.prisma`, `backend/src/modules/tratamientos/tratamientos.service.ts`, `backend/src/modules/historia-clinica/historia-clinica.service.ts`, `backend/src/modules/presupuestos/presupuestos.service.ts`, `frontend/src/types/tratamiento.ts`, `frontend/src/components/live-turno/LiveTurnoTabs.tsx`
+- [Stepper UI Best Practices — Foundey](https://foundey.com/blog/stepper-ui-best-practices) — sidebar stepper UX, linear vs. non-linear navigation, clickable steps
+- [Indicators, Validations, and Notifications — NN/g](https://www.nngroup.com/articles/indicators-validations-notifications/) — when to use toast vs. modal vs. inline; urgency and required-action framework
+- [Toast Notification UX — LogRocket](https://blog.logrocket.com/ux-design/toast-notifications/) — toast for non-critical messages; warning vs. error tone
+- [Modal vs. Popover vs. Tooltip — UX Patterns Dev](https://uxpatterns.dev/pattern-guide/modal-vs-popover-guide) — use Dialog (not Sheet) for compact contact log inside an open sheet
+- [CRM UX Design 2025 — Yellow Slice](https://yellowslice.in/bed/crm-ux-design-in-2025-what-works-what-fails-and-whats-next/) — proliferation-of-screens failure mode; inline action patterns
+- [SaaS CRM Design Trends 2025 — EseOSpace](https://eseospace.com/blog/saas-crm-design-trends-for-2025/) — kanban + detail drawer pattern dominance
+- Codebase: `KanbanBoard.tsx`, `CardActionsSheet.tsx`, `ContactoSheet.tsx`, `useCRMKanban.ts`, `useUpdateEtapaCRM.ts`
+- `PROJECT.md` — v1.7 milestone definition, ticket list CRM-01 through SHEET-09
 
 ---
-*Feature research for: v1.5 Catálogos Clínicos y Flujos de Atención — aesthetic surgery clinic SaaS (Argentina)*
-*Researched: 2026-04-22*
+
+*Feature research for: CRM Flexible stage transitions and kanban sheet redesign (v1.7)*
+*Researched: 2026-05-23*

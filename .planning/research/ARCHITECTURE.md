@@ -1,401 +1,328 @@
-# Architecture Research
+# Architecture Patterns: v1.7 CRM Flexible
 
-**Domain:** Catalog-driven clinical workflows (v1.5 Catálogos Clínicos y Flujos de Atención)
-**Researched:** 2026-04-22
-**Confidence:** HIGH — derived entirely from reading the actual codebase (schema, services, controllers, components)
+**Domain:** Flexible CRM stage transitions + redesigned kanban sheet
+**Researched:** 2026-05-23
+**Confidence:** HIGH — based on direct code inspection of all relevant files
 
 ---
 
-## System Overview
+## Existing Architecture — What Was Found
+
+### Endpoint
 
 ```
-┌──────────────────────────────────────────────────────────────────────┐
-│                        Next.js Frontend                               │
-│                                                                        │
-│  ┌──────────────┐  ┌────────────────┐  ┌─────────────────────────┐   │
-│  │ /pacientes   │  │ /turnos        │  │ /stock + /finanzas      │   │
-│  │  page.tsx    │  │  page.tsx      │  │  (existing pages)       │   │
-│  │  TratamTab   │  │  LiveTurnoPanel│  │                         │   │
-│  └──────┬───────┘  └───────┬────────┘  └──────────┬──────────────┘   │
-│         │                  │                       │                  │
-│  ┌──────▼──────────────────▼───────────────────────▼──────────────┐  │
-│  │              TanStack Query hooks (frontend/src/hooks/)         │  │
-│  │   useTratamientosProfesional · useCirugias · useOrdenConsumo   │  │
-│  │   useCreatePresupuesto · useCreateHistoriaClinicaEntry          │  │
-│  └─────────────────────────────────────────────────────────────────┘  │
-└──────────────────────────────────────────────────────────────────────┘
-                              │ HTTP/JSON (axios + JWT)
-┌──────────────────────────────────────────────────────────────────────┐
-│                        NestJS Backend                                  │
-│                                                                        │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐                │
-│  │ tratamientos │  │  cirugias-   │  │historia-clin │                │
-│  │  module      │  │  catalogo    │  │  module      │                │
-│  │  (modified)  │  │  (NEW)       │  │  (modified)  │                │
-│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘                │
-│         │                  │                  │                       │
-│  ┌──────▼──────────────────▼──────────────────▼───────────────────┐  │
-│  │   presupuestos · stock · pacientes · ordenes-consumo (NEW)      │  │
-│  └─────────────────────────────────────────────────────────────────┘  │
-│                              │                                        │
-│  ┌────────────────────────────────────────────────────────────────┐   │
-│  │                      PrismaService                              │   │
-│  └────────────────────────────────────────────────────────────────┘   │
-└──────────────────────────────────────────────────────────────────────┘
-                              │
-┌──────────────────────────────────────────────────────────────────────┐
-│                     PostgreSQL (via PgBouncer)                         │
-│                                                                        │
-│  Tratamiento · TratamientoInsumo(NEW) · CirugiasCatalogo(NEW)         │
-│  CirugiaInsumo(NEW) · HistoriaClinicaEntrada(modified)                │
-│  OrdenConsumo(NEW) · PresupuestoItem(modified) · Paciente(modified)   │
-└──────────────────────────────────────────────────────────────────────┘
+PATCH /pacientes/:id/etapa-crm
+Body: { etapaCRM: EtapaCRM; motivoPerdida?: MotivoPerdidaCRM }
 ```
 
+Single endpoint in `PacientesController` → `PacientesService.updateEtapaCRM()`.
+Both drag-and-drop and the sheet stepper must call this same endpoint.
+
+### Current Backend Guards — Exact Code
+
+Two guards exist in `pacientes.service.ts:updateEtapaCRM()`:
+
+**Guard 1 — PERDIDO requires motivoPerdida (line 513–517):**
+```typescript
+if (dto.etapaCRM === EtapaCRM.PERDIDO && !dto.motivoPerdida) {
+  throw new BadRequestException('Se requiere motivoPerdida al mover a etapa PERDIDO');
+}
+```
+This guard MUST stay. It enforces a data-completeness invariant (the loss reason modal already handles it on the frontend). This is a data integrity rule, not a workflow restriction.
+
+**Guard 2 — CONFIRMADO requires accepted presupuesto (line 519–528):**
+```typescript
+if (dto.etapaCRM === EtapaCRM.CONFIRMADO) {
+  const tienePresupuestoAceptado = paciente.presupuestos.some(
+    (p) => p.estado === EstadoPresupuesto.ACEPTADO,
+  );
+  if (!tienePresupuestoAceptado) {
+    throw new BadRequestException(
+      'El paciente debe tener al menos un presupuesto ACEPTADO para pasar a CONFIRMADO',
+    );
+  }
+}
+```
+This guard MUST BE REMOVED for v1.7. It is the only backend blocker to free transitions. Currently it causes the `onError` toast in `KanbanBoard` ("No se pudo mover el paciente. Verificá los requisitos.") to fire when a user legitimately tries to manually confirm a patient.
+
+### Side Effects in updateEtapaCRM (must be preserved)
+
+After the DB write, the service does two things:
+1. Auto-creates a `ContactoLog` of type SISTEMA for stages NUEVO_LEAD, CONSULTADO, and PRESUPUESTO_ENVIADO.
+2. Creates 3 `TareaSeguimiento` records (day 3, 7, 14) when moving to PRESUPUESTO_ENVIADO.
+
+These side effects are correct and must not be touched.
+
+### Automatic Transitions (separate code path — DO NOT TOUCH)
+
+In `presupuestos.service.ts`, three automatic transitions write directly to `Paciente.etapaCRM` via `$transaction`:
+- `marcarEnviado()` sets `PRESUPUESTO_ENVIADO`
+- `aceptarPresupuesto()` sets `CONFIRMADO`
+- `rechazar()` sets `PERDIDO`
+
+These bypass `updateEtapaCRM()` entirely — they write straight to Prisma. They have their own guards (presupuesto state machine checks). They are unaffected by v1.7 changes and must remain untouched.
+
+### Frontend Data Available in KanbanPatient
+
+The `KanbanPatient` object (already in the kanban query response) contains:
+```typescript
+presupuesto: {
+  total: number;
+  estado: string;       // 'ACEPTADO' | 'ENVIADO' | 'BORRADOR' | 'RECHAZADO' | 'VENCIDO'
+  fechaEnviado: string | null;
+} | null
+```
+
+This is critical: **the frontend already has enough data to evaluate both warning conditions without a new API call.**
+
+- Warning for PRESUPUESTO_ENVIADO: `patient.presupuesto === null`
+- Warning for CONFIRMADO: `patient.presupuesto?.estado !== 'ACEPTADO'`
+
+The frontend performs these checks and emits toasts before calling the mutation. The mutation proceeds regardless.
+
 ---
 
-## Existing Architecture: What Already Exists
+## Recommended Architecture for v1.7
 
-### Backend modules (confirmed from filesystem)
+### Q1: What to do with backend guards?
 
-| Module | Path | Current State |
-|--------|------|---------------|
-| `tratamientos` | `backend/src/modules/tratamientos/` | Exists. CRUD for `Tratamiento` per-profesional (nombre, descripcion, precio, duracionMinutos, activo). Also has legacy `TratamientoCatalogo` (global, unused going forward). |
-| `presupuestos` | `backend/src/modules/presupuestos/` | Exists. `PresupuestoItem` has only `descripcion` + `precioTotal` — no catalog FK. PDF + email services present. |
-| `historia-clinica` | `backend/src/modules/historia-clinica/` | Exists. `crearEntrada()` builds JSONB `contenido` field. `tratamientos` in HC stored as free `TratamientoItemDto[]` in JSON, not FK. `turnoId` relationship is via `Turno.entradaHCId` (turno → entrada, not entrada → turno). |
-| `stock` | `backend/src/modules/stock/` | Exists. Split into 5 services: inventario, productos, proveedores, ordenes-compra, ventas-producto. `Inventario` is `productoId + profesionalId`. No `OrdenConsumo` model yet. |
-| `pacientes` | `backend/src/modules/pacientes/` | Exists. Has `PATCH /:id/flujo` endpoint using `UpdateFlujoDto`. No `ultimoTratamientoId` field yet. |
-| `turnos` | `backend/src/modules/turnos/` | Exists. `Turno` has `cirugiaId?` (FK to surgery session), `entradaHCId?`, `esCirugia` boolean. |
-| `tipos-turno` | `backend/src/modules/tipos-turno/` | Exists. `TipoTurno` has `flujoPaciente: FlujoPaciente?` (used to filter TRATAMIENTO turnos in TratamientosTab). |
+**Remove the CONFIRMADO guard. Keep the PERDIDO guard.**
 
-### Key existing model facts (from schema.prisma)
+The CONFIRMADO guard (lines 519–528 of `pacientes.service.ts`) must be deleted. This is the only backend change needed. The check logic moves entirely to the frontend as a warning — the mutation succeeds regardless of presupuesto state.
 
-- `Cirugia` already exists but is a **surgery session** (per-patient: fecha, procedimiento, quirofano, etc.) — NOT a catalog. v1.5 adds a **CirugiasCatalogo** concept (per-profesional: nombre, precioARS, precioUSD, duracion, insumos).
-- `Tratamiento` already exists as a per-profesional catalog with pricing. Missing: `insumos` join table (TratamientoInsumo → Producto/Inventario).
-- `PresupuestoItem` is currently free-text only (`descripcion` + `precioTotal`). Missing: `catalogItemId`, `catalogItemType` enum.
-- `HistoriaClinicaEntrada` stores treatments in JSONB `contenido`. The `turnoId` association is inverted — Turno holds `entradaHCId?`, making HC entry the owner. `turnoId` becoming optional on HistoriaClinicaEntrada is already effectively true since Turno can exist without an HC entry — adding HC from PatientDrawer (without a turno) only requires ensuring `historiaClinica.crearEntrada()` does not require a turnoId.
-- `Paciente` has no `ultimoTratamientoId` FK yet.
+The PERDIDO guard stays because it enforces data integrity (motivoPerdida is a required field for loss reason analytics), not a business workflow restriction. The frontend already enforces this via `LossReasonModal`.
 
-### Frontend components (confirmed from filesystem)
+No "opt-in" flag, no bypass parameter, no dual-mode. Delete the guard block cleanly.
 
-| Component | Path | Current State |
-|-----------|------|---------------|
-| `TratamientosTab` | `frontend/src/app/dashboard/pacientes/components/TratamientosTab.tsx` | Exists. Shows TRATAMIENTO-type turnos grouped by month. No "último tratamiento" column. |
-| `PrimeraConsultaForm` | `frontend/src/components/live-turno/tabs/hc/PrimeraConsultaForm.tsx` | Exists. Uses chip UI from `ZONAS`/`CATEGORIAS_TRATAMIENTO` constants + `useTratamientosProfesional` hook for catalog. Treatments stored as free `{ nombre, precio }` objects, not FK. |
-| `HistorialClinicoPanel` | `frontend/src/components/live-turno/tabs/hc/HistorialClinicoPanel.tsx` | Exists. Read-only display of HC entries. |
-| `PatientDrawer` | `frontend/src/app/dashboard/pacientes/components/PatientDrawer.tsx` | Exists as page-level component. Views under `frontend/src/components/patient/PatientDrawer/views/` (PresupuestosView, etc.) — no flujo-change action yet, no HC creator. |
-| `GenerarPresupuestoModal` | `frontend/src/components/live-turno/tabs/hc/GenerarPresupuestoModal.tsx` | Exists inside LiveTurno HC tab. Free-text item entry only. |
-| `LiveTurnoPanel` | `frontend/src/components/live-turno/LiveTurnoPanel.tsx` | Root panel component. Has tabs via `LiveTurnoTabs.tsx`. |
+### Q2: Should drag-and-drop and the stepper use the same mutation?
 
----
+Yes. One hook, one endpoint.
 
-## New vs Modified Components
+`useUpdateEtapaCRM` already does optimistic UI via `pendingMoves` in `KanbanBoard`. The sheet stepper will call the same hook. No new endpoint is needed.
 
-### Schema Changes
+The warning logic is the same for both entry points. Extract it to a shared helper function `checkCRMTransitionWarnings(patient, targetEtapa): string | null` that returns a warning message or null. Both drag-and-drop and stepper click call this function, emit the toast if a warning exists, then proceed with the mutation unconditionally.
 
-**NEW models to add via Prisma migration:**
+### Q3: Where does warning context come from?
 
-| Model | Purpose | Key Fields |
-|-------|---------|------------|
-| `TratamientoInsumo` | Join table: Tratamiento ↔ Producto (stock) with quantity | `tratamientoId`, `productoId`, `cantidad: Int` |
-| `CirugiasCatalogo` | Per-profesional surgery catalog | `profesionalId`, `nombre`, `precioARS`, `precioUSD`, `duracionEstimada`, `activo: Boolean` |
-| `CirugiaInsumo` | Join table: CirugiasCatalogo ↔ Producto with quantity | `cirugiasCatalogoId`, `productoId`, `cantidad: Int` |
-| `OrdenConsumo` | Stock consumption order from HC | `pacienteId`, `profesionalId`, `entradaHCId?`, `fecha`, `estado: EstadoOrdenConsumo`, `insumos: Json` (snapshot) |
+Frontend only. No new backend endpoint needed.
 
-**NEW enums to add:**
+The `KanbanPatient` already carries `presupuesto.estado`. The sheet receives the `KanbanPatient` object via the existing `patient` prop. Warning evaluation is synchronous and pure:
 
-| Enum | Values |
+```typescript
+// frontend/src/lib/crmTransitions.ts
+export function checkCRMTransitionWarnings(
+  patient: KanbanPatient,
+  targetEtapa: EtapaCRM
+): string | null {
+  if (targetEtapa === 'PRESUPUESTO_ENVIADO' && !patient.presupuesto) {
+    return 'Este paciente no tiene presupuesto. Podés crearlo desde "Ver presupuesto".';
+  }
+  if (targetEtapa === 'CONFIRMADO' && patient.presupuesto?.estado !== 'ACEPTADO') {
+    return 'El paciente no tiene presupuesto aceptado. La etapa se actualizará igual.';
+  }
+  return null;
+}
+```
+
+Place this in `frontend/src/lib/crmTransitions.ts`. Both `KanbanBoard` and the new stepper import it.
+
+### Q4: What components are new vs modified?
+
+#### Backend: 1 file modified
+
+| File | Change | Type |
+|------|--------|------|
+| `backend/src/modules/pacientes/pacientes.service.ts` | Delete the CONFIRMADO guard block (lines 519–528) | Modify — 10 lines deleted |
+
+#### Frontend: New files
+
+| File | Purpose |
+|------|---------|
+| `frontend/src/lib/crmTransitions.ts` | `checkCRMTransitionWarnings()` pure helper |
+| `frontend/src/components/crm/EtapaStepper.tsx` | Clickable horizontal stepper showing 6 CRM stages |
+| `frontend/src/components/crm/ContactoRapidoModal.tsx` | Small Dialog wrapping the contacto form extracted from CardActionsSheet |
+
+#### Frontend: Modified files
+
+| File | Change |
 |------|--------|
-| `EstadoOrdenConsumo` | `PENDIENTE`, `CONFIRMADA`, `CANCELADA` |
-| `CatalogItemType` | `CIRUGIA`, `TRATAMIENTO` |
+| `frontend/src/components/crm/CardActionsSheet.tsx` | Full layout redesign: compact header with FlujoBadge, compact action buttons, remove inline contacto form (→ ContactoRapidoModal), add EtapaStepper, remove quick actions panel |
+| `frontend/src/components/crm/KanbanBoard.tsx` | Import `checkCRMTransitionWarnings`, call it in `handleDragEnd` before mutation, show warning toast |
+| `backend/src/modules/pacientes/pacientes.service.ts` | (listed above) |
 
-**MODIFIED models:**
+#### Frontend: Requires a small data addition
 
-| Model | Change | Why |
-|-------|--------|-----|
-| `Tratamiento` | Add `insumos TratamientoInsumo[]` relation | Connects catalog item to stock products |
-| `PresupuestoItem` | Add `catalogItemId: String?`, `catalogItemType: CatalogItemType?` | Enables auto-populate from catalog; backward-compatible (optional) |
-| `HistoriaClinicaEntrada` | Add `consumirInsumos: Boolean @default(false)`, `tratamientoIds: String[]` (Postgres array) | Tracks which catalog treatments were applied; triggers OrdenConsumo creation |
-| `Paciente` | Add `ultimoTratamientoId: String?` FK to `Tratamiento` | Powers "último tratamiento" column in TratamientosTab |
+`getKanban()` in `pacientes.service.ts` and the `KanbanPatient` type do not currently include `flujo`. The sheet header needs it to render `FlujoBadge`. One field addition to the Prisma select and the TypeScript type.
 
-**Note on `turnoId` on HistoriaClinicaEntrada:** The association currently runs `Turno.entradaHCId?` → `HistoriaClinicaEntrada`. HC entries created from PatientDrawer (without a turno) simply have no Turno pointing at them — no schema change needed. The `crearEntrada()` service already does not require a turnoId.
-
-### Backend New/Modified
-
-| Item | Type | Change |
-|------|------|--------|
-| `cirugias-catalogo` | NEW module | Full NestJS module: `CirugiasCatalogo.module/controller/service` + DTOs. CRUD scoped to `profesionalId`. Endpoints: `GET /cirugias-catalogo`, `POST`, `PATCH/:id`, `DELETE/:id` (soft-delete). |
-| `tratamientos.service.ts` | MODIFIED | Add `findAllWithInsumos()` (include TratamientoInsumo → Producto). Add `updateInsumos()` mutation. |
-| `tratamientos.controller.ts` | MODIFIED | Add `GET /tratamientos/:id/insumos`, `PUT /tratamientos/:id/insumos`. |
-| `historia-clinica.service.ts` | MODIFIED | `crearEntrada()`: accept `tratamientoIds[]` + `consumirInsumos: boolean`. When `consumirInsumos = true`, create `OrdenConsumo` in same transaction. Update `Paciente.ultimoTratamientoId` when `tratamientoIds` non-empty. |
-| `historia-clinica/dto/crear-entrada.dto.ts` | MODIFIED | Add `tratamientoIds?: string[]`, `consumirInsumos?: boolean`. `turnoId` is already optional (not in DTO). |
-| `presupuestos.service.ts` | MODIFIED | `create()`: accept `catalogItemId?` + `catalogItemType?` per item. Auto-populate `descripcion` + `precioTotal` from catalog if provided and not overridden. |
-| `presupuestos/dto/create-presupuesto.dto.ts` | MODIFIED | Add optional `catalogItemId?: string`, `catalogItemType?: string` to `PresupuestoItemDto`. |
-| `ordenes-consumo` | NEW module | Lightweight module for stock team. `GET /ordenes-consumo?profesionalId=&estado=PENDIENTE`, `PATCH /ordenes-consumo/:id/confirmar` (triggers MovimientoStock SALIDA). |
-| `pacientes.service.ts` | MODIFIED | Add `updateUltimoTratamiento(pacienteId, tratamientoId)` called from HC service. |
-
-### Frontend New/Modified
-
-| Item | Type | Change |
-|------|------|--------|
-| `useCirugiasCatalogo.ts` | NEW hook | `GET /cirugias-catalogo?profesionalId=` — list for selector dropdowns. |
-| `useCreateCirugiasCatalogo.ts` | NEW hook | `POST /cirugias-catalogo` mutation. |
-| `useTratamientosConInsumos.ts` | NEW hook | `GET /tratamientos?includeInsumos=true` — enhanced version of existing hook. |
-| `useOrdenesConsumo.ts` | NEW hook | `GET /ordenes-consumo?profesionalId=&estado=PENDIENTE`. |
-| `useConfirmarOrdenConsumo.ts` | NEW hook | `PATCH /ordenes-consumo/:id/confirmar`. |
-| `useUpdateFlujo.ts` | NEW hook | `PATCH /pacientes/:id/flujo` with optimistic update. |
-| `PrimeraConsultaForm.tsx` | MODIFIED | Replace free `TratamientoItemDto[]` chip UI with catalog combobox (`useTratamientosProfesional`). Add `consumirInsumos` checkbox. Pass `tratamientoIds[]` to `useCreateHistoriaClinicaEntry`. |
-| `GenerarPresupuestoModal.tsx` | MODIFIED | Add "seleccionar del catálogo" button/panel. CirugiasCatalogo + Tratamiento selectors pre-populate description and price. |
-| `TratamientosTab.tsx` | MODIFIED | Add "Último tratamiento" column — read `Paciente.ultimoTratamientoId` → `Tratamiento.nombre`. Fetch via backend include, not N+1. |
-| `PatientDrawer` (views) | MODIFIED | Add flujo-change action button/dropdown → calls `useUpdateFlujo` with optimistic update. Add HC creator panel using the same `PrimeraConsultaForm` (wrapped in modal). |
-| `GestionTratamientos.tsx` | MODIFIED | Add insumos management section per tratamiento (product combobox + quantity input). Exists at `frontend/src/app/dashboard/configuracion/components/GestionTratamientos.tsx`. |
-| `CirugiasCatalogoSection` | NEW | UI for CRUD of CirugiasCatalogo per profesional. Lives under `/dashboard/configuracion`. |
-| Stock ordenes-consumo view | NEW | Table of OrdenConsumo with PENDIENTE filter and confirm button. Lives under `/dashboard/stock/ordenes-consumo`. |
-
----
-
-## Data Flow Changes
-
-### Flow 1: HC Entry with Catalog Tratamientos (LiveTurno or PatientDrawer)
-
-```
-User selects tratamientos from catalog combobox + checks "Consumir insumos"
-    ↓
-PrimeraConsultaForm.onChange({ tratamientoIds: ['uuid1', 'uuid2'], consumirInsumos: true, ... })
-    ↓
-useCreateHistoriaClinicaEntry.mutate({ pacienteId, tratamientoIds, consumirInsumos, ... })
-    ↓
-POST /historia-clinica/:pacienteId/entradas
-    ↓
-HistoriaClinicaService.crearEntrada() [transaction]:
-  1. Resolve or create HistoriaClinica record
-  2. Create HistoriaClinicaEntrada (with tratamientoIds[], consumirInsumos)
-  3. If consumirInsumos = true:
-     - Fetch TratamientoInsumo records for each tratamientoId
-     - Build insumos snapshot
-     - Create OrdenConsumo { estado: PENDIENTE, insumos: snapshot }
-  4. Update Paciente.ultimoTratamientoId = tratamientoIds[last]
-  5. Update Paciente.diagnostico/tratamiento strings (existing behavior)
-    ↓
-Frontend: invalidate ['historia-clinica', pacienteId], ['pacientes'] queries
-```
-
-### Flow 2: Presupuesto with Catalog Items
-
-```
-User clicks "Agregar del catálogo" in GenerarPresupuestoModal
-    ↓
-CirugiasCatalogo or Tratamiento selector populates item row:
-  { descripcion: catalogItem.nombre, precioTotal: catalogItem.precio, catalogItemId, catalogItemType }
-    ↓
-useCreatePresupuesto.mutate({ ..., items: [{ descripcion, precioTotal, catalogItemId, catalogItemType }] })
-    ↓
-POST /presupuestos
-    ↓
-PresupuestosService.create(): existing total calculation + stores catalogItemId/catalogItemType on PresupuestoItem
-    ↓
-PDF generation uses existing descripcion field (no catalog-aware changes needed in PDF service)
-```
-
-### Flow 3: Flujo Change from PatientDrawer
-
-```
-Coordinator clicks flujo badge in PatientDrawer header
-    ↓
-FlujoSelector dropdown (CIRUGIA | TRATAMIENTO | PENDIENTE) — optimistic update immediately changes badge
-    ↓
-useUpdateFlujo.mutate({ pacienteId, flujo })
-    ↓
-PATCH /pacientes/:id/flujo (existing endpoint + service from v1.4)
-    ↓
-Existing CRM side effects in pacientesService.updateFlujo()
-    ↓
-Rollback on error (TanStack Query onError)
-```
-
-### Flow 4: Stock Consumption Confirmation
-
-```
-Stock user navigates to /dashboard/stock/ordenes-consumo
-    ↓
-useOrdenesConsumo fetches PENDIENTE orders
-    ↓
-User reviews insumos snapshot and clicks "Confirmar"
-    ↓
-useConfirmarOrdenConsumo.mutate({ ordenConsumoId })
-    ↓
-PATCH /ordenes-consumo/:id/confirmar
-    ↓
-OrdenesConsumoService.confirmar() [transaction]:
-  1. For each insumo in snapshot:
-     - Find Inventario { productoId, profesionalId }
-     - Create MovimientoStock { tipo: SALIDA, cantidad, motivo: 'Orden de consumo HC' }
-     - Decrement inventario.stockActual
-  2. Update OrdenConsumo.estado = CONFIRMADA
-```
+| File | Change |
+|------|--------|
+| `backend/src/modules/pacientes/pacientes.service.ts` | Add `flujo: true` to `getKanban()` select |
+| `frontend/src/hooks/useCRMKanban.ts` | Add `flujo: FlujoPaciente \| null` to `KanbanPatient` interface |
 
 ---
 
 ## Component Boundaries
 
-| Boundary | Communication | Notes |
-|----------|---------------|-------|
-| `historia-clinica` → `stock` | Service injection at module level | HistoriaClinicaModule imports StockModule to create OrdenConsumo. Direct injection is simpler and already the pattern in this codebase (no EventEmitter needed). |
-| `historia-clinica` → `pacientes` | Service injection | PacientesService.updateUltimoTratamiento() called from HC service inside same transaction scope. |
-| `presupuestos` → `tratamientos` catalog | Direct Prisma query | Presupuestos already injects PrismaService — can query Tratamiento table without importing TratamientosModule. |
-| `presupuestos` → `cirugias-catalogo` | Direct Prisma query | Same pattern as above — no module import needed for read-only catalog lookup. |
-| `ordenes-consumo` → `stock` | Service injection or Prisma direct | OrdenesConsumoService needs to create MovimientoStock. Either import InventarioService from StockModule or use PrismaService directly for the two queries needed. |
-| Frontend hooks → Backend | HTTP via axios | All via `frontend/src/lib/api.ts` with JWT interceptor. No changes to auth flow. |
+### CardActionsSheet — Redesigned Layout
+
+```
+SheetHeader
+  ├── Patient name (text-base font-semibold)          [existing]
+  ├── FlujoBadge (uses new flujo field)               [new]
+  └── Compact action row (horizontal flex):
+       ├── [Registrar contacto] button → opens ContactoRapidoModal  [new]
+       └── Lista de espera Switch (instant toggle, no save button)   [redesigned]
+
+EtapaStepper                                          [new component]
+  ├── Steps: NUEVO_LEAD → TURNO_AGENDADO → CONSULTADO → PRESUPUESTO_ENVIADO → CONFIRMADO → PERDIDO
+  ├── Current stage highlighted
+  ├── On click → checkCRMTransitionWarnings → toast if warning → mutate
+  └── Per-step contextual action shown below active step:
+       PRESUPUESTO_ENVIADO → "Ver/Crear presupuesto" (calls onOpenPresupuestos)
+       CONSULTADO          → "Registrar HC" (opens HCCreatorDialog)
+       PROCEDIMIENTO_REALIZADO → "Marcar como realizado" (mutate to that stage)
+
+[Ver perfil completo] button                          [existing, keep]
+```
+
+### ContactoRapidoModal
+
+Wraps the contacto form currently inline in `CardActionsSheet`. Uses a `Dialog` (not Sheet) to stay compact. Props: `pacienteId`, `open`, `onOpenChange`. On success: closes modal, sheet stays open.
+
+### EtapaStepper
+
+```typescript
+interface EtapaStepperProps {
+  currentEtapa: EtapaCRM | null;
+  patient: KanbanPatient;
+  profesionalId: string;            // for HCCreatorDialog
+  onEtapaChange: (etapa: EtapaCRM) => void;
+  onOpenPresupuestos: () => void;
+}
+```
+
+`onEtapaChange` goes to `CardActionsSheet`, which calls `checkCRMTransitionWarnings` then `useUpdateEtapaCRM`. The mutation is owned by `CardActionsSheet`, not by the stepper component itself. This keeps the stepper purely presentational.
 
 ---
 
-## Suggested Build Order (Phase Dependencies)
+## Data Flow
 
-### Phase A: Schema + Catalog Foundation
-
-**No UI dependency. Every subsequent feature depends on these models.**
-
-1. Prisma migration: `TratamientoInsumo`, `CirugiasCatalogo`, `CirugiaInsumo`, `OrdenConsumo`, `EstadoOrdenConsumo` enum, `CatalogItemType` enum.
-2. Modified models: `PresupuestoItem` (optional catalog FKs), `HistoriaClinicaEntrada` (`tratamientoIds String[]`, `consumirInsumos`), `Paciente` (`ultimoTratamientoId`).
-3. New `cirugias-catalogo` NestJS module (CRUD only, no frontend yet).
-4. Extend `tratamientos` service with `findAllWithInsumos()` and insumos endpoints.
-5. New configuracion UI sections (GestionTratamientos insumos + CirugiasCatalogoSection).
-
-**Schema design note for `tratamientoIds` on HistoriaClinicaEntrada:** Use `String[]` (Postgres array) rather than a join table. The data is primarily written once and read for display. A join table (TratamientoEntrada) is only needed if future reporting requires "all patients who received tratamiento X" — that is a v2 reporting concern. Postgres array with `@db.array` is sufficient at this scale.
-
-### Phase B: HC Integration
-
-**Depends on Phase A. Core of v1.5.**
-
-1. Modify `crearEntrada()` in `historia-clinica.service.ts`: accept `tratamientoIds`, `consumirInsumos`, create OrdenConsumo in transaction, update `Paciente.ultimoTratamientoId`.
-2. Modify `PrimeraConsultaForm.tsx`: replace chip-based tratamiento UI with catalog combobox.
-3. Wire updated form state to `useCreateHistoriaClinicaEntry` hook.
-4. Add HC creator to PatientDrawer (reuse `PrimeraConsultaForm` in a modal, no duplication).
-
-### Phase C: Presupuestos with Catalog
-
-**Depends on Phase A only. Can run parallel with Phase B.**
-
-1. Modify `PresupuestosService.create()`: handle optional `catalogItemId` + `catalogItemType` on items.
-2. Modify `GenerarPresupuestoModal.tsx`: add catalog selector panel.
-3. Update `CreatePresupuestoDto` with optional catalog fields.
-
-### Phase D: PatientDrawer Flujo Action
-
-**Independent — `PATCH /pacientes/:id/flujo` already exists from v1.4. Frontend only.**
-
-1. Add flujo-change button/selector to PatientDrawer.
-2. `useUpdateFlujo` hook with optimistic update + rollback.
-
-### Phase E: TratamientosTab "Último Tratamiento" Column
-
-**Depends on Phase A (field exists) + Phase B (field gets populated).**
-
-1. Include `ultimoTratamiento: { nombre }` in turno/paciente query response from backend.
-2. Add column to `TratamientosTab.tsx`.
-
-### Phase F: Stock Ordenes de Consumo UI
-
-**Depends on Phase A (model exists) + Phase B (records created).**
-
-1. New `ordenes-consumo` NestJS module (GET list + PATCH confirm).
-2. `useOrdenesConsumo` + `useConfirmarOrdenConsumo` hooks.
-3. Stock page `/dashboard/stock/ordenes-consumo` with PENDIENTE table + confirm action.
-
-**Recommended parallel execution:**
 ```
-Phase A (schema + catalog CRUD)
-    ↓
-Phase B (HC integration) ─────── Phase C (presupuestos catalog) ─── parallel
-Phase D (drawer flujo)   ─── can even go before Phase A (pure frontend to existing endpoint)
-    ↓ (after B completes)
-Phase E (último tratamiento column)
-Phase F (stock ordenes UI)
+[Drag-and-drop in KanbanBoard]          [Stepper click in CardActionsSheet]
+         │                                          │
+         ▼                                          ▼
+checkCRMTransitionWarnings(patient, targetEtapa)    (same function)
+         │                                          │
+    warning?──yes──► toast.warning(msg)        warning?──yes──► toast.warning(msg)
+         │                                          │
+         ▼ (always proceeds)                        ▼ (always proceeds)
+useUpdateEtapaCRM.mutate(...)              useUpdateEtapaCRM.mutate(...)
+         │                                          │
+         └──────────────────┬─────────────────────-┘
+                            ▼
+            PATCH /pacientes/:id/etapa-crm
+                            │
+                            ▼
+            PacientesService.updateEtapaCRM()
+              ├── PERDIDO guard (kept — requires motivoPerdida)
+              ├── [CONFIRMADO guard REMOVED]
+              ├── prisma.paciente.update(etapaCRM)
+              ├── ContactoLog auto-create (NUEVO_LEAD / CONSULTADO / PRESUPUESTO_ENVIADO)
+              └── TareaSeguimiento create (if PRESUPUESTO_ENVIADO)
+                            │
+                            ▼
+            onSuccess → invalidate ["crm-kanban"] + ["pacientes"]
+            onError   → toast.error (network/DB errors only)
 ```
+
+---
+
+## Patterns to Follow
+
+### Pattern: Warning helper is a pure function, not a hook
+
+Warning evaluation is synchronous and takes only the patient object and target stage. No React hooks, no async. A plain exported function in `lib/crmTransitions.ts` is trivially testable and avoids hook overhead.
+
+### Pattern: Mutation stays at the container level
+
+`EtapaStepper` calls `onEtapaChange(etapa)`. `CardActionsSheet` applies warnings and calls the mutation. This prevents two mutation instances fighting over the same patient and keeps the `pendingMoves` optimistic state concentrated in `KanbanBoard` (for drag-and-drop) and sheet-level state (for stepper clicks).
+
+### Pattern: FlujoBadge reuse across contexts
+
+`FlujoBadge` currently lives in `frontend/src/app/dashboard/pacientes/components/FlujoBadge.tsx`. For reuse in the CRM sheet, either move it to `frontend/src/components/ui/FlujoBadge.tsx` or import it from its current location. The latter avoids a migration step — prefer importing from the existing path.
 
 ---
 
 ## Anti-Patterns to Avoid
 
-### Anti-Pattern 1: Reusing the existing `Cirugia` model as a catalog
+### Do not add a prerequisite status endpoint
 
-**What happens:** Extending `Cirugia` (which is a per-patient surgery session with fecha, quirofano, anestesiologo) to also serve as a catalog entry.
+No `GET /pacientes/:id/crm-prerequisites`. The frontend already has all needed data from the kanban query payload. A roundtrip adds latency for advisory information.
 
-**Why it's wrong:** `Cirugia` is a clinical event record — a surgery that happened. Adding catalog fields to it mixes semantics, breaks surgical scheduling reports, and makes the catalog dependent on having a patient attached.
+### Do not add a bypass parameter to the PATCH endpoint
 
-**Do this instead:** Create a separate `CirugiasCatalogo` model. Keep `Cirugia` (surgery session) entirely untouched.
+No `{ force: true }` or `{ bypassGuards: true }`. Just delete the CONFIRMADO guard. Keeping it in any "soft" form adds dead code paths and misleads future developers about the intended workflow.
 
-### Anti-Pattern 2: Storing catalog FKs inside `contenido` JSONB
+### Do not move the PERDIDO guard to frontend-only
 
-**What happens:** Continuing to store treatment references inside the `contenido: Json?` blob on `HistoriaClinicaEntrada`.
+The `motivoPerdida` required rule stays on the backend as a data integrity safety net. The frontend modal already enforces it — the backend guard will never trigger in normal usage, but it prevents data corruption from direct API calls or future bugs.
 
-**Why it's wrong:** JSONB fields are opaque to Postgres indexes and Prisma relations. You cannot query "all entries that used tratamiento X" without full table scans and application-level parsing. Reporting and the "último tratamiento" feature both need queryable data.
+### Do not merge CardActionsSheet and PatientDrawer
 
-**Do this instead:** Add `tratamientoIds: String[]` as a proper Postgres array column. Keep JSONB for display/narrative content only.
-
-### Anti-Pattern 3: Decrementing stock directly inside `crearEntrada()`
-
-**What happens:** The HC service tries to decrement `Inventario.stockActual` directly at entry creation time.
-
-**Why it's wrong:** Stock consumption requires confirmation by a stock-responsible user. Automatic decrement at HC save removes the review step and corrupts inventory if entries are created in error.
-
-**Do this instead:** HC service creates `OrdenConsumo { estado: PENDIENTE }` only — a record of intent. The actual `MovimientoStock` creation happens only when the stock user confirms via the dedicated endpoint.
-
-### Anti-Pattern 4: N+1 queries for "último tratamiento" in TratamientosTab
-
-**What happens:** For each turno row in TratamientosTab, making a separate request to resolve the patient's último tratamiento.
-
-**Why it's wrong:** TratamientosTab already loads turnos in bulk by month. Per-patient fetches create N requests for N patients.
-
-**Do this instead:** Include `paciente: { select: { ultimoTratamiento: { select: { nombre: true } } } }` in the existing turno query response. One query covers all rows.
-
-### Anti-Pattern 5: Duplicating PrimeraConsultaForm logic for PatientDrawer
-
-**What happens:** Building a separate similar HC creator component for PatientDrawer instead of reusing the LiveTurno form.
-
-**Why it's wrong:** Both surfaces must produce identical `CreateEntradaDto` shapes. Separate implementations diverge, causing subtle differences in what gets saved.
-
-**Do this instead:** `PrimeraConsultaForm` is already context-agnostic (receives `onChange` + `onGenerarPresupuesto` + `obraSocialId` props). Wrap it in a modal for PatientDrawer use. Same component, two call sites.
+The sheet is the kanban quick-action surface. The drawer is the full patient profile. Keep them separate. The sheet triggers the drawer via `onOpenDrawer` for anything that needs full context.
 
 ---
 
-## Scaling Considerations
+## Build Order (accounts for dependencies)
 
-| Scale | Architecture Notes |
-|-------|-------------------|
-| Current (1-10 clinics) | All synchronous service injections are fine. OrdenConsumo PENDIENTE list will be short (< 50/day per clinic). |
-| 100+ clinics | `Inventario` lookups per OrdenConsumo confirmation may slow down. `@@unique([productoId, profesionalId])` on Inventario already covers the index — no additional index needed. |
-| High OrdenConsumo volume | Plan cursor-based pagination from the start in `GET /ordenes-consumo`. A simple `take/skip` is fine now but the endpoint contract should include pagination params to avoid a breaking change later. |
+**Step 1 — Backend guard removal** (unblocks everything, 5 minutes)
+- Delete the CONFIRMADO guard block from `pacientes.service.ts`
+- Add `flujo: true` to `getKanban()` select
+
+**Step 2 — Frontend type + warning infrastructure** (depends on Step 1)
+- Add `flujo` field to `KanbanPatient` in `useCRMKanban.ts`
+- Create `lib/crmTransitions.ts` with `checkCRMTransitionWarnings()`
+- Modify `KanbanBoard.handleDragEnd` to call it and emit toast before mutation
+
+At this point drag-and-drop is fully functional with warnings. Steps 3–4 can be done together.
+
+**Step 3 — Sheet redesign**
+- Build `ContactoRapidoModal` (extract existing form)
+- Build `EtapaStepper` (pure UI component, no data dependencies beyond props)
+- Rewrite `CardActionsSheet` layout: compact header, compact action row, EtapaStepper, remove quick actions panel
+
+**Step 4 — Per-step contextual actions**
+- Wire PRESUPUESTO_ENVIADO step action → `onOpenPresupuestos` (prop already exists on CardActionsSheet)
+- Wire CONSULTADO step action → `HCCreatorDialog` (already exists; needs `profesionalId` added to `KanbanPatient` or passed from the page level via `CardActionsSheet` props)
+- Wire PROCEDIMIENTO_REALIZADO step action → mutate to that stage directly
+
+**Dependency note on profesionalId for HCCreatorDialog:**
+`HCCreatorDialog` requires `profesionalId`. The `KanbanBoard` is rendered inside the pacientes page which has access to the effective professional context via `useEffectiveProfessionalId`. Thread `profesionalId` as a prop through `KanbanBoard → CardActionsSheet → HCCreatorDialog`. This is a 2-line prop addition to `KanbanBoard` and `CardActionsSheet`.
 
 ---
 
-## Integration Points Summary
+## Open Questions
 
-| New Feature | Integrates With | Mechanism |
-|-------------|-----------------|-----------|
-| TratamientoInsumo | `Producto` (stock) | Prisma FK `productoId` |
-| CirugiasCatalogo | `Profesional` | Scoped by `profesionalId` — same tenant-isolation pattern as Tratamiento |
-| HC entry → OrdenConsumo | `stock` module | HistoriaClinicaModule imports PrismaService (already present) or StockModule |
-| HC entry → `ultimoTratamientoId` | `pacientes` module | `prisma.paciente.update()` inside HC transaction |
-| PresupuestoItem → catalog | `tratamientos` + `cirugias-catalogo` | Optional FK fields; catalog lookup at creation time via direct Prisma query |
-| PatientDrawer flujo action | `pacientes` endpoint | Existing `PATCH /pacientes/:id/flujo` — CRM side effects already implemented in v1.4 |
-| TratamientosTab "último tratamiento" | `Paciente.ultimoTratamientoId` | Include in turno query response (backend change); read-only display (frontend) |
-| OrdenConsumo confirm → MovimientoStock | `inventario.service.ts` / Prisma direct | Transaction: inventory lookup + MovimientoStock create + stockActual decrement |
+1. **SIN_CLASIFICAR in stepper:** Should the stepper include SIN_CLASIFICAR as step 0? Recommend hiding it — it is a system-assigned entry state, not a meaningful manual target for the secretaria.
+
+2. **Lista de espera comment on instant toggle:** If the toggle fires immediately (no save button), what happens to the comment text? Recommend: keep the comment textarea, fire the mutation with the current comment text on toggle. Add a separate "Guardar comentario" link below for text-only changes.
+
+3. **PROCEDIMIENTO_REALIZADO excluded from kanban board columns:** Patients in this stage appear as SIN_CLASIFICAR on the board (the kanban server groups them there). The stepper in the sheet should still allow moving TO this stage ("Marcar como realizado"). When the mutation fires, the patient card will disappear from its current column and re-appear in SIN_CLASIFICAR — this is existing behavior and acceptable.
 
 ---
 
 ## Sources
 
-- `backend/src/prisma/schema.prisma` — full schema inspected (confirmed all model shapes and existing relations)
-- `backend/src/modules/tratamientos/tratamientos.service.ts` — confirmed Tratamiento CRUD pattern
-- `backend/src/modules/presupuestos/dto/create-presupuesto.dto.ts` — confirmed PresupuestoItem has no catalog FK
-- `backend/src/modules/historia-clinica/historia-clinica.service.ts` — confirmed crearEntrada() signature and JSONB pattern
-- `frontend/src/components/live-turno/tabs/hc/PrimeraConsultaForm.tsx` — confirmed tratamiento chip UI stores free objects, not FKs
-- `frontend/src/app/dashboard/pacientes/components/TratamientosTab.tsx` — confirmed current tab state (no último tratamiento column)
-- `frontend/src/hooks/` directory listing — confirmed full existing hooks inventory
-- `.planning/PROJECT.md` — milestone context, validated requirements, and existing Key Decisions
+All findings based on direct inspection of:
+- `backend/src/modules/pacientes/pacientes.service.ts` (lines 503–588, 603–697)
+- `backend/src/modules/presupuestos/presupuestos.service.ts` (lines 155–292)
+- `frontend/src/components/crm/KanbanBoard.tsx`
+- `frontend/src/components/crm/CardActionsSheet.tsx`
+- `frontend/src/components/crm/KanbanColumn.tsx`
+- `frontend/src/components/crm/PatientCard.tsx`
+- `frontend/src/hooks/useUpdateEtapaCRM.ts`
+- `frontend/src/hooks/useCRMKanban.ts`
+- `frontend/src/components/patient/PatientDrawer/views/HCCreatorDialog.tsx`
+- `.planning/PROJECT.md` (v1.7 requirements)
 
----
-
-*Architecture research for: v1.5 Catálogos Clínicos y Flujos de Atención — NestJS + Prisma + Next.js clinic SaaS*
-*Researched: 2026-04-22*
+Confidence: HIGH — no external sources needed; all findings grounded in the actual codebase.

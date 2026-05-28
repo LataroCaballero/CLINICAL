@@ -1,203 +1,278 @@
-# Pitfalls Research — v1.5 Catálogos Clínicos y Flujos de Atención
+# Pitfalls Research
 
-**Domain:** Catalog-driven clinical workflows added to an existing clinic SaaS (NestJS + Prisma + PostgreSQL + Next.js)
-**Researched:** 2026-04-22
-**Confidence:** HIGH — based on direct codebase analysis of actual schema, services, and patterns in use
+**Domain:** CRM Flexible v1.7 — removing business rule guards, stepper UX, any-to-any kanban transitions
+**Researched:** 2026-05-23
+**Confidence:** HIGH (based on direct code analysis of the actual codebase — all file references are verified line numbers)
 
 ---
 
 ## Critical Pitfalls
 
-### Pitfall 1: PresupuestoItem Has No Price Snapshot — Catalog Drift
+### Pitfall 1: Auto-Transition Overwriting Manual Manual Move — The Core Race Condition
 
 **What goes wrong:**
-`PresupuestoItem` currently stores only `descripcion` and `precioTotal` (a single lump sum). When catalog items are added via `catalogoId` FK pointing at `Tratamiento` or a new `CatalogoCirugia`, if the code recalculates or re-resolves the price from the catalog row on quote re-render or PDF generation, the customer sees a different total than the one they were quoted.
+The backend has three separate auto-transition paths that write `etapaCRM` directly to the `Paciente` row with no awareness of where the patient currently is:
+
+1. `turnos.service.ts` `crearTurno` (line 135–139): forces `TURNO_AGENDADO` if patient is in `null` or `NUEVO_LEAD`
+2. `turnos.service.ts` `cerrarSesion` (lines 893–912): forces `PROCEDIMIENTO_REALIZADO` unconditionally if `esCirugia=true`; forces `CONSULTADO` if current etapa is `TURNO_AGENDADO`
+3. `presupuestos.service.ts` `marcarEnviado` (line 229): forces `PRESUPUESTO_ENVIADO` unconditionally; `aceptar` (line 182) and both `*ByToken` variants (lines 582, 641) force `CONFIRMADO` or `PERDIDO`
+
+Today, the guard in `updateEtapaCRM` (lines 519–528 of `pacientes.service.ts`) prevents a patient from being manually moved to `CONFIRMADO` without an accepted budget, so `CONFIRMADO` and an active surgery session coexist. Remove the guard and the race becomes reachable:
+
+- Secretaria manually moves patient to `CONFIRMADO` at 10:00 AM via drag
+- At 10:00:05 the surgeon closes the session (`cerrarSesion`); `esCirugia=true` so `PROCEDIMIENTO_REALIZADO` is written unconditionally — no check against the current etapa
+- Patient silently moves backwards from `CONFIRMADO` to `PROCEDIMIENTO_REALIZADO`
+
+The same regression applies to `marcarEnviado`: if the secretaria has manually moved the patient to `CONFIRMADO`, sending the budget marks them back as `PRESUPUESTO_ENVIADO`.
 
 **Why it happens:**
-The existing `PresupuestoItem` has no `precioUnitario`, no `cantidad`, and no `catalogoId`. When the team adds catalog selection to the quote UI, the temptation is to store only the FK and derive amounts on read. This is DRY but wrong for financial documents.
+The auto-transitions were written when guards prevented backward-incompatible manual moves. Remove the manual guards and the auto-transitions are suddenly reachable in states they were never designed for.
 
 **How to avoid:**
-- Add `precioUnitario Decimal`, `cantidad Int @default(1)`, and optional `catalogoId String?` to `PresupuestoItem` in the migration.
-- Store `precioUnitario` at the moment of quote creation — copied from catalog, never re-read from catalog.
-- Keep `precioTotal = precioUnitario * cantidad` computed on write, stored on the row.
-- `catalogoId` is for display traceability only; never use it to re-derive financials.
+Add a forward-only guard to every auto-transition path before shipping unrestricted drag-and-drop. Auto-transitions should only fire if the current etapa is at or behind the target in `ETAPA_ORDER`. In `cerrarSesion`:
+
+```typescript
+const etapaActualIdx = ETAPA_ORDER.indexOf(turnoInfo.paciente.etapaCRM);
+const nuevaEtapaIdx = ETAPA_ORDER.indexOf(nuevaEtapa);
+if (nuevaEtapa && (turnoInfo.paciente.etapaCRM === null || nuevaEtapaIdx > etapaActualIdx)) {
+  await this.prisma.paciente.update(...);
+}
+```
+
+Apply the same pattern in `marcarEnviado` before the forced `PRESUPUESTO_ENVIADO` write. `crearTurno` already uses `etapasIniciales` so it is safe; verify it remains safe if `ETAPA_ORDER` changes.
 
 **Warning signs:**
-- PR that computes `precioTotal` inside a query join to the catalog table.
-- PDF generation service that calls `tratamientosService.findById()` inside `presupuestosService.generatePdf()`.
-- UI that shows a stale price badge ("precio actualizado") on a sent quote.
+- A `CONFIRMADO` patient appears in `PROCEDIMIENTO_REALIZADO` the morning after their surgery session
+- `contactoLog` shows two consecutive SISTEMA entries within seconds for the same patient
+- The kanban invalidation after `cerrarSesion` fires shows an unexpected column for the patient
 
-**Phase to address:** Schema foundation phase — migration must add snapshot columns before any quote-catalog UI is built.
+**Phase to address:**
+Phase implementing CRM-01 backend — must fix auto-transition guards before exposing unrestricted UI. This is a 3-line change per transition path; low effort, non-negotiable.
 
 ---
 
-### Pitfall 2: M2M Catalog-Insumo Without Quantity Versioning — Stale Price Base
+### Pitfall 2: Optimistic Update Card Disappears on Backend Error
 
 **What goes wrong:**
-`TratamientoInsumo` (new junction) stores `productoId + cantidad`. `Tratamiento.precio` is currently a static field. If `precio base` is computed from `SUM(insumo.precioActual * cantidad)` at query time, every re-fetch recalculates it. When `Inventario.precioActual` changes (new purchase order received), all historical presupuestos that displayed "precio base desde insumos" show a new number retroactively.
+`KanbanBoard.tsx` uses a `pendingMoves: Record<string, EtapaCRM>` local state to visually relocate a card before the backend responds. `onSettled` always removes the entry from `pendingMoves`. `useUpdateEtapaCRM` only invalidates the cache on `onSuccess` — there is no `onError` invalidation.
+
+Sequence on a transient 500:
+1. Card moves optimistically to column B
+2. Backend returns 500
+3. `onSettled` fires → `pendingMoves` entry deleted → card disappears from column B visually
+4. Cache still holds stale data placing the card in column A
+5. `staleTime: 30_000` means no automatic refetch for 30 seconds
+6. Card is invisible for up to 30 seconds — user thinks the card was lost
 
 **Why it happens:**
-It feels natural to compute the price base dynamically so it "stays up to date." The problem is that "up to date" means different things for catalog display vs. financial commitments.
+`useUpdateEtapaCRM` has no `onError` invalidation call. `staleTime: 30_000` in `useCRMKanban` prevents automatic recovery within the 30s window.
 
 **How to avoid:**
-- `Tratamiento.precio` (and the equivalent field on `CatalogoCirugia`) remains the **canonical price** — editable by the professional, not auto-calculated on read.
-- Provide a "Recalcular desde insumos" button that updates `Tratamiento.precio` on demand. Never auto-recalculate it.
-- `TratamientoInsumo.precioUnitarioReferencia` (nullable) can store the insumo cost at the moment of the last explicit recalculation for auditing, but must not be used for quote totals.
+Add `onError` invalidation to `useUpdateEtapaCRM.ts`:
+
+```typescript
+onError: () => {
+  queryClient.invalidateQueries({ queryKey: ["crm-kanban"] });
+}
+```
+
+This is a one-liner that prevents all ghost-card scenarios regardless of the error source.
 
 **Warning signs:**
-- `getTratamientoConPrecio()` method that sums `inventario.precioActual * cantidad` and returns it as `precio`.
-- Frontend that shows a live "precio calculado: $X" that updates when stock changes.
-- `Tratamiento.precio` stored as `@default(0)` with no update path — meaning the team forgot to provide a way to set it.
+- Dragging when the backend is briefly unavailable causes the card to disappear
+- User reports "the card disappeared" without any reload; card returns after ~30s
+- Impossible to reproduce on localhost (always up); only visible under network degradation or staging load
 
-**Phase to address:** Schema foundation + catalog management phase; the "recalculate" button is a UI-only concern deferred to catalog CRUD phase.
+**Phase to address:**
+Phase implementing CRM-01 frontend. The fix is a single line in `useUpdateEtapaCRM.ts` and must be in the same commit as the unrestricted drag-and-drop change.
 
 ---
 
-### Pitfall 3: Consumption Orders Create a Stock Race Condition
+### Pitfall 3: Stepper Step-Click Has No Optimistic Update — Visual Lag While Sheet Is Open
 
 **What goes wrong:**
-HC save triggers consumption order creation for insumos used in the treatment. If the consumption order deducts stock immediately on HC save, two concurrent LiveTurno sessions (or a HC save + a stock adjustment) can both succeed past the guard check but together bring `stockActual` below zero.
+CRM-05 (stepper click moves patient) calls `useUpdateEtapaCRM` from inside `CardActionsSheet`. The `pendingMoves` optimistic state lives inside `KanbanBoard` and only covers drag-originated moves. A stepper step-click fires a mutation outside the board state — the stepper shows the new step as active immediately (if local state is updated), but the kanban column behind the sheet still shows the old position until cache invalidation resolves (1–2s).
+
+If the user closes the sheet immediately after clicking a step, they see the card in the wrong column for 1–2 seconds. This is jarring but not incorrect.
+
+The bigger risk: if the user clicks the same step twice rapidly, two `PATCH /pacientes/:id/etapa-crm` calls fire. The second call returns the same value as the first — unless `updateEtapaCRM` is not idempotent (see Pitfall 4), which creates duplicate `contactoLog` and `tareaSeguimiento` rows.
 
 **Why it happens:**
-`Inventario.stockActual` is updated in a service method that does `findUnique` then `update` in two separate Prisma calls. Concurrent saves pass the availability check before either has committed.
+No shared optimistic state between `KanbanBoard` and `CardActionsSheet` component trees. Optimistic state is local to `KanbanBoard`.
 
 **How to avoid:**
-- Do NOT deduct stock on HC save. Create the consumption order with `estado: PENDIENTE_CONFIRMACION`.
-- Stock deduction happens only when a user in the stock module explicitly confirms the order — a deliberate two-step that serializes writes.
-- If you must deduct immediately, use a PostgreSQL row-level lock: `SELECT ... FOR UPDATE` via `prisma.$queryRaw` or `pg_advisory_xact_lock` inside a `$transaction` (same pattern already used for AFIP CAE numeración in v1.2).
-- Add a `CHECK CONSTRAINT` on `Inventario.stockActual >= 0` at DB level as the last line of defense.
+Accept the 1–2s lag from invalidation. Do NOT add a second `pendingMoves` in the sheet — this creates coupling without meaningful UX gain (the sheet obscures the board). The choice to accept the lag must be documented explicitly in the implementation plan.
+
+To prevent double-fires: disable the stepper button immediately on click and re-enable only after the mutation settles (`isPending` flag from `useUpdateEtapaCRM`).
 
 **Warning signs:**
-- `inventario.service.ts` `registrarMovimiento()` called outside of a Prisma `$transaction`.
-- `stockActual: { decrement: cantidad }` used without first verifying sufficiency inside the same transaction.
-- No `estado` field on the consumption order model — means deduction is immediate.
+- Two `PATCH /pacientes/:id/etapa-crm` calls with the same target etapa appear in network tab
+- Stepper shows new step active but closing the sheet shows the old column for 1–2s
+- Duplicate `contactoLog` SISTEMA entries in the patient history
 
-**Phase to address:** Consumption order schema phase; the two-step confirmation flow is the explicit design, not an afterthought.
+**Phase to address:**
+Phase implementing SHEET-05. The decision (accept lag vs. shared state) must be made at plan time, not discovered mid-implementation.
 
 ---
 
-### Pitfall 4: HC Entry Without turnoId Breaks Turno-HC Bidirectional Relation
+### Pitfall 4: `updateEtapaCRM` is Not Idempotent — Duplicate Side Effects
 
 **What goes wrong:**
-`Turno` has `entradaHCId String?` pointing to an `HistoriaClinicaEntrada`. `HistoriaClinicaEntrada` currently has no `turnoId` field — the relation is Turno → HC, not HC → Turno. When adding HC creation from PatientDrawer (no turno context), the new entry has no turno reference. If the code tries to set `Turno.entradaHCId` to the new entry it will fail silently or worse — it will create an orphan entry unlinked from any turno and also leave the turno with a stale `entradaHCId`.
+`pacientes.service.ts` `updateEtapaCRM` (lines 538–585) always creates a `contactoLog` SISTEMA entry when called, regardless of whether the patient is already in the target etapa. It also creates three `tareaSeguimiento` rows whenever `dto.etapaCRM === PRESUPUESTO_ENVIADO`, with no deduplication.
 
-The existing `HistoriaClinicaEntrada` already has `Turno[]` as a relation (many turnos can reference one entrada). This means the relation is one-entrada → many-turnos, not one-turno → one-entrada. Verify this design is intentional before building on it.
+For SHEET-08 ("Marcar procedimiento realizado"), the quick action calls `updateEtapaCRM(PROCEDIMIENTO_REALIZADO)` after `cerrarSesion` has already auto-transitioned the patient there. The result:
+- Two consecutive `contactoLog` SISTEMA entries within seconds
+- If a future phase adds `tareaSeguimiento` creation for `PROCEDIMIENTO_REALIZADO`, two sets of tasks are created
+
+For any stepper stage already at the current etapa, a double-click creates duplicate `contactoLog` entries.
 
 **Why it happens:**
-LiveTurno creates HC entry then sets `Turno.entradaHCId`. PatientDrawer creates HC entry with no turno — a new code path that was never in the original design. The temptation is to reuse the same service method and just pass `turnoId: undefined`.
+`updateEtapaCRM` was written when the only callers were manual moves from stages the patient was not already in (guards enforced this). Remove the guards and the no-op case is now reachable.
 
 **How to avoid:**
-- `HistoriaClinicaService.crearEntrada()` already does not require a turnoId in the DTO (`CreateEntradaDto` has no turnoId field). The method is already turno-agnostic.
-- Make the PatientDrawer path explicit: call the same service, pass no turnoId, and ensure the LiveTurno path still sets `Turno.entradaHCId` after entry creation.
-- Do not add `turnoId` as required to `CreateEntradaDto`. Keep it optional, only set when called from LiveTurno context.
-- If a turnoId is passed, validate it belongs to the same paciente before linking.
+Add an idempotency check at the start of `updateEtapaCRM`:
+
+```typescript
+if (paciente.etapaCRM === dto.etapaCRM) {
+  return this.prisma.paciente.findUnique({ where: { id } }); // return current, no side effects
+}
+```
+
+This prevents all duplicate `contactoLog` and `tareaSeguimiento` rows regardless of the caller. It also protects against rapid double-clicks on the stepper.
 
 **Warning signs:**
-- `CreateEntradaDto` gains a required `turnoId` field.
-- `HistoriaClinicaService` throws if `dto.turnoId` is absent.
-- Two separate service methods (`crearEntradaDesdeDrawer` and `crearEntradaDesdeLiveTurno`) that duplicate 80% of logic.
+- Contact history shows two consecutive SISTEMA entries with the same etapa and similar timestamps
+- `TareaSeguimiento` table has pairs of `SEGUIMIENTO_DIA_3` / `SEGUIMIENTO_DIA_7` / `SEGUIMIENTO_DIA_14` rows for the same patient created within seconds
+- `SHEET-08` "Marcar como realizado" is visible for a patient whose session was already closed
 
-**Phase to address:** PatientDrawer HC creator phase — share the same service method, differ only in whether turnoId post-linking happens.
+**Phase to address:**
+Phase implementing SHEET-08 (and before any quick action that calls `updateEtapaCRM`). Fix idempotency before wiring the button.
 
 ---
 
-### Pitfall 5: Auto-Update Paciente.ultimoTratamientoId on HC Save — Concurrent Write and Delete Edge Cases
+### Pitfall 5: Toast Warning Fires on Stale Cache Data — False Positives Cause Warning Fatigue
 
 **What goes wrong:**
-After adding `ultimoTratamientoId` to `Paciente`, every HC save that includes treatments updates this field. Three failure modes:
-1. Two concurrent HC saves for the same patient pick opposite treatments; last-write wins is non-deterministic.
-2. When an HC entry is deleted (or soft-deleted), `ultimoTratamientoId` still points to the deleted entry — dangling display in Tab Tratamientos.
-3. `ultimoTratamientoId` is updated unconditionally even if the new HC entry has an older `fecha` than the existing last entry (retroactive HC entries via `dto.fecha`).
+CRM-02 and CRM-03 warn the user when moving to `PRESUPUESTO_ENVIADO` without an existing budget or to `CONFIRMADO` without an accepted budget. The warning condition must be evaluated from `KanbanPatient.presupuesto.estado`, which comes from the kanban query cache with `staleTime: 30_000`.
+
+Scenario for a false positive:
+1. User creates a presupuesto and marks it ENVIADO (budget now exists and is ENVIADO)
+2. 45 seconds later (within the 30s staleTime window) the secretaria drags the patient to `PRESUPUESTO_ENVIADO`
+3. Kanban cache still shows `presupuesto: null` (budget was created after the last kanban fetch)
+4. Warning fires: "paciente no tiene presupuesto enviado" — but the budget exists
+5. The drag succeeds anyway (non-blocking), but the warning was wrong
+
+Once users learn the warning fires spuriously, they ignore all warnings — including true ones about genuinely missing budgets.
 
 **Why it happens:**
-The pattern of "update parent aggregate field after child insert" inside a transaction looks correct until retroactive entries and deletes are considered. The existing service already does retroactive date entry (`fechaFinal` from `dto.fecha`) without updating any "último" pointer.
+Warning condition reads from stale `KanbanPatient` data, not from a fresh check. The kanban query is not invalidated when a budget is created (only `['presupuestos', pacienteId]` is invalidated after budget creation — not `['crm-kanban']`).
 
 **How to avoid:**
-- Store `ultimoTratamientoId` as a denormalized pointer, but derive it from the latest `HistoriaClinicaEntrada` by `fecha DESC` at query time for the Tab Tratamientos list (a single `ORDER BY fecha DESC LIMIT 1` join, not a stored field).
-- If you must store it: only update when `new entry.fecha > current Paciente.ultimoTratamientoFecha`. Compare dates inside the transaction, not outside.
-- On HC entry delete: re-query the latest remaining entry and update the pointer in the same transaction. If no entries remain, null the pointer.
-- Use `SELECT ... FOR UPDATE` on `Paciente` row inside the transaction to prevent concurrent update races.
+Option A (preferred if budget actions are frequent): After any budget state change (`marcarEnviado`, `aceptar`, `rechazar`), invalidate `['crm-kanban']` in the respective mutation hooks so the kanban data is fresh.
+
+Option B (simpler for v1.7): Accept stale warnings as non-blocking and best-effort. Add copy to the toast that makes this explicit: "Es posible que el presupuesto ya exista — verificá antes de continuar." Never block the move based on stale data.
+
+Do NOT use the stale cache check to block or roll back the drag.
 
 **Warning signs:**
-- `paciente.update({ ultimoTratamientoId: entrada.id })` called unconditionally after entry create, without date comparison.
-- No handling in HC delete/soft-delete path to refresh the pointer.
-- Tab Tratamientos showing treatment name from a deleted HC entry.
+- QA scenario: create a budget, wait 5s (less than staleTime), drag to `PRESUPUESTO_ENVIADO` — warning fires erroneously
+- Users ask "¿por qué dice que no hay presupuesto si yo lo acabo de enviar?"
+- Warning volume is high even on patients with valid budgets
 
-**Phase to address:** Schema foundation (whether to store vs. query) must be decided before Tab Tratamientos column phase.
+**Phase to address:**
+Phase implementing CRM-02/CRM-03. Decide between option A and B at plan time; document which was chosen and why.
 
 ---
 
-### Pitfall 6: Optimistic Update on Flujo Change — CRM Side Effects Not Rolled Back
+### Pitfall 6: Sheet Layout Regression — Stepper in a Narrow Sheet Breaks Scroll and Layout
 
 **What goes wrong:**
-The PatientDrawer calls `PATCH /pacientes/:id/flujo`. The current `updateFlujo()` implementation only updates `Paciente.flujo` — it does not touch CRM fields. However, switching from CIRUGIA → TRATAMIENTO should remove the patient from the CRM kanban (which already filters `flujo = CIRUGIA OR flujo IS NULL`). If the frontend optimistically updates the drawer UI but the API call fails, the drawer shows TRATAMIENTO while the kanban still shows the patient as CIRUGIA. When the API succeeds, the kanban silently drops the patient from view without any user feedback.
+`CardActionsSheet` is `sm:max-w-sm` (~384px). The current layout uses `flex flex-col gap-0 p-0` at SheetContent level with `overflow-y-auto` on the inner div (lines 88–102 of `CardActionsSheet.tsx`).
 
-The bigger risk: switching TRATAMIENTO → CIRUGIA must initialize `etapaCRM` if null, otherwise the patient is CIRUGIA with no CRM stage — invisible in both kanban and tratamientos tab.
+Adding a 6-step stepper (SHEET-04) horizontally at the top creates several failure modes:
+- Six steps with text labels do not fit in 384px — labels wrap to two lines, pushing content below the fold
+- If the stepper is not given a fixed height, flex children can grow unpredictably, making the scrollable body area collapse to zero height
+- Radix `SheetContent side="right"` applies `h-full` and its own overflow handling; adding a second `overflow-y-auto` wrapper creates double scroll bars on some browsers
+- Quick actions per step (SHEET-06, SHEET-07, SHEET-08) add variable-height content below the stepper — if this area is not inside the scrollable region, it gets clipped
 
 **Why it happens:**
-`updateFlujo()` is implemented as a simple field update with no CRM business logic. The CRM auto-classification in `crearTurno()` (v1.4) set the precedent that flujo changes have side effects, but the manual `updateFlujo` endpoint was added separately without that logic.
+The existing layout works with a fixed set of sections. Adding a stepper with dynamic per-step content changes the layout contract. The narrow sheet constraint was not a problem before because all sections had roughly fixed height.
 
 **How to avoid:**
-- Extend `updateFlujo()` to include CRM side effects atomically in one `$transaction`:
-  - TRATAMIENTO → CIRUGIA: if `etapaCRM IS NULL`, set `etapaCRM = NUEVO_LEAD`.
-  - CIRUGIA → TRATAMIENTO: do not clear `etapaCRM` — leave it as historical data but the kanban will auto-exclude the patient.
-- On the frontend, do not use optimistic UI for flujo change. Use a loading state instead. The side effects (kanban disappears, tab changes) are disorienting if rolled back.
-- If optimistic update is kept, invalidate both `['pacientes']` and `['kanban']` queries on mutation settle (success or error).
+- The stepper must use step numbers (circles) as primary indicators, with labels visible only for the active step — keeps total stepper height under 60px
+- Layout contract: `flex flex-col h-full` on SheetContent, stepper as a `shrink-0` header, scrollable body as `flex-1 overflow-y-auto` below it
+- Quick actions per step are inside the scrollable body — not fixed at the bottom of the sheet
+- Test at 375px viewport width (iPhone SE) before wiring any mutation logic to the stepper
+- Do not nest a second `overflow-y-auto` inside the existing one
 
 **Warning signs:**
-- `updateFlujo()` is a single `prisma.paciente.update()` with no transaction, no CRM logic.
-- Frontend `useMutation` has no `onError` rollback for the previous flujo value.
-- After flujo change, patient appears in both kanban and tratamientos tab simultaneously until manual refresh.
+- Step labels wrap to two lines at any viewport width under 400px
+- Sheet body is not scrollable when content exceeds viewport
+- Step action buttons clipped at the bottom of the sheet on short screens
 
-**Phase to address:** PatientDrawer flujo change phase — must include CRM side effect specification before implementation.
+**Phase to address:**
+Phase implementing SHEET-04. Prototype the layout with static content before wiring any mutations.
 
 ---
 
-### Pitfall 7: Multi-Select Tratamientos in LiveTurno HC Wizard — Form State Diverges From Server
+### Pitfall 7: `PROCEDIMIENTO_REALIZADO` Hidden from Kanban Board but Shown in Stepper Creates Conflicting State
 
 **What goes wrong:**
-The HC wizard adds a multi-select for `tratamientos` from the catalog. The existing `HistoriaClinicaEntrada.contenido` is a `Json?` blob that stores `{ tipo, diagnostico, tratamientos: [{nombre, tratamientoId?, precio}], ... }`. If the UI allows selecting multiple catalog tratamientos and the form state management is naive (e.g., a simple `useState` array), two failure modes appear:
-1. The user selects tratamientos, navigates to a different wizard step, returns, and the selection is reset because local state was not lifted.
-2. On submit, the `tratamientos` array is sent but `tratamientoId` is omitted if the item was typed manually (not selected from catalog) — the existing DTO allows this, but the new consumption order generator needs `tratamientoId` to look up insumos. Null `tratamientoId` on a manually typed entry silently skips stock order generation with no user feedback.
+`ETAPA_ORDER` in `useCRMKanban.ts` (line 65) explicitly excludes `PROCEDIMIENTO_REALIZADO` from kanban columns. The backend `getKanban` method maps patients in `PROCEDIMIENTO_REALIZADO` to the `SIN_CLASIFICAR` bucket (lines 655–660 of `pacientes.service.ts`).
+
+If the stepper in SHEET-04 includes `PROCEDIMIENTO_REALIZADO` as a clickable step:
+1. User clicks step `PROCEDIMIENTO_REALIZADO` in the stepper
+2. `updateEtapaCRM(PROCEDIMIENTO_REALIZADO)` succeeds
+3. Cache invalidates; kanban re-fetches; patient now appears in `SIN_CLASIFICAR` (the hidden etapa bucket)
+4. The stepper inside the sheet correctly shows `PROCEDIMIENTO_REALIZADO` as active (read from `KanbanPatient.etapaCRM`)
+5. The kanban column shows the card in `SIN_CLASIFICAR` — the two surfaces disagree
+
+This is confusing and unsupported by the current kanban architecture.
 
 **Why it happens:**
-The existing `TratamientoItemDto` has `tratamientoId?: string` (optional). The new flow adds semantic meaning to this field (present = catalog item, generates consumption order), but the field name and nullability are unchanged — developers expect the same DTO to just work.
+Two representations of `PROCEDIMIENTO_REALIZADO` exist: the actual `Paciente.etapaCRM` value and the kanban column mapping (which hides it). The stepper reads from `etapaCRM` directly; the kanban column reads from the grouped mapping.
 
 **How to avoid:**
-- In the LiveTurno HC wizard, use React Hook Form with a top-level `useForm` wrapping all steps — not per-step local state. Field array for `tratamientos` via `useFieldArray`.
-- Distinguish catalog items from free-text items explicitly in the UI: catalog-selected items show a catalog badge; free-text items show a warning "sin gestión de stock."
-- When `tratamientoId` is null and consumption orders are configured, log a warning but do not block HC save. The consumption order is optional.
-- Add a `origenCatalogo: boolean` field (frontend-only or in contenido JSONB) to distinguish the two cases.
+Decide upfront — before writing any stepper code — one of two options:
+- Option A: Make `PROCEDIMIENTO_REALIZADO` a terminal step in the stepper (shown, grayed out, not clickable via step-click). Only reachable via the SHEET-08 "Marcar como realizado" quick action. This preserves the hidden-column design and avoids adding a 7th kanban column.
+- Option B: Add `PROCEDIMIENTO_REALIZADO` as a visible kanban column for v1.7. This is a larger scope change (column header, color, drag target).
+
+Option A is strongly recommended for v1.7. Document it as an explicit decision.
 
 **Warning signs:**
-- Multi-select tratamientos state lives in a local `useState` inside a wizard step component.
-- The submit handler does `dto.tratamientos.map(t => createConsumptionOrder(t.tratamientoId))` without null-checking `tratamientoId`.
-- Free-text tratamiento entries silently fail to generate consumption orders with no user feedback.
+- Stepper allows clicking `PROCEDIMIENTO_REALIZADO` step directly
+- Patient appears in `SIN_CLASIFICAR` column after clicking that stepper step
+- Kanban and stepper disagree on the current etapa badge
 
-**Phase to address:** LiveTurno HC wizard phase — form architecture decision must be made at the start, not retrofitted.
+**Phase to address:**
+Design decision that must precede SHEET-04 implementation. Resolve before writing any stepper code.
 
 ---
 
-### Pitfall 8: Consumption Order FK to HC Entry vs. Turno — Orphan Risk on LiveTurno Cancel
+### Pitfall 8: `ContactoSheet` Etapa Selector Bypasses Warning Toasts Silently
 
 **What goes wrong:**
-If the consumption order links to `HistoriaClinicaEntrada.id` and the LiveTurno session is cancelled (turno moved to CANCELADO or AUSENTE), the HC entry may be deleted or voided. The consumption order now has a dangling FK to a non-existent or voided HC entry. Stock module users see a consumption order with no clinical context — they cannot determine whether to fulfill or reject it.
+`ContactoSheet.tsx` (lines 174–195) has an "Etapa CRM (opcional)" select that lets the user set any etapa when registering a contact. This path goes through `createContacto` in `pacientes.service.ts` (lines 865–900), which calls `tx.paciente.update({ etapaCRM: dto.etapaCRM })` inside a transaction — with no business rule checks, no `motivoPerdida` validation for `PERDIDO`, and no warning toast.
+
+This is a completely separate code path from `updateEtapaCRM`. Even after adding toast warnings to the drag-and-drop and stepper paths (CRM-02/CRM-03), the `ContactoSheet` etapa selector remains an unguarded path to any etapa. A SECRETARIA can move a patient to `CONFIRMADO` via this selector without a budget and with no warning.
 
 **Why it happens:**
-The HC entry is created optimistically during LiveTurno session. Cancellation flows may delete the entry or leave it in DRAFT status. The consumption order is created in the same batch and is not automatically rolled back.
+`ContactoSheet` was designed for registering the outcome of a contact, including CRM advancement as part of that interaction. The guard removal in v1.7 is conceptually consistent with this design — but the inconsistency is that the kanban and stepper paths will have warnings while this path has none, creating an uneven user experience.
 
 **How to avoid:**
-- Consumption orders must always be confirmed by a stock module user — never auto-applied. This means a pending consumption order surviving a cancelled session is a valid workflow (stock user reviews and rejects it).
-- Link the consumption order to `HistoriaClinicaEntrada.id` with `onDelete: SetNull` so that if the HC entry is deleted, the order survives with `entradaHCId = null` and `estado = REQUIERE_REVISION`.
-- Add `pacienteId` and `profesionalId` directly on the consumption order model for display even when the HC entry link is null.
-- Add `turnoId String?` to the consumption order for LiveTurno context — this survives even if HC entry is deleted since Turno is not deleted on cancel.
+Either:
+- Apply the same warning conditions as CRM-02/CRM-03 to the ContactoSheet etapa selector (show a warning badge next to the selector, not a blocking validation)
+- Or remove `etapaCRM` from `ContactoSheet` in v1.7 and route all etapa changes through the stepper (breaking change to existing UX, not recommended for v1.7)
+
+Also: `createContacto` must validate `motivoPerdida` when `etapaCRM === PERDIDO` — currently `updateEtapaCRM` does this check (line 513–516) but `createContacto` does not.
 
 **Warning signs:**
-- `OrdenConsumo` model has only `entradaHCId` as context FK, no `pacienteId` or `turnoId`.
-- `onDelete: Cascade` on `OrdenConsumo.entradaHCId` — deleting an HC entry deletes pending consumption orders.
-- Stock module UI shows `paciente: undefined` for orders whose HC entry was voided.
+- Secretaria uses ContactoSheet etapa selector to move patient to CONFIRMADO — no toast appears
+- `contactoLog` shows a SECRETARIA-type entry with `etapaCRMPost: CONFIRMADO` but no `motivoPerdida` for PERDIDO transitions
+- QA finds a different UX for "same action, different entry point"
 
-**Phase to address:** Consumption order schema phase — FK strategy and `onDelete` behavior must be explicit in the migration.
+**Phase to address:**
+Phase implementing CRM-02/CRM-03. Audit all etapa-writing paths at the same time, not just the kanban drag path.
 
 ---
 
@@ -205,12 +280,12 @@ The HC entry is created optimistically during LiveTurno session. Cancellation fl
 
 | Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
 |----------|-------------------|----------------|-----------------|
-| Store `catalogoId` FK on `PresupuestoItem` without price snapshot | DRY, no duplication | Quote totals change retroactively when catalog price changes | Never for financial documents |
-| Compute `Tratamiento.precio` dynamically from insumos on every read | Always "up to date" | Unpredictable presupuesto totals; N+1 queries on catalog list | Never for quoted prices; OK for a read-only "cost reference" display |
-| Update `ultimoTratamientoId` unconditionally after HC save | Simple code | Retroactive entries corrupt the pointer; concurrent saves are non-deterministic | Never if retroactive HC entries are supported |
-| Deduct stock immediately on HC save | Simpler flow, no pending orders to manage | Race conditions; HC cancellation leaves stock under-counted | Only if stock deduction is always reversible with an undo within the session |
-| Optimistic UI for flujo change | Snappier UX | CRM kanban and tratamientos tab diverge until re-query; hard-to-debug state | Acceptable only if `onError` rollback is implemented and both query caches are invalidated |
-| Separate `crearEntradaDesdeDrawer` and `crearEntradaDesdeLiveTurno` service methods | Easier to reason per path | Logic drift over time; bugs fixed in one method not the other | Never — use one method with optional `turnoId` parameter |
+| Skip idempotency check in `updateEtapaCRM` | Faster implementation | Duplicate `contactoLog` and `tareaSeguimiento` rows when auto-transitions overlap with quick action buttons | Never — fix before adding SHEET-08 |
+| Use stale kanban cache for toast warning conditions | No extra API call | False-positive warnings; warning fatigue; users learn to ignore toasts | Acceptable only if toasts are documented as "best-effort, not authoritative" and toast copy reflects this |
+| Share `pendingMoves` between board and sheet | Fully consistent optimistic UI | Tight coupling between unrelated component trees; breaks when sheet is refactored | Never — accept the 1–2s visual lag from invalidation; the sheet obscures the board anyway |
+| Keep `PROCEDIMIENTO_REALIZADO` hidden from kanban | No layout change needed | Stepper and kanban disagree for patients in that etapa | Acceptable for v1.7 only if the stepper step is non-clickable (terminal) |
+| Auto-transitions without forward-only guard | No code change needed (existing behavior) | Manual advance silently overwritten by concurrent session close after guards are removed | Never acceptable once manual guards are removed |
+| Leave `ContactoSheet` etapa selector without warnings | No extra UX work | Inconsistent experience: drag/stepper warn, ContactoSheet does not | Acceptable for v1.7 if documented; unacceptable permanently |
 
 ---
 
@@ -218,11 +293,12 @@ The HC entry is created optimistically during LiveTurno session. Cancellation fl
 
 | Integration | Common Mistake | Correct Approach |
 |-------------|----------------|------------------|
-| `Inventario` stock deduction in `$transaction` | `{ decrement: cantidad }` without checking `stockActual >= cantidad` first | Read `stockActual` inside the transaction with a lock check, then decrement; or add DB CHECK constraint |
-| CRM auto-effects on `updateFlujo` | Treating flujo as a simple enum field update | Always run flujo change through a service method that applies CRM business rules in the same `$transaction` |
-| TanStack Query cache after flujo change | Invalidating only `['paciente', id]` | Also invalidate `['kanban']`, `['tratamientos']`, and `['listaAccion']` — flujo change affects multiple list queries |
-| `HistoriaClinicaEntrada.contenido` JSONB structure | Adding new top-level keys without versioning | Add a `version` key to the JSONB blob (`version: 2`) so queries can distinguish old-format entries from new catalog-aware ones |
-| Presupuesto PDF re-generation | Re-resolving catalog price during PDF generation | PDF must read `PresupuestoItem.precioUnitario` (the snapshot), never join to catalog |
+| `cerrarSesion` auto-transition | After removing manual guards, assumes the auto-transition still only fires in forward direction | Add explicit `ETAPA_ORDER` index check before every auto-write in `cerrarSesion` |
+| `marcarEnviado` auto-`PRESUPUESTO_ENVIADO` | Does not check if patient is already in a later etapa (e.g., `CONFIRMADO`) — silently moves them back | Guard: fetch current `etapaCRM` before writing; skip if already ahead in `ETAPA_ORDER` |
+| `useUpdateEtapaCRM` on error | `onError` path does not invalidate cache — card disappears for up to 30s | Add `queryClient.invalidateQueries({ queryKey: ["crm-kanban"] })` in `onError` |
+| `ContactoSheet` etapa selector | Bypasses all warning logic and `motivoPerdida` validation | Audit this path when implementing CRM-02/CRM-03; add `motivoPerdida` check for `PERDIDO` transitions |
+| Toast visual level | Using `toast.error` (red) for non-blocking prerequisites confuses "something broke" with "warning" | Use `toast.warning` (amber) for missing-prerequisite conditions; reserve `toast.error` for mutation failures |
+| Stepper PERDIDO step | Direct transition without `LossReasonModal` produces a patient in `PERDIDO` with no `motivoPerdida` | Stepper step-click for `PERDIDO` must open `LossReasonModal`, not call `updateEtapaCRM` directly |
 
 ---
 
@@ -230,10 +306,9 @@ The HC entry is created optimistically during LiveTurno session. Cancellation fl
 
 | Trap | Symptoms | Prevention | When It Breaks |
 |------|----------|------------|----------------|
-| Tab Tratamientos "ultimo tratamiento" via subquery per patient row | List of 200 patients triggers 200 HC subqueries | Use a single `GROUP BY` query with `MAX(fecha)` or a materialized column on Paciente | 50+ patients in list |
-| Catalog selector in LiveTurno loading all `Tratamiento` records with their insumos | Slow modal open for professionals with large catalogs | Paginate or search-on-type; only load insumos when a tratamiento is selected | 100+ catalog items |
-| Consumption order list in stock module scanning all orders without index | Slow stock module load | Add `@@index([profesionalId, estado, createdAt])` to `OrdenConsumo` model from day one | 500+ pending orders |
-| `PresupuestoItem` join to catalog on every quote list render | Quote list table slow | Never join to catalog from quote list; display only stored snapshot data | 100+ quotes per professional |
+| `queryClient.invalidateQueries(["crm-kanban"])` after every etapa update without `profesionalId` key | All professional contexts refetch on every drag, even other users | Use exact key: `["crm-kanban", profesionalId]` for targeted invalidation | Not a current problem (single professional per tab); becomes a problem with multi-tab multi-professional usage |
+| Re-rendering all 6 kanban columns on every `pendingMoves` state change | All columns re-render and re-sort on every drag update | Already mitigated by `useMemo(displayedColumns)` — do not break this memo when adding stepper state to `KanbanBoard` | No current breakpoint; risk exists if new state causes memo dependencies to change on every render |
+| Opening `CardActionsSheet` re-fetches `useUpdateEtapaCRM` mutation state | Not a real trap — mutations are created fresh per mount | No action needed | N/A |
 
 ---
 
@@ -241,10 +316,9 @@ The HC entry is created optimistically during LiveTurno session. Cancellation fl
 
 | Mistake | Risk | Prevention |
 |---------|------|------------|
-| `CatalogoCirugia` accessible across professionals | Professional A reads Professional B's pricing strategy | Every catalog query must include `profesionalId` in `where` clause; service-level guard like existing `TratamientosService.findById()` pattern |
-| Consumption order creation without verifying HC entry belongs to the authenticated professional | Any authenticated user could trigger stock deductions for another professional's inventory | Verify `HistoriaClinicaEntrada.historiaClinica.profesionalId === req.profesionalId` before creating consumption order |
-| `PresupuestoItem.catalogoId` exposed in API response | Client can infer catalog pricing of other professionals if catalogoId is global | Validate ownership before resolving catalogoId details; return null for unowned references |
-| HC entry created from PatientDrawer without professional ownership check on patient | SECRETARIA could create HC for patient belonging to different professional | Reuse existing `pacientes.service.ts` ownership guard before calling `historia-clinica.service.ts` |
+| Removing CONFIRMADO guard from `updateEtapaCRM` | Patient incorrectly marked CONFIRMADO; misleading conversion metrics; audit trail shows manual CONFIRMADO without accepted budget | Not a financial risk (billing charge only created via `presupuestos.aceptar` which still requires `estado: ENVIADO`); is a data integrity and reporting risk | Document the intentional removal; the warning toast is the substitute control |
+| `createContacto` path allows any `etapaCRM` without `motivoPerdida` for PERDIDO | Patient in `PERDIDO` with no `motivoPerdida`; "motivos de pérdida" dashboard shows incomplete data | Add `if dto.etapaCRM === PERDIDO && !dto.motivoPerdida throw BadRequestException` to `createContacto` path |
+| Auto-transition writes `etapaCRM` in `cerrarSesion` without checking the role of who closed the session | N/A — `cerrarSesion` is already role-guarded at controller level | No action needed |
 
 ---
 
@@ -252,24 +326,25 @@ The HC entry is created optimistically during LiveTurno session. Cancellation fl
 
 | Pitfall | User Impact | Better Approach |
 |---------|-------------|-----------------|
-| Showing "precio base calculado" that changes when stock prices update | Professional sees different price than what was quoted; distrust in the system | Show "precio base" as the stored `Tratamiento.precio` with a "Recalcular" button; never auto-update |
-| Flujo change from drawer with optimistic UI that reverts on error | User sees the badge flip back to old value 2 seconds after clicking — confusing | Use loading spinner on the badge during the PATCH; show toast on error with "No se pudo cambiar el flujo" |
-| Multi-select tratamientos in LiveTurno losing state on step navigation | Professional re-selects treatments on every session; slows down the flow | Lift form state to top-level RHF; persist draft HC in `sessionStorage` if full form persistence is needed |
-| Consumption order confirmation flow in stock module is not discoverable | Stock manager does not know pending orders exist | Add a badge/counter on the stock module nav item showing pending consumption orders count |
-| HC entry from PatientDrawer with no turno context has identical UI to LiveTurno HC | Professional confused about whether the entry is linked to an appointment | Show "Entrada manual — sin turno" label on entries with no Turno reference in the HC timeline |
+| Warning toast fires on every drag to CONFIRMADO even when budget is ACEPTADO and cache is fresh | Secretaria sees warning when she correctly moved the patient; distrust in the system | Evaluate warning only when `KanbanPatient.presupuesto?.estado !== 'ACEPTADO'`; suppress warning when budget is clearly in order |
+| Stepper shows all 6 stage labels simultaneously in a 384px sheet | Labels truncate or wrap; stepper is unreadable | Step numbers in circles at rest; label visible only for the active step; tooltip on hover for others |
+| "Marcar como realizado" (SHEET-08) has no confirmation step | Accidental tap marks patient as procedure-done, creating follow-up tasks and log entries | Require two interactions: toggle or secondary confirm button ("Confirmar"); not a full AlertDialog (too heavy), but not a single tap |
+| Compact "Registrar contacto" button opens `ContactoSheet` (a full Sheet) from inside `CardActionsSheet` | Two overlapping Sheet portals cause z-index and modal={false} conflicts, especially on iOS Safari | Open `ContactoSheet` as a separate root-level portal (already supports `modal={false}`); do not nest it inside the redesigned sheet |
+| Stepper step for PERDIDO fires direct `updateEtapaCRM` | Patient lands in PERDIDO without `motivoPerdida`; funnel report breaks | Stepper PERDIDO click must open `LossReasonModal` — same as drag behavior currently implemented in `handleDragEnd` |
 
 ---
 
 ## "Looks Done But Isn't" Checklist
 
-- [ ] **Catalog-quote integration:** Quote shows catalog name — verify `PresupuestoItem.precioUnitario` is stored at creation time, not joined from catalog on render.
-- [ ] **Consumption orders:** HC save creates orders — verify stock is NOT decremented until stock-module confirmation step.
-- [ ] **Flujo change CRM side effects:** PATCH flujo returns 200 — verify TRATAMIENTO to CIRUGIA path sets `etapaCRM = NUEVO_LEAD` when null; verify both kanban and tratamientos cache are invalidated on the frontend.
-- [ ] **HC from PatientDrawer:** Entry appears in HC timeline — verify `Turno.entradaHCId` is NOT set (no turno context) and the entry appears with "sin turno" label.
-- [ ] **ultimoTratamiento column in Tab Tratamientos:** Column shows last treatment — verify retroactive HC entries do not display a treatment dated earlier than the actual last entry.
-- [ ] **Multi-select tratamientos:** Treatments appear in HC contenido JSONB — verify `tratamientoId` is present for catalog-selected items and null for free-text items, and that consumption orders are only generated for catalog items.
-- [ ] **Precio base from insumos:** Catalog shows precio — verify it reads `Tratamiento.precio` (static field), not a live SUM from `TratamientoInsumo` join.
-- [ ] **Consumption order context:** Order appears in stock module — verify `pacienteId`, `profesionalId`, and `turnoId` (if applicable) are stored on the order itself, not only via HC entry FK.
+- [ ] **Auto-transition forward-only guard:** move patient to CONFIRMADO manually; close a surgery session for the same patient; assert `etapaCRM` remains CONFIRMADO — not overwritten to `PROCEDIMIENTO_REALIZADO`
+- [ ] **`useUpdateEtapaCRM` error path:** simulate a backend 500 on drag; assert the card returns to its original column within 2 seconds — not lost for 30s
+- [ ] **Stepper PERDIDO step:** clicking PERDIDO step in stepper opens `LossReasonModal`, not a direct PATCH — verify by clicking the step and confirming the modal fires
+- [ ] **Idempotent `updateEtapaCRM`:** call `PATCH /pacientes/:id/etapa-crm` with the patient's current etapa; assert exactly zero new `contactoLog` rows and zero new `tareaSeguimiento` rows are created
+- [ ] **SHEET-08 "Marcar como realizado":** click the button for a patient already in `PROCEDIMIENTO_REALIZADO`; assert no duplicate `contactoLog` entry is created
+- [ ] **`PROCEDIMIENTO_REALIZADO` in stepper:** step is displayed but not clickable (terminal) OR if clickable, patient does not end up in `SIN_CLASIFICAR` column — verify the kanban column placement post-click
+- [ ] **Sheet layout at 375px:** stepper, compact buttons, and quick actions all visible without horizontal scroll and with a working scroll for the body — verify on narrow viewport before merging
+- [ ] **ContactoSheet etapa selector → PERDIDO:** selecting PERDIDO in the etapa dropdown without a `motivoPerdida` is rejected by the backend — verify the new validation fires
+- [ ] **Warning toast visual level:** warning uses `toast.warning` amber style, mutation error uses `toast.error` red style — visually distinct in the UI
 
 ---
 
@@ -277,11 +352,13 @@ The HC entry is created optimistically during LiveTurno session. Cancellation fl
 
 | Pitfall | Recovery Cost | Recovery Steps |
 |---------|---------------|----------------|
-| Price drift in PresupuestoItem (catalog FK, no snapshot) | HIGH — requires data migration to backfill snapshot prices | Write a migration that copies `tratamiento.precio` into `presupuestoItem.precioUnitario` at migration time; accept that historical quotes pre-migration have an approximation |
-| Stock went negative due to race condition | MEDIUM — data correction needed | Add a DB CHECK constraint immediately; run adjustment MovimientoStock entries to restore accurate counts; audit consumption orders for double-deductions |
-| ultimoTratamientoId points to deleted HC entry | LOW — re-run a query to fix the pointer | One-off SQL: `UPDATE "Paciente" SET "ultimoTratamientoId" = (SELECT id FROM "HistoriaClinicaEntrada" WHERE "historiaClinicaId" IN (SELECT id FROM "HistoriaClinica" WHERE "pacienteId" = "Paciente".id) ORDER BY fecha DESC LIMIT 1)` |
-| Flujo change with no CRM side effects deployed to production | MEDIUM — patients in CIRUGIA with no etapaCRM, invisible in kanban | Backfill: `UPDATE "Paciente" SET "etapaCRM" = 'NUEVO_LEAD' WHERE flujo = 'CIRUGIA' AND "etapaCRM" IS NULL` |
-| HC multi-step form loses state | LOW — user re-enters data | Add `sessionStorage` persistence for the HC draft in LiveTurno; no DB changes needed |
+| Auto-transition overwrote manual CONFIRMADO move | LOW — code fix only | Add forward-only guard to `cerrarSesion` and `marcarEnviado`; no DB migration needed; one guard per transition path |
+| Duplicate `contactoLog` / `tareaSeguimiento` from non-idempotent calls | MEDIUM — data cleanup needed | Add idempotency check to `updateEtapaCRM`; run SQL to delete consecutive SISTEMA duplicate entries: `DELETE FROM "ContactoLog" WHERE id IN (SELECT id FROM ...)` comparing consecutive rows by pacienteId + tipo + etapaCRMPost + timestamp within 5s window |
+| Ghost card disappears on drag error | LOW — one-line fix | Add `onError: () => invalidateQueries(["crm-kanban"])` to `useUpdateEtapaCRM.ts` |
+| Warning fatigue from false positives | HIGH — trust recovery required | Fix stale cache trigger conditions; communicate to users that warnings are now reliable; may require explicit in-app "this warning is now accurate" notice |
+| Patient in PERDIDO with no `motivoPerdida` via ContactoSheet | MEDIUM — data backfill | Add backend validation to `createContacto`; backfill existing PERDIDO patients with `motivoPerdida = 'OTRO'` where null |
+| Sheet layout broken on mobile | LOW — CSS only | Adjust stepper to number-only at rest; move quick action content inside scrollable body region |
+| PROCEDIMIENTO_REALIZADO clickable in stepper — patient lands in SIN_CLASIFICAR | MEDIUM — UX confusion, data still correct | Make step non-clickable (terminal); patient etapaCRM remains PROCEDIMIENTO_REALIZADO which is correct; kanban display is the only issue |
 
 ---
 
@@ -289,26 +366,29 @@ The HC entry is created optimistically during LiveTurno session. Cancellation fl
 
 | Pitfall | Prevention Phase | Verification |
 |---------|------------------|--------------|
-| Price drift — no snapshot on PresupuestoItem | Schema foundation (first migration) | Check `PresupuestoItem` has `precioUnitario` and `cantidad` columns before any quote-catalog UI |
-| Stale precio base from insumos | Catalog management phase | `GET /tratamientos/:id` returns `precio` (static), not a computed sum; confirmed by service unit test |
-| Stock race condition on consumption | Consumption order schema phase | Integration test: two concurrent HC saves for the same patient + insumo; `stockActual` never goes negative |
-| HC entry without turnoId breaks existing flow | PatientDrawer HC phase | Existing LiveTurno HC save still sets `Turno.entradaHCId`; new PatientDrawer save does not; both share the same service method |
-| ultimoTratamientoId concurrent/retroactive write | Schema design decision (store vs. query) | Tab Tratamientos shows correct last treatment after creating a retroactive HC entry dated 6 months ago |
-| Flujo change missing CRM side effects | PatientDrawer flujo change phase | TRATAMIENTO to CIRUGIA: patient appears in kanban at NUEVO_LEAD; both query caches invalidated |
-| Multi-select form state diverges | LiveTurno HC wizard phase | Navigate away from step 2 and back; tratamientos selection persists |
-| Consumption order orphan on session cancel | Consumption order schema phase | Cancel a LiveTurno session after HC save; consumption order still visible in stock module with `estado: PENDIENTE_CONFIRMACION` |
+| Auto-transition conflict (Pitfall 1) | Phase implementing CRM-01 backend (guard removal) | Manual CONFIRMADO → close surgery session → assert etapaCRM stays CONFIRMADO |
+| Optimistic ghost card on error (Pitfall 2) | Phase implementing CRM-01 frontend (drag-and-drop) | Simulate 500 on drag → assert card returns to original column within 2s |
+| Stepper → board state desync (Pitfall 3) | Phase implementing SHEET-05 (stepper click) | Click step → close sheet → assert kanban column reflects new etapa within 2s; assert no double-PATCH |
+| Duplicate side effects from idempotency gap (Pitfall 4) | Phase implementing SHEET-08 (quick actions) | Double-call `updateEtapaCRM` with current etapa → assert zero new `contactoLog` rows |
+| Stale cache false-positive warnings (Pitfall 5) | Phase implementing CRM-02/CRM-03 | Create budget → drag immediately → assert no spurious warning fires |
+| Sheet layout regression (Pitfall 6) | Phase implementing SHEET-04 (stepper visual) | Render sheet at 375px → stepper fits; body scrolls; no double scrollbar |
+| PROCEDIMIENTO_REALIZADO state desync (Pitfall 7) | Design decision before SHEET-04 implementation | If terminal: step is non-clickable; assert patient is not moved to SIN_CLASIFICAR via stepper |
+| ContactoSheet etapa bypass (Pitfall 8) | Phase implementing CRM-02/CRM-03 (audit all paths) | Select PERDIDO in ContactoSheet without motivoPerdida → assert backend rejects with 400 |
 
 ---
 
 ## Sources
 
-- Direct schema analysis: `backend/src/prisma/schema.prisma` — `PresupuestoItem`, `Tratamiento`, `HistoriaClinicaEntrada`, `Turno`, `Inventario`, `MovimientoStock`, `Paciente` models
-- Direct service analysis: `historia-clinica.service.ts`, `tratamientos.service.ts`, `inventario.service.ts`, `pacientes.service.ts`
-- v1.4 Key Decisions in `.planning/PROJECT.md`: Guard PENDIENTE-only pattern, best-effort flujo update, banner UX decisions
-- v1.2 Key Decisions: `pg_advisory_xact_lock` pattern for serialized writes (applicable to stock race condition)
-- Existing `CreateEntradaDto`: confirms `turnoId` is not currently in the DTO; HC creation is already turno-agnostic at the service level
-- Existing `updateFlujo()`: confirms no CRM side effects are currently applied on flujo change
+- Direct code analysis: `backend/src/modules/pacientes/pacientes.service.ts` — `updateEtapaCRM` (lines 503–588), `createContacto` (lines 865–900), `getKanban` PROCEDIMIENTO_REALIZADO mapping (lines 644–660)
+- Direct code analysis: `backend/src/modules/turnos/turnos.service.ts` — `crearTurno` auto-transition (lines 129–140), `cerrarSesion` auto-transition (lines 849–912)
+- Direct code analysis: `backend/src/modules/presupuestos/presupuestos.service.ts` — `marcarEnviado` forced PRESUPUESTO_ENVIADO (line 229), `aceptar` forced CONFIRMADO (line 182), `rechazar` forced PERDIDO (line 278), `aceptarByToken` forced CONFIRMADO (line 582), `rechazarByToken` forced PERDIDO (line 641)
+- Direct code analysis: `frontend/src/components/crm/KanbanBoard.tsx` — `pendingMoves` optimistic pattern (lines 64–183), `onError` toast without invalidation (line 179)
+- Direct code analysis: `frontend/src/hooks/useUpdateEtapaCRM.ts` — missing `onError` invalidation
+- Direct code analysis: `frontend/src/hooks/useCRMKanban.ts` — `ETAPA_ORDER` excluding PROCEDIMIENTO_REALIZADO (line 65), `staleTime: 30_000` (line 86)
+- Direct code analysis: `frontend/src/components/crm/ContactoSheet.tsx` — unguarded etapa selector (lines 174–195)
+- Direct code analysis: `frontend/src/components/crm/CardActionsSheet.tsx` — existing sheet layout contract (lines 88–102)
+- `.planning/PROJECT.md` — v1.7 feature requirements (CRM-01 through SHEET-09), existing key decisions (v1.4 guard PENDIENTE-only, v1.5 optimistic update patterns, v1.6 AlertDialog e.preventDefault pattern)
 
 ---
-*Pitfalls research for: v1.5 Catalagos Clinicos y Flujos de Atencion — NestJS + Prisma + PostgreSQL + Next.js*
-*Researched: 2026-04-22*
+*Pitfalls research for: CRM Flexible v1.7 — unrestricted kanban, stepper UX, non-blocking warnings*
+*Researched: 2026-05-23*

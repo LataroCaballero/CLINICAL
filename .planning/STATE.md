@@ -1,79 +1,89 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.6
-milestone_name: Agenda Operativa
+milestone: v1.7
+milestone_name: CRM Flexible
 status: completed
-stopped_at: Completed 34-01-PLAN.md
-last_updated: "2026-05-14T01:53:15.530Z"
-last_activity: "2026-05-14 — Plan 34-02 complete: switch-session AlertDialog en UpcomingAppointments (LT-02)"
+stopped_at: Completed 38-02-PLAN.md
+last_updated: "2026-05-28T01:12:33.351Z"
 progress:
-  total_phases: 3
-  completed_phases: 3
-  total_plans: 6
-  completed_plans: 6
-  percent: 97
+  total_phases: 4
+  completed_phases: 4
+  total_plans: 8
+  completed_plans: 8
+  percent: 100
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-05-13)
+See: .planning/PROJECT.md (updated 2026-05-23)
 
 **Core value:** Que un cirujano plástico cierre más cirugías — el sistema hace visible qué pacientes seguir, cuándo y cómo, de la manera más automatizada posible
-**Current focus:** Milestone v1.6 — Agenda Operativa (Phase 32 next)
+**Current focus:** Phase 37 — Sheet Redesign Layout y Stepper UI (v1.7 CRM Flexible)
 
 ## Current Position
 
 ```
-Milestone: v1.6 Agenda Operativa
-Phase:     34 — LiveTurno Simplificado (IN PROGRESS)
-Plan:      02 complete (2/? plans done — LT-02 done)
-Status:    LT-02 done — switch-session AlertDialog en UpcomingAppointments
-Progress:  [██████████] 97% (34/35 plans across all milestones)
+Milestone: v1.7 CRM Flexible
+Phase:     38 — Stepper Interactions + Contextual Actions — In Progress
+Plan:      02 of 02 complete
+Status:    38-02 complete — CardActionsSheet wired with full stepper interaction logic
+Progress:  [██████████] 100% (35/35 plans)
+
+Last completed: 38-02-PLAN.md (2026-05-28)
+Next: Phase 38 complete — SHEET-06, SHEET-07, SHEET-08 remaining
 ```
 
-Last activity: 2026-05-14 — Plan 34-02 complete: switch-session AlertDialog en UpcomingAppointments (LT-02)
-
-## Phase Map
+## Milestone Overview
 
 | Phase | Name | Requirements | Status |
 |-------|------|--------------|--------|
-| 32 | Schema + Backend Estados Extendidos | EST-01..05 | Complete (2/2 plans) |
-| 33 | Widget Agenda Operativo | WID-01..06 | Complete (2/2 plans) |
-| 34 | LiveTurno Simplificado | LT-01..03 | In progress (LT-01, LT-02 done) |
+| 35 | Backend Foundation | CRM-01 (backend), CRM-04 | In Progress (1/2 plans done) |
+| 36 | Drag-and-Drop + Warning Infrastructure | CRM-01 (frontend), CRM-02, CRM-03 | Complete (2/2 plans done) |
+| 37 | Sheet Redesign — Layout y Stepper UI | SHEET-01, SHEET-02, SHEET-03, SHEET-04, SHEET-09 | Complete (2/2 plans done) |
+| 38 | Stepper Interactions + Contextual Actions | CRM-05, SHEET-05, SHEET-06, SHEET-07, SHEET-08 | In Progress (2/2 plans done) |
 
 ## Accumulated Context
 
-### Carry-forward Decisions (v1.5)
-- HCCreatorForm reutilizable compartido entre LiveTurno y PatientDrawer
+### Carry-forward Decisions (from v1.6)
+- HCCreatorForm reutilizable compartido entre LiveTurno y PatientDrawer — usar en SHEET-07
 - OrdenConsumo pattern: PENDIENTE → confirmación por stock admin
 - Snapshot de precio en presupuesto (inmutable al momento de selección)
 - Paciente.flujo: null = legacy, PENDIENTE = sin clasificar, CIRUGIA/TRATAMIENTO = clasificado
-- Guard PENDIENTE-only: no sobreescribe clasificaciones existentes
+- Guard PENDIENTE-only: no sobreescribe clasificaciones existentes al auto-clasificar
+- State machine turno: PENDIENTE/CONFIRMADO → EN_ESPERA → SIENDO_ATENDIDO → FINALIZADO; AUSENTE lateral reactivable
+- AlertDialogAction + e.preventDefault() para acciones async en shadcn
+- Switch-session: cerrar primero, si falla abortar
 
-### v1.6 Key Decisions (Phase 32 recorded)
-- EN_ESPERA y SIENDO_ATENDIDO se agregan al enum EstadoTurno existente (DONE - Plan 32-01)
-- Migration SQL creada manualmente: Supabase pgbouncer (6543) bloquea schema engine; aplicar con prisma migrate deploy o SQL editor (Plan 32-01)
-- iniciarSesion establece SIENDO_ATENDIDO (no CONFIRMADO) — sesion activa != cita confirmada (DONE - Plan 32-02)
-- QuickAppointment.tsx usa TurnoRango.estado: string (no inline union) — no requiere actualizacion de tipo (Plan 32-02)
-- SIENDO_ATENDIDO rechazado como origen de marcarEnEspera — en sesion activa primero cerrar-sesion (Plan 32-02)
-- El menú contextual del widget muestra acciones segun estado (DONE - Plan 33-02)
-- useTurnoEstadoActions: mutations-only hook (no optimistic update) — Plan 02 maneja feedback visual via isPending en el componente (Plan 33-01)
-- TurnoEstado type exportado desde useTurnoEstadoActions para que Plan 02 lo importe sin redefinirlo (Plan 33-01)
-- DropdownMenu trigger opacity-0 group-hover:opacity-100 — Acciones column stays clean by default (Plan 33-02)
-- SIENDO_ATENDIDO excluded from DropdownMenu — active session must be closed before state changes (Plan 33-02)
-- EN_ESPERA gets menu but "En espera" item is disabled (already in that state) — user can still Ausentarlo (Plan 33-02)
-- Exit sin HC en LiveTurno llama cerrar-sesion → FINALIZADO (nunca queda turno en estado abierto, pendiente Phase 34)
-- Timer UI eliminado de todas las superficies LiveTurno (Header/Footer/Indicator/Banner/RecoveryDialog) — hook useLiveTurnoTimer.ts borrado (Plan 34-01)
-- 'Cerrar sin guardar entrada de HC' llama cerrarSesion.mutateAsync({}) sin entradaHCId — salida limpia sin auto-save HC (Plan 34-01)
-- AlertDialogAction usa e.preventDefault() para prevenir cierre automatico del dialog durante handleConfirmSwitch async (Plan 34-02)
-- cerrarSesion.mutateAsync({}) sin entradaHCId — no auto-guardar HC draft al cambiar sesion (Plan 34-02)
-- Switch-session pattern: cerrar primero, si falla abortar y no abrir el nuevo turno (Plan 34-02)
+### v1.7 Key Design Decisions
+- Forward-only guard para auto-transiciones: la auto-transición a etapa X no se ejecuta si el paciente ya está en una etapa más avanzada que X
+- Warning no bloqueante: el drag-and-drop siempre persiste; el toast es informativo, no impeditivo
+- Stepper clickeable comparte la misma warning logic que el drag-and-drop (CRM-05 = CRM-01/02/03 en el stepper)
+- PERDIDO en stepper abre LossReasonModal (componente ya existente en v1.0)
+- HCCreatorForm reutilizado directamente desde SHEET-07 sin duplicar lógica
+- ContactoRapidoModal es un Dialog (no Sheet anidado) para evitar z-index y focus-trap issues
+- [35-01] Remover validación presupuesto ACEPTADO para CONFIRMADO: el profesional puede mover libremente cualquier etapa CRM; solo PERDIDO requiere motivoPerdida
+- [36-01] getEtapaWarning en lib/crm-warnings.ts (no en componente) para que Phase 38 stepper lo importe sin acoplar a KanbanBoard
+- [36-01] CONFIRMADO warning usa optional chaining (presupuesto?.estado !== 'ACEPTADO') cubriendo null y non-ACEPTADO en una sola condición
+- [36-02] Toast fires synchronously before updateEtapa call — warning visible even on instant backend response
+- [36-02] onSettled remains sole cleanup point for pendingMoves — snap-back logic unaffected by warning integration
+- [37-01] EtapaStepper has no onClick handlers — interactivity deferred to Phase 38 (CHAIN click + warning)
+- [37-01] CRMFlujoBadge is separate from FlujoBadge in /pacientes/ — both coexist, CRM uses full labels, patients uses abbreviated
+- [37-01] ContactoRapidoModal calls onOpenChange(false) only for its own Dialog; parent Sheet state is independent
+- [37-02] CardActionsSheet props reduced to 4 fields — onOpenNuevoTurno and onOpenPresupuestos fully removed after NuevoTurnoModal block deleted from KanbanBoard
+- [37-02] Sheet flex-col layout with flex-shrink-0 header/footer and flex-1 overflow-y-auto body — no absolute positioning
+- [37-02] Dialogs mount via Radix DialogPortal in document.body inside Sheet — no z-index or focus-trap conflicts (human-verified)
+- [38-01] STEPPER_CHAIN hardcoded (not derived from ETAPA_ORDER) to include PROCEDIMIENTO_REALIZADO which is intentionally excluded from kanban
+- [38-01] Step clickability guards on etapaActual (real server state), not displayEtapa (optimistic) — display-only optimism, real-state guards interaction
+- [38-01] PERDIDO hover uses bg-red-50 (destructive signal) vs bg-muted/50 for regular steps
+- [38-02] handleStepClick guards on patient.etapaCRM (real server state), not optimisticEtapa — display-only optimism, real-state guards interaction
+- [38-02] onOpenDrawerWithView is required (not optional) on CardActionsSheet — KanbanBoard always provides it, keeping the type contract strict
 
 ### Known Tech Debt (carry-forward)
 - LIVHC-05/PAC-01: tratamientos snapshot no se escribe cuando consumirInsumos=false
 - STOCK-03: FACTURADOR excluido del backend de ordenes-consumo pero accede desde frontend
+- CALL-01: botón "Llamar" placeholder en agenda — sala de espera digital deferida
 - marcarPracticasPagadas deprecado — limpiar cuando no tenga callers externos
 - IVA matrix cirugía estética — validar con contador antes de habilitar producción AFIP
 - EncryptionService dev fallback key — configurar ENCRYPTION_KEY en .env prod
@@ -81,7 +91,10 @@ Last activity: 2026-05-14 — Plan 34-02 complete: switch-session AlertDialog en
 
 ## Session Continuity
 
-Last session: 2026-05-14T01:48:56.979Z
-Stopped at: Completed 34-01-PLAN.md
-Resume file: None
-Next action: Phase 34 — LiveTurno Simplificado (LT-03 pending)
+**To resume:** Read `.planning/STATE.md` + `.planning/ROADMAP.md` + Phase 37 plan files.
+
+**Last session:** 2026-05-28T01:10:00Z
+
+**Stopped at:** Completed 38-02-PLAN.md
+
+**Blocked by:** Nothing — 38-02 complete. CardActionsSheet now handles stepper clicks end-to-end with optimistic updates, LossReasonModal for PERDIDO, HCCreatorDialog for HC creation, and presupuesto navigation. CRM-05 and SHEET-05 requirements satisfied.

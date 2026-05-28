@@ -42,6 +42,8 @@ export interface KanbanPatient {
   enListaEspera: boolean;
   comentarioListaEspera?: string | null;
   pendingAutorizaciones?: number;
+  // Phase 36 — expuesto por backend desde Phase 35
+  flujo: 'CIRUGIA' | 'TRATAMIENTO' | 'PENDIENTE' | null;
 }
 
 export interface KanbanColumn {

@@ -1,76 +1,79 @@
-# Requirements: CLINICAL — v1.6 Agenda Operativa
+# Requirements: CLINICAL v1.7 — CRM Flexible
 
-**Defined:** 2026-05-13
+**Defined:** 2026-05-23
 **Core Value:** Que un cirujano plástico cierre más cirugías — el sistema hace visible qué pacientes seguir, cuándo y cómo, de la manera más automatizada posible
 
-## v1.6 Requirements
+## v1.7 Requirements
 
-### Estados de Turno
+Requirements for milestone v1.7 CRM Flexible. Each maps to roadmap phases.
 
-- [x] **EST-01**: Schema migrado con `EN_ESPERA` y `SIENDO_ATENDIDO` en el enum `EstadoTurno` de Prisma
-- [x] **EST-02**: Endpoint disponible para marcar turno como `EN_ESPERA` (SECRETARIA / PROFESIONAL / ADMIN)
-- [x] **EST-03**: `iniciarSesion` establece el estado del turno a `SIENDO_ATENDIDO` (en lugar de `CONFIRMADO`)
-- [x] **EST-04**: Endpoint disponible para marcar turno como `AUSENTE`
-- [x] **EST-05**: Endpoint disponible para reactivar turno: `AUSENTE → PENDIENTE`
+### CRM — Libertad de movimiento
 
-### Widget Agenda
+- [x] **CRM-01**: El usuario puede mover un paciente a cualquier etapa del kanban mediante drag-and-drop sin restricciones de negocio
+- [x] **CRM-02**: Al mover a PRESUPUESTO_ENVIADO sin presupuesto existente, aparece toast no bloqueante: "No hay presupuesto enviado a este paciente"
+- [x] **CRM-03**: Al mover a CONFIRMADO sin presupuesto aceptado, aparece toast no bloqueante: "Ningún presupuesto fue aceptado — verificá antes de confirmar"
+- [x] **CRM-04**: Las transiciones automáticas del sistema (cerrar sesión, enviar/aceptar presupuesto) no sobreescriben etapas más avanzadas puestas a mano
+- [x] **CRM-05**: El usuario puede mover un paciente a cualquier etapa usando el stepper del sheet (mismo warning logic que drag-and-drop)
 
-- [x] **WID-01**: Columna "Tipo de Turno" aparece antes que "Tratamiento" en la tabla de agenda
-- [x] **WID-02**: Click en el nombre del paciente abre su PatientDrawer
-- [x] **WID-03**: Cada turno activo (no FINALIZADO/CANCELADO) muestra botón "Iniciar" + menú ⋮ con acciones contextuales
-- [x] **WID-04**: Menú ⋮ contiene "En espera", "Ausente" y "Llamar" (placeholder) según estado del turno
-- [x] **WID-05**: Turno en estado `AUSENTE` muestra opción "Reactivar" en el menú ⋮
-- [x] **WID-06**: Estados `EN_ESPERA` y `SIENDO_ATENDIDO` se muestran correctamente en columna Estado
+### SHEET — Rediseño del sheet lateral del kanban
 
-### LiveTurno Simplificado
+- [x] **SHEET-01**: El sheet muestra nombre del paciente y badge de flujo (CIRUGIA/TRATAMIENTO/PENDIENTE) en el header
+- [x] **SHEET-02**: "Registrar contacto" es un botón compacto que abre un modal pequeño (Dialog, no Sheet nested)
+- [x] **SHEET-03**: Botón compacto activa/desactiva opt-in de lista de espera del paciente
+- [x] **SHEET-04**: El sheet incluye un stepper con las 6 etapas CRM indicando la etapa actual
+- [x] **SHEET-05**: Click en etapa del stepper mueve al paciente a esa etapa; PERDIDO abre LossReasonModal
+- [x] **SHEET-06**: En etapa PRESUPUESTO_ENVIADO del stepper aparece acción "Ver/Crear presupuesto"
+- [x] **SHEET-07**: En etapa CONSULTADO del stepper aparece acción "Registrar HC" abriendo HCCreatorForm
+- [x] **SHEET-08**: En etapa PROCEDIMIENTO_REALIZADO del stepper aparece acción "Marcar como realizado" (etapa clickeable como las demás)
+- [x] **SHEET-09**: El panel de acciones rápidas actual es removido del sheet
 
-- [x] **LT-01**: El contador de tiempo (timer) no se muestra en el panel de consulta activa
-- [x] **LT-02**: Con consulta activa, intentar iniciar otro turno muestra confirmación en lugar de botón deshabilitado
-- [x] **LT-03**: Cerrar/descartar el panel sin guardar HC llama al backend cerrar-sesion → turno queda `FINALIZADO`
+## Deferred Requirements
 
-## Deferred (v2+)
+### v1.x — Stepper UX enhancements
 
-### Reportes
+- **STEP-01**: Indicador de tiempo en etapa por paso (días en CONFIRMADO, días en PRESUPUESTO_ENVIADO)
+- **STEP-02**: Acción inline en toast de warning (ej. "Crear presupuesto →" como botón dentro del toast)
+- **STEP-03**: Animaciones de transición en el stepper al cambiar etapa
+- **STEP-04**: Audit log de cambios manuales de etapa visible en el sheet
 
-- **REP-01**: Reportes ejecutivos exportables con comparativas entre períodos
-- **REP-02**: Historial de liquidaciones por OS con comparativa autorizado vs. pagado
+### v2.x — CRM avanzado
 
-### Llamadas (Sala de Espera Digital)
-
-- **CALL-01**: Botón "Llamar" conectado a pantalla de sala de espera para llamar pacientes desde el sistema
+- **AUTO-01**: Automatizaciones de seguimiento: triggers basados en tiempo/etapa
+- **AUDIT-01**: Historial de cambios de etapa por paciente (quién movió, cuándo, motivo)
 
 ## Out of Scope
 
 | Feature | Reason |
 |---------|--------|
-| Pantalla de sala de espera | Infraestructura adicional, futuro lejano; botón "Llamar" queda como placeholder |
-| Notificación al paciente al llamarlo | Requiere integración extra; out of scope v1.6 |
-| Timer de consulta como métrica | Profesional no lo usa; data de `duracionRealMinutos` se mantiene en backend sin mostrar en UI |
+| App móvil | Web-first; sin demanda hasta ahora |
+| Chat en tiempo real | WhatsApp cubre este caso |
+| Animaciones en stepper | Complejidad sin valor claro en v1.7 |
+| Audit log de etapas | Deferred — requiere modelo nuevo en DB |
 
 ## Traceability
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| EST-01 | Phase 32 | Complete |
-| EST-02 | Phase 32 | Complete |
-| EST-03 | Phase 32 | Complete |
-| EST-04 | Phase 32 | Complete |
-| EST-05 | Phase 32 | Complete |
-| WID-01 | Phase 33 | Complete |
-| WID-02 | Phase 33 | Complete |
-| WID-03 | Phase 33 | Complete |
-| WID-04 | Phase 33 | Complete |
-| WID-05 | Phase 33 | Complete |
-| WID-06 | Phase 33 | Complete |
-| LT-01 | Phase 34 | Complete |
-| LT-02 | Phase 34 | Complete |
-| LT-03 | Phase 34 | Complete |
+| CRM-01 | Phase 35 | Complete |
+| CRM-04 | Phase 35 | Complete |
+| CRM-02 | Phase 36 | Complete |
+| CRM-03 | Phase 36 | Complete |
+| SHEET-01 | Phase 37 | Complete |
+| SHEET-02 | Phase 37 | Complete |
+| SHEET-03 | Phase 37 | Complete |
+| SHEET-04 | Phase 37 | Complete |
+| SHEET-09 | Phase 37 | Complete |
+| CRM-05 | Phase 38 | Complete |
+| SHEET-05 | Phase 38 | Complete |
+| SHEET-06 | Phase 38 | Complete |
+| SHEET-07 | Phase 38 | Complete |
+| SHEET-08 | Phase 38 | Complete |
 
 **Coverage:**
-- v1.6 requirements: 14 total
+- v1.7 requirements: 14 total
 - Mapped to phases: 14
 - Unmapped: 0 ✓
 
 ---
-*Requirements defined: 2026-05-13*
-*Last updated: 2026-05-13 — traceability finalized after roadmap creation (phases 32–34)*
+*Requirements defined: 2026-05-23*
+*Last updated: 2026-05-23 — traceability confirmed against roadmap (phases 35–38)*

@@ -23,6 +23,31 @@ import { IniciarSesionDto } from './dto/iniciar-sesion.dto';
 import { CerrarSesionDto } from './dto/cerrar-sesion.dto';
 import { CuentasCorrientesService } from '../cuentas-corrientes/cuentas-corrientes.service';
 
+// Constante de orden CRM — PERDIDO excluido intencionalmente (manejo especial)
+// ADVERTENCIA: El enum EtapaCRM en Prisma NO está en orden lógico de avance.
+// NO derivar el orden del enum — usar SIEMPRE ETAPA_ORDEN como fuente de verdad.
+const ETAPA_ORDEN: Record<string, number> = {
+  SIN_CLASIFICAR: 0,
+  NUEVO_LEAD: 1,
+  TURNO_AGENDADO: 2,
+  CONSULTADO: 3,
+  PRESUPUESTO_ENVIADO: 4,
+  CONFIRMADO: 5,
+  PROCEDIMIENTO_REALIZADO: 6,
+};
+
+function etapaOrden(e: EtapaCRM | null | undefined): number {
+  return ETAPA_ORDEN[e ?? 'SIN_CLASIFICAR'] ?? 0;
+}
+
+// Returns true when the auto-transition should be SKIPPED
+function isAutoTransitionBlocked(
+  actual: EtapaCRM | null | undefined,
+  destino: EtapaCRM,
+): boolean {
+  return etapaOrden(actual) >= etapaOrden(destino);
+}
+
 @Injectable()
 export class TurnosService {
   private readonly logger = new Logger(TurnosService.name);
@@ -126,13 +151,12 @@ export class TurnosService {
       },
     });
 
-    // 5) CRM auto-transition: avanzar a TURNO_AGENDADO si el paciente está en etapa inicial
+    // 5) CRM auto-transition: avanzar a TURNO_AGENDADO si la etapa actual es menor (guard forward-only)
     const pacienteCRM = await this.prisma.paciente.findUnique({
       where: { id: dto.pacienteId },
       select: { etapaCRM: true, profesionalId: true, flujo: true },
     });
-    const etapasIniciales: (EtapaCRM | null)[] = [null, EtapaCRM.NUEVO_LEAD];
-    if (etapasIniciales.includes(pacienteCRM?.etapaCRM ?? null)) {
+    if (!isAutoTransitionBlocked(pacienteCRM?.etapaCRM, EtapaCRM.TURNO_AGENDADO)) {
       await this.prisma.paciente.update({
         where: { id: dto.pacienteId },
         data: { etapaCRM: EtapaCRM.TURNO_AGENDADO },

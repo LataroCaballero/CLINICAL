@@ -105,12 +105,13 @@ Full details: `.planning/milestones/v1.6-ROADMAP.md`
 
 </details>
 
-### v1.7 CRM Flexible (Fases 35–38)
+### v1.7 CRM Flexible (Fases 35–39)
 
 - [x] **Phase 35: Backend Foundation** — Eliminar guard CONFIRMADO, agregar guards forward-only para auto-transiciones, fix idempotencia, campo flujo en query kanban (completed 2026-05-24)
 - [x] **Phase 36: Drag-and-Drop + Warning Infrastructure** — Helper de warnings, integración en KanbanBoard, fix ghost-card onError, campo flujo wired al tipo frontend (completed 2026-05-25)
 - [x] **Phase 37: Sheet Redesign — Layout y Stepper UI** — Header compacto con FlujoBadge, ContactoRapidoModal, toggle lista de espera compacto, EtapaStepper estático, eliminar panel de acciones rápidas (completed 2026-05-27)
 - [x] **Phase 38: Stepper Interactions + Contextual Actions** — Stepper clickeable con useUpdateEtapaCRM, PERDIDO abre LossReasonModal, botones de acción contextual por etapa (completed 2026-05-28)
+- [ ] **Phase 39: CRM Tech Debt — Guard & Ordering Fixes** — Guard forward-only en rechazar(), alineación STEPPER_CHAIN con ETAPA_ORDEN backend, fix getKanban budget selection para evitar falsos positivos
 
 ## Phase Details
 
@@ -169,8 +170,22 @@ Plans:
   5. En la etapa PROCEDIMIENTO_REALIZADO del stepper aparece el botón "Marcar como realizado" que aplica la transición de etapa como las demás
 **Plans**: 2 plans
 Plans:
-- [ ] 35-01-PLAN.md — Remove CONFIRMADO guard in updateEtapaCRM + add flujo field to getKanban
-- [ ] 35-02-PLAN.md — Forward-only guard in presupuestos (4 methods) and turnos auto-transitions
+- [ ] 38-01-PLAN.md — Interactive stepper: handleStepClick + LossReasonModal integration
+- [ ] 38-02-PLAN.md — Contextual action buttons per stage (presupuesto nav, HC creation, marcar realizado)
+
+### Phase 39: CRM Tech Debt — Guard & Ordering Fixes
+**Goal**: Cerrar 3 asimetrías descubiertas por el audit v1.7: guard faltante en rechazar(), orden visual del stepper contrario al backend, y falso positivo en warning de CONFIRMADO
+**Depends on**: Phase 38
+**Gap Closure:** Closes tech debt items from v1.7 audit
+**Requirements**: TD-1 (rechazar guard), TD-2 (STEPPER_CHAIN order), TD-3 (getKanban budget selection)
+**Success Criteria** (what must be TRUE):
+  1. `rechazar()` en presupuestos.service.ts aplica el mismo guard `etapasProtegidas` que `rechazarByToken()` — un paciente en CONFIRMADO o PROCEDIMIENTO_REALIZADO no puede ser movido a PERDIDO por staff vía este path
+  2. `STEPPER_CHAIN` en EtapaStepper.tsx presenta las etapas en el mismo orden que `ETAPA_ORDEN` del backend: `PRESUPUESTO_ENVIADO(4) → CONFIRMADO(5) → PROCEDIMIENTO_REALIZADO(6)`
+  3. `getKanban` retorna el presupuesto más relevante (ACEPTADO si existe, si no el más reciente) para que `getEtapaWarning` no dispare falsos positivos en pacientes con múltiples presupuestos
+**Plans**: 2 plans
+Plans:
+- [ ] 39-01-PLAN.md — Backend: rechazar() guard + getKanban budget selection fix
+- [ ] 39-02-PLAN.md — Frontend: STEPPER_CHAIN ordering alignment with ETAPA_ORDEN
 
 ## Progress
 
@@ -216,6 +231,7 @@ Plans:
 | 36. Drag-and-Drop + Warning Infrastructure | 2/2 | Complete    | 2026-05-25 | - |
 | 37. Sheet Redesign — Layout y Stepper UI | 2/2 | Complete    | 2026-05-27 | - |
 | 38. Stepper Interactions + Contextual Actions | 2/2 | Complete    | 2026-05-28 | - |
+| 39. CRM Tech Debt — Guard & Ordering Fixes | v1.7 | 0/2 | Pending | — |
 
 ---
 *Roadmap initialized: 2026-02-23 | v1.0 shipped: 2026-03-03 | v1.1 shipped: 2026-03-16 | v1.2 shipped: 2026-03-31 | v1.3 shipped: 2026-04-09 | v1.4 shipped: 2026-04-20 | v1.5 shipped: 2026-05-13 | v1.6 shipped: 2026-05-23 | v1.7 started: 2026-05-23*

@@ -27,6 +27,14 @@ Requirements for milestone v1.7 CRM Flexible. Each maps to roadmap phases.
 - [x] **SHEET-08**: En etapa PROCEDIMIENTO_REALIZADO del stepper aparece acción "Marcar como realizado" (etapa clickeable como las demás)
 - [x] **SHEET-09**: El panel de acciones rápidas actual es removido del sheet
 
+## Tech Debt (Phase 39)
+
+Identified by v1.7 audit. All requirements remain satisfied; these fix behavioral asymmetries and UX edge cases:
+
+- [ ] **TD-1** (High): `rechazar()` en presupuestos.service.ts aplica guard `etapasProtegidas` igual que `rechazarByToken()` — sin esto, staff puede sobreescribir etapas avanzadas
+- [ ] **TD-2** (Medium): `STEPPER_CHAIN` en EtapaStepper.tsx alineado con `ETAPA_ORDEN` backend: `CONFIRMADO(5) → PROCEDIMIENTO_REALIZADO(6)` (actualmente invertido)
+- [ ] **TD-3** (Low): `getKanban` prioriza presupuesto ACEPTADO sobre el más reciente para evitar falso positivo en warning CRM-03
+
 ## Deferred Requirements
 
 ### v1.x — Stepper UX enhancements
@@ -68,10 +76,14 @@ Requirements for milestone v1.7 CRM Flexible. Each maps to roadmap phases.
 | SHEET-06 | Phase 38 | Complete |
 | SHEET-07 | Phase 38 | Complete |
 | SHEET-08 | Phase 38 | Complete |
+| TD-1 | Phase 39 | Pending |
+| TD-2 | Phase 39 | Pending |
+| TD-3 | Phase 39 | Pending |
 
 **Coverage:**
-- v1.7 requirements: 14 total
-- Mapped to phases: 14
+- v1.7 requirements: 14 total (all satisfied)
+- Tech debt items: 3 (Phase 39 pending)
+- Mapped to phases: 17
 - Unmapped: 0 ✓
 
 ---

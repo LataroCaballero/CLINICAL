@@ -31,9 +31,9 @@ Requirements for milestone v1.7 CRM Flexible. Each maps to roadmap phases.
 
 Identified by v1.7 audit. All requirements remain satisfied; these fix behavioral asymmetries and UX edge cases:
 
-- [ ] **TD-1** (High): `rechazar()` en presupuestos.service.ts aplica guard `etapasProtegidas` igual que `rechazarByToken()` — sin esto, staff puede sobreescribir etapas avanzadas
-- [ ] **TD-2** (Medium): `STEPPER_CHAIN` en EtapaStepper.tsx alineado con `ETAPA_ORDEN` backend: `CONFIRMADO(5) → PROCEDIMIENTO_REALIZADO(6)` (actualmente invertido)
-- [ ] **TD-3** (Low): `getKanban` prioriza presupuesto ACEPTADO sobre el más reciente para evitar falso positivo en warning CRM-03
+- [x] **TD-1** (High): `rechazar()` en presupuestos.service.ts aplica guard `etapasProtegidas` igual que `rechazarByToken()` — sin esto, staff puede sobreescribir etapas avanzadas
+- [x] **TD-2** (Medium): `STEPPER_CHAIN` en EtapaStepper.tsx alineado con `ETAPA_ORDEN` backend: `CONFIRMADO(5) → PROCEDIMIENTO_REALIZADO(6)` (actualmente invertido)
+- [x] **TD-3** (Low): `getKanban` prioriza presupuesto ACEPTADO sobre el más reciente para evitar falso positivo en warning CRM-03
 
 ## Deferred Requirements
 
@@ -76,9 +76,9 @@ Identified by v1.7 audit. All requirements remain satisfied; these fix behaviora
 | SHEET-06 | Phase 38 | Complete |
 | SHEET-07 | Phase 38 | Complete |
 | SHEET-08 | Phase 38 | Complete |
-| TD-1 | Phase 39 | Pending |
-| TD-2 | Phase 39 | Pending |
-| TD-3 | Phase 39 | Pending |
+| TD-1 | Phase 39 | Complete |
+| TD-2 | Phase 39 | Complete |
+| TD-3 | Phase 39 | Complete |
 
 **Coverage:**
 - v1.7 requirements: 14 total (all satisfied)

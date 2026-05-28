@@ -111,7 +111,7 @@ Full details: `.planning/milestones/v1.6-ROADMAP.md`
 - [x] **Phase 36: Drag-and-Drop + Warning Infrastructure** — Helper de warnings, integración en KanbanBoard, fix ghost-card onError, campo flujo wired al tipo frontend (completed 2026-05-25)
 - [x] **Phase 37: Sheet Redesign — Layout y Stepper UI** — Header compacto con FlujoBadge, ContactoRapidoModal, toggle lista de espera compacto, EtapaStepper estático, eliminar panel de acciones rápidas (completed 2026-05-27)
 - [x] **Phase 38: Stepper Interactions + Contextual Actions** — Stepper clickeable con useUpdateEtapaCRM, PERDIDO abre LossReasonModal, botones de acción contextual por etapa (completed 2026-05-28)
-- [ ] **Phase 39: CRM Tech Debt — Guard & Ordering Fixes** — Guard forward-only en rechazar(), alineación STEPPER_CHAIN con ETAPA_ORDEN backend, fix getKanban budget selection para evitar falsos positivos
+- [x] **Phase 39: CRM Tech Debt — Guard & Ordering Fixes** — Guard forward-only en rechazar(), alineación STEPPER_CHAIN con ETAPA_ORDEN backend, fix getKanban budget selection para evitar falsos positivos (completed 2026-05-28)
 
 ## Phase Details
 
@@ -231,7 +231,7 @@ Plans:
 | 36. Drag-and-Drop + Warning Infrastructure | 2/2 | Complete    | 2026-05-25 | - |
 | 37. Sheet Redesign — Layout y Stepper UI | 2/2 | Complete    | 2026-05-27 | - |
 | 38. Stepper Interactions + Contextual Actions | 2/2 | Complete    | 2026-05-28 | - |
-| 39. CRM Tech Debt — Guard & Ordering Fixes | v1.7 | 0/2 | Pending | — |
+| 39. CRM Tech Debt — Guard & Ordering Fixes | 2/2 | Complete   | 2026-05-28 | — |
 
 ---
 *Roadmap initialized: 2026-02-23 | v1.0 shipped: 2026-03-03 | v1.1 shipped: 2026-03-16 | v1.2 shipped: 2026-03-31 | v1.3 shipped: 2026-04-09 | v1.4 shipped: 2026-04-20 | v1.5 shipped: 2026-05-13 | v1.6 shipped: 2026-05-23 | v1.7 started: 2026-05-23*

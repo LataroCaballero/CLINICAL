@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: CRM Flexible
 status: completed
-stopped_at: Completed 38-02-PLAN.md
-last_updated: "2026-05-28T01:12:33.351Z"
+stopped_at: Completed 39-02-PLAN.md
+last_updated: "2026-05-28T16:43:18.871Z"
 progress:
-  total_phases: 4
-  completed_phases: 4
-  total_plans: 8
-  completed_plans: 8
-  percent: 100
+  total_phases: 5
+  completed_phases: 5
+  total_plans: 10
+  completed_plans: 10
+  percent: 97
 ---
 
 # Project State
@@ -25,14 +25,14 @@ See: .planning/PROJECT.md (updated 2026-05-23)
 ## Current Position
 
 ```
-Milestone: v1.7 CRM Flexible
-Phase:     38 — Stepper Interactions + Contextual Actions — In Progress
-Plan:      02 of 02 complete
-Status:    38-02 complete — CardActionsSheet wired with full stepper interaction logic
-Progress:  [██████████] 100% (35/35 plans)
+Milestone: v1.7 CRM Flexible (tech debt phase)
+Phase:     39 — CRM Tech Debt Gap Closure — In Progress
+Plan:      02 of 03 complete
+Status:    39-02 complete — STEPPER_CHAIN order corrected (CONFIRMADO before PROCEDIMIENTO_REALIZADO)
+Progress:  [██████████] 97% (38/39 plans)
 
-Last completed: 38-02-PLAN.md (2026-05-28)
-Next: Phase 38 complete — SHEET-06, SHEET-07, SHEET-08 remaining
+Last completed: 39-02-PLAN.md (2026-05-28)
+Next: 39-03 — getKanban budget selection fix
 ```
 
 ## Milestone Overview
@@ -43,6 +43,7 @@ Next: Phase 38 complete — SHEET-06, SHEET-07, SHEET-08 remaining
 | 36 | Drag-and-Drop + Warning Infrastructure | CRM-01 (frontend), CRM-02, CRM-03 | Complete (2/2 plans done) |
 | 37 | Sheet Redesign — Layout y Stepper UI | SHEET-01, SHEET-02, SHEET-03, SHEET-04, SHEET-09 | Complete (2/2 plans done) |
 | 38 | Stepper Interactions + Contextual Actions | CRM-05, SHEET-05, SHEET-06, SHEET-07, SHEET-08 | In Progress (2/2 plans done) |
+| 39 | CRM Tech Debt Gap Closure | TD-1, TD-2, TD-3 | In Progress (2/3 plans done) |
 
 ## Accumulated Context
 
@@ -79,6 +80,7 @@ Next: Phase 38 complete — SHEET-06, SHEET-07, SHEET-08 remaining
 - [38-01] PERDIDO hover uses bg-red-50 (destructive signal) vs bg-muted/50 for regular steps
 - [38-02] handleStepClick guards on patient.etapaCRM (real server state), not optimisticEtapa — display-only optimism, real-state guards interaction
 - [38-02] onOpenDrawerWithView is required (not optional) on CardActionsSheet — KanbanBoard always provides it, keeping the type contract strict
+- [39-02] STEPPER_CHAIN swap is string-identity safe: contextual button checks use string comparison not index, so no secondary changes needed after the two-entry swap
 
 ### Known Tech Debt (carry-forward)
 - LIVHC-05/PAC-01: tratamientos snapshot no se escribe cuando consumirInsumos=false
@@ -93,8 +95,8 @@ Next: Phase 38 complete — SHEET-06, SHEET-07, SHEET-08 remaining
 
 **To resume:** Read `.planning/STATE.md` + `.planning/ROADMAP.md` + Phase 37 plan files.
 
-**Last session:** 2026-05-28T01:10:00Z
+**Last session:** 2026-05-28T16:43:18.870Z
 
-**Stopped at:** Completed 38-02-PLAN.md
+**Stopped at:** Completed 39-02-PLAN.md
 
-**Blocked by:** Nothing — 38-02 complete. CardActionsSheet now handles stepper clicks end-to-end with optimistic updates, LossReasonModal for PERDIDO, HCCreatorDialog for HC creation, and presupuesto navigation. CRM-05 and SHEET-05 requirements satisfied.
+**Blocked by:** Nothing — 39-02 complete. STEPPER_CHAIN now has CONFIRMADO before PROCEDIMIENTO_REALIZADO, matching backend ETAPA_ORDEN. TD-2 closed. Next: 39-03 getKanban budget selection.

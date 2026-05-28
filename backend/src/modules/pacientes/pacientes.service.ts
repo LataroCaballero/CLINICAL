@@ -610,8 +610,8 @@ export class PacientesService {
         flujo: true,
         presupuestos: {
           select: { total: true, estado: true, fechaEnviado: true },
+          where: { estado: { not: 'RECHAZADO' } },
           orderBy: { createdAt: 'desc' },
-          take: 1,
         },
         turnos: {
           select: { inicio: true },
@@ -654,36 +654,42 @@ export class PacientesService {
     return Object.entries(columnas).map(([etapa, items]) => ({
       etapa,
       total: items.length,
-      pacientes: items.map((p) => ({
-        id: p.id,
-        nombreCompleto: p.nombreCompleto,
-        fotoUrl: p.fotoUrl,
-        etapaCRM: p.etapaCRM,
-        temperatura: p.temperatura,
-        scoreConversion: p.scoreConversion,
-        procedimiento: p.tratamiento ?? p.lugarIntervencion ?? null,
-        ultimoContactoNota: p.contactos[0]?.nota ?? null,
-        ultimoContactoFecha: p.contactos[0]?.fecha ?? null,
-        ultimoTurno: p.turnos[0]?.inicio ?? null,
-        presupuesto: p.presupuestos[0]
-          ? {
-              total: Number(p.presupuestos[0].total),
-              estado: p.presupuestos[0].estado,
-              fechaEnviado: p.presupuestos[0].fechaEnviado,
-            }
-          : null,
-        diasDesdePresupuesto: p.presupuestos[0]?.fechaEnviado
-          ? Math.floor(
-              (Date.now() -
-                new Date(p.presupuestos[0].fechaEnviado).getTime()) /
-                (1000 * 60 * 60 * 24),
-            )
-          : null,
-        enListaEspera: p.enListaEspera,
-        comentarioListaEspera: p.comentarioListaEspera,
-        pendingAutorizaciones: p.autorizaciones.length,
-        flujo: p.flujo ?? null,
-      })),
+      pacientes: items.map((p) => {
+        const presupuestoSeleccionado =
+          p.presupuestos.find((pr) => pr.estado === 'ACEPTADO') ??
+          p.presupuestos[0] ??
+          null;
+        return {
+          id: p.id,
+          nombreCompleto: p.nombreCompleto,
+          fotoUrl: p.fotoUrl,
+          etapaCRM: p.etapaCRM,
+          temperatura: p.temperatura,
+          scoreConversion: p.scoreConversion,
+          procedimiento: p.tratamiento ?? p.lugarIntervencion ?? null,
+          ultimoContactoNota: p.contactos[0]?.nota ?? null,
+          ultimoContactoFecha: p.contactos[0]?.fecha ?? null,
+          ultimoTurno: p.turnos[0]?.inicio ?? null,
+          presupuesto: presupuestoSeleccionado
+            ? {
+                total: Number(presupuestoSeleccionado.total),
+                estado: presupuestoSeleccionado.estado,
+                fechaEnviado: presupuestoSeleccionado.fechaEnviado,
+              }
+            : null,
+          diasDesdePresupuesto: presupuestoSeleccionado?.fechaEnviado
+            ? Math.floor(
+                (Date.now() -
+                  new Date(presupuestoSeleccionado.fechaEnviado).getTime()) /
+                  (1000 * 60 * 60 * 24),
+              )
+            : null,
+          enListaEspera: p.enListaEspera,
+          comentarioListaEspera: p.comentarioListaEspera,
+          pendingAutorizaciones: p.autorizaciones.length,
+          flujo: p.flujo ?? null,
+        };
+      }),
     }));
   }
 

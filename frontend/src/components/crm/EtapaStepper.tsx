@@ -1,25 +1,62 @@
 "use client";
 
+import { CheckCircle, ExternalLink, FilePlus } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ETAPA_LABELS, ETAPA_ORDER, EtapaCRM } from "@/hooks/useCRMKanban";
+import { ETAPA_LABELS, EtapaCRM } from "@/hooks/useCRMKanban";
 
-// 6-step chain: all ETAPA_ORDER entries except PERDIDO
-const CHAIN = ETAPA_ORDER.filter((e) => e !== "PERDIDO");
+// Stepper shows 7 steps including PROCEDIMIENTO_REALIZADO (not in ETAPA_ORDER — that's for kanban only)
+const STEPPER_CHAIN: EtapaCRM[] = [
+  "SIN_CLASIFICAR",
+  "NUEVO_LEAD",
+  "TURNO_AGENDADO",
+  "CONSULTADO",
+  "PRESUPUESTO_ENVIADO",
+  "PROCEDIMIENTO_REALIZADO",
+  "CONFIRMADO",
+];
 
-export function EtapaStepper({ etapaActual }: { etapaActual: EtapaCRM | null }) {
+interface EtapaStepperProps {
+  etapaActual: EtapaCRM | null;
+  optimisticEtapa?: EtapaCRM | null; // for visual display only
+  onClickEtapa?: (etapa: EtapaCRM) => void;
+  onPresupuestoClick?: () => void;
+  onHCClick?: () => void;
+}
+
+export function EtapaStepper({
+  etapaActual,
+  optimisticEtapa,
+  onClickEtapa,
+  onPresupuestoClick,
+  onHCClick,
+}: EtapaStepperProps) {
+  const displayEtapa = optimisticEtapa ?? etapaActual;
+
+  // activeIndex uses displayEtapa for visual highlighting
   const activeIndex =
-    etapaActual === null || etapaActual === "PERDIDO"
+    displayEtapa === null || displayEtapa === "PERDIDO"
       ? -1
-      : CHAIN.indexOf(etapaActual);
+      : STEPPER_CHAIN.indexOf(displayEtapa);
 
-  const esPerdido = etapaActual === "PERDIDO";
+  const esPerdido = displayEtapa === "PERDIDO";
 
   return (
     <div className="flex flex-col">
-      {CHAIN.map((etapa, index) => {
+      {STEPPER_CHAIN.map((etapa, index) => {
         const isDone = index < activeIndex;
         const isCurrent = index === activeIndex;
-        const isLast = index === CHAIN.length - 1;
+        const isLast = index === STEPPER_CHAIN.length - 1;
+
+        // Non-clickable: the REAL current etapa (not the optimistic one)
+        const isActualCurrent = etapa === etapaActual;
+        const isClickable = !!onClickEtapa && !isActualCurrent;
+
+        const hasContextualButton =
+          (etapa === "PRESUPUESTO_ENVIADO" && !!onPresupuestoClick) ||
+          (etapa === "CONSULTADO" && !!onHCClick) ||
+          (etapa === "PROCEDIMIENTO_REALIZADO" &&
+            !!onClickEtapa &&
+            displayEtapa !== "PROCEDIMIENTO_REALIZADO");
 
         const circleClass = cn(
           "h-5 w-5 rounded-full border-2 flex-shrink-0",
@@ -31,14 +68,23 @@ export function EtapaStepper({ etapaActual }: { etapaActual: EtapaCRM | null }) 
         );
 
         const labelClass = cn(
-          "pt-0.5 pb-3",
+          "pt-0.5",
+          hasContextualButton ? "pb-1" : "pb-3",
           isCurrent
             ? "text-sm font-semibold text-foreground"
             : "text-sm text-muted-foreground"
         );
 
         return (
-          <div key={etapa} className="flex items-start gap-3">
+          <div
+            key={etapa}
+            className={cn(
+              "flex items-start gap-3 rounded-md px-1 -mx-1",
+              isClickable && "cursor-pointer",
+              isClickable && "hover:bg-muted/50"
+            )}
+            onClick={isClickable ? () => onClickEtapa!(etapa) : undefined}
+          >
             {/* Left column: circle + connector */}
             <div className="flex flex-col items-center">
               <div className={circleClass} />
@@ -46,8 +92,55 @@ export function EtapaStepper({ etapaActual }: { etapaActual: EtapaCRM | null }) 
                 <div className="w-0.5 flex-1 min-h-[24px] bg-gray-200 mt-1" />
               )}
             </div>
-            {/* Label */}
-            <span className={labelClass}>{ETAPA_LABELS[etapa]}</span>
+
+            {/* Right column: label + optional contextual button */}
+            <div className="flex flex-col">
+              <span className={labelClass}>{ETAPA_LABELS[etapa]}</span>
+
+              {etapa === "PRESUPUESTO_ENVIADO" && onPresupuestoClick && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onPresupuestoClick();
+                  }}
+                  className="mb-3 flex items-center gap-1.5 text-xs text-muted-foreground border border-border rounded px-2 py-1 hover:bg-muted/50 w-fit"
+                >
+                  <ExternalLink className="h-3 w-3" />
+                  Ver/Crear presupuesto
+                </button>
+              )}
+
+              {etapa === "CONSULTADO" && onHCClick && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onHCClick();
+                  }}
+                  className="mb-3 flex items-center gap-1.5 text-xs text-muted-foreground border border-border rounded px-2 py-1 hover:bg-muted/50 w-fit"
+                >
+                  <FilePlus className="h-3 w-3" />
+                  Registrar HC
+                </button>
+              )}
+
+              {etapa === "PROCEDIMIENTO_REALIZADO" &&
+                onClickEtapa &&
+                displayEtapa !== "PROCEDIMIENTO_REALIZADO" && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onClickEtapa("PROCEDIMIENTO_REALIZADO");
+                    }}
+                    className="mb-3 flex items-center gap-1.5 text-xs text-muted-foreground border border-border rounded px-2 py-1 hover:bg-muted/50 w-fit"
+                  >
+                    <CheckCircle className="h-3 w-3" />
+                    Marcar como realizado
+                  </button>
+                )}
+            </div>
           </div>
         );
       })}
@@ -55,8 +148,20 @@ export function EtapaStepper({ etapaActual }: { etapaActual: EtapaCRM | null }) 
       {/* Dashed divider before PERDIDO */}
       <div className="my-2 border-t border-dashed border-gray-200" />
 
-      {/* PERDIDO node — no connector line */}
-      <div className="flex items-start gap-3">
+      {/* PERDIDO node — no connector line, destructive hover */}
+      <div
+        className={cn(
+          "flex items-start gap-3 rounded-md px-1 -mx-1",
+          !!onClickEtapa &&
+            etapaActual !== "PERDIDO" &&
+            "cursor-pointer hover:bg-red-50"
+        )}
+        onClick={
+          onClickEtapa && etapaActual !== "PERDIDO"
+            ? () => onClickEtapa("PERDIDO")
+            : undefined
+        }
+      >
         <div className="flex flex-col items-center">
           <div
             className={cn(

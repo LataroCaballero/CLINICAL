@@ -285,6 +285,10 @@ export function KanbanBoard({ columns, unreadMap }: Props) {
           setDrawerInitialView("default");
           setDrawerPatientId(id);
         }}
+        onOpenDrawerWithView={(id, view) => {
+          setDrawerInitialView(view);
+          setDrawerPatientId(id);
+        }}
       />
 
       <PatientDrawer

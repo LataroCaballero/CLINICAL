@@ -68,6 +68,20 @@ export function KanbanBoard({ columns, unreadMap }: Props) {
   const [drawerInitialView, setDrawerInitialView] = useState<"default" | "presupuestos">("default");
   const [actionPatient, setActionPatient] = useState<KanbanPatient | null>(null);
 
+  // Keep the open sheet's patient in sync when the query re-renders with new data
+  const actionPatientRef = useRef(actionPatient);
+  actionPatientRef.current = actionPatient;
+  useEffect(() => {
+    if (!actionPatientRef.current) return;
+    for (const col of columns) {
+      const updated = col.pacientes.find((p) => p.id === actionPatientRef.current!.id);
+      if (updated && updated.etapaCRM !== actionPatientRef.current.etapaCRM) {
+        setActionPatient(updated);
+        return;
+      }
+    }
+  }, [columns]);
+
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);

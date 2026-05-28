@@ -27,12 +27,12 @@ See: .planning/PROJECT.md (updated 2026-05-23)
 ```
 Milestone: v1.7 CRM Flexible (tech debt phase)
 Phase:     39 — CRM Tech Debt Gap Closure — In Progress
-Plan:      02 of 03 complete
-Status:    39-02 complete — STEPPER_CHAIN order corrected (CONFIRMADO before PROCEDIMIENTO_REALIZADO)
-Progress:  [██████████] 97% (38/39 plans)
+Plan:      01+02 of 03 complete (39-01 rechazar guard + ACEPTADO-first; 39-02 STEPPER_CHAIN)
+Status:    39-01 complete — rechazar() etapasProtegidas guard (TD-1) + getKanban ACEPTADO-first (TD-3)
+Progress:  [██████████] 100% (39/39 plans)
 
-Last completed: 39-02-PLAN.md (2026-05-28)
-Next: 39-03 — getKanban budget selection fix
+Last completed: 39-01-PLAN.md (2026-05-28)
+Next: 39-03 — remaining tech debt (if any)
 ```
 
 ## Milestone Overview
@@ -81,6 +81,8 @@ Next: 39-03 — getKanban budget selection fix
 - [38-02] handleStepClick guards on patient.etapaCRM (real server state), not optimisticEtapa — display-only optimism, real-state guards interaction
 - [38-02] onOpenDrawerWithView is required (not optional) on CardActionsSheet — KanbanBoard always provides it, keeping the type contract strict
 - [39-02] STEPPER_CHAIN swap is string-identity safe: contextual button checks use string comparison not index, so no secondary changes needed after the two-entry swap
+- [39-01] rechazar() mirrors rechazarByToken() guard exactly — etapasProtegidas list [CONFIRMADO, PROCEDIMIENTO_REALIZADO] blocks PERDIDO write for protected stages
+- [39-01] getKanban drops take:1, filters RECHAZADO via where clause, picks ACEPTADO-first via presupuestoSeleccionado — eliminates false CONFIRMADO warning for multi-presupuesto patients
 
 ### Known Tech Debt (carry-forward)
 - LIVHC-05/PAC-01: tratamientos snapshot no se escribe cuando consumirInsumos=false
@@ -97,6 +99,6 @@ Next: 39-03 — getKanban budget selection fix
 
 **Last session:** 2026-05-28T16:43:18.870Z
 
-**Stopped at:** Completed 39-02-PLAN.md
+**Stopped at:** Completed 39-01-PLAN.md
 
-**Blocked by:** Nothing — 39-02 complete. STEPPER_CHAIN now has CONFIRMADO before PROCEDIMIENTO_REALIZADO, matching backend ETAPA_ORDEN. TD-2 closed. Next: 39-03 getKanban budget selection.
+**Blocked by:** Nothing — 39-01 complete. rechazar() now guards etapasProtegidas before writing PERDIDO (TD-1); getKanban returns ACEPTADO-first presupuesto eliminating false CONFIRMADO warnings (TD-3). TD-1 and TD-3 closed.

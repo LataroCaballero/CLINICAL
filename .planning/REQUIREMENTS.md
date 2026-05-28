@@ -13,7 +13,7 @@ Requirements for milestone v1.7 CRM Flexible. Each maps to roadmap phases.
 - [x] **CRM-02**: Al mover a PRESUPUESTO_ENVIADO sin presupuesto existente, aparece toast no bloqueante: "No hay presupuesto enviado a este paciente"
 - [x] **CRM-03**: Al mover a CONFIRMADO sin presupuesto aceptado, aparece toast no bloqueante: "Ningún presupuesto fue aceptado — verificá antes de confirmar"
 - [x] **CRM-04**: Las transiciones automáticas del sistema (cerrar sesión, enviar/aceptar presupuesto) no sobreescriben etapas más avanzadas puestas a mano
-- [ ] **CRM-05**: El usuario puede mover un paciente a cualquier etapa usando el stepper del sheet (mismo warning logic que drag-and-drop)
+- [x] **CRM-05**: El usuario puede mover un paciente a cualquier etapa usando el stepper del sheet (mismo warning logic que drag-and-drop)
 
 ### SHEET — Rediseño del sheet lateral del kanban
 
@@ -21,7 +21,7 @@ Requirements for milestone v1.7 CRM Flexible. Each maps to roadmap phases.
 - [x] **SHEET-02**: "Registrar contacto" es un botón compacto que abre un modal pequeño (Dialog, no Sheet nested)
 - [x] **SHEET-03**: Botón compacto activa/desactiva opt-in de lista de espera del paciente
 - [x] **SHEET-04**: El sheet incluye un stepper con las 6 etapas CRM indicando la etapa actual
-- [ ] **SHEET-05**: Click en etapa del stepper mueve al paciente a esa etapa; PERDIDO abre LossReasonModal
+- [x] **SHEET-05**: Click en etapa del stepper mueve al paciente a esa etapa; PERDIDO abre LossReasonModal
 - [x] **SHEET-06**: En etapa PRESUPUESTO_ENVIADO del stepper aparece acción "Ver/Crear presupuesto"
 - [x] **SHEET-07**: En etapa CONSULTADO del stepper aparece acción "Registrar HC" abriendo HCCreatorForm
 - [x] **SHEET-08**: En etapa PROCEDIMIENTO_REALIZADO del stepper aparece acción "Marcar como realizado" (etapa clickeable como las demás)
@@ -63,8 +63,8 @@ Requirements for milestone v1.7 CRM Flexible. Each maps to roadmap phases.
 | SHEET-03 | Phase 37 | Complete |
 | SHEET-04 | Phase 37 | Complete |
 | SHEET-09 | Phase 37 | Complete |
-| CRM-05 | Phase 38 | Pending |
-| SHEET-05 | Phase 38 | Pending |
+| CRM-05 | Phase 38 | Complete |
+| SHEET-05 | Phase 38 | Complete |
 | SHEET-06 | Phase 38 | Complete |
 | SHEET-07 | Phase 38 | Complete |
 | SHEET-08 | Phase 38 | Complete |

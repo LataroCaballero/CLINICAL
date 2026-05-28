@@ -10,17 +10,24 @@ import {
 import { Button } from "@/components/ui/button";
 import { Phone, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { KanbanPatient } from "@/hooks/useCRMKanban";
+import { EtapaCRM, KanbanPatient, MotivoPerdidaCRM } from "@/hooks/useCRMKanban";
+import { useUpdateEtapaCRM } from "@/hooks/useUpdateEtapaCRM";
+import { useEffectiveProfessionalId } from "@/hooks/useEffectiveProfessionalId";
+import { getEtapaWarning } from "@/lib/crm-warnings";
+import { toast } from "sonner";
 import { CRMFlujoBadge } from "./CRMFlujoBadge";
 import { EtapaStepper } from "./EtapaStepper";
 import { ContactoRapidoModal } from "./ContactoRapidoModal";
 import { ListaEsperaDialog } from "./ListaEsperaDialog";
+import { LossReasonModal } from "./LossReasonModal";
+import { HCCreatorDialog } from "@/components/patient/PatientDrawer/views/HCCreatorDialog";
 
 interface Props {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   patient: KanbanPatient | null;
   onOpenDrawer: (pacienteId: string) => void;
+  onOpenDrawerWithView: (pacienteId: string, view: "default" | "presupuestos") => void;
 }
 
 export function CardActionsSheet({
@@ -28,11 +35,56 @@ export function CardActionsSheet({
   onOpenChange,
   patient,
   onOpenDrawer,
+  onOpenDrawerWithView,
 }: Props) {
   const [contactoOpen, setContactoOpen] = useState(false);
   const [listaEsperaOpen, setListaEsperaOpen] = useState(false);
+  const [optimisticEtapa, setOptimisticEtapa] = useState<EtapaCRM | null>(null);
+  const [lossReasonOpen, setLossReasonOpen] = useState(false);
+  const [hcOpen, setHcOpen] = useState(false);
+
+  const { mutate: updateEtapa } = useUpdateEtapaCRM();
+  const profesionalId = useEffectiveProfessionalId();
 
   if (!patient) return null;
+
+  function handleStepClick(targetEtapa: EtapaCRM) {
+    if (targetEtapa === patient!.etapaCRM || targetEtapa === optimisticEtapa) return;
+
+    if (targetEtapa === "PERDIDO") {
+      setLossReasonOpen(true);
+      return;
+    }
+
+    const warning = getEtapaWarning(patient!, targetEtapa);
+    if (warning) toast.warning(warning);
+
+    setOptimisticEtapa(targetEtapa);
+    updateEtapa(
+      { pacienteId: patient!.id, etapaCRM: targetEtapa },
+      {
+        onSettled: () => setOptimisticEtapa(null),
+        onError: () => toast.error("No se pudo guardar el movimiento. Intentá de nuevo."),
+      }
+    );
+  }
+
+  function handleLossConfirm(motivo: MotivoPerdidaCRM) {
+    setLossReasonOpen(false);
+    setOptimisticEtapa("PERDIDO");
+    updateEtapa(
+      { pacienteId: patient!.id, etapaCRM: "PERDIDO", motivoPerdida: motivo },
+      {
+        onSettled: () => setOptimisticEtapa(null),
+        onError: () => toast.error("No se pudo guardar el movimiento. Intentá de nuevo."),
+      }
+    );
+  }
+
+  function handlePresupuestoClick() {
+    onOpenChange(false);
+    onOpenDrawerWithView(patient!.id, "presupuestos");
+  }
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -55,7 +107,13 @@ export function CardActionsSheet({
 
         {/* STEPPER BODY — scrollable, fills available space */}
         <div className="flex-1 overflow-y-auto px-5 py-4">
-          <EtapaStepper etapaActual={patient.etapaCRM} />
+          <EtapaStepper
+            etapaActual={patient.etapaCRM}
+            optimisticEtapa={optimisticEtapa}
+            onClickEtapa={handleStepClick}
+            onPresupuestoClick={handlePresupuestoClick}
+            onHCClick={profesionalId ? () => setHcOpen(true) : undefined}
+          />
         </div>
 
         {/* FOOTER — fixed at bottom */}
@@ -103,6 +161,17 @@ export function CardActionsSheet({
           open={listaEsperaOpen}
           onOpenChange={setListaEsperaOpen}
           patient={patient}
+        />
+        <LossReasonModal
+          open={lossReasonOpen}
+          onConfirm={handleLossConfirm}
+          onCancel={() => setLossReasonOpen(false)}
+        />
+        <HCCreatorDialog
+          open={hcOpen}
+          onOpenChange={setHcOpen}
+          pacienteId={patient.id}
+          profesionalId={profesionalId ?? ""}
         />
       </SheetContent>
     </Sheet>

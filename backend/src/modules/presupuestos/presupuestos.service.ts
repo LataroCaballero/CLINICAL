@@ -298,6 +298,18 @@ export class PresupuestosService {
       );
     }
 
+    // Guard especial para PERDIDO — mismo patrón que rechazarByToken()
+    // PERDIDO no está en ETAPA_ORDEN por diseño; usamos lista explícita de etapas protegidas.
+    const paciente = await this.prisma.paciente.findUnique({
+      where: { id: presupuesto.pacienteId },
+      select: { etapaCRM: true },
+    });
+    const etapasProtegidas: EtapaCRM[] = [EtapaCRM.CONFIRMADO, EtapaCRM.PROCEDIMIENTO_REALIZADO];
+    const bloqueado = paciente?.etapaCRM != null && etapasProtegidas.includes(paciente.etapaCRM);
+    const maybyCRMUpdate = bloqueado
+      ? []
+      : [this.prisma.paciente.update({ where: { id: presupuesto.pacienteId }, data: { etapaCRM: EtapaCRM.PERDIDO } })];
+
     const [updated] = await this.prisma.$transaction([
       this.prisma.presupuesto.update({
         where: { id },
@@ -311,10 +323,7 @@ export class PresupuestosService {
           paciente: { select: { id: true, nombreCompleto: true } },
         },
       }),
-      this.prisma.paciente.update({
-        where: { id: presupuesto.pacienteId },
-        data: { etapaCRM: EtapaCRM.PERDIDO },
-      }),
+      ...maybyCRMUpdate,
       this.prisma.contactoLog.create({
         data: {
           pacienteId: presupuesto.pacienteId,

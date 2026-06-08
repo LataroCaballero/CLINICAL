@@ -4,6 +4,46 @@
 
 ---
 
+## Milestone: v1.7 — CRM Flexible
+
+**Shipped:** 2026-05-28
+**Phases:** 5 (35–39) | **Plans:** 10 | **Timeline:** 6 days (2026-05-23 → 2026-05-28)
+
+### What Was Built
+- Guard forward-only (`isAutoTransitionBlocked` + `ETAPA_ORDEN`) en 5 call sites de auto-transición: las etapas avanzadas puestas a mano nunca son sobreescritas por eventos del sistema
+- `getEtapaWarning` en lib dedicada (`crm-warnings.ts`) + drag-and-drop con toast amber no bloqueante; snap-back preservado vía onSettled en caso de error de red
+- 4 nuevos sub-componentes CRM (`CRMFlujoBadge`, `EtapaStepper`, `ContactoRapidoModal`, `ListaEsperaDialog`); `CardActionsSheet` refactorizado en layout stepper-centric; panel de acciones rápidas removido
+- Stepper clickeable con `handleStepClick`, optimistic display, `LossReasonModal` para PERDIDO, botones contextuales por etapa (presupuesto nav, HC creation, marcar realizado)
+- Tech debt Phase 39: `rechazar()` con `etapasProtegidas` guard, `STEPPER_CHAIN` alineado con `ETAPA_ORDEN`, `getKanban` ACEPTADO-first
+
+### What Worked
+- **Audit-before-milestone como patrón establecido**: el audit v1.7 detectó 3 asimetrías (TD-1/2/3) que se cerraron con Phase 39 antes de completar el milestone — el sistema de auditoría previene gaps silenciosos
+- **`getEtapaWarning` en lib separada**: la decisión de no acoplarla al componente permitió que Phase 38 reutilizara la función directamente desde `EtapaStepper` sin tocar `KanbanBoard` — zero coupling pay-off
+- **Dialog-from-Sheet pattern**: resolver z-index/focus-trap con `DialogPortal` en `document.body` fue limpio y sin hacks; patrón reutilizable para cualquier modal dentro de un Sheet
+- **Optimistic display pattern**: `displayEtapa = optimisticEtapa ?? etapaActual` — guardia de clickability en estado real, display en estado optimista — separación clara sin estado inconsistente
+
+### What Was Inefficient
+- **MILESTONES.md accomplishments vacíos (recurrente)**: el CLI `gsd-tools` no puede extraer `one_liner` porque los SUMMARY.md no tienen el campo poblado — siempre requiere edición manual post-archivado
+- **Phase 37 requirió audit-level research post-hoc**: la discrepancia STEPPER_CHAIN vs ETAPA_ORDEN no fue detectada durante la implementación de Phase 37/38 — solo emergió en el audit. Un quick-check de alineación backend↔frontend debería ser parte del plan de cada fase CRM
+
+### Patterns Established
+- `Dialog-from-Sheet`: usar shadcn `Dialog` (no `Sheet` anidado) para modales dentro de un Sheet — `DialogPortal` en `document.body`, sin z-index/focus-trap issues
+- `ETAPA_ORDEN` por módulo (no shared): duplicar en cada archivo de servicio evita acoplamiento cross-module; si se centraliza, common/crm-helpers.ts
+- `etapasProtegidas` pattern: cualquier staff action que pueda regresar CRM stage a PERDIDO debe llevar lista explícita de etapas protegidas
+- `find(ACEPTADO) ?? arr[0]` en queries multi-presupuesto: previene false positives cuando hay presupuestos más nuevos en estado BORRADOR
+
+### Key Lessons
+1. **El audit descubre lo que la implementación asume**: Phase 39 cierra 3 bugs silenciosos que habían pasado code review — el audit es indispensable, no opcional
+2. **Libs puras > componentes acoplados para lógica cross-phase**: `getEtapaWarning` en `crm-warnings.ts` fue correcta desde el día 1; vale la pena plantear esto en el plan antes de implementar
+3. **El stepper visual ≠ stepper backend**: `ETAPA_ORDEN` en backend excluye `PROCEDIMIENTO_REALIZADO` del kanban pero el stepper debe mostrarlo — la divergencia es intencional, hay que documentarla en el plan para evitar confusión futura
+
+### Cost Observations
+- Model: claude-sonnet-4-6 (balanced profile)
+- Sessions: 10 plan executions (~5 dias)
+- Notable: Phase 35 completada en 11 min (2 planes); Phase 36 demoró 26h por human-verify checkpoint de UX en browser — la verificación manual es el bottleneck real, no la implementación
+
+---
+
 ## Milestone: v1.6 — Agenda Operativa
 
 **Shipped:** 2026-05-23

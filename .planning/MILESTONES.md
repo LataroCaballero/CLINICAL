@@ -1,5 +1,19 @@
 # Milestones
 
+## v1.7 CRM Flexible (Shipped: 2026-05-28)
+
+**Phases completed:** 5 phases (35–39), 10 plans
+**Stats:** 6 días (2026-05-23 → 2026-05-28) | 53 archivos | +7,798 / -323 líneas | 57 commits
+
+**Key accomplishments:**
+1. Movimiento libre de etapas CRM: eliminada la validación CONFIRMADO+presupuesto en updateEtapaCRM; guard forward-only (`isAutoTransitionBlocked` + `ETAPA_ORDEN`) en 5 call sites de auto-transición — las decisiones manuales del profesional ya no son sobreescritas por eventos del sistema
+2. Warning infrastructure: `getEtapaWarning` en lib dedicada (`crm-warnings.ts`) + `KanbanPatient.flujo` field; drag-and-drop con toast amber no bloqueante para PRESUPUESTO_ENVIADO y CONFIRMADO; snap-back preservado vía `onSettled`
+3. Sheet rediseñado: 4 nuevos sub-componentes CRM (`CRMFlujoBadge`, `EtapaStepper` 6-pasos + PERDIDO separado, `ContactoRapidoModal` Dialog, `ListaEsperaDialog` dual-mode); `CardActionsSheet` refactorizado como stepper-centric; panel de acciones rápidas removido
+4. Stepper interactivo: 7 pasos clickeables con `handleStepClick`, optimistic display, `LossReasonModal` para PERDIDO, botones contextuales por etapa (ver presupuesto, registrar HC, marcar realizado)
+5. Tech debt cierre — TD-1: guard `etapasProtegidas` en `rechazar()` espeja `rechazarByToken()`; TD-2: `STEPPER_CHAIN` alineado con `ETAPA_ORDEN` backend (CONFIRMADO→PROCEDIMIENTO_REALIZADO); TD-3: `getKanban` ACEPTADO-first elimina falsos positivos CRM-03
+
+---
+
 ## v1.6 Agenda Operativa (Shipped: 2026-05-23)
 
 **Phases completed:** 3 phases (32–34), 6 plans

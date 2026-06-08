@@ -4,7 +4,7 @@ milestone: v1.7
 milestone_name: CRM Flexible
 status: completed
 stopped_at: Completed 39-01-PLAN.md
-last_updated: "2026-05-28T16:46:29.126Z"
+last_updated: "2026-06-07T23:56:32.511Z"
 progress:
   total_phases: 5
   completed_phases: 5
@@ -17,10 +17,10 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-05-23)
+See: .planning/PROJECT.md (updated 2026-06-07)
 
 **Core value:** Que un cirujano plástico cierre más cirugías — el sistema hace visible qué pacientes seguir, cuándo y cómo, de la manera más automatizada posible
-**Current focus:** Phase 37 — Sheet Redesign Layout y Stepper UI (v1.7 CRM Flexible)
+**Current focus:** Planning next milestone — v1.7 CRM Flexible shipped
 
 ## Current Position
 

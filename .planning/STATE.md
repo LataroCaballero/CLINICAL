@@ -2,11 +2,11 @@
 gsd_state_version: 1.0
 milestone: v1.8
 milestone_name: Tipos de Turno y Flujo Clínico
-status: defining_requirements
-stopped_at: Not started
+status: roadmap_ready
+stopped_at: Phase 40 (not started)
 last_updated: "2026-06-08T00:00:00.000Z"
 progress:
-  total_phases: 0
+  total_phases: 4
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -20,20 +20,29 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-08)
 
 **Core value:** Que un cirujano plástico cierre más cirugías — el sistema hace visible qué pacientes seguir, cuándo y cómo, de la manera más automatizada posible
-**Current focus:** Defining requirements — v1.8 Tipos de Turno y Flujo Clínico
+**Current focus:** Phase 40 — Migración de Tipos de Turno
 
 ## Current Position
 
 ```
 Milestone: v1.8 Tipos de Turno y Flujo Clínico
-Phase:     Not started (defining requirements)
+Phase:     40 — Migración de Tipos de Turno
 Plan:      —
-Status:    Defining requirements
-Progress:  [░░░░░░░░░░] 0%
+Status:    Roadmap ready, awaiting plan-phase 40
+Progress:  [░░░░░░░░░░] 0% (0/4 phases)
 
-Last activity: 2026-06-08 — Milestone v1.8 started
-Next: Create REQUIREMENTS.md and ROADMAP.md
+Last activity: 2026-06-08 — Roadmap v1.8 created
+Next: /gsd:plan-phase 40
 ```
+
+## Phase Map
+
+| Phase | Name | Requirements | Status |
+|-------|------|--------------|--------|
+| 40 | Migración de Tipos de Turno | TIPO-01..06 | Not started |
+| 41 | Tipo de Entrada en Historia Clínica | HC-01..04 | Not started |
+| 42 | Estado Dual y TratamientosTab | DUAL-01..03 | Not started |
+| 43 | Archivar del Embudo CRM | ARCH-01..04 | Not started |
 
 ## Accumulated Context
 
@@ -46,15 +55,22 @@ Next: Create REQUIREMENTS.md and ROADMAP.md
 - HCCreatorForm reutilizable compartido entre LiveTurno y PatientDrawer
 - OrdenConsumo PENDIENTE→CONFIRMADA (dos-step, no descuento inmediato)
 
-### v1.8 Key Context
-- TipoTurno es tabla de datos (no enum Prisma) — nombres y propiedades en DB
-- flujoPaciente en TipoTurno: campo que auto-actualiza paciente.flujo al crear turno (guard PENDIENTE-only)
-- esCirugia en TipoTurno: determina PROCEDIMIENTO_REALIZADO en cerrarSesion
-- TratamientosTab filtra por tipoTurno.flujoPaciente === "TRATAMIENTO" (frontend-side)
-- getKanban filtra: flujo = CIRUGIA OR flujo = null (legacy)
-- cerrarSesion: esCirugia → PROCEDIMIENTO_REALIZADO; etapaCRM=TURNO_AGENDADO → CONSULTADO
-- Tipos actuales a migrar: "Consulta para cirugía" → "Consulta" (flujoPaciente: null); "Consulta para tratamiento" → "Tratamiento"; "Pre-operatorio" → "Pre-Quirúrgico"; "Consulta pendiente" → merge a "Consulta" + DELETE
-- tipoEntrada en HC: nuevo campo para clasificar la entrada (CONSULTA_CIRUGIA/TRATAMIENTO/CONTROL/etc.)
+### v1.8 Key Decisions (pre-execution)
+- TipoTurno son registros en DB (no enum Prisma) — la migración es SQL UPDATE/DELETE de registros + reasignación de FK de turnos
+- Secuencia de migración Phase 40: (1) crear "Consulta", (2) migrar turnos de "Consulta para cirugía" → "Consulta", (3) migrar turnos de "Consulta pendiente" → "Consulta", (4) eliminar "Consulta pendiente", (5) rename "Consulta para cirugía". Mantiene integridad referencial en todo momento
+- "Cirugía" (esCirugia=true) se preserva sin tocar — usado por agenda quirúrgica
+- tipoEntrada en HC: nuevo enum/campo en HistoriaClinicaEntrada (no en HistoriaClinica), valores: CONSULTA_CIRUGIA, TRATAMIENTO, CONTROL, SEGUIMIENTO, PREOPERATORIO
+- cerrarSesion Phase 41: la lógica PROCEDIMIENTO_REALIZADO para esCirugia=true es independiente del tipoEntrada y no cambia
+- cerrarSesion Phase 41: la transición TURNO_AGENDADO → CONSULTADO solo aplica cuando tipoEntrada = CONSULTA_CIRUGIA
+- TratamientosTab Phase 42: query dual via OR entre tipoTurno.nombre = "Tratamiento" y existencia de HC entry con tipoEntrada = TRATAMIENTO
+- crmArchivado Phase 43: Boolean default false en modelo Paciente; getKanban y getListaAccion agregan WHERE crmArchivado = false
+
+### v1.8 Technical Context
+- Tipos actuales en DB (pre-migración): "Consulta para cirugía", "Consulta para tratamiento en consultorio", "Pre-operatorio", "Control", "Consulta pendiente", "Cirugía"
+- Tipos objetivo (post-migración Phase 40): "Consulta", "Tratamiento", "Pre-Quirúrgico", "Control", "Cirugía" (interno, no seleccionable)
+- TratamientosTab actualmente filtra por tipoTurno.flujoPaciente === "TRATAMIENTO" (frontend-side) — Phase 42 amplía esta lógica
+- getKanban filtra: flujo = CIRUGIA OR flujo = null (legacy) — Phase 43 agrega AND crmArchivado = false
+- El seed.ts debe actualizarse en Phase 40 para reflejar los 4 tipos públicos + Cirugía
 
 ### Known Tech Debt (carry-forward)
 - LIVHC-05/PAC-01: tratamientos snapshot no se escribe cuando consumirInsumos=false

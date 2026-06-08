@@ -82,4 +82,4 @@
 
 ---
 *Requirements defined: 2026-06-08*
-*Last updated: 2026-06-08 after initial definition*
+*Last updated: 2026-06-08 — traceability confirmed against ROADMAP.md phases 40–43*

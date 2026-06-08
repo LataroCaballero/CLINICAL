@@ -121,7 +121,7 @@ Full details: `.planning/milestones/v1.7-ROADMAP.md`
 
 ### v1.8 Tipos de Turno y Flujo Clínico (Fases 40–43)
 
-- [ ] **Phase 40: Migración de Tipos de Turno** — Schema, datos y frontend del selector de 4 tipos
+- [x] **Phase 40: Migración de Tipos de Turno** — Schema, datos y frontend del selector de 4 tipos (completed 2026-06-08)
 - [ ] **Phase 41: Tipo de Entrada en Historia Clínica** — Campo tipoEntrada, selector en form y lógica cerrarSesion
 - [ ] **Phase 42: Estado Dual y TratamientosTab** — Query dual para planilla de tratamientos
 - [ ] **Phase 43: Archivar del Embudo CRM** — Campo crmArchivado, endpoint, filtros y UI
@@ -222,7 +222,7 @@ Plans:
 | 37. Sheet Redesign — Layout y Stepper UI | v1.7 | 2/2 | Complete | 2026-05-27 |
 | 38. Stepper Interactions + Contextual Actions | v1.7 | 2/2 | Complete | 2026-05-28 |
 | 39. CRM Tech Debt — Guard & Ordering Fixes | v1.7 | 2/2 | Complete | 2026-05-28 |
-| 40. Migración de Tipos de Turno | 1/2 | In Progress|  | - |
+| 40. Migración de Tipos de Turno | 2/2 | Complete   | 2026-06-08 | - |
 | 41. Tipo de Entrada en Historia Clínica | v1.8 | 0/? | Not started | - |
 | 42. Estado Dual y TratamientosTab | v1.8 | 0/? | Not started | - |
 | 43. Archivar del Embudo CRM | v1.8 | 0/? | Not started | - |

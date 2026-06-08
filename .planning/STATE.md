@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.8
 milestone_name: Tipos de Turno y Flujo Clínico
-status: in_progress
-last_updated: "2026-06-08T15:52:37.000Z"
-last_activity: 2026-06-08 — Completed 40-01-PLAN.md
+status: executing
+last_updated: "2026-06-08T15:58:00.213Z"
+last_activity: 2026-06-08 — Completed 40-02-PLAN.md (seed + CalendarGrid orange fix)
 progress:
   total_phases: 4
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 2
-  completed_plans: 1
-  percent: 25
+  completed_plans: 2
+  percent: 50
 ---
 
 # Project State
@@ -26,24 +26,25 @@ See: .planning/PROJECT.md (updated 2026-06-08)
 
 ```
 Milestone: v1.8 Tipos de Turno y Flujo Clínico
-Phase:     40 — Migración de Tipos de Turno
-Plan:      01 (completed)
-Status:    In progress — 40-01 done, awaiting more plans in phase 40
-Progress:  [██░░░░░░░░] 25% (1/2 plans in phase 40)
+Phase:     40 — Migración de Tipos de Turno (COMPLETE — 2/2 plans done)
+Plan:      02 (completed)
+Status:    Phase 40 complete — ready to plan Phase 41
+Progress:  [█████░░░░░] 50% (2/2 plans in phase 40 done; phases 41-43 not started)
 
-Last activity: 2026-06-08 — Completed 40-01-PLAN.md (migration SQL + service filter)
-Next: Execute remaining plans in phase 40 or /gsd:plan-phase 41
+Last activity: 2026-06-08 — Completed 40-02-PLAN.md (seed idempotente + orange fix en CalendarGrid)
+Next: /gsd:plan-phase 41 — Tipo de Entrada en Historia Clínica
 ```
 
 ## Decisions
 
 - Phase 40-01: Migration is data-only SQL (no DDL) — manual file created; `esCirugia: false` filter added at service layer (findAll), keeping Cirugía accessible internally via crearTurnoCirugia()
+- [Phase 40-migracion-tipos-turno]: Phase 40-02: Idempotent seed uses upsert per nombre; Pre-Quirúrgico orange branch in getEventStyle() inserted before consulta inicial in both dark/light blocks
 
 ## Phase Map
 
 | Phase | Name | Requirements | Status |
 |-------|------|--------------|--------|
-| 40 | Migración de Tipos de Turno | TIPO-01..06 | In progress (1/? plans done) |
+| 40 | Migración de Tipos de Turno | TIPO-01..06 | Complete (2/2 plans done) |
 | 41 | Tipo de Entrada en Historia Clínica | HC-01..04 | Not started |
 | 42 | Estado Dual y TratamientosTab | DUAL-01..03 | Not started |
 | 43 | Archivar del Embudo CRM | ARCH-01..04 | Not started |

@@ -1,0 +1,85 @@
+# Requirements: CLINICAL — v1.8 Tipos de Turno y Flujo Clínico
+
+**Defined:** 2026-06-08
+**Core Value:** Que un cirujano plástico cierre más cirugías — el sistema hace visible qué pacientes seguir, cuándo y cómo, de la manera más automatizada posible
+
+## v1.8 Requirements
+
+### Tipos de Turno
+
+- [ ] **TIPO-01**: El sistema expone exactamente 4 tipos de turno para el profesional al agendar: Consulta, Control, Pre-Quirúrgico, Tratamiento
+- [ ] **TIPO-02**: Los turnos existentes que referencian "Consulta para cirugía" o "Consulta pendiente" se migran al nuevo tipo "Consulta" sin pérdida de datos
+- [ ] **TIPO-03**: "Consulta para tratamiento en consultorio" se renombra a "Tratamiento" y mantiene `flujoPaciente = TRATAMIENTO`
+- [ ] **TIPO-04**: "Pre-operatorio" se renombra a "Pre-Quirúrgico" y mantiene `flujoPaciente = CIRUGIA`
+- [ ] **TIPO-05**: "Control" permanece sin cambios funcionales
+- [ ] **TIPO-06**: El tipo interno "Cirugía" (`esCirugia = true`) se preserva para la agenda quirúrgica — no es seleccionable en el turno normal
+
+### Historia Clínica — Tipo de Entrada
+
+- [ ] **HC-01**: La entrada de HC tiene un campo `tipoEntrada` con valores: `CONSULTA_CIRUGIA`, `TRATAMIENTO`, `CONTROL`, `SEGUIMIENTO`, `PREOPERATORIO`
+- [ ] **HC-02**: El form HCCreatorForm incluye un selector obligatorio "Tipo de consulta" al guardar una entrada
+- [ ] **HC-03**: Al cerrar sesión de un turno "Consulta" con HC tipo `CONSULTA_CIRUGIA`: si `paciente.flujo === PENDIENTE` → `flujo = CIRUGIA`; si `etapaCRM === TURNO_AGENDADO` → `etapaCRM = CONSULTADO`
+- [ ] **HC-04**: Al cerrar sesión de un turno "Consulta" con HC tipo `TRATAMIENTO`: si `paciente.flujo === PENDIENTE` → `flujo = TRATAMIENTO`; si `paciente.flujo === CIRUGIA` → sin cambio de flujo (dual-state preservado)
+
+### Estado Dual — Planilla de Tratamientos
+
+- [ ] **DUAL-01**: Un paciente con `flujo = CIRUGIA` que tiene un turno de tipo "Tratamiento" aparece tanto en el kanban CRM como en la planilla de tratamientos
+- [ ] **DUAL-02**: Un paciente con `flujo = CIRUGIA` cuya HC tiene una entrada de tipo `TRATAMIENTO` aparece en la planilla de tratamientos además del kanban CRM
+- [ ] **DUAL-03**: La planilla de tratamientos (TratamientosTab) muestra tanto (a) turnos de tipo "Tratamiento" como (b) turnos de tipo "Consulta" con HC vinculada de tipo `TRATAMIENTO`
+
+### Archivar del Embudo CRM
+
+- [ ] **ARCH-01**: Cada paciente tiene un campo `crmArchivado: Boolean` (default `false`)
+- [ ] **ARCH-02**: El endpoint `PATCH /pacientes/:id/crm-archivo` permite archivar/desarchivar
+- [ ] **ARCH-03**: `getKanban` y `getListaAccion` excluyen por defecto los pacientes con `crmArchivado = true`
+- [ ] **ARCH-04**: El sheet lateral del kanban tiene un botón "Archivar del embudo" que activa el toggle
+
+## v2 Requirements (deferred)
+
+### Tipos de Turno — Extensiones Futuras
+- **TIPO-F01**: El profesional puede crear tipos de turno personalizados desde Configuración
+- **TIPO-F02**: Color por tipo de turno en el calendario
+
+### CRM — Filtros Avanzados
+- **CRM-F01**: Vista de pacientes archivados con opción de desarchivar en lote
+- **CRM-F02**: Archivar automático después de N días sin actividad en etapa PERDIDO
+
+## Out of Scope
+
+| Feature | Reason |
+|---------|--------|
+| Eliminar el tipo "Cirugía" interno | Cirugías ya programadas en agenda quirúrgica lo requieren |
+| tipoEntrada retroactivo en entradas HC existentes | Backfill innecesario — entradas legacy sin tipoEntrada tratan como CONSULTA_CIRUGIA por defecto |
+| Contador de tratamientos por paciente en kanban | No solicitado, deferido |
+| Notificaciones al cambiar flujo por cerrarSesion | Scope incrementalmente — no parte del core request |
+
+## Traceability
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| TIPO-01 | Phase 40 | Pending |
+| TIPO-02 | Phase 40 | Pending |
+| TIPO-03 | Phase 40 | Pending |
+| TIPO-04 | Phase 40 | Pending |
+| TIPO-05 | Phase 40 | Pending |
+| TIPO-06 | Phase 40 | Pending |
+| HC-01 | Phase 41 | Pending |
+| HC-02 | Phase 41 | Pending |
+| HC-03 | Phase 41 | Pending |
+| HC-04 | Phase 41 | Pending |
+| DUAL-01 | Phase 42 | Pending |
+| DUAL-02 | Phase 42 | Pending |
+| DUAL-03 | Phase 42 | Pending |
+| ARCH-01 | Phase 43 | Pending |
+| ARCH-02 | Phase 43 | Pending |
+| ARCH-03 | Phase 43 | Pending |
+| ARCH-04 | Phase 43 | Pending |
+
+**Coverage:**
+- v1.8 requirements: 17 total
+- Mapped to phases: 17
+- Unmapped: 0 ✓
+
+---
+*Requirements defined: 2026-06-08*
+*Last updated: 2026-06-08 after initial definition*

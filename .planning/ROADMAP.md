@@ -138,7 +138,10 @@ Full details: `.planning/milestones/v1.7-ROADMAP.md`
   3. Los turnos de tipo "Tratamiento" mantienen `flujoPaciente = TRATAMIENTO` y los de "Pre-Quirúrgico" mantienen `flujoPaciente = CIRUGIA`
   4. El tipo interno "Cirugía" (`esCirugia = true`) sigue existiendo en la DB y la agenda quirúrgica funciona sin cambios
   5. El seed.ts refleja los 4 tipos públicos + Cirugía, con la migración reproducible en un entorno limpio
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 40-01-PLAN.md — Migración SQL de datos TipoTurno + filtro esCirugia en TiposTurnoService
+- [ ] 40-02-PLAN.md — Seed idempotente seed-tipos-turno.ts + corrección color Pre-Quirúrgico en CalendarGrid
 
 ### Phase 41: Tipo de Entrada en Historia Clínica
 **Goal**: Al cerrar una sesión de consulta, el profesional clasifica el tipo de consulta realizada, y el sistema actualiza el flujo del paciente y su etapa CRM de acuerdo a esa clasificación

@@ -11,7 +11,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandInput, CommandList, CommandEmpty, CommandItem } from '@/components/ui/command';
 import { Calendar } from '@/components/ui/calendar';
-import { useCreateHistoriaClinicaEntry, type TipoEntrada } from '@/hooks/useCreateHistoriaClinicaEntry';
+import { useCreateHistoriaClinicaEntry, type TipoEntrada, type TipoEntradaHCValue } from '@/hooks/useCreateHistoriaClinicaEntry';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useTratamientosProfesional } from '@/hooks/useTratamientosProfesional';
 import type { TratamientoConInsumos } from '@/types/tratamiento';
 import { PrimeraConsultaForm, type PrimeraConsultaFormState } from './PrimeraConsultaForm';
@@ -39,6 +40,23 @@ const TIPOS: { id: TipoBoton; label: string }[] = [
   { id: 'tratamiento_en_consultorio', label: 'Tratamiento en Consultorio' },
 ];
 
+const TIPO_ENTRADA_OPTIONS: { value: TipoEntradaHCValue; label: string }[] = [
+  { value: 'CONSULTA_CIRUGIA', label: 'Consulta para cirugía' },
+  { value: 'TRATAMIENTO',      label: 'Tratamiento' },
+  { value: 'CONTROL',          label: 'Control' },
+  { value: 'SEGUIMIENTO',      label: 'Seguimiento' },
+  { value: 'PREOPERATORIO',    label: 'Pre-operatorio' },
+];
+
+const PLANTILLA_TO_TIPO_ENTRADA: Record<string, TipoEntradaHCValue> = {
+  primera_vez: 'CONSULTA_CIRUGIA',
+  pre_quirurgico: 'PREOPERATORIO',
+  control: 'CONTROL',
+  tratamiento_en_consultorio: 'TRATAMIENTO',
+  libre: 'CONTROL',
+  practica: 'CONTROL',
+};
+
 export function HCCreatorForm({
   pacienteId,
   profesionalId,
@@ -49,6 +67,7 @@ export function HCCreatorForm({
   onSaved,
 }: HCCreatorFormProps) {
   const [tipoSeleccionado, setTipoSeleccionado] = useState<TipoBoton | null>(null);
+  const [tipoEntradaHC, setTipoEntradaHC] = useState<TipoEntradaHCValue | null>(null);
 
   // Estado para primera_vez
   const [pvState, setPvState] = useState<PrimeraConsultaFormState | null>(null);
@@ -88,6 +107,7 @@ export function HCCreatorForm({
 
   const canSave =
     tipoSeleccionado !== null &&
+    tipoEntradaHC !== null &&
     (tipoSeleccionado === 'primera_vez'
       ? pvState !== null && (pvState.diagnostico.zonas.length > 0 || pvState.tratamientos.length > 0)
       : tipoSeleccionado === 'tratamiento_en_consultorio'
@@ -103,6 +123,7 @@ export function HCCreatorForm({
         pacienteId,
         dto: {
           tipo: 'primera_vez',
+          tipoEntrada: tipoEntradaHC ?? undefined,
           diagnostico: pvState.diagnostico,
           tratamientos: pvState.tratamientos,
           comentario: pvState.comentario,
@@ -120,6 +141,7 @@ export function HCCreatorForm({
         pacienteId,
         dto: {
           tipo: 'tratamiento_en_consultorio',
+          tipoEntrada: tipoEntradaHC ?? undefined,
           tratamientoIds: tratamientosSeleccionados.map((t) => t.id),
           consumirInsumos: consumirInsumos && anyHasInsumos,
           texto: textoLibre || undefined,
@@ -137,6 +159,7 @@ export function HCCreatorForm({
         pacienteId,
         dto: {
           tipo: tipoSeleccionado,
+          tipoEntrada: tipoEntradaHC ?? undefined,
           texto: textoLibre,
           ...(selectedFecha ? { fecha: selectedFecha } : {}),
         },
@@ -149,6 +172,7 @@ export function HCCreatorForm({
     setTimeout(() => {
       setSaved(false);
       setTipoSeleccionado(null);
+      setTipoEntradaHC(null);
       setPvState(null);
       setTextoLibre('');
       setNotasLibresOpen(false);
@@ -200,6 +224,7 @@ export function HCCreatorForm({
             type="button"
             onClick={() => {
               setTipoSeleccionado(id);
+              setTipoEntradaHC(PLANTILLA_TO_TIPO_ENTRADA[id] ?? 'CONTROL');
               setSaved(false);
             }}
             className={cn(
@@ -213,6 +238,30 @@ export function HCCreatorForm({
           </button>
         ))}
       </div>
+
+      {/* Tipo de consulta selector — visible after a plantilla is chosen */}
+      {tipoSeleccionado !== null && (
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-medium text-gray-700">
+            Tipo de consulta <span className="text-red-500">*</span>
+          </label>
+          <Select
+            value={tipoEntradaHC ?? undefined}
+            onValueChange={(v) => setTipoEntradaHC(v as TipoEntradaHCValue)}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Seleccionar tipo de consulta..." />
+            </SelectTrigger>
+            <SelectContent>
+              {TIPO_ENTRADA_OPTIONS.map(({ value, label }) => (
+                <SelectItem key={value} value={value}>
+                  {label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
       {/* Form area */}
       {tipoSeleccionado === 'primera_vez' && (

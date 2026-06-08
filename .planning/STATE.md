@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v1.8
 milestone_name: Tipos de Turno y Flujo Clínico
-status: executing
-last_updated: "2026-06-08T15:58:00.213Z"
-last_activity: 2026-06-08 — Completed 40-02-PLAN.md (seed + CalendarGrid orange fix)
+status: planning
+last_updated: "2026-06-08T16:34:22.417Z"
+last_activity: 2026-06-08 — Completed 40-02-PLAN.md (seed idempotente + orange fix en CalendarGrid)
 progress:
   total_phases: 4
   completed_phases: 1

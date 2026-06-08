@@ -1,4 +1,4 @@
-import { resolverNuevoFlujo } from './historia-clinica.service';
+import { resolverNuevoFlujo } from './historia-clinica.flujo.helpers';
 
 describe('resolverNuevoFlujo', () => {
   // Test 1: CONSULTA_CIRUGIA + PENDIENTE → CIRUGIA

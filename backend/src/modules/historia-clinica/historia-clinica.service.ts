@@ -2,6 +2,10 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 import { CreateEntradaDto } from './dto/crear-entrada.dto';
+import { resolverNuevoFlujo } from './historia-clinica.flujo.helpers';
+
+// Re-export so existing imports from this file still work
+export { resolverNuevoFlujo };
 
 @Injectable()
 export class HistoriaClinicaService {
@@ -178,6 +182,14 @@ export class HistoriaClinicaService {
       }
     }
 
+    // Pre-fetch turno.esCirugia outside tx (pgBouncer pattern — same as other pre-fetches)
+    const turnoCtx = dto.turnoId
+      ? await this.prisma.turno.findUnique({
+          where: { id: dto.turnoId },
+          select: { esCirugia: true },
+        })
+      : null;
+
     // Una sola transacción: buscar/crear historia + crear entrada + actualizar paciente
     return this.prisma.$transaction(async (tx) => {
       let historia = await tx.historiaClinica.findFirst({ where: { pacienteId } });
@@ -191,16 +203,29 @@ export class HistoriaClinicaService {
         data: {
           historiaClinicaId: historia.id,
           contenido,
+          tipoEntrada: dto.tipoEntrada ?? undefined,
           ...(fechaFinal && { fecha: fechaFinal }),
         },
       });
 
-      if (diagnosticoStr !== null || tratamientoStr !== null) {
+      // Resolve flujo transition (tipoEntrada classification logic)
+      const pac = await tx.paciente.findUnique({
+        where: { id: pacienteId },
+        select: { flujo: true },
+      });
+      const nuevoFlujo = resolverNuevoFlujo(
+        dto.tipoEntrada,
+        pac?.flujo,
+        turnoCtx?.esCirugia ?? false,
+      );
+
+      if (diagnosticoStr !== null || tratamientoStr !== null || nuevoFlujo) {
         await tx.paciente.update({
           where: { id: pacienteId },
           data: {
             ...(diagnosticoStr !== null && { diagnostico: diagnosticoStr }),
             ...(tratamientoStr !== null && { tratamiento: tratamientoStr }),
+            ...(nuevoFlujo && { flujo: nuevoFlujo }),
           },
         });
       }

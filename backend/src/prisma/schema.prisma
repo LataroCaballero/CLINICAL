@@ -288,6 +288,7 @@ model HistoriaClinicaEntrada {
   status            EstadoEntradaHC @default(FINALIZED)
   answers           Json?
   computed          Json?
+  tipoEntrada       TipoEntradaHC?
 
   archivos        Archivo[]                       @relation("ArchivosEntradaHC")
   historiaClinica HistoriaClinica                 @relation(fields: [historiaClinicaId], references: [id])
@@ -1164,6 +1165,14 @@ enum FlujoPaciente {
   CIRUGIA
   TRATAMIENTO
   PENDIENTE
+}
+
+enum TipoEntradaHC {
+  CONSULTA_CIRUGIA
+  TRATAMIENTO
+  CONTROL
+  SEGUIMIENTO
+  PREOPERATORIO
 }
 
 enum TipoTareaSeguimiento {

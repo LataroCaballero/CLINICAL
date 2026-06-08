@@ -7,12 +7,12 @@
 
 ### Tipos de Turno
 
-- [ ] **TIPO-01**: El sistema expone exactamente 4 tipos de turno para el profesional al agendar: Consulta, Control, Pre-Quirúrgico, Tratamiento
-- [ ] **TIPO-02**: Los turnos existentes que referencian "Consulta para cirugía" o "Consulta pendiente" se migran al nuevo tipo "Consulta" sin pérdida de datos
-- [ ] **TIPO-03**: "Consulta para tratamiento en consultorio" se renombra a "Tratamiento" y mantiene `flujoPaciente = TRATAMIENTO`
-- [ ] **TIPO-04**: "Pre-operatorio" se renombra a "Pre-Quirúrgico" y mantiene `flujoPaciente = CIRUGIA`
-- [ ] **TIPO-05**: "Control" permanece sin cambios funcionales
-- [ ] **TIPO-06**: El tipo interno "Cirugía" (`esCirugia = true`) se preserva para la agenda quirúrgica — no es seleccionable en el turno normal
+- [x] **TIPO-01**: El sistema expone exactamente 4 tipos de turno para el profesional al agendar: Consulta, Control, Pre-Quirúrgico, Tratamiento
+- [x] **TIPO-02**: Los turnos existentes que referencian "Consulta para cirugía" o "Consulta pendiente" se migran al nuevo tipo "Consulta" sin pérdida de datos
+- [x] **TIPO-03**: "Consulta para tratamiento en consultorio" se renombra a "Tratamiento" y mantiene `flujoPaciente = TRATAMIENTO`
+- [x] **TIPO-04**: "Pre-operatorio" se renombra a "Pre-Quirúrgico" y mantiene `flujoPaciente = CIRUGIA`
+- [x] **TIPO-05**: "Control" permanece sin cambios funcionales
+- [x] **TIPO-06**: El tipo interno "Cirugía" (`esCirugia = true`) se preserva para la agenda quirúrgica — no es seleccionable en el turno normal
 
 ### Historia Clínica — Tipo de Entrada
 
@@ -57,12 +57,12 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| TIPO-01 | Phase 40 | Pending |
-| TIPO-02 | Phase 40 | Pending |
-| TIPO-03 | Phase 40 | Pending |
-| TIPO-04 | Phase 40 | Pending |
-| TIPO-05 | Phase 40 | Pending |
-| TIPO-06 | Phase 40 | Pending |
+| TIPO-01 | Phase 40 | Complete |
+| TIPO-02 | Phase 40 | Complete |
+| TIPO-03 | Phase 40 | Complete |
+| TIPO-04 | Phase 40 | Complete |
+| TIPO-05 | Phase 40 | Complete |
+| TIPO-06 | Phase 40 | Complete |
 | HC-01 | Phase 41 | Pending |
 | HC-02 | Phase 41 | Pending |
 | HC-03 | Phase 41 | Pending |

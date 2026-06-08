@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.8
 milestone_name: Tipos de Turno y Flujo Clínico
-status: roadmap_ready
-stopped_at: Phase 40 (not started)
-last_updated: "2026-06-08T00:00:00.000Z"
+status: in_progress
+last_updated: "2026-06-08T15:52:37.000Z"
+last_activity: 2026-06-08 — Completed 40-01-PLAN.md
 progress:
   total_phases: 4
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
-  percent: 0
+  total_plans: 2
+  completed_plans: 1
+  percent: 25
 ---
 
 # Project State
@@ -27,19 +27,23 @@ See: .planning/PROJECT.md (updated 2026-06-08)
 ```
 Milestone: v1.8 Tipos de Turno y Flujo Clínico
 Phase:     40 — Migración de Tipos de Turno
-Plan:      —
-Status:    Roadmap ready, awaiting plan-phase 40
-Progress:  [░░░░░░░░░░] 0% (0/4 phases)
+Plan:      01 (completed)
+Status:    In progress — 40-01 done, awaiting more plans in phase 40
+Progress:  [██░░░░░░░░] 25% (1/2 plans in phase 40)
 
-Last activity: 2026-06-08 — Roadmap v1.8 created
-Next: /gsd:plan-phase 40
+Last activity: 2026-06-08 — Completed 40-01-PLAN.md (migration SQL + service filter)
+Next: Execute remaining plans in phase 40 or /gsd:plan-phase 41
 ```
+
+## Decisions
+
+- Phase 40-01: Migration is data-only SQL (no DDL) — manual file created; `esCirugia: false` filter added at service layer (findAll), keeping Cirugía accessible internally via crearTurnoCirugia()
 
 ## Phase Map
 
 | Phase | Name | Requirements | Status |
 |-------|------|--------------|--------|
-| 40 | Migración de Tipos de Turno | TIPO-01..06 | Not started |
+| 40 | Migración de Tipos de Turno | TIPO-01..06 | In progress (1/? plans done) |
 | 41 | Tipo de Entrada en Historia Clínica | HC-01..04 | Not started |
 | 42 | Estado Dual y TratamientosTab | DUAL-01..03 | Not started |
 | 43 | Archivar del Embudo CRM | ARCH-01..04 | Not started |

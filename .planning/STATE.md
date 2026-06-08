@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.8
 milestone_name: Tipos de Turno y Flujo Clínico
-status: planning
-last_updated: "2026-06-08T17:59:43Z"
+status: completed
+last_updated: "2026-06-08T18:07:21.618Z"
 last_activity: 2026-06-08 — Completed 41-01-PLAN.md (TipoEntradaHC enum + tipoEntrada field + flujo transition logic)
 progress:
   total_phases: 4
-  completed_phases: 1
-  total_plans: 3
-  completed_plans: 3
+  completed_phases: 2
+  total_plans: 4
+  completed_plans: 4
   percent: 60
 ---
 
@@ -40,6 +40,7 @@ Next: Phase 41 Plan 02 — Frontend form field + UI integration for tipoEntrada
 - Phase 40-01: Migration is data-only SQL (no DDL) — manual file created; `esCirugia: false` filter added at service layer (findAll), keeping Cirugía accessible internally via crearTurnoCirugia()
 - [Phase 40-migracion-tipos-turno]: Phase 40-02: Idempotent seed uses upsert per nombre; Pre-Quirúrgico orange branch in getEventStyle() inserted before consulta inicial in both dark/light blocks
 - [Phase 41-tipo-entrada-hc]: 41-01: resolverNuevoFlujo extracted to historia-clinica.flujo.helpers.ts (no NestJS deps) — Jest config lacks moduleNameMapper for src/ aliases; pure helper file enables direct unit tests. tipoEntrada @IsOptional() in DTO; UI enforces selection. turno.esCirugia pre-fetched outside $transaction (pgBouncer pattern).
+- [Phase 41-tipo-entrada-hc]: 41-02: TipoEntradaHCValue = NonNullable<CreateEntradaDto['tipoEntrada']> alias avoids duplicating the union; canSave guard enforces selection in UI while DTO field stays optional
 
 ## Phase Map
 

@@ -92,6 +92,25 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 
 ### Active
 
+## Current Milestone: v1.8 Tipos de Turno y Flujo Clínico
+
+**Goal:** Simplificar los tipos de turno de 6 a 4, introducir clasificación del paciente al cerrar la HC (primera vez vs tratamiento), habilitar estado dual cirugía+tratamiento, y permitir archivar pacientes del embudo CRM.
+
+**Target features:**
+- 4 tipos de turno (Consulta, Control, Pre-Quirúrgico, Tratamiento) con migración limpia
+- Tipo de entrada en HC: CONSULTA_CIRUGIA / TRATAMIENTO / CONTROL / SEGUIMIENTO / PREOPERATORIO
+- Clasificación automática del flujo al cerrar sesión basada en tipoEntrada
+- Dual-state: paciente CIRUGIA puede aparecer también en planilla de tratamientos
+- Campo crmArchivado en Paciente con toggle endpoint y UI en kanban
+- TratamientosTab actualizada para mostrar tanto turnos de tipo Tratamiento como consultas con HC tipo Tratamiento
+
+- [ ] Simplificación de tipos de turno: 4 tipos con migración de datos
+- [ ] Tipo de entrada en HC con selector en el form
+- [ ] Clasificación de flujo al cerrar sesión basada en tipoEntrada HC
+- [ ] Estado dual: paciente con flujo CIRUGIA puede tener HC de tratamiento
+- [ ] TratamientosTab ampliada (Tratamiento turno + Consulta con HC Tratamiento)
+- [ ] Archivar paciente del embudo CRM (campo + endpoint + UI)
+
 - [ ] Automatizaciones de seguimiento: triggers basados en tiempo/etapa (ej. "30 días sin respuesta → mensaje automático")
 - [ ] Módulos financieros optimizados e interconectados con CRM
 - [ ] Página pública del paciente: historial, presupuestos, documentos
@@ -211,4 +230,4 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 27/27 requisitos completados en 21 días (2026-04-22 → 2026-05-13). 6 fases, 16 planes. Tech debt aceptado: snapshot de tratamientos sin consumirInsumos y rol FACTURADOR en ordenes-consumo. Ver `.planning/milestones/v1.5-ROADMAP.md` para detalles.
 
 ---
-*Last updated: 2026-06-07 after v1.7 milestone completion — CRM Flexible*
+*Last updated: 2026-06-08 after v1.8 milestone start — Tipos de Turno y Flujo Clínico*

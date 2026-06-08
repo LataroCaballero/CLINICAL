@@ -155,7 +155,7 @@ Plans:
   5. La lógica de PROCEDIMIENTO_REALIZADO para turnos con `esCirugia = true` se mantiene intacta e independiente del tipoEntrada
 **Plans**: 2 plans
 Plans:
-- [ ] 41-01-PLAN.md — Backend: enum TipoEntradaHC + campo tipoEntrada + lógica de transición de flujo en crearEntrada
+- [x] 41-01-PLAN.md — Backend: enum TipoEntradaHC + campo tipoEntrada + lógica de transición de flujo en crearEntrada
 - [ ] 41-02-PLAN.md — Frontend: selector "Tipo de consulta" en HCCreatorForm + payload tipoEntrada
 
 ### Phase 42: Estado Dual y TratamientosTab
@@ -226,7 +226,7 @@ Plans:
 | 38. Stepper Interactions + Contextual Actions | v1.7 | 2/2 | Complete | 2026-05-28 |
 | 39. CRM Tech Debt — Guard & Ordering Fixes | v1.7 | 2/2 | Complete | 2026-05-28 |
 | 40. Migración de Tipos de Turno | 2/2 | Complete    | 2026-06-08 | - |
-| 41. Tipo de Entrada en Historia Clínica | v1.8 | 0/2 | Not started | - |
+| 41. Tipo de Entrada en Historia Clínica | v1.8 | 1/2 | In progress | 2026-06-08 |
 | 42. Estado Dual y TratamientosTab | v1.8 | 0/? | Not started | - |
 | 43. Archivar del Embudo CRM | v1.8 | 0/? | Not started | - |
 

@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.8
 milestone_name: Tipos de Turno y Flujo Clínico
 status: planning
-last_updated: "2026-06-08T16:34:22.417Z"
-last_activity: 2026-06-08 — Completed 40-02-PLAN.md (seed idempotente + orange fix en CalendarGrid)
+last_updated: "2026-06-08T17:59:43Z"
+last_activity: 2026-06-08 — Completed 41-01-PLAN.md (TipoEntradaHC enum + tipoEntrada field + flujo transition logic)
 progress:
   total_phases: 4
   completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
-  percent: 50
+  total_plans: 3
+  completed_plans: 3
+  percent: 60
 ---
 
 # Project State
@@ -26,19 +26,20 @@ See: .planning/PROJECT.md (updated 2026-06-08)
 
 ```
 Milestone: v1.8 Tipos de Turno y Flujo Clínico
-Phase:     40 — Migración de Tipos de Turno (COMPLETE — 2/2 plans done)
-Plan:      02 (completed)
-Status:    Phase 40 complete — ready to plan Phase 41
-Progress:  [█████░░░░░] 50% (2/2 plans in phase 40 done; phases 41-43 not started)
+Phase:     41 — Tipo de Entrada en Historia Clínica (IN PROGRESS — 1/? plans done)
+Plan:      01 (completed)
+Status:    41-01 complete — backend enum/migration/flujo-logic done; frontend DTO form next (Plan 02)
+Progress:  [██████░░░░] 60% (3 plans done across phases 40-41)
 
-Last activity: 2026-06-08 — Completed 40-02-PLAN.md (seed idempotente + orange fix en CalendarGrid)
-Next: /gsd:plan-phase 41 — Tipo de Entrada en Historia Clínica
+Last activity: 2026-06-08 — Completed 41-01-PLAN.md (TipoEntradaHC enum + tipoEntrada field + flujo transition logic)
+Next: Phase 41 Plan 02 — Frontend form field + UI integration for tipoEntrada
 ```
 
 ## Decisions
 
 - Phase 40-01: Migration is data-only SQL (no DDL) — manual file created; `esCirugia: false` filter added at service layer (findAll), keeping Cirugía accessible internally via crearTurnoCirugia()
 - [Phase 40-migracion-tipos-turno]: Phase 40-02: Idempotent seed uses upsert per nombre; Pre-Quirúrgico orange branch in getEventStyle() inserted before consulta inicial in both dark/light blocks
+- [Phase 41-tipo-entrada-hc]: 41-01: resolverNuevoFlujo extracted to historia-clinica.flujo.helpers.ts (no NestJS deps) — Jest config lacks moduleNameMapper for src/ aliases; pure helper file enables direct unit tests. tipoEntrada @IsOptional() in DTO; UI enforces selection. turno.esCirugia pre-fetched outside $transaction (pgBouncer pattern).
 
 ## Phase Map
 

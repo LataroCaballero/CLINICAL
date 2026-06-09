@@ -181,7 +181,10 @@ Plans:
   2. El kanban CRM y la lista de acción excluyen automáticamente a todos los pacientes con `crmArchivado = true` sin requerir filtros manuales
   3. El endpoint `PATCH /pacientes/:id/crm-archivo` persiste el campo `crmArchivado` y permite tanto archivar como desarchivar (toggle)
   4. El paciente archivado sigue visible en la sección de pacientes general (no está eliminado) y puede ser desarchivado desde el sheet si se accede a él por búsqueda
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 43-01-PLAN.md — Backend: campo crmArchivado + migración + endpoint PATCH crm-archivo + filtros en getKanban/getListaAccion
+- [ ] 43-02-PLAN.md — Frontend: hook useUpdateCrmArchivo + botón "Archivar del embudo" en CardActionsSheet + checkpoint human-verify
 
 ## Progress
 
@@ -231,7 +234,7 @@ Plans:
 | 40. Migración de Tipos de Turno | 2/2 | Complete    | 2026-06-08 | - |
 | 41. Tipo de Entrada en Historia Clínica | 2/2 | Complete    | 2026-06-09 | 2026-06-08 |
 | 42. Estado Dual y TratamientosTab | 2/2 | Complete    | 2026-06-09 | - |
-| 43. Archivar del Embudo CRM | v1.8 | 0/? | Not started | - |
+| 43. Archivar del Embudo CRM | v1.8 | 0/2 | Not started | - |
 
 ---
 *Roadmap initialized: 2026-02-23 | v1.0 shipped: 2026-03-03 | v1.1 shipped: 2026-03-16 | v1.2 shipped: 2026-03-31 | v1.3 shipped: 2026-04-09 | v1.4 shipped: 2026-04-20 | v1.5 shipped: 2026-05-13 | v1.6 shipped: 2026-05-23 | v1.7 shipped: 2026-05-28 | v1.8 started: 2026-06-08*

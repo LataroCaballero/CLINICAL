@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useUIStore } from "@/lib/stores/useUIStore";
-import { useTurnosRango } from "@/hooks/useTurnosRangos";
+import { TurnoRango, useTurnosRango } from "@/hooks/useTurnosRangos";
 import PatientDrawer from "./PatientDrawer";
 
 const MESES = [
@@ -62,22 +62,33 @@ export function TratamientosTab({ profesionalId }: { profesionalId: string | nul
     hasta
   );
 
-  // Filter to TRATAMIENTO-type turnos only
+  // Fuente A: tipoTurno de flujo TRATAMIENTO (comportamiento actual)
+  // Fuente B: turno tipo "Consulta" con entrada HC tipoEntrada=TRATAMIENTO (Phase 42 dual)
+  const isFuenteB = (t: TurnoRango) =>
+    t.tipoTurno.nombre === "Consulta" && t.tipoEntradaHC === "TRATAMIENTO";
+
   const tratamientoTurnos = (turnosData ?? []).filter(
-    (t) => t.tipoTurno.flujoPaciente === "TRATAMIENTO"
+    (t) => t.tipoTurno.flujoPaciente === "TRATAMIENTO" || isFuenteB(t)
   );
 
-  // Derive unique tipos present in tratamientoTurnos for the dropdown
+  // Derive unique tipos present in tratamientoTurnos for the dropdown (source A only)
   const tiposEnMes = Array.from(
     new Map(
-      tratamientoTurnos.map((t) => [t.tipoTurno.id, t.tipoTurno])
+      tratamientoTurnos
+        .filter((t) => !isFuenteB(t))
+        .map((t) => [t.tipoTurno.id, t.tipoTurno])
     ).values()
   );
 
+  // Whether there are any fuente-B rows to show in the dropdown
+  const hasFuenteB = tratamientoTurnos.some(isFuenteB);
+
   // Apply tipo filter client-side
-  const visibleTurnos = filterTipoId
-    ? tratamientoTurnos.filter((t) => t.tipoTurno.id === filterTipoId)
-    : tratamientoTurnos;
+  const visibleTurnos = (() => {
+    if (!filterTipoId) return tratamientoTurnos;
+    if (filterTipoId === "CONSULTA_TRATAMIENTO") return tratamientoTurnos.filter(isFuenteB);
+    return tratamientoTurnos.filter((t) => t.tipoTurno.id === filterTipoId && !isFuenteB(t));
+  })();
 
   // Count by estado for header
   const countByEstado = tratamientoTurnos.reduce<Record<string, number>>(
@@ -139,7 +150,7 @@ export function TratamientosTab({ profesionalId }: { profesionalId: string | nul
         </Button>
 
         {/* Tipo filter dropdown */}
-        {!isLoading && tiposEnMes.length > 0 && (
+        {!isLoading && (tiposEnMes.length > 0 || hasFuenteB) && (
           <select
             value={filterTipoId ?? ""}
             onChange={(e) => setFilterTipoId(e.target.value || null)}
@@ -156,6 +167,9 @@ export function TratamientosTab({ profesionalId }: { profesionalId: string | nul
                 {tipo.nombre}
               </option>
             ))}
+            {hasFuenteB && (
+              <option value="CONSULTA_TRATAMIENTO">Consulta → Tratamiento</option>
+            )}
           </select>
         )}
       </div>
@@ -231,7 +245,7 @@ export function TratamientosTab({ profesionalId }: { profesionalId: string | nul
                     </button>
                   </td>
                   <td className={cn("py-2 px-3", fm ? "text-[var(--fc-text-secondary)]" : "text-gray-600")}>
-                    {turno.tipoTurno.nombre}
+                    {isFuenteB(turno) ? "Consulta → Tratamiento" : turno.tipoTurno.nombre}
                   </td>
                   <td className="py-2 px-3">
                     <span

@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.8
 milestone_name: Tipos de Turno y Flujo Clínico
-status: verifying
-last_updated: "2026-06-08T00:00:00.000Z"
-last_activity: 2026-06-08 — Completed 42-01-PLAN.md (TratamientosTab dual-source predicate + tipoEntradaHC exposure)
+status: completed
+last_updated: "2026-06-09T02:05:18.701Z"
+last_activity: 2026-06-09 — Completed 42-02-PLAN.md (human verification: DUAL-01/02/03 confirmed, Phase 42 complete)
 progress:
   total_phases: 4
-  completed_phases: 3
-  total_plans: 6
-  completed_plans: 6
-  percent: 97
+  completed_phases: 4
+  total_plans: 7
+  completed_plans: 7
+  percent: 100
 ---
 
 # Project State
@@ -26,12 +26,12 @@ See: .planning/PROJECT.md (updated 2026-06-08)
 
 ```
 Milestone: v1.8 Tipos de Turno y Flujo Clínico
-Phase:     42 — Estado Dual y TratamientosTab (COMPLETE — 1/1 plans done)
-Plan:      01 (completed)
-Status:    42-01 complete — dual-source TratamientosTab (fuente A OR fuente B) + tipoEntradaHC in API
-Progress:  [██████████] 97% (6 plans done across phases 40-42)
+Phase:     42 — Estado Dual y TratamientosTab (COMPLETE — 2/2 plans done)
+Plan:      02 (completed)
+Status:    42-02 complete — human verification passed (DUAL-01/02/03 confirmed end-to-end)
+Progress:  [██████████] 100% (7 plans done across phases 40-42)
 
-Last activity: 2026-06-08 — Completed 42-01-PLAN.md (TratamientosTab dual-source predicate + tipoEntradaHC exposure)
+Last activity: 2026-06-09 — Completed 42-02-PLAN.md (human verification: DUAL-01/02/03 confirmed, Phase 42 complete)
 Next: Phase 43 — Archivar del Embudo CRM
 ```
 
@@ -42,6 +42,7 @@ Next: Phase 43 — Archivar del Embudo CRM
 - [Phase 41-tipo-entrada-hc]: 41-01: resolverNuevoFlujo extracted to historia-clinica.flujo.helpers.ts (no NestJS deps) — Jest config lacks moduleNameMapper for src/ aliases; pure helper file enables direct unit tests. tipoEntrada @IsOptional() in DTO; UI enforces selection. turno.esCirugia pre-fetched outside $transaction (pgBouncer pattern).
 - [Phase 41-tipo-entrada-hc]: 41-02: TipoEntradaHCValue = NonNullable<CreateEntradaDto['tipoEntrada']> alias avoids duplicating the union; canSave guard enforces selection in UI while DTO field stays optional
 - [Phase 42-estado-dual-y-tratamientostab]: Phase 42 read-only: isFuenteB predicate (tipoTurno.nombre=Consulta + tipoEntradaHC=TRATAMIENTO) client-side; synthetic CONSULTA_TRATAMIENTO dropdown sentinel for fuente-B filter
+- [Phase 42]: DUAL-01/02/03 confirmed visually — Phase 42 closes with full end-to-end confidence in dual-state behavior
 
 ## Phase Map
 
@@ -49,7 +50,7 @@ Next: Phase 43 — Archivar del Embudo CRM
 |-------|------|--------------|--------|
 | 40 | Migración de Tipos de Turno | TIPO-01..06 | Complete (2/2 plans done) |
 | 41 | Tipo de Entrada en Historia Clínica | HC-01..04 | Complete (2/2 plans done) |
-| 42 | Estado Dual y TratamientosTab | DUAL-01..03 | Complete (1/1 plans done) |
+| 42 | Estado Dual y TratamientosTab | DUAL-01..03 | Complete (2/2 plans done) |
 | 43 | Archivar del Embudo CRM | ARCH-01..04 | Not started |
 
 ## Accumulated Context

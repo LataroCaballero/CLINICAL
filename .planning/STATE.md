@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.8
 milestone_name: Tipos de Turno y Flujo Clínico
 status: verifying
-last_updated: "2026-06-09T00:23:18.566Z"
-last_activity: 2026-06-08 — Completed 41-02-PLAN.md (Frontend 'Tipo de consulta' selector in HCCreatorForm + human-verify approved)
+last_updated: "2026-06-08T00:00:00.000Z"
+last_activity: 2026-06-08 — Completed 42-01-PLAN.md (TratamientosTab dual-source predicate + tipoEntradaHC exposure)
 progress:
   total_phases: 4
-  completed_phases: 2
-  total_plans: 4
-  completed_plans: 4
-  percent: 75
+  completed_phases: 3
+  total_plans: 6
+  completed_plans: 6
+  percent: 97
 ---
 
 # Project State
@@ -26,13 +26,13 @@ See: .planning/PROJECT.md (updated 2026-06-08)
 
 ```
 Milestone: v1.8 Tipos de Turno y Flujo Clínico
-Phase:     41 — Tipo de Entrada en Historia Clínica (IN PROGRESS — 2/2 plans done)
-Plan:      02 (completed)
-Status:    41-02 complete — frontend selector with auto-derivation + human-verify approved; Phase 42 (TratamientosTab) next
-Progress:  [████████░░] 75% (4 plans done across phases 40-41)
+Phase:     42 — Estado Dual y TratamientosTab (COMPLETE — 1/1 plans done)
+Plan:      01 (completed)
+Status:    42-01 complete — dual-source TratamientosTab (fuente A OR fuente B) + tipoEntradaHC in API
+Progress:  [██████████] 97% (6 plans done across phases 40-42)
 
-Last activity: 2026-06-08 — Completed 41-02-PLAN.md (Frontend 'Tipo de consulta' selector in HCCreatorForm + human-verify approved)
-Next: Phase 42 — Estado Dual y TratamientosTab
+Last activity: 2026-06-08 — Completed 42-01-PLAN.md (TratamientosTab dual-source predicate + tipoEntradaHC exposure)
+Next: Phase 43 — Archivar del Embudo CRM
 ```
 
 ## Decisions
@@ -41,6 +41,7 @@ Next: Phase 42 — Estado Dual y TratamientosTab
 - [Phase 40-migracion-tipos-turno]: Phase 40-02: Idempotent seed uses upsert per nombre; Pre-Quirúrgico orange branch in getEventStyle() inserted before consulta inicial in both dark/light blocks
 - [Phase 41-tipo-entrada-hc]: 41-01: resolverNuevoFlujo extracted to historia-clinica.flujo.helpers.ts (no NestJS deps) — Jest config lacks moduleNameMapper for src/ aliases; pure helper file enables direct unit tests. tipoEntrada @IsOptional() in DTO; UI enforces selection. turno.esCirugia pre-fetched outside $transaction (pgBouncer pattern).
 - [Phase 41-tipo-entrada-hc]: 41-02: TipoEntradaHCValue = NonNullable<CreateEntradaDto['tipoEntrada']> alias avoids duplicating the union; canSave guard enforces selection in UI while DTO field stays optional
+- [Phase 42-estado-dual-y-tratamientostab]: Phase 42 read-only: isFuenteB predicate (tipoTurno.nombre=Consulta + tipoEntradaHC=TRATAMIENTO) client-side; synthetic CONSULTA_TRATAMIENTO dropdown sentinel for fuente-B filter
 
 ## Phase Map
 
@@ -48,7 +49,7 @@ Next: Phase 42 — Estado Dual y TratamientosTab
 |-------|------|--------------|--------|
 | 40 | Migración de Tipos de Turno | TIPO-01..06 | Complete (2/2 plans done) |
 | 41 | Tipo de Entrada en Historia Clínica | HC-01..04 | Complete (2/2 plans done) |
-| 42 | Estado Dual y TratamientosTab | DUAL-01..03 | Not started |
+| 42 | Estado Dual y TratamientosTab | DUAL-01..03 | Complete (1/1 plans done) |
 | 43 | Archivar del Embudo CRM | ARCH-01..04 | Not started |
 
 ## Accumulated Context

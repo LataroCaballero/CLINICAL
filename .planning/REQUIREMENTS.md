@@ -23,9 +23,9 @@
 
 ### Estado Dual — Planilla de Tratamientos
 
-- [ ] **DUAL-01**: Un paciente con `flujo = CIRUGIA` que tiene un turno de tipo "Tratamiento" aparece tanto en el kanban CRM como en la planilla de tratamientos
-- [ ] **DUAL-02**: Un paciente con `flujo = CIRUGIA` cuya HC tiene una entrada de tipo `TRATAMIENTO` aparece en la planilla de tratamientos además del kanban CRM
-- [ ] **DUAL-03**: La planilla de tratamientos (TratamientosTab) muestra tanto (a) turnos de tipo "Tratamiento" como (b) turnos de tipo "Consulta" con HC vinculada de tipo `TRATAMIENTO`
+- [x] **DUAL-01**: Un paciente con `flujo = CIRUGIA` que tiene un turno de tipo "Tratamiento" aparece tanto en el kanban CRM como en la planilla de tratamientos
+- [x] **DUAL-02**: Un paciente con `flujo = CIRUGIA` cuya HC tiene una entrada de tipo `TRATAMIENTO` aparece en la planilla de tratamientos además del kanban CRM
+- [x] **DUAL-03**: La planilla de tratamientos (TratamientosTab) muestra tanto (a) turnos de tipo "Tratamiento" como (b) turnos de tipo "Consulta" con HC vinculada de tipo `TRATAMIENTO`
 
 ### Archivar del Embudo CRM
 
@@ -67,9 +67,9 @@
 | HC-02 | Phase 41 | Complete |
 | HC-03 | Phase 41 | Complete |
 | HC-04 | Phase 41 | Complete |
-| DUAL-01 | Phase 42 | Pending |
-| DUAL-02 | Phase 42 | Pending |
-| DUAL-03 | Phase 42 | Pending |
+| DUAL-01 | Phase 42 | Complete |
+| DUAL-02 | Phase 42 | Complete |
+| DUAL-03 | Phase 42 | Complete |
 | ARCH-01 | Phase 43 | Pending |
 | ARCH-02 | Phase 43 | Pending |
 | ARCH-03 | Phase 43 | Pending |

@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.8
 milestone_name: Tipos de Turno y Flujo Clínico
 status: verifying
-last_updated: "2026-06-09T00:19:26.015Z"
+last_updated: "2026-06-09T00:23:18.566Z"
 last_activity: 2026-06-08 — Completed 41-02-PLAN.md (Frontend 'Tipo de consulta' selector in HCCreatorForm + human-verify approved)
 progress:
   total_phases: 4

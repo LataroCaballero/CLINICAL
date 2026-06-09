@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.8
 milestone_name: Tipos de Turno y Flujo Clínico
-status: verifying
-last_updated: "2026-06-09T02:46:00.000Z"
-last_activity: "2026-06-09 — Completed 43-01-PLAN.md (ARCH-01/02/03: crmArchivado field, PATCH endpoint, kanban/lista-accion filters)"
+status: completed
+last_updated: "2026-06-09T02:47:04.537Z"
+last_activity: "2026-06-09 — Completed 43-02-PLAN.md (ARCH-04: useUpdateCrmArchivo hook + Archivar del embudo button in CardActionsSheet — human-verify approved)"
 progress:
   total_phases: 4
-  completed_phases: 3
-  total_plans: 7
-  completed_plans: 7
+  completed_phases: 4
+  total_plans: 8
+  completed_plans: 8
   percent: 100
 ---
 
@@ -25,14 +25,14 @@ See: .planning/PROJECT.md (updated 2026-06-08)
 ## Current Position
 
 ```
-Milestone: v1.8 Tipos de Turno y Flujo Clínico
-Phase:     43 — Archivar del Embudo CRM (1/1 plans done)
-Plan:      01 (completed)
-Status:    43-01 complete — crmArchivado field + PATCH endpoint + kanban/lista-accion filters (ARCH-01/02/03)
+Milestone: v1.8 Tipos de Turno y Flujo Clínico — COMPLETE
+Phase:     43 — Archivar del Embudo CRM (2/2 plans done)
+Plan:      02 (completed)
+Status:    43-02 complete — useUpdateCrmArchivo hook + Archivar del embudo button (ARCH-04). Milestone v1.8 CLOSED.
 Progress:  [██████████] 100% (8 plans done across phases 40-43)
 
-Last activity: 2026-06-09 — Completed 43-01-PLAN.md (ARCH-01/02/03: crmArchivado field, PATCH endpoint, kanban/lista-accion filters)
-Next: Phase 43 frontend plan (if planned) or milestone v1.8 complete
+Last activity: 2026-06-09 — Completed 43-02-PLAN.md (ARCH-04: archivar del embudo confirmed end-to-end)
+Next: Milestone v1.8 complete — all ARCH/TIPO/HC/DUAL requirements satisfied
 ```
 
 ## Decisions
@@ -43,6 +43,7 @@ Next: Phase 43 frontend plan (if planned) or milestone v1.8 complete
 - [Phase 41-tipo-entrada-hc]: 41-02: TipoEntradaHCValue = NonNullable<CreateEntradaDto['tipoEntrada']> alias avoids duplicating the union; canSave guard enforces selection in UI while DTO field stays optional
 - [Phase 42-estado-dual-y-tratamientostab]: Phase 42 read-only: isFuenteB predicate (tipoTurno.nombre=Consulta + tipoEntradaHC=TRATAMIENTO) client-side; synthetic CONSULTA_TRATAMIENTO dropdown sentinel for fuente-B filter
 - [Phase 42]: DUAL-01/02/03 confirmed visually — Phase 42 closes with full end-to-end confidence in dual-state behavior
+- [Phase 43-archivar-embudo-crm]: ARCH-04: Dialog-from-Sheet pattern for archivar confirmation; onSettled invalidation covers all profesionalId variants of crm-kanban
 
 ## Phase Map
 
@@ -51,7 +52,7 @@ Next: Phase 43 frontend plan (if planned) or milestone v1.8 complete
 | 40 | Migración de Tipos de Turno | TIPO-01..06 | Complete (2/2 plans done) |
 | 41 | Tipo de Entrada en Historia Clínica | HC-01..04 | Complete (2/2 plans done) |
 | 42 | Estado Dual y TratamientosTab | DUAL-01..03 | Complete (2/2 plans done) |
-| 43 | Archivar del Embudo CRM | ARCH-01..04 | In progress (1/1 backend done) |
+| 43 | Archivar del Embudo CRM | ARCH-01..04 | Complete (2/2 plans done) |
 
 ## Accumulated Context
 

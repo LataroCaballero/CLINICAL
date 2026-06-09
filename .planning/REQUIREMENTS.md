@@ -32,7 +32,7 @@
 - [x] **ARCH-01**: Cada paciente tiene un campo `crmArchivado: Boolean` (default `false`)
 - [x] **ARCH-02**: El endpoint `PATCH /pacientes/:id/crm-archivo` permite archivar/desarchivar
 - [x] **ARCH-03**: `getKanban` y `getListaAccion` excluyen por defecto los pacientes con `crmArchivado = true`
-- [ ] **ARCH-04**: El sheet lateral del kanban tiene un botón "Archivar del embudo" que activa el toggle
+- [x] **ARCH-04**: El sheet lateral del kanban tiene un botón "Archivar del embudo" que activa el toggle
 
 ## v2 Requirements (deferred)
 
@@ -73,7 +73,7 @@
 | ARCH-01 | Phase 43 | Complete |
 | ARCH-02 | Phase 43 | Complete |
 | ARCH-03 | Phase 43 | Complete |
-| ARCH-04 | Phase 43 | Pending |
+| ARCH-04 | Phase 43 | Complete |
 
 **Coverage:**
 - v1.8 requirements: 17 total

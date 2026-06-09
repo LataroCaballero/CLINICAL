@@ -204,6 +204,7 @@ model Paciente {
   enListaEspera              Boolean           @default(false)
   comentarioListaEspera      String?
   fechaListaEspera           DateTime?
+  crmArchivado               Boolean           @default(false)
   autorizaciones             AutorizacionObraSocial[]
   ordenesConsumo             OrdenConsumo[]
 

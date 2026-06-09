@@ -29,6 +29,8 @@ export interface AutorizacionEntradaDto {
 
 export interface CreateEntradaDto {
   tipo: TipoEntrada;
+  // Clasificación clínica (Phase 41) — distinto del `tipo` de plantilla
+  tipoEntrada?: 'CONSULTA_CIRUGIA' | 'TRATAMIENTO' | 'CONTROL' | 'SEGUIMIENTO' | 'PREOPERATORIO';
   // primera_vez
   diagnostico?: DiagnosticoDto;
   tratamientos?: TratamientoItemDto[];
@@ -45,6 +47,8 @@ export interface CreateEntradaDto {
   consumirInsumos?: boolean;   // Whether to create OrdenConsumo on save
   turnoId?: string;            // Present from LiveTurno, absent from PatientDrawer
 }
+
+export type TipoEntradaHCValue = NonNullable<CreateEntradaDto['tipoEntrada']>;
 
 export function useCreateHistoriaClinicaEntry() {
   const qc = useQueryClient();

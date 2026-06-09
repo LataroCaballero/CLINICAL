@@ -11,8 +11,8 @@ const STEPPER_CHAIN: EtapaCRM[] = [
   "TURNO_AGENDADO",
   "CONSULTADO",
   "PRESUPUESTO_ENVIADO",
-  "PROCEDIMIENTO_REALIZADO",
-  "CONFIRMADO",
+  "CONFIRMADO",               // index 5 — matches ETAPA_ORDEN backend
+  "PROCEDIMIENTO_REALIZADO",  // index 6 — matches ETAPA_ORDEN backend
 ];
 
 interface EtapaStepperProps {

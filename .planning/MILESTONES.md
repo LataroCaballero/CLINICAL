@@ -1,5 +1,34 @@
 # Milestones
 
+## v1.8 Tipos de Turno y Flujo Clínico (Shipped: 2026-06-09)
+
+**Phases completed:** 4 phases (40–43), 8 plans
+**Stats:** 2 días (2026-06-08 → 2026-06-09) | 46 archivos | +3,125 / -84 líneas | 36 commits
+**Requirements:** 17/17 v1.8 (TIPO-01..06, HC-01..04, DUAL-01..03, ARCH-01..04)
+
+**Key accomplishments:**
+1. Migración de datos TipoTurno a 4 tipos públicos claros (Consulta, Control, Pre-Quirúrgico, Tratamiento): SQL data-only sin DDL, configs de TipoTurnoProfesional transferidas vía INSERT ON CONFLICT, filtro `esCirugia=false` en `findAll()` que preserva el tipo interno Cirugía para la agenda quirúrgica; seed idempotente (`seed-tipos-turno.ts`) + branch de color naranja para Pre-Quirúrgico en CalendarGrid
+2. Tipo de Entrada en Historia Clínica: enum `TipoEntradaHC` (CONSULTA_CIRUGIA, TRATAMIENTO, CONTROL, SEGUIMIENTO, PREOPERATORIO) + campo `tipoEntrada` opcional; helper puro `resolverNuevoFlujo` con suite de 10 casos (extracción a `*.flujo.helpers.ts` para tests Jest sin deps NestJS); selector obligatorio "Tipo de consulta" en HCCreatorForm con mapeo PLANTILLA_TO_TIPO_ENTRADA editable
+3. Transición automática de flujo/etapa CRM al cerrar sesión (HC-03/HC-04): CONSULTA_CIRUGIA en paciente PENDIENTE → flujo CIRUGIA + etapa CONSULTADO; TRATAMIENTO en paciente PENDIENTE → flujo TRATAMIENTO; TRATAMIENTO en paciente CIRUGIA → dual-state preservado (sin cambio de flujo); pre-fetch de `turno.esCirugia` fuera de `$transaction` (patrón pgBouncer)
+4. Estado dual en TratamientosTab: `obtenerTurnosPorRango` expone `tipoEntradaHC` vía nested select (sin N+1); predicado dual fuente A (`flujoPaciente=TRATAMIENTO`) OR fuente B (Consulta + `tipoEntradaHC=TRATAMIENTO`) con columna "Consulta → Tratamiento" y filtro sintético CONSULTA_TRATAMIENTO; pacientes de cirugía con tratamientos visibles simultáneamente en kanban CRM y planilla — verificado end-to-end (DUAL-01/02/03)
+5. Archivar del embudo CRM: campo `crmArchivado` Boolean + migración; endpoint `PATCH /pacientes/:id/crm-archivo` toggle (patrón whatsapp-opt-in); `getKanban` y `getListaAccion` excluyen archivados automáticamente; hook `useUpdateCrmArchivo` + botón "Archivar del embudo" con Dialog de confirmación (patrón Dialog-from-Sheet) e invalidación `onSettled` por key prefix — verificado end-to-end (ARCH-04)
+
+---
+
+## v1.7 CRM Flexible (Shipped: 2026-05-28)
+
+**Phases completed:** 5 phases (35–39), 10 plans
+**Stats:** 6 días (2026-05-23 → 2026-05-28) | 53 archivos | +7,798 / -323 líneas | 57 commits
+
+**Key accomplishments:**
+1. Movimiento libre de etapas CRM: eliminada la validación CONFIRMADO+presupuesto en updateEtapaCRM; guard forward-only (`isAutoTransitionBlocked` + `ETAPA_ORDEN`) en 5 call sites de auto-transición — las decisiones manuales del profesional ya no son sobreescritas por eventos del sistema
+2. Warning infrastructure: `getEtapaWarning` en lib dedicada (`crm-warnings.ts`) + `KanbanPatient.flujo` field; drag-and-drop con toast amber no bloqueante para PRESUPUESTO_ENVIADO y CONFIRMADO; snap-back preservado vía `onSettled`
+3. Sheet rediseñado: 4 nuevos sub-componentes CRM (`CRMFlujoBadge`, `EtapaStepper` 6-pasos + PERDIDO separado, `ContactoRapidoModal` Dialog, `ListaEsperaDialog` dual-mode); `CardActionsSheet` refactorizado como stepper-centric; panel de acciones rápidas removido
+4. Stepper interactivo: 7 pasos clickeables con `handleStepClick`, optimistic display, `LossReasonModal` para PERDIDO, botones contextuales por etapa (ver presupuesto, registrar HC, marcar realizado)
+5. Tech debt cierre — TD-1: guard `etapasProtegidas` en `rechazar()` espeja `rechazarByToken()`; TD-2: `STEPPER_CHAIN` alineado con `ETAPA_ORDEN` backend (CONFIRMADO→PROCEDIMIENTO_REALIZADO); TD-3: `getKanban` ACEPTADO-first elimina falsos positivos CRM-03
+
+---
+
 ## v1.6 Agenda Operativa (Shipped: 2026-05-23)
 
 **Phases completed:** 3 phases (32–34), 6 plans

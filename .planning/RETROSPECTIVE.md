@@ -4,6 +4,85 @@
 
 ---
 
+## Milestone: v1.8 — Tipos de Turno y Flujo Clínico
+
+**Shipped:** 2026-06-09
+**Phases:** 4 (40–43) | **Plans:** 8 | **Timeline:** 2 days (2026-06-08 → 2026-06-09)
+
+### What Was Built
+- Migración data-only de TipoTurno a 4 tipos públicos (Consulta, Control, Pre-Quirúrgico, Tratamiento) con secuencia que mantiene integridad referencial; tipo interno Cirugía preservado vía filtro `esCirugia=false` en findAll; seed idempotente + color naranja Pre-Quirúrgico en CalendarGrid
+- Enum `TipoEntradaHC` + campo `tipoEntrada` en HistoriaClinicaEntrada; selector obligatorio "Tipo de consulta" en HCCreatorForm con mapeo PLANTILLA_TO_TIPO_ENTRADA editable; helper puro `resolverNuevoFlujo` con suite TDD de 10 casos
+- Clasificación automática de flujo/etapa CRM al cerrar sesión (HC-03/HC-04): CONSULTA_CIRUGIA→CIRUGIA+CONSULTADO, TRATAMIENTO→TRATAMIENTO, dual-state preservado para pacientes CIRUGIA
+- TratamientosTab dual-source: `tipoEntradaHC` vía nested select (sin N+1), predicado fuente A OR B, columna "Consulta → Tratamiento", filtro sintético CONSULTA_TRATAMIENTO
+- Archivar del embudo CRM: campo `crmArchivado` + endpoint PATCH toggle + filtros automáticos en getKanban/getListaAccion + botón con Dialog de confirmación (patrón Dialog-from-Sheet)
+
+### What Worked
+- **TDD en lógica de dominio compleja**: extraer `resolverNuevoFlujo` a un helper puro (`*.flujo.helpers.ts`) permitió 10 tests unitarios directos sin pelear con el moduleNameMapper de Jest — las transiciones HC-03/HC-04 quedaron cubiertas antes de tocar el service
+- **Reuso de patrones establecidos**: Dialog-from-Sheet y onSettled-invalidation (heredados de v1.7) se aplicaron en Phase 43 sin re-descubrirlos — el RETROSPECTIVE/PROJECT decision log paga dividendos
+- **Migración data-only sin DDL**: reconocer que el cambio era puro reordenamiento de datos (no schema) evitó la migración vacía que `prisma migrate dev` habría generado; SQL manual con INSERT ON CONFLICT preservó las configs de TipoTurnoProfesional
+- **Velocidad**: 8 planes en 2 días — el milestone más rápido por plan, apoyado en patrones maduros del CRM y la HC
+
+### What Was Inefficient
+- **MILESTONES.md accomplishments vacíos (recurrente, 3er milestone seguido)**: `gsd-tools milestone complete` sigue devolviendo `accomplishments: []` porque los SUMMARY.md no pueblan el campo `one_liner` en el frontmatter — edición manual obligatoria cada vez. Vale la pena estandarizar `one_liner:` en el template de SUMMARY o ajustar el extractor
+- **Progress table malformada en ROADMAP**: las filas de v1.8 quedaron con columnas desalineadas (falta columna Milestone) durante la ejecución — se corrigió al completar, pero indica que el update incremental de la tabla durante las fases no respetó el header
+
+### Patterns Established
+- **Pure-helper extraction para lógica con muchas ramas**: cuando una regla de negocio tiene >5 casos, extraerla a `*.helpers.ts` sin deps de framework habilita tests unitarios baratos
+- **Service-layer filtering para ocultar sin eliminar**: filtrar `esCirugia=false` (y `crmArchivado=false`) en el método de lectura, no en el controller ni borrando datos — mantiene el registro accesible internamente
+- **Migración por reordenamiento de registros**: para catálogos almacenados como filas (no enums), la migración es una secuencia ordenada de INSERT/UPDATE/DELETE que preserva FKs en cada paso
+
+### Key Lessons
+1. **Distinguir migración de datos vs migración de schema temprano**: ahorra generar migraciones vacías y clarifica que la herramienta correcta es SQL manual + `migrate deploy`
+2. **El dual-state se modela mejor con predicados de lectura que con cambios de estado**: en vez de mover al paciente entre flujos, exponer ambas fuentes en la query mantiene una sola fuente de verdad y evita inconsistencias
+3. **Los patrones documentados se reusan; los no documentados se re-descubren**: Phase 43 fue rápida porque Dialog-from-Sheet ya estaba en el decision log — reforzar la disciplina de registrar decisiones
+
+### Cost Observations
+- Model: balanced profile (sonnet/opus mix)
+- Sessions: 8 plan executions en 2 días | 36 commits | 46 archivos (+3,125/-84)
+- Notable: milestone sin audit previo (se procedió directo a completar con 17/17 requisitos verificados manualmente en Phases 42-02 y 43-02) — los human-verify checkpoints intra-fase sustituyeron al audit formal
+
+---
+
+## Milestone: v1.7 — CRM Flexible
+
+**Shipped:** 2026-05-28
+**Phases:** 5 (35–39) | **Plans:** 10 | **Timeline:** 6 days (2026-05-23 → 2026-05-28)
+
+### What Was Built
+- Guard forward-only (`isAutoTransitionBlocked` + `ETAPA_ORDEN`) en 5 call sites de auto-transición: las etapas avanzadas puestas a mano nunca son sobreescritas por eventos del sistema
+- `getEtapaWarning` en lib dedicada (`crm-warnings.ts`) + drag-and-drop con toast amber no bloqueante; snap-back preservado vía onSettled en caso de error de red
+- 4 nuevos sub-componentes CRM (`CRMFlujoBadge`, `EtapaStepper`, `ContactoRapidoModal`, `ListaEsperaDialog`); `CardActionsSheet` refactorizado en layout stepper-centric; panel de acciones rápidas removido
+- Stepper clickeable con `handleStepClick`, optimistic display, `LossReasonModal` para PERDIDO, botones contextuales por etapa (presupuesto nav, HC creation, marcar realizado)
+- Tech debt Phase 39: `rechazar()` con `etapasProtegidas` guard, `STEPPER_CHAIN` alineado con `ETAPA_ORDEN`, `getKanban` ACEPTADO-first
+
+### What Worked
+- **Audit-before-milestone como patrón establecido**: el audit v1.7 detectó 3 asimetrías (TD-1/2/3) que se cerraron con Phase 39 antes de completar el milestone — el sistema de auditoría previene gaps silenciosos
+- **`getEtapaWarning` en lib separada**: la decisión de no acoplarla al componente permitió que Phase 38 reutilizara la función directamente desde `EtapaStepper` sin tocar `KanbanBoard` — zero coupling pay-off
+- **Dialog-from-Sheet pattern**: resolver z-index/focus-trap con `DialogPortal` en `document.body` fue limpio y sin hacks; patrón reutilizable para cualquier modal dentro de un Sheet
+- **Optimistic display pattern**: `displayEtapa = optimisticEtapa ?? etapaActual` — guardia de clickability en estado real, display en estado optimista — separación clara sin estado inconsistente
+
+### What Was Inefficient
+- **MILESTONES.md accomplishments vacíos (recurrente)**: el CLI `gsd-tools` no puede extraer `one_liner` porque los SUMMARY.md no tienen el campo poblado — siempre requiere edición manual post-archivado
+- **Phase 37 requirió audit-level research post-hoc**: la discrepancia STEPPER_CHAIN vs ETAPA_ORDEN no fue detectada durante la implementación de Phase 37/38 — solo emergió en el audit. Un quick-check de alineación backend↔frontend debería ser parte del plan de cada fase CRM
+
+### Patterns Established
+- `Dialog-from-Sheet`: usar shadcn `Dialog` (no `Sheet` anidado) para modales dentro de un Sheet — `DialogPortal` en `document.body`, sin z-index/focus-trap issues
+- `ETAPA_ORDEN` por módulo (no shared): duplicar en cada archivo de servicio evita acoplamiento cross-module; si se centraliza, common/crm-helpers.ts
+- `etapasProtegidas` pattern: cualquier staff action que pueda regresar CRM stage a PERDIDO debe llevar lista explícita de etapas protegidas
+- `find(ACEPTADO) ?? arr[0]` en queries multi-presupuesto: previene false positives cuando hay presupuestos más nuevos en estado BORRADOR
+
+### Key Lessons
+1. **El audit descubre lo que la implementación asume**: Phase 39 cierra 3 bugs silenciosos que habían pasado code review — el audit es indispensable, no opcional
+2. **Libs puras > componentes acoplados para lógica cross-phase**: `getEtapaWarning` en `crm-warnings.ts` fue correcta desde el día 1; vale la pena plantear esto en el plan antes de implementar
+3. **El stepper visual ≠ stepper backend**: `ETAPA_ORDEN` en backend excluye `PROCEDIMIENTO_REALIZADO` del kanban pero el stepper debe mostrarlo — la divergencia es intencional, hay que documentarla en el plan para evitar confusión futura
+
+### Cost Observations
+- Model: claude-sonnet-4-6 (balanced profile)
+- Sessions: 10 plan executions (~5 dias)
+- Notable: Phase 35 completada en 11 min (2 planes); Phase 36 demoró 26h por human-verify checkpoint de UX en browser — la verificación manual es el bottleneck real, no la implementación
+
+---
+
 ## Milestone: v1.6 — Agenda Operativa
 
 **Shipped:** 2026-05-23
@@ -221,6 +300,8 @@
 | v1.4 Flujo de Pacientes | 4 | 10 | 5 días | ~variable | Mejor ratio plans/days — objetivo acotado y schema sólido |
 | v1.5 Catálogos Clínicos | 6 | 16 | 21 días | ~variable | Milestone más amplio; component extraction (HCCreatorForm) como patrón clave |
 | v1.6 Agenda Operativa | 3 | 6 | 2 días | ~variable | Milestone más corto — scope UI-focused sin schema compleja, patrones reutilizados |
+| v1.7 CRM Flexible | 5 | 10 | 6 días | ~variable | Audit detectó 3 asimetrías cerradas en Phase 39; human-verify de UX como bottleneck |
+| v1.8 Tipos de Turno y Flujo Clínico | 4 | 8 | 2 días | ~variable | Milestone más rápido por plan — patrones CRM/HC maduros + migración data-only |
 
 ### Cumulative Quality
 
@@ -233,12 +314,15 @@
 | v1.4 | ~minimal | <10% | ninguna |
 | v1.5 | ~minimal | <10% | ninguna |
 | v1.6 | ~minimal | <10% | ninguna |
+| v1.7 | ~minimal | <10% | ninguna |
+| v1.8 | 10 TDD tests (resolverNuevoFlujo) | <10% | ninguna |
 
 ### Recurring Process Debt
 
-| Issue | v1.1 | v1.2 | v1.4 | v1.5 | v1.6 | Fix |
-|-------|------|------|------|------|------|-----|
-| MILESTONES.md accomplishments vacíos | ✗ | ✗ | ✗ | ✗ | ✗ | Actualizar formato SUMMARY.md con `one_liner:` field |
-| STATE.md progress desactualizado durante ejecución | ✗ | parcial | parcial | parcial | parcial | GSD executor actualiza STATE al final de cada plan |
-| Integration bugs detectados tarde (audit, no verify) | — | ✗ | ✓ | ✓ | sin audit | Audit antes de complete-milestone elimina retrabajo |
-| Audit saltado antes de archivar | — | — | — | — | ✗ | Correr /gsd:audit-milestone antes de /gsd:complete-milestone |
+| Issue | v1.1 | v1.2 | v1.4 | v1.5 | v1.6 | v1.7 | v1.8 | Fix |
+|-------|------|------|------|------|------|------|------|-----|
+| MILESTONES.md accomplishments vacíos | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | Actualizar formato SUMMARY.md con `one_liner:` field |
+| STATE.md progress desactualizado durante ejecución | ✗ | parcial | parcial | parcial | parcial | parcial | parcial | GSD executor actualiza STATE al final de cada plan |
+| Integration bugs detectados tarde (audit, no verify) | — | ✗ | ✓ | ✓ | sin audit | ✓ | sin audit | Audit antes de complete-milestone elimina retrabajo |
+| Audit saltado antes de archivar | — | — | — | — | ✗ | ✓ | ✗ | Correr /gsd:audit-milestone antes de /gsd:complete-milestone |
+| Progress table ROADMAP desalineada durante ejecución | — | — | — | — | — | — | ✗ | Executor debe respetar header de columnas al agregar filas |

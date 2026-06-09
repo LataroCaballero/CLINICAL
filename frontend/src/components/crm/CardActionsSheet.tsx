@@ -8,10 +8,18 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Phone, Clock } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Phone, Clock, Archive } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { EtapaCRM, KanbanPatient, MotivoPerdidaCRM } from "@/hooks/useCRMKanban";
 import { useUpdateEtapaCRM } from "@/hooks/useUpdateEtapaCRM";
+import { useUpdateCrmArchivo } from "@/hooks/useUpdateCrmArchivo";
 import { useEffectiveProfessionalId } from "@/hooks/useEffectiveProfessionalId";
 import { getEtapaWarning } from "@/lib/crm-warnings";
 import { toast } from "sonner";
@@ -42,8 +50,10 @@ export function CardActionsSheet({
   const [optimisticEtapa, setOptimisticEtapa] = useState<EtapaCRM | null>(null);
   const [lossReasonOpen, setLossReasonOpen] = useState(false);
   const [hcOpen, setHcOpen] = useState(false);
+  const [archivarOpen, setArchivarOpen] = useState(false);
 
   const { mutate: updateEtapa } = useUpdateEtapaCRM();
+  const { mutate: archivar, isPending: archivando } = useUpdateCrmArchivo();
   const profesionalId = useEffectiveProfessionalId();
 
   if (!patient) return null;
@@ -149,6 +159,14 @@ export function CardActionsSheet({
           >
             Ver perfil completo
           </button>
+          <button
+            type="button"
+            className="text-xs text-muted-foreground hover:text-destructive transition-colors flex items-center justify-center gap-1.5 w-full"
+            onClick={() => setArchivarOpen(true)}
+          >
+            <Archive className="h-3.5 w-3.5" />
+            Archivar del embudo
+          </button>
         </div>
 
         {/* DIALOGS — Radix DialogPortal mounts in document.body, no z-index conflict with Sheet */}
@@ -173,6 +191,49 @@ export function CardActionsSheet({
           pacienteId={patient.id}
           profesionalId={profesionalId ?? ""}
         />
+
+        {/* Dialog de confirmación para archivar del embudo */}
+        <Dialog open={archivarOpen} onOpenChange={setArchivarOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>¿Archivar del embudo?</DialogTitle>
+            </DialogHeader>
+            <p className="text-sm text-muted-foreground">
+              El paciente desaparecerá del kanban y de la lista de acción diaria,
+              pero <strong>no será eliminado del sistema</strong>. Seguirá accesible
+              por búsqueda en la sección de Pacientes.
+            </p>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setArchivarOpen(false)}
+                disabled={archivando}
+              >
+                Cancelar
+              </Button>
+              <Button
+                variant="destructive"
+                disabled={archivando}
+                onClick={() => {
+                  archivar(
+                    { pacienteId: patient!.id, archivado: true },
+                    {
+                      onSuccess: () => {
+                        toast.success("Paciente archivado del embudo");
+                        setArchivarOpen(false);
+                        onOpenChange(false);
+                      },
+                      onError: () =>
+                        toast.error("No se pudo archivar. Intentá de nuevo."),
+                    }
+                  );
+                }}
+              >
+                {archivando ? "Archivando..." : "Archivar"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </SheetContent>
     </Sheet>
   );

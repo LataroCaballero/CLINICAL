@@ -9,7 +9,8 @@
 - ✅ **v1.4 Flujo de Pacientes** — Fases 22–25 (shipped 2026-04-20)
 - ✅ **v1.5 Catálogos Clínicos y Flujos de Atención** — Fases 26–31 (shipped 2026-05-13)
 - ✅ **v1.6 Agenda Operativa** — Fases 32–34 (shipped 2026-05-23)
-- 🔄 **v1.7 CRM Flexible** — Fases 35–38 (en progreso)
+- ✅ **v1.7 CRM Flexible** — Fases 35–39 (shipped 2026-05-28)
+- ✅ **v1.8 Tipos de Turno y Flujo Clínico** — Fases 40–43 (shipped 2026-06-09)
 
 ## Phases
 
@@ -105,72 +106,30 @@ Full details: `.planning/milestones/v1.6-ROADMAP.md`
 
 </details>
 
-### v1.7 CRM Flexible (Fases 35–38)
+<details>
+<summary>✅ v1.7 CRM Flexible (Fases 35–39) — SHIPPED 2026-05-28</summary>
 
-- [x] **Phase 35: Backend Foundation** — Eliminar guard CONFIRMADO, agregar guards forward-only para auto-transiciones, fix idempotencia, campo flujo en query kanban (completed 2026-05-24)
-- [x] **Phase 36: Drag-and-Drop + Warning Infrastructure** — Helper de warnings, integración en KanbanBoard, fix ghost-card onError, campo flujo wired al tipo frontend (completed 2026-05-25)
-- [x] **Phase 37: Sheet Redesign — Layout y Stepper UI** — Header compacto con FlujoBadge, ContactoRapidoModal, toggle lista de espera compacto, EtapaStepper estático, eliminar panel de acciones rápidas (completed 2026-05-27)
-- [x] **Phase 38: Stepper Interactions + Contextual Actions** — Stepper clickeable con useUpdateEtapaCRM, PERDIDO abre LossReasonModal, botones de acción contextual por etapa (completed 2026-05-28)
+- [x] Phase 35: Backend Foundation (2/2 planes) — completado 2026-05-24
+- [x] Phase 36: Drag-and-Drop + Warning Infrastructure (2/2 planes) — completado 2026-05-25
+- [x] Phase 37: Sheet Redesign — Layout y Stepper UI (2/2 planes) — completado 2026-05-27
+- [x] Phase 38: Stepper Interactions + Contextual Actions (2/2 planes) — completado 2026-05-28
+- [x] Phase 39: CRM Tech Debt — Guard & Ordering Fixes (2/2 planes) — completado 2026-05-28
 
-## Phase Details
+Full details: `.planning/milestones/v1.7-ROADMAP.md`
 
-### Phase 35: Backend Foundation
-**Goal**: El backend permite mover pacientes a cualquier etapa manualmente sin restricciones, y las auto-transiciones del sistema respetan etapas más avanzadas
-**Depends on**: Phase 34 (v1.6 completo)
-**Requirements**: CRM-01 (parte backend), CRM-04
-**Success Criteria** (what must be TRUE):
-  1. Un PATCH manual a cualquier etapa desde el kanban es aceptado por el backend sin validación de negocio que lo bloquee
-  2. Al enviar un presupuesto, la auto-transición a PRESUPUESTO_ENVIADO no sobreescribe si el paciente ya está en CONFIRMADO o PROCEDIMIENTO_REALIZADO
-  3. Al aceptar un presupuesto, la auto-transición a CONFIRMADO no sobreescribe si el paciente ya está en PROCEDIMIENTO_REALIZADO
-  4. El endpoint GET /kanban incluye el campo flujo (CIRUGIA/TRATAMIENTO/PENDIENTE) en cada paciente de la respuesta
-**Plans**: 2 plans
-Plans:
-- [ ] 35-01-PLAN.md — Remove CONFIRMADO guard in updateEtapaCRM + add flujo field to getKanban
-- [ ] 35-02-PLAN.md — Forward-only guard in presupuestos (4 methods) and turnos auto-transitions
+</details>
 
-### Phase 36: Drag-and-Drop + Warning Infrastructure
-**Goal**: El usuario puede arrastrar y soltar un paciente a cualquier columna del kanban; si faltan prerequisitos, aparece un toast de advertencia no bloqueante
-**Depends on**: Phase 35
-**Requirements**: CRM-01 (parte frontend), CRM-02, CRM-03
-**Success Criteria** (what must be TRUE):
-  1. El usuario puede arrastrar un paciente desde cualquier columna kanban a cualquier otra columna y el movimiento se persiste
-  2. Al soltar en PRESUPUESTO_ENVIADO cuando el paciente no tiene presupuesto, aparece un toast con el texto "No hay presupuesto enviado a este paciente" y el movimiento se realiza igual
-  3. Al soltar en CONFIRMADO cuando el paciente no tiene presupuesto aceptado, aparece un toast con el texto "Ningún presupuesto fue aceptado — verificá antes de confirmar" y el movimiento se realiza igual
-  4. Si el drag falla (error de red), la tarjeta vuelve a su columna original sin quedar en estado fantasma
-**Plans**: 2 plans
-Plans:
-- [ ] 36-01-PLAN.md — Warning utility (getEtapaWarning) + flujo field in KanbanPatient type
-- [ ] 36-02-PLAN.md — Integrate warning logic in KanbanBoard handleDragEnd + update error text
+<details>
+<summary>✅ v1.8 Tipos de Turno y Flujo Clínico (Fases 40–43) — SHIPPED 2026-06-09</summary>
 
-### Phase 37: Sheet Redesign — Layout y Stepper UI
-**Goal**: El sheet lateral del kanban muestra información del paciente de forma compacta y presenta el stepper de etapas CRM como elemento visual principal
-**Depends on**: Phase 35
-**Requirements**: SHEET-01, SHEET-02, SHEET-03, SHEET-04, SHEET-09
-**Success Criteria** (what must be TRUE):
-  1. El header del sheet muestra el nombre del paciente y un FlujoBadge (CIRUGIA/TRATAMIENTO/PENDIENTE) visible sin hacer scroll
-  2. El botón "Registrar contacto" es un elemento compacto que abre un Dialog (no un Sheet anidado) con el formulario de contacto
-  3. El botón de lista de espera es compacto y alterna el opt-in del paciente con un solo click, mostrando el estado actual
-  4. El stepper muestra las 6 etapas CRM en orden, con la etapa actual claramente destacada visualmente
-  5. El panel de acciones rápidas anterior ya no aparece en el sheet
-**Plans**: 2 plans
-Plans:
-- [ ] 37-01-PLAN.md — New CRM sub-components: CRMFlujoBadge, EtapaStepper, ContactoRapidoModal, ListaEsperaDialog
-- [ ] 37-02-PLAN.md — Refactor CardActionsSheet to stepper-centric layout + clean up KanbanBoard
+- [x] Phase 40: Migración de Tipos de Turno (2/2 planes) — completado 2026-06-08
+- [x] Phase 41: Tipo de Entrada en Historia Clínica (2/2 planes) — completado 2026-06-08
+- [x] Phase 42: Estado Dual y TratamientosTab (2/2 planes) — completado 2026-06-09
+- [x] Phase 43: Archivar del Embudo CRM (2/2 planes) — completado 2026-06-09
 
-### Phase 38: Stepper Interactions + Contextual Actions
-**Goal**: El stepper es interactivo: cada etapa es clickeable y mueve al paciente, con acciones contextuales específicas por etapa que aceleran el flujo de trabajo de la secretaria
-**Depends on**: Phase 36, Phase 37
-**Requirements**: CRM-05, SHEET-05, SHEET-06, SHEET-07, SHEET-08
-**Success Criteria** (what must be TRUE):
-  1. Hacer click en cualquier etapa del stepper mueve al paciente a esa etapa, con los mismos warnings que el drag-and-drop (PRESUPUESTO_ENVIADO y CONFIRMADO)
-  2. Hacer click en PERDIDO en el stepper abre el LossReasonModal para registrar el motivo de pérdida antes de aplicar el movimiento
-  3. En la etapa PRESUPUESTO_ENVIADO del stepper aparece el botón "Ver/Crear presupuesto" que navega al presupuesto del paciente
-  4. En la etapa CONSULTADO del stepper aparece el botón "Registrar HC" que abre el HCCreatorForm del paciente
-  5. En la etapa PROCEDIMIENTO_REALIZADO del stepper aparece el botón "Marcar como realizado" que aplica la transición de etapa como las demás
-**Plans**: 2 plans
-Plans:
-- [ ] 35-01-PLAN.md — Remove CONFIRMADO guard in updateEtapaCRM + add flujo field to getKanban
-- [ ] 35-02-PLAN.md — Forward-only guard in presupuestos (4 methods) and turnos auto-transitions
+Full details: `.planning/milestones/v1.8-ROADMAP.md`
+
+</details>
 
 ## Progress
 
@@ -212,10 +171,15 @@ Plans:
 | 32. Schema + Backend Estados Extendidos | v1.6 | 2/2 | Complete | 2026-05-13 |
 | 33. Widget Agenda Operativo | v1.6 | 2/2 | Complete | 2026-05-13 |
 | 34. LiveTurno Simplificado | v1.6 | 2/2 | Complete | 2026-05-14 |
-| 35. Backend Foundation | 2/2 | Complete    | 2026-05-24 | - |
-| 36. Drag-and-Drop + Warning Infrastructure | 2/2 | Complete    | 2026-05-25 | - |
-| 37. Sheet Redesign — Layout y Stepper UI | 2/2 | Complete    | 2026-05-27 | - |
-| 38. Stepper Interactions + Contextual Actions | 2/2 | Complete    | 2026-05-28 | - |
+| 35. Backend Foundation | v1.7 | 2/2 | Complete | 2026-05-24 |
+| 36. Drag-and-Drop + Warning Infrastructure | v1.7 | 2/2 | Complete | 2026-05-25 |
+| 37. Sheet Redesign — Layout y Stepper UI | v1.7 | 2/2 | Complete | 2026-05-27 |
+| 38. Stepper Interactions + Contextual Actions | v1.7 | 2/2 | Complete | 2026-05-28 |
+| 39. CRM Tech Debt — Guard & Ordering Fixes | v1.7 | 2/2 | Complete | 2026-05-28 |
+| 40. Migración de Tipos de Turno | v1.8 | 2/2 | Complete | 2026-06-08 |
+| 41. Tipo de Entrada en Historia Clínica | v1.8 | 2/2 | Complete | 2026-06-08 |
+| 42. Estado Dual y TratamientosTab | v1.8 | 2/2 | Complete | 2026-06-09 |
+| 43. Archivar del Embudo CRM | v1.8 | 2/2 | Complete | 2026-06-09 |
 
 ---
-*Roadmap initialized: 2026-02-23 | v1.0 shipped: 2026-03-03 | v1.1 shipped: 2026-03-16 | v1.2 shipped: 2026-03-31 | v1.3 shipped: 2026-04-09 | v1.4 shipped: 2026-04-20 | v1.5 shipped: 2026-05-13 | v1.6 shipped: 2026-05-23 | v1.7 started: 2026-05-23*
+*Roadmap initialized: 2026-02-23 | v1.0 shipped: 2026-03-03 | v1.1 shipped: 2026-03-16 | v1.2 shipped: 2026-03-31 | v1.3 shipped: 2026-04-09 | v1.4 shipped: 2026-04-20 | v1.5 shipped: 2026-05-13 | v1.6 shipped: 2026-05-23 | v1.7 shipped: 2026-05-28 | v1.8 shipped: 2026-06-09*

@@ -4,6 +4,7 @@ import {
   IsArray,
   IsBoolean,
   IsString,
+  IsEnum,
 } from 'class-validator';
 
 export class DiagnosticoDto {
@@ -66,4 +67,8 @@ export class CreateEntradaDto {
   @IsOptional()
   @IsString()
   turnoId?: string; // Present when called from LiveTurno, null from PatientDrawer
+
+  @IsOptional()
+  @IsEnum(['CONSULTA_CIRUGIA', 'TRATAMIENTO', 'CONTROL', 'SEGUIMIENTO', 'PREOPERATORIO'])
+  tipoEntrada?: 'CONSULTA_CIRUGIA' | 'TRATAMIENTO' | 'CONTROL' | 'SEGUIMIENTO' | 'PREOPERATORIO';
 }

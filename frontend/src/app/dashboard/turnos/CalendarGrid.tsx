@@ -99,6 +99,8 @@ function getEventStyle(
 
   if (fm) {
     // Dark theme — saturated variants
+    if (tipo.includes("pre-quir") || tipo.includes("pre-"))
+      return { bg: "#431407", border: "#fb923c", text: "#fed7aa" }; // orange dark
     if (tipo.includes("consulta inicial"))
       return { bg: "#1e1b4b", border: "#818cf8", text: "#c7d2fe" }; // indigo dark
     if (tipo.includes("consulta") || tipo.includes("control"))
@@ -113,6 +115,8 @@ function getEventStyle(
   }
 
   // Light theme
+  if (tipo.includes("pre-quir") || tipo.includes("pre-"))
+    return { bg: "#FFF7ED", border: "#F97316", text: "#7C2D12" }; // orange
   if (tipo.includes("consulta inicial"))
     return { bg: "#EEF2FF", border: "#6366F1", text: "#3730A3" }; // indigo
   if (tipo.includes("consulta") || tipo.includes("control"))

@@ -10,6 +10,7 @@ export type TurnoRango = {
   paciente: { id: string; nombreCompleto: string };
   tipoTurno: { id: string; nombre: string; flujoPaciente?: string | null };
   ultimoTratamiento?: string | null;
+  tipoEntradaHC?: string | null;
 };
 
 export function useTurnosRango(

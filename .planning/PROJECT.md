@@ -83,42 +83,27 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 - ✓ EstadoTurno extendido con EN_ESPERA y SIENDO_ATENDIDO; 3 endpoints de transición (marcarEnEspera, marcarAusente, reactivar); iniciarSesion establece SIENDO_ATENDIDO — v1.6
 - ✓ Widget Agenda Operativo: columna Tipo de Turno reordenada, nombre del paciente clickeable abre PatientDrawer, menú ⋮ contextual con acciones por estado — v1.6
 - ✓ LiveTurno simplificado: sin timer, exit sin HC llama cerrarSesion (turno FINALIZADO), switch-session mediante AlertDialog — v1.6
-
-## Current Milestone: v1.7 CRM Flexible
-
-**Goal:** Permitir que la secretaria mueva pacientes entre cualquier etapa del CRM libremente, con warnings contextuales y un sheet de kanban rediseñado con stepper de etapas y acciones rápidas por paso.
-
-**Target features:**
-- Drag-and-drop kanban sin restricciones de negocio (cualquier etapa → cualquier etapa)
-- Toast warnings no bloqueantes cuando faltan prerequisitos (ej. mover a CONFIRMADO sin presupuesto aceptado)
-- Sheet lateral del kanban rediseñado: nombre/flujo + botones compactos + stepper de etapas
-- Stepper clickeable con acciones rápidas por etapa (ver presupuesto, registrar HC, marcar procedimiento)
-- "Registrar contacto" como botón compacto que abre modal pequeño
-- Botón de lista de espera opt-in integrado en el sheet
+- ✓ Movimiento libre entre etapas CRM via drag-and-drop; guard forward-only (`isAutoTransitionBlocked` + `ETAPA_ORDEN`) protege auto-transiciones del sistema en 5 call sites — v1.7
+- ✓ Toast no bloqueante PRESUPUESTO_ENVIADO (sin presupuesto) y CONFIRMADO (sin presupuesto aceptado); drag siempre persiste; snap-back vía onSettled — v1.7
+- ✓ EtapaStepper interactivo: 7 pasos clickeables, misma warning logic que drag-and-drop, PERDIDO abre LossReasonModal — v1.7
+- ✓ Sheet lateral rediseñado: CRMFlujoBadge (Cirugía/Tratamiento/Pendiente), ContactoRapidoModal Dialog, botón lista de espera compacto, panel de acciones rápidas removido — v1.7
+- ✓ Acciones contextuales por etapa: presupuesto nav (PRESUPUESTO_ENVIADO), HC creation (CONSULTADO), marcar realizado (PROCEDIMIENTO_REALIZADO) — v1.7
+- ✓ rechazar() guard etapasProtegidas; STEPPER_CHAIN alineado con ETAPA_ORDEN; getKanban ACEPTADO-first elimina falsos positivos CRM-03 — v1.7
+- ✓ 4 tipos de turno públicos (Consulta, Control, Pre-Quirúrgico, Tratamiento) con migración de datos sin pérdida; tipo interno Cirugía preservado vía filtro `esCirugia=false`; seed idempotente + color Pre-Quirúrgico en CalendarGrid — v1.8
+- ✓ Tipo de entrada en HC (`TipoEntradaHC`: CONSULTA_CIRUGIA/TRATAMIENTO/CONTROL/SEGUIMIENTO/PREOPERATORIO) con selector obligatorio en HCCreatorForm y helper puro `resolverNuevoFlujo` con suite de 10 casos — v1.8
+- ✓ Clasificación automática de flujo/etapa CRM al cerrar sesión basada en tipoEntrada (CONSULTA_CIRUGIA→CIRUGIA+CONSULTADO; TRATAMIENTO→TRATAMIENTO; dual-state preservado para CIRUGIA) — v1.8
+- ✓ Estado dual: paciente CIRUGIA con turno/HC de tratamiento aparece simultáneamente en kanban CRM y TratamientosTab sin perder etapa — v1.8
+- ✓ TratamientosTab dual-source: turnos de tipo Tratamiento (fuente A) + Consultas con HC tipo TRATAMIENTO (fuente B) vía `tipoEntradaHC` en obtenerTurnosPorRango, columna "Consulta → Tratamiento" y filtro CONSULTA_TRATAMIENTO — v1.8
+- ✓ Archivar del embudo CRM: campo `crmArchivado`, endpoint `PATCH /pacientes/:id/crm-archivo` toggle, exclusión automática en getKanban/getListaAccion, botón "Archivar del embudo" con confirmación — v1.8
 
 ### Active
-
-- [ ] CRM-01: El usuario puede mover un paciente a cualquier etapa del kanban mediante drag-and-drop sin restricciones de negocio
-- [ ] CRM-02: Al mover a PRESUPUESTO_ENVIADO sin presupuesto existente, aparece un toast de advertencia no bloqueante
-- [ ] CRM-03: Al mover a CONFIRMADO sin presupuesto aceptado, aparece un toast de advertencia no bloqueante
-- [ ] CRM-04: Las transiciones automáticas del sistema siguen funcionando normalmente
-- [ ] CRM-05: El usuario puede mover un paciente a cualquier etapa usando el stepper del sheet lateral
-- [ ] SHEET-01: El sheet muestra nombre del paciente y badge de flujo en el header
-- [ ] SHEET-02: "Registrar contacto" es un botón compacto que abre un modal pequeño
-- [ ] SHEET-03: Hay un botón compacto para activar/desactivar el opt-in de lista de espera
-- [ ] SHEET-04: El sheet incluye un stepper con las 6 etapas CRM indicando la etapa actual
-- [ ] SHEET-05: Hacer click en una etapa del stepper mueve al paciente a esa etapa
-- [ ] SHEET-06: En la etapa PRESUPUESTO_ENVIADO del stepper aparece "Ver/Crear presupuesto"
-- [ ] SHEET-07: En la etapa CONSULTADO del stepper aparece "Registrar HC" abriendo HCCreatorForm
-- [ ] SHEET-08: En la etapa PROCEDIMIENTO_REALIZADO del stepper aparece "Marcar como realizado"
-- [ ] SHEET-09: El panel de acciones rápidas actual es removido del sheet
-
-### Deferred
 
 - [ ] Automatizaciones de seguimiento: triggers basados en tiempo/etapa (ej. "30 días sin respuesta → mensaje automático")
 - [ ] Módulos financieros optimizados e interconectados con CRM
 - [ ] Página pública del paciente: historial, presupuestos, documentos
 - [ ] Módulo de estadísticas ejecutivas (reportes exportables, comparativas)
+- [ ] Tipos de turno personalizados por profesional desde Configuración (TIPO-F01) + color por tipo en calendario (TIPO-F02) — diferido de v1.8
+- [ ] CRM: vista de pacientes archivados con desarchivar en lote (CRM-F01) + archivado automático tras N días en PERDIDO (CRM-F02) — diferido de v1.8
 
 ### Out of Scope
 
@@ -126,6 +111,16 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 - Chat en tiempo real entre pacientes y clínica — WhatsApp cubre este caso por ahora
 - Facturación electrónica AFIP real en v1.1 — completada la investigación, implementación real planificada para v1.2
 - Tiers de suscripción con feature flags — deferido a cuando haya clientes reales con necesidades diferenciadas
+- Eliminar el tipo "Cirugía" interno — la agenda quirúrgica lo requiere (v1.8)
+- tipoEntrada retroactivo en entradas HC legacy — backfill innecesario, se tratan como CONSULTA_CIRUGIA por defecto (v1.8)
+
+## Shipped: v1.8 Tipos de Turno y Flujo Clínico ✅
+
+17/17 requisitos completados en 2 días (2026-06-08 → 2026-06-09). 4 fases, 8 planes. Tipos de turno simplificados a 4 públicos + Cirugía interno; tipo de entrada en HC con clasificación automática de flujo al cerrar sesión; estado dual cirugía+tratamiento; archivar del embudo CRM. Ver `.planning/milestones/v1.8-ROADMAP.md` para detalles.
+
+## Shipped: v1.7 CRM Flexible ✅
+
+17/17 requisitos completados en 6 días (2026-05-23 → 2026-05-28). 5 fases, 10 planes. CRM kanban: movimiento libre de etapas, warnings no bloqueantes, sheet redesign con stepper interactivo y acciones contextuales. Ver `.planning/milestones/v1.7-ROADMAP.md` para detalles.
 
 ## Shipped: v1.6 Agenda Operativa ✅
 
@@ -133,7 +128,9 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 
 ## Context
 
-**Estado actual (post-v1.6):** La tabla de agenda del dashboard es ahora la herramienta de operación diaria completa. La secretaria puede marcar la llegada del paciente (EN_ESPERA), ver quién está siendo atendido (SIENDO_ATENDIDO), marcar ausencias y reactivarlas, y abrir el PatientDrawer desde el nombre del paciente — todo sin salir del dashboard. LiveTurno es sin fricción: sin timer, con opción de cerrar sin guardar HC, y con switch-session seguro cuando el profesional quiere cambiar de paciente. 14/14 requisitos v1.6 completados en 2 días (3 fases, 6 planes). Tech debt acumulado: snapshot de tratamientos no se escribe sin consumirInsumos=true; FACTURADOR excluido del backend de ordenes-consumo; CALL-01 (botón Llamar conectado a pantalla sala de espera) deferido.
+**Estado actual (post-v1.8):** Los tipos de turno se simplificaron a 4 públicos (Consulta, Control, Pre-Quirúrgico, Tratamiento) más el tipo interno Cirugía para la agenda quirúrgica. Al cerrar la sesión de una HC, el profesional clasifica el tipo de entrada (CONSULTA_CIRUGIA, TRATAMIENTO, CONTROL, SEGUIMIENTO, PREOPERATORIO) y el sistema actualiza automáticamente el flujo del paciente y su etapa CRM. Un paciente de cirugía que también recibe tratamientos vive en estado dual: aparece en el kanban CRM y en la planilla de tratamientos simultáneamente, sin perder etapa. La secretaria puede archivar pacientes del embudo CRM (`crmArchivado`) sin eliminarlos: desaparecen del kanban y de la lista de acción pero siguen en el sistema. 17/17 requisitos v1.8 completados en 2 días (4 fases, 8 planes).
+
+**Estado previo (post-v1.7):** El CRM kanban es un entorno de trabajo completo para la secretaria: arrastre libre entre etapas con warnings no bloqueantes, sheet lateral con badge de flujo, stepper de 7 etapas clickeable con acciones contextuales, y botones para registrar contacto y gestionar lista de espera. Las auto-transiciones del sistema nunca sobreescriben etapas avanzadas puestas a mano. Tech debt cosmético: variable `maybyCRMUpdate` (typo) en rechazar(), animación de cierre del sheet cortada, SHEET-04 dice 6 etapas pero se muestran 7 en cadena + PERDIDO separado.
 
 **Stack:** NestJS + Prisma + PostgreSQL (backend) | Next.js 16 + React 19 + TypeScript (frontend) | BullMQ + Redis (async) | WhatsApp Cloud API | node-forge (firma CMS WSAA) | qrcode 1.5.4 + PDFKit (QR en PDF).
 
@@ -201,6 +198,20 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 | DropdownMenu opacity-0 group-hover:opacity-100 — v1.6 | Columna Acciones queda limpia por defecto; el menú aparece en hover sin ocupar espacio visible | ✓ Correcto — UX limpia sin sacrificar accesibilidad |
 | AlertDialogAction con e.preventDefault() para switch-session async — v1.6 | El dialog se cerraría automáticamente antes de que terminen las mutations sin el preventDefault | ✓ Correcto — cierre explícito con setShowSwitchDialog(false) en el handler |
 | cerrarSesion sin entradaHCId al salir sin HC (exit y switch) — v1.6 | No auto-guardar HC draft: el profesional tomó la decisión explícita de salir sin registrar | ✓ Correcto — comportamiento intencional con aviso en el dialog |
+| Movimiento libre CRM sin validación de negocio — v1.7 | El profesional (secretaria) conoce mejor que el sistema cuándo mover; solo PERDIDO requiere motivoPerdida para integridad | ✓ Correcto — 17/17 requisitos completados, UX significativamente más fluida |
+| Forward-only guard por módulo (no shared) — v1.7 | Evita acoplamiento cross-module; si se centraliza, será en common/crm-helpers.ts | ✓ Correcto — patrón duplicado en presupuestos y turnos, fácil de localizar |
+| getEtapaWarning en lib dedicada (no componente) — v1.7 | Reutilizable desde cualquier capa sin acoplamiento a KanbanBoard; Phase 38 stepper lo importa directamente | ✓ Correcto — reutilizado en EtapaStepper sin tocar KanbanBoard |
+| Dialog-from-Sheet para modales dentro del kanban sheet — v1.7 | shadcn Sheet anidado genera conflictos z-index y focus-trap; Dialog con DialogPortal monta en document.body | ✓ Correcto — ContactoRapidoModal y ListaEsperaDialog funcionan sin conflictos |
+| STEPPER_CHAIN hardcoded (no derivado de ETAPA_ORDER) — v1.7 | Incluye PROCEDIMIENTO_REALIZADO que está intencionalmente excluido del kanban ETAPA_ORDER | ✓ Correcto — evita inconsistencia silenciosa al agregar etapas al kanban futuro |
+| etapasProtegidas pattern para PERDIDO — v1.7 | PERDIDO es terminal/lateral; lista explícita es más clara que threshold numérico del ETAPA_ORDEN | ✓ Correcto — patrón consistente entre rechazar() y rechazarByToken() |
+| ACEPTADO-first en getKanban via find(ACEPTADO) ?? [0] — v1.7 | Pacientes con múltiples presupuestos (BORRADOR posterior a ACEPTADO) generaban falsos positivos en CRM-03 | ✓ Correcto — elimina false positives sin performance cost adicional |
+| Migración TipoTurno data-only (SQL manual, sin DDL) — v1.8 | `prisma migrate dev` genera migración vacía sin cambios de schema; el cambio es puro reordenamiento de datos | ✓ Correcto — INSERT ON CONFLICT transfiere configs de TipoTurnoProfesional sin pérdida |
+| Filtro `esCirugia=false` en service layer (no controller) — v1.8 | Mantiene Cirugía accesible internamente vía crearTurnoCirugia() para la agenda quirúrgica, oculto solo del selector normal | ✓ Correcto — 4 tipos públicos sin romper agenda quirúrgica |
+| Helper puro `resolverNuevoFlujo` en `*.flujo.helpers.ts` — v1.8 | Jest config carece de moduleNameMapper para aliases src/; helper sin deps NestJS permite tests unitarios directos | ✓ Correcto — suite de 10 casos cubre todas las transiciones HC-03/HC-04 |
+| Pre-fetch `turno.esCirugia` fuera de `$transaction` — v1.8 | Patrón pgBouncer consistente con otros pre-fetches (OS names, insumos) para evitar timeouts | ✓ Correcto — sin regresiones en cerrarSesion |
+| Dual-source predicate client-side (fuente A OR B) en TratamientosTab — v1.8 | `tipoEntradaHC` expuesto vía nested select evita N+1; el predicado combina flujoPaciente y tipoTurno+tipoEntradaHC | ✓ Correcto — estado dual visible sin query extra |
+| Toggle endpoint `PATCH :id/crm-archivo` (patrón whatsapp-opt-in) — v1.8 | Reutiliza patrón existente de toggle booleano; un solo endpoint archiva y desarchiva | ✓ Correcto — filtros en getKanban/getListaAccion sin flags manuales |
+| Dialog-from-Sheet para confirmación de archivar — v1.8 | Radix Dialog dentro de Sheet evita conflictos z-index/focus-trap (mismo patrón que v1.7 ContactoRapidoModal) | ✓ Correcto — invalidación onSettled por key prefix cubre todas las variantes de profesionalId |
 
 ## Shipped: v1.1 Vista del Facturador ✅
 
@@ -223,4 +234,4 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 27/27 requisitos completados en 21 días (2026-04-22 → 2026-05-13). 6 fases, 16 planes. Tech debt aceptado: snapshot de tratamientos sin consumirInsumos y rol FACTURADOR en ordenes-consumo. Ver `.planning/milestones/v1.5-ROADMAP.md` para detalles.
 
 ---
-*Last updated: 2026-05-23 after v1.7 milestone start — CRM Flexible*
+*Last updated: 2026-06-09 after v1.8 milestone completion — Tipos de Turno y Flujo Clínico shipped*

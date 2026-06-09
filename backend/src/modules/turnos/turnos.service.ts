@@ -534,6 +534,11 @@ export class TurnosService {
             flujoPaciente: true,
           },
         },
+        entradaHC: {
+          select: {
+            tipoEntrada: true,
+          },
+        },
       },
     });
 
@@ -567,10 +572,14 @@ export class TurnosService {
       }
     }
 
-    return turnos.map((t) => ({
-      ...t,
-      ultimoTratamiento: ultimoTratamientoMap.get(t.paciente.id) ?? null,
-    }));
+    return turnos.map((t) => {
+      const { entradaHC, ...rest } = t;
+      return {
+        ...rest,
+        ultimoTratamiento: ultimoTratamientoMap.get(t.paciente.id) ?? null,
+        tipoEntradaHC: entradaHC?.tipoEntrada ?? null,
+      };
+    });
   }
   async reprogramarTurno(turnoId: string, dto: ReprogramarTurnoDto) {
     const inicio = new Date(dto.inicio);

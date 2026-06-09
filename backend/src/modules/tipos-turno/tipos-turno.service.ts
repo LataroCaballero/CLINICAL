@@ -8,6 +8,7 @@ export class TiposTurnoService {
 
   findAll() {
     return this.prisma.tipoTurno.findMany({
+      where: { esCirugia: false },  // excluye Cirugía del selector público
       orderBy: { nombre: 'asc' },
       select: {
         id: true,

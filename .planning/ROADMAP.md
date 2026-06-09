@@ -234,7 +234,7 @@ Plans:
 | 40. Migración de Tipos de Turno | 2/2 | Complete    | 2026-06-08 | - |
 | 41. Tipo de Entrada en Historia Clínica | 2/2 | Complete    | 2026-06-09 | 2026-06-08 |
 | 42. Estado Dual y TratamientosTab | 2/2 | Complete    | 2026-06-09 | - |
-| 43. Archivar del Embudo CRM | v1.8 | 0/2 | Not started | - |
+| 43. Archivar del Embudo CRM | 1/2 | In Progress|  | - |
 
 ---
 *Roadmap initialized: 2026-02-23 | v1.0 shipped: 2026-03-03 | v1.1 shipped: 2026-03-16 | v1.2 shipped: 2026-03-31 | v1.3 shipped: 2026-04-09 | v1.4 shipped: 2026-04-20 | v1.5 shipped: 2026-05-13 | v1.6 shipped: 2026-05-23 | v1.7 shipped: 2026-05-28 | v1.8 started: 2026-06-08*

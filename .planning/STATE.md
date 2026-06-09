@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.8
 milestone_name: Tipos de Turno y Flujo Clínico
 status: verifying
-last_updated: "2026-06-09T02:09:40.430Z"
-last_activity: "2026-06-09 — Completed 42-02-PLAN.md (human verification: DUAL-01/02/03 confirmed, Phase 42 complete)"
+last_updated: "2026-06-09T02:46:00.000Z"
+last_activity: "2026-06-09 — Completed 43-01-PLAN.md (ARCH-01/02/03: crmArchivado field, PATCH endpoint, kanban/lista-accion filters)"
 progress:
   total_phases: 4
   completed_phases: 3
-  total_plans: 6
-  completed_plans: 6
+  total_plans: 7
+  completed_plans: 7
   percent: 100
 ---
 
@@ -26,13 +26,13 @@ See: .planning/PROJECT.md (updated 2026-06-08)
 
 ```
 Milestone: v1.8 Tipos de Turno y Flujo Clínico
-Phase:     42 — Estado Dual y TratamientosTab (COMPLETE — 2/2 plans done)
-Plan:      02 (completed)
-Status:    42-02 complete — human verification passed (DUAL-01/02/03 confirmed end-to-end)
-Progress:  [██████████] 100% (7 plans done across phases 40-42)
+Phase:     43 — Archivar del Embudo CRM (1/1 plans done)
+Plan:      01 (completed)
+Status:    43-01 complete — crmArchivado field + PATCH endpoint + kanban/lista-accion filters (ARCH-01/02/03)
+Progress:  [██████████] 100% (8 plans done across phases 40-43)
 
-Last activity: 2026-06-09 — Completed 42-02-PLAN.md (human verification: DUAL-01/02/03 confirmed, Phase 42 complete)
-Next: Phase 43 — Archivar del Embudo CRM
+Last activity: 2026-06-09 — Completed 43-01-PLAN.md (ARCH-01/02/03: crmArchivado field, PATCH endpoint, kanban/lista-accion filters)
+Next: Phase 43 frontend plan (if planned) or milestone v1.8 complete
 ```
 
 ## Decisions
@@ -51,7 +51,7 @@ Next: Phase 43 — Archivar del Embudo CRM
 | 40 | Migración de Tipos de Turno | TIPO-01..06 | Complete (2/2 plans done) |
 | 41 | Tipo de Entrada en Historia Clínica | HC-01..04 | Complete (2/2 plans done) |
 | 42 | Estado Dual y TratamientosTab | DUAL-01..03 | Complete (2/2 plans done) |
-| 43 | Archivar del Embudo CRM | ARCH-01..04 | Not started |
+| 43 | Archivar del Embudo CRM | ARCH-01..04 | In progress (1/1 backend done) |
 
 ## Accumulated Context
 
@@ -72,7 +72,7 @@ Next: Phase 43 — Archivar del Embudo CRM
 - cerrarSesion Phase 41: la lógica PROCEDIMIENTO_REALIZADO para esCirugia=true es independiente del tipoEntrada y no cambia
 - cerrarSesion Phase 41: la transición TURNO_AGENDADO → CONSULTADO solo aplica cuando tipoEntrada = CONSULTA_CIRUGIA
 - TratamientosTab Phase 42: query dual via OR entre tipoTurno.nombre = "Tratamiento" y existencia de HC entry con tipoEntrada = TRATAMIENTO
-- crmArchivado Phase 43: Boolean default false en modelo Paciente; getKanban y getListaAccion agregan WHERE crmArchivado = false
+- crmArchivado Phase 43: Boolean default false en modelo Paciente; getKanban y getListaAccion agregan WHERE crmArchivado = false; no @@index (siempre va junto a profesionalId ya indexado); findAll/findOne sin filtro (ARCH-04)
 
 ### v1.8 Technical Context
 - Tipos actuales en DB (pre-migración): "Consulta para cirugía", "Consulta para tratamiento en consultorio", "Pre-operatorio", "Control", "Consulta pendiente", "Cirugía"

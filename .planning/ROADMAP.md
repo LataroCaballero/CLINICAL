@@ -167,7 +167,10 @@ Plans:
   2. Un paciente con `flujo = CIRUGIA` cuya entrada de HC tiene `tipoEntrada = TRATAMIENTO` aparece en la planilla de tratamientos, además de seguir visible en el kanban CRM
   3. La planilla de tratamientos (TratamientosTab) muestra dos fuentes: turnos de tipo "Tratamiento" directamente, y turnos de tipo "Consulta" que tienen una entrada HC con tipoEntrada = TRATAMIENTO
   4. Los pacientes con `flujo = CIRUGIA` dual no desaparecen del kanban CRM ni pierden su etapa al aparecer en la planilla de tratamientos
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 42-01-PLAN.md — Backend findRango expone tipoEntradaHC + TratamientosTab predicado dual (fuente A OR B) y columna "Consulta → Tratamiento"
+- [ ] 42-02-PLAN.md — Checkpoint human-verify: estado dual visible en kanban CRM + planilla simultáneamente
 
 ### Phase 43: Archivar del Embudo CRM
 **Goal**: La secretaria puede retirar pacientes irrelevantes del embudo CRM sin eliminarlos del sistema, manteniendo el kanban enfocado en oportunidades activas

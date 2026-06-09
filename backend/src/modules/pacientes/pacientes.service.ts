@@ -593,6 +593,7 @@ export class PacientesService {
     const pacientes = await this.prisma.paciente.findMany({
       where: {
         profesionalId,
+        crmArchivado: false,
         OR: [{ flujo: FlujoPaciente.CIRUGIA }, { flujo: null }],
       },
       select: {
@@ -816,6 +817,7 @@ export class PacientesService {
     const pacientes = await this.prisma.paciente.findMany({
       where: {
         profesionalId,
+        crmArchivado: false,
         etapaCRM: { notIn: ['CONFIRMADO', 'PERDIDO'] as EtapaCRM[] },
         NOT: {
           contactos: { some: { fecha: { gte: hoyInicio } } },

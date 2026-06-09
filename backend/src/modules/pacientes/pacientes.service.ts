@@ -750,6 +750,24 @@ export class PacientesService {
     });
   }
 
+  async updateCrmArchivo(id: string, archivado: boolean) {
+    const exists = await this.prisma.paciente.findUnique({
+      where: { id },
+      select: { id: true },
+    });
+    if (!exists) throw new NotFoundException('Paciente no encontrado');
+
+    return this.prisma.paciente.update({
+      where: { id },
+      data: { crmArchivado: archivado },
+      select: {
+        id: true,
+        nombreCompleto: true,
+        crmArchivado: true,
+      },
+    });
+  }
+
   // ── Log de Contactos ────────────────────────────────────────────────────────
 
   // Helper privado — calcular score de prioridad

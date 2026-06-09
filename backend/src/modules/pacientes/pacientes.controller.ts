@@ -24,6 +24,7 @@ import { Auth } from '../auth/decorators/auth.decorator';
 import { EtapaCRM, TemperaturaPaciente, FlujoPaciente, MotivoPerdidaCRM } from '@prisma/client';
 import { UpdateFlujoDto } from './dto/update-flujo.dto';
 import { UpdateWhatsappOptInDto } from './dto/update-whatsapp-opt-in.dto';
+import { UpdateCrmArchivoDto } from './dto/update-crm-archivo.dto';
 import { CreateContactoDto } from './dto/create-contacto.dto';
 import { UpdateListaEsperaDto } from './dto/update-lista-espera.dto';
 
@@ -205,6 +206,15 @@ export class PacientesController {
     @Body() dto: UpdateWhatsappOptInDto,
   ) {
     return this.pacientesService.updateWhatsappOptIn(id, dto.optIn);
+  }
+
+  // CRM — Archivar / desarchivar paciente del embudo CRM
+  @Patch(':id/crm-archivo')
+  updateCrmArchivo(
+    @Param('id') id: string,
+    @Body() dto: UpdateCrmArchivoDto,
+  ) {
+    return this.pacientesService.updateCrmArchivo(id, dto.archivado);
   }
 
   // Flujo — Clasificar o reclasificar el flujo del paciente

@@ -1,5 +1,20 @@
 # Milestones
 
+## v1.8 Tipos de Turno y Flujo Clínico (Shipped: 2026-06-09)
+
+**Phases completed:** 4 phases (40–43), 8 plans
+**Stats:** 2 días (2026-06-08 → 2026-06-09) | 46 archivos | +3,125 / -84 líneas | 36 commits
+**Requirements:** 17/17 v1.8 (TIPO-01..06, HC-01..04, DUAL-01..03, ARCH-01..04)
+
+**Key accomplishments:**
+1. Migración de datos TipoTurno a 4 tipos públicos claros (Consulta, Control, Pre-Quirúrgico, Tratamiento): SQL data-only sin DDL, configs de TipoTurnoProfesional transferidas vía INSERT ON CONFLICT, filtro `esCirugia=false` en `findAll()` que preserva el tipo interno Cirugía para la agenda quirúrgica; seed idempotente (`seed-tipos-turno.ts`) + branch de color naranja para Pre-Quirúrgico en CalendarGrid
+2. Tipo de Entrada en Historia Clínica: enum `TipoEntradaHC` (CONSULTA_CIRUGIA, TRATAMIENTO, CONTROL, SEGUIMIENTO, PREOPERATORIO) + campo `tipoEntrada` opcional; helper puro `resolverNuevoFlujo` con suite de 10 casos (extracción a `*.flujo.helpers.ts` para tests Jest sin deps NestJS); selector obligatorio "Tipo de consulta" en HCCreatorForm con mapeo PLANTILLA_TO_TIPO_ENTRADA editable
+3. Transición automática de flujo/etapa CRM al cerrar sesión (HC-03/HC-04): CONSULTA_CIRUGIA en paciente PENDIENTE → flujo CIRUGIA + etapa CONSULTADO; TRATAMIENTO en paciente PENDIENTE → flujo TRATAMIENTO; TRATAMIENTO en paciente CIRUGIA → dual-state preservado (sin cambio de flujo); pre-fetch de `turno.esCirugia` fuera de `$transaction` (patrón pgBouncer)
+4. Estado dual en TratamientosTab: `obtenerTurnosPorRango` expone `tipoEntradaHC` vía nested select (sin N+1); predicado dual fuente A (`flujoPaciente=TRATAMIENTO`) OR fuente B (Consulta + `tipoEntradaHC=TRATAMIENTO`) con columna "Consulta → Tratamiento" y filtro sintético CONSULTA_TRATAMIENTO; pacientes de cirugía con tratamientos visibles simultáneamente en kanban CRM y planilla — verificado end-to-end (DUAL-01/02/03)
+5. Archivar del embudo CRM: campo `crmArchivado` Boolean + migración; endpoint `PATCH /pacientes/:id/crm-archivo` toggle (patrón whatsapp-opt-in); `getKanban` y `getListaAccion` excluyen archivados automáticamente; hook `useUpdateCrmArchivo` + botón "Archivar del embudo" con Dialog de confirmación (patrón Dialog-from-Sheet) e invalidación `onSettled` por key prefix — verificado end-to-end (ARCH-04)
+
+---
+
 ## v1.7 CRM Flexible (Shipped: 2026-05-28)
 
 **Phases completed:** 5 phases (35–39), 10 plans

@@ -89,32 +89,21 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 - ✓ Sheet lateral rediseñado: CRMFlujoBadge (Cirugía/Tratamiento/Pendiente), ContactoRapidoModal Dialog, botón lista de espera compacto, panel de acciones rápidas removido — v1.7
 - ✓ Acciones contextuales por etapa: presupuesto nav (PRESUPUESTO_ENVIADO), HC creation (CONSULTADO), marcar realizado (PROCEDIMIENTO_REALIZADO) — v1.7
 - ✓ rechazar() guard etapasProtegidas; STEPPER_CHAIN alineado con ETAPA_ORDEN; getKanban ACEPTADO-first elimina falsos positivos CRM-03 — v1.7
+- ✓ 4 tipos de turno públicos (Consulta, Control, Pre-Quirúrgico, Tratamiento) con migración de datos sin pérdida; tipo interno Cirugía preservado vía filtro `esCirugia=false`; seed idempotente + color Pre-Quirúrgico en CalendarGrid — v1.8
+- ✓ Tipo de entrada en HC (`TipoEntradaHC`: CONSULTA_CIRUGIA/TRATAMIENTO/CONTROL/SEGUIMIENTO/PREOPERATORIO) con selector obligatorio en HCCreatorForm y helper puro `resolverNuevoFlujo` con suite de 10 casos — v1.8
+- ✓ Clasificación automática de flujo/etapa CRM al cerrar sesión basada en tipoEntrada (CONSULTA_CIRUGIA→CIRUGIA+CONSULTADO; TRATAMIENTO→TRATAMIENTO; dual-state preservado para CIRUGIA) — v1.8
+- ✓ Estado dual: paciente CIRUGIA con turno/HC de tratamiento aparece simultáneamente en kanban CRM y TratamientosTab sin perder etapa — v1.8
+- ✓ TratamientosTab dual-source: turnos de tipo Tratamiento (fuente A) + Consultas con HC tipo TRATAMIENTO (fuente B) vía `tipoEntradaHC` en obtenerTurnosPorRango, columna "Consulta → Tratamiento" y filtro CONSULTA_TRATAMIENTO — v1.8
+- ✓ Archivar del embudo CRM: campo `crmArchivado`, endpoint `PATCH /pacientes/:id/crm-archivo` toggle, exclusión automática en getKanban/getListaAccion, botón "Archivar del embudo" con confirmación — v1.8
 
 ### Active
-
-## Current Milestone: v1.8 Tipos de Turno y Flujo Clínico
-
-**Goal:** Simplificar los tipos de turno de 6 a 4, introducir clasificación del paciente al cerrar la HC (primera vez vs tratamiento), habilitar estado dual cirugía+tratamiento, y permitir archivar pacientes del embudo CRM.
-
-**Target features:**
-- 4 tipos de turno (Consulta, Control, Pre-Quirúrgico, Tratamiento) con migración limpia
-- Tipo de entrada en HC: CONSULTA_CIRUGIA / TRATAMIENTO / CONTROL / SEGUIMIENTO / PREOPERATORIO
-- Clasificación automática del flujo al cerrar sesión basada en tipoEntrada
-- Dual-state: paciente CIRUGIA puede aparecer también en planilla de tratamientos
-- Campo crmArchivado en Paciente con toggle endpoint y UI en kanban
-- TratamientosTab actualizada para mostrar tanto turnos de tipo Tratamiento como consultas con HC tipo Tratamiento
-
-- [ ] Simplificación de tipos de turno: 4 tipos con migración de datos
-- [ ] Tipo de entrada en HC con selector en el form
-- [ ] Clasificación de flujo al cerrar sesión basada en tipoEntrada HC
-- [ ] Estado dual: paciente con flujo CIRUGIA puede tener HC de tratamiento
-- [ ] TratamientosTab ampliada (Tratamiento turno + Consulta con HC Tratamiento)
-- [ ] Archivar paciente del embudo CRM (campo + endpoint + UI)
 
 - [ ] Automatizaciones de seguimiento: triggers basados en tiempo/etapa (ej. "30 días sin respuesta → mensaje automático")
 - [ ] Módulos financieros optimizados e interconectados con CRM
 - [ ] Página pública del paciente: historial, presupuestos, documentos
 - [ ] Módulo de estadísticas ejecutivas (reportes exportables, comparativas)
+- [ ] Tipos de turno personalizados por profesional desde Configuración (TIPO-F01) + color por tipo en calendario (TIPO-F02) — diferido de v1.8
+- [ ] CRM: vista de pacientes archivados con desarchivar en lote (CRM-F01) + archivado automático tras N días en PERDIDO (CRM-F02) — diferido de v1.8
 
 ### Out of Scope
 
@@ -122,6 +111,12 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 - Chat en tiempo real entre pacientes y clínica — WhatsApp cubre este caso por ahora
 - Facturación electrónica AFIP real en v1.1 — completada la investigación, implementación real planificada para v1.2
 - Tiers de suscripción con feature flags — deferido a cuando haya clientes reales con necesidades diferenciadas
+- Eliminar el tipo "Cirugía" interno — la agenda quirúrgica lo requiere (v1.8)
+- tipoEntrada retroactivo en entradas HC legacy — backfill innecesario, se tratan como CONSULTA_CIRUGIA por defecto (v1.8)
+
+## Shipped: v1.8 Tipos de Turno y Flujo Clínico ✅
+
+17/17 requisitos completados en 2 días (2026-06-08 → 2026-06-09). 4 fases, 8 planes. Tipos de turno simplificados a 4 públicos + Cirugía interno; tipo de entrada en HC con clasificación automática de flujo al cerrar sesión; estado dual cirugía+tratamiento; archivar del embudo CRM. Ver `.planning/milestones/v1.8-ROADMAP.md` para detalles.
 
 ## Shipped: v1.7 CRM Flexible ✅
 
@@ -133,7 +128,9 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 
 ## Context
 
-**Estado actual (post-v1.7):** El CRM kanban es ahora un entorno de trabajo completo para la secretaria. Puede arrastrar pacientes a cualquier etapa sin restricciones de negocio, con warnings contextuales no bloqueantes cuando faltan prerequisitos. El sheet lateral muestra nombre, badge de flujo (Cirugía/Tratamiento/Pendiente), un stepper de 7 etapas clickeable con acciones contextuales por paso, y botones compactos para registrar contacto y gestionar lista de espera. Las auto-transiciones del sistema (enviar presupuesto, aceptar presupuesto, crear turno) nunca sobreescriben etapas avanzadas puestas a mano. 17/17 requisitos v1.7 completados en 6 días (5 fases, 10 planes). Tech debt cosmético: variable `maybyCRMUpdate` (typo) en rechazar(), animación de cierre del sheet cortada, SHEET-04 dice 6 etapas pero se muestran 7 en cadena + PERDIDO separado.
+**Estado actual (post-v1.8):** Los tipos de turno se simplificaron a 4 públicos (Consulta, Control, Pre-Quirúrgico, Tratamiento) más el tipo interno Cirugía para la agenda quirúrgica. Al cerrar la sesión de una HC, el profesional clasifica el tipo de entrada (CONSULTA_CIRUGIA, TRATAMIENTO, CONTROL, SEGUIMIENTO, PREOPERATORIO) y el sistema actualiza automáticamente el flujo del paciente y su etapa CRM. Un paciente de cirugía que también recibe tratamientos vive en estado dual: aparece en el kanban CRM y en la planilla de tratamientos simultáneamente, sin perder etapa. La secretaria puede archivar pacientes del embudo CRM (`crmArchivado`) sin eliminarlos: desaparecen del kanban y de la lista de acción pero siguen en el sistema. 17/17 requisitos v1.8 completados en 2 días (4 fases, 8 planes).
+
+**Estado previo (post-v1.7):** El CRM kanban es un entorno de trabajo completo para la secretaria: arrastre libre entre etapas con warnings no bloqueantes, sheet lateral con badge de flujo, stepper de 7 etapas clickeable con acciones contextuales, y botones para registrar contacto y gestionar lista de espera. Las auto-transiciones del sistema nunca sobreescriben etapas avanzadas puestas a mano. Tech debt cosmético: variable `maybyCRMUpdate` (typo) en rechazar(), animación de cierre del sheet cortada, SHEET-04 dice 6 etapas pero se muestran 7 en cadena + PERDIDO separado.
 
 **Stack:** NestJS + Prisma + PostgreSQL (backend) | Next.js 16 + React 19 + TypeScript (frontend) | BullMQ + Redis (async) | WhatsApp Cloud API | node-forge (firma CMS WSAA) | qrcode 1.5.4 + PDFKit (QR en PDF).
 
@@ -208,6 +205,13 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 | STEPPER_CHAIN hardcoded (no derivado de ETAPA_ORDER) — v1.7 | Incluye PROCEDIMIENTO_REALIZADO que está intencionalmente excluido del kanban ETAPA_ORDER | ✓ Correcto — evita inconsistencia silenciosa al agregar etapas al kanban futuro |
 | etapasProtegidas pattern para PERDIDO — v1.7 | PERDIDO es terminal/lateral; lista explícita es más clara que threshold numérico del ETAPA_ORDEN | ✓ Correcto — patrón consistente entre rechazar() y rechazarByToken() |
 | ACEPTADO-first en getKanban via find(ACEPTADO) ?? [0] — v1.7 | Pacientes con múltiples presupuestos (BORRADOR posterior a ACEPTADO) generaban falsos positivos en CRM-03 | ✓ Correcto — elimina false positives sin performance cost adicional |
+| Migración TipoTurno data-only (SQL manual, sin DDL) — v1.8 | `prisma migrate dev` genera migración vacía sin cambios de schema; el cambio es puro reordenamiento de datos | ✓ Correcto — INSERT ON CONFLICT transfiere configs de TipoTurnoProfesional sin pérdida |
+| Filtro `esCirugia=false` en service layer (no controller) — v1.8 | Mantiene Cirugía accesible internamente vía crearTurnoCirugia() para la agenda quirúrgica, oculto solo del selector normal | ✓ Correcto — 4 tipos públicos sin romper agenda quirúrgica |
+| Helper puro `resolverNuevoFlujo` en `*.flujo.helpers.ts` — v1.8 | Jest config carece de moduleNameMapper para aliases src/; helper sin deps NestJS permite tests unitarios directos | ✓ Correcto — suite de 10 casos cubre todas las transiciones HC-03/HC-04 |
+| Pre-fetch `turno.esCirugia` fuera de `$transaction` — v1.8 | Patrón pgBouncer consistente con otros pre-fetches (OS names, insumos) para evitar timeouts | ✓ Correcto — sin regresiones en cerrarSesion |
+| Dual-source predicate client-side (fuente A OR B) en TratamientosTab — v1.8 | `tipoEntradaHC` expuesto vía nested select evita N+1; el predicado combina flujoPaciente y tipoTurno+tipoEntradaHC | ✓ Correcto — estado dual visible sin query extra |
+| Toggle endpoint `PATCH :id/crm-archivo` (patrón whatsapp-opt-in) — v1.8 | Reutiliza patrón existente de toggle booleano; un solo endpoint archiva y desarchiva | ✓ Correcto — filtros en getKanban/getListaAccion sin flags manuales |
+| Dialog-from-Sheet para confirmación de archivar — v1.8 | Radix Dialog dentro de Sheet evita conflictos z-index/focus-trap (mismo patrón que v1.7 ContactoRapidoModal) | ✓ Correcto — invalidación onSettled por key prefix cubre todas las variantes de profesionalId |
 
 ## Shipped: v1.1 Vista del Facturador ✅
 
@@ -230,4 +234,4 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 27/27 requisitos completados en 21 días (2026-04-22 → 2026-05-13). 6 fases, 16 planes. Tech debt aceptado: snapshot de tratamientos sin consumirInsumos y rol FACTURADOR en ordenes-consumo. Ver `.planning/milestones/v1.5-ROADMAP.md` para detalles.
 
 ---
-*Last updated: 2026-06-08 after v1.8 milestone start — Tipos de Turno y Flujo Clínico*
+*Last updated: 2026-06-09 after v1.8 milestone completion — Tipos de Turno y Flujo Clínico shipped*

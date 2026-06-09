@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.8
 milestone_name: Tipos de Turno y Flujo Clínico
 status: completed
-last_updated: "2026-06-09T02:47:04.537Z"
-last_activity: "2026-06-09 — Completed 43-02-PLAN.md (ARCH-04: useUpdateCrmArchivo hook + Archivar del embudo button in CardActionsSheet — human-verify approved)"
+last_updated: "2026-06-09T02:49:51.080Z"
+last_activity: "2026-06-09 — Completed 43-02-PLAN.md (ARCH-04: archivar del embudo confirmed end-to-end)"
 progress:
   total_phases: 4
   completed_phases: 4

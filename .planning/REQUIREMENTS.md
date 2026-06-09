@@ -17,7 +17,7 @@
 ### Historia Clínica — Tipo de Entrada
 
 - [x] **HC-01**: La entrada de HC tiene un campo `tipoEntrada` con valores: `CONSULTA_CIRUGIA`, `TRATAMIENTO`, `CONTROL`, `SEGUIMIENTO`, `PREOPERATORIO`
-- [ ] **HC-02**: El form HCCreatorForm incluye un selector obligatorio "Tipo de consulta" al guardar una entrada
+- [x] **HC-02**: El form HCCreatorForm incluye un selector obligatorio "Tipo de consulta" al guardar una entrada
 - [x] **HC-03**: Al cerrar sesión de un turno "Consulta" con HC tipo `CONSULTA_CIRUGIA`: si `paciente.flujo === PENDIENTE` → `flujo = CIRUGIA`; si `etapaCRM === TURNO_AGENDADO` → `etapaCRM = CONSULTADO`
 - [x] **HC-04**: Al cerrar sesión de un turno "Consulta" con HC tipo `TRATAMIENTO`: si `paciente.flujo === PENDIENTE` → `flujo = TRATAMIENTO`; si `paciente.flujo === CIRUGIA` → sin cambio de flujo (dual-state preservado)
 
@@ -64,7 +64,7 @@
 | TIPO-05 | Phase 40 | Complete |
 | TIPO-06 | Phase 40 | Complete |
 | HC-01 | Phase 41 | Complete |
-| HC-02 | Phase 41 | Pending |
+| HC-02 | Phase 41 | Complete |
 | HC-03 | Phase 41 | Complete |
 | HC-04 | Phase 41 | Complete |
 | DUAL-01 | Phase 42 | Pending |

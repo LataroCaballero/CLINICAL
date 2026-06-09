@@ -38,9 +38,8 @@ patterns-established:
 requirements-completed: [HC-02]
 
 # Metrics
-duration: 3min
+duration: ~35min (including human-verify checkpoint)
 completed: 2026-06-08
-status: checkpoint — awaiting human verification (Task 3)
 ---
 
 # Phase 41 Plan 02: Frontend TipoEntrada HC Selector Summary
@@ -49,10 +48,10 @@ status: checkpoint — awaiting human verification (Task 3)
 
 ## Performance
 
-- **Duration:** ~3 min
+- **Duration:** ~35 min (including human-verify checkpoint)
 - **Started:** 2026-06-08T18:04:10Z
-- **Completed:** 2026-06-08T18:06:25Z (Tasks 1-2; Task 3 = checkpoint)
-- **Tasks:** 2/3 complete (Task 3 = human-verify checkpoint)
+- **Completed:** 2026-06-08T21:00:00Z (approx)
+- **Tasks:** 3/3 complete (Task 3 = human-verify checkpoint — APPROVED)
 - **Files modified:** 2
 
 ## Accomplishments
@@ -64,7 +63,7 @@ status: checkpoint — awaiting human verification (Task 3)
 
 1. **Task 1: tipoEntrada en el hook CreateEntradaDto** - `b52dc2a` (feat)
 2. **Task 2: Selector 'Tipo de consulta' con auto-derivacion en HCCreatorForm** - `cb3ab0c` (feat)
-3. **Task 3: Checkpoint — verificacion end-to-end** — PENDING (human-verify)
+3. **Task 3: Checkpoint — verificacion end-to-end** — APPROVED (human-verify passed)
 
 ## Files Created/Modified
 - `frontend/src/hooks/useCreateHistoriaClinicaEntry.ts` — Added `tipoEntrada?` to `CreateEntradaDto`; exported `TipoEntradaHCValue` alias
@@ -86,9 +85,10 @@ None - plan executed exactly as written.
 None - no external service configuration required.
 
 ## Next Phase Readiness
-- Frontend form ready to test end-to-end with backend (Plan 01) once checkpoint is approved
-- Upon checkpoint approval: plan complete, HC-02 satisfied, Phase 42 (TratamientosTab + dual state) can begin
+- HC-02 fully satisfied: selector implemented, human-verified end-to-end with backend Plan 01
+- Phase 42 (TratamientosTab + dual state) can begin — tipoEntrada = TRATAMIENTO entries now persisted
+- Phase 43 (Archivar CRM) unblocked
 
 ---
 *Phase: 41-tipo-entrada-hc*
-*Completed: 2026-06-08 (Tasks 1-2; checkpoint pending)*
+*Completed: 2026-06-08*

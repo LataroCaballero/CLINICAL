@@ -226,7 +226,7 @@ Plans:
 | 38. Stepper Interactions + Contextual Actions | v1.7 | 2/2 | Complete | 2026-05-28 |
 | 39. CRM Tech Debt — Guard & Ordering Fixes | v1.7 | 2/2 | Complete | 2026-05-28 |
 | 40. Migración de Tipos de Turno | 2/2 | Complete    | 2026-06-08 | - |
-| 41. Tipo de Entrada en Historia Clínica | 2/2 | Complete   | 2026-06-08 | 2026-06-08 |
+| 41. Tipo de Entrada en Historia Clínica | 2/2 | Complete   | 2026-06-09 | 2026-06-08 |
 | 42. Estado Dual y TratamientosTab | v1.8 | 0/? | Not started | - |
 | 43. Archivar del Embudo CRM | v1.8 | 0/? | Not started | - |
 

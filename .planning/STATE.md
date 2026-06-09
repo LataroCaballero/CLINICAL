@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.8
 milestone_name: Tipos de Turno y Flujo Clínico
-status: completed
-last_updated: "2026-06-08T18:07:21.618Z"
-last_activity: 2026-06-08 — Completed 41-01-PLAN.md (TipoEntradaHC enum + tipoEntrada field + flujo transition logic)
+status: verifying
+last_updated: "2026-06-09T00:19:26.015Z"
+last_activity: 2026-06-08 — Completed 41-02-PLAN.md (Frontend 'Tipo de consulta' selector in HCCreatorForm + human-verify approved)
 progress:
   total_phases: 4
   completed_phases: 2
   total_plans: 4
   completed_plans: 4
-  percent: 60
+  percent: 75
 ---
 
 # Project State
@@ -26,13 +26,13 @@ See: .planning/PROJECT.md (updated 2026-06-08)
 
 ```
 Milestone: v1.8 Tipos de Turno y Flujo Clínico
-Phase:     41 — Tipo de Entrada en Historia Clínica (IN PROGRESS — 1/? plans done)
-Plan:      01 (completed)
-Status:    41-01 complete — backend enum/migration/flujo-logic done; frontend DTO form next (Plan 02)
-Progress:  [██████░░░░] 60% (3 plans done across phases 40-41)
+Phase:     41 — Tipo de Entrada en Historia Clínica (IN PROGRESS — 2/2 plans done)
+Plan:      02 (completed)
+Status:    41-02 complete — frontend selector with auto-derivation + human-verify approved; Phase 42 (TratamientosTab) next
+Progress:  [████████░░] 75% (4 plans done across phases 40-41)
 
-Last activity: 2026-06-08 — Completed 41-01-PLAN.md (TipoEntradaHC enum + tipoEntrada field + flujo transition logic)
-Next: Phase 41 Plan 02 — Frontend form field + UI integration for tipoEntrada
+Last activity: 2026-06-08 — Completed 41-02-PLAN.md (Frontend 'Tipo de consulta' selector in HCCreatorForm + human-verify approved)
+Next: Phase 42 — Estado Dual y TratamientosTab
 ```
 
 ## Decisions
@@ -47,7 +47,7 @@ Next: Phase 41 Plan 02 — Frontend form field + UI integration for tipoEntrada
 | Phase | Name | Requirements | Status |
 |-------|------|--------------|--------|
 | 40 | Migración de Tipos de Turno | TIPO-01..06 | Complete (2/2 plans done) |
-| 41 | Tipo de Entrada en Historia Clínica | HC-01..04 | Not started |
+| 41 | Tipo de Entrada en Historia Clínica | HC-01..04 | Complete (2/2 plans done) |
 | 42 | Estado Dual y TratamientosTab | DUAL-01..03 | Not started |
 | 43 | Archivar del Embudo CRM | ARCH-01..04 | Not started |
 

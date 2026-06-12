@@ -2,16 +2,23 @@ import {
   Injectable,
   NotFoundException,
   ConflictException,
+  Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateUsuarioDto } from './dto/create-usuario.dto';
 import { UpdateUsuarioDto } from './dto/update-usuario.dto';
 import { RolUsuario } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
+import { CatalogoHCService } from '../catalogo-hc/catalogo-hc.service';
 
 @Injectable()
 export class UsuariosService {
-  constructor(private prisma: PrismaService) {}
+  private readonly logger = new Logger(UsuariosService.name);
+
+  constructor(
+    private prisma: PrismaService,
+    private readonly catalogoHCService: CatalogoHCService,
+  ) {}
 
   async findAll() {
     return this.prisma.usuario.findMany({
@@ -58,43 +65,63 @@ export class UsuariosService {
     const passwordHash = await bcrypt.hash(dto.password, 10);
 
     // Usar transacción para crear usuario y profesional si corresponde
-    return this.prisma.$transaction(async (tx) => {
-      const usuario = await tx.usuario.create({
-        data: {
-          nombre: dto.nombre,
-          apellido: dto.apellido,
-          email: dto.email,
-          telefono: dto.telefono,
-          rol: dto.rol,
-          passwordHash,
-        },
-        select: {
-          id: true,
-          nombre: true,
-          apellido: true,
-          email: true,
-          rol: true,
-          telefono: true,
-        },
-      });
+    const { usuario, profesionalId } = await this.prisma.$transaction(
+      async (tx) => {
+        const usuario = await tx.usuario.create({
+          data: {
+            nombre: dto.nombre,
+            apellido: dto.apellido,
+            email: dto.email,
+            telefono: dto.telefono,
+            rol: dto.rol,
+            passwordHash,
+          },
+          select: {
+            id: true,
+            nombre: true,
+            apellido: true,
+            email: true,
+            rol: true,
+            telefono: true,
+          },
+        });
 
-      // Crear registro en tabla correspondiente según el rol
-      if (dto.rol === RolUsuario.PROFESIONAL) {
-        await tx.profesional.create({
-          data: {
-            usuarioId: usuario.id,
-          },
-        });
-      } else if (dto.rol === RolUsuario.SECRETARIA) {
-        await tx.secretaria.create({
-          data: {
-            usuarioId: usuario.id,
-          },
-        });
+        let profesionalId: string | undefined;
+
+        // Crear registro en tabla correspondiente según el rol
+        if (dto.rol === RolUsuario.PROFESIONAL) {
+          const profesional = await tx.profesional.create({
+            data: {
+              usuarioId: usuario.id,
+            },
+          });
+          profesionalId = profesional.id;
+        } else if (dto.rol === RolUsuario.SECRETARIA) {
+          await tx.secretaria.create({
+            data: {
+              usuarioId: usuario.id,
+            },
+          });
+        }
+
+        return { usuario, profesionalId };
+      },
+    );
+
+    // After transaction commits, seed the catalog for new professionals.
+    // The seed runs OUTSIDE the transaction to avoid long tx duration.
+    // Failure is non-blocking — lazy seed via GET covers any failure.
+    if (dto.rol === RolUsuario.PROFESIONAL && profesionalId) {
+      try {
+        await this.catalogoHCService.seedCatalogoInicial(profesionalId);
+      } catch (err) {
+        this.logger.warn(
+          `seedCatalogoInicial falló para profesional ${profesionalId}: ${err?.message}. El lazy seed del GET cubre este fallo.`,
+        );
       }
+    }
 
-      return usuario;
-    });
+    return usuario;
   }
 
   async update(id: string, dto: UpdateUsuarioDto) {

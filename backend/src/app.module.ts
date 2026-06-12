@@ -29,6 +29,7 @@ import { AutorizacionesModule } from './modules/autorizaciones/autorizaciones.mo
 import { WsaaModule } from './modules/wsaa/wsaa.module';
 import { AfipConfigModule } from './modules/afip-config/afip-config.module';
 import { OrdenesConsumoModule } from './modules/ordenes-consumo/ordenes-consumo.module';
+import { CatalogoHCModule } from './modules/catalogo-hc/catalogo-hc.module';
 
 @Module({
   imports: [
@@ -62,6 +63,7 @@ import { OrdenesConsumoModule } from './modules/ordenes-consumo/ordenes-consumo.
     DiagnosticosModule,
     TratamientosModule,
     CirugiasCatalogoModule,
+    CatalogoHCModule,
     OrdenesConsumoModule,
     HistoriaClinicaModule,
     HCTemplatesModule,

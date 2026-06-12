@@ -333,6 +333,13 @@ export default function TurnoHCModal({
   );
 }
 
+type ZonaContenidoHC = {
+  zona: string;
+  diagnosticos: string[];
+  otroTexto?: string;
+  tratamientos: Array<{ nombre: string; precio: number }>;
+};
+
 function EntryCard({ entrada }: { entrada: any }) {
   const contenido = (entrada.contenido ?? null) as any;
   const isPrimeraVez = contenido?.tipo === "primera_vez";
@@ -361,31 +368,58 @@ function EntryCard({ entrada }: { entrada: any }) {
 
       {isPrimeraVez ? (
         <div className="space-y-1.5">
-          {contenido.diagnostico?.zonas?.length > 0 && (
-            <div className="flex flex-wrap gap-1">
-              {contenido.diagnostico.zonas.map((z: string) => (
-                <Badge key={z} variant="secondary" className="text-xs capitalize">
-                  {z}
+          {Array.isArray(contenido.zonas) ? (
+            /* New grouped shape (v1.9+) */
+            contenido.zonas.map((z: ZonaContenidoHC, zi: number) => (
+              <div key={zi} className="flex flex-wrap gap-1 items-center">
+                <Badge variant="secondary" className="text-xs capitalize font-semibold">
+                  {z.zona}
                 </Badge>
-              ))}
-              {contenido.diagnostico.subzonas?.map((s: string) => (
-                <Badge key={s} variant="outline" className="text-xs capitalize">
-                  {s}
-                </Badge>
-              ))}
-            </div>
-          )}
-          {contenido.tratamientos?.length > 0 && (
-            <div className="flex flex-wrap gap-1">
-              {contenido.tratamientos.map((t: any, i: number) => (
-                <Badge
-                  key={i}
-                  className="text-xs bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-50"
-                >
-                  {t.nombre}
-                </Badge>
-              ))}
-            </div>
+                {z.diagnosticos.map((d: string, di: number) => (
+                  <Badge key={di} variant="outline" className="text-xs">
+                    {d}
+                  </Badge>
+                ))}
+                {z.tratamientos.map((t: { nombre: string; precio: number }, ti: number) => (
+                  <Badge
+                    key={ti}
+                    className="text-xs bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-50"
+                  >
+                    {t.nombre}
+                  </Badge>
+                ))}
+              </div>
+            ))
+          ) : (
+            /* Legacy shape */
+            <>
+              {contenido.diagnostico?.zonas?.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {contenido.diagnostico.zonas.map((z: string) => (
+                    <Badge key={z} variant="secondary" className="text-xs capitalize">
+                      {z}
+                    </Badge>
+                  ))}
+                  {contenido.diagnostico.subzonas?.map((s: string) => (
+                    <Badge key={s} variant="outline" className="text-xs capitalize">
+                      {s}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+              {contenido.tratamientos?.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {contenido.tratamientos.map((t: any, i: number) => (
+                    <Badge
+                      key={i}
+                      className="text-xs bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-50"
+                    >
+                      {t.nombre}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </div>
       ) : (

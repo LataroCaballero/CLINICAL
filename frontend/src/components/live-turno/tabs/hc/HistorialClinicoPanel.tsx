@@ -10,8 +10,18 @@ interface Props {
   pacienteId: string;
 }
 
+type ZonaContenido = {
+  zona: string;
+  diagnosticos: string[];
+  otroTexto?: string;
+  tratamientos: Array<{ nombre: string; precio: number }>;
+};
+
 type EntradaPrimeraVez = {
   tipo: 'primera_vez';
+  // New grouped shape (v1.9+)
+  zonas?: ZonaContenido[];
+  // Legacy shape
   diagnostico?: { zonas: string[]; subzonas: string[] };
   tratamientos?: Array<{ nombre: string; precio: number }>;
   comentario?: string;
@@ -76,28 +86,54 @@ export function HistorialClinicoPanel({ pacienteId }: Props) {
 
             {isPrimeraVez && pvContenido ? (
               <div className="space-y-1.5">
-                {pvContenido.diagnostico?.zonas && pvContenido.diagnostico.zonas.length > 0 && (
-                  <div className="flex flex-wrap gap-1">
-                    {pvContenido.diagnostico.zonas.map((z) => (
-                      <Badge key={z} variant="secondary" className="text-xs capitalize">
-                        {z}
-                      </Badge>
-                    ))}
-                    {pvContenido.diagnostico.subzonas?.map((s) => (
-                      <Badge key={s} variant="outline" className="text-xs capitalize">
-                        {s}
-                      </Badge>
-                    ))}
-                  </div>
-                )}
-                {pvContenido.tratamientos && pvContenido.tratamientos.length > 0 && (
-                  <div className="flex flex-wrap gap-1">
-                    {pvContenido.tratamientos.map((t, i) => (
-                      <Badge key={i} className="text-xs bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-50">
-                        {t.nombre}
-                      </Badge>
-                    ))}
-                  </div>
+                {Array.isArray(pvContenido.zonas) ? (
+                  /* New grouped shape (v1.9+) */
+                  pvContenido.zonas.map((z, zi) => (
+                    <div key={zi} className="space-y-1">
+                      <div className="flex flex-wrap gap-1 items-center">
+                        <Badge variant="secondary" className="text-xs capitalize font-semibold">
+                          {z.zona}
+                        </Badge>
+                        {z.diagnosticos.map((d, di) => (
+                          <Badge key={di} variant="outline" className="text-xs">
+                            {d}
+                          </Badge>
+                        ))}
+                        {z.tratamientos.map((t, ti) => (
+                          <Badge key={ti} className="text-xs bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-50">
+                            {t.nombre}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  /* Legacy shape */
+                  <>
+                    {pvContenido.diagnostico?.zonas && pvContenido.diagnostico.zonas.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {pvContenido.diagnostico.zonas.map((z) => (
+                          <Badge key={z} variant="secondary" className="text-xs capitalize">
+                            {z}
+                          </Badge>
+                        ))}
+                        {pvContenido.diagnostico.subzonas?.map((s) => (
+                          <Badge key={s} variant="outline" className="text-xs capitalize">
+                            {s}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                    {pvContenido.tratamientos && pvContenido.tratamientos.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {pvContenido.tratamientos.map((t, i) => (
+                          <Badge key={i} className="text-xs bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-50">
+                            {t.nombre}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             ) : (

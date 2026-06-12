@@ -384,9 +384,20 @@ export default function HistoriaClinica({ pacienteId, onBack }: Props) {
 }
 
 // Types for entries
+interface ZonaContenido {
+  zonaId?: string;
+  zona: string;
+  diagnosticos: string[];
+  otroTexto?: string;
+  tratamientos: Array<{ nombre: string; tratamientoId?: string; precio: number }>;
+}
+
 interface ContenidoPrimeraVez {
   tipo: "primera_vez";
   comentario?: string;
+  // New grouped shape (v1.9+)
+  zonas?: ZonaContenido[];
+  // Legacy shape
   diagnostico?: { zonas?: string[]; subzonas?: string[]; otroTexto?: string };
   tratamientos?: { nombre: string; precio?: number }[];
   presupuestoTotal?: number;
@@ -494,9 +505,20 @@ function EntryCard({
 function FreeEntryPreview({ contenido }: { contenido?: ContenidoEntrada }) {
   if (!contenido) return <p className="text-sm text-muted-foreground italic">(sin contenido)</p>;
 
-  const c = contenido as any;
+  const c = contenido as ContenidoPrimeraVez & ContenidoLibre;
 
   if (c.tipo === "primera_vez") {
+    // New grouped shape (v1.9+)
+    if (Array.isArray(c.zonas) && c.zonas.length > 0) {
+      const parts = c.zonas.map((z: ZonaContenido) => {
+        const items: string[] = [];
+        if (z.diagnosticos.length) items.push(z.diagnosticos.join(", "));
+        if (z.tratamientos.length) items.push(z.tratamientos.map((t) => t.nombre).join(", "));
+        return `${z.zona}: ${items.join(" · ")}`;
+      });
+      return <p className="text-sm text-muted-foreground">{parts.join(" | ") || "(sin datos)"}</p>;
+    }
+    // Legacy shape
     const zonas: string[] = c.diagnostico?.zonas ?? [];
     const subzonas: string[] = c.diagnostico?.subzonas ?? [];
     const tratamientos: { nombre: string }[] = c.tratamientos ?? [];
@@ -528,12 +550,71 @@ function FreeEntryFullContent({ contenido }: { contenido?: ContenidoEntrada }) {
 
   // ── Primera consulta estructurada ──
   if (c.tipo === "primera_vez") {
+    const comentario: string = c.comentario ?? "";
+    const presupuestoTotal: number = c.presupuestoTotal ?? 0;
+
+    // New grouped shape (v1.9+)
+    if (Array.isArray(c.zonas) && c.zonas.length > 0) {
+      return (
+        <div className="space-y-5">
+          {/* Zonas agrupadas */}
+          {c.zonas.map((z: ZonaContenido, zi: number) => (
+            <div key={zi} className="space-y-2">
+              <h4 className="text-sm font-semibold capitalize">{z.zona}</h4>
+              {z.diagnosticos.length > 0 && (
+                <div className="p-3 bg-muted/40 rounded-lg">
+                  <p className="text-xs text-muted-foreground mb-1">Diagnósticos</p>
+                  <p className="text-sm font-medium">{z.diagnosticos.join(", ")}</p>
+                </div>
+              )}
+              {z.otroTexto && (
+                <div className="p-3 bg-muted/40 rounded-lg">
+                  <p className="text-xs text-muted-foreground mb-1">Observación</p>
+                  <p className="text-sm">{z.otroTexto}</p>
+                </div>
+              )}
+              {z.tratamientos.length > 0 && (
+                <div className="space-y-1">
+                  {z.tratamientos.map((t, ti) => (
+                    <div key={ti} className="flex items-center justify-between p-2.5 bg-muted/40 rounded-lg">
+                      <span className="text-sm">{t.nombre}</span>
+                      {t.precio > 0 && (
+                        <span className="text-sm font-medium text-green-700">
+                          {new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS" }).format(t.precio)}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+
+          {/* Comentario */}
+          {comentario && (
+            <div className="space-y-2">
+              <h4 className="text-sm font-semibold">Comentario</h4>
+              <p className="text-sm whitespace-pre-line p-3 bg-muted/40 rounded-lg">{comentario}</p>
+            </div>
+          )}
+
+          {/* Total */}
+          {presupuestoTotal > 0 && (
+            <div className="flex justify-end pt-1">
+              <span className="text-sm font-semibold text-green-700">
+                Total: {new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS" }).format(presupuestoTotal)}
+              </span>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // Legacy shape
     const zonas: string[] = c.diagnostico?.zonas ?? [];
     const subzonas: string[] = c.diagnostico?.subzonas ?? [];
     const otroTexto: string = c.diagnostico?.otroTexto ?? "";
     const tratamientos: { nombre: string; precio?: number }[] = c.tratamientos ?? [];
-    const comentario: string = c.comentario ?? "";
-    const presupuestoTotal: number = c.presupuestoTotal ?? 0;
 
     return (
       <div className="space-y-5">

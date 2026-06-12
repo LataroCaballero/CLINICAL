@@ -98,6 +98,11 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 
 ### Active
 
+- [ ] Plantilla Primera Consulta: zonas como eje único con diagnósticos y tratamientos agrupados por zona (v1.9)
+- [ ] Catálogo de zonas/diagnósticos/tratamientos de HC en BD por profesional, con seed desde el JSON actual (v1.9)
+- [ ] Auto-aprendizaje vía "Otros": zonas, diagnósticos y tratamientos nuevos se persisten para la próxima vez (v1.9)
+- [ ] Tratamientos aprendidos se integran al catálogo del profesional (precio 0 a completar) (v1.9)
+- [ ] Admin UI en Configuración para editar/eliminar zonas, diagnósticos y tratamientos del catálogo HC (v1.9)
 - [ ] Automatizaciones de seguimiento: triggers basados en tiempo/etapa (ej. "30 días sin respuesta → mensaje automático")
 - [ ] Módulos financieros optimizados e interconectados con CRM
 - [ ] Página pública del paciente: historial, presupuestos, documentos
@@ -113,6 +118,17 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 - Tiers de suscripción con feature flags — deferido a cuando haya clientes reales con necesidades diferenciadas
 - Eliminar el tipo "Cirugía" interno — la agenda quirúrgica lo requiere (v1.8)
 - tipoEntrada retroactivo en entradas HC legacy — backfill innecesario, se tratan como CONSULTA_CIRUGIA por defecto (v1.8)
+
+## Current Milestone: v1.9 Plantilla Primera Consulta
+
+**Goal:** Rediseñar la plantilla de entrada de HC para Primera Consulta con la zona anatómica como eje único: seleccionar una zona despliega sus diagnósticos y tratamientos, agrupados por zona, con un catálogo en BD por profesional que aprende opciones nuevas vía "Otros".
+
+**Target features:**
+- Zonas primero (Abdomen, Mamas, Nariz, Facial, Locales, Otros): al seleccionar una se despliega su grupo de diagnóstico y tratamiento; selecciones múltiples agrupadas por zona
+- Catálogo de zonas/diagnósticos/tratamientos migrado del JSON hardcodeado a BD por profesional (seed con datos actuales; Facial y Locales arrancan con diagnósticos = [Otros] pero con sus tratamientos actuales)
+- Auto-aprendizaje vía "Otros" en todas las zonas: zona nueva escrita se persiste y arranca con diagnóstico/tratamiento "Otros"; diagnósticos/tratamientos nuevos escritos se guardan para la próxima vez
+- Tratamientos aprendidos se crean también en el catálogo del profesional (precio 0, a completar en Configuración)
+- Admin UI en Configuración para ver, renombrar y eliminar zonas/diagnósticos/tratamientos del catálogo HC
 
 ## Shipped: v1.8 Tipos de Turno y Flujo Clínico ✅
 
@@ -234,4 +250,4 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 27/27 requisitos completados en 21 días (2026-04-22 → 2026-05-13). 6 fases, 16 planes. Tech debt aceptado: snapshot de tratamientos sin consumirInsumos y rol FACTURADOR en ordenes-consumo. Ver `.planning/milestones/v1.5-ROADMAP.md` para detalles.
 
 ---
-*Last updated: 2026-06-09 after v1.8 milestone completion — Tipos de Turno y Flujo Clínico shipped*
+*Last updated: 2026-06-12 after starting milestone v1.9 Plantilla Primera Consulta*

@@ -98,7 +98,7 @@ export function HCCreatorForm({
   const canSave =
     tipoSeleccionado !== null &&
     (tipoSeleccionado === 'primera_vez'
-      ? pvState !== null && (pvState.diagnostico.zonas.length > 0 || pvState.tratamientos.length > 0)
+      ? pvState !== null && pvState.zonas.length > 0
       : tipoSeleccionado === 'tratamiento_en_consultorio'
       ? tratamientosSeleccionados.length > 0 || textoLibre.trim().length > 0
       : textoLibre.trim().length > 0);
@@ -113,8 +113,7 @@ export function HCCreatorForm({
         dto: {
           tipo: 'primera_vez',
           tipoEntrada: PLANTILLA_TO_TIPO_ENTRADA[tipoSeleccionado] ?? 'CONTROL',
-          diagnostico: pvState.diagnostico,
-          tratamientos: pvState.tratamientos,
+          zonas: pvState.zonas,
           comentario: pvState.comentario,
           presupuestoId: pvPresupuestoId,
           presupuestoTotal: pvPresupuestoTotal,
@@ -229,6 +228,7 @@ export function HCCreatorForm({
       {/* Form area */}
       {tipoSeleccionado === 'primera_vez' && (
         <PrimeraConsultaForm
+          profesionalId={profesionalId}
           onChange={(state) => setPvState(state)}
           onGenerarPresupuesto={(items) => setPresupuestoModalItems(items)}
           obraSocialId={obraSocialId}
@@ -351,12 +351,13 @@ export function HCCreatorForm({
           <div className="flex-1" />
 
           {/* Generar presupuesto */}
-          {tipoSeleccionado === 'primera_vez' && !pvPresupuestoId && (pvState?.tratamientos?.length ?? 0) > 0 && (
+          {tipoSeleccionado === 'primera_vez' && !pvPresupuestoId && (pvState?.zonas.flatMap((z) => z.tratamientos).length ?? 0) > 0 && (
             <Button
               variant="outline"
               size="sm"
               onClick={() => {
-                const items = (pvState?.tratamientos ?? []).map((t) => ({
+                const tratamientosPlanos = pvState?.zonas.flatMap((z) => z.tratamientos) ?? [];
+                const items = tratamientosPlanos.map((t) => ({
                   descripcion: t.nombre,
                   precioTotal: t.precio,
                 }));

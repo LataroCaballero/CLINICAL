@@ -37,6 +37,7 @@ import {
   PrimeraConsultaForm,
   type PrimeraConsultaFormState,
 } from "@/components/live-turno/tabs/hc/PrimeraConsultaForm";
+import { useEffectiveProfessionalId } from "@/hooks/useEffectiveProfessionalId";
 
 type TurnoAgenda = {
   id: string;
@@ -87,6 +88,9 @@ export default function TurnoHCModal({
   const [saved, setSaved] = useState(false);
   const [patientDrawerOpen, setPatientDrawerOpen] = useState(false);
 
+  // Must be called before any early returns (rules of hooks)
+  const efectivoProfesionalId = useEffectiveProfessionalId();
+
   const pacienteId = turno?.paciente.id ?? "";
 
   const { data: hcEntries, isLoading } = useHistoriaClinica(pacienteId);
@@ -113,9 +117,7 @@ export default function TurnoHCModal({
   const canSave =
     tipoSeleccionado !== null &&
     (tipoSeleccionado === "primera_vez"
-      ? pvState !== null &&
-        (pvState.diagnostico.zonas.length > 0 ||
-          pvState.tratamientos.length > 0)
+      ? pvState !== null && pvState.zonas.length > 0
       : textoLibre.trim().length > 0);
 
   const handleSave = async () => {
@@ -129,8 +131,7 @@ export default function TurnoHCModal({
           dto: {
             tipo: "primera_vez",
             fecha,
-            diagnostico: pvState.diagnostico,
-            tratamientos: pvState.tratamientos,
+            zonas: pvState.zonas,
             comentario: pvState.comentario,
             autorizaciones: pvState.autorizacion
               ? [
@@ -225,6 +226,7 @@ export default function TurnoHCModal({
 
                 {tipoSeleccionado === "primera_vez" && (
                   <PrimeraConsultaForm
+                    profesionalId={efectivoProfesionalId}
                     onChange={setPvState}
                     onGenerarPresupuesto={() => {}}
                     obraSocialId={pacienteData?.obraSocialId}

@@ -9,7 +9,7 @@ Requisitos del milestone actual. Cada uno mapea a una fase del roadmap.
 
 ### Catálogo de Zonas en BD
 
-- [ ] **ZONA-01**: El catálogo de zonas/diagnósticos/tratamientos de HC se persiste en BD por profesional (reemplaza el JSON hardcodeado `zonas-diagnostico.json`)
+- [x] **ZONA-01**: El catálogo de zonas/diagnósticos/tratamientos de HC se persiste en BD por profesional (reemplaza el JSON hardcodeado `zonas-diagnostico.json`)
 - [ ] **ZONA-02**: Seed inicial con 6 zonas (Abdomen, Mamas, Nariz, Facial, Locales, Otros) con los diagnósticos y tratamientos actuales mapeados por zona (abdominoplastia→Abdomen, mastoplastia→Mamas, rinoplastia→Nariz, tratamiento_facial→Facial, lunar_cirugia_local→Locales)
 - [ ] **ZONA-03**: Facial y Locales arrancan con diagnósticos = [Otros] (hoy no tienen diagnósticos definidos)
 
@@ -70,7 +70,7 @@ Qué fases cubren qué requisitos.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| ZONA-01 | Phase 44 | Pending |
+| ZONA-01 | Phase 44 | Complete |
 | ZONA-02 | Phase 44 | Pending |
 | ZONA-03 | Phase 44 | Pending |
 | FORM-01 | Phase 45 | Pending |

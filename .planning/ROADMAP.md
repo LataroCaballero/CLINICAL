@@ -152,7 +152,7 @@ Full details: `.planning/milestones/v1.9-ROADMAP.md`
   2. Un profesional recién creado tiene automáticamente 6 zonas (Abdomen, Mamas, Nariz, Facial, Locales, Otros) con sus diagnósticos y tratamientos correspondientes (seed idempotente)
   3. Facial y Locales tienen exactamente un diagnóstico inicial: "Otros"; sus tratamientos (tratamiento_facial, lunar_cirugia_local) están presentes
   4. La API expone un endpoint GET para obtener el catálogo completo de zonas del profesional con diagnósticos y tratamientos anidados
-**Plans:** 3 plans
+**Plans:** 1/3 plans executed
 
 Plans:
 - [ ] 44-01-PLAN.md — Modelos Prisma ZonaHC/DiagnosticoHC/TratamientoHC + migración SQL manual (DDL)
@@ -241,7 +241,7 @@ Plans:
 | 41. Tipo de Entrada en Historia Clínica | v1.8 | 2/2 | Complete | 2026-06-08 |
 | 42. Estado Dual y TratamientosTab | v1.8 | 2/2 | Complete | 2026-06-09 |
 | 43. Archivar del Embudo CRM | v1.8 | 2/2 | Complete | 2026-06-09 |
-| 44. Schema + Catálogo en BD | v1.9 | 0/3 | Not started | — |
+| 44. Schema + Catálogo en BD | 1/3 | In Progress|  | — |
 | 45. Formulario Primera Consulta | v1.9 | 0/TBD | Not started | — |
 | 46. Auto-aprendizaje vía "Otros" | v1.9 | 0/TBD | Not started | — |
 | 47. Admin UI en Configuración | v1.9 | 0/TBD | Not started | — |

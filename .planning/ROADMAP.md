@@ -11,6 +11,7 @@
 - ✅ **v1.6 Agenda Operativa** — Fases 32–34 (shipped 2026-05-23)
 - ✅ **v1.7 CRM Flexible** — Fases 35–39 (shipped 2026-05-28)
 - ✅ **v1.8 Tipos de Turno y Flujo Clínico** — Fases 40–43 (shipped 2026-06-09)
+- 🔄 **v1.9 Plantilla Primera Consulta** — Fases 44–47 (in progress)
 
 ## Phases
 
@@ -131,6 +132,61 @@ Full details: `.planning/milestones/v1.8-ROADMAP.md`
 
 </details>
 
+### v1.9 Plantilla Primera Consulta (Fases 44–47) — IN PROGRESS
+
+- [ ] **Phase 44: Schema + Catálogo en BD** — Modelos Prisma ZonaHC/DiagnosticoHC/TratamientoHC por profesional, migración SQL manual, seed idempotente desde JSON actual
+- [ ] **Phase 45: Formulario Primera Consulta** — Rediseño PrimeraConsultaForm: zona como eje, grupos desplegables por zona, agrupación visual multi-zona, lookup de precios preservado
+- [ ] **Phase 46: Auto-aprendizaje vía "Otros"** — Persistencia de zonas/diagnósticos/tratamientos nuevos escritos; tratamientos aprendidos creados en catálogo de tratamientos (precio 0)
+- [ ] **Phase 47: Admin UI en Configuración** — Vista, renombrado y eliminación del catálogo de zonas/diagnósticos/tratamientos en Configuración
+
+Full details: `.planning/milestones/v1.9-ROADMAP.md`
+
+## Phase Details
+
+### Phase 44: Schema + Catálogo en BD
+**Goal:** El catálogo de zonas, diagnósticos y tratamientos de HC existe en PostgreSQL por profesional y está pre-cargado con los datos actuales del JSON hardcodeado
+**Depends on:** Nothing (first phase of v1.9)
+**Requirements:** ZONA-01, ZONA-02, ZONA-03
+**Success Criteria** (what must be TRUE):
+  1. Existen tablas ZonaHC, DiagnosticoHC, TratamientoHC en DB con FK al profesional; el JSON hardcodeado ya no es la fuente de verdad para nuevas instalaciones
+  2. Un profesional recién creado tiene automáticamente 6 zonas (Abdomen, Mamas, Nariz, Facial, Locales, Otros) con sus diagnósticos y tratamientos correspondientes (seed idempotente)
+  3. Facial y Locales tienen exactamente un diagnóstico inicial: "Otros"; sus tratamientos (tratamiento_facial, lunar_cirugia_local) están presentes
+  4. La API expone un endpoint GET para obtener el catálogo completo de zonas del profesional con diagnósticos y tratamientos anidados
+**Plans:** TBD
+
+### Phase 45: Formulario Primera Consulta
+**Goal:** El profesional ve y usa la plantilla de Primera Consulta con las zonas como eje: seleccionar una zona despliega sus diagnósticos y tratamientos, agrupados visualmente cuando hay múltiples zonas
+**Depends on:** Phase 44
+**Requirements:** FORM-01, FORM-02, FORM-03, FORM-04
+**Success Criteria** (what must be TRUE):
+  1. Al abrir la plantilla Primera Consulta, el profesional ve las zonas disponibles (Abdomen, Mamas, Nariz, Facial, Locales, Otros) antes de ver diagnósticos o tratamientos
+  2. Al seleccionar una zona, se despliega su grupo de diagnósticos y su grupo de tratamientos correspondientes; las zonas no seleccionadas permanecen colapsadas
+  3. Con dos o más zonas seleccionadas, los diagnósticos y tratamientos aparecen visualmente agrupados por zona (etiqueta de zona visible sobre cada grupo)
+  4. La HC guardada contiene la selección de diagnósticos/tratamientos agrupada por zona en su campo contenido (estructura que refleja el eje zona)
+  5. Al seleccionar un tratamiento, el sistema hace lookup del precio en el catálogo del profesional y el botón "Generar presupuesto" funciona igual que antes
+**Plans:** TBD
+
+### Phase 46: Auto-aprendizaje vía "Otros"
+**Goal:** Los campos "Otros" en zonas, diagnósticos y tratamientos persisten lo que el profesional escribe, enriqueciendo el catálogo para la próxima consulta; los tratamientos nuevos aparecen en el catálogo de tratamientos para poder asignarles precio
+**Depends on:** Phase 45
+**Requirements:** APR-01, APR-02, APR-03, APR-04
+**Success Criteria** (what must be TRUE):
+  1. Al escribir un nombre en el campo "Otros" de zona y guardar la HC, esa zona nueva aparece en la lista de zonas del formulario en la próxima consulta (con diagnóstico/tratamiento "Otros" como punto de partida)
+  2. Al escribir un nombre en el campo "Otros" de diagnósticos de cualquier zona y guardar, ese diagnóstico aparece en esa zona en la próxima consulta
+  3. Al escribir un nombre en el campo "Otros" de tratamientos de cualquier zona y guardar, ese tratamiento aparece en esa zona en la próxima consulta
+  4. Un tratamiento aprendido por primera vez aparece también en el catálogo de tratamientos del profesional (en Configuración → Tratamientos) con precio 0, listo para completar
+**Plans:** TBD
+
+### Phase 47: Admin UI en Configuración
+**Goal:** El profesional puede ver y mantener limpio su catálogo de zonas/diagnósticos/tratamientos desde Configuración, sin tocar código
+**Depends on:** Phase 44
+**Requirements:** ADM-01, ADM-02, ADM-03
+**Success Criteria** (what must be TRUE):
+  1. En Configuración existe una sección "Catálogo HC" donde el profesional ve todas sus zonas con sus diagnósticos y tratamientos anidados, expandibles
+  2. El profesional puede renombrar cualquier zona, diagnóstico o tratamiento con un edit inline o modal; el nuevo nombre se refleja de inmediato en el formulario Primera Consulta
+  3. El profesional puede eliminar una zona, diagnóstico o tratamiento; el ítem desaparece del formulario Primera Consulta; las HC históricas que lo registraron no se modifican (sus textos guardados quedan intactos)
+**Plans:** TBD
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -180,6 +236,10 @@ Full details: `.planning/milestones/v1.8-ROADMAP.md`
 | 41. Tipo de Entrada en Historia Clínica | v1.8 | 2/2 | Complete | 2026-06-08 |
 | 42. Estado Dual y TratamientosTab | v1.8 | 2/2 | Complete | 2026-06-09 |
 | 43. Archivar del Embudo CRM | v1.8 | 2/2 | Complete | 2026-06-09 |
+| 44. Schema + Catálogo en BD | v1.9 | 0/TBD | Not started | — |
+| 45. Formulario Primera Consulta | v1.9 | 0/TBD | Not started | — |
+| 46. Auto-aprendizaje vía "Otros" | v1.9 | 0/TBD | Not started | — |
+| 47. Admin UI en Configuración | v1.9 | 0/TBD | Not started | — |
 
 ---
-*Roadmap initialized: 2026-02-23 | v1.0 shipped: 2026-03-03 | v1.1 shipped: 2026-03-16 | v1.2 shipped: 2026-03-31 | v1.3 shipped: 2026-04-09 | v1.4 shipped: 2026-04-20 | v1.5 shipped: 2026-05-13 | v1.6 shipped: 2026-05-23 | v1.7 shipped: 2026-05-28 | v1.8 shipped: 2026-06-09*
+*Roadmap initialized: 2026-02-23 | v1.0 shipped: 2026-03-03 | v1.1 shipped: 2026-03-16 | v1.2 shipped: 2026-03-31 | v1.3 shipped: 2026-04-09 | v1.4 shipped: 2026-04-20 | v1.5 shipped: 2026-05-13 | v1.6 shipped: 2026-05-23 | v1.7 shipped: 2026-05-28 | v1.8 shipped: 2026-06-09 | v1.9 started: 2026-06-12*

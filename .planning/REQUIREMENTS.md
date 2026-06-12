@@ -66,30 +66,30 @@ Exclusiones explícitas. Documentadas para prevenir scope creep.
 
 ## Traceability
 
-Qué fases cubren qué requisitos. Se completa durante la creación del roadmap.
+Qué fases cubren qué requisitos.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| ZONA-01 | — | Pending |
-| ZONA-02 | — | Pending |
-| ZONA-03 | — | Pending |
-| FORM-01 | — | Pending |
-| FORM-02 | — | Pending |
-| FORM-03 | — | Pending |
-| FORM-04 | — | Pending |
-| APR-01 | — | Pending |
-| APR-02 | — | Pending |
-| APR-03 | — | Pending |
-| APR-04 | — | Pending |
-| ADM-01 | — | Pending |
-| ADM-02 | — | Pending |
-| ADM-03 | — | Pending |
+| ZONA-01 | Phase 44 | Pending |
+| ZONA-02 | Phase 44 | Pending |
+| ZONA-03 | Phase 44 | Pending |
+| FORM-01 | Phase 45 | Pending |
+| FORM-02 | Phase 45 | Pending |
+| FORM-03 | Phase 45 | Pending |
+| FORM-04 | Phase 45 | Pending |
+| APR-01 | Phase 46 | Pending |
+| APR-02 | Phase 46 | Pending |
+| APR-03 | Phase 46 | Pending |
+| APR-04 | Phase 46 | Pending |
+| ADM-01 | Phase 47 | Pending |
+| ADM-02 | Phase 47 | Pending |
+| ADM-03 | Phase 47 | Pending |
 
 **Coverage:**
 - v1.9 requirements: 14 total
-- Mapped to phases: 0
-- Unmapped: 14 ⚠️ (pendiente de roadmap)
+- Mapped to phases: 14
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-06-12*
-*Last updated: 2026-06-12 after initial definition*
+*Last updated: 2026-06-12 — Traceability complete after roadmap creation*

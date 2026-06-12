@@ -2,11 +2,11 @@
 gsd_state_version: 1.0
 milestone: v1.9
 milestone_name: Plantilla Primera Consulta
-status: defining-requirements
+status: roadmap-ready
 last_updated: "2026-06-12"
-last_activity: "2026-06-12 — Milestone v1.9 started (questioning complete, defining requirements)"
+last_activity: "2026-06-12 — Roadmap v1.9 creado: 4 fases (44–47), 14/14 requisitos mapeados"
 progress:
-  total_phases: 0
+  total_phases: 4
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -20,14 +20,18 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-12)
 
 **Core value:** Que un cirujano plástico cierre más cirugías — el sistema hace visible qué pacientes seguir, cuándo y cómo, de la manera más automatizada posible
-**Current focus:** Milestone v1.9 Plantilla Primera Consulta — defining requirements
+**Current focus:** Milestone v1.9 Plantilla Primera Consulta — Phase 44: Schema + Catálogo en BD
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-06-12 — Milestone v1.9 started
+Phase: 44 — Schema + Catálogo en BD
+Plan: Not started
+Status: Roadmap ready, awaiting first plan
+Last activity: 2026-06-12 — Roadmap created (4 phases, 14/14 requirements mapped)
+
+```
+Progress: ░░░░░░░░░░ 0% (0/4 phases)
+```
 
 ## Decisions
 
@@ -53,7 +57,16 @@ Last activity: 2026-06-12 — Milestone v1.9 started
 ### Relevant to v1.9
 - Plantilla actual: PrimeraConsultaForm.tsx consume frontend/src/lib/zonas-diagnostico.json (hardcodeado) vía zonas-diagnostico.ts
 - Zonas actuales en JSON: abdomen, Nariz, Mamas, Otros (diagnósticos); tratamientos en categorías separadas: abdominoplastia, mastoplastia, rinoplastia, lunar_cirugia_local, tratamiento_facial, otros
-- addTratamiento ya hace lookup en tratamientosProfesional (catálogo con precios) por nombre — punto de integración existente
+- Mapeo zona → tratamiento para seed: abdominoplastia→Abdomen, mastoplastia→Mamas, rinoplastia→Nariz, tratamiento_facial→Facial, lunar_cirugia_local→Locales
+- Facial y Locales: sin diagnósticos definidos hoy → arrancan con diagnósticos=[Otros] en v1.9
+- addTratamiento ya hace lookup en tratamientosProfesional (catálogo con precios) por nombre — punto de integración existente para APR-04
+- Catálogos per-profesional ya existen: cirugias-catalogo y tratamientos — patrón a seguir para ZonaHC
+- Migrate deploy (no dev) vía SQL manual — patrón pgBouncer establecido desde v1.2
+
+### Phase 44 Key Decisions (to make)
+- Nombres de modelos Prisma: ZonaHC / DiagnosticoHC / TratamientoHC (sugeridos, confirmar)
+- Orden de zonas en seed: definir campo `orden` o array ordenado
+- Endpoint pattern: GET /profesionales/:id/zonas-hc o GET /historia-clinica/zonas-catalogo
 
 ### Known Tech Debt (carry-forward)
 - LIVHC-05/PAC-01: tratamientos snapshot no se escribe cuando consumirInsumos=false

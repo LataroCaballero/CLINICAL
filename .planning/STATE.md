@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.9
 milestone_name: Plantilla Primera Consulta
 status: Roadmap ready, awaiting first plan
-last_updated: "2026-06-12T22:08:25.604Z"
+last_updated: "2026-06-12T22:48:00.605Z"
 last_activity: 2026-06-12 — Roadmap created (4 phases, 14/14 requirements mapped)
 progress:
   total_phases: 4
   completed_phases: 1
-  total_plans: 3
-  completed_plans: 3
+  total_plans: 6
+  completed_plans: 4
   percent: 0
 ---
 
@@ -41,6 +41,7 @@ Progress: ░░░░░░░░░░ 0% (0/4 phases)
 - [Phase 44-schema-cat-logo-en-bd]: Seed runs outside transaction in usuarios.service.crear() — failure warn-logged, lazy seed via GET covers any failure
 - [Phase 44-schema-cat-logo-en-bd]: crearZona() creates ZonaHC + Otros DiagnosticoHC + Otros TratamientoHC in  — Phase 46 reuses for APR-01
 - [Phase 44-schema-cat-logo-en-bd]: normalizarNombre: native NFD + combining-mark strip — no external dependencies for accent-insensitive price matching
+- [Phase 45-formulario-primera-consulta]: zonas[] present and non-empty triggers new grouped JSONB shape; empty array treated as legacy; legacy DTO fields kept for LiveTurnoFooter compatibility
 
 ## Accumulated Context
 

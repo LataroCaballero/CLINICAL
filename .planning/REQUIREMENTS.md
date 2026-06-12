@@ -17,7 +17,7 @@ Requisitos del milestone actual. Cada uno mapea a una fase del roadmap.
 
 - [ ] **FORM-01**: El profesional ve primero las zonas; al seleccionar una se despliega su grupo de diagnósticos y su grupo de tratamientos correspondientes
 - [ ] **FORM-02**: Con dos o más zonas seleccionadas, los diagnósticos y tratamientos se agrupan visualmente por zona
-- [ ] **FORM-03**: La entrada de HC guarda la selección de diagnósticos/tratamientos agrupada por zona
+- [x] **FORM-03**: La entrada de HC guarda la selección de diagnósticos/tratamientos agrupada por zona
 - [ ] **FORM-04**: Los tratamientos seleccionados mantienen el lookup de precio del catálogo del profesional y el flujo "Generar presupuesto" existente
 
 ### Auto-aprendizaje vía "Otros"
@@ -75,7 +75,7 @@ Qué fases cubren qué requisitos.
 | ZONA-03 | Phase 44 | Complete |
 | FORM-01 | Phase 45 | Pending |
 | FORM-02 | Phase 45 | Pending |
-| FORM-03 | Phase 45 | Pending |
+| FORM-03 | Phase 45 | Complete |
 | FORM-04 | Phase 45 | Pending |
 | APR-01 | Phase 46 | Pending |
 | APR-02 | Phase 46 | Pending |

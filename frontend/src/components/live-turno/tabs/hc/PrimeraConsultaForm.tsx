@@ -5,21 +5,22 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
-import { Plus } from 'lucide-react';
-import { ZONAS, CATEGORIAS_TRATAMIENTO, getSubzonas, getTratamientosCategoria } from '@/lib/zonas-diagnostico';
+import { Plus, Loader2 } from 'lucide-react';
+import { useCatalogoHC } from '@/hooks/useCatalogoHC';
 import { useTratamientosProfesional } from '@/hooks/useTratamientosProfesional';
+import type { ZonaHC, TratamientoHC } from '@/types/catalogo-hc';
 import type { PresupuestoItemInput } from '@/hooks/useCreatePresupuesto';
-import type { DiagnosticoDto, TratamientoItemDto } from '@/hooks/useCreateHistoriaClinicaEntry';
+import type { ZonaSeleccionDto, TratamientoItemDto } from '@/hooks/useCreateHistoriaClinicaEntry';
 import { AutorizacionCodigosForm, type AutorizacionFormState } from './AutorizacionCodigosForm';
 
 export interface PrimeraConsultaFormState {
-  diagnostico: DiagnosticoDto;
-  tratamientos: TratamientoItemDto[];
+  zonas: ZonaSeleccionDto[];
   comentario: string;
   autorizacion: AutorizacionFormState | null;
 }
 
 interface Props {
+  profesionalId?: string | null;
   onChange: (state: PrimeraConsultaFormState) => void;
   onGenerarPresupuesto: (items: PresupuestoItemInput[]) => void;
   obraSocialId?: string | null;
@@ -50,198 +51,199 @@ function Chip({
   );
 }
 
-const CATEGORIA_LABELS: Record<string, string> = {
-  abdominoplastia: 'Abdominoplastia',
-  mastoplastia: 'Mastoplastia',
-  rinoplastia: 'Rinoplastia',
-  lunar_cirugia_local: 'Lunar / Cir. Local',
-  tratamiento_facial: 'Tratamiento Facial',
-  otros: 'Otros',
-};
-
-export function PrimeraConsultaForm({ onChange, onGenerarPresupuesto, obraSocialId }: Props) {
-  const [zonasSeleccionadas, setZonasSeleccionadas] = useState<string[]>([]);
-  const [subzonasSeleccionadas, setSubzonasSeleccionadas] = useState<string[]>([]);
-  const [otroTextoZona, setOtroTextoZona] = useState('');
-  const [categoriaAbierta, setCategoriaAbierta] = useState<string | null>(null);
-  const [tratamientosSeleccionados, setTratamientosSeleccionados] = useState<TratamientoItemDto[]>([]);
+export function PrimeraConsultaForm({ profesionalId, onChange, onGenerarPresupuesto, obraSocialId }: Props) {
+  const [zonasSeleccionadas, setZonasSeleccionadas] = useState<ZonaSeleccionDto[]>([]);
+  const [otroTextos, setOtroTextos] = useState<Record<string, string>>({});
   const [comentario, setComentario] = useState('');
   const [mostrarComentario, setMostrarComentario] = useState(false);
   const [autorizacion, setAutorizacion] = useState<AutorizacionFormState | null>(null);
 
+  const { data: catalogo = [], isLoading } = useCatalogoHC(profesionalId ?? undefined, {
+    enabled: !!profesionalId,
+  });
   const { data: tratamientosProfesional = [] } = useTratamientosProfesional();
 
   const emitChange = (
-    zonas: string[],
-    subzonas: string[],
-    tratamientos: TratamientoItemDto[],
+    zonas: ZonaSeleccionDto[],
     coment: string,
-    aut: AutorizacionFormState | null = autorizacion,
+    aut: AutorizacionFormState | null,
   ) => {
-    onChange({
-      diagnostico: { zonas, subzonas, otroTexto: otroTextoZona },
-      tratamientos,
-      comentario: coment,
-      autorizacion: aut,
+    onChange({ zonas, comentario: coment, autorizacion: aut });
+  };
+
+  const toggleZona = (z: ZonaHC) => {
+    const exists = zonasSeleccionadas.find((s) => s.zonaId === z.id);
+    const next = exists
+      ? zonasSeleccionadas.filter((s) => s.zonaId !== z.id)
+      : [...zonasSeleccionadas, { zonaId: z.id, zona: z.nombre, diagnosticos: [], tratamientos: [] }];
+    setZonasSeleccionadas(next);
+    emitChange(next, comentario, autorizacion);
+  };
+
+  const toggleDiagnostico = (zonaId: string, nombre: string) => {
+    const next = zonasSeleccionadas.map((s) => {
+      if (s.zonaId !== zonaId) return s;
+      const hasDx = s.diagnosticos.includes(nombre);
+      return {
+        ...s,
+        diagnosticos: hasDx
+          ? s.diagnosticos.filter((d) => d !== nombre)
+          : [...s.diagnosticos, nombre],
+      };
     });
+    setZonasSeleccionadas(next);
+    emitChange(next, comentario, autorizacion);
   };
 
-  const toggleZona = (zona: string) => {
-    const nextZonas = zonasSeleccionadas.includes(zona)
-      ? zonasSeleccionadas.filter((z) => z !== zona)
-      : [...zonasSeleccionadas, zona];
-    const nextSubzonas = subzonasSeleccionadas.filter((s) =>
-      nextZonas.some((z) => getSubzonas(z).includes(s)),
-    );
-    setZonasSeleccionadas(nextZonas);
-    setSubzonasSeleccionadas(nextSubzonas);
-    emitChange(nextZonas, nextSubzonas, tratamientosSeleccionados, comentario);
-  };
-
-  const toggleSubzona = (subzona: string) => {
-    const next = subzonasSeleccionadas.includes(subzona)
-      ? subzonasSeleccionadas.filter((s) => s !== subzona)
-      : [...subzonasSeleccionadas, subzona];
-    setSubzonasSeleccionadas(next);
-    emitChange(zonasSeleccionadas, next, tratamientosSeleccionados, comentario);
-  };
-
-  const toggleCategoria = (cat: string) => {
-    setCategoriaAbierta((prev) => (prev === cat ? null : cat));
-  };
-
-  const addTratamiento = (nombre: string) => {
-    const found = tratamientosProfesional.find(
-      (t) => t.nombre.toLowerCase() === nombre.toLowerCase(),
+  const toggleTratamiento = (zonaId: string, t: TratamientoHC) => {
+    // FORM-04 price lookup: catalog already resolves precio via backend join;
+    // fallback covers items without FK
+    const fallback = tratamientosProfesional.find(
+      (tp) => tp.nombre.toLowerCase() === t.nombre.toLowerCase(),
     );
     const item: TratamientoItemDto = {
-      nombre,
-      tratamientoId: found?.id,
-      precio: found?.precio ?? 0,
+      nombre: t.nombre,
+      tratamientoId: t.tratamientoId ?? fallback?.id,
+      precio: t.precio ?? fallback?.precio ?? 0,
     };
-    const next = [...tratamientosSeleccionados, item];
-    setTratamientosSeleccionados(next);
-    emitChange(zonasSeleccionadas, subzonasSeleccionadas, next, comentario);
+
+    const next = zonasSeleccionadas.map((s) => {
+      if (s.zonaId !== zonaId) return s;
+      const idx = s.tratamientos.findIndex((tx) => tx.nombre === t.nombre);
+      return {
+        ...s,
+        tratamientos:
+          idx === -1
+            ? [...s.tratamientos, item]
+            : s.tratamientos.filter((_, i) => i !== idx),
+      };
+    });
+    setZonasSeleccionadas(next);
+    emitChange(next, comentario, autorizacion);
   };
 
-  const removeTratamiento = (index: number) => {
-    const next = tratamientosSeleccionados.filter((_, i) => i !== index);
-    setTratamientosSeleccionados(next);
-    emitChange(zonasSeleccionadas, subzonasSeleccionadas, next, comentario);
+  const handleOtroTextoChange = (zonaId: string, value: string) => {
+    setOtroTextos((prev) => ({ ...prev, [zonaId]: value }));
+    const next = zonasSeleccionadas.map((s) =>
+      s.zonaId === zonaId ? { ...s, otroTexto: value } : s,
+    );
+    setZonasSeleccionadas(next);
+    emitChange(next, comentario, autorizacion);
   };
 
   const handleComentarioChange = (val: string) => {
     setComentario(val);
-    emitChange(zonasSeleccionadas, subzonasSeleccionadas, tratamientosSeleccionados, val);
+    emitChange(zonasSeleccionadas, val, autorizacion);
   };
 
   const handleAutorizacionChange = (aut: AutorizacionFormState | null) => {
     setAutorizacion(aut);
-    emitChange(zonasSeleccionadas, subzonasSeleccionadas, tratamientosSeleccionados, comentario, aut);
+    emitChange(zonasSeleccionadas, comentario, aut);
   };
 
-  // All subzonas from selected zones (deduped)
-  const subzonasDisponibles = Array.from(
-    new Set(zonasSeleccionadas.flatMap((z) => getSubzonas(z))),
+  // Sorted catalog zones by orden
+  const zonasOrdenadas = [...catalogo].sort((a, b) => a.orden - b.orden);
+
+  // Selected zones in catalog order
+  const zonasSeleccionadasOrdenadas = zonasOrdenadas.filter((z) =>
+    zonasSeleccionadas.some((s) => s.zonaId === z.id),
   );
-
-  const handleGenerarPresupuesto = () => {
-    const items: PresupuestoItemInput[] = tratamientosSeleccionados.map((t) => ({
-      descripcion: t.nombre,
-      precioTotal: t.precio,
-    }));
-    onGenerarPresupuesto(items);
-  };
 
   return (
     <div className="space-y-5">
-      {/* Diagnóstico */}
+      {/* Zona chips */}
       <section className="space-y-3">
-        <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Diagnóstico</h3>
-        <div className="flex flex-wrap gap-2">
-          {ZONAS.map((zona) => (
-            <Chip
-              key={zona}
-              label={zona}
-              selected={zonasSeleccionadas.includes(zona)}
-              onClick={() => toggleZona(zona)}
-            />
-          ))}
-        </div>
+        <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Zonas</h3>
 
-        {/* Subzonas */}
-        {subzonasDisponibles.length > 0 && (
-          <div className="pl-2 border-l-2 border-blue-200 space-y-2">
-            <p className="text-xs text-muted-foreground font-medium">Subzonas</p>
-            <div className="flex flex-wrap gap-2">
-              {subzonasDisponibles.map((sub) => (
-                <Chip
-                  key={sub}
-                  label={sub}
-                  selected={subzonasSeleccionadas.includes(sub)}
-                  onClick={() => toggleSubzona(sub)}
-                />
-              ))}
-            </div>
+        {isLoading ? (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="w-4 h-4 animate-spin" />
+            Cargando catálogo...
           </div>
-        )}
-
-        {/* Otros text */}
-        {zonasSeleccionadas.includes('Otros') && (
-          <Input
-            value={otroTextoZona}
-            onChange={(e) => setOtroTextoZona(e.target.value)}
-            placeholder="Describir zona..."
-            className="mt-1"
-          />
+        ) : catalogo.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Sin catálogo disponible</p>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {zonasOrdenadas.map((zona) => (
+              <Chip
+                key={zona.id}
+                label={zona.nombre}
+                selected={zonasSeleccionadas.some((s) => s.zonaId === zona.id)}
+                onClick={() => toggleZona(zona)}
+              />
+            ))}
+          </div>
         )}
       </section>
 
-      {/* Tratamiento */}
-      <section className="space-y-3">
-        <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Tratamiento</h3>
-        {/* Categorías */}
-        <div className="flex flex-wrap gap-2">
-          {CATEGORIAS_TRATAMIENTO.map((cat) => (
-            <Chip
-              key={cat}
-              label={CATEGORIA_LABELS[cat] ?? cat}
-              selected={categoriaAbierta === cat}
-              onClick={() => toggleCategoria(cat)}
-            />
-          ))}
-        </div>
+      {/* Groups for selected zones */}
+      {zonasSeleccionadasOrdenadas.map((zona) => {
+        const selState = zonasSeleccionadas.find((s) => s.zonaId === zona.id)!;
+        const diagnosticosOrdenados = [...zona.diagnosticos].sort((a, b) => a.orden - b.orden);
+        const tratamientosOrdenados = [...zona.tratamientos].sort((a, b) => a.orden - b.orden);
+        const isOtros = zona.nombre.toLowerCase() === 'otros';
 
-        {/* Sub-tratamientos de la categoría seleccionada */}
-        {categoriaAbierta && (
-          <div className="pl-2 border-l-2 border-blue-200 space-y-2">
-            <p className="text-xs text-muted-foreground font-medium">Sub-tratamientos</p>
-            <div className="flex flex-wrap gap-2">
-              {getTratamientosCategoria(categoriaAbierta).map((nombre) => {
-                const idx = tratamientosSeleccionados.findIndex((t) => t.nombre === nombre);
-                const alreadyAdded = idx !== -1;
-                return (
-                  <button
-                    key={nombre}
-                    type="button"
-                    onClick={() => alreadyAdded ? removeTratamiento(idx) : addTratamiento(nombre)}
-                    className={cn(
-                      'px-3 py-1.5 rounded-full text-sm border transition-colors flex items-center gap-1',
-                      alreadyAdded
-                        ? 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700'
-                        : 'bg-white text-gray-700 border-gray-300 hover:border-blue-400',
-                    )}
-                  >
-                    {!alreadyAdded && <Plus className="w-3 h-3" />}
-                    {nombre}
-                  </button>
-                );
-              })}
-            </div>
+        return (
+          <div key={zona.id} className="pl-2 border-l-2 border-blue-200 space-y-3">
+            {/* Zone label */}
+            <p className="text-xs font-semibold uppercase text-blue-700">{zona.nombre}</p>
+
+            {/* Otros: free text input */}
+            {isOtros && (
+              <Input
+                value={otroTextos[zona.id] ?? ''}
+                onChange={(e) => handleOtroTextoChange(zona.id, e.target.value)}
+                placeholder="Describir zona..."
+              />
+            )}
+
+            {/* Diagnósticos */}
+            {diagnosticosOrdenados.length > 0 && (
+              <div className="space-y-1.5">
+                <p className="text-xs text-muted-foreground font-medium">Diagnósticos</p>
+                <div className="flex flex-wrap gap-2">
+                  {diagnosticosOrdenados.map((dx) => (
+                    <Chip
+                      key={dx.id}
+                      label={dx.nombre}
+                      selected={selState.diagnosticos.includes(dx.nombre)}
+                      onClick={() => toggleDiagnostico(zona.id, dx.nombre)}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Tratamientos */}
+            {tratamientosOrdenados.length > 0 && (
+              <div className="space-y-1.5">
+                <p className="text-xs text-muted-foreground font-medium">Tratamientos</p>
+                <div className="flex flex-wrap gap-2">
+                  {tratamientosOrdenados.map((t) => {
+                    const alreadyAdded = selState.tratamientos.some((tx) => tx.nombre === t.nombre);
+                    return (
+                      <button
+                        key={t.id}
+                        type="button"
+                        onClick={() => toggleTratamiento(zona.id, t)}
+                        className={cn(
+                          'px-3 py-1.5 rounded-full text-sm border transition-colors flex items-center gap-1',
+                          alreadyAdded
+                            ? 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700'
+                            : 'bg-white text-gray-700 border-gray-300 hover:border-blue-400',
+                        )}
+                      >
+                        {!alreadyAdded && <Plus className="w-3 h-3" />}
+                        {t.nombre}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
-        )}
-
-      </section>
+        );
+      })}
 
       {/* Comentario */}
       {!mostrarComentario ? (
@@ -267,7 +269,6 @@ export function PrimeraConsultaForm({ onChange, onGenerarPresupuesto, obraSocial
         obraSocialId={obraSocialId}
         onChange={handleAutorizacionChange}
       />
-
     </div>
   );
 }

@@ -13,6 +13,15 @@ export interface TratamientoItemDto {
   precio: number;
 }
 
+/** Selección de una zona en el formulario de primera consulta (v1.9) */
+export interface ZonaSeleccionDto {
+  zonaId: string;           // ZonaHC.id
+  zona: string;             // nombre snapshot, ej. "Abdomen"
+  diagnosticos: string[];   // nombres de diagnósticos seleccionados
+  otroTexto?: string;       // texto libre cuando la zona es "Otros"
+  tratamientos: TratamientoItemDto[]; // { nombre, tratamientoId?, precio }
+}
+
 export type TipoEntrada = 'primera_vez' | 'pre_quirurgico' | 'control' | 'practica' | 'tratamiento_en_consultorio' | 'libre';
 
 export interface CodigoPracticaEntradaDto {
@@ -31,9 +40,11 @@ export interface CreateEntradaDto {
   tipo: TipoEntrada;
   // Clasificación clínica (Phase 41) — distinto del `tipo` de plantilla
   tipoEntrada?: 'CONSULTA_CIRUGIA' | 'TRATAMIENTO' | 'CONTROL' | 'SEGUIMIENTO' | 'PREOPERATORIO';
-  // primera_vez
+  // primera_vez (legacy — se mantiene para auto-guardado de borrador en LiveTurnoFooter)
   diagnostico?: DiagnosticoDto;
   tratamientos?: TratamientoItemDto[];
+  // primera_vez (v1.9 — zona-céntrico)
+  zonas?: ZonaSeleccionDto[];
   comentario?: string;
   presupuestoId?: string;
   presupuestoTotal?: number;

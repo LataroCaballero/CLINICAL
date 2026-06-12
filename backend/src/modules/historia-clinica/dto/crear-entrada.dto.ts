@@ -19,6 +19,14 @@ export class TratamientoItemDto {
   precio: number;
 }
 
+export class ZonaSeleccionDto {
+  zonaId: string;
+  zona: string;
+  diagnosticos: string[];
+  otroTexto?: string;
+  tratamientos: TratamientoItemDto[];
+}
+
 export class CodigoPracticaEntradaDto {
   codigo: string;
   descripcion: string;
@@ -40,7 +48,12 @@ export class CreateEntradaDto {
     | 'tratamiento_en_consultorio'
     | 'libre';
 
-  // Para primera_vez
+  // Para primera_vez — forma nueva agrupada por zona (v1.9)
+  @IsOptional()
+  @IsArray()
+  zonas?: ZonaSeleccionDto[];
+
+  // Para primera_vez — forma legacy (LiveTurnoFooter draft / entradas históricas)
   diagnostico?: DiagnosticoDto;
   tratamientos?: TratamientoItemDto[];
   comentario?: string;
@@ -69,6 +82,17 @@ export class CreateEntradaDto {
   turnoId?: string; // Present when called from LiveTurno, null from PatientDrawer
 
   @IsOptional()
-  @IsEnum(['CONSULTA_CIRUGIA', 'TRATAMIENTO', 'CONTROL', 'SEGUIMIENTO', 'PREOPERATORIO'])
-  tipoEntrada?: 'CONSULTA_CIRUGIA' | 'TRATAMIENTO' | 'CONTROL' | 'SEGUIMIENTO' | 'PREOPERATORIO';
+  @IsEnum([
+    'CONSULTA_CIRUGIA',
+    'TRATAMIENTO',
+    'CONTROL',
+    'SEGUIMIENTO',
+    'PREOPERATORIO',
+  ])
+  tipoEntrada?:
+    | 'CONSULTA_CIRUGIA'
+    | 'TRATAMIENTO'
+    | 'CONTROL'
+    | 'SEGUIMIENTO'
+    | 'PREOPERATORIO';
 }

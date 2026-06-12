@@ -241,7 +241,7 @@ Plans:
 | 41. Tipo de Entrada en Historia Clínica | v1.8 | 2/2 | Complete | 2026-06-08 |
 | 42. Estado Dual y TratamientosTab | v1.8 | 2/2 | Complete | 2026-06-09 |
 | 43. Archivar del Embudo CRM | v1.8 | 2/2 | Complete | 2026-06-09 |
-| 44. Schema + Catálogo en BD | 3/3 | Complete   | 2026-06-12 | — |
+| 44. Schema + Catálogo en BD | 3/3 | Complete    | 2026-06-12 | — |
 | 45. Formulario Primera Consulta | v1.9 | 0/TBD | Not started | — |
 | 46. Auto-aprendizaje vía "Otros" | v1.9 | 0/TBD | Not started | — |
 | 47. Admin UI en Configuración | v1.9 | 0/TBD | Not started | — |

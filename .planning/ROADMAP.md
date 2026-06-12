@@ -169,7 +169,12 @@ Plans:
   3. Con dos o más zonas seleccionadas, los diagnósticos y tratamientos aparecen visualmente agrupados por zona (etiqueta de zona visible sobre cada grupo)
   4. La HC guardada contiene la selección de diagnósticos/tratamientos agrupada por zona en su campo contenido (estructura que refleja el eje zona)
   5. Al seleccionar un tratamiento, el sistema hace lookup del precio en el catálogo del profesional y el botón "Generar presupuesto" funciona igual que antes
-**Plans:** TBD
+**Plans:** 3 plans
+
+Plans:
+- [ ] 45-01-PLAN.md — Backend: DTO zonas[] + helpers de contenido agrupado por zona en historia-clinica (FORM-03)
+- [ ] 45-02-PLAN.md — Frontend: rediseño PrimeraConsultaForm con zona como eje + cableado HCCreatorForm/TurnoHCModal (FORM-01/02/04)
+- [ ] 45-03-PLAN.md — Lectores de historial dual-shape + borrar zonas-diagnostico.json + checkpoint visual
 
 ### Phase 46: Auto-aprendizaje vía "Otros"
 **Goal:** Los campos "Otros" en zonas, diagnósticos y tratamientos persisten lo que el profesional escribe, enriqueciendo el catálogo para la próxima consulta; los tratamientos nuevos aparecen en el catálogo de tratamientos para poder asignarles precio

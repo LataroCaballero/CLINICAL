@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.9
 milestone_name: Plantilla Primera Consulta
 status: Roadmap ready, awaiting first plan
-last_updated: "2026-06-12T21:37:07.335Z"
+last_updated: "2026-06-12T21:42:52.663Z"
 last_activity: 2026-06-12 — Roadmap created (4 phases, 14/14 requirements mapped)
 progress:
   total_phases: 4
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 3
-  completed_plans: 2
+  completed_plans: 3
   percent: 0
 ---
 
@@ -38,6 +38,9 @@ Progress: ░░░░░░░░░░ 0% (0/4 phases)
 (Full decision log in PROJECT.md Key Decisions table. Cleared on milestone completion.)
 - [Phase 44]: useCatalogoHC enabled guard via options?.enabled allows SECRETARIA/ADMIN to delay query until profesionalId available
 - [Phase 44-schema-cat-logo-en-bd]: Nombres definitivos: ZonaHC / DiagnosticoHC / TratamientoHC; profesionalId denormalizado en hijos sin @relation; esSistema en los 3 modelos; FK opcional TratamientoHC→Tratamiento con ON DELETE SET NULL
+- [Phase 44-schema-cat-logo-en-bd]: Seed runs outside transaction in usuarios.service.crear() — failure warn-logged, lazy seed via GET covers any failure
+- [Phase 44-schema-cat-logo-en-bd]: crearZona() creates ZonaHC + Otros DiagnosticoHC + Otros TratamientoHC in  — Phase 46 reuses for APR-01
+- [Phase 44-schema-cat-logo-en-bd]: normalizarNombre: native NFD + combining-mark strip — no external dependencies for accent-insensitive price matching
 
 ## Accumulated Context
 

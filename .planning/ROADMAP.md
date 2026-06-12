@@ -134,7 +134,7 @@ Full details: `.planning/milestones/v1.8-ROADMAP.md`
 
 ### v1.9 Plantilla Primera Consulta (Fases 44–47) — IN PROGRESS
 
-- [ ] **Phase 44: Schema + Catálogo en BD** — Modelos Prisma ZonaHC/DiagnosticoHC/TratamientoHC por profesional, migración SQL manual, seed idempotente desde JSON actual
+- [x] **Phase 44: Schema + Catálogo en BD** — Modelos Prisma ZonaHC/DiagnosticoHC/TratamientoHC por profesional, migración SQL manual, seed idempotente desde JSON actual (completed 2026-06-12)
 - [ ] **Phase 45: Formulario Primera Consulta** — Rediseño PrimeraConsultaForm: zona como eje, grupos desplegables por zona, agrupación visual multi-zona, lookup de precios preservado
 - [ ] **Phase 46: Auto-aprendizaje vía "Otros"** — Persistencia de zonas/diagnósticos/tratamientos nuevos escritos; tratamientos aprendidos creados en catálogo de tratamientos (precio 0)
 - [ ] **Phase 47: Admin UI en Configuración** — Vista, renombrado y eliminación del catálogo de zonas/diagnósticos/tratamientos en Configuración
@@ -152,7 +152,7 @@ Full details: `.planning/milestones/v1.9-ROADMAP.md`
   2. Un profesional recién creado tiene automáticamente 6 zonas (Abdomen, Mamas, Nariz, Facial, Locales, Otros) con sus diagnósticos y tratamientos correspondientes (seed idempotente)
   3. Facial y Locales tienen exactamente un diagnóstico inicial: "Otros"; sus tratamientos (tratamiento_facial, lunar_cirugia_local) están presentes
   4. La API expone un endpoint GET para obtener el catálogo completo de zonas del profesional con diagnósticos y tratamientos anidados
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 
 Plans:
 - [ ] 44-01-PLAN.md — Modelos Prisma ZonaHC/DiagnosticoHC/TratamientoHC + migración SQL manual (DDL)
@@ -241,7 +241,7 @@ Plans:
 | 41. Tipo de Entrada en Historia Clínica | v1.8 | 2/2 | Complete | 2026-06-08 |
 | 42. Estado Dual y TratamientosTab | v1.8 | 2/2 | Complete | 2026-06-09 |
 | 43. Archivar del Embudo CRM | v1.8 | 2/2 | Complete | 2026-06-09 |
-| 44. Schema + Catálogo en BD | 2/3 | In Progress|  | — |
+| 44. Schema + Catálogo en BD | 3/3 | Complete   | 2026-06-12 | — |
 | 45. Formulario Primera Consulta | v1.9 | 0/TBD | Not started | — |
 | 46. Auto-aprendizaje vía "Otros" | v1.9 | 0/TBD | Not started | — |
 | 47. Admin UI en Configuración | v1.9 | 0/TBD | Not started | — |

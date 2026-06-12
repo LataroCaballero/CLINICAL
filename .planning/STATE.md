@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.8
 milestone_name: Tipos de Turno y Flujo Clínico
 status: completed
-last_updated: "2026-06-09T02:53:34.800Z"
-last_activity: "2026-06-09 — Completed 43-02-PLAN.md (ARCH-04: archivar del embudo confirmed end-to-end)"
+last_updated: "2026-06-12T19:28:28.752Z"
+last_activity: "2026-06-12 - Completed quick task 1: Eliminar dropdown Tipo de consulta de HCCreatorForm — tipoEntrada inferido de la plantilla"
 progress:
   total_phases: 4
   completed_phases: 4
@@ -44,6 +44,12 @@ Next: /gsd:new-milestone para iniciar el próximo ciclo
 | 41 | Tipo de Entrada en Historia Clínica | HC-01..04 | Complete (2/2 plans done) |
 | 42 | Estado Dual y TratamientosTab | DUAL-01..03 | Complete (2/2 plans done) |
 | 43 | Archivar del Embudo CRM | ARCH-01..04 | Complete (2/2 plans done) |
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 1 | Eliminar dropdown Tipo de consulta de HCCreatorForm — tipoEntrada inferido de la plantilla | 2026-06-12 | 6886df7 | [1-eliminar-dropdown-tipo-de-consulta-de-hc](./quick/1-eliminar-dropdown-tipo-de-consulta-de-hc/) |
 
 ## Accumulated Context
 

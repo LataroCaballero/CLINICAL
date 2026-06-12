@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.9
 milestone_name: Plantilla Primera Consulta
-status: Roadmap ready, awaiting first plan
-last_updated: "2026-06-12T22:48:00.605Z"
-last_activity: 2026-06-12 — Roadmap created (4 phases, 14/14 requirements mapped)
+status: executing
+last_updated: "2026-06-12T22:50:09.469Z"
+last_activity: "2026-06-12 — 45-02 complete: PrimeraConsultaForm rediseñado zona-céntrico, ZonaSeleccionDto, consumers cableados"
 progress:
   total_phases: 4
   completed_phases: 1
   total_plans: 6
-  completed_plans: 4
-  percent: 0
+  completed_plans: 5
+  percent: 50
 ---
 
 # Project State
@@ -20,17 +20,17 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-12)
 
 **Core value:** Que un cirujano plástico cierre más cirugías — el sistema hace visible qué pacientes seguir, cuándo y cómo, de la manera más automatizada posible
-**Current focus:** Milestone v1.9 Plantilla Primera Consulta — Phase 44: Schema + Catálogo en BD
+**Current focus:** Milestone v1.9 Plantilla Primera Consulta — Phase 45: Formulario Primera Consulta
 
 ## Current Position
 
-Phase: 44 — Schema + Catálogo en BD
-Plan: Not started
-Status: Roadmap ready, awaiting first plan
-Last activity: 2026-06-12 — Roadmap created (4 phases, 14/14 requirements mapped)
+Phase: 45 — Formulario Primera Consulta
+Plan: 02 complete (45-02)
+Status: In progress — 2/3 plans complete in phase 45
+Last activity: 2026-06-12 — 45-02 complete: PrimeraConsultaForm rediseñado zona-céntrico, ZonaSeleccionDto, consumers cableados
 
 ```
-Progress: ░░░░░░░░░░ 0% (0/4 phases)
+Progress: ██████░░░░ 50% (2/4 phases — Phase 44 + partial 45)
 ```
 
 ## Decisions
@@ -42,6 +42,8 @@ Progress: ░░░░░░░░░░ 0% (0/4 phases)
 - [Phase 44-schema-cat-logo-en-bd]: crearZona() creates ZonaHC + Otros DiagnosticoHC + Otros TratamientoHC in  — Phase 46 reuses for APR-01
 - [Phase 44-schema-cat-logo-en-bd]: normalizarNombre: native NFD + combining-mark strip — no external dependencies for accent-insensitive price matching
 - [Phase 45-formulario-primera-consulta]: zonas[] present and non-empty triggers new grouped JSONB shape; empty array treated as legacy; legacy DTO fields kept for LiveTurnoFooter compatibility
+- [Phase 45-02]: PrimeraConsultaFormState reemplaza diagnostico/tratamientos planos por zonas: ZonaSeleccionDto[] — eje de toda la UX v1.9
+- [Phase 45-02]: useEffectiveProfessionalId llamado antes del early return en TurnoHCModal para cumplir reglas de hooks de React
 
 ## Accumulated Context
 

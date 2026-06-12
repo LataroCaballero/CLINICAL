@@ -169,7 +169,7 @@ Plans:
   3. Con dos o más zonas seleccionadas, los diagnósticos y tratamientos aparecen visualmente agrupados por zona (etiqueta de zona visible sobre cada grupo)
   4. La HC guardada contiene la selección de diagnósticos/tratamientos agrupada por zona en su campo contenido (estructura que refleja el eje zona)
   5. Al seleccionar un tratamiento, el sistema hace lookup del precio en el catálogo del profesional y el botón "Generar presupuesto" funciona igual que antes
-**Plans:** 1/3 plans executed
+**Plans:** 2/3 plans executed
 
 Plans:
 - [ ] 45-01-PLAN.md — Backend: DTO zonas[] + helpers de contenido agrupado por zona en historia-clinica (FORM-03)
@@ -247,7 +247,7 @@ Plans:
 | 42. Estado Dual y TratamientosTab | v1.8 | 2/2 | Complete | 2026-06-09 |
 | 43. Archivar del Embudo CRM | v1.8 | 2/2 | Complete | 2026-06-09 |
 | 44. Schema + Catálogo en BD | 3/3 | Complete    | 2026-06-12 | — |
-| 45. Formulario Primera Consulta | 1/3 | In Progress|  | — |
+| 45. Formulario Primera Consulta | 2/3 | In Progress|  | — |
 | 46. Auto-aprendizaje vía "Otros" | v1.9 | 0/TBD | Not started | — |
 | 47. Admin UI en Configuración | v1.9 | 0/TBD | Not started | — |
 

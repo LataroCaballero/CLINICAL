@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.9
 milestone_name: Plantilla Primera Consulta
 status: executing
-last_updated: "2026-06-12T22:50:09.469Z"
+last_updated: "2026-06-12T22:55:01.851Z"
 last_activity: "2026-06-12 — 45-02 complete: PrimeraConsultaForm rediseñado zona-céntrico, ZonaSeleccionDto, consumers cableados"
 progress:
   total_phases: 4
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 6
-  completed_plans: 5
+  completed_plans: 6
   percent: 50
 ---
 
@@ -44,6 +44,7 @@ Progress: ██████░░░░ 50% (2/4 phases — Phase 44 + partial 
 - [Phase 45-formulario-primera-consulta]: zonas[] present and non-empty triggers new grouped JSONB shape; empty array treated as legacy; legacy DTO fields kept for LiveTurnoFooter compatibility
 - [Phase 45-02]: PrimeraConsultaFormState reemplaza diagnostico/tratamientos planos por zonas: ZonaSeleccionDto[] — eje de toda la UX v1.9
 - [Phase 45-02]: useEffectiveProfessionalId llamado antes del early return en TurnoHCModal para cumplir reglas de hooks de React
+- [Phase 45-03]: Detección dual-shape via Array.isArray(contenido.zonas) — mismo patrón en los 3 lectores sin ruptura del legacy
 
 ## Accumulated Context
 

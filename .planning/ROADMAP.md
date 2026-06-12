@@ -135,7 +135,7 @@ Full details: `.planning/milestones/v1.8-ROADMAP.md`
 ### v1.9 Plantilla Primera Consulta (Fases 44–47) — IN PROGRESS
 
 - [x] **Phase 44: Schema + Catálogo en BD** — Modelos Prisma ZonaHC/DiagnosticoHC/TratamientoHC por profesional, migración SQL manual, seed idempotente desde JSON actual (completed 2026-06-12)
-- [ ] **Phase 45: Formulario Primera Consulta** — Rediseño PrimeraConsultaForm: zona como eje, grupos desplegables por zona, agrupación visual multi-zona, lookup de precios preservado
+- [x] **Phase 45: Formulario Primera Consulta** — Rediseño PrimeraConsultaForm: zona como eje, grupos desplegables por zona, agrupación visual multi-zona, lookup de precios preservado (completed 2026-06-12)
 - [ ] **Phase 46: Auto-aprendizaje vía "Otros"** — Persistencia de zonas/diagnósticos/tratamientos nuevos escritos; tratamientos aprendidos creados en catálogo de tratamientos (precio 0)
 - [ ] **Phase 47: Admin UI en Configuración** — Vista, renombrado y eliminación del catálogo de zonas/diagnósticos/tratamientos en Configuración
 
@@ -169,7 +169,7 @@ Plans:
   3. Con dos o más zonas seleccionadas, los diagnósticos y tratamientos aparecen visualmente agrupados por zona (etiqueta de zona visible sobre cada grupo)
   4. La HC guardada contiene la selección de diagnósticos/tratamientos agrupada por zona en su campo contenido (estructura que refleja el eje zona)
   5. Al seleccionar un tratamiento, el sistema hace lookup del precio en el catálogo del profesional y el botón "Generar presupuesto" funciona igual que antes
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 
 Plans:
 - [ ] 45-01-PLAN.md — Backend: DTO zonas[] + helpers de contenido agrupado por zona en historia-clinica (FORM-03)
@@ -247,7 +247,7 @@ Plans:
 | 42. Estado Dual y TratamientosTab | v1.8 | 2/2 | Complete | 2026-06-09 |
 | 43. Archivar del Embudo CRM | v1.8 | 2/2 | Complete | 2026-06-09 |
 | 44. Schema + Catálogo en BD | 3/3 | Complete    | 2026-06-12 | — |
-| 45. Formulario Primera Consulta | 2/3 | In Progress|  | — |
+| 45. Formulario Primera Consulta | 3/3 | Complete   | 2026-06-12 | — |
 | 46. Auto-aprendizaje vía "Otros" | v1.9 | 0/TBD | Not started | — |
 | 47. Admin UI en Configuración | v1.9 | 0/TBD | Not started | — |
 

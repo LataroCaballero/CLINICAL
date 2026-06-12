@@ -133,6 +133,7 @@ model Profesional {
   caeaVigentes       CaeaVigente[]
   cirugiasCatalogo   CirugiaCatalogo[]
   ordenesConsumo     OrdenConsumo[]
+  zonasHC            ZonaHC[]
 }
 
 model Secretaria {
@@ -903,6 +904,7 @@ model Tratamiento {
   updatedAt       DateTime    @updatedAt
   precioBase      Decimal?    @db.Decimal(10, 2)
   insumos         TratamientoInsumo[]
+  tratamientosHC  TratamientoHC[]
 
   @@unique([nombre, profesionalId])
   @@index([profesionalId, activo])
@@ -1352,4 +1354,59 @@ model MensajeWhatsApp {
   @@index([pacienteId, createdAt])
   @@index([estado])
   @@index([waMessageId])
+}
+
+// ─── Catálogo HC por profesional ────────────────────────────────────────────
+
+model ZonaHC {
+  id            String          @id @default(uuid())
+  nombre        String
+  orden         Int
+  activo        Boolean         @default(true)
+  esSistema     Boolean         @default(false)
+  profesionalId String
+  profesional   Profesional     @relation(fields: [profesionalId], references: [id])
+  diagnosticos  DiagnosticoHC[]
+  tratamientos  TratamientoHC[]
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@unique([nombre, profesionalId])
+  @@index([profesionalId, activo])
+}
+
+model DiagnosticoHC {
+  id            String   @id @default(uuid())
+  nombre        String
+  orden         Int      @default(0)
+  activo        Boolean  @default(true)
+  esSistema     Boolean  @default(false)
+  zonaId        String
+  zona          ZonaHC   @relation(fields: [zonaId], references: [id], onDelete: Cascade)
+  profesionalId String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([nombre, zonaId])
+  @@index([zonaId, activo])
+  @@index([profesionalId])
+}
+
+model TratamientoHC {
+  id            String       @id @default(uuid())
+  nombre        String
+  orden         Int          @default(0)
+  activo        Boolean      @default(true)
+  esSistema     Boolean      @default(false)
+  zonaId        String
+  zona          ZonaHC       @relation(fields: [zonaId], references: [id], onDelete: Cascade)
+  profesionalId String
+  tratamientoId String?
+  tratamiento   Tratamiento? @relation(fields: [tratamientoId], references: [id], onDelete: SetNull)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@unique([nombre, zonaId])
+  @@index([zonaId, activo])
+  @@index([profesionalId])
 }

@@ -52,14 +52,14 @@ completed: 2026-06-12
 
 # Phase 45 Plan 03: Lectores de historial con render dual-shape y eliminación de zonas-diagnostico Summary
 
-**Tres lectores de historial actualizados con branch dual-shape (zonas[] nuevo vs legacy), zonas-diagnostico hardcodeado eliminado; pendiente checkpoint de verificación visual del flujo completo**
+**Tres lectores de historial con branch dual-shape zonas[]/legacy, zonas-diagnostico hardcodeado eliminado, flujo completo verificado visualmente por el usuario en los 8 pasos**
 
 ## Performance
 
 - **Duration:** ~3 min
 - **Started:** 2026-06-12T22:51:43Z
-- **Completed:** 2026-06-12T22:53:55Z (checkpoint Task 3 pendiente)
-- **Tasks:** 2/3 completadas (Task 3 = checkpoint:human-verify)
+- **Completed:** 2026-06-12T23:00:00Z
+- **Tasks:** 3/3 completadas
 - **Files modified:** 3 modificados + 2 eliminados
 
 ## Accomplishments
@@ -74,8 +74,7 @@ Each task was committed atomically:
 
 1. **Task 1: Render dual-shape en los tres lectores de historial** - `c2e7ac2` (feat)
 2. **Task 2: Eliminar zonas-diagnostico hardcodeado** - `0b60476` (chore)
-
-_Task 3 (checkpoint:human-verify) pendiente de aprobación del usuario_
+3. **Task 3: Verificación visual del flujo completo** - checkpoint:human-verify, aprobado por usuario (no code changes)
 
 ## Files Created/Modified
 - `frontend/src/components/live-turno/tabs/hc/HistorialClinicoPanel.tsx` - Tipo ZonaContenido + branch dual-shape en render isPrimeraVez
@@ -100,9 +99,10 @@ None - plan ejecutado exactamente como estaba escrito para Task 1 y Task 2.
 None - no external service configuration required.
 
 ## Next Phase Readiness
-- Pending: Task 3 checkpoint:human-verify — usuario debe verificar los 8 pasos del flujo completo
-- Una vez aprobado Task 3, Phase 45 estará completa y los 5 criterios de éxito del milestone v1.9 estarán validados
+- Phase 45 completa: los 5 criterios de éxito del milestone v1.9 fueron validados visualmente por el usuario (8 pasos aprobados)
+- Milestone v1.9 Plantilla Primera Consulta: entregado — catálogo BD, formulario zona-céntrico, guardado agrupado, historial dual-shape
+- Sin blockers para el próximo trabajo
 
 ---
 *Phase: 45-formulario-primera-consulta*
-*Completed: 2026-06-12 (Tasks 1-2; Task 3 checkpoint pendiente)*
+*Completed: 2026-06-12*

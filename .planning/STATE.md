@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.9
 milestone_name: Plantilla Primera Consulta
 status: Roadmap ready, awaiting first plan
-last_updated: "2026-06-12T21:36:36.703Z"
+last_updated: "2026-06-12T21:37:07.335Z"
 last_activity: 2026-06-12 — Roadmap created (4 phases, 14/14 requirements mapped)
 progress:
   total_phases: 4
   completed_phases: 0
   total_plans: 3
-  completed_plans: 1
+  completed_plans: 2
   percent: 0
 ---
 
@@ -37,6 +37,7 @@ Progress: ░░░░░░░░░░ 0% (0/4 phases)
 
 (Full decision log in PROJECT.md Key Decisions table. Cleared on milestone completion.)
 - [Phase 44]: useCatalogoHC enabled guard via options?.enabled allows SECRETARIA/ADMIN to delay query until profesionalId available
+- [Phase 44-schema-cat-logo-en-bd]: Nombres definitivos: ZonaHC / DiagnosticoHC / TratamientoHC; profesionalId denormalizado en hijos sin @relation; esSistema en los 3 modelos; FK opcional TratamientoHC→Tratamiento con ON DELETE SET NULL
 
 ## Accumulated Context
 

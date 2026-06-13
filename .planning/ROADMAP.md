@@ -254,7 +254,7 @@ Plans:
 | 43. Archivar del Embudo CRM | v1.8 | 2/2 | Complete | 2026-06-09 |
 | 44. Schema + Catálogo en BD | 3/3 | Complete    | 2026-06-12 | — |
 | 45. Formulario Primera Consulta | 3/3 | Complete    | 2026-06-12 | — |
-| 46. Auto-aprendizaje vía "Otros" | 4/4 | Complete   | 2026-06-13 | — |
+| 46. Auto-aprendizaje vía "Otros" | 4/4 | Complete    | 2026-06-13 | — |
 | 47. Admin UI en Configuración | v1.9 | 0/TBD | Not started | — |
 
 ---

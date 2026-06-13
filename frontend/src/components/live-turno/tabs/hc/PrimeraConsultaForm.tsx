@@ -94,7 +94,7 @@ export function PrimeraConsultaForm({ profesionalId, onChange, onGenerarPresupue
   const { data: catalogo = [], isLoading } = useCatalogoHC(profesionalId ?? undefined, {
     enabled: !!profesionalId,
   });
-  const { data: tratamientosProfesional = [] } = useTratamientosProfesional();
+  const { data: tratamientosProfesional = [] } = useTratamientosProfesional(false, profesionalId ?? undefined);
 
   const emitChange = (
     zonas: ZonaSeleccionDto[],

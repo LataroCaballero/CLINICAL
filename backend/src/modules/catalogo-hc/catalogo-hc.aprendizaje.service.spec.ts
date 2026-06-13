@@ -13,8 +13,10 @@ function makeZonaSnap(
   id: string,
   nombre: string,
   activo: boolean,
-  diagnosticos: { id: string; nombre: string; activo: boolean }[] = [],
-  tratamientos: { id: string; nombre: string; activo: boolean }[] = [],
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  diagnosticos: any[] = [],
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  tratamientos: any[] = [],
   orden = 1,
   esSistema = false,
 ) {
@@ -111,8 +113,8 @@ describe('CatalogoHCService.aprenderDesdeZonas', () => {
       'Abdomen',
       true,
       [
-        { id: 'dx-1', nombre: 'Piel', activo: true },
-        { id: 'dx-2', nombre: 'Grasa', activo: true },
+        { id: 'dx-1', nombre: 'Piel', activo: true, orden: 1, esSistema: false },
+        { id: 'dx-2', nombre: 'Grasa', activo: true, orden: 2, esSistema: false },
         // orden 1 and 2, so next = 3
       ],
       [],

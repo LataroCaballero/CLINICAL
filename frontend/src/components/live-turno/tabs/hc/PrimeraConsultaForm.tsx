@@ -85,6 +85,9 @@ export function PrimeraConsultaForm({ profesionalId, onChange, onGenerarPresupue
   // Track de TratamientoItemDto nuevos por zonaId
   const [txNuevos, setTxNuevos] = useState<Record<string, TratamientoItemDto[]>>({});
 
+  // Toggle visibility of the "nueva zona" input (shown only when chip "Otros" is clicked)
+  const [zonaOtrosInputAbierto, setZonaOtrosInputAbierto] = useState(false);
+
   // Counter for stable temp IDs (avoids calling Date.now/Math.random during render)
   const zonaNuevaCounter = useRef(0);
 
@@ -362,22 +365,26 @@ export function PrimeraConsultaForm({ profesionalId, onChange, onGenerarPresupue
             {zonasConNuevas.map((zona) => {
               const isNueva = zonasNuevas.some((n) => n.id === zona.id);
               const isOtros = zona.nombre.toLowerCase() === 'otros';
-              // La zona "Otros" sistema siempre se renderiza como chip y su input está abajo
+              // Chip "Otros" alterna la visibilidad del input de zona nueva (mismo patrón que dx/tx)
               return (
                 <Chip
                   key={zona.id}
                   label={zona.nombre}
-                  selected={zonasSeleccionadas.some((s) => s.zonaId === zona.id)}
+                  selected={isOtros ? zonaOtrosInputAbierto : zonasSeleccionadas.some((s) => s.zonaId === zona.id)}
                   dashed={isNueva}
-                  onClick={() => (isOtros ? undefined : toggleZona(zona))}
+                  onClick={() =>
+                    isOtros
+                      ? setZonaOtrosInputAbierto((prev) => !prev)
+                      : toggleZona(zona)
+                  }
                 />
               );
             })}
           </div>
         )}
 
-        {/* Input para crear zona nueva (debajo de chips, en el contexto de la zona "Otros") */}
-        {catalogo.some((z) => z.nombre.toLowerCase() === 'otros') && (() => {
+        {/* Input para crear zona nueva — visible solo cuando el chip "Otros" está activo */}
+        {zonaOtrosInputAbierto && catalogo.some((z) => z.nombre.toLowerCase() === 'otros') && (() => {
           const zonaOtros = catalogo.find((z) => z.nombre.toLowerCase() === 'otros')!;
           return (
             <Input
@@ -392,6 +399,7 @@ export function PrimeraConsultaForm({ profesionalId, onChange, onGenerarPresupue
                 }
               }}
               placeholder="Nueva zona... (Enter para agregar)"
+              autoFocus
             />
           );
         })()}

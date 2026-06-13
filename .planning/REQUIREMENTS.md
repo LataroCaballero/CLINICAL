@@ -22,9 +22,9 @@ Requisitos del milestone actual. Cada uno mapea a una fase del roadmap.
 
 ### Auto-aprendizaje vía "Otros"
 
-- [ ] **APR-01**: Al seleccionar "Otros" como zona y escribir un nombre, la zona nueva se guarda en BD para ese profesional y despliega diagnóstico/tratamiento con la opción "Otros"
-- [ ] **APR-02**: Al seleccionar "Otros" en diagnósticos de cualquier zona y escribir un nombre, ese diagnóstico queda guardado en esa zona para la próxima vez
-- [ ] **APR-03**: Al seleccionar "Otros" en tratamientos de cualquier zona y escribir un nombre, ese tratamiento queda guardado en esa zona para la próxima vez
+- [x] **APR-01**: Al seleccionar "Otros" como zona y escribir un nombre, la zona nueva se guarda en BD para ese profesional y despliega diagnóstico/tratamiento con la opción "Otros"
+- [x] **APR-02**: Al seleccionar "Otros" en diagnósticos de cualquier zona y escribir un nombre, ese diagnóstico queda guardado en esa zona para la próxima vez
+- [x] **APR-03**: Al seleccionar "Otros" en tratamientos de cualquier zona y escribir un nombre, ese tratamiento queda guardado en esa zona para la próxima vez
 - [ ] **APR-04**: Un tratamiento aprendido se crea también en el catálogo de tratamientos del profesional (precio 0, a completar en Configuración)
 
 ### Admin UI en Configuración
@@ -77,9 +77,9 @@ Qué fases cubren qué requisitos.
 | FORM-02 | Phase 45 | Complete |
 | FORM-03 | Phase 45 | Complete |
 | FORM-04 | Phase 45 | Complete |
-| APR-01 | Phase 46 | Pending |
-| APR-02 | Phase 46 | Pending |
-| APR-03 | Phase 46 | Pending |
+| APR-01 | Phase 46 | Complete |
+| APR-02 | Phase 46 | Complete |
+| APR-03 | Phase 46 | Complete |
 | APR-04 | Phase 46 | Pending |
 | ADM-01 | Phase 47 | Pending |
 | ADM-02 | Phase 47 | Pending |

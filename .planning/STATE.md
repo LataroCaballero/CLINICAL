@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.9
 milestone_name: Plantilla Primera Consulta
 status: completed
-last_updated: "2026-06-12T23:16:05.835Z"
+last_updated: "2026-06-13T01:19:04.379Z"
 last_activity: "2026-06-12 — 45-03 complete: lectores historial dual-shape, zonas-diagnostico eliminado, flujo verificado"
 progress:
   total_phases: 4
   completed_phases: 2
-  total_plans: 6
-  completed_plans: 6
+  total_plans: 10
+  completed_plans: 7
   percent: 100
 ---
 
@@ -46,6 +46,8 @@ Progress: [██████████] 100% (all plans in active phases comp
 - [Phase 45-02]: useEffectiveProfessionalId llamado antes del early return en TurnoHCModal para cumplir reglas de hooks de React
 - [Phase 45-03]: Detección dual-shape via Array.isArray(contenido.zonas) — mismo patrón en los 3 lectores sin ruptura del legacy
 - [Phase 45-03]: Task 3 checkpoint:human-verify aprobado — flujo completo verificado en 8 pasos; milestone v1.9 Plantilla Primera Consulta entregado
+- [Phase 46-01]: formatearNombreAprendido usa spread Unicode para capitalización segura con acentos
+- [Phase 46-01]: detectarAprendizaje proceso en dos fases (zonas primero, luego dx/tx) para resolver nombres de zonas nuevas
 
 ## Accumulated Context
 

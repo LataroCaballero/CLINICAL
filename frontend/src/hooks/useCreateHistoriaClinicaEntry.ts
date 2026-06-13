@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
+import { CATALOGO_HC_QUERY_KEY } from '@/hooks/useCatalogoHC';
 
 export interface DiagnosticoDto {
   zonas: string[];
@@ -89,6 +90,8 @@ export function useCreateHistoriaClinicaEntry() {
       qc.invalidateQueries({ queryKey: ['autorizaciones'] });
       // Refrescar columna "Último tratamiento" en TratamientosTab
       qc.invalidateQueries({ queryKey: ['turnos', 'rango'] });
+      // Invalida catálogo HC: la próxima consulta trae zonas/dx/tx aprendidos silenciosamente (APR-01/02/03)
+      qc.invalidateQueries({ queryKey: [CATALOGO_HC_QUERY_KEY] });
     },
   });
 }

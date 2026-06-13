@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.9
 milestone_name: Plantilla Primera Consulta
 status: completed
-last_updated: "2026-06-13T01:19:04.379Z"
+last_updated: "2026-06-13T01:19:55.235Z"
 last_activity: "2026-06-12 — 45-03 complete: lectores historial dual-shape, zonas-diagnostico eliminado, flujo verificado"
 progress:
   total_phases: 4
   completed_phases: 2
   total_plans: 10
-  completed_plans: 7
+  completed_plans: 8
   percent: 100
 ---
 
@@ -20,14 +20,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-12)
 
 **Core value:** Que un cirujano plástico cierre más cirugías — el sistema hace visible qué pacientes seguir, cuándo y cómo, de la manera más automatizada posible
-**Current focus:** Milestone v1.9 Plantilla Primera Consulta — Phase 45: Formulario Primera Consulta
+**Current focus:** Milestone v1.9 Plantilla Primera Consulta — Phase 46: Auto-aprendizaje via Otros
 
 ## Current Position
 
-Phase: 45 — Formulario Primera Consulta
-Plan: 03 complete (45-03) — Phase 45 COMPLETE
-Status: Milestone v1.9 Plantilla Primera Consulta entregado — 3/3 plans Phase 45 complete
-Last activity: 2026-06-12 — 45-03 complete: lectores historial dual-shape, zonas-diagnostico eliminado, flujo verificado
+Phase: 46 — Auto-aprendizaje via Otros
+Plan: 03 complete (46-03) — 2/4 plans Phase 46 complete
+Status: In Progress — UX Enter→chip + invalidación catálogo frontend completo
+Last activity: 2026-06-13 — 46-03 complete: UX Enter→chip zona/dx/tx nuevos, chips punteados, invalidación CATALOGO_HC_QUERY_KEY
 
 ```
 Progress: [██████████] 100% (all plans in active phases complete)
@@ -48,6 +48,8 @@ Progress: [██████████] 100% (all plans in active phases comp
 - [Phase 45-03]: Task 3 checkpoint:human-verify aprobado — flujo completo verificado en 8 pasos; milestone v1.9 Plantilla Primera Consulta entregado
 - [Phase 46-01]: formatearNombreAprendido usa spread Unicode para capitalización segura con acentos
 - [Phase 46-01]: detectarAprendizaje proceso en dos fases (zonas primero, luego dx/tx) para resolver nombres de zonas nuevas
+- [Phase 46]: Chip Otros de dx/tx alterna input en lugar de togglear string literal — evita enviar Otros al backend
+- [Phase 46]: CATALOGO_HC_QUERY_KEY sin profesionalId en invalidateQueries — invalida todas las variantes cacheadas por prefijo
 
 ## Accumulated Context
 

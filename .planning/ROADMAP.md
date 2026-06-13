@@ -185,7 +185,7 @@ Plans:
   2. Al escribir un nombre en el campo "Otros" de diagnósticos de cualquier zona y guardar, ese diagnóstico aparece en esa zona en la próxima consulta
   3. Al escribir un nombre en el campo "Otros" de tratamientos de cualquier zona y guardar, ese tratamiento aparece en esa zona en la próxima consulta
   4. Un tratamiento aprendido por primera vez aparece también en el catálogo de tratamientos del profesional (en Configuración → Tratamientos) con precio 0, listo para completar
-**Plans:** 1/4 plans executed
+**Plans:** 2/4 plans executed
 
 Plans:
 - [ ] 46-01-PLAN.md — Motor puro de detección de aprendizaje (TDD): detectarAprendizaje + formato de nombres
@@ -254,7 +254,7 @@ Plans:
 | 43. Archivar del Embudo CRM | v1.8 | 2/2 | Complete | 2026-06-09 |
 | 44. Schema + Catálogo en BD | 3/3 | Complete    | 2026-06-12 | — |
 | 45. Formulario Primera Consulta | 3/3 | Complete    | 2026-06-12 | — |
-| 46. Auto-aprendizaje vía "Otros" | 1/4 | In Progress|  | — |
+| 46. Auto-aprendizaje vía "Otros" | 2/4 | In Progress|  | — |
 | 47. Admin UI en Configuración | v1.9 | 0/TBD | Not started | — |
 
 ---

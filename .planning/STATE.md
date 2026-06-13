@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.9
 milestone_name: Plantilla Primera Consulta
 status: completed
-last_updated: "2026-06-13T01:54:40.690Z"
+last_updated: "2026-06-13T02:20:01.300Z"
 last_activity: "2026-06-13 — 46-04 complete: verificacion end-to-end aprobada, fix zona input toggle, APR-01/02/03/04 cerrados"
 progress:
   total_phases: 4
   completed_phases: 3
-  total_plans: 10
-  completed_plans: 10
+  total_plans: 12
+  completed_plans: 11
   percent: 100
 ---
 
@@ -53,6 +53,9 @@ Progress: [██████████] 100% (all plans in active phases comp
 - [Phase 46]: aprenderDesdeZonas: best-effort error handling delegado al caller (crearEntrada try/catch)
 - [Phase 46]: matchMap Tratamiento actualizado inline para evitar duplicados dentro del mismo input
 - [Phase 46]: zonaOtrosInputAbierto state controla visibilidad del input de zona nueva — mismo patron toggle que dxInputAbierto/txInputAbierto
+- [Phase 47-01]: eliminarZona uses $transaction([array]) syntax (not callback) — pgBouncer-safe
+- [Phase 47-01]: Ownership check returns NotFoundException (not ForbiddenException) when profesionalId mismatches — avoids revealing existence of other professionals catalog items
+- [Phase 47-01]: P2002 catch on renombrar* methods — relays Prisma unique constraint as ConflictException without pre-check query overhead
 
 ## Accumulated Context
 

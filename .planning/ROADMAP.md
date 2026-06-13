@@ -201,7 +201,7 @@ Plans:
   1. En Configuración existe una sección "Catálogo HC" donde el profesional ve todas sus zonas con sus diagnósticos y tratamientos anidados, expandibles
   2. El profesional puede renombrar cualquier zona, diagnóstico o tratamiento con un edit inline o modal; el nuevo nombre se refleja de inmediato en el formulario Primera Consulta
   3. El profesional puede eliminar una zona, diagnóstico o tratamiento; el ítem desaparece del formulario Primera Consulta; las HC históricas que lo registraron no se modifican (sus textos guardados quedan intactos)
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 
 Plans:
 - [ ] 47-01-PLAN.md — Backend catalogo-hc: DTO + endpoints PATCH (renombrar) y DELETE (soft-delete) para zonas/diagnósticos/tratamientos con guard esSistema
@@ -259,7 +259,7 @@ Plans:
 | 44. Schema + Catálogo en BD | 3/3 | Complete    | 2026-06-12 | — |
 | 45. Formulario Primera Consulta | 3/3 | Complete    | 2026-06-12 | — |
 | 46. Auto-aprendizaje vía "Otros" | 4/4 | Complete    | 2026-06-13 | — |
-| 47. Admin UI en Configuración | v1.9 | 0/TBD | Not started | — |
+| 47. Admin UI en Configuración | 1/2 | In Progress|  | — |
 
 ---
 *Roadmap initialized: 2026-02-23 | v1.0 shipped: 2026-03-03 | v1.1 shipped: 2026-03-16 | v1.2 shipped: 2026-03-31 | v1.3 shipped: 2026-04-09 | v1.4 shipped: 2026-04-20 | v1.5 shipped: 2026-05-13 | v1.6 shipped: 2026-05-23 | v1.7 shipped: 2026-05-28 | v1.8 shipped: 2026-06-09 | v1.9 started: 2026-06-12*

@@ -1,14 +1,19 @@
 import {
   Controller,
   Get,
+  Patch,
+  Delete,
   Query,
   Req,
+  Param,
+  Body,
   ForbiddenException,
 } from '@nestjs/common';
 import { CatalogoHCService } from './catalogo-hc.service';
 import { Auth } from '../auth/decorators/auth.decorator';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { RolUsuario } from '@prisma/client';
+import { RenameItemDto } from './dto/rename-item.dto';
 
 @Controller('catalogo-hc')
 @Auth('ADMIN', 'PROFESIONAL', 'SECRETARIA')
@@ -56,5 +61,76 @@ export class CatalogoHCController {
   ) {
     const pid = await this.getProfesionalId(req.user, profesionalId);
     return this.service.getCatalogoConSeed(pid);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Rename endpoints
+  // ---------------------------------------------------------------------------
+
+  @Patch('zonas/:id')
+  async renombrarZona(
+    @Param('id') id: string,
+    @Body() dto: RenameItemDto,
+    @Req() req: any,
+    @Query('profesionalId') profesionalId?: string,
+  ) {
+    const pid = await this.getProfesionalId(req.user, profesionalId);
+    return this.service.renombrarZona(pid, id, dto.nombre);
+  }
+
+  @Patch('diagnosticos/:id')
+  async renombrarDiagnostico(
+    @Param('id') id: string,
+    @Body() dto: RenameItemDto,
+    @Req() req: any,
+    @Query('profesionalId') profesionalId?: string,
+  ) {
+    const pid = await this.getProfesionalId(req.user, profesionalId);
+    return this.service.renombrarDiagnostico(pid, id, dto.nombre);
+  }
+
+  @Patch('tratamientos/:id')
+  async renombrarTratamiento(
+    @Param('id') id: string,
+    @Body() dto: RenameItemDto,
+    @Req() req: any,
+    @Query('profesionalId') profesionalId?: string,
+  ) {
+    const pid = await this.getProfesionalId(req.user, profesionalId);
+    return this.service.renombrarTratamiento(pid, id, dto.nombre);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Soft-delete endpoints
+  // ---------------------------------------------------------------------------
+
+  @Delete('zonas/:id')
+  async eliminarZona(
+    @Param('id') id: string,
+    @Req() req: any,
+    @Query('profesionalId') profesionalId?: string,
+  ) {
+    const pid = await this.getProfesionalId(req.user, profesionalId);
+    return this.service.eliminarZona(pid, id);
+  }
+
+  @Delete('diagnosticos/:id')
+  async eliminarDiagnostico(
+    @Param('id') id: string,
+    @Req() req: any,
+    @Query('profesionalId') profesionalId?: string,
+  ) {
+    const pid = await this.getProfesionalId(req.user, profesionalId);
+    return this.service.eliminarDiagnostico(pid, id);
+  }
+
+  @Delete('tratamientos/:id')
+  async eliminarTratamiento(
+    @Param('id') id: string,
+    @Req() req: any,
+    @Query('profesionalId') profesionalId?: string,
+  ) {
+    const pid = await this.getProfesionalId(req.user, profesionalId);
+    return this.service.eliminarTratamiento(pid, id);
   }
 }

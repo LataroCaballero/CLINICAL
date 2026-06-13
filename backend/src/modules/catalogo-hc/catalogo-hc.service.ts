@@ -1,4 +1,10 @@
-import { Injectable, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  ForbiddenException,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { SEED_ZONAS, normalizarNombre } from './catalogo-hc.seed-data';
 import {
@@ -412,5 +418,142 @@ export class CatalogoHCService {
         },
       });
     }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Rename helpers
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Renames a ZonaHC. Guards: belongs to profesional, not esSistema.
+   * Throws ConflictException on duplicate name (P2002).
+   */
+  async renombrarZona(
+    profesionalId: string,
+    zonaId: string,
+    nombre: string,
+  ) {
+    const zona = await this.prisma.zonaHC.findUnique({ where: { id: zonaId } });
+    if (!zona || zona.profesionalId !== profesionalId) {
+      throw new NotFoundException('Zona no encontrada');
+    }
+    if (zona.esSistema) {
+      throw new ForbiddenException('No se puede modificar un ítem del sistema');
+    }
+    try {
+      return await this.prisma.zonaHC.update({ where: { id: zonaId }, data: { nombre } });
+    } catch (err: any) {
+      if (err?.code === 'P2002') {
+        throw new ConflictException('Ya existe un ítem con ese nombre en este perfil');
+      }
+      throw err;
+    }
+  }
+
+  /**
+   * Renames a DiagnosticoHC. Guards: belongs to profesional, not esSistema.
+   * Throws ConflictException on duplicate name (P2002).
+   */
+  async renombrarDiagnostico(
+    profesionalId: string,
+    diagnosticoId: string,
+    nombre: string,
+  ) {
+    const dx = await this.prisma.diagnosticoHC.findUnique({ where: { id: diagnosticoId } });
+    if (!dx || dx.profesionalId !== profesionalId) {
+      throw new NotFoundException('Diagnóstico no encontrado');
+    }
+    if (dx.esSistema) {
+      throw new ForbiddenException('No se puede modificar un ítem del sistema');
+    }
+    try {
+      return await this.prisma.diagnosticoHC.update({ where: { id: diagnosticoId }, data: { nombre } });
+    } catch (err: any) {
+      if (err?.code === 'P2002') {
+        throw new ConflictException('Ya existe un ítem con ese nombre en esta zona');
+      }
+      throw err;
+    }
+  }
+
+  /**
+   * Renames a TratamientoHC. Guards: belongs to profesional, not esSistema.
+   * Throws ConflictException on duplicate name (P2002).
+   */
+  async renombrarTratamiento(
+    profesionalId: string,
+    tratamientoHCId: string,
+    nombre: string,
+  ) {
+    const tx = await this.prisma.tratamientoHC.findUnique({ where: { id: tratamientoHCId } });
+    if (!tx || tx.profesionalId !== profesionalId) {
+      throw new NotFoundException('Tratamiento no encontrado');
+    }
+    if (tx.esSistema) {
+      throw new ForbiddenException('No se puede modificar un ítem del sistema');
+    }
+    try {
+      return await this.prisma.tratamientoHC.update({ where: { id: tratamientoHCId }, data: { nombre } });
+    } catch (err: any) {
+      if (err?.code === 'P2002') {
+        throw new ConflictException('Ya existe un ítem con ese nombre en esta zona');
+      }
+      throw err;
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Soft-delete helpers
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Soft-deletes a ZonaHC (activo=false) and cascades to its DiagnosticoHC
+   * and TratamientoHC rows via logical updateMany.
+   * Guards: belongs to profesional, not esSistema.
+   * NEVER calls prisma.*.delete().
+   */
+  async eliminarZona(profesionalId: string, zonaId: string) {
+    const zona = await this.prisma.zonaHC.findUnique({ where: { id: zonaId } });
+    if (!zona || zona.profesionalId !== profesionalId) {
+      throw new NotFoundException('Zona no encontrada');
+    }
+    if (zona.esSistema) {
+      throw new ForbiddenException('No se puede eliminar un ítem del sistema');
+    }
+    await this.prisma.$transaction([
+      this.prisma.zonaHC.update({ where: { id: zonaId }, data: { activo: false } }),
+      this.prisma.diagnosticoHC.updateMany({ where: { zonaId }, data: { activo: false } }),
+      this.prisma.tratamientoHC.updateMany({ where: { zonaId }, data: { activo: false } }),
+    ]);
+  }
+
+  /**
+   * Soft-deletes a DiagnosticoHC (activo=false).
+   * Guards: belongs to profesional, not esSistema.
+   */
+  async eliminarDiagnostico(profesionalId: string, diagnosticoId: string) {
+    const dx = await this.prisma.diagnosticoHC.findUnique({ where: { id: diagnosticoId } });
+    if (!dx || dx.profesionalId !== profesionalId) {
+      throw new NotFoundException('Diagnóstico no encontrado');
+    }
+    if (dx.esSistema) {
+      throw new ForbiddenException('No se puede eliminar un ítem del sistema');
+    }
+    return this.prisma.diagnosticoHC.update({ where: { id: diagnosticoId }, data: { activo: false } });
+  }
+
+  /**
+   * Soft-deletes a TratamientoHC (activo=false).
+   * Guards: belongs to profesional, not esSistema.
+   */
+  async eliminarTratamiento(profesionalId: string, tratamientoHCId: string) {
+    const tx = await this.prisma.tratamientoHC.findUnique({ where: { id: tratamientoHCId } });
+    if (!tx || tx.profesionalId !== profesionalId) {
+      throw new NotFoundException('Tratamiento no encontrado');
+    }
+    if (tx.esSistema) {
+      throw new ForbiddenException('No se puede eliminar un ítem del sistema');
+    }
+    return this.prisma.tratamientoHC.update({ where: { id: tratamientoHCId }, data: { activo: false } });
   }
 }

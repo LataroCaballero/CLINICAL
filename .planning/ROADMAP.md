@@ -259,7 +259,7 @@ Plans:
 | 44. Schema + Catálogo en BD | 3/3 | Complete    | 2026-06-12 | — |
 | 45. Formulario Primera Consulta | 3/3 | Complete    | 2026-06-12 | — |
 | 46. Auto-aprendizaje vía "Otros" | 4/4 | Complete    | 2026-06-13 | — |
-| 47. Admin UI en Configuración | 2/2 | Complete   | 2026-06-13 | — |
+| 47. Admin UI en Configuración | 2/2 | Complete    | 2026-06-13 | — |
 
 ---
 *Roadmap initialized: 2026-02-23 | v1.0 shipped: 2026-03-03 | v1.1 shipped: 2026-03-16 | v1.2 shipped: 2026-03-31 | v1.3 shipped: 2026-04-09 | v1.4 shipped: 2026-04-20 | v1.5 shipped: 2026-05-13 | v1.6 shipped: 2026-05-23 | v1.7 shipped: 2026-05-28 | v1.8 shipped: 2026-06-09 | v1.9 started: 2026-06-12*

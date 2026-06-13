@@ -29,7 +29,7 @@ Requisitos del milestone actual. Cada uno mapea a una fase del roadmap.
 
 ### Admin UI en Configuración
 
-- [ ] **ADM-01**: El profesional puede ver en Configuración el catálogo completo de zonas con sus diagnósticos y tratamientos
+- [x] **ADM-01**: El profesional puede ver en Configuración el catálogo completo de zonas con sus diagnósticos y tratamientos
 - [x] **ADM-02**: El profesional puede renombrar zonas, diagnósticos y tratamientos del catálogo
 - [x] **ADM-03**: El profesional puede eliminar zonas, diagnósticos y tratamientos (dejan de aparecer en la plantilla; las HC históricas no se modifican)
 
@@ -81,7 +81,7 @@ Qué fases cubren qué requisitos.
 | APR-02 | Phase 46 | Complete |
 | APR-03 | Phase 46 | Complete |
 | APR-04 | Phase 46 | Complete |
-| ADM-01 | Phase 47 | Pending |
+| ADM-01 | Phase 47 | Complete |
 | ADM-02 | Phase 47 | Complete |
 | ADM-03 | Phase 47 | Complete |
 

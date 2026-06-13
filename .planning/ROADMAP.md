@@ -136,7 +136,7 @@ Full details: `.planning/milestones/v1.8-ROADMAP.md`
 
 - [x] **Phase 44: Schema + Catálogo en BD** — Modelos Prisma ZonaHC/DiagnosticoHC/TratamientoHC por profesional, migración SQL manual, seed idempotente desde JSON actual (completed 2026-06-12)
 - [x] **Phase 45: Formulario Primera Consulta** — Rediseño PrimeraConsultaForm: zona como eje, grupos desplegables por zona, agrupación visual multi-zona, lookup de precios preservado (completed 2026-06-12)
-- [ ] **Phase 46: Auto-aprendizaje vía "Otros"** — Persistencia de zonas/diagnósticos/tratamientos nuevos escritos; tratamientos aprendidos creados en catálogo de tratamientos (precio 0)
+- [x] **Phase 46: Auto-aprendizaje vía "Otros"** — Persistencia de zonas/diagnósticos/tratamientos nuevos escritos; tratamientos aprendidos creados en catálogo de tratamientos (precio 0) (completed 2026-06-13)
 - [ ] **Phase 47: Admin UI en Configuración** — Vista, renombrado y eliminación del catálogo de zonas/diagnósticos/tratamientos en Configuración
 
 Full details: `.planning/milestones/v1.9-ROADMAP.md`
@@ -185,7 +185,7 @@ Plans:
   2. Al escribir un nombre en el campo "Otros" de diagnósticos de cualquier zona y guardar, ese diagnóstico aparece en esa zona en la próxima consulta
   3. Al escribir un nombre en el campo "Otros" de tratamientos de cualquier zona y guardar, ese tratamiento aparece en esa zona en la próxima consulta
   4. Un tratamiento aprendido por primera vez aparece también en el catálogo de tratamientos del profesional (en Configuración → Tratamientos) con precio 0, listo para completar
-**Plans:** 3/4 plans executed
+**Plans:** 4/4 plans complete
 
 Plans:
 - [ ] 46-01-PLAN.md — Motor puro de detección de aprendizaje (TDD): detectarAprendizaje + formato de nombres
@@ -254,7 +254,7 @@ Plans:
 | 43. Archivar del Embudo CRM | v1.8 | 2/2 | Complete | 2026-06-09 |
 | 44. Schema + Catálogo en BD | 3/3 | Complete    | 2026-06-12 | — |
 | 45. Formulario Primera Consulta | 3/3 | Complete    | 2026-06-12 | — |
-| 46. Auto-aprendizaje vía "Otros" | 3/4 | In Progress|  | — |
+| 46. Auto-aprendizaje vía "Otros" | 4/4 | Complete   | 2026-06-13 | — |
 | 47. Admin UI en Configuración | v1.9 | 0/TBD | Not started | — |
 
 ---

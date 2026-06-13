@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.9
 milestone_name: Plantilla Primera Consulta
 status: executing
-last_updated: "2026-06-13T01:42:11.679Z"
-last_activity: "2026-06-13 — 46-02 complete: aprenderDesdeZonas en BD con best-effort wiring en crearEntrada, APR-01/02/03/04 completados"
+last_updated: "2026-06-13T01:50:50.591Z"
+last_activity: "2026-06-13 — 46-04 complete: verificacion end-to-end aprobada, fix zona input toggle, fase 46 cerrada"
 progress:
   total_phases: 4
-  completed_phases: 2
+  completed_phases: 4
   total_plans: 10
-  completed_plans: 9
-  percent: 98
+  completed_plans: 10
+  percent: 100
 ---
 
 # Project State
@@ -25,9 +25,9 @@ See: .planning/PROJECT.md (updated 2026-06-12)
 ## Current Position
 
 Phase: 46 — Auto-aprendizaje via Otros
-Plan: 02 complete (46-02) — 3/4 plans Phase 46 complete
-Status: In Progress — aprenderDesdeZonas BD + best-effort wiring en crearEntrada completos
-Last activity: 2026-06-13 — 46-02 complete: aprenderDesdeZonas aplica AccionesAprendizaje en BD, APR-01/02/03/04 cerrados
+Plan: 04 complete (46-04) — 4/4 plans Phase 46 complete
+Status: Complete — Fase 46 cerrada, milestone v1.9 entregado
+Last activity: 2026-06-13 — 46-04 complete: verificacion end-to-end aprobada, fix zona input toggle, APR-01/02/03/04 cerrados
 
 ```
 Progress: [██████████] 100% (all plans in active phases complete)
@@ -52,6 +52,7 @@ Progress: [██████████] 100% (all plans in active phases comp
 - [Phase 46]: CATALOGO_HC_QUERY_KEY sin profesionalId en invalidateQueries — invalida todas las variantes cacheadas por prefijo
 - [Phase 46]: aprenderDesdeZonas: best-effort error handling delegado al caller (crearEntrada try/catch)
 - [Phase 46]: matchMap Tratamiento actualizado inline para evitar duplicados dentro del mismo input
+- [Phase 46]: zonaOtrosInputAbierto state controla visibilidad del input de zona nueva — mismo patron toggle que dxInputAbierto/txInputAbierto
 
 ## Accumulated Context
 

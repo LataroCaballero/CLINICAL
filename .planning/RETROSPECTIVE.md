@@ -4,6 +4,46 @@
 
 ---
 
+## Milestone: v1.9 — Plantilla Primera Consulta
+
+**Shipped:** 2026-06-13
+**Phases:** 4 (44–47) | **Plans:** 12 | **Timeline:** 1 day (2026-06-12 → 2026-06-13)
+
+### What Was Built
+- Catálogo de HC en BD por profesional: 3 modelos Prisma (ZonaHC/DiagnosticoHC/TratamientoHC) con FK + `esSistema` + soft-delete; migración DDL pura (`migrate deploy`); `CatalogoHCModule` con seed idempotente de 6 zonas (lazy + hook al crear PROFESIONAL); `GET /catalogo-hc` con anidados y precio resuelto — reemplaza `zonas-diagnostico.json` (eliminado)
+- PrimeraConsultaForm rediseñado zona-céntrico: zona como eje único, despliegue de diagnósticos/tratamientos por zona, agrupación visual multi-zona; HC persiste JSONB agrupado por zona vía helper puro `construirContenidoPrimeraVez` (dual-shape, sin migrar legacy); 3 lectores renderizan ambos shapes; lookup de precio catálogo→fallback preservado (FORM-04)
+- Auto-aprendizaje vía "Otros": motor puro `detectarAprendizaje` (TDD) + `aprenderDesdeZonas` best-effort post-transacción; zonas/diagnósticos/tratamientos nuevos persisten; tratamiento aprendido se crea en el catálogo del profesional con precio 0; UX Enter→chip
+- Admin UI "Catálogo HC" en Configuración: `PATCH` (rename) + `DELETE` (soft-delete con cascada lógica) con guard `esSistema` y detección de conflictos; hook `useCatalogoHCMutations`; componente `GestionCatalogoHC` expandible para PROFESIONAL y SECRETARIA — HC históricas intactas
+
+### What Worked
+- **Audit formal antes de completar**: `/gsd:audit-milestone` cruzó 3 fuentes (REQUIREMENTS `[x]` + SUMMARY frontmatter + VERIFICATION) y detectó un único gap de wiring (FORM-04 SECRETARIA price fallback) que se corrigió en el acto — el audit recuperó disciplina que v1.8 había salteado
+- **Pure-helper + TDD (reuso de v1.8)**: `construirContenidoPrimeraVez` y `detectarAprendizaje` se construyeron como módulos sin deps de framework con specs RED/GREEN — la lógica de agrupación y aprendizaje quedó cubierta antes de tocar el service
+- **Dual-shape sin migración**: `Array.isArray(contenido.zonas)` permitió convivir el formato nuevo con las entradas legacy sin backfill — las HC históricas quedan como snapshot, consistente con el out-of-scope declarado
+- **Best-effort post-transacción (patrón v1.4)**: el aprendizaje del catálogo no bloquea la creación de la entrada; resilience > exactitud, reutilizando el patrón de `crearTurno` step 5.5
+- **Velocidad**: 12 planes en 1 día apoyándose en catálogos per-profesional ya maduros (cirugias-catalogo, tratamientos) como plantilla para ZonaHC
+
+### What Was Inefficient
+- **MILESTONES.md accomplishments vacíos (4to milestone seguido)**: `gsd-tools milestone complete` volvió a devolver `accomplishments: []` — el campo `one_liner` sigue sin poblarse en los SUMMARY.md. Deuda de tooling acumulada: estandarizar `one_liner:` en el template o ajustar el extractor de una vez
+- **CLI sobrescribe el archivo de archivo milestone-scoped**: el `milestones/v1.9-ROADMAP.md` creado al definir el roadmap (78 líneas, scoped) fue reemplazado por el snapshot completo de ROADMAP.md (265 líneas) — consistente con v1.8 pero pierde el resumen scoped original
+- **Progress table malformada en ROADMAP (recurrente)**: las filas de v1.9 quedaron sin columna Milestone durante la ejecución — mismo síntoma que v1.8, corregido al completar
+
+### Patterns Established
+- **Dual-shape JSONB con discriminador `Array.isArray`**: para evolucionar la forma de un campo JSONB sin migrar registros históricos, ramificar por presencia de la nueva clave en cada lector
+- **Catálogo auto-enriquecido vía campo "Otros"**: capturar lo que el usuario escribe en el escape-hatch ("Otros") y persistirlo best-effort convierte un input libre en datos estructurados para la próxima vez
+- **`esSistema` flag para proteger seed**: marcar ítems del seed como inmutables permite exponer rename/delete al usuario sin riesgo de romper los puntos de partida del sistema
+
+### Key Lessons
+1. **Correr el audit formal paga**: v1.8 se completó sin audit; v1.9 lo corrió y atrapó un gap real de wiring antes de taggear — el cruce de 3 fuentes vale el paso extra
+2. **El escape-hatch ("Otros") es una fuente de datos, no solo un input libre**: diseñar la persistencia del campo libre desde el inicio convierte fricción en enriquecimiento del catálogo
+3. **La deuda de tooling no atendida se repite**: el campo `one_liner` vacío lleva 4 milestones de edición manual — los problemas de proceso conocidos hay que cerrarlos, no rodearlos cada vez
+
+### Cost Observations
+- Model: balanced profile (sonnet/opus mix)
+- Sessions: 12 plan executions en 1 día | 53 commits | 69 archivos (+9,331/-460)
+- Notable: milestone con audit formal previo (`status: passed`, 14/14 reqs, 23/23 integración, 3/3 flows) — el gap detectado se resolvió post-audit sin re-planificar fases
+
+---
+
 ## Milestone: v1.8 — Tipos de Turno y Flujo Clínico
 
 **Shipped:** 2026-06-09
@@ -302,6 +342,7 @@
 | v1.6 Agenda Operativa | 3 | 6 | 2 días | ~variable | Milestone más corto — scope UI-focused sin schema compleja, patrones reutilizados |
 | v1.7 CRM Flexible | 5 | 10 | 6 días | ~variable | Audit detectó 3 asimetrías cerradas en Phase 39; human-verify de UX como bottleneck |
 | v1.8 Tipos de Turno y Flujo Clínico | 4 | 8 | 2 días | ~variable | Milestone más rápido por plan — patrones CRM/HC maduros + migración data-only |
+| v1.9 Plantilla Primera Consulta | 4 | 12 | 1 día | ~variable | 12 planes en 1 día — catálogo en BD nuevo + dual-shape JSONB sin migración; audit formal retomado |
 
 ### Cumulative Quality
 
@@ -316,13 +357,15 @@
 | v1.6 | ~minimal | <10% | ninguna |
 | v1.7 | ~minimal | <10% | ninguna |
 | v1.8 | 10 TDD tests (resolverNuevoFlujo) | <10% | ninguna |
+| v1.9 | TDD tests (construirContenidoPrimeraVez, detectarAprendizaje, aprenderDesdeZonas, seed-data) | <10% | ninguna |
 
 ### Recurring Process Debt
 
-| Issue | v1.1 | v1.2 | v1.4 | v1.5 | v1.6 | v1.7 | v1.8 | Fix |
-|-------|------|------|------|------|------|------|------|-----|
-| MILESTONES.md accomplishments vacíos | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | Actualizar formato SUMMARY.md con `one_liner:` field |
-| STATE.md progress desactualizado durante ejecución | ✗ | parcial | parcial | parcial | parcial | parcial | parcial | GSD executor actualiza STATE al final de cada plan |
-| Integration bugs detectados tarde (audit, no verify) | — | ✗ | ✓ | ✓ | sin audit | ✓ | sin audit | Audit antes de complete-milestone elimina retrabajo |
-| Audit saltado antes de archivar | — | — | — | — | ✗ | ✓ | ✗ | Correr /gsd:audit-milestone antes de /gsd:complete-milestone |
-| Progress table ROADMAP desalineada durante ejecución | — | — | — | — | — | — | ✗ | Executor debe respetar header de columnas al agregar filas |
+| Issue | v1.1 | v1.2 | v1.4 | v1.5 | v1.6 | v1.7 | v1.8 | v1.9 | Fix |
+|-------|------|------|------|------|------|------|------|------|-----|
+| MILESTONES.md accomplishments vacíos | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | Actualizar formato SUMMARY.md con `one_liner:` field |
+| STATE.md progress desactualizado durante ejecución | ✗ | parcial | parcial | parcial | parcial | parcial | parcial | parcial | GSD executor actualiza STATE al final de cada plan |
+| Integration bugs detectados tarde (audit, no verify) | — | ✗ | ✓ | ✓ | sin audit | ✓ | sin audit | ✓ | Audit antes de complete-milestone elimina retrabajo |
+| Audit saltado antes de archivar | — | — | — | — | ✗ | ✓ | ✗ | ✓ | Correr /gsd:audit-milestone antes de /gsd:complete-milestone |
+| Progress table ROADMAP desalineada durante ejecución | — | — | — | — | — | — | ✗ | ✗ | Executor debe respetar header de columnas al agregar filas |
+| CLI sobrescribe archivo milestone-scoped con snapshot completo | — | — | — | — | — | — | — | ✗ | `milestone complete` debería preservar el ROADMAP scoped del roadmapper |

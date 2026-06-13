@@ -95,14 +95,14 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 - ✓ Estado dual: paciente CIRUGIA con turno/HC de tratamiento aparece simultáneamente en kanban CRM y TratamientosTab sin perder etapa — v1.8
 - ✓ TratamientosTab dual-source: turnos de tipo Tratamiento (fuente A) + Consultas con HC tipo TRATAMIENTO (fuente B) vía `tipoEntradaHC` en obtenerTurnosPorRango, columna "Consulta → Tratamiento" y filtro CONSULTA_TRATAMIENTO — v1.8
 - ✓ Archivar del embudo CRM: campo `crmArchivado`, endpoint `PATCH /pacientes/:id/crm-archivo` toggle, exclusión automática en getKanban/getListaAccion, botón "Archivar del embudo" con confirmación — v1.8
+- ✓ Catálogo de zonas/diagnósticos/tratamientos de HC en BD por profesional (ZonaHC/DiagnosticoHC/TratamientoHC, FK + esSistema + soft-delete), seed idempotente de 6 zonas desde el JSON anterior; reemplaza `zonas-diagnostico.json` — v1.9
+- ✓ Plantilla Primera Consulta con la zona como eje único: seleccionar zona despliega sus diagnósticos y tratamientos; multi-zona agrupada visualmente; HC persiste JSONB agrupado por zona (dual-shape); lookup de precio catálogo→fallback preservado — v1.9
+- ✓ Auto-aprendizaje vía "Otros": zonas/diagnósticos/tratamientos nuevos escritos se persisten en BD best-effort al crear la entrada y aparecen en la próxima consulta — v1.9
+- ✓ Tratamiento aprendido se crea también en el catálogo del profesional con precio 0 y FK opcional, listo para completar en Configuración — v1.9
+- ✓ Admin UI "Catálogo HC" en Configuración: ver, renombrar (PATCH) y eliminar (soft-delete con cascada lógica, guard esSistema) zonas/diagnósticos/tratamientos; HC históricas intactas — v1.9
 
 ### Active
 
-- [ ] Plantilla Primera Consulta: zonas como eje único con diagnósticos y tratamientos agrupados por zona (v1.9)
-- [ ] Catálogo de zonas/diagnósticos/tratamientos de HC en BD por profesional, con seed desde el JSON actual (v1.9)
-- [ ] Auto-aprendizaje vía "Otros": zonas, diagnósticos y tratamientos nuevos se persisten para la próxima vez (v1.9)
-- [ ] Tratamientos aprendidos se integran al catálogo del profesional (precio 0 a completar) (v1.9)
-- [ ] Admin UI en Configuración para editar/eliminar zonas, diagnósticos y tratamientos del catálogo HC (v1.9)
 - [ ] Automatizaciones de seguimiento: triggers basados en tiempo/etapa (ej. "30 días sin respuesta → mensaje automático")
 - [ ] Módulos financieros optimizados e interconectados con CRM
 - [ ] Página pública del paciente: historial, presupuestos, documentos
@@ -119,16 +119,13 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 - Eliminar el tipo "Cirugía" interno — la agenda quirúrgica lo requiere (v1.8)
 - tipoEntrada retroactivo en entradas HC legacy — backfill innecesario, se tratan como CONSULTA_CIRUGIA por defecto (v1.8)
 
-## Current Milestone: v1.9 Plantilla Primera Consulta
+## Next Milestone
 
-**Goal:** Rediseñar la plantilla de entrada de HC para Primera Consulta con la zona anatómica como eje único: seleccionar una zona despliega sus diagnósticos y tratamientos, agrupados por zona, con un catálogo en BD por profesional que aprende opciones nuevas vía "Otros".
+Por definir. Próximo paso: `/gsd:new-milestone` (questioning → research → requirements → roadmap).
 
-**Target features:**
-- Zonas primero (Abdomen, Mamas, Nariz, Facial, Locales, Otros): al seleccionar una se despliega su grupo de diagnóstico y tratamiento; selecciones múltiples agrupadas por zona
-- Catálogo de zonas/diagnósticos/tratamientos migrado del JSON hardcodeado a BD por profesional (seed con datos actuales; Facial y Locales arrancan con diagnósticos = [Otros] pero con sus tratamientos actuales)
-- Auto-aprendizaje vía "Otros" en todas las zonas: zona nueva escrita se persiste y arranca con diagnóstico/tratamiento "Otros"; diagnósticos/tratamientos nuevos escritos se guardan para la próxima vez
-- Tratamientos aprendidos se crean también en el catálogo del profesional (precio 0, a completar en Configuración)
-- Admin UI en Configuración para ver, renombrar y eliminar zonas/diagnósticos/tratamientos del catálogo HC
+## Shipped: v1.9 Plantilla Primera Consulta ✅
+
+14/14 requisitos completados en 1 día (2026-06-12 → 2026-06-13). 4 fases, 12 planes. Catálogo de zonas/diagnósticos/tratamientos de HC migrado del JSON hardcodeado a BD por profesional; PrimeraConsultaForm rediseñado con la zona como eje único y agrupación visual multi-zona; auto-aprendizaje vía "Otros" que persiste opciones nuevas y crea tratamientos en el catálogo (precio 0); Admin UI en Configuración para renombrar/eliminar. Ver `.planning/milestones/v1.9-ROADMAP.md` para detalles.
 
 ## Shipped: v1.8 Tipos de Turno y Flujo Clínico ✅
 
@@ -144,7 +141,9 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 
 ## Context
 
-**Estado actual (post-v1.8):** Los tipos de turno se simplificaron a 4 públicos (Consulta, Control, Pre-Quirúrgico, Tratamiento) más el tipo interno Cirugía para la agenda quirúrgica. Al cerrar la sesión de una HC, el profesional clasifica el tipo de entrada (CONSULTA_CIRUGIA, TRATAMIENTO, CONTROL, SEGUIMIENTO, PREOPERATORIO) y el sistema actualiza automáticamente el flujo del paciente y su etapa CRM. Un paciente de cirugía que también recibe tratamientos vive en estado dual: aparece en el kanban CRM y en la planilla de tratamientos simultáneamente, sin perder etapa. La secretaria puede archivar pacientes del embudo CRM (`crmArchivado`) sin eliminarlos: desaparecen del kanban y de la lista de acción pero siguen en el sistema. 17/17 requisitos v1.8 completados en 2 días (4 fases, 8 planes).
+**Estado actual (post-v1.9):** La plantilla de Primera Consulta de la HC ahora tiene la zona anatómica como eje único: el profesional selecciona una zona (Abdomen, Mamas, Nariz, Facial, Locales, Otros) y se despliegan sus diagnósticos y tratamientos; con varias zonas la selección se agrupa visualmente. El catálogo de zonas/diagnósticos/tratamientos vive en BD por profesional (modelos ZonaHC/DiagnosticoHC/TratamientoHC con seed idempotente, reemplazando el `zonas-diagnostico.json` hardcodeado) y se autoenriquece: lo que el profesional escribe en "Otros" se persiste para la próxima consulta, y un tratamiento aprendido aparece también en su catálogo de tratamientos con precio 0. Desde Configuración → "Catálogo HC" puede ver, renombrar y eliminar (soft-delete) cualquier ítem, sin afectar las HC históricas. 14/14 requisitos v1.9 completados en 1 día (4 fases, 12 planes).
+
+**Estado previo (post-v1.8):** Los tipos de turno se simplificaron a 4 públicos (Consulta, Control, Pre-Quirúrgico, Tratamiento) más el tipo interno Cirugía para la agenda quirúrgica. Al cerrar la sesión de una HC, el profesional clasifica el tipo de entrada (CONSULTA_CIRUGIA, TRATAMIENTO, CONTROL, SEGUIMIENTO, PREOPERATORIO) y el sistema actualiza automáticamente el flujo del paciente y su etapa CRM. Un paciente de cirugía que también recibe tratamientos vive en estado dual: aparece en el kanban CRM y en la planilla de tratamientos simultáneamente, sin perder etapa. La secretaria puede archivar pacientes del embudo CRM (`crmArchivado`) sin eliminarlos: desaparecen del kanban y de la lista de acción pero siguen en el sistema. 17/17 requisitos v1.8 completados en 2 días (4 fases, 8 planes).
 
 **Estado previo (post-v1.7):** El CRM kanban es un entorno de trabajo completo para la secretaria: arrastre libre entre etapas con warnings no bloqueantes, sheet lateral con badge de flujo, stepper de 7 etapas clickeable con acciones contextuales, y botones para registrar contacto y gestionar lista de espera. Las auto-transiciones del sistema nunca sobreescriben etapas avanzadas puestas a mano. Tech debt cosmético: variable `maybyCRMUpdate` (typo) en rechazar(), animación de cierre del sheet cortada, SHEET-04 dice 6 etapas pero se muestran 7 en cadena + PERDIDO separado.
 
@@ -228,6 +227,12 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 | Dual-source predicate client-side (fuente A OR B) en TratamientosTab — v1.8 | `tipoEntradaHC` expuesto vía nested select evita N+1; el predicado combina flujoPaciente y tipoTurno+tipoEntradaHC | ✓ Correcto — estado dual visible sin query extra |
 | Toggle endpoint `PATCH :id/crm-archivo` (patrón whatsapp-opt-in) — v1.8 | Reutiliza patrón existente de toggle booleano; un solo endpoint archiva y desarchiva | ✓ Correcto — filtros en getKanban/getListaAccion sin flags manuales |
 | Dialog-from-Sheet para confirmación de archivar — v1.8 | Radix Dialog dentro de Sheet evita conflictos z-index/focus-trap (mismo patrón que v1.7 ContactoRapidoModal) | ✓ Correcto — invalidación onSettled por key prefix cubre todas las variantes de profesionalId |
+| Catálogo HC con `profesionalId` denormalizado en hijos (sin @relation) — v1.9 | Solo ZonaHC tiene relación real a Profesional; evita relaciones inversas extra y simplifica queries por profesional en diagnósticos/tratamientos | ✓ Correcto — GET /catalogo-hc filtra por profesional sin joins adicionales |
+| `esSistema` Boolean en los 3 modelos del catálogo — v1.9 | Proteger ítems "Otros" del seed contra rename/delete del usuario; guard reutilizado en Phase 47 | ✓ Correcto — guard esSistema bloquea mutaciones sobre ítems del sistema |
+| JSONB dual-shape en HC (zonas[] vs legacy) sin migración — v1.9 | `Array.isArray(contenido.zonas)` distingue entradas v1.9+ de legacy; entradas históricas quedan como snapshot intacto | ✓ Correcto — 3 lectores renderizan ambos shapes sin backfill |
+| Helper puro `construirContenidoPrimeraVez`/`detectarAprendizaje` (TDD) — v1.9 | Lógica de agrupación y aprendizaje testeable sin deps NestJS/Prisma (patrón `*.flujo.helpers.ts`) | ✓ Correcto — motores cubiertos por specs RED/GREEN |
+| Aprendizaje `aprenderDesdeZonas` best-effort post-transacción — v1.9 | No bloquear la creación de la HC si el enriquecimiento del catálogo falla; resilience > exactitud (patrón v1.4 crearTurno step 5.5) | ✓ Correcto — la entrada se guarda aunque el aprendizaje falle |
+| Soft-delete con cascada lógica en catálogo HC (no hard delete) — v1.9 | Eliminar un ítem lo saca del formulario pero las HC históricas que lo registraron como texto quedan intactas | ✓ Correcto — ADM-03 verificado: historial sin cambios tras delete |
 
 ## Shipped: v1.1 Vista del Facturador ✅
 
@@ -250,4 +255,4 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 27/27 requisitos completados en 21 días (2026-04-22 → 2026-05-13). 6 fases, 16 planes. Tech debt aceptado: snapshot de tratamientos sin consumirInsumos y rol FACTURADOR en ordenes-consumo. Ver `.planning/milestones/v1.5-ROADMAP.md` para detalles.
 
 ---
-*Last updated: 2026-06-12 after starting milestone v1.9 Plantilla Primera Consulta*
+*Last updated: 2026-06-13 after v1.9 Plantilla Primera Consulta milestone*

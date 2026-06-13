@@ -1,5 +1,21 @@
 # Milestones
 
+## v1.9 Plantilla Primera Consulta (Shipped: 2026-06-13)
+
+**Phases completed:** 4 phases (44–47), 12 plans
+**Stats:** 1 día (2026-06-12 → 2026-06-13) | 69 archivos | +9,331 / -460 líneas | 53 commits
+**Requirements:** 14/14 v1.9 (ZONA-01..03, FORM-01..04, APR-01..04, ADM-01..03)
+
+**Key accomplishments:**
+1. Catálogo HC en BD por profesional (ZONA-01/02/03): 3 modelos Prisma nuevos (ZonaHC/DiagnosticoHC/TratamientoHC) con FK al profesional, flag `esSistema` y soft-delete; migración DDL pura (patrón pgBouncer `migrate deploy`); `CatalogoHCModule` con seed idempotente de 6 zonas (Abdomen, Mamas, Nariz, Facial, Locales, Otros) lazy + hook al crear usuario PROFESIONAL; `GET /catalogo-hc` con diagnósticos/tratamientos anidados y precio resuelto — reemplaza el JSON hardcodeado `zonas-diagnostico.json` (eliminado)
+2. PrimeraConsultaForm rediseñado zona-céntrico (FORM-01/02/03/04): la zona es el eje único, seleccionarla despliega sus grupos de diagnósticos y tratamientos; con dos o más zonas la selección se agrupa visualmente por zona; la HC persiste JSONB agrupado por zona vía helper puro `construirContenidoPrimeraVez` (dual-shape, sin migración de entradas legacy); 3 lectores de historial renderizan ambos shapes; lookup de precio catálogo→fallback `tratamientosProfesional` preservado con el flujo "Generar presupuesto"
+3. Auto-aprendizaje vía "Otros" (APR-01/02/03/04): motor puro `detectarAprendizaje` (TDD) computa zonas/diagnósticos/tratamientos a crear o reactivar; `aprenderDesdeZonas` aplica los cambios en BD best-effort post-transacción al crear la entrada; lo escrito en "Otros" persiste para la próxima consulta; un tratamiento aprendido se crea también en el catálogo del profesional con precio 0 y FK opcional; UX Enter→chip en el formulario
+4. Admin UI "Catálogo HC" en Configuración (ADM-01/02/03): endpoints `PATCH` (renombrar) y `DELETE` (soft-delete con cascada lógica a hijos) para zonas/diagnósticos/tratamientos con guard `esSistema` y detección de conflictos; hook `useCatalogoHCMutations` (6 mutations); componente `GestionCatalogoHC` con jerarquía expandible, rename inline y delete; pestaña cableada para PROFESIONAL y SECRETARIA — las HC históricas quedan intactas
+
+**Post-audit fix:** FORM-04 SECRETARIA price fallback — `PrimeraConsultaForm` forwards `profesionalId` a `useTratamientosProfesional` (commit 22a790e).
+
+---
+
 ## v1.8 Tipos de Turno y Flujo Clínico (Shipped: 2026-06-09)
 
 **Phases completed:** 4 phases (40–43), 8 plans

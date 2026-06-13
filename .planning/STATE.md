@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.9
 milestone_name: Plantilla Primera Consulta
 status: completed
-last_updated: "2026-06-13T02:39:03.866Z"
+last_updated: "2026-06-13T02:55:05.511Z"
 last_activity: "2026-06-13 — 47-02 complete: Admin UI catalogo HC (GestionCatalogoHC + useCatalogoHCMutations + pestaña Configuracion), ADM-01/02/03 cerrados, human-verify aprobado"
 progress:
   total_phases: 4
@@ -17,48 +17,24 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-06-12)
+See: .planning/PROJECT.md (updated 2026-06-13)
 
 **Core value:** Que un cirujano plástico cierre más cirugías — el sistema hace visible qué pacientes seguir, cuándo y cómo, de la manera más automatizada posible
-**Current focus:** Milestone v1.9 Plantilla Primera Consulta — Phase 46: Auto-aprendizaje via Otros
+**Current focus:** Planning next milestone (v1.9 shipped — `/gsd:new-milestone`)
 
 ## Current Position
 
-Phase: 47 — Admin UI en Configuración
-Plan: 02 complete (47-02) — 2/2 plans Phase 47 complete
-Status: Complete — Phase 47 cerrada, ADM-01/02/03 entregados
-Last activity: 2026-06-13 — 47-02 complete: Admin UI catalogo HC (GestionCatalogoHC + useCatalogoHCMutations + pestaña Configuracion), ADM-01/02/03 cerrados, human-verify aprobado
+Milestone: v1.9 Plantilla Primera Consulta — ✅ SHIPPED 2026-06-13
+Status: Complete — 4 fases (44–47), 12 planes, 14/14 requisitos. Tag v1.9.
+Last activity: 2026-06-13 — milestone v1.9 archivado (ROADMAP + REQUIREMENTS + audit en milestones/)
 
 ```
-Progress: [██████████] 100% (all plans in active phases complete)
+Progress: [██████████] 100% — milestone complete
 ```
 
 ## Decisions
 
 (Full decision log in PROJECT.md Key Decisions table. Cleared on milestone completion.)
-- [Phase 44]: useCatalogoHC enabled guard via options?.enabled allows SECRETARIA/ADMIN to delay query until profesionalId available
-- [Phase 44-schema-cat-logo-en-bd]: Nombres definitivos: ZonaHC / DiagnosticoHC / TratamientoHC; profesionalId denormalizado en hijos sin @relation; esSistema en los 3 modelos; FK opcional TratamientoHC→Tratamiento con ON DELETE SET NULL
-- [Phase 44-schema-cat-logo-en-bd]: Seed runs outside transaction in usuarios.service.crear() — failure warn-logged, lazy seed via GET covers any failure
-- [Phase 44-schema-cat-logo-en-bd]: crearZona() creates ZonaHC + Otros DiagnosticoHC + Otros TratamientoHC in  — Phase 46 reuses for APR-01
-- [Phase 44-schema-cat-logo-en-bd]: normalizarNombre: native NFD + combining-mark strip — no external dependencies for accent-insensitive price matching
-- [Phase 45-formulario-primera-consulta]: zonas[] present and non-empty triggers new grouped JSONB shape; empty array treated as legacy; legacy DTO fields kept for LiveTurnoFooter compatibility
-- [Phase 45-02]: PrimeraConsultaFormState reemplaza diagnostico/tratamientos planos por zonas: ZonaSeleccionDto[] — eje de toda la UX v1.9
-- [Phase 45-02]: useEffectiveProfessionalId llamado antes del early return en TurnoHCModal para cumplir reglas de hooks de React
-- [Phase 45-03]: Detección dual-shape via Array.isArray(contenido.zonas) — mismo patrón en los 3 lectores sin ruptura del legacy
-- [Phase 45-03]: Task 3 checkpoint:human-verify aprobado — flujo completo verificado en 8 pasos; milestone v1.9 Plantilla Primera Consulta entregado
-- [Phase 46-01]: formatearNombreAprendido usa spread Unicode para capitalización segura con acentos
-- [Phase 46-01]: detectarAprendizaje proceso en dos fases (zonas primero, luego dx/tx) para resolver nombres de zonas nuevas
-- [Phase 46]: Chip Otros de dx/tx alterna input en lugar de togglear string literal — evita enviar Otros al backend
-- [Phase 46]: CATALOGO_HC_QUERY_KEY sin profesionalId en invalidateQueries — invalida todas las variantes cacheadas por prefijo
-- [Phase 46]: aprenderDesdeZonas: best-effort error handling delegado al caller (crearEntrada try/catch)
-- [Phase 46]: matchMap Tratamiento actualizado inline para evitar duplicados dentro del mismo input
-- [Phase 46]: zonaOtrosInputAbierto state controla visibilidad del input de zona nueva — mismo patron toggle que dxInputAbierto/txInputAbierto
-- [Phase 47-01]: eliminarZona uses $transaction([array]) syntax (not callback) — pgBouncer-safe
-- [Phase 47-01]: Ownership check returns NotFoundException (not ForbiddenException) when profesionalId mismatches — avoids revealing existence of other professionals catalog items
-- [Phase 47-01]: P2002 catch on renombrar* methods — relays Prisma unique constraint as ConflictException without pre-check query overhead
-- [Phase 47-02]: GestionCatalogoHC enabled guard: profesionalId undefined → enabled true (PROFESIONAL, JWT resolves); profesionalId provided → enabled !!profesionalId (SECRETARIA)
-- [Phase 47-02]: Discriminated union { tipo: 'zona'|'diagnostico'|'tratamiento', id, nombreActual } for shared rename dialog avoids 3 separate dialog states
-- [Phase 47-02]: esSistema items show badge 'Sistema' with no rename/delete — Otros fully protected in UI
 
 ## Accumulated Context
 
@@ -77,19 +53,12 @@ Progress: [██████████] 100% (all plans in active phases comp
 - getKanban ACEPTADO-first para múltiples presupuestos (elimina falsos positivos)
 - HCCreatorForm reutilizable compartido entre LiveTurno y PatientDrawer
 
-### Relevant to v1.9
-- Plantilla actual: PrimeraConsultaForm.tsx consume frontend/src/lib/zonas-diagnostico.json (hardcodeado) vía zonas-diagnostico.ts
-- Zonas actuales en JSON: abdomen, Nariz, Mamas, Otros (diagnósticos); tratamientos en categorías separadas: abdominoplastia, mastoplastia, rinoplastia, lunar_cirugia_local, tratamiento_facial, otros
-- Mapeo zona → tratamiento para seed: abdominoplastia→Abdomen, mastoplastia→Mamas, rinoplastia→Nariz, tratamiento_facial→Facial, lunar_cirugia_local→Locales
-- Facial y Locales: sin diagnósticos definidos hoy → arrancan con diagnósticos=[Otros] en v1.9
-- addTratamiento ya hace lookup en tratamientosProfesional (catálogo con precios) por nombre — punto de integración existente para APR-04
-- Catálogos per-profesional ya existen: cirugias-catalogo y tratamientos — patrón a seguir para ZonaHC
-- Migrate deploy (no dev) vía SQL manual — patrón pgBouncer establecido desde v1.2
-
-### Phase 44 Key Decisions (to make)
-- Nombres de modelos Prisma: ZonaHC / DiagnosticoHC / TratamientoHC (sugeridos, confirmar)
-- Orden de zonas en seed: definir campo `orden` o array ordenado
-- Endpoint pattern: GET /profesionales/:id/zonas-hc o GET /historia-clinica/zonas-catalogo
+### Carry-forward from v1.9
+- Catálogo HC en BD: modelos ZonaHC / DiagnosticoHC / TratamientoHC por profesional (profesionalId denormalizado en hijos sin @relation; esSistema protege "Otros"); seed idempotente de 6 zonas; `GET /catalogo-hc` + `PATCH`/`DELETE` (soft-delete) por tipo; FK opcional TratamientoHC→Tratamiento (ON DELETE SET NULL)
+- HC primera_vez: JSONB dual-shape — `Array.isArray(contenido.zonas)` distingue v1.9+ (agrupado por zona) de legacy; helper puro `construirContenidoPrimeraVez`; 3 lectores de historial renderizan ambos shapes
+- Auto-aprendizaje: motor puro `detectarAprendizaje` + `aprenderDesdeZonas` best-effort post-transacción en crearEntrada; tratamiento aprendido se crea en catálogo del profesional con precio 0
+- `zonas-diagnostico.{ts,json}` eliminados — el catálogo en BD es la única fuente
+- useCatalogoHC enabled guard via options?.enabled (SECRETARIA/ADMIN delay query hasta tener profesionalId); CATALOGO_HC_QUERY_KEY invalidado por prefijo sin profesionalId
 
 ### Known Tech Debt (carry-forward)
 - LIVHC-05/PAC-01: tratamientos snapshot no se escribe cuando consumirInsumos=false

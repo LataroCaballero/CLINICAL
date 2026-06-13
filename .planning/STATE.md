@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.9
 milestone_name: Plantilla Primera Consulta
-status: completed
-last_updated: "2026-06-13T01:19:55.235Z"
-last_activity: "2026-06-12 — 45-03 complete: lectores historial dual-shape, zonas-diagnostico eliminado, flujo verificado"
+status: executing
+last_updated: "2026-06-13T01:42:11.679Z"
+last_activity: "2026-06-13 — 46-02 complete: aprenderDesdeZonas en BD con best-effort wiring en crearEntrada, APR-01/02/03/04 completados"
 progress:
   total_phases: 4
   completed_phases: 2
   total_plans: 10
-  completed_plans: 8
-  percent: 100
+  completed_plans: 9
+  percent: 98
 ---
 
 # Project State
@@ -25,9 +25,9 @@ See: .planning/PROJECT.md (updated 2026-06-12)
 ## Current Position
 
 Phase: 46 — Auto-aprendizaje via Otros
-Plan: 03 complete (46-03) — 2/4 plans Phase 46 complete
-Status: In Progress — UX Enter→chip + invalidación catálogo frontend completo
-Last activity: 2026-06-13 — 46-03 complete: UX Enter→chip zona/dx/tx nuevos, chips punteados, invalidación CATALOGO_HC_QUERY_KEY
+Plan: 02 complete (46-02) — 3/4 plans Phase 46 complete
+Status: In Progress — aprenderDesdeZonas BD + best-effort wiring en crearEntrada completos
+Last activity: 2026-06-13 — 46-02 complete: aprenderDesdeZonas aplica AccionesAprendizaje en BD, APR-01/02/03/04 cerrados
 
 ```
 Progress: [██████████] 100% (all plans in active phases complete)
@@ -50,6 +50,8 @@ Progress: [██████████] 100% (all plans in active phases comp
 - [Phase 46-01]: detectarAprendizaje proceso en dos fases (zonas primero, luego dx/tx) para resolver nombres de zonas nuevas
 - [Phase 46]: Chip Otros de dx/tx alterna input en lugar de togglear string literal — evita enviar Otros al backend
 - [Phase 46]: CATALOGO_HC_QUERY_KEY sin profesionalId en invalidateQueries — invalida todas las variantes cacheadas por prefijo
+- [Phase 46]: aprenderDesdeZonas: best-effort error handling delegado al caller (crearEntrada try/catch)
+- [Phase 46]: matchMap Tratamiento actualizado inline para evitar duplicados dentro del mismo input
 
 ## Accumulated Context
 

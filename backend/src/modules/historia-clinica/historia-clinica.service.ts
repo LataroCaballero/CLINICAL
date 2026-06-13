@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 import { CreateEntradaDto } from './dto/crear-entrada.dto';
@@ -7,13 +7,19 @@ import {
   construirContenidoPrimeraVez,
   derivarPerfilPrimeraVez,
 } from './historia-clinica.contenido.helpers';
+import { CatalogoHCService } from '../catalogo-hc/catalogo-hc.service';
 
 // Re-export so existing imports from this file still work
 export { resolverNuevoFlujo };
 
 @Injectable()
 export class HistoriaClinicaService {
-  constructor(private prisma: PrismaService) {}
+  private readonly logger = new Logger(HistoriaClinicaService.name);
+
+  constructor(
+    private prisma: PrismaService,
+    private catalogoHc: CatalogoHCService,
+  ) {}
 
   async obtenerHistoriaClinica(pacienteId: string) {
     const historia = await this.prisma.historiaClinica.findFirst({
@@ -203,7 +209,7 @@ export class HistoriaClinicaService {
       : null;
 
     // Una sola transacción: buscar/crear historia + crear entrada + actualizar paciente
-    return this.prisma.$transaction(async (tx) => {
+    const entrada = await this.prisma.$transaction(async (tx) => {
       let historia = await tx.historiaClinica.findFirst({
         where: { pacienteId },
       });
@@ -294,5 +300,26 @@ export class HistoriaClinicaService {
 
       return entrada;
     });
+
+    // Best-effort catalog learning — must run AFTER the transaction commits so only
+    // successfully saved HC entries enrich the catalog. Never blocks the response.
+    if (dto.tipo === 'primera_vez' && Array.isArray(dto.zonas) && dto.zonas.length > 0) {
+      try {
+        await this.catalogoHc.aprenderDesdeZonas(
+          profesionalId,
+          dto.zonas.map((z) => ({
+            zona: z.zona,
+            diagnosticos: z.diagnosticos ?? [],
+            tratamientos: (z.tratamientos ?? []).map((t) => ({ nombre: t.nombre })),
+          })),
+        );
+      } catch (e) {
+        this.logger.warn(
+          `Aprendizaje de catálogo HC falló (no bloqueante): ${e?.message ?? e}`,
+        );
+      }
+    }
+
+    return entrada;
   }
 }

@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.9
 milestone_name: Plantilla Primera Consulta
 status: completed
-last_updated: "2026-06-13T02:20:01.300Z"
-last_activity: "2026-06-13 — 46-04 complete: verificacion end-to-end aprobada, fix zona input toggle, APR-01/02/03/04 cerrados"
+last_updated: "2026-06-13T02:30:00.000Z"
+last_activity: "2026-06-13 — 47-02 complete: Admin UI catalogo HC (GestionCatalogoHC + useCatalogoHCMutations + pestaña Configuracion), ADM-01/02/03 cerrados, human-verify aprobado"
 progress:
   total_phases: 4
   completed_phases: 3
   total_plans: 12
-  completed_plans: 11
+  completed_plans: 12
   percent: 100
 ---
 
@@ -24,10 +24,10 @@ See: .planning/PROJECT.md (updated 2026-06-12)
 
 ## Current Position
 
-Phase: 46 — Auto-aprendizaje via Otros
-Plan: 04 complete (46-04) — 4/4 plans Phase 46 complete
-Status: Complete — Fase 46 cerrada, milestone v1.9 entregado
-Last activity: 2026-06-13 — 46-04 complete: verificacion end-to-end aprobada, fix zona input toggle, APR-01/02/03/04 cerrados
+Phase: 47 — Admin UI en Configuración
+Plan: 02 complete (47-02) — 2/2 plans Phase 47 complete
+Status: Complete — Phase 47 cerrada, ADM-01/02/03 entregados
+Last activity: 2026-06-13 — 47-02 complete: Admin UI catalogo HC (GestionCatalogoHC + useCatalogoHCMutations + pestaña Configuracion), ADM-01/02/03 cerrados, human-verify aprobado
 
 ```
 Progress: [██████████] 100% (all plans in active phases complete)
@@ -56,6 +56,9 @@ Progress: [██████████] 100% (all plans in active phases comp
 - [Phase 47-01]: eliminarZona uses $transaction([array]) syntax (not callback) — pgBouncer-safe
 - [Phase 47-01]: Ownership check returns NotFoundException (not ForbiddenException) when profesionalId mismatches — avoids revealing existence of other professionals catalog items
 - [Phase 47-01]: P2002 catch on renombrar* methods — relays Prisma unique constraint as ConflictException without pre-check query overhead
+- [Phase 47-02]: GestionCatalogoHC enabled guard: profesionalId undefined → enabled true (PROFESIONAL, JWT resolves); profesionalId provided → enabled !!profesionalId (SECRETARIA)
+- [Phase 47-02]: Discriminated union { tipo: 'zona'|'diagnostico'|'tratamiento', id, nombreActual } for shared rename dialog avoids 3 separate dialog states
+- [Phase 47-02]: esSistema items show badge 'Sistema' with no rename/delete — Otros fully protected in UI
 
 ## Accumulated Context
 

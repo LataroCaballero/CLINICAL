@@ -3,7 +3,9 @@ import { resolverNuevoFlujo } from './historia-clinica.flujo.helpers';
 describe('resolverNuevoFlujo', () => {
   // Test 1: CONSULTA_CIRUGIA + PENDIENTE → CIRUGIA
   it('CONSULTA_CIRUGIA + PENDIENTE → CIRUGIA', () => {
-    expect(resolverNuevoFlujo('CONSULTA_CIRUGIA', 'PENDIENTE', false)).toBe('CIRUGIA');
+    expect(resolverNuevoFlujo('CONSULTA_CIRUGIA', 'PENDIENTE', false)).toBe(
+      'CIRUGIA',
+    );
   });
 
   // Test 2: CONSULTA_CIRUGIA + CIRUGIA → null (sin cambio)
@@ -13,7 +15,9 @@ describe('resolverNuevoFlujo', () => {
 
   // Test 3: TRATAMIENTO + PENDIENTE → TRATAMIENTO
   it('TRATAMIENTO + PENDIENTE → TRATAMIENTO', () => {
-    expect(resolverNuevoFlujo('TRATAMIENTO', 'PENDIENTE', false)).toBe('TRATAMIENTO');
+    expect(resolverNuevoFlujo('TRATAMIENTO', 'PENDIENTE', false)).toBe(
+      'TRATAMIENTO',
+    );
   });
 
   // Test 4: TRATAMIENTO + CIRUGIA → null (dual-state preservado, HC-04)
@@ -43,7 +47,9 @@ describe('resolverNuevoFlujo', () => {
 
   // Test 9: esCirugia guard — CONSULTA_CIRUGIA + PENDIENTE + esCirugia=true → null
   it('esCirugia=true omite el cambio de flujo (criterio 5)', () => {
-    expect(resolverNuevoFlujo('CONSULTA_CIRUGIA', 'PENDIENTE', true)).toBeNull();
+    expect(
+      resolverNuevoFlujo('CONSULTA_CIRUGIA', 'PENDIENTE', true),
+    ).toBeNull();
   });
 
   // Test 10: tipoEntrada undefined → null (entradas legacy / sin clasificar)

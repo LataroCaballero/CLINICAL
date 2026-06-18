@@ -86,8 +86,16 @@ describe('AfipConfigService', () => {
     };
 
     const mockWsaaService = {
-      getTicket: jest.fn().mockResolvedValue({ token: 'tok', sign: 'sig', expiresAt: new Date() }),
-      getTicketTransient: jest.fn().mockResolvedValue({ token: 'tok', sign: 'sig', expiresAt: new Date() }),
+      getTicket: jest.fn().mockResolvedValue({
+        token: 'tok',
+        sign: 'sig',
+        expiresAt: new Date(),
+      }),
+      getTicketTransient: jest.fn().mockResolvedValue({
+        token: 'tok',
+        sign: 'sig',
+        expiresAt: new Date(),
+      }),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -119,14 +127,18 @@ describe('AfipConfigService', () => {
     });
 
     it('CERT-01: throws BadRequestException for malformed PEM (not a certificate)', () => {
-      expect(() => service.extractCertInfo('not-a-cert')).toThrow(BadRequestException);
+      expect(() => service.extractCertInfo('not-a-cert')).toThrow(
+        BadRequestException,
+      );
       expect(() => service.extractCertInfo('not-a-cert')).toThrow(
         /El certificado no es un PEM válido/,
       );
     });
 
     it('CERT-01: throws BadRequestException when CUIT cannot be extracted from subject', () => {
-      expect(() => service.extractCertInfo(CERT_NO_CUIT)).toThrow(BadRequestException);
+      expect(() => service.extractCertInfo(CERT_NO_CUIT)).toThrow(
+        BadRequestException,
+      );
       expect(() => service.extractCertInfo(CERT_NO_CUIT)).toThrow(
         /No se pudo extraer el CUIT/,
       );
@@ -136,7 +148,9 @@ describe('AfipConfigService', () => {
   describe('getStatus', () => {
     it('CERT-02: response never includes certPemEncrypted field', async () => {
       const futureDate = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000); // 60 days
-      (prismaService.configuracionAFIP.findUnique as jest.Mock).mockResolvedValue({
+      (
+        prismaService.configuracionAFIP.findUnique as jest.Mock
+      ).mockResolvedValue({
         cuit: '20123456789',
         ptoVta: 1,
         ambiente: 'HOMOLOGACION',
@@ -149,7 +163,9 @@ describe('AfipConfigService', () => {
 
     it('CERT-02: response never includes keyPemEncrypted field', async () => {
       const futureDate = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000);
-      (prismaService.configuracionAFIP.findUnique as jest.Mock).mockResolvedValue({
+      (
+        prismaService.configuracionAFIP.findUnique as jest.Mock
+      ).mockResolvedValue({
         cuit: '20123456789',
         ptoVta: 1,
         ambiente: 'HOMOLOGACION',
@@ -161,7 +177,9 @@ describe('AfipConfigService', () => {
     });
 
     it('CERT-04: returns configured=false when no ConfiguracionAFIP row exists', async () => {
-      (prismaService.configuracionAFIP.findUnique as jest.Mock).mockResolvedValue(null);
+      (
+        prismaService.configuracionAFIP.findUnique as jest.Mock
+      ).mockResolvedValue(null);
 
       const result = await service.getStatus('prof-no-cfg');
       expect(result.configured).toBe(false);
@@ -170,7 +188,9 @@ describe('AfipConfigService', () => {
 
     it('CERT-04: returns certStatus=EXPIRING_SOON when certExpiresAt is 15 days from now', async () => {
       const expiresAt = new Date(Date.now() + 15 * 24 * 60 * 60 * 1000);
-      (prismaService.configuracionAFIP.findUnique as jest.Mock).mockResolvedValue({
+      (
+        prismaService.configuracionAFIP.findUnique as jest.Mock
+      ).mockResolvedValue({
         cuit: '20123456789',
         ptoVta: 1,
         ambiente: 'HOMOLOGACION',
@@ -185,7 +205,9 @@ describe('AfipConfigService', () => {
 
     it('CERT-04: returns certStatus=OK when certExpiresAt is more than 30 days from now', async () => {
       const expiresAt = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000);
-      (prismaService.configuracionAFIP.findUnique as jest.Mock).mockResolvedValue({
+      (
+        prismaService.configuracionAFIP.findUnique as jest.Mock
+      ).mockResolvedValue({
         cuit: '20123456789',
         ptoVta: 1,
         ambiente: 'HOMOLOGACION',
@@ -199,7 +221,9 @@ describe('AfipConfigService', () => {
 
     it('CERT-04: returns certStatus=EXPIRED when certExpiresAt is in the past', async () => {
       const expiresAt = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000); // 5 days ago
-      (prismaService.configuracionAFIP.findUnique as jest.Mock).mockResolvedValue({
+      (
+        prismaService.configuracionAFIP.findUnique as jest.Mock
+      ).mockResolvedValue({
         cuit: '20123456789',
         ptoVta: 1,
         ambiente: 'HOMOLOGACION',
@@ -225,7 +249,9 @@ describe('AfipConfigService', () => {
     it('CERT-01: throws BadRequestException when ptoVta is not of type RECE (CAE)', () => {
       // validatePtoVta is a private method tested via its public error surface.
       // A cert with no-CUIT subject triggers BadRequestException before network call.
-      expect(() => service.extractCertInfo(CERT_NO_CUIT)).toThrow(BadRequestException);
+      expect(() => service.extractCertInfo(CERT_NO_CUIT)).toThrow(
+        BadRequestException,
+      );
     });
   });
 });

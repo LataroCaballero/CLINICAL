@@ -356,9 +356,7 @@ export class ReportesOperativosService {
           ? Math.round((agendados / slotsDisponibles) * 10000) / 100
           : 0;
       const tasaEfectividad =
-        agendados > 0
-          ? Math.round((completados / agendados) * 10000) / 100
-          : 0;
+        agendados > 0 ? Math.round((completados / agendados) * 10000) / 100 : 0;
 
       totalAgendados += agendados;
       totalCompletados += completados;

@@ -86,14 +86,20 @@ export class AfipRealService implements AfipService {
         const cbteDesde = lastNro + 1;
 
         // Call FECAESolicitar
-        const result = await this.callFECAESolicitar(url, token, sign, cfg.cuit, {
-          ...params,
-          ptoVta: cfg.ptoVta,
-          cbteDesde,
-          cbteHasta: cbteDesde,
-          cbteFch,
-          condicionIVAReceptorId,
-        });
+        const result = await this.callFECAESolicitar(
+          url,
+          token,
+          sign,
+          cfg.cuit,
+          {
+            ...params,
+            ptoVta: cfg.ptoVta,
+            cbteDesde,
+            cbteHasta: cbteDesde,
+            cbteFch,
+            condicionIVAReceptorId,
+          },
+        );
 
         if (result.resultado === 'R') {
           throw new AfipBusinessError(
@@ -258,8 +264,7 @@ export class AfipRealService implements AfipService {
 
       const resultado = (xml.match(/<Resultado>([AR])<\/Resultado>/) ??
         [])[1] as 'A' | 'R' | undefined;
-      const cae =
-        (xml.match(/<CAE>(\d{14})<\/CAE>/) ?? [])[1] ?? '';
+      const cae = (xml.match(/<CAE>(\d{14})<\/CAE>/) ?? [])[1] ?? '';
       const caeFchVto =
         (xml.match(/<CAEFchVto>(\d{8})<\/CAEFchVto>/) ?? [])[1] ?? '';
       const cbtDesde = parseInt(

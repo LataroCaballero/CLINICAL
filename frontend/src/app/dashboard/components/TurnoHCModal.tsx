@@ -421,6 +421,11 @@ function EntryCard({ entrada }: { entrada: any }) {
               )}
             </>
           )}
+          {contenido.comentario && (
+            <p className="text-xs text-muted-foreground whitespace-pre-line pt-1">
+              {contenido.comentario}
+            </p>
+          )}
         </div>
       ) : (
         <p className="text-xs text-muted-foreground line-clamp-2">

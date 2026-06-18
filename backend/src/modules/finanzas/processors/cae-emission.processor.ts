@@ -34,7 +34,10 @@ export class CaeEmissionProcessor extends WorkerHost {
     try {
       // AfipRealService reads all required data (amounts, docTipo, etc.) from DB by facturaId.
       // We only pass the identifiers to prevent trusting client-supplied monetary data.
-      await (this.afipService as any).emitirComprobante({ facturaId, profesionalId });
+      await (this.afipService as any).emitirComprobante({
+        facturaId,
+        profesionalId,
+      });
     } catch (err) {
       if (err instanceof AfipBusinessError) {
         // Permanent failure — bad data that retrying will never fix.
@@ -73,7 +76,10 @@ export class CaeEmissionProcessor extends WorkerHost {
       this.logger.warn(
         `Max retries reached for facturaId ${job.data.facturaId} — attempting CAEA fallback`,
       );
-      await this.caeaService.asignarCaeaFallback(job.data.facturaId, job.data.profesionalId);
+      await this.caeaService.asignarCaeaFallback(
+        job.data.facturaId,
+        job.data.profesionalId,
+      );
     }
   }
 }

@@ -17,7 +17,9 @@ export class OrdenesConsumoService {
         paciente: { select: { id: true, nombreCompleto: true } },
         insumos: {
           include: {
-            producto: { select: { id: true, nombre: true, unidadMedida: true } },
+            producto: {
+              select: { id: true, nombre: true, unidadMedida: true },
+            },
           },
         },
       },
@@ -31,7 +33,8 @@ export class OrdenesConsumoService {
       where: { id, profesionalId, estado: 'PENDIENTE' },
       include: { insumos: true },
     });
-    if (!orden) throw new NotFoundException('Orden no encontrada o no está pendiente');
+    if (!orden)
+      throw new NotFoundException('Orden no encontrada o no está pendiente');
 
     return this.prisma.$transaction(async (tx) => {
       // Re-fetch inside tx to guard against race condition
@@ -39,17 +42,28 @@ export class OrdenesConsumoService {
         where: { id, profesionalId, estado: 'PENDIENTE' },
         include: { insumos: true },
       });
-      if (!ordenTx) throw new ConflictException('Orden ya fue confirmada o cancelada');
+      if (!ordenTx)
+        throw new ConflictException('Orden ya fue confirmada o cancelada');
 
       for (const insumo of ordenTx.insumos) {
         const cantidad = Number(insumo.cantidad); // Decimal cast — critical
 
         let inv = await tx.inventario.findUnique({
-          where: { productoId_profesionalId: { productoId: insumo.productoId, profesionalId } },
+          where: {
+            productoId_profesionalId: {
+              productoId: insumo.productoId,
+              profesionalId,
+            },
+          },
         });
         if (!inv) {
           inv = await tx.inventario.create({
-            data: { productoId: insumo.productoId, profesionalId, stockActual: 0, stockMinimo: 0 },
+            data: {
+              productoId: insumo.productoId,
+              profesionalId,
+              stockActual: 0,
+              stockMinimo: 0,
+            },
           });
         }
 

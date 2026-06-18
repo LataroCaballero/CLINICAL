@@ -39,14 +39,23 @@ describe('ReportesExportService', () => {
         ReportesExportService,
         { provide: ReportesDashboardService, useValue: mockDashboardService },
         { provide: ReportesOperativosService, useValue: mockOperativosService },
-        { provide: ReportesFinancierosService, useValue: mockFinancierosService },
+        {
+          provide: ReportesFinancierosService,
+          useValue: mockFinancierosService,
+        },
       ],
     }).compile();
 
     service = module.get<ReportesExportService>(ReportesExportService);
-    dashboardService = module.get<ReportesDashboardService>(ReportesDashboardService);
-    operativosService = module.get<ReportesOperativosService>(ReportesOperativosService);
-    financierosService = module.get<ReportesFinancierosService>(ReportesFinancierosService);
+    dashboardService = module.get<ReportesDashboardService>(
+      ReportesDashboardService,
+    );
+    operativosService = module.get<ReportesOperativosService>(
+      ReportesOperativosService,
+    );
+    financierosService = module.get<ReportesFinancierosService>(
+      ReportesFinancierosService,
+    );
 
     jest.clearAllMocks();
   });
@@ -118,7 +127,9 @@ describe('ReportesExportService', () => {
             { nombre: 'Dra. Jones', ingresos: 40000 },
           ],
         };
-        mockFinancierosService.getIngresosPorProfesional.mockResolvedValue(mockData);
+        mockFinancierosService.getIngresosPorProfesional.mockResolvedValue(
+          mockData,
+        );
 
         const result = await service.exportarReporte({
           tipoReporte: 'ingresos-profesional',
@@ -138,7 +149,9 @@ describe('ReportesExportService', () => {
           totalIngresos: 0,
           porProfesional: [],
         };
-        mockFinancierosService.getIngresosPorProfesional.mockResolvedValue(mockData);
+        mockFinancierosService.getIngresosPorProfesional.mockResolvedValue(
+          mockData,
+        );
 
         const result = await service.exportarReporte({
           tipoReporte: 'ingresos-profesional',
@@ -151,11 +164,11 @@ describe('ReportesExportService', () => {
 
       it('should escape commas in CSV values', async () => {
         const mockData = {
-          ranking: [
-            { descripcion: 'Consulta, general', cantidad: 10 },
-          ],
+          ranking: [{ descripcion: 'Consulta, general', cantidad: 10 }],
         };
-        mockOperativosService.getRankingProcedimientos.mockResolvedValue(mockData);
+        mockOperativosService.getRankingProcedimientos.mockResolvedValue(
+          mockData,
+        );
 
         const result = await service.exportarReporte({
           tipoReporte: 'procedimientos',
@@ -175,7 +188,14 @@ describe('ReportesExportService', () => {
           ausentismos: 10,
           tasaAsistencia: 88.89,
           porPeriodo: [
-            { periodo: '2024-01-01', total: 10, completados: 8, cancelados: 1, ausentismos: 1, tasaAsistencia: 88.89 },
+            {
+              periodo: '2024-01-01',
+              total: 10,
+              completados: 8,
+              cancelados: 1,
+              ausentismos: 1,
+              tasaAsistencia: 88.89,
+            },
           ],
         };
         mockOperativosService.getReporteTurnos.mockResolvedValue(mockData);
@@ -247,7 +267,10 @@ describe('ReportesExportService', () => {
     it('should route to dashboard service for dashboard report', async () => {
       mockDashboardService.getDashboardKPIs.mockResolvedValue({});
 
-      await service.exportarReporte({ tipoReporte: 'dashboard', formato: 'json' });
+      await service.exportarReporte({
+        tipoReporte: 'dashboard',
+        formato: 'json',
+      });
 
       expect(mockDashboardService.getDashboardKPIs).toHaveBeenCalled();
     });
@@ -263,7 +286,10 @@ describe('ReportesExportService', () => {
     it('should route to operativos service for ausentismo report', async () => {
       mockOperativosService.getReporteAusentismo.mockResolvedValue({});
 
-      await service.exportarReporte({ tipoReporte: 'ausentismo', formato: 'json' });
+      await service.exportarReporte({
+        tipoReporte: 'ausentismo',
+        formato: 'json',
+      });
 
       expect(mockOperativosService.getReporteAusentismo).toHaveBeenCalled();
     });
@@ -271,7 +297,10 @@ describe('ReportesExportService', () => {
     it('should route to financieros service for morosidad report', async () => {
       mockFinancierosService.getMorosidad.mockResolvedValue({});
 
-      await service.exportarReporte({ tipoReporte: 'morosidad', formato: 'json' });
+      await service.exportarReporte({
+        tipoReporte: 'morosidad',
+        formato: 'json',
+      });
 
       expect(mockFinancierosService.getMorosidad).toHaveBeenCalled();
     });
@@ -279,7 +308,10 @@ describe('ReportesExportService', () => {
     it('should route to financieros service for cuentas-por-cobrar report', async () => {
       mockFinancierosService.getCuentasPorCobrar.mockResolvedValue({});
 
-      await service.exportarReporte({ tipoReporte: 'cuentas-por-cobrar', formato: 'json' });
+      await service.exportarReporte({
+        tipoReporte: 'cuentas-por-cobrar',
+        formato: 'json',
+      });
 
       expect(mockFinancierosService.getCuentasPorCobrar).toHaveBeenCalled();
     });

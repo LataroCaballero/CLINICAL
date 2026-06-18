@@ -28,18 +28,12 @@ export class PresupuestoPublicController {
   }
 
   @Post(':token/verificar')
-  verificarDni(
-    @Param('token') token: string,
-    @Body() body: { dni: string },
-  ) {
+  verificarDni(@Param('token') token: string, @Body() body: { dni: string }) {
     return this.service.verificarYCargar(token, body.dni);
   }
 
   @Post(':token/duda')
-  registrarDuda(
-    @Param('token') token: string,
-    @Body() body: { duda: string },
-  ) {
+  registrarDuda(@Param('token') token: string, @Body() body: { duda: string }) {
     return this.service.registrarDuda(token, body.duda);
   }
 

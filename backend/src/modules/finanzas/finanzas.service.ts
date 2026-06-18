@@ -408,7 +408,9 @@ export class FinanzasService {
         profesional: {
           include: {
             usuario: { select: { nombre: true, apellido: true } },
-            configClinica: { select: { nombreClinica: true, direccion: true, telefono: true } },
+            configClinica: {
+              select: { nombreClinica: true, direccion: true, telefono: true },
+            },
           },
         },
       },
@@ -431,7 +433,10 @@ export class FinanzasService {
     ]);
 
     const qrImageDataUrl = f.qrData
-      ? await QRCode.toDataURL(f.qrData, { errorCorrectionLevel: 'M', width: 200 })
+      ? await QRCode.toDataURL(f.qrData, {
+          errorCorrectionLevel: 'M',
+          width: 200,
+        })
       : null;
 
     return {
@@ -465,7 +470,9 @@ export class FinanzasService {
   /**
    * Generate PDF buffer for a factura (requires CAE to be set)
    */
-  async generateFacturaPdf(id: string): Promise<{ buffer: Buffer; filename: string }> {
+  async generateFacturaPdf(
+    id: string,
+  ): Promise<{ buffer: Buffer; filename: string }> {
     const facturaDetail = await this.getFacturaById(id);
 
     if (!facturaDetail.cae) {
@@ -481,7 +488,9 @@ export class FinanzasService {
         profesional: {
           include: {
             usuario: { select: { nombre: true, apellido: true } },
-            configClinica: { select: { nombreClinica: true, direccion: true, telefono: true } },
+            configClinica: {
+              select: { nombreClinica: true, direccion: true, telefono: true },
+            },
           },
         },
       },
@@ -526,7 +535,10 @@ export class FinanzasService {
   /**
    * Update tipoCambio on a Factura (BNA exchange rate for USD invoices)
    */
-  async updateTipoCambio(id: string, tipoCambio: number): Promise<{ tipoCambio: number }> {
+  async updateTipoCambio(
+    id: string,
+    tipoCambio: number,
+  ): Promise<{ tipoCambio: number }> {
     if (tipoCambio <= 0) {
       throw new BadRequestException('tipoCambio debe ser mayor a 0');
     }
@@ -717,7 +729,9 @@ export class FinanzasService {
     }
 
     // Lookup facturaId per obra social via LiquidacionObraSocial
-    const obraSocialIds = Object.keys(porObraSocial).filter((k) => k !== 'particular');
+    const obraSocialIds = Object.keys(porObraSocial).filter(
+      (k) => k !== 'particular',
+    );
     if (obraSocialIds.length > 0) {
       const liquidaciones = await this.prisma.liquidacionObraSocial.findMany({
         where: {
@@ -730,7 +744,10 @@ export class FinanzasService {
       const facturaIdByOs = new Map<string, string | null>();
       for (const liq of liquidaciones) {
         const existing = facturaIdByOs.get(liq.obraSocialId);
-        if (existing === undefined || (existing === null && liq.facturaId !== null)) {
+        if (
+          existing === undefined ||
+          (existing === null && liq.facturaId !== null)
+        ) {
           facturaIdByOs.set(liq.obraSocialId, liq.facturaId ?? null);
         }
       }
@@ -872,7 +889,11 @@ export class FinanzasService {
   async getLimiteDisponible(
     profesionalId: string,
     mes: string,
-  ): Promise<{ limite: number | null; emitido: number; disponible: number | null }> {
+  ): Promise<{
+    limite: number | null;
+    emitido: number;
+    disponible: number | null;
+  }> {
     const { start, end } = getMonthBoundariesART(mes);
 
     const [limiteRecord, facturaAggregate] = await Promise.all([
@@ -889,7 +910,8 @@ export class FinanzasService {
       }),
     ]);
 
-    const limite = limiteRecord?.limite != null ? Number(limiteRecord.limite) : null;
+    const limite =
+      limiteRecord?.limite != null ? Number(limiteRecord.limite) : null;
     const emitido = Number(facturaAggregate._sum.total ?? 0);
     const disponible = limite !== null ? limite - emitido : null;
 
@@ -945,7 +967,9 @@ export class FinanzasService {
 
     // Collect unique obra social IDs
     const obraSocialIds = [
-      ...new Set(practicas.map((p) => p.obraSocialId).filter(Boolean) as string[]),
+      ...new Set(
+        practicas.map((p) => p.obraSocialId).filter(Boolean) as string[],
+      ),
     ];
 
     // Batch fetch obras sociales
@@ -1034,7 +1058,10 @@ export class FinanzasService {
    * Returns liquidaciones with optional filters for profesionalId and periodo.
    * Ordered by createdAt desc. Includes _count of associated practicas.
    */
-  async getLiquidaciones(filters: { profesionalId?: string; periodo?: string }) {
+  async getLiquidaciones(filters: {
+    profesionalId?: string;
+    periodo?: string;
+  }) {
     return this.prisma.liquidacionObraSocial.findMany({
       where: {
         ...(filters.profesionalId
@@ -1110,7 +1137,10 @@ export class FinanzasService {
    *
    * @throws BadRequestException with Spanish message on any pre-condition failure
    */
-  async emitirFactura(facturaId: string, profesionalId: string): Promise<{ jobId: string; status: string }> {
+  async emitirFactura(
+    facturaId: string,
+    profesionalId: string,
+  ): Promise<{ jobId: string; status: string }> {
     // 1. Load Factura
     const factura = await this.prisma.factura.findFirst({
       where: { id: facturaId, profesionalId },
@@ -1118,16 +1148,22 @@ export class FinanzasService {
     });
 
     if (!factura) {
-      throw new BadRequestException('Factura no encontrada o no pertenece a este profesional.');
+      throw new BadRequestException(
+        'Factura no encontrada o no pertenece a este profesional.',
+      );
     }
 
     if (factura.estado === EstadoFactura.EMISION_PENDIENTE) {
-      throw new BadRequestException('Esta factura ya tiene una emisión en curso. Esperá a que finalice.');
+      throw new BadRequestException(
+        'Esta factura ya tiene una emisión en curso. Esperá a que finalice.',
+      );
     }
 
     if (factura.condicionIVAReceptor === null) {
       // Guard per STATE.md Pitfall 2 — error 10242 from AFIP if missing
-      throw new BadRequestException('Falta la condición de IVA del receptor. Completá el campo antes de emitir.');
+      throw new BadRequestException(
+        'Falta la condición de IVA del receptor. Completá el campo antes de emitir.',
+      );
     }
 
     // 2. Check AFIP config exists for tenant
@@ -1137,7 +1173,9 @@ export class FinanzasService {
     });
 
     if (!afipConfig) {
-      throw new BadRequestException('No se encontró la configuración AFIP del consultorio. Subí el certificado desde Configuración > AFIP.');
+      throw new BadRequestException(
+        'No se encontró la configuración AFIP del consultorio. Subí el certificado desde Configuración > AFIP.',
+      );
     }
 
     // 3. Set transient estado — Facturador sees "en proceso" while job is in-flight

@@ -30,11 +30,23 @@ export class ReportesDashboardService {
     const finHoy = endOfToday();
 
     // Ejecutar secuencialmente para evitar MaxClientsInSessionMode con pgBouncer
-    const turnosPorEstado = await this.getTurnosPorEstadoHoy(profesionalId, inicioHoy, finHoy);
-    const ingresosHoy = await this.getIngresosHoy(profesionalId, inicioHoy, finHoy);
+    const turnosPorEstado = await this.getTurnosPorEstadoHoy(
+      profesionalId,
+      inicioHoy,
+      finHoy,
+    );
+    const ingresosHoy = await this.getIngresosHoy(
+      profesionalId,
+      inicioHoy,
+      finHoy,
+    );
     const proximosTurnos = await this.getProximosTurnos(profesionalId, hoy);
-    const alertasPendientes = await this.getAlertasPendientesCount(profesionalId);
-    const tendenciasIngresos = await this.getTendenciasIngresos(profesionalId, 7);
+    const alertasPendientes =
+      await this.getAlertasPendientesCount(profesionalId);
+    const tendenciasIngresos = await this.getTendenciasIngresos(
+      profesionalId,
+      7,
+    );
     const tendenciasTurnos = await this.getTendenciasTurnos(profesionalId, 7);
 
     return {
@@ -42,7 +54,8 @@ export class ReportesDashboardService {
       turnosCompletados: turnosPorEstado.finalizados,
       turnosAusentes: turnosPorEstado.ausentes,
       turnosCancelados: turnosPorEstado.cancelados,
-      turnosPendientes: turnosPorEstado.pendientes + turnosPorEstado.confirmados,
+      turnosPendientes:
+        turnosPorEstado.pendientes + turnosPorEstado.confirmados,
       ingresosHoy,
       proximosTurnos,
       alertasPendientes,

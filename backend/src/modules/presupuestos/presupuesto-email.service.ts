@@ -95,7 +95,10 @@ export class PresupuestoEmailService {
 
     // 3. Generate acceptance token
     const token = crypto.randomUUID();
-    const frontendUrl = this.configService.get<string>('FRONTEND_URL', 'http://localhost:3000');
+    const frontendUrl = this.configService.get<string>(
+      'FRONTEND_URL',
+      'http://localhost:3000',
+    );
     const acceptanceUrl = `${frontendUrl}/presupuesto/${token}`;
 
     // 4. Send email
@@ -140,7 +143,9 @@ export class PresupuestoEmailService {
       }),
     ]);
 
-    this.logger.log(`Presupuesto ${presupuestoId} enviado por email a ${emailDestino}`);
+    this.logger.log(
+      `Presupuesto ${presupuestoId} enviado por email a ${emailDestino}`,
+    );
   }
 
   private async sendEmail(params: {
@@ -153,13 +158,17 @@ export class PresupuestoEmailService {
   }): Promise<void> {
     // Use ConfigClinica SMTP if available, else fall back to env vars
     const host = params.config?.smtpHost ?? this.configService.get('SMTP_HOST');
-    const port = params.config?.smtpPort ?? this.configService.get<number>('SMTP_PORT', 587);
+    const port =
+      params.config?.smtpPort ??
+      this.configService.get<number>('SMTP_PORT', 587);
     const user = params.config?.smtpUser ?? this.configService.get('SMTP_USER');
     const passEncrypted = params.config?.smtpPassEncrypted;
     const pass = passEncrypted
       ? await this.decryptSmtpPass(passEncrypted)
       : this.configService.get('SMTP_PASS');
-    const from = params.config?.smtpFrom ?? this.configService.get('SMTP_FROM', 'noreply@clinical.com');
+    const from =
+      params.config?.smtpFrom ??
+      this.configService.get('SMTP_FROM', 'noreply@clinical.com');
 
     if (!host || !user || !pass) {
       this.logger.warn('SMTP no configurado — email de presupuesto no enviado');
@@ -178,11 +187,13 @@ export class PresupuestoEmailService {
       to: params.to,
       subject: params.subject,
       html: params.html,
-      attachments: [{
-        filename: `presupuesto-${params.presupuestoId.slice(0, 8)}.pdf`,
-        content: params.pdfBuffer,
-        contentType: 'application/pdf',
-      }],
+      attachments: [
+        {
+          filename: `presupuesto-${params.presupuestoId.slice(0, 8)}.pdf`,
+          content: params.pdfBuffer,
+          contentType: 'application/pdf',
+        },
+      ],
     });
   }
 

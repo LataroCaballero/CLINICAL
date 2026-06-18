@@ -16,7 +16,9 @@ describe('CertExpiryScheduler', () => {
 
   const makeConfig = (daysLeft: number, configClinicaOverride?: any) => {
     const now = new Date();
-    const certExpiresAt = new Date(now.getTime() + daysLeft * 24 * 60 * 60 * 1000);
+    const certExpiresAt = new Date(
+      now.getTime() + daysLeft * 24 * 60 * 60 * 1000,
+    );
     return {
       cuit: '20123456789',
       ambiente: 'HOMOLOGACION',

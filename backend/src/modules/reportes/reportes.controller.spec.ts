@@ -46,15 +46,24 @@ describe('ReportesController', () => {
       providers: [
         { provide: ReportesDashboardService, useValue: mockDashboardService },
         { provide: ReportesOperativosService, useValue: mockOperativosService },
-        { provide: ReportesFinancierosService, useValue: mockFinancierosService },
+        {
+          provide: ReportesFinancierosService,
+          useValue: mockFinancierosService,
+        },
         { provide: ReportesExportService, useValue: mockExportService },
       ],
     }).compile();
 
     controller = module.get<ReportesController>(ReportesController);
-    dashboardService = module.get<ReportesDashboardService>(ReportesDashboardService);
-    operativosService = module.get<ReportesOperativosService>(ReportesOperativosService);
-    financierosService = module.get<ReportesFinancierosService>(ReportesFinancierosService);
+    dashboardService = module.get<ReportesDashboardService>(
+      ReportesDashboardService,
+    );
+    operativosService = module.get<ReportesOperativosService>(
+      ReportesOperativosService,
+    );
+    financierosService = module.get<ReportesFinancierosService>(
+      ReportesFinancierosService,
+    );
     exportService = module.get<ReportesExportService>(ReportesExportService);
 
     jest.clearAllMocks();
@@ -74,7 +83,9 @@ describe('ReportesController', () => {
         };
         mockDashboardService.getDashboardKPIs.mockResolvedValue(mockKPIs);
 
-        const result = await controller.getDashboard({ profesionalId: 'prof-123' });
+        const result = await controller.getDashboard({
+          profesionalId: 'prof-123',
+        });
 
         expect(result).toEqual(mockKPIs);
         expect(mockDashboardService.getDashboardKPIs).toHaveBeenCalledWith({
@@ -102,7 +113,9 @@ describe('ReportesController', () => {
         const result = await controller.getReporteTurnos(filters);
 
         expect(result).toEqual(mockReport);
-        expect(mockOperativosService.getReporteTurnos).toHaveBeenCalledWith(filters);
+        expect(mockOperativosService.getReporteTurnos).toHaveBeenCalledWith(
+          filters,
+        );
       });
     });
 
@@ -112,7 +125,9 @@ describe('ReportesController', () => {
           totalAusencias: 20,
           tasaGeneral: 15,
         };
-        mockOperativosService.getReporteAusentismo.mockResolvedValue(mockReport);
+        mockOperativosService.getReporteAusentismo.mockResolvedValue(
+          mockReport,
+        );
 
         const result = await controller.getReporteAusentismo({
           profesionalId: 'prof-123',
@@ -144,7 +159,9 @@ describe('ReportesController', () => {
           totalProcedimientos: 150,
           ranking: [],
         };
-        mockOperativosService.getRankingProcedimientos.mockResolvedValue(mockReport);
+        mockOperativosService.getRankingProcedimientos.mockResolvedValue(
+          mockReport,
+        );
 
         const result = await controller.getRankingProcedimientos({
           profesionalId: 'prof-123',
@@ -194,7 +211,9 @@ describe('ReportesController', () => {
           totalIngresos: 100000,
           porProfesional: [],
         };
-        mockFinancierosService.getIngresosPorProfesional.mockResolvedValue(mockReport);
+        mockFinancierosService.getIngresosPorProfesional.mockResolvedValue(
+          mockReport,
+        );
 
         const result = await controller.getIngresosPorProfesional({});
 
@@ -208,7 +227,9 @@ describe('ReportesController', () => {
           totalPorCobrar: 50000,
           cuentas: [],
         };
-        mockFinancierosService.getCuentasPorCobrar.mockResolvedValue(mockReport);
+        mockFinancierosService.getCuentasPorCobrar.mockResolvedValue(
+          mockReport,
+        );
 
         const result = await controller.getCuentasPorCobrar({
           profesionalId: 'prof-123',

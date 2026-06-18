@@ -1,6 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
-import { EtapaCRM, TemperaturaPaciente, EstadoPresupuesto, FlujoPaciente } from '@prisma/client';
+import {
+  EtapaCRM,
+  TemperaturaPaciente,
+  EstadoPresupuesto,
+  FlujoPaciente,
+} from '@prisma/client';
 
 const ETAPAS_FUNNEL: EtapaCRM[] = [
   EtapaCRM.NUEVO_LEAD,
@@ -71,7 +76,8 @@ export class CrmDashboardService {
     }));
 
     // Calculate conversion rates between consecutive stages
-    const tasasPaso: Array<{ de: EtapaCRM; a: EtapaCRM; tasa: number | null }> = [];
+    const tasasPaso: Array<{ de: EtapaCRM; a: EtapaCRM; tasa: number | null }> =
+      [];
     for (let i = 0; i < etapas.length - 1; i++) {
       const de = etapas[i].etapa;
       const a = etapas[i + 1].etapa;
@@ -174,8 +180,7 @@ export class CrmDashboardService {
       motivos: grupos.map((g) => ({
         motivo: g.motivoPerdida ?? 'SIN_MOTIVO',
         count: g._count.id,
-        porcentaje:
-          total > 0 ? Math.round((g._count.id / total) * 100) : 0,
+        porcentaje: total > 0 ? Math.round((g._count.id / total) * 100) : 0,
       })),
     };
   }
@@ -196,10 +201,7 @@ export class CrmDashboardService {
       select: { total: true },
     });
 
-    const total = presupuestos.reduce(
-      (acc, p) => acc + Number(p.total),
-      0,
-    );
+    const total = presupuestos.reduce((acc, p) => acc + Number(p.total), 0);
 
     return { total, count: presupuestos.length };
   }

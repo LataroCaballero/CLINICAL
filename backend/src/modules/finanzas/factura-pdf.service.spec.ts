@@ -7,12 +7,20 @@
  *   QR-01: FacturaPdfService.generatePdfBuffer returns non-empty Buffer with QR embedded
  */
 
-import { buildAfipQrUrl, toAfipMonedaCodigo, FacturaPdfService, AfipQrPayload, FacturaPdfData } from './factura-pdf.service';
+import {
+  buildAfipQrUrl,
+  toAfipMonedaCodigo,
+  FacturaPdfService,
+  AfipQrPayload,
+  FacturaPdfData,
+} from './factura-pdf.service';
 import * as QRCode from 'qrcode';
 
 // Mock QRCode to avoid PNG rendering in unit tests
 jest.mock('qrcode');
-const mockQrCodeToBuffer = QRCode.toBuffer as jest.MockedFunction<typeof QRCode.toBuffer>;
+const mockQrCodeToBuffer = QRCode.toBuffer as jest.MockedFunction<
+  typeof QRCode.toBuffer
+>;
 
 const SAMPLE_PAYLOAD: AfipQrPayload = {
   ver: 1,
@@ -21,7 +29,7 @@ const SAMPLE_PAYLOAD: AfipQrPayload = {
   ptoVta: 1,
   tipoCmp: 6,
   nroCmp: 1,
-  importe: 1210.00,
+  importe: 1210.0,
   moneda: 'PES',
   ctz: 1,
   tipoDocRec: 99,
@@ -95,16 +103,20 @@ describe('FacturaPdfService', () => {
       caeFchVto: '20260330',
       nroComprobante: 1,
       qrData: buildAfipQrUrl(SAMPLE_PAYLOAD),
-      total: 1210.00,
-      subtotal: 1000.00,
-      impuestos: 210.00,
+      total: 1210.0,
+      subtotal: 1000.0,
+      impuestos: 210.0,
       moneda: 'ARS',
       tipoCambio: 1,
       razonSocial: null,
       cuit: null,
       concepto: 'Honorarios médicos',
       profesional: { nombre: 'Juan', apellido: 'Pérez' },
-      config: { nombreClinica: 'Clínica Test', direccion: null, telefono: null },
+      config: {
+        nombreClinica: 'Clínica Test',
+        direccion: null,
+        telefono: null,
+      },
     };
 
     const buffer = await service.generatePdfBuffer(data);

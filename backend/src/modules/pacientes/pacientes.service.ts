@@ -61,7 +61,9 @@ export class PacientesService {
     }
   }
 
-  async obtenerListaPacientes(profesionalId?: string): Promise<PacienteListaDto[]> {
+  async obtenerListaPacientes(
+    profesionalId?: string,
+  ): Promise<PacienteListaDto[]> {
     const ahora = new Date();
 
     const [pacientes, turnoStats] = await Promise.all([
@@ -82,7 +84,13 @@ export class PacientesService {
         },
       }),
       profesionalId
-        ? this.prisma.$queryRaw<{ pacienteId: string; ultimoTurno: Date | null; proximoTurno: Date | null }[]>`
+        ? this.prisma.$queryRaw<
+            {
+              pacienteId: string;
+              ultimoTurno: Date | null;
+              proximoTurno: Date | null;
+            }[]
+          >`
             SELECT "pacienteId",
               MAX(CASE WHEN inicio < ${ahora} THEN inicio END) AS "ultimoTurno",
               MIN(CASE WHEN inicio >= ${ahora} THEN inicio END) AS "proximoTurno"
@@ -90,7 +98,13 @@ export class PacientesService {
             WHERE "profesionalId" = ${profesionalId}
             GROUP BY "pacienteId"
           `
-        : this.prisma.$queryRaw<{ pacienteId: string; ultimoTurno: Date | null; proximoTurno: Date | null }[]>`
+        : this.prisma.$queryRaw<
+            {
+              pacienteId: string;
+              ultimoTurno: Date | null;
+              proximoTurno: Date | null;
+            }[]
+          >`
             SELECT "pacienteId",
               MAX(CASE WHEN inicio < ${ahora} THEN inicio END) AS "ultimoTurno",
               MIN(CASE WHEN inicio >= ${ahora} THEN inicio END) AS "proximoTurno"
@@ -565,9 +579,7 @@ export class PacientesService {
             pacienteId: id,
             profesionalId: paciente.profesionalId,
             tipo: TipoTareaSeguimiento.SEGUIMIENTO_DIA_14,
-            fechaProgramada: new Date(
-              now.getTime() + 14 * 24 * 60 * 60 * 1000,
-            ),
+            fechaProgramada: new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000),
           },
         ],
       });
@@ -778,7 +790,11 @@ export class PacientesService {
     etapa: EtapaCRM | null,
   ): number {
     const diasScore = Math.min(diasSinContacto, 30);
-    const tempWeight: Record<string, number> = { CALIENTE: 3, TIBIO: 2, FRIO: 1 };
+    const tempWeight: Record<string, number> = {
+      CALIENTE: 3,
+      TIBIO: 2,
+      FRIO: 1,
+    };
     const etapaWeight: Record<string, number> = {
       PROCEDIMIENTO_REALIZADO: 3,
       PRESUPUESTO_ENVIADO: 2,
@@ -835,8 +851,15 @@ export class PacientesService {
     // Mapear con score de prioridad
     const items = pacientes.map((p) => {
       const ultimoContacto = p.contactos[0]?.fecha ?? null;
-      const diasSinContacto = this.calcularDiasSinContacto(ultimoContacto, p.createdAt);
-      const score = this.calcularScore(diasSinContacto, p.temperatura, p.etapaCRM);
+      const diasSinContacto = this.calcularDiasSinContacto(
+        ultimoContacto,
+        p.createdAt,
+      );
+      const score = this.calcularScore(
+        diasSinContacto,
+        p.temperatura,
+        p.etapaCRM,
+      );
       return {
         id: p.id,
         nombreCompleto: p.nombreCompleto,

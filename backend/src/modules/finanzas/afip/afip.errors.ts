@@ -5,10 +5,22 @@ import { EmitirComprobanteResult } from './afip.interfaces';
  * Key: AFIP numeric error code. Value: human-readable Spanish message for the Facturador.
  */
 export const AFIP_TRANSLATIONS: Map<number, string> = new Map([
-  [10242, 'La condición de IVA del receptor es obligatoria. Completá la condición frente al IVA del paciente o del destinatario.'],
-  [10243, 'El tipo de documento del receptor no coincide con su CUIT. Verificá los datos del destinatario.'],
-  [10016, 'El punto de venta no está habilitado para factura electrónica. Verificá la configuración AFIP del consultorio.'],
-  [10040, 'El número de comprobante está fuera de secuencia. Intentá nuevamente.'],
+  [
+    10242,
+    'La condición de IVA del receptor es obligatoria. Completá la condición frente al IVA del paciente o del destinatario.',
+  ],
+  [
+    10243,
+    'El tipo de documento del receptor no coincide con su CUIT. Verificá los datos del destinatario.',
+  ],
+  [
+    10016,
+    'El punto de venta no está habilitado para factura electrónica. Verificá la configuración AFIP del consultorio.',
+  ],
+  [
+    10040,
+    'El número de comprobante está fuera de secuencia. Intentá nuevamente.',
+  ],
 ]);
 
 /**

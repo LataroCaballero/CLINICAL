@@ -18,7 +18,9 @@ describe('ReportesOperativosService', () => {
     },
     ventaProducto: {
       findMany: jest.fn().mockResolvedValue([]),
-      aggregate: jest.fn().mockResolvedValue({ _sum: { total: 0 }, _count: { _all: 0 } }),
+      aggregate: jest
+        .fn()
+        .mockResolvedValue({ _sum: { total: 0 }, _count: { _all: 0 } }),
       groupBy: jest.fn().mockResolvedValue([]),
     },
     ventaProductoItem: {
@@ -26,7 +28,9 @@ describe('ReportesOperativosService', () => {
     },
     practicaRealizada: {
       groupBy: jest.fn().mockResolvedValue([]),
-      aggregate: jest.fn().mockResolvedValue({ _count: { _all: 0 }, _sum: { monto: 0 } }),
+      aggregate: jest
+        .fn()
+        .mockResolvedValue({ _count: { _all: 0 }, _sum: { monto: 0 } }),
     },
     producto: {
       findMany: jest.fn().mockResolvedValue([]),
@@ -102,7 +106,7 @@ describe('ReportesOperativosService', () => {
 
     beforeEach(() => {
       mockPrismaService.turno.count
-        .mockResolvedValueOnce(20)  // ausencias
+        .mockResolvedValueOnce(20) // ausencias
         .mockResolvedValueOnce(100); // total
       mockPrismaService.$queryRaw.mockResolvedValue([]);
     });

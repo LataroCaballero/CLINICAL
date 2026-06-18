@@ -135,6 +135,11 @@ export function HistorialClinicoPanel({ pacienteId }: Props) {
                     )}
                   </>
                 )}
+                {pvContenido.comentario && (
+                  <p className="text-xs text-muted-foreground whitespace-pre-line pt-1">
+                    {pvContenido.comentario}
+                  </p>
+                )}
               </div>
             ) : (
               <p className="text-xs text-muted-foreground line-clamp-2">

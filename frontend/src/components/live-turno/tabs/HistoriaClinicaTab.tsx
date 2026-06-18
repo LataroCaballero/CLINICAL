@@ -2,12 +2,19 @@
 
 import { useLiveTurnoStore } from '@/store/live-turno.store';
 import { usePaciente } from '@/hooks/usePaciente';
+import { useCatalogoHC } from '@/hooks/useCatalogoHC';
 import { HCCreatorForm } from './hc/HCCreatorForm';
 import { HistorialClinicoPanel } from './hc/HistorialClinicoPanel';
 
 export function HistoriaClinicaTab() {
   const { session, setDraftData } = useLiveTurnoStore();
   const { data: pacienteData } = usePaciente(session?.pacienteId ?? null);
+
+  // Prefetch del catálogo HC apenas se abre el tab, para que las zonas ya estén
+  // en caché cuando el usuario elija "Primera Consulta" (evita el round-trip en el click).
+  useCatalogoHC(session?.profesionalId ?? undefined, {
+    enabled: !!session?.profesionalId,
+  });
 
   if (!session) return null;
 

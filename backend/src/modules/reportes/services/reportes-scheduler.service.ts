@@ -52,22 +52,20 @@ export class ReportesSchedulerService {
 
     try {
       // Obtener suscripciones que deben enviarse hoy
-      const suscripcionesPendientes = await this.prisma.reporteSuscripcion.findMany({
-        where: {
-          activo: true,
-          OR: [
-            { proximoEnvio: null },
-            { proximoEnvio: { lte: new Date() } },
-          ],
-        },
-        include: {
-          usuario: {
-            include: {
-              profesional: true,
+      const suscripcionesPendientes =
+        await this.prisma.reporteSuscripcion.findMany({
+          where: {
+            activo: true,
+            OR: [{ proximoEnvio: null }, { proximoEnvio: { lte: new Date() } }],
+          },
+          include: {
+            usuario: {
+              include: {
+                profesional: true,
+              },
             },
           },
-        },
-      });
+        });
 
       this.logger.log(
         `Encontradas ${suscripcionesPendientes.length} suscripciones pendientes`,
@@ -88,7 +86,12 @@ export class ReportesSchedulerService {
    */
   private async processSingleSubscription(
     suscripcion: ReporteSuscripcion & {
-      usuario: { email: string; nombre: string; apellido: string; profesional?: { id: string } | null };
+      usuario: {
+        email: string;
+        nombre: string;
+        apellido: string;
+        profesional?: { id: string } | null;
+      };
     },
   ): Promise<void> {
     try {
@@ -111,7 +114,8 @@ export class ReportesSchedulerService {
       );
 
       // Determinar email destino
-      const emailDestino = suscripcion.emailDestino || suscripcion.usuario.email;
+      const emailDestino =
+        suscripcion.emailDestino || suscripcion.usuario.email;
 
       // Generar HTML del email
       const html = this.emailService.generateReportEmailHtml({
@@ -174,7 +178,7 @@ export class ReportesSchedulerService {
       return {
         fechaDesde: format(lastWeekStart, 'yyyy-MM-dd'),
         fechaHasta: format(lastWeekEnd, 'yyyy-MM-dd'),
-        label: `Semana del ${format(lastWeekStart, 'd', { locale: es })} al ${format(lastWeekEnd, 'd \'de\' MMMM', { locale: es })}`,
+        label: `Semana del ${format(lastWeekStart, 'd', { locale: es })} al ${format(lastWeekEnd, "d 'de' MMMM", { locale: es })}`,
       };
     } else {
       const lastMonthStart = startOfMonth(subMonths(now, 1));
@@ -267,7 +271,7 @@ export class ReportesSchedulerService {
         'Turnos Completados': turnos.completados,
         'Tasa de Asistencia': `${turnos.tasaCompletado.toFixed(1)}%`,
         'Ingresos Totales': this.formatCurrency(ingresos.totalIngresos),
-        'Transacciones': ingresos.cantidadTransacciones,
+        Transacciones: ingresos.cantidadTransacciones,
         'Ticket Promedio': this.formatCurrency(ingresos.ticketPromedio),
       },
       pdfBuffer: pdfResult.data as Buffer,
@@ -317,9 +321,9 @@ export class ReportesSchedulerService {
       titulo: 'Reporte de Turnos',
       resumen: {
         'Total Turnos': turnos.total,
-        'Completados': turnos.completados,
-        'Cancelados': turnos.cancelados,
-        'Ausentes': turnos.ausentes,
+        Completados: turnos.completados,
+        Cancelados: turnos.cancelados,
+        Ausentes: turnos.ausentes,
         'Tasa de Asistencia': `${turnos.tasaCompletado.toFixed(1)}%`,
       },
       pdfBuffer: pdfResult.data as Buffer,

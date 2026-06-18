@@ -177,9 +177,7 @@ export class WhatsappMessageProcessor extends WorkerHost {
         data: { estado: 'FALLIDO', errorMsg },
       });
 
-      this.logger.error(
-        `MensajeWhatsApp ${mensajeId} falló: ${errorMsg}`,
-      );
+      this.logger.error(`MensajeWhatsApp ${mensajeId} falló: ${errorMsg}`);
       // Re-throw so BullMQ retries with backoff
       throw new Error(`Meta API error: ${errorMsg}`);
     }
@@ -196,8 +194,7 @@ export class WhatsappMessageProcessor extends WorkerHost {
     const body = job.data as any;
 
     try {
-      const value =
-        body?.entry?.[0]?.changes?.[0]?.value;
+      const value = body?.entry?.[0]?.changes?.[0]?.value;
 
       if (!value) {
         this.logger.warn('Webhook body has no value — ignoring');

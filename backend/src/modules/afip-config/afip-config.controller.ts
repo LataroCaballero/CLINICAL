@@ -21,6 +21,9 @@ export class AfipConfigController {
 
   @Patch('billing')
   saveBillingConfig(@Req() req: any, @Body() dto: SaveBillingConfigDto) {
-    return this.afipConfigService.saveBillingConfig(req.user.profesionalId, dto);
+    return this.afipConfigService.saveBillingConfig(
+      req.user.profesionalId,
+      dto,
+    );
   }
 }

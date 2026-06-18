@@ -54,7 +54,12 @@ describe('CaeaService', () => {
       add: jest.fn().mockResolvedValue({}),
     };
 
-    service = new CaeaService(mockWsaaService, mockPrisma, mockConfig, mockCaeaInformarQueue);
+    service = new CaeaService(
+      mockWsaaService,
+      mockPrisma,
+      mockConfig,
+      mockCaeaInformarQueue,
+    );
     // Inject mock logger to avoid console output in tests
     (service as any).logger = mockLogger;
   });
@@ -237,9 +242,9 @@ describe('CaeaService', () => {
       `;
       mockedAxios.post = jest.fn().mockResolvedValue({ data: rejectedXml });
 
-      await expect(service.informarFactura('f1', 'prof-1')).rejects.toBeInstanceOf(
-        AfipBusinessError,
-      );
+      await expect(
+        service.informarFactura('f1', 'prof-1'),
+      ).rejects.toBeInstanceOf(AfipBusinessError);
     });
   });
 });

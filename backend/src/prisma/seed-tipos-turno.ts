@@ -9,18 +9,38 @@ import { PrismaClient, FlujoPaciente } from '@prisma/client';
 const prisma = new PrismaClient();
 
 const TIPOS_TURNO = [
-  { nombre: 'Consulta',       flujoPaciente: null as FlujoPaciente | null, esCirugia: false },
-  { nombre: 'Control',        flujoPaciente: null as FlujoPaciente | null, esCirugia: false },
-  { nombre: 'Pre-Quirúrgico', flujoPaciente: FlujoPaciente.CIRUGIA,        esCirugia: false },
-  { nombre: 'Tratamiento',    flujoPaciente: FlujoPaciente.TRATAMIENTO,    esCirugia: false },
-  { nombre: 'Cirugía',        flujoPaciente: null as FlujoPaciente | null, esCirugia: true  },
+  {
+    nombre: 'Consulta',
+    flujoPaciente: null as FlujoPaciente | null,
+    esCirugia: false,
+  },
+  {
+    nombre: 'Control',
+    flujoPaciente: null as FlujoPaciente | null,
+    esCirugia: false,
+  },
+  {
+    nombre: 'Pre-Quirúrgico',
+    flujoPaciente: FlujoPaciente.CIRUGIA,
+    esCirugia: false,
+  },
+  {
+    nombre: 'Tratamiento',
+    flujoPaciente: FlujoPaciente.TRATAMIENTO,
+    esCirugia: false,
+  },
+  {
+    nombre: 'Cirugía',
+    flujoPaciente: null as FlujoPaciente | null,
+    esCirugia: true,
+  },
 ];
 
 async function main() {
   console.log('Seed: tipos de turno v1.8');
   for (const tipo of TIPOS_TURNO) {
     await prisma.tipoTurno.upsert({
-      where:  { nombre: tipo.nombre },
+      where: { nombre: tipo.nombre },
       update: { flujoPaciente: tipo.flujoPaciente, esCirugia: tipo.esCirugia },
       create: tipo,
     });

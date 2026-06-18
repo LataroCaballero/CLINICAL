@@ -35,7 +35,10 @@ export class WsaaService implements WsaaServiceInterface {
   // Public API
   // ---------------------------------------------------------------------------
 
-  async getTicket(profesionalId: string, service: string): Promise<AccessTicket> {
+  async getTicket(
+    profesionalId: string,
+    service: string,
+  ): Promise<AccessTicket> {
     const cfg = await this.loadConfig(profesionalId);
     const mutexKey = `${profesionalId}:${cfg.cuit}`;
     const redisKey = `afip_ta:${profesionalId}:${cfg.cuit}:${service}`;
@@ -58,12 +61,19 @@ export class WsaaService implements WsaaServiceInterface {
             expiresAt: new Date(parsed.expiresAt),
           };
         } catch {
-          this.logger.warn(`Failed to parse cached WSAA ticket for key ${redisKey}`);
+          this.logger.warn(
+            `Failed to parse cached WSAA ticket for key ${redisKey}`,
+          );
         }
       }
 
       // 2. Call WSAA
-      const ticket = await this.callWsaa(cfg.certPem, cfg.keyPem, cfg.ambiente, service);
+      const ticket = await this.callWsaa(
+        cfg.certPem,
+        cfg.keyPem,
+        cfg.ambiente,
+        service,
+      );
 
       // 3. Store in Redis with TTL = expiresAt - now - 5min (guard against negative TTL)
       const ttlSeconds = Math.floor(
@@ -163,7 +173,10 @@ export class WsaaService implements WsaaServiceInterface {
     });
     p7.sign({ detached: false });
 
-    return Buffer.from(forge.asn1.toDer(p7.toAsn1()).getBytes(), 'binary').toString('base64');
+    return Buffer.from(
+      forge.asn1.toDer(p7.toAsn1()).getBytes(),
+      'binary',
+    ).toString('base64');
   }
 
   private async callWsaa(
@@ -182,7 +195,8 @@ export class WsaaService implements WsaaServiceInterface {
     const tra = this.buildTra(service);
     const cms = this.signTra(tra, certPem, keyPem);
 
-    const soapEnvelope = `<?xml version="1.0" encoding="UTF-8"?>` +
+    const soapEnvelope =
+      `<?xml version="1.0" encoding="UTF-8"?>` +
       `<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" ` +
       `xmlns:wsaa="http://wsaa.view.sua.dvadac.desein.afip.gov/">` +
       `<soapenv:Header/>` +
@@ -200,7 +214,9 @@ export class WsaaService implements WsaaServiceInterface {
     const xml: string = res.data;
     const tokenMatch = xml.match(/<token>([\s\S]*?)<\/token>/);
     const signMatch = xml.match(/<sign>([\s\S]*?)<\/sign>/);
-    const expiryMatch = xml.match(/<expirationTime>([\s\S]*?)<\/expirationTime>/);
+    const expiryMatch = xml.match(
+      /<expirationTime>([\s\S]*?)<\/expirationTime>/,
+    );
 
     if (!tokenMatch || !signMatch || !expiryMatch) {
       throw new Error(
@@ -228,7 +244,11 @@ export class WsaaService implements WsaaServiceInterface {
     }
   }
 
-  private async redisSafeSet(key: string, value: string, ttlSeconds: number): Promise<void> {
+  private async redisSafeSet(
+    key: string,
+    value: string,
+    ttlSeconds: number,
+  ): Promise<void> {
     if (!this.redis) return;
     try {
       await this.redis.set(key, value, 'EX', ttlSeconds);

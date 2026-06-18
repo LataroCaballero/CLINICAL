@@ -12,7 +12,10 @@ import axios from 'axios';
 import { AmbienteAFIP } from '@prisma/client';
 import { SaveCertDto } from './dto/save-cert.dto';
 import { SaveBillingConfigDto } from './dto/save-billing-config.dto';
-import { AfipConfigStatusResponse, CertStatus } from './dto/afip-config-status.dto';
+import {
+  AfipConfigStatusResponse,
+  CertStatus,
+} from './dto/afip-config-status.dto';
 import { WSAA_SERVICE } from '../wsaa/wsaa.constants';
 import { WsaaServiceInterface } from '../wsaa/wsaa.interfaces';
 
@@ -166,7 +169,12 @@ export class AfipConfigService {
     const certPem = this.encryption.decrypt(cfg.certPemEncrypted);
     const keyPem = this.encryption.decrypt(cfg.keyPemEncrypted);
 
-    const { token, sign } = await this.wsaaService.getTicketTransient(certPem, keyPem, dto.ambiente, 'wsfe');
+    const { token, sign } = await this.wsaaService.getTicketTransient(
+      certPem,
+      keyPem,
+      dto.ambiente,
+      'wsfe',
+    );
     await this.validatePtoVta(token, sign, cfg.cuit, dto.ptoVta, dto.ambiente);
 
     await this.prisma.configuracionAFIP.update({

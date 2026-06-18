@@ -487,7 +487,10 @@ export class HCTemplatesService {
               items: {
                 create: budgetData.items.map((item, index) => ({
                   descripcion: item.descripcion,
-                  precioTotal: item.precioTotal ?? item.total ?? (item.cantidad * item.precioUnitario),
+                  precioTotal:
+                    item.precioTotal ??
+                    item.total ??
+                    item.cantidad * item.precioUnitario,
                   orden: index,
                 })),
               },

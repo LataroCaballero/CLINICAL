@@ -68,9 +68,7 @@ export class WhatsappService {
       if (metaCode === 190)
         throw new BadRequestException(`Token inválido: ${metaMsg}`);
       if (metaCode === 100)
-        throw new BadRequestException(
-          `Phone Number ID inválido: ${metaMsg}`,
-        );
+        throw new BadRequestException(`Phone Number ID inválido: ${metaMsg}`);
       throw new BadRequestException(`Meta API: ${metaMsg}`);
     }
   }

@@ -112,7 +112,10 @@ export class ReportesController {
     @Query('profesionalId') profesionalId: string,
     @Query('periodo') periodo: string = 'semana',
   ) {
-    return this.crmDashboardService.getCoordinatorPerformance(profesionalId, periodo);
+    return this.crmDashboardService.getCoordinatorPerformance(
+      profesionalId,
+      periodo,
+    );
   }
 
   // ============================================================

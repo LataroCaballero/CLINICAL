@@ -427,7 +427,10 @@ export class OrdenesCompraService {
         });
       }
 
-      const total = dto.items.reduce((sum, item) => sum + item.precioFactura, 0);
+      const total = dto.items.reduce(
+        (sum, item) => sum + item.precioFactura,
+        0,
+      );
 
       // 3. Crear OrdenCompra con estado RECIBIDA
       const orden = await tx.ordenCompra.create({
@@ -440,7 +443,10 @@ export class OrdenesCompraService {
           fechaRecepcion: fechaFactura,
           total,
           condicionPago,
-          cantidadCuotas: condicionPago === CondicionPagoProveedor.CONTADO ? 1 : cantidadCuotas,
+          cantidadCuotas:
+            condicionPago === CondicionPagoProveedor.CONTADO
+              ? 1
+              : cantidadCuotas,
           fechaPrimerVencimiento: dto.fechaPrimerVencimiento
             ? new Date(dto.fechaPrimerVencimiento)
             : null,

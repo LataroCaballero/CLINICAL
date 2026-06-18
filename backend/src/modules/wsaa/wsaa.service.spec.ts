@@ -114,9 +114,7 @@ describe('WsaaService', () => {
     jest.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
 
     // Mock signTra to avoid needing real PEM certs
-    jest
-      .spyOn(service as any, 'signTra')
-      .mockReturnValue('base64-cms-stub');
+    jest.spyOn(service as any, 'signTra').mockReturnValue('base64-cms-stub');
 
     // Default: axios returns a valid WSAA response
     axiosPostSpy = jest
@@ -231,7 +229,11 @@ describe('WsaaService', () => {
     const realSignTra = (service as any).signTra.getMockImplementation?.();
 
     // Call the mocked version — just verify the contract shape
-    const result = (service as any).signTra('some-tra-xml', MOCK_CERT_PEM, MOCK_KEY_PEM);
+    const result = (service as any).signTra(
+      'some-tra-xml',
+      MOCK_CERT_PEM,
+      MOCK_KEY_PEM,
+    );
     expect(typeof result).toBe('string');
     expect(result.length).toBeGreaterThan(0);
     // Verify it looks like base64
@@ -283,6 +285,8 @@ describe('WsaaService', () => {
     });
     axiosPostSpy.mockRejectedValueOnce(httpError);
 
-    await expect(service.getTicket(MOCK_PROFESIONAL_ID, MOCK_SERVICE)).rejects.toThrow();
+    await expect(
+      service.getTicket(MOCK_PROFESIONAL_ID, MOCK_SERVICE),
+    ).rejects.toThrow();
   });
 });

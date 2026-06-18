@@ -69,7 +69,7 @@ export class WhatsappController {
   @Get('templates')
   @Auth('ADMIN', 'PROFESIONAL', 'SECRETARIA')
   async getTemplates(@Req() req: any) {
-    let profesionalId = req.user?.profesionalId as string | null;
+    const profesionalId = req.user?.profesionalId as string | null;
     if (!profesionalId) {
       throw new BadRequestException(
         'SECRETARIA debe estar asociada a un profesional para listar templates',

@@ -1,5 +1,8 @@
 import { UnrecoverableError } from 'bullmq';
-import { CaeaInformarProcessor, CAEA_INFORMAR_QUEUE } from './caea-informar.processor';
+import {
+  CaeaInformarProcessor,
+  CAEA_INFORMAR_QUEUE,
+} from './caea-informar.processor';
 import { AfipBusinessError, AfipTransientError } from '../afip/afip.errors';
 
 describe('CaeaInformarProcessor', () => {
@@ -7,7 +10,7 @@ describe('CaeaInformarProcessor', () => {
   let mockCaeaService: any;
 
   const makeJob = (data: { facturaId: string; profesionalId: string }) =>
-    ({ data } as any);
+    ({ data }) as any;
 
   beforeEach(() => {
     mockCaeaService = {

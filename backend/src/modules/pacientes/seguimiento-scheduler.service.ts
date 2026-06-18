@@ -65,9 +65,7 @@ export class SeguimientoSchedulerService {
           `Alerta creada para paciente ${tarea.paciente.nombreCompleto} — ${tarea.tipo}`,
         );
       } catch (err) {
-        this.logger.error(
-          `Error procesando tarea ${tarea.id}: ${err.message}`,
-        );
+        this.logger.error(`Error procesando tarea ${tarea.id}: ${err.message}`);
       }
     }
   }

@@ -30,8 +30,14 @@ export class CaeaPrefetchScheduler {
 
     for (const cfg of configs) {
       try {
-        await this.caeaService.solicitarYPersistir(cfg.profesionalId, periodo, orden);
-        this.logger.log(`CAEA pre-fetched for profesionalId ${cfg.profesionalId} periodo ${periodo} orden ${orden}`);
+        await this.caeaService.solicitarYPersistir(
+          cfg.profesionalId,
+          periodo,
+          orden,
+        );
+        this.logger.log(
+          `CAEA pre-fetched for profesionalId ${cfg.profesionalId} periodo ${periodo} orden ${orden}`,
+        );
       } catch (err: any) {
         this.logger.error(
           `CAEA pre-fetch failed for profesionalId ${cfg.profesionalId}: ${err?.message ?? String(err)}`,
@@ -78,7 +84,11 @@ export class CaeaPrefetchScheduler {
         continue;
       }
 
-      await this.sendDeadlineAlert(caeaVigente, pendingCount, daysUntilDeadline);
+      await this.sendDeadlineAlert(
+        caeaVigente,
+        pendingCount,
+        daysUntilDeadline,
+      );
     }
   }
 
@@ -98,7 +108,8 @@ export class CaeaPrefetchScheduler {
     const port = cc?.smtpPort ?? this.config.get<number>('SMTP_PORT', 587);
     const user = cc?.smtpUser ?? this.config.get('SMTP_USER');
     const pass = this.config.get('SMTP_PASS');
-    const from = cc?.smtpFrom ?? this.config.get('SMTP_FROM', 'noreply@clinical.com');
+    const from =
+      cc?.smtpFrom ?? this.config.get('SMTP_FROM', 'noreply@clinical.com');
     const to = profesional?.usuario?.email;
 
     if (!host || !user || !pass) {

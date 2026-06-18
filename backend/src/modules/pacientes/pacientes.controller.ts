@@ -21,7 +21,12 @@ import { PacienteListaDto } from './dto/paciente-lista.dto';
 import { PrismaService } from '@/src/prisma/prisma.service';
 import { UpdatePacienteSectionDto } from './dto/update-paciente-section.dto';
 import { Auth } from '../auth/decorators/auth.decorator';
-import { EtapaCRM, TemperaturaPaciente, FlujoPaciente, MotivoPerdidaCRM } from '@prisma/client';
+import {
+  EtapaCRM,
+  TemperaturaPaciente,
+  FlujoPaciente,
+  MotivoPerdidaCRM,
+} from '@prisma/client';
 import { UpdateFlujoDto } from './dto/update-flujo.dto';
 import { UpdateWhatsappOptInDto } from './dto/update-whatsapp-opt-in.dto';
 import { UpdateCrmArchivoDto } from './dto/update-crm-archivo.dto';
@@ -68,7 +73,10 @@ export class PacientesController {
   @Header('Cache-Control', 'no-store')
   @Header('Pragma', 'no-cache')
   @Header('Expires', '0')
-  async suggest(@Query('q') q: string, @Query('profesionalId') profesionalId?: string) {
+  async suggest(
+    @Query('q') q: string,
+    @Query('profesionalId') profesionalId?: string,
+  ) {
     const results = await this.pacientesService.suggest(q, profesionalId);
     return results ?? [];
   }
@@ -80,9 +88,7 @@ export class PacientesController {
 
   // Log de Contactos — Lista de acción priorizada
   @Get('lista-accion')
-  getListaAccion(
-    @Query('profesionalId') profesionalId: string,
-  ) {
+  getListaAccion(@Query('profesionalId') profesionalId: string) {
     return this.pacientesService.getListaAccion(profesionalId);
   }
 
@@ -124,7 +130,12 @@ export class PacientesController {
     }
 
     const registradoPorId = req.user?.userId as string | undefined;
-    return this.pacientesService.createContacto(pacienteId, profesionalId, dto, registradoPorId);
+    return this.pacientesService.createContacto(
+      pacienteId,
+      profesionalId,
+      dto,
+      registradoPorId,
+    );
   }
 
   // CRM — Obtener pacientes en lista de espera
@@ -210,20 +221,14 @@ export class PacientesController {
 
   // CRM — Archivar / desarchivar paciente del embudo CRM
   @Patch(':id/crm-archivo')
-  updateCrmArchivo(
-    @Param('id') id: string,
-    @Body() dto: UpdateCrmArchivoDto,
-  ) {
+  updateCrmArchivo(@Param('id') id: string, @Body() dto: UpdateCrmArchivoDto) {
     return this.pacientesService.updateCrmArchivo(id, dto.archivado);
   }
 
   // Flujo — Clasificar o reclasificar el flujo del paciente
   @Auth('ADMIN', 'PROFESIONAL', 'SECRETARIA')
   @Patch(':id/flujo')
-  updateFlujo(
-    @Param('id') id: string,
-    @Body() dto: UpdateFlujoDto,
-  ) {
+  updateFlujo(@Param('id') id: string, @Body() dto: UpdateFlujoDto) {
     return this.pacientesService.updateFlujo(id, dto.flujo);
   }
 }

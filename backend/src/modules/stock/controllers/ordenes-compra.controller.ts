@@ -10,7 +10,11 @@ import {
 } from '@nestjs/common';
 import { Auth } from 'src/modules/auth/decorators/auth.decorator';
 import { OrdenesCompraService } from '../services/ordenes-compra.service';
-import { CreateOrdenCompraDto, RecibirOrdenCompraDto, CargaFacturaDto } from '../dto';
+import {
+  CreateOrdenCompraDto,
+  RecibirOrdenCompraDto,
+  CargaFacturaDto,
+} from '../dto';
 import { resolveScope } from 'src/common/scope/resolve-scope';
 import { EstadoOrdenCompra } from '@prisma/client';
 

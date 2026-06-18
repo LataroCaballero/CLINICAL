@@ -206,11 +206,17 @@ export class TratamientosService {
   // Insumos management
   // =====================
 
-  async setInsumos(id: string, profesionalId: string, insumos: InsumoItemDto[]) {
+  async setInsumos(
+    id: string,
+    profesionalId: string,
+    insumos: InsumoItemDto[],
+  ) {
     await this.findById(id, profesionalId);
 
     await this.prisma.$transaction([
-      this.prisma.tratamientoInsumo.deleteMany({ where: { tratamientoId: id } }),
+      this.prisma.tratamientoInsumo.deleteMany({
+        where: { tratamientoId: id },
+      }),
       ...insumos.map((item) =>
         this.prisma.tratamientoInsumo.create({
           data: {

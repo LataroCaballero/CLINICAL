@@ -626,9 +626,7 @@ export class ReportesFinancierosService {
       : endOfDay(new Date());
     const fechaDesde = filters.fechaDesde
       ? startOfDay(parseISO(filters.fechaDesde))
-      : startOfDay(
-          new Date(fechaHasta.getTime() - 90 * 24 * 60 * 60 * 1000),
-        );
+      : startOfDay(new Date(fechaHasta.getTime() - 90 * 24 * 60 * 60 * 1000));
 
     // Pagos pendientes = Cargos sin el pago correspondiente
     // Simplificamos: cuentas con saldo > 0 y sus últimos cargos

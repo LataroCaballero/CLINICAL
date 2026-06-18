@@ -1,4 +1,10 @@
-import { IsString, IsNotEmpty, IsInt, IsPositive, IsEnum } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsInt,
+  IsPositive,
+  IsEnum,
+} from 'class-validator';
 import { AmbienteAFIP } from '@prisma/client';
 
 export class SaveCertDto {

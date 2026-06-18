@@ -127,7 +127,9 @@ describe('ReportesDashboardService', () => {
     });
 
     it('should return proximosTurnos as array', async () => {
-      const result = await service.getDashboardKPIs({ profesionalId: 'prof-123' });
+      const result = await service.getDashboardKPIs({
+        profesionalId: 'prof-123',
+      });
 
       expect(result.proximosTurnos).toBeDefined();
       expect(Array.isArray(result.proximosTurnos)).toBe(true);

@@ -164,30 +164,39 @@ export class CatalogoHCService {
    * Returns ZonaHCResponse[] matching the Phase 45 / 44-03 contract exactly.
    */
   async getCatalogoConSeed(profesionalId: string): Promise<ZonaHCResponse[]> {
-    const count = await this.prisma.zonaHC.count({ where: { profesionalId } });
-    if (count === 0) {
-      await this.seedCatalogoInicial(profesionalId);
-    }
-
-    const zonas = await this.prisma.zonaHC.findMany({
-      where: { profesionalId, activo: true },
-      orderBy: { orden: 'asc' },
-      include: {
-        diagnosticos: {
-          where: { activo: true },
-          orderBy: { orden: 'asc' },
-        },
-        tratamientos: {
-          where: { activo: true },
-          orderBy: { orden: 'asc' },
-          include: {
-            tratamiento: {
-              select: { id: true, precio: true },
-            },
+    const includeActivos = {
+      diagnosticos: {
+        where: { activo: true },
+        orderBy: { orden: 'asc' as const },
+      },
+      tratamientos: {
+        where: { activo: true },
+        orderBy: { orden: 'asc' as const },
+        include: {
+          tratamiento: {
+            select: { id: true, precio: true },
           },
         },
       },
+    };
+
+    // Caso común (catálogo ya sembrado): una sola query.
+    // Solo si no hay zonas activas sembramos y volvemos a leer — evita el count
+    // extra en cada carga (un round-trip menos contra el pooler).
+    let zonas = await this.prisma.zonaHC.findMany({
+      where: { profesionalId, activo: true },
+      orderBy: { orden: 'asc' },
+      include: includeActivos,
     });
+
+    if (zonas.length === 0) {
+      await this.seedCatalogoInicial(profesionalId);
+      zonas = await this.prisma.zonaHC.findMany({
+        where: { profesionalId, activo: true },
+        orderBy: { orden: 'asc' },
+        include: includeActivos,
+      });
+    }
 
     return zonas.map((zona) => ({
       id: zona.id,

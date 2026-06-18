@@ -38,7 +38,12 @@ import { WSAA_REDIS_CLIENT, WSAA_SERVICE } from './wsaa.constants';
     },
     {
       provide: WSAA_SERVICE,
-      inject: [ConfigService, PrismaService, EncryptionService, WSAA_REDIS_CLIENT],
+      inject: [
+        ConfigService,
+        PrismaService,
+        EncryptionService,
+        WSAA_REDIS_CLIENT,
+      ],
       useFactory: (
         config: ConfigService,
         prisma: PrismaService,

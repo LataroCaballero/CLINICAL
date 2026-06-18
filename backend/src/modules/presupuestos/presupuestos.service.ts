@@ -9,7 +9,15 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { CuentasCorrientesService } from '../cuentas-corrientes/cuentas-corrientes.service';
 import { PresupuestoPdfService } from './presupuesto-pdf.service';
 import { CreatePresupuestoDto } from './dto/create-presupuesto.dto';
-import { EstadoPresupuesto, TipoMovimiento, EtapaCRM, PrioridadMensaje, TipoContacto, TemperaturaPaciente, TipoTareaSeguimiento } from '@prisma/client';
+import {
+  EstadoPresupuesto,
+  TipoMovimiento,
+  EtapaCRM,
+  PrioridadMensaje,
+  TipoContacto,
+  TemperaturaPaciente,
+  TipoTareaSeguimiento,
+} from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 
 // Constante de orden CRM — PERDIDO excluido intencionalmente (manejo especial)
@@ -77,7 +85,10 @@ export class PresupuestosService {
       orden: index,
     }));
 
-    const subtotal = itemsConTotal.reduce((acc, item) => acc + item.precioTotal, 0);
+    const subtotal = itemsConTotal.reduce(
+      (acc, item) => acc + item.precioTotal,
+      0,
+    );
     const descuentos = dto.descuentos || 0;
     const total = subtotal - descuentos;
 
@@ -193,9 +204,17 @@ export class PresupuestosService {
       where: { id: presupuesto.pacienteId },
       select: { etapaCRM: true },
     });
-    const maybeCRMUpdateAceptar = isAutoTransitionBlocked(pacienteCRM?.etapaCRM, EtapaCRM.CONFIRMADO)
+    const maybeCRMUpdateAceptar = isAutoTransitionBlocked(
+      pacienteCRM?.etapaCRM,
+      EtapaCRM.CONFIRMADO,
+    )
       ? []
-      : [this.prisma.paciente.update({ where: { id: presupuesto.pacienteId }, data: { etapaCRM: EtapaCRM.CONFIRMADO } })];
+      : [
+          this.prisma.paciente.update({
+            where: { id: presupuesto.pacienteId },
+            data: { etapaCRM: EtapaCRM.CONFIRMADO },
+          }),
+        ];
 
     // Actualizar estado del presupuesto y etapaCRM del paciente (condicional)
     const [updated] = await this.prisma.$transaction([
@@ -231,7 +250,13 @@ export class PresupuestosService {
   async marcarEnviado(id: string) {
     const presupuesto = await this.prisma.presupuesto.findUnique({
       where: { id },
-      select: { id: true, pacienteId: true, profesionalId: true, estado: true, tokenAceptacion: true },
+      select: {
+        id: true,
+        pacienteId: true,
+        profesionalId: true,
+        estado: true,
+        tokenAceptacion: true,
+      },
     });
 
     if (!presupuesto) throw new NotFoundException('Presupuesto no encontrado');
@@ -247,9 +272,17 @@ export class PresupuestosService {
       where: { id: presupuesto.pacienteId },
       select: { etapaCRM: true },
     });
-    const maybeCRMUpdateEnviado = isAutoTransitionBlocked(pacienteCRMEnviado?.etapaCRM, EtapaCRM.PRESUPUESTO_ENVIADO)
+    const maybeCRMUpdateEnviado = isAutoTransitionBlocked(
+      pacienteCRMEnviado?.etapaCRM,
+      EtapaCRM.PRESUPUESTO_ENVIADO,
+    )
       ? []
-      : [this.prisma.paciente.update({ where: { id: presupuesto.pacienteId }, data: { etapaCRM: EtapaCRM.PRESUPUESTO_ENVIADO } })];
+      : [
+          this.prisma.paciente.update({
+            where: { id: presupuesto.pacienteId },
+            data: { etapaCRM: EtapaCRM.PRESUPUESTO_ENVIADO },
+          }),
+        ];
 
     const [updated] = await this.prisma.$transaction([
       this.prisma.presupuesto.update({
@@ -304,11 +337,21 @@ export class PresupuestosService {
       where: { id: presupuesto.pacienteId },
       select: { etapaCRM: true },
     });
-    const etapasProtegidas: EtapaCRM[] = [EtapaCRM.CONFIRMADO, EtapaCRM.PROCEDIMIENTO_REALIZADO];
-    const bloqueado = paciente?.etapaCRM != null && etapasProtegidas.includes(paciente.etapaCRM);
+    const etapasProtegidas: EtapaCRM[] = [
+      EtapaCRM.CONFIRMADO,
+      EtapaCRM.PROCEDIMIENTO_REALIZADO,
+    ];
+    const bloqueado =
+      paciente?.etapaCRM != null &&
+      etapasProtegidas.includes(paciente.etapaCRM);
     const maybyCRMUpdate = bloqueado
       ? []
-      : [this.prisma.paciente.update({ where: { id: presupuesto.pacienteId }, data: { etapaCRM: EtapaCRM.PERDIDO } })];
+      : [
+          this.prisma.paciente.update({
+            where: { id: presupuesto.pacienteId },
+            data: { etapaCRM: EtapaCRM.PERDIDO },
+          }),
+        ];
 
     const [updated] = await this.prisma.$transaction([
       this.prisma.presupuesto.update({
@@ -376,7 +419,15 @@ export class PresupuestosService {
       where: { id },
       include: {
         items: { orderBy: { orden: 'asc' } },
-        paciente: { select: { id: true, nombreCompleto: true, dni: true, email: true, telefono: true } },
+        paciente: {
+          select: {
+            id: true,
+            nombreCompleto: true,
+            dni: true,
+            email: true,
+            telefono: true,
+          },
+        },
         profesional: {
           include: {
             usuario: { select: { nombre: true, apellido: true } },
@@ -433,7 +484,8 @@ export class PresupuestosService {
       where: { tokenAceptacion: token },
       select: { id: true, estado: true },
     });
-    if (!presupuesto) throw new NotFoundException('Presupuesto no encontrado o link expirado');
+    if (!presupuesto)
+      throw new NotFoundException('Presupuesto no encontrado o link expirado');
     if (
       presupuesto.estado !== EstadoPresupuesto.ENVIADO &&
       presupuesto.estado !== EstadoPresupuesto.ACEPTADO
@@ -463,7 +515,8 @@ export class PresupuestosService {
         },
       },
     });
-    if (!presupuesto) throw new NotFoundException('Presupuesto no encontrado o link expirado');
+    if (!presupuesto)
+      throw new NotFoundException('Presupuesto no encontrado o link expirado');
     if (
       presupuesto.estado !== EstadoPresupuesto.ENVIADO &&
       presupuesto.estado !== EstadoPresupuesto.ACEPTADO
@@ -472,7 +525,10 @@ export class PresupuestosService {
     }
 
     const dniInput = dni.trim().replace(/\s/g, '').replace(/\./g, '');
-    const dniStored = (presupuesto.paciente.dni ?? '').trim().replace(/\s/g, '').replace(/\./g, '');
+    const dniStored = (presupuesto.paciente.dni ?? '')
+      .trim()
+      .replace(/\s/g, '')
+      .replace(/\./g, '');
     if (dniInput.toLowerCase() !== dniStored.toLowerCase()) {
       throw new UnauthorizedException('DNI incorrecto');
     }
@@ -588,7 +644,13 @@ export class PresupuestosService {
   async aceptarByToken(token: string) {
     const presupuesto = await this.prisma.presupuesto.findUnique({
       where: { tokenAceptacion: token },
-      select: { id: true, pacienteId: true, total: true, estado: true, profesionalId: true },
+      select: {
+        id: true,
+        pacienteId: true,
+        total: true,
+        estado: true,
+        profesionalId: true,
+      },
     });
     if (!presupuesto) throw new NotFoundException('Presupuesto no encontrado');
     if (presupuesto.estado !== EstadoPresupuesto.ENVIADO) {
@@ -616,9 +678,17 @@ export class PresupuestosService {
       },
     );
 
-    const maybeCRMUpdateByToken = isAutoTransitionBlocked(paciente?.etapaCRM, EtapaCRM.CONFIRMADO)
+    const maybeCRMUpdateByToken = isAutoTransitionBlocked(
+      paciente?.etapaCRM,
+      EtapaCRM.CONFIRMADO,
+    )
       ? []
-      : [this.prisma.paciente.update({ where: { id: presupuesto.pacienteId }, data: { etapaCRM: EtapaCRM.CONFIRMADO } })];
+      : [
+          this.prisma.paciente.update({
+            where: { id: presupuesto.pacienteId },
+            data: { etapaCRM: EtapaCRM.CONFIRMADO },
+          }),
+        ];
 
     await this.prisma.$transaction([
       this.prisma.presupuesto.update({
@@ -677,11 +747,21 @@ export class PresupuestosService {
 
     // Guard especial para PERDIDO — PERDIDO no está en ETAPA_ORDEN por diseño.
     // Solo bloqueamos si el paciente ya está en una etapa avanzada (protegida).
-    const etapasProtegidas: EtapaCRM[] = [EtapaCRM.CONFIRMADO, EtapaCRM.PROCEDIMIENTO_REALIZADO];
-    const bloqueadoRechazarByToken = paciente?.etapaCRM != null && etapasProtegidas.includes(paciente.etapaCRM);
+    const etapasProtegidas: EtapaCRM[] = [
+      EtapaCRM.CONFIRMADO,
+      EtapaCRM.PROCEDIMIENTO_REALIZADO,
+    ];
+    const bloqueadoRechazarByToken =
+      paciente?.etapaCRM != null &&
+      etapasProtegidas.includes(paciente.etapaCRM);
     const maybeCRMUpdateRechazado = bloqueadoRechazarByToken
       ? []
-      : [this.prisma.paciente.update({ where: { id: presupuesto.pacienteId }, data: { etapaCRM: EtapaCRM.PERDIDO } })];
+      : [
+          this.prisma.paciente.update({
+            where: { id: presupuesto.pacienteId },
+            data: { etapaCRM: EtapaCRM.PERDIDO },
+          }),
+        ];
 
     await this.prisma.$transaction([
       this.prisma.presupuesto.update({

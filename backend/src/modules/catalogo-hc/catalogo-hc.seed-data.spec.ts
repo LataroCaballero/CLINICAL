@@ -39,7 +39,10 @@ describe('catalogo-hc seed data', () => {
     });
 
     it('tiene el orden correcto: Abdomen(1), Mamas(2), Nariz(3), Facial(4), Locales(5), Otros(9999)', () => {
-      const ordenes = SEED_ZONAS.map((z) => ({ nombre: z.nombre, orden: z.orden }));
+      const ordenes = SEED_ZONAS.map((z) => ({
+        nombre: z.nombre,
+        orden: z.orden,
+      }));
       expect(ordenes).toEqual([
         { nombre: 'Abdomen', orden: 1 },
         { nombre: 'Mamas', orden: 2 },
@@ -144,7 +147,10 @@ describe('catalogo-hc seed data', () => {
 
     it('Nariz tiene 2 tratamientos', () => {
       const nariz = SEED_ZONAS.find((z) => z.nombre === 'Nariz');
-      expect(nariz?.tratamientos).toEqual(['Rinoplastia', 'Rinoplastia estructural']);
+      expect(nariz?.tratamientos).toEqual([
+        'Rinoplastia',
+        'Rinoplastia estructural',
+      ]);
     });
 
     // Facial

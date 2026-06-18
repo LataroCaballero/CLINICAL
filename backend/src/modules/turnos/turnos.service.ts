@@ -95,7 +95,8 @@ export class TurnosService {
         },
         select: { duracionMinutos: true },
       });
-      duracionMin = configProf?.duracionMinutos ?? tipoTurno.duracionDefault ?? 30;
+      duracionMin =
+        configProf?.duracionMinutos ?? tipoTurno.duracionDefault ?? 30;
     }
     if (duracionMin <= 0) {
       throw new BadRequestException('La duración del turno es inválida.');
@@ -156,7 +157,9 @@ export class TurnosService {
       where: { id: dto.pacienteId },
       select: { etapaCRM: true, profesionalId: true, flujo: true },
     });
-    if (!isAutoTransitionBlocked(pacienteCRM?.etapaCRM, EtapaCRM.TURNO_AGENDADO)) {
+    if (
+      !isAutoTransitionBlocked(pacienteCRM?.etapaCRM, EtapaCRM.TURNO_AGENDADO)
+    ) {
       await this.prisma.paciente.update({
         where: { id: dto.pacienteId },
         data: { etapaCRM: EtapaCRM.TURNO_AGENDADO },
@@ -164,7 +167,10 @@ export class TurnosService {
     }
 
     // 5.5) Flujo auto-update (best-effort — no bloquea creación del turno)
-    if (tipoTurno.flujoPaciente && pacienteCRM?.flujo === FlujoPaciente.PENDIENTE) {
+    if (
+      tipoTurno.flujoPaciente &&
+      pacienteCRM?.flujo === FlujoPaciente.PENDIENTE
+    ) {
       this.prisma.paciente
         .update({
           where: { id: dto.pacienteId },
@@ -562,11 +568,19 @@ export class TurnosService {
     for (const historia of historias) {
       const lastEntry = historia.entradas.find((e) => {
         const c = e.contenido as Record<string, unknown> | null;
-        return Array.isArray(c?.tratamientos) && (c!.tratamientos as unknown[]).length > 0;
+        return (
+          Array.isArray(c?.tratamientos) &&
+          (c!.tratamientos as unknown[]).length > 0
+        );
       });
       if (lastEntry) {
-        const tratamientos = (lastEntry.contenido as { tratamientos: Array<{ nombre: string }> }).tratamientos;
-        ultimoTratamientoMap.set(historia.pacienteId, tratamientos.map((t) => t.nombre).join(', '));
+        const tratamientos = (
+          lastEntry.contenido as { tratamientos: Array<{ nombre: string }> }
+        ).tratamientos;
+        ultimoTratamientoMap.set(
+          historia.pacienteId,
+          tratamientos.map((t) => t.nombre).join(', '),
+        );
       } else {
         ultimoTratamientoMap.set(historia.pacienteId, null);
       }

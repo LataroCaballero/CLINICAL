@@ -9,12 +9,16 @@ describe('ReportesFinancierosService', () => {
 
   const mockPrismaService = {
     movimientoCuenta: {
-      aggregate: jest.fn().mockResolvedValue({ _sum: { monto: 0 }, _count: { _all: 0 } }),
+      aggregate: jest
+        .fn()
+        .mockResolvedValue({ _sum: { monto: 0 }, _count: { _all: 0 } }),
       count: jest.fn().mockResolvedValue(0),
       groupBy: jest.fn().mockResolvedValue([]),
     },
     movimientoCC: {
-      aggregate: jest.fn().mockResolvedValue({ _sum: { monto: 0 }, _count: { _all: 0 } }),
+      aggregate: jest
+        .fn()
+        .mockResolvedValue({ _sum: { monto: 0 }, _count: { _all: 0 } }),
       count: jest.fn().mockResolvedValue(0),
       groupBy: jest.fn().mockResolvedValue([]),
       findMany: jest.fn().mockResolvedValue([]),
@@ -25,7 +29,9 @@ describe('ReportesFinancierosService', () => {
     },
     cuentaCorriente: {
       findMany: jest.fn().mockResolvedValue([]),
-      aggregate: jest.fn().mockResolvedValue({ _sum: { saldo: 0 }, _count: { _all: 0 } }),
+      aggregate: jest
+        .fn()
+        .mockResolvedValue({ _sum: { saldo: 0 }, _count: { _all: 0 } }),
       count: jest.fn().mockResolvedValue(0),
     },
     profesional: {
@@ -45,7 +51,9 @@ describe('ReportesFinancierosService', () => {
       ],
     }).compile();
 
-    service = module.get<ReportesFinancierosService>(ReportesFinancierosService);
+    service = module.get<ReportesFinancierosService>(
+      ReportesFinancierosService,
+    );
     prisma = module.get<PrismaService>(PrismaService);
 
     jest.clearAllMocks();

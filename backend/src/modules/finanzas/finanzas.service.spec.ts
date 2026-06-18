@@ -131,7 +131,11 @@ describe('FinanzasService', () => {
 
   describe('actualizarMontoPagado', () => {
     it('should update montoPagado, corregidoPor, corregidoAt when practica exists', async () => {
-      const mockPractica = { id: 'practica-uuid', monto: 2000, montoPagado: null };
+      const mockPractica = {
+        id: 'practica-uuid',
+        monto: 2000,
+        montoPagado: null,
+      };
       const updatedPractica = {
         id: 'practica-uuid',
         montoPagado: 1500,
@@ -141,7 +145,11 @@ describe('FinanzasService', () => {
       prisma.practicaRealizada.findUnique.mockResolvedValue(mockPractica);
       prisma.practicaRealizada.update.mockResolvedValue(updatedPractica);
 
-      const result = await service.actualizarMontoPagado('practica-uuid', 1500, 'user-uuid');
+      const result = await service.actualizarMontoPagado(
+        'practica-uuid',
+        1500,
+        'user-uuid',
+      );
 
       expect(prisma.practicaRealizada.update).toHaveBeenCalledWith({
         where: { id: 'practica-uuid' },
@@ -163,9 +171,18 @@ describe('FinanzasService', () => {
     });
 
     it('should set corregidoPor to null when no usuarioId provided', async () => {
-      const mockPractica = { id: 'practica-uuid', monto: 2000, montoPagado: null };
+      const mockPractica = {
+        id: 'practica-uuid',
+        monto: 2000,
+        montoPagado: null,
+      };
       prisma.practicaRealizada.findUnique.mockResolvedValue(mockPractica);
-      prisma.practicaRealizada.update.mockResolvedValue({ id: 'practica-uuid', montoPagado: 1500, corregidoPor: null, corregidoAt: new Date() });
+      prisma.practicaRealizada.update.mockResolvedValue({
+        id: 'practica-uuid',
+        montoPagado: 1500,
+        corregidoPor: null,
+        corregidoAt: new Date(),
+      });
 
       await service.actualizarMontoPagado('practica-uuid', 1500);
 
@@ -287,7 +304,9 @@ describe('FinanzasService', () => {
     it('should throw BadRequestException when factura not found', async () => {
       prisma.factura.findFirst.mockResolvedValue(null);
 
-      await expect(service.emitirFactura(facturaId, profesionalId)).rejects.toThrow(
+      await expect(
+        service.emitirFactura(facturaId, profesionalId),
+      ).rejects.toThrow(
         'Factura no encontrada o no pertenece a este profesional.',
       );
     });
@@ -299,9 +318,9 @@ describe('FinanzasService', () => {
         condicionIVAReceptor: 'CONSUMIDOR_FINAL',
       });
 
-      await expect(service.emitirFactura(facturaId, profesionalId)).rejects.toThrow(
-        'Esta factura ya tiene una emisión en curso.',
-      );
+      await expect(
+        service.emitirFactura(facturaId, profesionalId),
+      ).rejects.toThrow('Esta factura ya tiene una emisión en curso.');
     });
 
     it('should throw BadRequestException when condicionIVAReceptor is null', async () => {
@@ -311,9 +330,9 @@ describe('FinanzasService', () => {
         condicionIVAReceptor: null,
       });
 
-      await expect(service.emitirFactura(facturaId, profesionalId)).rejects.toThrow(
-        'Falta la condición de IVA del receptor.',
-      );
+      await expect(
+        service.emitirFactura(facturaId, profesionalId),
+      ).rejects.toThrow('Falta la condición de IVA del receptor.');
     });
 
     it('should throw BadRequestException when ConfiguracionAFIP does not exist', async () => {
@@ -324,7 +343,9 @@ describe('FinanzasService', () => {
       });
       prisma.configuracionAFIP.findUnique.mockResolvedValue(null);
 
-      await expect(service.emitirFactura(facturaId, profesionalId)).rejects.toThrow(
+      await expect(
+        service.emitirFactura(facturaId, profesionalId),
+      ).rejects.toThrow(
         'No se encontró la configuración AFIP del consultorio.',
       );
     });
@@ -358,13 +379,24 @@ describe('FinanzasService', () => {
       obraSocialId: 'os-1',
       profesional: {
         usuario: { nombre: 'Maria', apellido: 'Garcia' },
-        configClinica: { nombreClinica: 'Clinica Test', direccion: 'Av. Test 1', telefono: '111' },
+        configClinica: {
+          nombreClinica: 'Clinica Test',
+          direccion: 'Av. Test 1',
+          telefono: '111',
+        },
       },
     };
 
     beforeEach(() => {
-      prisma.paciente.findUnique.mockResolvedValue({ id: 'pac-1', nombreCompleto: 'Juan Perez', dni: '12345678' });
-      prisma.obraSocial.findUnique.mockResolvedValue({ id: 'os-1', nombre: 'OSDE' });
+      prisma.paciente.findUnique.mockResolvedValue({
+        id: 'pac-1',
+        nombreCompleto: 'Juan Perez',
+        dni: '12345678',
+      });
+      prisma.obraSocial.findUnique.mockResolvedValue({
+        id: 'os-1',
+        nombre: 'OSDE',
+      });
     });
 
     it('should return object with cae, caeFchVto, nroComprobante, qrData, qrImageDataUrl, moneda, tipoCambio, ptoVta fields', async () => {
@@ -375,7 +407,10 @@ describe('FinanzasService', () => {
       expect(result).toHaveProperty('cae', '12345678901234');
       expect(result).toHaveProperty('caeFchVto', '20260330');
       expect(result).toHaveProperty('nroComprobante', 1);
-      expect(result).toHaveProperty('qrData', 'https://www.afip.gob.ar/fe/qr/?p=abc123');
+      expect(result).toHaveProperty(
+        'qrData',
+        'https://www.afip.gob.ar/fe/qr/?p=abc123',
+      );
       expect(result).toHaveProperty('moneda', 'ARS');
       expect(result).toHaveProperty('tipoCambio', 1);
       expect(result).toHaveProperty('ptoVta', 1);
@@ -391,7 +426,12 @@ describe('FinanzasService', () => {
     });
 
     it('should return qrImageDataUrl as null when qrData is null', async () => {
-      const facturaNoQr = { ...facturaWithQr, qrData: null, pacienteId: null, obraSocialId: null };
+      const facturaNoQr = {
+        ...facturaWithQr,
+        qrData: null,
+        pacienteId: null,
+        obraSocialId: null,
+      };
       prisma.factura.findUniqueOrThrow.mockResolvedValue(facturaNoQr);
 
       const result = await service.getFacturaById('f-uuid');
@@ -450,16 +490,29 @@ describe('FinanzasService', () => {
       obraSocialId: 'os-1',
       profesional: {
         usuario: { nombre: 'Maria', apellido: 'Garcia' },
-        configClinica: { nombreClinica: 'Clinica Test', direccion: 'Av. Test 1', telefono: '111' },
+        configClinica: {
+          nombreClinica: 'Clinica Test',
+          direccion: 'Av. Test 1',
+          telefono: '111',
+        },
       },
     };
 
     beforeEach(() => {
       // getFacturaById calls findUniqueOrThrow for detail, then generateFacturaPdf calls it again for profesional
       prisma.factura.findUniqueOrThrow.mockResolvedValue(facturaEmitida);
-      prisma.paciente.findUnique.mockResolvedValue({ id: 'pac-1', nombreCompleto: 'Juan Perez', dni: '12345678' });
-      prisma.obraSocial.findUnique.mockResolvedValue({ id: 'os-1', nombre: 'OSDE' });
-      mockFacturaPdfService.generatePdfBuffer.mockResolvedValue(Buffer.from('fake-pdf'));
+      prisma.paciente.findUnique.mockResolvedValue({
+        id: 'pac-1',
+        nombreCompleto: 'Juan Perez',
+        dni: '12345678',
+      });
+      prisma.obraSocial.findUnique.mockResolvedValue({
+        id: 'os-1',
+        nombre: 'OSDE',
+      });
+      mockFacturaPdfService.generatePdfBuffer.mockResolvedValue(
+        Buffer.from('fake-pdf'),
+      );
     });
 
     it('should call factPdfService.generatePdfBuffer and return { buffer, filename }', async () => {
@@ -472,7 +525,9 @@ describe('FinanzasService', () => {
     });
 
     it('should throw NotFoundException if factura not found', async () => {
-      prisma.factura.findUniqueOrThrow.mockRejectedValue(new Error('Record not found'));
+      prisma.factura.findUniqueOrThrow.mockRejectedValue(
+        new Error('Record not found'),
+      );
 
       await expect(service.generateFacturaPdf('nonexistent')).rejects.toThrow();
     });
@@ -522,14 +577,18 @@ describe('FinanzasService', () => {
         { obraSocialId: OS_ID, facturaId: 'factura-uuid-1' },
       ]);
       const result = await service.getCierreMensual(MES);
-      const osEntry = (result.detalleObrasSociales as any[]).find((d) => d.obraSocialId === OS_ID);
+      const osEntry = (result.detalleObrasSociales as any[]).find(
+        (d) => d.obraSocialId === OS_ID,
+      );
       expect(osEntry?.facturaId).toBe('factura-uuid-1');
     });
 
     it('returns facturaId: null when no LiquidacionObraSocial exists for the OS', async () => {
       prisma.liquidacionObraSocial.findMany.mockResolvedValue([]);
       const result = await service.getCierreMensual(MES);
-      const osEntry = (result.detalleObrasSociales as any[]).find((d) => d.obraSocialId === OS_ID);
+      const osEntry = (result.detalleObrasSociales as any[]).find(
+        (d) => d.obraSocialId === OS_ID,
+      );
       expect(osEntry?.facturaId).toBeNull();
     });
 
@@ -539,7 +598,9 @@ describe('FinanzasService', () => {
         { obraSocialId: OS_ID, facturaId: 'uuid-2' },
       ]);
       const result = await service.getCierreMensual(MES);
-      const osEntry = (result.detalleObrasSociales as any[]).find((d) => d.obraSocialId === OS_ID);
+      const osEntry = (result.detalleObrasSociales as any[]).find(
+        (d) => d.obraSocialId === OS_ID,
+      );
       expect(osEntry?.facturaId).toBe('uuid-2');
     });
   });

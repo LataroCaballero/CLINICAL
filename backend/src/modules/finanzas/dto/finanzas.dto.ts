@@ -9,7 +9,12 @@ import {
   IsUUID,
   Matches,
 } from 'class-validator';
-import { MedioPago, TipoFactura, EstadoLiquidacion, CondicionIVA } from '@prisma/client';
+import {
+  MedioPago,
+  TipoFactura,
+  EstadoLiquidacion,
+  CondicionIVA,
+} from '@prisma/client';
 
 export class CreatePagoDto {
   @IsUUID()

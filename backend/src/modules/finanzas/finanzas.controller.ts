@@ -148,10 +148,7 @@ export class FinanzasController {
    */
   @Patch('facturas/:id/tipo-cambio')
   @Auth('ADMIN', 'FACTURADOR')
-  updateTipoCambio(
-    @Param('id') id: string,
-    @Body() dto: UpdateTipoCambioDto,
-  ) {
+  updateTipoCambio(@Param('id') id: string, @Body() dto: UpdateTipoCambioDto) {
     return this.service.updateTipoCambio(id, dto.tipoCambio);
   }
 
@@ -254,7 +251,11 @@ export class FinanzasController {
   @Post('limite-mensual')
   @Auth('ADMIN', 'FACTURADOR')
   setLimiteMensual(@Body() dto: SetLimiteMensualDto, @Request() req: any) {
-    return this.service.setLimiteMensual(dto.profesionalId, dto.mes, dto.limite);
+    return this.service.setLimiteMensual(
+      dto.profesionalId,
+      dto.mes,
+      dto.limite,
+    );
   }
 
   /**
@@ -279,7 +280,10 @@ export class FinanzasController {
     @Param('profesionalId') profesionalId: string,
     @Param('obraSocialId') obraSocialId: string,
   ) {
-    return this.service.getPracticasPendientesPorOS(profesionalId, obraSocialId);
+    return this.service.getPracticasPendientesPorOS(
+      profesionalId,
+      obraSocialId,
+    );
   }
 
   /**
@@ -324,6 +328,10 @@ export class FinanzasController {
     @Body() dto: ActualizarMontoPagadoDto,
     @Request() req: any,
   ) {
-    return this.service.actualizarMontoPagado(id, dto.montoPagado, req.user?.id);
+    return this.service.actualizarMontoPagado(
+      id,
+      dto.montoPagado,
+      req.user?.id,
+    );
   }
 }

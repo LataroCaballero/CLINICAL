@@ -52,6 +52,8 @@ describe('AfipStubService', () => {
   it('emitirComprobante returns qrData starting with AFIP QR base URL', async () => {
     const result = await service.emitirComprobante(mockParams);
     expect(result.qrData).toBeDefined();
-    expect(result.qrData).toMatch(/^https:\/\/www\.afip\.gob\.ar\/fe\/qr\/\?p=/);
+    expect(result.qrData).toMatch(
+      /^https:\/\/www\.afip\.gob\.ar\/fe\/qr\/\?p=/,
+    );
   });
 });

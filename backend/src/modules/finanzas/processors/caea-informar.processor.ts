@@ -32,7 +32,9 @@ export class CaeaInformarProcessor extends WorkerHost {
 
   async process(job: Job<CaeaInformarJobData>): Promise<void> {
     const { facturaId, profesionalId } = job.data;
-    this.logger.log(`Processing CAEA inform job ${job.id} — facturaId: ${facturaId}`);
+    this.logger.log(
+      `Processing CAEA inform job ${job.id} — facturaId: ${facturaId}`,
+    );
 
     try {
       await this.caeaService.informarFactura(facturaId, profesionalId);
@@ -57,7 +59,9 @@ export class CaeaInformarProcessor extends WorkerHost {
 
   @OnWorkerEvent('completed')
   onCompleted(job: Job): void {
-    this.logger.log(`CAEA inform job ${job.id} completed — facturaId: ${(job.data as CaeaInformarJobData).facturaId}`);
+    this.logger.log(
+      `CAEA inform job ${job.id} completed — facturaId: ${(job.data as CaeaInformarJobData).facturaId}`,
+    );
   }
 
   @OnWorkerEvent('failed')

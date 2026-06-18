@@ -64,7 +64,11 @@ export class CirugiasCatalogoService {
     }
   }
 
-  async update(id: string, profesionalId: string, dto: UpdateCirugiaCatalogoDto) {
+  async update(
+    id: string,
+    profesionalId: string,
+    dto: UpdateCirugiaCatalogoDto,
+  ) {
     await this.findById(id, profesionalId);
 
     return this.prisma.cirugiaCatalogo.update({
@@ -73,7 +77,9 @@ export class CirugiasCatalogoService {
         ...(dto.nombre !== undefined && { nombre: dto.nombre }),
         ...(dto.precioARS !== undefined && { precioARS: dto.precioARS }),
         ...(dto.precioUSD !== undefined && { precioUSD: dto.precioUSD }),
-        ...(dto.duracionMinutos !== undefined && { duracionMinutos: dto.duracionMinutos }),
+        ...(dto.duracionMinutos !== undefined && {
+          duracionMinutos: dto.duracionMinutos,
+        }),
       },
     });
   }
@@ -102,7 +108,11 @@ export class CirugiasCatalogoService {
     });
   }
 
-  async setInsumos(id: string, profesionalId: string, insumos: InsumoItemCirugiaDto[]) {
+  async setInsumos(
+    id: string,
+    profesionalId: string,
+    insumos: InsumoItemCirugiaDto[],
+  ) {
     await this.findById(id, profesionalId);
 
     await this.prisma.$transaction([

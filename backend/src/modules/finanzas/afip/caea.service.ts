@@ -53,22 +53,28 @@ export class CaeaService {
       // Compute bimensual period dates from periodo (YYYYMM) + orden (1=first half, 2=second half)
       const year = parseInt(periodo.slice(0, 4), 10);
       const month = parseInt(periodo.slice(4, 6), 10);
-      const fchVigDesde = orden === 1
-        ? `${periodo}01`
-        : `${periodo}16`;
+      const fchVigDesde = orden === 1 ? `${periodo}01` : `${periodo}16`;
       const lastDay = new Date(year, month, 0).getDate(); // last day of month
-      const fchVigHasta = orden === 1
-        ? `${periodo}15`
-        : `${periodo}${lastDay}`;
+      const fchVigHasta = orden === 1 ? `${periodo}15` : `${periodo}${lastDay}`;
       // fchTopeInf = fchVigHasta + 8 calendar days
-      const topeDate = new Date(year, month - 1, parseInt(fchVigHasta.slice(6, 8), 10) + 8);
+      const topeDate = new Date(
+        year,
+        month - 1,
+        parseInt(fchVigHasta.slice(6, 8), 10) + 8,
+      );
       const fchTopeInf =
         `${topeDate.getFullYear()}` +
         `${String(topeDate.getMonth() + 1).padStart(2, '0')}` +
         `${String(topeDate.getDate()).padStart(2, '0')}`;
 
       await this.prisma.caeaVigente.upsert({
-        where: { profesionalId_periodo_orden: { profesionalId, periodo, orden: Number(orden) } },
+        where: {
+          profesionalId_periodo_orden: {
+            profesionalId,
+            periodo,
+            orden: Number(orden),
+          },
+        },
         create: {
           profesionalId,
           cuit: cfg.cuit,
@@ -93,7 +99,10 @@ export class CaeaService {
       return;
     }
 
-    const { token, sign } = await this.wsaaService.getTicket(profesionalId, 'wsfe');
+    const { token, sign } = await this.wsaaService.getTicket(
+      profesionalId,
+      'wsfe',
+    );
 
     const cfg = await this.prisma.configuracionAFIP.findUniqueOrThrow({
       where: { profesionalId },
@@ -102,7 +111,13 @@ export class CaeaService {
 
     const url = this.buildWsfev1Url(cfg.ambiente);
 
-    const envelope = this.buildFECAEASolicitarEnvelope(token, sign, cfg.cuit, periodo, orden);
+    const envelope = this.buildFECAEASolicitarEnvelope(
+      token,
+      sign,
+      cfg.cuit,
+      periodo,
+      orden,
+    );
 
     let xml: string;
     try {
@@ -117,19 +132,27 @@ export class CaeaService {
       );
     }
 
-    const resultado = (xml.match(/<Resultado>([AR])<\/Resultado>/) ?? [])[1] ?? '';
+    const resultado =
+      (xml.match(/<Resultado>([AR])<\/Resultado>/) ?? [])[1] ?? '';
     if (resultado === 'R') {
-      const msgMatches = [...xml.matchAll(/<Msg>(.*?)<\/Msg>/g)].map((m) => m[1]);
+      const msgMatches = [...xml.matchAll(/<Msg>(.*?)<\/Msg>/g)].map(
+        (m) => m[1],
+      );
       throw new AfipBusinessError(
-        msgMatches.length > 0 ? msgMatches : ['AFIP rechazó la solicitud CAEA.'],
+        msgMatches.length > 0
+          ? msgMatches
+          : ['AFIP rechazó la solicitud CAEA.'],
         {} as any,
       );
     }
 
     const caea = (xml.match(/<CAEA>(\w{14})<\/CAEA>/) ?? [])[1] ?? '';
-    const fchVigDesde = (xml.match(/<FchVigDesde>(\d{8})<\/FchVigDesde>/) ?? [])[1] ?? '';
-    const fchVigHasta = (xml.match(/<FchVigHasta>(\d{8})<\/FchVigHasta>/) ?? [])[1] ?? '';
-    const fchTopeInf = (xml.match(/<FchTopeInf>(\d{8})<\/FchTopeInf>/) ?? [])[1] ?? '';
+    const fchVigDesde =
+      (xml.match(/<FchVigDesde>(\d{8})<\/FchVigDesde>/) ?? [])[1] ?? '';
+    const fchVigHasta =
+      (xml.match(/<FchVigHasta>(\d{8})<\/FchVigHasta>/) ?? [])[1] ?? '';
+    const fchTopeInf =
+      (xml.match(/<FchTopeInf>(\d{8})<\/FchTopeInf>/) ?? [])[1] ?? '';
 
     await this.prisma.caeaVigente.upsert({
       where: {
@@ -167,7 +190,10 @@ export class CaeaService {
    * transitioning it to CAEA_PENDIENTE_INFORMAR.
    * If no valid CaeaVigente exists for today, logs error and returns without updating.
    */
-  async asignarCaeaFallback(facturaId: string, profesionalId: string): Promise<void> {
+  async asignarCaeaFallback(
+    facturaId: string,
+    profesionalId: string,
+  ): Promise<void> {
     const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
 
     const caeaVigente = await this.prisma.caeaVigente.findFirst({
@@ -185,7 +211,10 @@ export class CaeaService {
       return;
     }
 
-    const cbteFchHsGen = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14);
+    const cbteFchHsGen = new Date()
+      .toISOString()
+      .replace(/[-:T]/g, '')
+      .slice(0, 14);
 
     await this.prisma.factura.update({
       where: { id: facturaId },
@@ -215,8 +244,14 @@ export class CaeaService {
    * On Resultado=R throws AfipBusinessError (processor wraps as UnrecoverableError).
    * On network/timeout errors throws AfipTransientError for BullMQ retry.
    */
-  async informarFactura(facturaId: string, profesionalId: string): Promise<void> {
-    const { token, sign } = await this.wsaaService.getTicket(profesionalId, 'wsfe');
+  async informarFactura(
+    facturaId: string,
+    profesionalId: string,
+  ): Promise<void> {
+    const { token, sign } = await this.wsaaService.getTicket(
+      profesionalId,
+      'wsfe',
+    );
 
     const cfg = await this.prisma.configuracionAFIP.findUniqueOrThrow({
       where: { profesionalId },
@@ -246,7 +281,8 @@ export class CaeaService {
       CONDICION_IVA_ID_MAP[factura.condicionIVAReceptor as string] ?? 5;
     // Factura A (tipo 1) for RESPONSABLE_INSCRIPTO; Factura B (tipo 6) for all others.
     // Schema TipoFactura only tracks FACTURA vs RECIBO, not A/B sub-type.
-    const cbteTipo = factura.condicionIVAReceptor === 'RESPONSABLE_INSCRIPTO' ? 1 : 6;
+    const cbteTipo =
+      factura.condicionIVAReceptor === 'RESPONSABLE_INSCRIPTO' ? 1 : 6;
 
     const envelope = this.buildFECAEARegInformativoEnvelope({
       token,
@@ -290,7 +326,9 @@ export class CaeaService {
       this.logger.log(`CAEA informado OK — facturaId: ${facturaId}`);
     } catch (err: any) {
       if (err instanceof AfipBusinessError) throw err;
-      throw new AfipTransientError(`FECAEARegInformativo failed: ${err.message}`);
+      throw new AfipTransientError(
+        `FECAEARegInformativo failed: ${err.message}`,
+      );
     }
   }
 

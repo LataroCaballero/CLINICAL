@@ -23,11 +23,7 @@ export interface SeedZona {
  * Strategy: lowercase → NFD decompose → strip combining marks → trim
  */
 export function normalizarNombre(nombre: string): string {
-  return nombre
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .trim();
+  return nombre.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
 }
 
 export const SEED_ZONAS: SeedZona[] = [

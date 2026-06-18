@@ -6,7 +6,7 @@ import { AlertasResumenDto } from './dto/alertas-resumen.dto';
 @Controller('alertas')
 @Auth('ADMIN', 'PROFESIONAL', 'SECRETARIA', 'FACTURADOR')
 export class AlertasController {
-  constructor(private readonly alertasService: AlertasService) { }
+  constructor(private readonly alertasService: AlertasService) {}
 
   @Get('resumen')
   async getResumen(

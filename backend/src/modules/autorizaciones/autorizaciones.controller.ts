@@ -1,4 +1,13 @@
-import { Controller, Post, Get, Patch, Param, Body, Query, Req } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Patch,
+  Param,
+  Body,
+  Query,
+  Req,
+} from '@nestjs/common';
 import { AutorizacionesService } from './autorizaciones.service';
 import { CreateAutorizacionDto } from './dto/create-autorizacion.dto';
 import {
@@ -16,7 +25,11 @@ export class AutorizacionesController {
   create(@Body() dto: CreateAutorizacionDto, @Req() req: any) {
     const profesionalIdFromJwt = req.user?.profesionalId as string | null;
     const registradoPorId = req.user?.userId as string | undefined;
-    return this.autorizacionesService.createAutorizacion(dto, profesionalIdFromJwt, registradoPorId);
+    return this.autorizacionesService.createAutorizacion(
+      dto,
+      profesionalIdFromJwt,
+      registradoPorId,
+    );
   }
 
   @Get()
@@ -25,7 +38,11 @@ export class AutorizacionesController {
     @Query('profesionalId') profesionalId?: string,
     @Query('pacienteId') pacienteId?: string,
   ) {
-    return this.autorizacionesService.findAll(estado, profesionalId, pacienteId);
+    return this.autorizacionesService.findAll(
+      estado,
+      profesionalId,
+      pacienteId,
+    );
   }
 
   @Patch(':id/autorizar')
@@ -35,7 +52,11 @@ export class AutorizacionesController {
     @Req() req: any,
   ) {
     const autorizadoPorId = req.user?.userId as string | undefined;
-    return this.autorizacionesService.autorizarCodigos(id, dto, autorizadoPorId);
+    return this.autorizacionesService.autorizarCodigos(
+      id,
+      dto,
+      autorizadoPorId,
+    );
   }
 
   @Patch(':id/rechazar')
@@ -45,6 +66,10 @@ export class AutorizacionesController {
     @Req() req: any,
   ) {
     const rechazadoPorId = req.user?.userId as string | undefined;
-    return this.autorizacionesService.rechazarCodigos(id, dto.nota, rechazadoPorId);
+    return this.autorizacionesService.rechazarCodigos(
+      id,
+      dto.nota,
+      rechazadoPorId,
+    );
   }
 }

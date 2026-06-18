@@ -1,7 +1,11 @@
 import { Injectable, NotImplementedException } from '@nestjs/common';
 import * as PDFDocument from 'pdfkit';
 import { ExportOptionsDto, ProgramarEnvioDto } from '../dto/export-options.dto';
-import { ExportResult, ProgramacionEnvio, TipoReporte } from '../types/reportes.types';
+import {
+  ExportResult,
+  ProgramacionEnvio,
+  TipoReporte,
+} from '../types/reportes.types';
 import { ReportesDashboardService } from './reportes-dashboard.service';
 import { ReportesOperativosService } from './reportes-operativos.service';
 import { ReportesFinancierosService } from './reportes-financieros.service';
@@ -194,10 +198,7 @@ export class ReportesExportService {
       doc.on('error', reject);
 
       // Header
-      doc
-        .fontSize(20)
-        .font('Helvetica-Bold')
-        .text(titulo, { align: 'center' });
+      doc.fontSize(20).font('Helvetica-Bold').text(titulo, { align: 'center' });
 
       doc.moveDown(0.5);
 
@@ -242,7 +243,10 @@ export class ReportesExportService {
     // Renderizar KPIs principales si existen
     const kpis = this.extraerKPIs(data, tipoReporte);
     if (kpis.length > 0) {
-      doc.fontSize(14).font('Helvetica-Bold').text('Resumen', { underline: true });
+      doc
+        .fontSize(14)
+        .font('Helvetica-Bold')
+        .text('Resumen', { underline: true });
       doc.moveDown(0.5);
 
       for (const kpi of kpis) {
@@ -259,7 +263,10 @@ export class ReportesExportService {
     // Renderizar tabla si hay datos tabulares
     const tablaData = this.extraerDatosTabla(data, tipoReporte);
     if (tablaData && tablaData.rows.length > 0) {
-      doc.fontSize(14).font('Helvetica-Bold').text('Detalle', { underline: true });
+      doc
+        .fontSize(14)
+        .font('Helvetica-Bold')
+        .text('Detalle', { underline: true });
       doc.moveDown(0.5);
 
       this.renderizarTabla(doc, tablaData.headers, tablaData.rows);
@@ -284,9 +291,15 @@ export class ReportesExportService {
     switch (tipoReporte) {
       case 'turnos':
         if (data.totalTurnos !== undefined)
-          kpis.push({ label: 'Total Turnos', value: data.totalTurnos.toString() });
+          kpis.push({
+            label: 'Total Turnos',
+            value: data.totalTurnos.toString(),
+          });
         if (data.completados !== undefined)
-          kpis.push({ label: 'Completados', value: data.completados.toString() });
+          kpis.push({
+            label: 'Completados',
+            value: data.completados.toString(),
+          });
         if (data.cancelados !== undefined)
           kpis.push({ label: 'Cancelados', value: data.cancelados.toString() });
         if (data.tasaAsistencia !== undefined)
@@ -298,7 +311,10 @@ export class ReportesExportService {
 
       case 'ausentismo':
         if (data.totalAusencias !== undefined)
-          kpis.push({ label: 'Total Ausencias', value: data.totalAusencias.toString() });
+          kpis.push({
+            label: 'Total Ausencias',
+            value: data.totalAusencias.toString(),
+          });
         if (data.tasaGeneral !== undefined)
           kpis.push({
             label: 'Tasa General',
@@ -308,7 +324,10 @@ export class ReportesExportService {
 
       case 'ingresos':
         if (data.totalIngresos !== undefined)
-          kpis.push({ label: 'Total Ingresos', value: formatMoney(data.totalIngresos) });
+          kpis.push({
+            label: 'Total Ingresos',
+            value: formatMoney(data.totalIngresos),
+          });
         if (data.cantidadTransacciones !== undefined)
           kpis.push({
             label: 'Transacciones',
@@ -323,11 +342,20 @@ export class ReportesExportService {
 
       case 'cuentas-por-cobrar':
         if (data.totalPorCobrar !== undefined)
-          kpis.push({ label: 'Total por Cobrar', value: formatMoney(data.totalPorCobrar) });
+          kpis.push({
+            label: 'Total por Cobrar',
+            value: formatMoney(data.totalPorCobrar),
+          });
         if (data.totalVencido !== undefined)
-          kpis.push({ label: 'Total Vencido', value: formatMoney(data.totalVencido) });
+          kpis.push({
+            label: 'Total Vencido',
+            value: formatMoney(data.totalVencido),
+          });
         if (data.cantidadCuentas !== undefined)
-          kpis.push({ label: 'Cuentas con Deuda', value: data.cantidadCuentas.toString() });
+          kpis.push({
+            label: 'Cuentas con Deuda',
+            value: data.cantidadCuentas.toString(),
+          });
         break;
 
       case 'morosidad':
@@ -350,7 +378,10 @@ export class ReportesExportService {
             value: data.totalProcedimientos.toString(),
           });
         if (data.ingresoTotal !== undefined)
-          kpis.push({ label: 'Ingreso Total', value: formatMoney(data.ingresoTotal) });
+          kpis.push({
+            label: 'Ingreso Total',
+            value: formatMoney(data.ingresoTotal),
+          });
         break;
 
       default:
@@ -392,9 +423,11 @@ export class ReportesExportService {
         if (value === null || value === undefined) return '-';
         if (typeof value === 'number') {
           // Formatear números grandes como moneda si parecen ser dinero
-          if (header.toLowerCase().includes('ingreso') ||
-              header.toLowerCase().includes('monto') ||
-              header.toLowerCase().includes('saldo')) {
+          if (
+            header.toLowerCase().includes('ingreso') ||
+            header.toLowerCase().includes('monto') ||
+            header.toLowerCase().includes('saldo')
+          ) {
             return new Intl.NumberFormat('es-AR', {
               style: 'currency',
               currency: 'ARS',

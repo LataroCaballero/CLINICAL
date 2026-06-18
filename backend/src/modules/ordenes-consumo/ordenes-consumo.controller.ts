@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Param, Query, Req, ForbiddenException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Param,
+  Query,
+  Req,
+  ForbiddenException,
+} from '@nestjs/common';
 import { OrdenesConsumoService } from './ordenes-consumo.service';
 import { Auth } from '../auth/decorators/auth.decorator';
 import { PrismaService } from 'src/prisma/prisma.service';

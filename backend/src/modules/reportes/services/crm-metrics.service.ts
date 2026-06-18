@@ -72,9 +72,7 @@ export class CrmMetricsService {
 
     // Tiempo promedio de decisión (días entre enviado y aceptado/rechazado)
     const conDecision = todosPresupuestos.filter(
-      (pr) =>
-        pr.fechaEnviado &&
-        (pr.fechaAceptado || pr.fechaRechazado),
+      (pr) => pr.fechaEnviado && (pr.fechaAceptado || pr.fechaRechazado),
     );
     const tiempoPromedioDecisionDias =
       conDecision.length > 0

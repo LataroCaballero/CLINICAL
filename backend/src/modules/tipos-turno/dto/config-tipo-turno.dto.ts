@@ -1,4 +1,11 @@
-import { IsOptional, IsInt, Min, Max, IsString, Matches } from 'class-validator';
+import {
+  IsOptional,
+  IsInt,
+  Min,
+  Max,
+  IsString,
+  Matches,
+} from 'class-validator';
 
 export class ConfigTipoTurnoItemDto {
   @IsString()
@@ -12,6 +19,8 @@ export class ConfigTipoTurnoItemDto {
 
   @IsOptional()
   @IsString()
-  @Matches(/^#[0-9A-Fa-f]{6}$/, { message: 'colorHex debe ser un color hexadecimal válido (#RRGGBB)' })
+  @Matches(/^#[0-9A-Fa-f]{6}$/, {
+    message: 'colorHex debe ser un color hexadecimal válido (#RRGGBB)',
+  })
   colorHex?: string | null;
 }

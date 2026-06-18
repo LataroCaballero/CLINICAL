@@ -8,15 +8,15 @@ export class TiposTurnoService {
 
   findAll() {
     return this.prisma.tipoTurno.findMany({
-      where: { esCirugia: false },  // excluye Cirugía del selector público
+      where: { esCirugia: false }, // excluye Cirugía del selector público
       orderBy: { nombre: 'asc' },
       select: {
         id: true,
         nombre: true,
         descripcion: true,
         duracionDefault: true,
-        flujoPaciente: true,  // needed for Phase 23 auto-update logic
-        esCirugia: true,      // needed for cerrarSesion() and Phase 23
+        flujoPaciente: true, // needed for Phase 23 auto-update logic
+        esCirugia: true, // needed for cerrarSesion() and Phase 23
       },
     });
   }

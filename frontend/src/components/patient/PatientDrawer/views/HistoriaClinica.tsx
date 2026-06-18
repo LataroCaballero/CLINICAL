@@ -516,7 +516,12 @@ function FreeEntryPreview({ contenido }: { contenido?: ContenidoEntrada }) {
         if (z.tratamientos.length) items.push(z.tratamientos.map((t) => t.nombre).join(", "));
         return `${z.zona}: ${items.join(" · ")}`;
       });
-      return <p className="text-sm text-muted-foreground">{parts.join(" | ") || "(sin datos)"}</p>;
+      return (
+        <>
+          <p className="text-sm text-muted-foreground">{parts.join(" | ") || "(sin datos)"}</p>
+          {c.comentario && <p className="text-sm whitespace-pre-line mt-1">{c.comentario}</p>}
+        </>
+      );
     }
     // Legacy shape
     const zonas: string[] = c.diagnostico?.zonas ?? [];
@@ -526,7 +531,12 @@ function FreeEntryPreview({ contenido }: { contenido?: ContenidoEntrada }) {
     if (zonas.length) parts.push(`Zonas: ${zonas.join(", ")}`);
     if (subzonas.length) parts.push(`Subzonas: ${subzonas.join(", ")}`);
     if (tratamientos.length) parts.push(`Tratamientos: ${tratamientos.map((t) => t.nombre).join(", ")}`);
-    return <p className="text-sm text-muted-foreground">{parts.join(" · ") || "(sin datos)"}</p>;
+    return (
+      <>
+        <p className="text-sm text-muted-foreground">{parts.join(" · ") || "(sin datos)"}</p>
+        {c.comentario && <p className="text-sm whitespace-pre-line mt-1">{c.comentario}</p>}
+      </>
+    );
   }
 
   if (c.texto) return <p className="text-sm whitespace-pre-line">{c.texto}</p>;

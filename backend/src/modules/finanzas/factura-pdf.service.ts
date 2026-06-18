@@ -18,19 +18,19 @@ import * as QRCode from 'qrcode';
 // ---- RG 5616/2024 QR Payload ----
 
 export interface AfipQrPayload {
-  ver: number;        // 1
-  fecha: string;      // 'YYYY-MM-DD'
-  cuit: number;       // CUIT del emisor como entero (sin guiones)
+  ver: number; // 1
+  fecha: string; // 'YYYY-MM-DD'
+  cuit: number; // CUIT del emisor como entero (sin guiones)
   ptoVta: number;
-  tipoCmp: number;    // 1=FactA, 6=FactB, 11=FactC
+  tipoCmp: number; // 1=FactA, 6=FactB, 11=FactC
   nroCmp: number;
   importe: number;
-  moneda: string;     // 'PES' para ARS, 'DOL' para USD
-  ctz: number;        // 1 para ARS
+  moneda: string; // 'PES' para ARS, 'DOL' para USD
+  ctz: number; // 1 para ARS
   tipoDocRec: number; // 80=CUIT, 96=DNI, 99=SIN_ID
   nroDocRec: number;
   tipoCodAut: string; // 'E' = CAE
-  codAut: number;     // CAE como número (14 dígitos)
+  codAut: number; // CAE como número (14 dígitos)
 }
 
 /**
@@ -56,17 +56,17 @@ export function toAfipMonedaCodigo(m: string): string {
 
 export interface FacturaPdfData {
   id: string;
-  numero: string;          // Ej: '00001-00000001'
-  fecha: string;           // 'YYYY-MM-DD'
-  tipo: string;            // Ej: 'Factura B'
+  numero: string; // Ej: '00001-00000001'
+  fecha: string; // 'YYYY-MM-DD'
+  tipo: string; // Ej: 'Factura B'
   cae: string;
-  caeFchVto: string;       // 'YYYYMMDD'
+  caeFchVto: string; // 'YYYYMMDD'
   nroComprobante: number;
-  qrData: string;          // URL AFIP QR (output de buildAfipQrUrl)
+  qrData: string; // URL AFIP QR (output de buildAfipQrUrl)
   total: number;
   subtotal: number;
   impuestos: number;
-  moneda: string;          // 'ARS' | 'USD'
+  moneda: string; // 'ARS' | 'USD'
   tipoCambio: number;
   razonSocial: string | null;
   cuit: string | null;
@@ -103,31 +103,49 @@ export class FacturaPdfService {
       doc.on('end', () => resolve(Buffer.concat(chunks)));
       doc.on('error', reject);
 
-      this.buildContent(doc, data).then(() => doc.end()).catch(reject);
+      this.buildContent(doc, data)
+        .then(() => doc.end())
+        .catch(reject);
     });
   }
 
-  private async buildContent(doc: PDFKit.PDFDocument, data: FacturaPdfData): Promise<void> {
+  private async buildContent(
+    doc: PDFKit.PDFDocument,
+    data: FacturaPdfData,
+  ): Promise<void> {
     // Header
     const clinicaNombre = data.config?.nombreClinica ?? 'Clínica';
-    doc.fontSize(18).font('Helvetica-Bold').text(clinicaNombre, { align: 'center' });
+    doc
+      .fontSize(18)
+      .font('Helvetica-Bold')
+      .text(clinicaNombre, { align: 'center' });
     doc.moveDown(0.5);
 
     if (data.config?.direccion) {
-      doc.fontSize(10).font('Helvetica').text(data.config.direccion, { align: 'center' });
+      doc
+        .fontSize(10)
+        .font('Helvetica')
+        .text(data.config.direccion, { align: 'center' });
     }
     if (data.config?.telefono) {
-      doc.fontSize(10).text(`Tel: ${data.config.telefono}`, { align: 'center' });
+      doc
+        .fontSize(10)
+        .text(`Tel: ${data.config.telefono}`, { align: 'center' });
     }
     doc.moveDown(1);
 
     // Comprobante info
-    doc.fontSize(14).font('Helvetica-Bold').text(`${data.tipo} N° ${data.numero}`);
+    doc
+      .fontSize(14)
+      .font('Helvetica-Bold')
+      .text(`${data.tipo} N° ${data.numero}`);
     doc.fontSize(10).font('Helvetica').text(`Fecha: ${data.fecha}`);
     doc.moveDown(0.5);
 
     // Profesional
-    doc.text(`Profesional: ${data.profesional.nombre} ${data.profesional.apellido}`);
+    doc.text(
+      `Profesional: ${data.profesional.nombre} ${data.profesional.apellido}`,
+    );
     doc.moveDown(0.5);
 
     // Receptor
@@ -154,10 +172,16 @@ export class FacturaPdfService {
     const monedaSym = data.moneda === 'USD' ? 'USD' : '$';
     doc.text(`Subtotal: ${monedaSym} ${data.subtotal.toFixed(2)}`);
     doc.text(`Impuestos: ${monedaSym} ${data.impuestos.toFixed(2)}`);
-    doc.fontSize(12).font('Helvetica-Bold').text(`Total: ${monedaSym} ${data.total.toFixed(2)}`);
+    doc
+      .fontSize(12)
+      .font('Helvetica-Bold')
+      .text(`Total: ${monedaSym} ${data.total.toFixed(2)}`);
 
     if (data.moneda === 'USD') {
-      doc.fontSize(9).font('Helvetica').text(`Tipo de cambio: ${data.tipoCambio}`);
+      doc
+        .fontSize(9)
+        .font('Helvetica')
+        .text(`Tipo de cambio: ${data.tipoCambio}`);
     }
 
     doc.moveDown(1);
@@ -166,7 +190,10 @@ export class FacturaPdfService {
     await this.buildAfipSection(doc, data);
   }
 
-  private async buildAfipSection(doc: PDFKit.PDFDocument, data: FacturaPdfData): Promise<void> {
+  private async buildAfipSection(
+    doc: PDFKit.PDFDocument,
+    data: FacturaPdfData,
+  ): Promise<void> {
     doc.fontSize(11).font('Helvetica-Bold').text('Comprobante AFIP');
     doc.moveDown(0.3);
 
@@ -185,7 +212,11 @@ export class FacturaPdfService {
     // CAE details to the right of QR
     doc.fontSize(8).font('Helvetica');
     doc.text(`CAE: ${data.cae}`, 145, sectionY + 10);
-    doc.text(`Vto. CAE: ${formatCaeFchVto(data.caeFchVto)}`, 145, sectionY + 24);
+    doc.text(
+      `Vto. CAE: ${formatCaeFchVto(data.caeFchVto)}`,
+      145,
+      sectionY + 24,
+    );
     doc.text('Comprobante emitido via AFIP WSFEv1', 145, sectionY + 38);
 
     // Move past QR block

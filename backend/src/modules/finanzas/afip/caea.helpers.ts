@@ -8,7 +8,10 @@
  * - Days 1–15: orden 1
  * - Days 16–31: orden 2
  */
-export function calcularPeriodoYOrden(now: Date): { periodo: string; orden: 1 | 2 } {
+export function calcularPeriodoYOrden(now: Date): {
+  periodo: string;
+  orden: 1 | 2;
+} {
   const year = now.getUTCFullYear();
   const month = String(now.getUTCMonth() + 1).padStart(2, '0');
   const orden: 1 | 2 = now.getUTCDate() <= 15 ? 1 : 2;
@@ -24,7 +27,10 @@ export function calcularPeriodoYOrden(now: Date): { periodo: string; orden: 1 | 
  * - Day >= 11: current month, orden 2
  * - Otherwise: current period from calcularPeriodoYOrden
  */
-export function calcularProximoPeriodoYOrden(now: Date): { periodo: string; orden: 1 | 2 } {
+export function calcularProximoPeriodoYOrden(now: Date): {
+  periodo: string;
+  orden: 1 | 2;
+} {
   const day = now.getUTCDate();
   if (day >= 27) {
     // Next month, orden 1 — use UTC-safe date arithmetic

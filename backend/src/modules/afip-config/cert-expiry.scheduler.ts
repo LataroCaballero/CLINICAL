@@ -46,11 +46,14 @@ export class CertExpiryScheduler {
     // ConfigClinica smtpPassEncrypted decryption is a pre-existing gap (same as PresupuestoEmailService)
     // env-var SMTP_PASS is the safe path for Phase 12
     const pass = this.config.get('SMTP_PASS');
-    const from = cc?.smtpFrom ?? this.config.get('SMTP_FROM', 'noreply@clinical.com');
+    const from =
+      cc?.smtpFrom ?? this.config.get('SMTP_FROM', 'noreply@clinical.com');
     const to = cfg.profesional.usuario.email;
 
     if (!host || !user || !pass) {
-      this.logger.warn(`SMTP no configurado — alerta de vencimiento no enviada a ${to}`);
+      this.logger.warn(
+        `SMTP no configurado — alerta de vencimiento no enviada a ${to}`,
+      );
       return;
     }
 

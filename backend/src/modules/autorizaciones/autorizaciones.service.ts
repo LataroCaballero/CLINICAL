@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateAutorizacionDto } from './dto/create-autorizacion.dto';
 import { AutorizarAutorizacionDto } from './dto/autorizar-autorizacion.dto';
@@ -20,7 +24,8 @@ export class AutorizacionesService {
     registradoPorId: string | undefined,
   ) {
     const profesionalId = profesionalIdFromJwt ?? dto.profesionalId;
-    if (!profesionalId) throw new BadRequestException('profesionalId requerido');
+    if (!profesionalId)
+      throw new BadRequestException('profesionalId requerido');
 
     const obraSocial = await this.prisma.obraSocial.findUnique({
       where: { id: dto.obraSocialId },
@@ -28,7 +33,9 @@ export class AutorizacionesService {
     });
     if (!obraSocial) throw new NotFoundException('Obra social no encontrada');
 
-    const codigosStr = dto.codigos.map((c) => `${c.codigo} - ${c.descripcion}`).join(', ');
+    const codigosStr = dto.codigos
+      .map((c) => `${c.codigo} - ${c.descripcion}`)
+      .join(', ');
 
     return this.prisma.$transaction(async (tx) => {
       const aut = await tx.autorizacionObraSocial.create({
@@ -65,10 +72,15 @@ export class AutorizacionesService {
         ...(pacienteId ? { pacienteId } : {}),
       },
       include: {
-        paciente: { select: { id: true, nombreCompleto: true, telefono: true } },
+        paciente: {
+          select: { id: true, nombreCompleto: true, telefono: true },
+        },
         obraSocial: { select: { id: true, nombre: true } },
         profesional: {
-          select: { id: true, usuario: { select: { nombre: true, apellido: true } } },
+          select: {
+            id: true,
+            usuario: { select: { nombre: true, apellido: true } },
+          },
         },
       },
       orderBy: { createdAt: 'desc' },
@@ -86,10 +98,14 @@ export class AutorizacionesService {
     });
     if (!aut) throw new NotFoundException('Autorización no encontrada');
     if (aut.estado !== 'PENDIENTE')
-      throw new BadRequestException('La autorización no está en estado PENDIENTE');
+      throw new BadRequestException(
+        'La autorización no está en estado PENDIENTE',
+      );
 
     const codigos = aut.codigos as CodigoPractica[];
-    const codigosStr = codigos.map((c) => `${c.codigo} - ${c.descripcion}`).join(', ');
+    const codigosStr = codigos
+      .map((c) => `${c.codigo} - ${c.descripcion}`)
+      .join(', ');
 
     return this.prisma.$transaction(async (tx) => {
       const updated = await tx.autorizacionObraSocial.update({
@@ -129,14 +145,20 @@ export class AutorizacionesService {
     });
   }
 
-  async rechazarCodigos(id: string, nota: string | undefined, rechazadoPorId: string | undefined) {
+  async rechazarCodigos(
+    id: string,
+    nota: string | undefined,
+    rechazadoPorId: string | undefined,
+  ) {
     const aut = await this.prisma.autorizacionObraSocial.findUnique({
       where: { id },
       include: { obraSocial: { select: { nombre: true } } },
     });
     if (!aut) throw new NotFoundException('Autorización no encontrada');
     if (aut.estado !== 'PENDIENTE')
-      throw new BadRequestException('La autorización no está en estado PENDIENTE');
+      throw new BadRequestException(
+        'La autorización no está en estado PENDIENTE',
+      );
 
     return this.prisma.$transaction(async (tx) => {
       const updated = await tx.autorizacionObraSocial.update({

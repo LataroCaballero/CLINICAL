@@ -6,7 +6,7 @@ import {
 } from './afip.interfaces';
 import { buildAfipQrUrl } from '../factura-pdf.service';
 
-const MOCK_CAE = '74397704790943' as const;     // 14-digit plausible value
+const MOCK_CAE = '74397704790943' as const; // 14-digit plausible value
 const MOCK_CAE_VENCIMIENTO = '20260323' as const; // Fixed future date
 
 @Injectable()

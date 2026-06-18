@@ -13,10 +13,11 @@ export class EncryptionService {
     if (!hexKey || hexKey.length !== 64) {
       const msg =
         'ENCRYPTION_KEY must be exactly 64 hex characters (32 bytes for AES-256-GCM). ' +
-        'Generate one with: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"';
+        "Generate one with: node -e \"console.log(require('crypto').randomBytes(32).toString('hex'))\"";
       this.logger.warn(msg);
       // Use a deterministic fallback for dev/test — NOT for production
-      const fallback = '0000000000000000000000000000000000000000000000000000000000000000';
+      const fallback =
+        '0000000000000000000000000000000000000000000000000000000000000000';
       this.key = Buffer.from(fallback, 'hex');
     } else {
       this.key = Buffer.from(hexKey, 'hex');
@@ -52,7 +53,9 @@ export class EncryptionService {
   decrypt(stored: string): string {
     const parts = stored.split(':');
     if (parts.length !== 3) {
-      throw new Error('Invalid encrypted value format — expected iv:authTag:ciphertext');
+      throw new Error(
+        'Invalid encrypted value format — expected iv:authTag:ciphertext',
+      );
     }
 
     const [ivB64, authTagB64, ciphertextB64] = parts;

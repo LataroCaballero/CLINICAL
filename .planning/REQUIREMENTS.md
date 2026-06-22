@@ -9,8 +9,8 @@ Refinamientos a la planilla de Tratamientos en `/dashboard/pacientes`. Cada requ
 
 ### Último tratamiento
 
-- [ ] **TRAT-01**: La columna "Último tratamiento" muestra el/los tratamiento(s) registrados en la entrada de HC correspondiente a ese turno (resolución por turno/fecha), no el último tratamiento global del paciente.
-- [ ] **TRAT-02**: El lector de tratamientos resuelve los tres shapes de contenido de HC: v1.9 agrupado por zona (`contenido.zonas[].tratamientos`), legacy plano (`contenido.tratamientos`) y texto libre / tratamiento en consultorio.
+- [x] **TRAT-01**: La columna "Último tratamiento" muestra el/los tratamiento(s) registrados en la entrada de HC correspondiente a ese turno (resolución por turno/fecha), no el último tratamiento global del paciente.
+- [x] **TRAT-02**: El lector de tratamientos resuelve los tres shapes de contenido de HC: v1.9 agrupado por zona (`contenido.zonas[].tratamientos`), legacy plano (`contenido.tratamientos`) y texto libre / tratamiento en consultorio.
 - [x] **TRAT-03**: Al crear una entrada de HC con tratamientos, el snapshot de tratamientos se persiste aunque `consumirInsumos=false` (fix tech debt LIVHC-05/PAC-01); las entradas nuevas siempre pueblan la columna.
 
 ### Filtro de pacientes
@@ -38,8 +38,8 @@ Qué fases cubren qué requisitos.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| TRAT-01 | Phase 48 | Pending |
-| TRAT-02 | Phase 48 | Pending |
+| TRAT-01 | Phase 48 | Complete |
+| TRAT-02 | Phase 48 | Complete |
 | TRAT-03 | Phase 48 | Complete |
 | TRAT-04 | Phase 49 | Pending |
 | TRAT-05 | Phase 49 | Pending |

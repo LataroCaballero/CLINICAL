@@ -147,7 +147,7 @@ Full details: `.planning/milestones/v1.9-ROADMAP.md`
 
 ### v1.10 Refinamiento Planilla de Tratamientos (Fases 48–49) — ACTIVE
 
-- [ ] **Phase 48: Backend — Lectura y Snapshot de Tratamientos** - Corregir resolución por turno de "Último tratamiento" (3 shapes) y fix snapshot consumirInsumos=false
+- [x] **Phase 48: Backend — Lectura y Snapshot de Tratamientos** - Corregir resolución por turno de "Último tratamiento" (3 shapes) y fix snapshot consumirInsumos=false (completed 2026-06-22)
 - [ ] **Phase 49: Frontend — Filtro y Color-coding de Estado** - Excluir CIRUGIA sin tratamiento real y semantizar chips de EstadoTurno
 
 Full details: `.planning/milestones/v1.10-ROADMAP.md`
@@ -233,7 +233,7 @@ Plans:
 | 45. Formulario Primera Consulta | v1.9 | 3/3 | Complete | 2026-06-12 |
 | 46. Auto-aprendizaje vía "Otros" | v1.9 | 4/4 | Complete | 2026-06-13 |
 | 47. Admin UI en Configuración | v1.9 | 2/2 | Complete | 2026-06-13 |
-| 48. Backend — Lectura y Snapshot de Tratamientos | 1/2 | In Progress|  | - |
+| 48. Backend — Lectura y Snapshot de Tratamientos | 2/2 | Complete   | 2026-06-22 | - |
 | 49. Frontend — Filtro y Color-coding de Estado | v1.10 | 0/? | Not started | - |
 
 ---

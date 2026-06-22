@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.10
 milestone_name: Refinamiento Planilla de Tratamientos
-status: Phase 48 in progress
-last_updated: "2026-06-22T01:36:05.055Z"
-last_activity: "2026-06-22 — Plan 48-02 ejecutado (snapshot incondicional, TRAT-03)"
+status: Phase 48 complete
+last_updated: "2026-06-22T15:00:00Z"
+last_activity: 2026-06-22 — Plan 48-01 ejecutado (extractor puro + resolución por-turno, TRAT-01/TRAT-02)
 progress:
   total_phases: 2
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 2
-  completed_plans: 1
+  completed_plans: 2
   percent: 0
 ---
 
@@ -24,13 +24,13 @@ See: .planning/PROJECT.md (updated 2026-06-21)
 
 ## Current Position
 
-Phase: 48 — Backend — Lectura y Snapshot de Tratamientos (in progress)
-Plan: 48-02 completado (snapshot incondicional). 48-01 (read-path por-turno) pendiente de ejecución.
-Status: Phase 48 in progress
-Last activity: 2026-06-22 — Plan 48-02 ejecutado
+Phase: 48 — Backend — Lectura y Snapshot de Tratamientos (complete)
+Plan: 48-01 completado (extractor puro + resolución por-turno). 48-02 completado (snapshot incondicional).
+Status: Phase 48 complete — Next: Phase 49 (frontend TratamientosTab)
+Last activity: 2026-06-22 — Plan 48-01 ejecutado
 
 ```
-Progress: [░░░░░░░░░░] 0% — 0/2 phases complete (1/2 plans en Phase 48)
+Progress: [██████████] 100% — 2/2 plans en Phase 48 complete
 ```
 
 ## Decisions
@@ -38,6 +38,7 @@ Progress: [░░░░░░░░░░] 0% — 0/2 phases complete (1/2 plans
 (Full decision log in PROJECT.md Key Decisions table. Cleared on milestone completion.)
 
 - 48-02 (TRAT-03): el snapshot de tratamientos (`contenido.tratamientos`) se persiste siempre que haya `tratamientoIds`, independiente de `consumirInsumos`; la `OrdenConsumo` sigue condicionada a `consumirInsumos=true`. Fix LIVHC-05.
+- [Phase 48-01]: resumen-con-conteo: 1 nombre → nombre; N nombres → 'first +N-1' uniforme para los 3 shapes; contenido: true en entradaHC select elimina query N+1 separada
 
 ## Accumulated Context
 

@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.10
 milestone_name: Refinamiento Planilla de Tratamientos
 status: completed
-last_updated: "2026-06-22T20:41:57Z"
+last_updated: "2026-06-22T21:05:29.845Z"
 last_activity: 2026-06-22 — Plan 49-01 ejecutado
 progress:
   total_phases: 2

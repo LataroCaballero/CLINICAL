@@ -15,12 +15,12 @@ Refinamientos a la planilla de Tratamientos en `/dashboard/pacientes`. Cada requ
 
 ### Filtro de pacientes
 
-- [ ] **TRAT-04**: Un paciente con flujo CIRUGIA que no tiene ningún tratamiento real (ni turno tipo Tratamiento, ni entrada de HC con tipoEntrada=TRATAMIENTO con contenido de tratamientos) no aparece en la planilla de Tratamientos (filtro automático, sin acción manual).
-- [ ] **TRAT-05**: Se preserva el estado dual de v1.8 — un paciente con flujo CIRUGIA que sí tiene un tratamiento real sigue apareciendo en la planilla simultáneamente con su presencia en el kanban CRM.
+- [x] **TRAT-04**: Un paciente con flujo CIRUGIA que no tiene ningún tratamiento real (ni turno tipo Tratamiento, ni entrada de HC con tipoEntrada=TRATAMIENTO con contenido de tratamientos) no aparece en la planilla de Tratamientos (filtro automático, sin acción manual).
+- [x] **TRAT-05**: Se preserva el estado dual de v1.8 — un paciente con flujo CIRUGIA que sí tiene un tratamiento real sigue apareciendo en la planilla simultáneamente con su presencia en el kanban CRM.
 
 ### Legibilidad de estado
 
-- [ ] **TRAT-06**: Los chips de la columna "Estado" tienen color-coding semántico y labels humanizados para todos los valores reales del enum `EstadoTurno` (PENDIENTE, CONFIRMADO, EN_ESPERA, SIENDO_ATENDIDO, FINALIZADO, AUSENTE, CANCELADO).
+- [x] **TRAT-06**: Los chips de la columna "Estado" tienen color-coding semántico y labels humanizados para todos los valores reales del enum `EstadoTurno` (PENDIENTE, CONFIRMADO, EN_ESPERA, SIENDO_ATENDIDO, FINALIZADO, AUSENTE, CANCELADO).
 
 ## Out of Scope
 
@@ -41,9 +41,9 @@ Qué fases cubren qué requisitos.
 | TRAT-01 | Phase 48 | Complete |
 | TRAT-02 | Phase 48 | Complete |
 | TRAT-03 | Phase 48 | Complete |
-| TRAT-04 | Phase 49 | Pending |
-| TRAT-05 | Phase 49 | Pending |
-| TRAT-06 | Phase 49 | Pending |
+| TRAT-04 | Phase 49 | Complete |
+| TRAT-05 | Phase 49 | Complete |
+| TRAT-06 | Phase 49 | Complete |
 
 **Coverage:**
 - v1.10 requirements: 6 total

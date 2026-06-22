@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.10
 milestone_name: Refinamiento Planilla de Tratamientos
 status: completed
-last_updated: "2026-06-22T14:59:58.086Z"
-last_activity: 2026-06-22 — Plan 48-01 ejecutado
+last_updated: "2026-06-22T20:41:57Z"
+last_activity: 2026-06-22 — Plan 49-01 ejecutado
 progress:
   total_phases: 2
-  completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
+  completed_phases: 2
+  total_plans: 3
+  completed_plans: 3
   percent: 100
 ---
 
@@ -24,13 +24,13 @@ See: .planning/PROJECT.md (updated 2026-06-21)
 
 ## Current Position
 
-Phase: 48 — Backend — Lectura y Snapshot de Tratamientos (complete)
-Plan: 48-01 completado (extractor puro + resolución por-turno). 48-02 completado (snapshot incondicional).
-Status: Phase 48 complete — Next: Phase 49 (frontend TratamientosTab)
-Last activity: 2026-06-22 — Plan 48-01 ejecutado
+Phase: 49 — Frontend — Filtro y Color-Coding de Estado (complete)
+Plan: 49-01 completado (filtro source-B null + helper getEstadoTurnoChip + header remap).
+Status: Phase 49 complete — Milestone v1.10 complete
+Last activity: 2026-06-22 — Plan 49-01 ejecutado
 
 ```
-Progress: [██████████] 100% — 2/2 plans en Phase 48 complete
+Progress: [██████████] 100% — 1/1 plans en Phase 49 complete
 ```
 
 ## Decisions
@@ -39,6 +39,7 @@ Progress: [██████████] 100% — 2/2 plans en Phase 48 comple
 
 - 48-02 (TRAT-03): el snapshot de tratamientos (`contenido.tratamientos`) se persiste siempre que haya `tratamientoIds`, independiente de `consumirInsumos`; la `OrdenConsumo` sigue condicionada a `consumirInsumos=true`. Fix LIVHC-05.
 - [Phase 48-01]: resumen-con-conteo: 1 nombre → nombre; N nombres → 'first +N-1' uniforme para los 3 shapes; contenido: true en entradaHC select elimina query N+1 separada
+- [Phase 49-01]: getEstadoTurnoChip extraído como helper compartido en @/lib/estadoTurno (no inlineado); AppointmentDetailModal y CalendarGrid no migrados (deferred scope creep); filtro source-B null puramente client-side, sin mutar backend
 
 ## Accumulated Context
 

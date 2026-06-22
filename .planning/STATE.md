@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.10
 milestone_name: Refinamiento Planilla de Tratamientos
-status: roadmap_ready
-last_updated: "2026-06-21T00:00:00.000Z"
-last_activity: "2026-06-21 — Roadmap creado (2 fases, 6/6 requirements mapped)"
+status: Phase 48 in progress
+last_updated: "2026-06-22T01:36:05.055Z"
+last_activity: "2026-06-22 — Plan 48-02 ejecutado (snapshot incondicional, TRAT-03)"
 progress:
   total_phases: 2
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_plans: 2
+  completed_plans: 1
   percent: 0
 ---
 
@@ -24,18 +24,20 @@ See: .planning/PROJECT.md (updated 2026-06-21)
 
 ## Current Position
 
-Phase: 48 — Backend — Lectura y Snapshot de Tratamientos (not started)
-Plan: —
-Status: Roadmap ready, awaiting plan-phase
-Last activity: 2026-06-21 — Roadmap creado
+Phase: 48 — Backend — Lectura y Snapshot de Tratamientos (in progress)
+Plan: 48-02 completado (snapshot incondicional). 48-01 (read-path por-turno) pendiente de ejecución.
+Status: Phase 48 in progress
+Last activity: 2026-06-22 — Plan 48-02 ejecutado
 
 ```
-Progress: [░░░░░░░░░░] 0% — 0/2 phases complete
+Progress: [░░░░░░░░░░] 0% — 0/2 phases complete (1/2 plans en Phase 48)
 ```
 
 ## Decisions
 
 (Full decision log in PROJECT.md Key Decisions table. Cleared on milestone completion.)
+
+- 48-02 (TRAT-03): el snapshot de tratamientos (`contenido.tratamientos`) se persiste siempre que haya `tratamientoIds`, independiente de `consumirInsumos`; la `OrdenConsumo` sigue condicionada a `consumirInsumos=true`. Fix LIVHC-05.
 
 ## Accumulated Context
 

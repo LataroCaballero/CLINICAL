@@ -2,11 +2,11 @@
 gsd_state_version: 1.0
 milestone: v1.10
 milestone_name: Refinamiento Planilla de Tratamientos
-status: defining_requirements
+status: roadmap_ready
 last_updated: "2026-06-21T00:00:00.000Z"
-last_activity: "2026-06-21 — Milestone v1.10 started (defining requirements)"
+last_activity: "2026-06-21 — Roadmap creado (2 fases, 6/6 requirements mapped)"
 progress:
-  total_phases: 0
+  total_phases: 2
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -20,17 +20,17 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-21)
 
 **Core value:** Que un cirujano plástico cierre más cirugías — el sistema hace visible qué pacientes seguir, cuándo y cómo, de la manera más automatizada posible
-**Current focus:** v1.10 Refinamiento Planilla de Tratamientos — defining requirements
+**Current focus:** v1.10 Refinamiento Planilla de Tratamientos — Phase 48 next
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 48 — Backend — Lectura y Snapshot de Tratamientos (not started)
 Plan: —
-Status: Defining requirements
-Last activity: 2026-06-21 — Milestone v1.10 started
+Status: Roadmap ready, awaiting plan-phase
+Last activity: 2026-06-21 — Roadmap creado
 
 ```
-Progress: [░░░░░░░░░░] 0% — defining requirements
+Progress: [░░░░░░░░░░] 0% — 0/2 phases complete
 ```
 
 ## Decisions
@@ -38,6 +38,13 @@ Progress: [░░░░░░░░░░] 0% — defining requirements
 (Full decision log in PROJECT.md Key Decisions table. Cleared on milestone completion.)
 
 ## Accumulated Context
+
+### Carry-forward from v1.9
+- Catálogo HC en BD: modelos ZonaHC / DiagnosticoHC / TratamientoHC por profesional (profesionalId denormalizado en hijos sin @relation; esSistema protege "Otros"); seed idempotente de 6 zonas; `GET /catalogo-hc` + `PATCH`/`DELETE` (soft-delete) por tipo; FK opcional TratamientoHC→Tratamiento (ON DELETE SET NULL)
+- HC primera_vez: JSONB dual-shape — `Array.isArray(contenido.zonas)` distingue v1.9+ (agrupado por zona) de legacy; helper puro `construirContenidoPrimeraVez`; 3 lectores de historial renderizan ambos shapes
+- Auto-aprendizaje: motor puro `detectarAprendizaje` + `aprenderDesdeZonas` best-effort post-transacción en crearEntrada; tratamiento aprendido se crea en catálogo del profesional con precio 0
+- `zonas-diagnostico.{ts,json}` eliminados — el catálogo en BD es la única fuente
+- useCatalogoHC enabled guard via options?.enabled (SECRETARIA/ADMIN delay query hasta tener profesionalId); CATALOGO_HC_QUERY_KEY invalidado por prefijo sin profesionalId
 
 ### Carry-forward from v1.8
 - 4 tipos de turno públicos en DB: "Consulta", "Tratamiento", "Pre-Quirúrgico", "Control" + "Cirugía" (interno, esCirugia=true, oculto vía filtro en findAll)
@@ -54,15 +61,15 @@ Progress: [░░░░░░░░░░] 0% — defining requirements
 - getKanban ACEPTADO-first para múltiples presupuestos (elimina falsos positivos)
 - HCCreatorForm reutilizable compartido entre LiveTurno y PatientDrawer
 
-### Carry-forward from v1.9
-- Catálogo HC en BD: modelos ZonaHC / DiagnosticoHC / TratamientoHC por profesional (profesionalId denormalizado en hijos sin @relation; esSistema protege "Otros"); seed idempotente de 6 zonas; `GET /catalogo-hc` + `PATCH`/`DELETE` (soft-delete) por tipo; FK opcional TratamientoHC→Tratamiento (ON DELETE SET NULL)
-- HC primera_vez: JSONB dual-shape — `Array.isArray(contenido.zonas)` distingue v1.9+ (agrupado por zona) de legacy; helper puro `construirContenidoPrimeraVez`; 3 lectores de historial renderizan ambos shapes
-- Auto-aprendizaje: motor puro `detectarAprendizaje` + `aprenderDesdeZonas` best-effort post-transacción en crearEntrada; tratamiento aprendido se crea en catálogo del profesional con precio 0
-- `zonas-diagnostico.{ts,json}` eliminados — el catálogo en BD es la única fuente
-- useCatalogoHC enabled guard via options?.enabled (SECRETARIA/ADMIN delay query hasta tener profesionalId); CATALOGO_HC_QUERY_KEY invalidado por prefijo sin profesionalId
+### v1.10 Key Context
+- Phase 48 touches: `turnos.service.ts` (lines ~493–597, read-path) + `historia-clinica.service.ts` (write-path, fix LIVHC-05)
+- Phase 49 touches: `TratamientosTab.tsx` (frontend only — filter predicate + EstadoTurno color map)
+- HC content shapes to resolve in Phase 48: (1) `contenido.zonas[].tratamientos` (v1.9 zona-grouped), (2) `contenido.tratamientos` (legacy flat), (3) free text / consultorio treatment
+- LIVHC-05 fix: snapshot must be written even when `consumirInsumos=false` (currently only written when true)
+- TRAT-04/05 constraint: CIRUGIA patients WITH at least one real treatment stay in planilla (dual-state v1.8 preserved); only those with zero real treatments are excluded
+- TRAT-06: current color map uses stale keys PROGRAMADO/REALIZADO — must map all 7 real EstadoTurno values
 
 ### Known Tech Debt (carry-forward)
-- LIVHC-05/PAC-01: tratamientos snapshot no se escribe cuando consumirInsumos=false
 - STOCK-03: FACTURADOR excluido del backend de ordenes-consumo pero accede desde frontend
 - CALL-01: botón "Llamar" placeholder en agenda
 - marcarPracticasPagadas deprecado — limpiar cuando no tenga callers externos

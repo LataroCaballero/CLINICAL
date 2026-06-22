@@ -12,6 +12,7 @@
 - ✅ **v1.7 CRM Flexible** — Fases 35–39 (shipped 2026-05-28)
 - ✅ **v1.8 Tipos de Turno y Flujo Clínico** — Fases 40–43 (shipped 2026-06-09)
 - ✅ **v1.9 Plantilla Primera Consulta** — Fases 44–47 (shipped 2026-06-13)
+- 🔄 **v1.10 Refinamiento Planilla de Tratamientos** — Fases 48–49 (active)
 
 ## Phases
 
@@ -144,6 +145,37 @@ Full details: `.planning/milestones/v1.9-ROADMAP.md`
 
 </details>
 
+### v1.10 Refinamiento Planilla de Tratamientos (Fases 48–49) — ACTIVE
+
+- [ ] **Phase 48: Backend — Lectura y Snapshot de Tratamientos** - Corregir resolución por turno de "Último tratamiento" (3 shapes) y fix snapshot consumirInsumos=false
+- [ ] **Phase 49: Frontend — Filtro y Color-coding de Estado** - Excluir CIRUGIA sin tratamiento real y semantizar chips de EstadoTurno
+
+Full details: `.planning/milestones/v1.10-ROADMAP.md`
+
+## Phase Details
+
+### Phase 48: Backend — Lectura y Snapshot de Tratamientos
+**Goal**: La columna "Último tratamiento" muestra el tratamiento registrado en la HC del turno correspondiente, resolviendo los tres shapes de contenido y persistiendo el snapshot siempre.
+**Depends on**: Nothing (first phase of milestone)
+**Requirements**: TRAT-01, TRAT-02, TRAT-03
+**Success Criteria** (what must be TRUE):
+  1. Al abrir la planilla de Tratamientos, la columna "Último tratamiento" muestra el/los tratamiento(s) del turno en esa fila — no el tratamiento más reciente del paciente.
+  2. Una entrada de HC creada con el formulario de Primera Consulta (v1.9 zona-agrupada) muestra sus tratamientos en la columna.
+  3. Una entrada de HC legacy (shape plano `contenido.tratamientos`) muestra sus tratamientos en la columna.
+  4. Una entrada de HC de texto libre / tratamiento en consultorio muestra su descripción en la columna.
+  5. Al guardar una HC con tratamientos y `consumirInsumos=false`, la columna "Último tratamiento" se puebla en la planilla (fix LIVHC-05).
+**Plans**: TBD
+
+### Phase 49: Frontend — Filtro y Color-coding de Estado
+**Goal**: La planilla muestra únicamente pacientes con tratamiento real (CIRUGIA sin tratamiento excluidos automáticamente), y los chips de estado son legibles con color semántico.
+**Depends on**: Phase 48
+**Requirements**: TRAT-04, TRAT-05, TRAT-06
+**Success Criteria** (what must be TRUE):
+  1. Un paciente con flujo CIRUGIA que nunca tuvo un turno de tratamiento ni una HC con tipoEntrada=TRATAMIENTO con contenido de tratamientos no aparece en la planilla de Tratamientos.
+  2. Un paciente con flujo CIRUGIA que sí tiene al menos un tratamiento real sigue apareciendo en la planilla sin perder su presencia en el kanban CRM (estado dual preservado).
+  3. Los chips de la columna "Estado" muestran colores distintos y labels humanizados para PENDIENTE, CONFIRMADO, EN_ESPERA, SIENDO_ATENDIDO, FINALIZADO, AUSENTE y CANCELADO (ningún chip aparece sin color o con texto técnico del enum).
+**Plans**: TBD
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -197,6 +229,8 @@ Full details: `.planning/milestones/v1.9-ROADMAP.md`
 | 45. Formulario Primera Consulta | v1.9 | 3/3 | Complete | 2026-06-12 |
 | 46. Auto-aprendizaje vía "Otros" | v1.9 | 4/4 | Complete | 2026-06-13 |
 | 47. Admin UI en Configuración | v1.9 | 2/2 | Complete | 2026-06-13 |
+| 48. Backend — Lectura y Snapshot de Tratamientos | v1.10 | 0/? | Not started | - |
+| 49. Frontend — Filtro y Color-coding de Estado | v1.10 | 0/? | Not started | - |
 
 ---
-*Roadmap initialized: 2026-02-23 | v1.0 shipped: 2026-03-03 | v1.1 shipped: 2026-03-16 | v1.2 shipped: 2026-03-31 | v1.3 shipped: 2026-04-09 | v1.4 shipped: 2026-04-20 | v1.5 shipped: 2026-05-13 | v1.6 shipped: 2026-05-23 | v1.7 shipped: 2026-05-28 | v1.8 shipped: 2026-06-09 | v1.9 shipped: 2026-06-13*
+*Roadmap initialized: 2026-02-23 | v1.0 shipped: 2026-03-03 | v1.1 shipped: 2026-03-16 | v1.2 shipped: 2026-03-31 | v1.3 shipped: 2026-04-09 | v1.4 shipped: 2026-04-20 | v1.5 shipped: 2026-05-13 | v1.6 shipped: 2026-05-23 | v1.7 shipped: 2026-05-28 | v1.8 shipped: 2026-06-09 | v1.9 shipped: 2026-06-13 | v1.10 started: 2026-06-21*

@@ -34,22 +34,22 @@ Explicitamente excluido. Documentado para prevenir scope creep.
 
 ## Traceability
 
-Qué fases cubren qué requisitos. Se completa durante la creación del roadmap.
+Qué fases cubren qué requisitos.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| TRAT-01 | Phase TBD | Pending |
-| TRAT-02 | Phase TBD | Pending |
-| TRAT-03 | Phase TBD | Pending |
-| TRAT-04 | Phase TBD | Pending |
-| TRAT-05 | Phase TBD | Pending |
-| TRAT-06 | Phase TBD | Pending |
+| TRAT-01 | Phase 48 | Pending |
+| TRAT-02 | Phase 48 | Pending |
+| TRAT-03 | Phase 48 | Pending |
+| TRAT-04 | Phase 49 | Pending |
+| TRAT-05 | Phase 49 | Pending |
+| TRAT-06 | Phase 49 | Pending |
 
 **Coverage:**
 - v1.10 requirements: 6 total
-- Mapped to phases: 0 (pending roadmap)
-- Unmapped: 6 ⚠️
+- Mapped to phases: 6 (100%)
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-06-21*
-*Last updated: 2026-06-21 after initial definition*
+*Last updated: 2026-06-21 — traceability complete (roadmap phases 48–49 assigned)*

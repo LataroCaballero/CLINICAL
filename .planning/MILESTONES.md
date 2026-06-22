@@ -1,5 +1,21 @@
 # Milestones
 
+## v1.10 Refinamiento Planilla de Tratamientos (Shipped: 2026-06-22)
+
+**Phases completed:** 2 phases (48–49), 3 plans, 6 tasks
+**Stats:** 1 día (2026-06-22) | 22 archivos | +1,431 / -233 líneas | 11 commits
+**Requirements:** 6/6 v1.10 (TRAT-01..06) | Audit: ✅ PASSED (6/6 req, 2/2 phases, integración WIRED)
+
+**Key accomplishments:**
+1. Read-path por-turno de "Último tratamiento" (TRAT-01/02): extractor puro `resumirTratamientosDeContenido` que normaliza los 3 shapes de contenido HC — v1.9 zona-agrupado (`contenido.zonas[].tratamientos`), legacy plano (`contenido.tratamientos`) y texto libre / tratamiento en consultorio — a `string|null` con resumen-con-conteo (1 nombre → nombre; N → `first +N-1`); integrado en `obtenerTurnosPorRango` resolviendo el tratamiento por turno y eliminando el query N+1 `historiaClinica.findMany`; 14 tests nuevos (25/25 pass), tsc build limpio
+2. Write-path snapshot incondicional (TRAT-03, fix tech debt LIVHC-05): `crearEntrada` persiste `contenido.tratamientos` siempre que haya `tratamientoIds`, independiente de `consumirInsumos`; la agregación de insumos y la `OrdenConsumo` siguen condicionadas a `consumirInsumos=true` (separación de responsabilidades); pre-fetch fuera de `$transaction` (patrón pgBouncer preservado), sin regresión de stock — las entradas nuevas siempre pueblan la columna
+3. Filtro automático source-B (TRAT-04/05): predicado client-side `isFuenteB(t) && t.ultimoTratamiento != null` oculta de la planilla a los pacientes CIRUGIA sin tratamiento real, sin mutar el backend ni romper el estado dual de v1.8 (etapaCRM/flujo intactos); los pacientes CIRUGIA con tratamiento real siguen visibles simultáneamente en kanban y planilla
+4. Color-coding semántico de EstadoTurno (TRAT-06): helper puro `getEstadoTurnoChip` en `@/lib/estadoTurno` que mapea los 7 valores reales del enum (PENDIENTE, CONFIRMADO, EN_ESPERA → violet, SIENDO_ATENDIDO → sky, FINALIZADO, AUSENTE, CANCELADO) a `{label, className}` Tailwind, reemplazando las keys legacy inexistentes PROGRAMADO/REALIZADO; header breakdown remapeado a realizados/programados/cancelados derivado de filas visibles post-filtro
+
+**Tech debt (no bloqueante):** `AppointmentDetailModal` y `CalendarGrid` no migrados a `getEstadoTurnoChip` (diferido para evitar scope creep; helper disponible en `@/lib/estadoTurno` para consolidación futura).
+
+---
+
 ## v1.9 Plantilla Primera Consulta (Shipped: 2026-06-13)
 
 **Phases completed:** 4 phases (44–47), 12 plans

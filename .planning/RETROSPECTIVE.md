@@ -4,6 +4,45 @@
 
 ---
 
+## Milestone: v1.10 — Refinamiento Planilla de Tratamientos
+
+**Shipped:** 2026-06-22
+**Phases:** 2 (48–49) | **Plans:** 3 | **Timeline:** 1 day (2026-06-22)
+**Stats:** 22 archivos | +1,431 / -233 líneas | 11 commits | 6/6 requisitos (TRAT-01..06)
+
+### What Was Built
+- Read-path por-turno de "Último tratamiento": extractor puro `resumirTratamientosDeContenido` que normaliza los 3 shapes de HC (v1.9 zona-agrupado, legacy plano, texto libre/consultorio) a `string|null` con resumen-con-conteo; integrado en `obtenerTurnosPorRango` con `contenido: true` en el select, eliminando el query N+1 `historiaClinica.findMany`; 14 tests nuevos (25/25 pass)
+- Write-path snapshot incondicional (fix LIVHC-05): `crearEntrada` persiste `contenido.tratamientos` siempre que haya `tratamientoIds`, independiente de `consumirInsumos`; insumos + `OrdenConsumo` bajo `if (consumirInsumos)`, sin regresión de stock
+- Filtro automático source-B: predicado client-side `isFuenteB(t) && t.ultimoTratamiento != null` oculta CIRUGIA sin tratamiento real, sin mutar backend ni romper el estado dual v1.8
+- Color-coding semántico: helper puro `getEstadoTurnoChip` en `@/lib/estadoTurno` mapea los 7 EstadoTurno reales a `{label, className}`, reemplazando keys legacy PROGRAMADO/REALIZADO; header breakdown remapeado sobre filas visibles
+
+### What Worked
+- **Extractor puro + TDD (reuso de v1.8/v1.9)**: `resumirTratamientosDeContenido` se construyó como helper sin deps con 14 specs cubriendo los 3 shapes y edge cases antes de tocar `turnos.service.ts` — refactor de read-path con confianza (eliminó el N+1) sin romper el contrato frontend
+- **Separación de responsabilidades en el write-path**: dividir "snapshot del contenido" (siempre) de "agregar insumos + OrdenConsumo" (condicional) hizo el fix LIVHC-05 quirúrgico — `insumosAgregados=[]` cuando false dejó el guard de stock intacto sin tocarlo
+- **Audit formal antes de completar (reuso de v1.9)**: `/gsd:audit-milestone` cruzó 3 fuentes y verificó la integración cross-phase (WIRED, field-by-field) — entró a complete-milestone con PASSED limpio y cero sorpresas
+- **Fix client-side de bajo riesgo**: el filtro source-B y el color map se resolvieron 100% en frontend sin tocar el backend, manteniendo el contrato `ultimoTratamiento: string|null` y el estado dual
+
+### What Was Inefficient
+- **MILESTONES.md accomplishments vacíos (5to milestone seguido)**: `gsd-tools milestone complete` volvió a devolver `accomplishments: []` y además omitió la línea de Stats — exactamente lo que la retro de v1.9 ya había señalado. El campo `one_liner:` sigue sin estandarizarse en los SUMMARY.md. Deuda de tooling que ya cuesta trabajo manual cada cierre
+- **CLI sobrescribe el archivo milestone-scoped (recurrente)**: `milestones/v1.10-ROADMAP.md` (snapshot scoped de 53 líneas creado al definir el roadmap) fue reemplazado por una copia íntegra del ROADMAP.md raíz (243 líneas, todos los milestones) — hubo que reescribirlo a mano con el template de archivo. Idéntico a v1.8/v1.9
+- **Progress table malformada en ROADMAP (recurrente, 3er milestone)**: la fila de Phase 49 quedó sin columna Milestone y con separadores corridos durante la ejecución — mismo síntoma que v1.8/v1.9, corregido al completar
+- **Tech debt de UI consciente**: `AppointmentDetailModal` y `CalendarGrid` siguen con su propia lógica de chips; el helper compartido existe pero la consolidación se difirió — decisión correcta para no inflar el scope, pero deja la triplicación viva un milestone más
+
+### Patterns Established
+- **Extractor puro de contenido multi-shape**: normalizar JSONB heterogéneo (v1.9+ vs legacy vs texto) a un tipo de retorno único en un helper testeable es ahora el patrón para leer HC — replicable para futuros lectores de `contenido`
+- **Snapshot-vs-efecto separados en writes**: cuando un write tiene una parte de datos (snapshot) y una parte de efecto (OrdenConsumo/insumos), guardarlas bajo guards independientes evita acoplar la persistencia del dato a un flag de efecto
+- **Helper de presentación compartido en `@/lib/`**: mapear un enum a `{label, className}` como módulo puro de cero deps (como `getEstadoTurnoChip`) antes de que se triplique
+
+### Key Lessons
+- **Las tres deudas de tooling de cierre son ahora crónicas** (accomplishments vacíos, archivo scoped sobrescrito, progress table malformada): aparecieron en v1.8, v1.9 y v1.10. Vale la pena un fix real en `gsd-tools` (poblar `one_liner`, no pisar el archivo scoped, no romper la tabla) en vez de seguir parchando a mano cada milestone
+- **El audit previo paga**: por segundo milestone consecutivo, entrar a complete-milestone con un audit PASSED hizo el cierre mecánico — la disciplina de v1.9 se sostuvo
+
+### Cost Observations
+- Milestone chico y enfocado (2 fases, 3 planes) ejecutado en 1 día — read-path/write-path/frontend bien separados en fases secuenciales
+- Backend cubierto por specs (TDD); frontend con un único checkpoint de verificación visual humana (aprobado)
+
+---
+
 ## Milestone: v1.9 — Plantilla Primera Consulta
 
 **Shipped:** 2026-06-13

@@ -312,14 +312,20 @@ export class HistoriaClinicaService {
 
     // Best-effort catalog learning — must run AFTER the transaction commits so only
     // successfully saved HC entries enrich the catalog. Never blocks the response.
-    if (dto.tipo === 'primera_vez' && Array.isArray(dto.zonas) && dto.zonas.length > 0) {
+    if (
+      dto.tipo === 'primera_vez' &&
+      Array.isArray(dto.zonas) &&
+      dto.zonas.length > 0
+    ) {
       try {
         await this.catalogoHc.aprenderDesdeZonas(
           profesionalId,
           dto.zonas.map((z) => ({
             zona: z.zona,
             diagnosticos: z.diagnosticos ?? [],
-            tratamientos: (z.tratamientos ?? []).map((t) => ({ nombre: t.nombre })),
+            tratamientos: (z.tratamientos ?? []).map((t) => ({
+              nombre: t.nombre,
+            })),
           })),
         );
       } catch (e) {

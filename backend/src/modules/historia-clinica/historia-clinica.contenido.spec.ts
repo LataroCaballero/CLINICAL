@@ -35,8 +35,14 @@ describe('construirContenidoPrimeraVez', () => {
   });
 
   it('sin zonas (forma legacy) → contenido idéntico al actual del service', () => {
-    const diagnostico = { zonas: ['Abdomen'], subzonas: ['Diástasis'], otroTexto: '' };
-    const tratamientos = [{ nombre: 'Abdominoplastia', tratamientoId: 'tr-1', precio: 100000 }];
+    const diagnostico = {
+      zonas: ['Abdomen'],
+      subzonas: ['Diástasis'],
+      otroTexto: '',
+    };
+    const tratamientos = [
+      { nombre: 'Abdominoplastia', tratamientoId: 'tr-1', precio: 100000 },
+    ];
 
     const result = construirContenidoPrimeraVez({
       diagnostico,
@@ -112,7 +118,9 @@ describe('derivarPerfilPrimeraVez', () => {
       },
     ];
 
-    const { diagnosticoStr, tratamientoStr } = derivarPerfilPrimeraVez({ zonas });
+    const { diagnosticoStr, tratamientoStr } = derivarPerfilPrimeraVez({
+      zonas,
+    });
 
     expect(diagnosticoStr).toBe('Abdomen (Diástasis, Hernia), Mamas (Ptosis)');
     expect(tratamientoStr).toBe('Abdominoplastia, Mastopexia');
@@ -149,15 +157,23 @@ describe('derivarPerfilPrimeraVez', () => {
   });
 
   it('forma legacy (sin zonas) → replica lógica actual del service', () => {
-    const diagnostico = { zonas: ['Abdomen', 'Nariz'], subzonas: ['Diástasis', 'Rinoplastia severa'] };
+    const diagnostico = {
+      zonas: ['Abdomen', 'Nariz'],
+      subzonas: ['Diástasis', 'Rinoplastia severa'],
+    };
     const tratamientos = [
       { nombre: 'Abdominoplastia', precio: 100000 },
       { nombre: 'Rinoplastia', precio: 200000 },
     ];
 
-    const { diagnosticoStr, tratamientoStr } = derivarPerfilPrimeraVez({ diagnostico, tratamientos });
+    const { diagnosticoStr, tratamientoStr } = derivarPerfilPrimeraVez({
+      diagnostico,
+      tratamientos,
+    });
 
-    expect(diagnosticoStr).toBe('Abdomen, Nariz (Diástasis, Rinoplastia severa)');
+    expect(diagnosticoStr).toBe(
+      'Abdomen, Nariz (Diástasis, Rinoplastia severa)',
+    );
     expect(tratamientoStr).toBe('Abdominoplastia, Rinoplastia');
   });
 
@@ -169,7 +185,9 @@ describe('derivarPerfilPrimeraVez', () => {
   });
 
   it('zonas array vacío [] → ambos null (edge case)', () => {
-    const { diagnosticoStr, tratamientoStr } = derivarPerfilPrimeraVez({ zonas: [] });
+    const { diagnosticoStr, tratamientoStr } = derivarPerfilPrimeraVez({
+      zonas: [],
+    });
 
     expect(diagnosticoStr).toBeNull();
     expect(tratamientoStr).toBeNull();
@@ -182,7 +200,10 @@ describe('resumirTratamientosDeContenido', () => {
       tipo: 'primera_vez',
       zonas: [
         { zona: 'Abdomen', tratamientos: [{ nombre: 'Lipoaspiración' }] },
-        { zona: 'Mamas', tratamientos: [{ nombre: 'Mastopexia' }, { nombre: 'Implante' }] },
+        {
+          zona: 'Mamas',
+          tratamientos: [{ nombre: 'Mastopexia' }, { nombre: 'Implante' }],
+        },
       ],
     };
     expect(resumirTratamientosDeContenido(contenido)).toBe('Lipoaspiración +2');
@@ -219,7 +240,9 @@ describe('resumirTratamientosDeContenido', () => {
       tratamientos: [],
       texto: 'Limpieza facial profunda',
     };
-    expect(resumirTratamientosDeContenido(contenido)).toBe('Limpieza facial profunda');
+    expect(resumirTratamientosDeContenido(contenido)).toBe(
+      'Limpieza facial profunda',
+    );
   });
 
   it('texto libre puro largo (>80 chars) → recortado con elipsis', () => {
@@ -266,7 +289,9 @@ describe('resumirTratamientosDeContenido', () => {
 
   it('edge: zonas con tratamientos sin nombre válido → null', () => {
     const contenido = {
-      zonas: [{ zona: 'Abdomen', tratamientos: [{ nombre: '' }, { nombre: '  ' }] }],
+      zonas: [
+        { zona: 'Abdomen', tratamientos: [{ nombre: '' }, { nombre: '  ' }] },
+      ],
     };
     expect(resumirTratamientosDeContenido(contenido)).toBeNull();
   });

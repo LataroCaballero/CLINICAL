@@ -312,7 +312,11 @@ export class CatalogoHCService {
 
     let ordenSiguiente = maxOrdenNoSistema + 1;
     for (const nombre of acciones.zonasACrear) {
-      const zona = await this.crearZona(profesionalId, nombre, ordenSiguiente++);
+      const zona = await this.crearZona(
+        profesionalId,
+        nombre,
+        ordenSiguiente++,
+      );
       zonaIdMap.set(normalizarNombre(nombre), zona.id);
     }
 
@@ -437,11 +441,7 @@ export class CatalogoHCService {
    * Renames a ZonaHC. Guards: belongs to profesional, not esSistema.
    * Throws ConflictException on duplicate name (P2002).
    */
-  async renombrarZona(
-    profesionalId: string,
-    zonaId: string,
-    nombre: string,
-  ) {
+  async renombrarZona(profesionalId: string, zonaId: string, nombre: string) {
     const zona = await this.prisma.zonaHC.findUnique({ where: { id: zonaId } });
     if (!zona || zona.profesionalId !== profesionalId) {
       throw new NotFoundException('Zona no encontrada');
@@ -450,10 +450,15 @@ export class CatalogoHCService {
       throw new ForbiddenException('No se puede modificar un ítem del sistema');
     }
     try {
-      return await this.prisma.zonaHC.update({ where: { id: zonaId }, data: { nombre } });
+      return await this.prisma.zonaHC.update({
+        where: { id: zonaId },
+        data: { nombre },
+      });
     } catch (err: any) {
       if (err?.code === 'P2002') {
-        throw new ConflictException('Ya existe un ítem con ese nombre en este perfil');
+        throw new ConflictException(
+          'Ya existe un ítem con ese nombre en este perfil',
+        );
       }
       throw err;
     }
@@ -468,7 +473,9 @@ export class CatalogoHCService {
     diagnosticoId: string,
     nombre: string,
   ) {
-    const dx = await this.prisma.diagnosticoHC.findUnique({ where: { id: diagnosticoId } });
+    const dx = await this.prisma.diagnosticoHC.findUnique({
+      where: { id: diagnosticoId },
+    });
     if (!dx || dx.profesionalId !== profesionalId) {
       throw new NotFoundException('Diagnóstico no encontrado');
     }
@@ -476,10 +483,15 @@ export class CatalogoHCService {
       throw new ForbiddenException('No se puede modificar un ítem del sistema');
     }
     try {
-      return await this.prisma.diagnosticoHC.update({ where: { id: diagnosticoId }, data: { nombre } });
+      return await this.prisma.diagnosticoHC.update({
+        where: { id: diagnosticoId },
+        data: { nombre },
+      });
     } catch (err: any) {
       if (err?.code === 'P2002') {
-        throw new ConflictException('Ya existe un ítem con ese nombre en esta zona');
+        throw new ConflictException(
+          'Ya existe un ítem con ese nombre en esta zona',
+        );
       }
       throw err;
     }
@@ -494,7 +506,9 @@ export class CatalogoHCService {
     tratamientoHCId: string,
     nombre: string,
   ) {
-    const tx = await this.prisma.tratamientoHC.findUnique({ where: { id: tratamientoHCId } });
+    const tx = await this.prisma.tratamientoHC.findUnique({
+      where: { id: tratamientoHCId },
+    });
     if (!tx || tx.profesionalId !== profesionalId) {
       throw new NotFoundException('Tratamiento no encontrado');
     }
@@ -502,10 +516,15 @@ export class CatalogoHCService {
       throw new ForbiddenException('No se puede modificar un ítem del sistema');
     }
     try {
-      return await this.prisma.tratamientoHC.update({ where: { id: tratamientoHCId }, data: { nombre } });
+      return await this.prisma.tratamientoHC.update({
+        where: { id: tratamientoHCId },
+        data: { nombre },
+      });
     } catch (err: any) {
       if (err?.code === 'P2002') {
-        throw new ConflictException('Ya existe un ítem con ese nombre en esta zona');
+        throw new ConflictException(
+          'Ya existe un ítem con ese nombre en esta zona',
+        );
       }
       throw err;
     }
@@ -530,9 +549,18 @@ export class CatalogoHCService {
       throw new ForbiddenException('No se puede eliminar un ítem del sistema');
     }
     await this.prisma.$transaction([
-      this.prisma.zonaHC.update({ where: { id: zonaId }, data: { activo: false } }),
-      this.prisma.diagnosticoHC.updateMany({ where: { zonaId }, data: { activo: false } }),
-      this.prisma.tratamientoHC.updateMany({ where: { zonaId }, data: { activo: false } }),
+      this.prisma.zonaHC.update({
+        where: { id: zonaId },
+        data: { activo: false },
+      }),
+      this.prisma.diagnosticoHC.updateMany({
+        where: { zonaId },
+        data: { activo: false },
+      }),
+      this.prisma.tratamientoHC.updateMany({
+        where: { zonaId },
+        data: { activo: false },
+      }),
     ]);
   }
 
@@ -541,14 +569,19 @@ export class CatalogoHCService {
    * Guards: belongs to profesional, not esSistema.
    */
   async eliminarDiagnostico(profesionalId: string, diagnosticoId: string) {
-    const dx = await this.prisma.diagnosticoHC.findUnique({ where: { id: diagnosticoId } });
+    const dx = await this.prisma.diagnosticoHC.findUnique({
+      where: { id: diagnosticoId },
+    });
     if (!dx || dx.profesionalId !== profesionalId) {
       throw new NotFoundException('Diagnóstico no encontrado');
     }
     if (dx.esSistema) {
       throw new ForbiddenException('No se puede eliminar un ítem del sistema');
     }
-    return this.prisma.diagnosticoHC.update({ where: { id: diagnosticoId }, data: { activo: false } });
+    return this.prisma.diagnosticoHC.update({
+      where: { id: diagnosticoId },
+      data: { activo: false },
+    });
   }
 
   /**
@@ -556,13 +589,18 @@ export class CatalogoHCService {
    * Guards: belongs to profesional, not esSistema.
    */
   async eliminarTratamiento(profesionalId: string, tratamientoHCId: string) {
-    const tx = await this.prisma.tratamientoHC.findUnique({ where: { id: tratamientoHCId } });
+    const tx = await this.prisma.tratamientoHC.findUnique({
+      where: { id: tratamientoHCId },
+    });
     if (!tx || tx.profesionalId !== profesionalId) {
       throw new NotFoundException('Tratamiento no encontrado');
     }
     if (tx.esSistema) {
       throw new ForbiddenException('No se puede eliminar un ítem del sistema');
     }
-    return this.prisma.tratamientoHC.update({ where: { id: tratamientoHCId }, data: { activo: false } });
+    return this.prisma.tratamientoHC.update({
+      where: { id: tratamientoHCId },
+      data: { activo: false },
+    });
   }
 }

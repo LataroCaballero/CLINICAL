@@ -45,7 +45,14 @@ type ContenidoInput = {
 export function construirContenidoPrimeraVez(
   input: ContenidoInput,
 ): Record<string, unknown> {
-  const { zonas, diagnostico, tratamientos, comentario, presupuestoId, presupuestoTotal } = input;
+  const {
+    zonas,
+    diagnostico,
+    tratamientos,
+    comentario,
+    presupuestoId,
+    presupuestoTotal,
+  } = input;
 
   // Nueva forma: zonas[] presente y no vacío
   if (zonas && zonas.length > 0) {
@@ -83,9 +90,15 @@ const TEXTO_LIMITE = 80;
  * - Tratamiento en consultorio: `{ tipo:'tratamiento_en_consultorio', tratamientos:[{nombre}], texto }`
  * - Texto libre puro: `{ tipo: string, texto: string }`
  */
-export function resumirTratamientosDeContenido(contenido: unknown): string | null {
+export function resumirTratamientosDeContenido(
+  contenido: unknown,
+): string | null {
   // Normalize to Record or bail
-  if (contenido === null || contenido === undefined || typeof contenido !== 'object') {
+  if (
+    contenido === null ||
+    contenido === undefined ||
+    typeof contenido !== 'object'
+  ) {
     return null;
   }
   const c = contenido as Record<string, unknown>;
@@ -94,7 +107,9 @@ export function resumirTratamientosDeContenido(contenido: unknown): string | nul
 
   // Priority 1: v1.9 zona-grouped shape
   if (Array.isArray(c.zonas) && (c.zonas as unknown[]).length > 0) {
-    const nombres = (c.zonas as Array<{ tratamientos?: Array<{ nombre?: unknown }> }>)
+    const nombres = (
+      c.zonas as Array<{ tratamientos?: Array<{ nombre?: unknown }> }>
+    )
       .flatMap((z) => z.tratamientos ?? [])
       .map((t) => (typeof t.nombre === 'string' ? t.nombre.trim() : ''))
       .filter((n) => n.length > 0);
@@ -166,7 +181,10 @@ export function derivarPerfilPrimeraVez(input: ContenidoInput): {
 
     return {
       diagnosticoStr: partesDiag.length > 0 ? partesDiag.join(', ') : null,
-      tratamientoStr: todosLosTratamientos.length > 0 ? todosLosTratamientos.join(', ') : null,
+      tratamientoStr:
+        todosLosTratamientos.length > 0
+          ? todosLosTratamientos.join(', ')
+          : null,
     };
   }
 

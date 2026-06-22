@@ -233,7 +233,7 @@ Plans:
 | 45. Formulario Primera Consulta | v1.9 | 3/3 | Complete | 2026-06-12 |
 | 46. Auto-aprendizaje vía "Otros" | v1.9 | 4/4 | Complete | 2026-06-13 |
 | 47. Admin UI en Configuración | v1.9 | 2/2 | Complete | 2026-06-13 |
-| 48. Backend — Lectura y Snapshot de Tratamientos | 2/2 | Complete   | 2026-06-22 | - |
+| 48. Backend — Lectura y Snapshot de Tratamientos | 2/2 | Complete    | 2026-06-22 | - |
 | 49. Frontend — Filtro y Color-coding de Estado | v1.10 | 0/? | Not started | - |
 
 ---

@@ -1,35 +1,36 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.9
-milestone_name: Plantilla Primera Consulta
-status: completed
-last_updated: "2026-06-13T02:55:05.511Z"
-last_activity: "2026-06-13 — 47-02 complete: Admin UI catalogo HC (GestionCatalogoHC + useCatalogoHCMutations + pestaña Configuracion), ADM-01/02/03 cerrados, human-verify aprobado"
+milestone: v1.10
+milestone_name: Refinamiento Planilla de Tratamientos
+status: defining_requirements
+last_updated: "2026-06-21T00:00:00.000Z"
+last_activity: "2026-06-21 — Milestone v1.10 started (defining requirements)"
 progress:
-  total_phases: 4
-  completed_phases: 4
-  total_plans: 12
-  completed_plans: 12
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-06-13)
+See: .planning/PROJECT.md (updated 2026-06-21)
 
 **Core value:** Que un cirujano plástico cierre más cirugías — el sistema hace visible qué pacientes seguir, cuándo y cómo, de la manera más automatizada posible
-**Current focus:** Planning next milestone (v1.9 shipped — `/gsd:new-milestone`)
+**Current focus:** v1.10 Refinamiento Planilla de Tratamientos — defining requirements
 
 ## Current Position
 
-Milestone: v1.9 Plantilla Primera Consulta — ✅ SHIPPED 2026-06-13
-Status: Complete — 4 fases (44–47), 12 planes, 14/14 requisitos. Tag v1.9.
-Last activity: 2026-06-13 — milestone v1.9 archivado (ROADMAP + REQUIREMENTS + audit en milestones/)
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-06-21 — Milestone v1.10 started
 
 ```
-Progress: [██████████] 100% — milestone complete
+Progress: [░░░░░░░░░░] 0% — defining requirements
 ```
 
 ## Decisions

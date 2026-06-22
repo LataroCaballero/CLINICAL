@@ -1,6 +1,7 @@
 import {
   construirContenidoPrimeraVez,
   derivarPerfilPrimeraVez,
+  resumirTratamientosDeContenido,
   ZonaSeleccionInput,
 } from './historia-clinica.contenido.helpers';
 
@@ -172,5 +173,101 @@ describe('derivarPerfilPrimeraVez', () => {
 
     expect(diagnosticoStr).toBeNull();
     expect(tratamientoStr).toBeNull();
+  });
+});
+
+describe('resumirTratamientosDeContenido', () => {
+  it('shape v1.9 agrupado (zonas[]) con múltiples tratamientos → primer nombre + conteo restante', () => {
+    const contenido = {
+      tipo: 'primera_vez',
+      zonas: [
+        { zona: 'Abdomen', tratamientos: [{ nombre: 'Lipoaspiración' }] },
+        { zona: 'Mamas', tratamientos: [{ nombre: 'Mastopexia' }, { nombre: 'Implante' }] },
+      ],
+    };
+    expect(resumirTratamientosDeContenido(contenido)).toBe('Lipoaspiración +2');
+  });
+
+  it('shape legacy plano con un tratamiento → nombre exacto sin conteo', () => {
+    const contenido = {
+      tipo: 'primera_vez',
+      tratamientos: [{ nombre: 'Abdominoplastia' }],
+    };
+    expect(resumirTratamientosDeContenido(contenido)).toBe('Abdominoplastia');
+  });
+
+  it('shape legacy plano con múltiples tratamientos → primer nombre + conteo restante', () => {
+    const contenido = {
+      tipo: 'primera_vez',
+      tratamientos: [{ nombre: 'A' }, { nombre: 'B' }],
+    };
+    expect(resumirTratamientosDeContenido(contenido)).toBe('A +1');
+  });
+
+  it('tratamiento_en_consultorio con catálogo → catálogo gana (ignora texto)', () => {
+    const contenido = {
+      tipo: 'tratamiento_en_consultorio',
+      tratamientos: [{ id: 'tr-1', nombre: 'Toxina' }],
+      texto: 'nota extra',
+    };
+    expect(resumirTratamientosDeContenido(contenido)).toBe('Toxina');
+  });
+
+  it('tratamiento_en_consultorio sin catálogo → fallback a texto', () => {
+    const contenido = {
+      tipo: 'tratamiento_en_consultorio',
+      tratamientos: [],
+      texto: 'Limpieza facial profunda',
+    };
+    expect(resumirTratamientosDeContenido(contenido)).toBe('Limpieza facial profunda');
+  });
+
+  it('texto libre puro largo (>80 chars) → recortado con elipsis', () => {
+    const textoLargo = 'a'.repeat(100);
+    const contenido = { tipo: 'seguimiento', texto: textoLargo };
+    const resultado = resumirTratamientosDeContenido(contenido);
+    expect(resultado).not.toBeNull();
+    expect(resultado!.endsWith('…')).toBe(true);
+    expect(resultado!.length).toBeLessThanOrEqual(81); // 80 chars + ellipsis
+  });
+
+  it('texto libre puro corto (<=80 chars) → sin recorte', () => {
+    const textoCort = 'Control post-operatorio sin cambios';
+    const contenido = { tipo: 'seguimiento', texto: textoCort };
+    expect(resumirTratamientosDeContenido(contenido)).toBe(textoCort);
+  });
+
+  it('contenido null → null', () => {
+    expect(resumirTratamientosDeContenido(null)).toBeNull();
+  });
+
+  it('contenido undefined → null', () => {
+    expect(resumirTratamientosDeContenido(undefined)).toBeNull();
+  });
+
+  it('contenido sin tratamientos ni texto → null', () => {
+    expect(resumirTratamientosDeContenido({ tipo: 'primera_vez' })).toBeNull();
+  });
+
+  it('edge: zonas[] vacío → null', () => {
+    expect(resumirTratamientosDeContenido({ zonas: [] })).toBeNull();
+  });
+
+  it('edge: tratamientos[] vacío → null', () => {
+    expect(resumirTratamientosDeContenido({ tratamientos: [] })).toBeNull();
+  });
+
+  it('edge: tratamientos con nombres vacíos/undefined → se descartan; si quedan 0 → null', () => {
+    const contenido = {
+      tratamientos: [{ nombre: '' }, { nombre: '   ' }, { nombre: undefined }],
+    };
+    expect(resumirTratamientosDeContenido(contenido)).toBeNull();
+  });
+
+  it('edge: zonas con tratamientos sin nombre válido → null', () => {
+    const contenido = {
+      zonas: [{ zona: 'Abdomen', tratamientos: [{ nombre: '' }, { nombre: '  ' }] }],
+    };
+    expect(resumirTratamientosDeContenido(contenido)).toBeNull();
   });
 });

@@ -69,6 +69,75 @@ export function construirContenidoPrimeraVez(
   };
 }
 
+/** Maximum length for free-text summaries before truncation with ellipsis. */
+const TEXTO_LIMITE = 80;
+
+/**
+ * Extractor puro que normaliza los tres shapes de contenido de HC
+ * (v1.9 agrupado por zona, legacy plano, texto libre / tratamiento en consultorio)
+ * a un string compacto o null si no hay información de tratamiento.
+ *
+ * Shapes soportados:
+ * - v1.9 agrupado: `{ zonas: [{ zona, tratamientos: [{nombre}] }] }`
+ * - Legacy plano: `{ tratamientos: [{nombre}] }`
+ * - Tratamiento en consultorio: `{ tipo:'tratamiento_en_consultorio', tratamientos:[{nombre}], texto }`
+ * - Texto libre puro: `{ tipo: string, texto: string }`
+ */
+export function resumirTratamientosDeContenido(contenido: unknown): string | null {
+  // Normalize to Record or bail
+  if (contenido === null || contenido === undefined || typeof contenido !== 'object') {
+    return null;
+  }
+  const c = contenido as Record<string, unknown>;
+
+  // --- Collect treatment names ---
+
+  // Priority 1: v1.9 zona-grouped shape
+  if (Array.isArray(c.zonas) && (c.zonas as unknown[]).length > 0) {
+    const nombres = (c.zonas as Array<{ tratamientos?: Array<{ nombre?: unknown }> }>)
+      .flatMap((z) => z.tratamientos ?? [])
+      .map((t) => (typeof t.nombre === 'string' ? t.nombre.trim() : ''))
+      .filter((n) => n.length > 0);
+
+    return formatearResumen(nombres);
+  }
+
+  // Priority 2: flat tratamientos array (legacy + tratamiento_en_consultorio with catalog)
+  if (Array.isArray(c.tratamientos)) {
+    const nombres = (c.tratamientos as Array<{ nombre?: unknown }>)
+      .map((t) => (typeof t.nombre === 'string' ? t.nombre.trim() : ''))
+      .filter((n) => n.length > 0);
+
+    if (nombres.length > 0) {
+      return formatearResumen(nombres);
+    }
+  }
+
+  // Priority 3: free text fallback
+  if (typeof c.texto === 'string') {
+    const texto = c.texto.trim();
+    if (texto.length === 0) return null;
+    if (texto.length > TEXTO_LIMITE) {
+      return texto.slice(0, TEXTO_LIMITE).trimEnd() + '…';
+    }
+    return texto;
+  }
+
+  return null;
+}
+
+/**
+ * Formatea una lista de nombres de tratamiento con resumen-con-conteo:
+ * - 1 nombre → nombre exacto
+ * - N nombres → `${primero} +${N-1}`
+ * - 0 nombres → null
+ */
+function formatearResumen(nombres: string[]): string | null {
+  if (nombres.length === 0) return null;
+  if (nombres.length === 1) return nombres[0];
+  return `${nombres[0]} +${nombres.length - 1}`;
+}
+
 /**
  * Deriva los strings de perfil del paciente (diagnosticoStr / tratamientoStr)
  * a partir del input de primera_vez.

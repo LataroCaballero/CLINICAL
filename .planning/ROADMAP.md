@@ -178,7 +178,10 @@ Plans:
   1. Un paciente con flujo CIRUGIA que nunca tuvo un turno de tratamiento ni una HC con tipoEntrada=TRATAMIENTO con contenido de tratamientos no aparece en la planilla de Tratamientos.
   2. Un paciente con flujo CIRUGIA que sí tiene al menos un tratamiento real sigue apareciendo en la planilla sin perder su presencia en el kanban CRM (estado dual preservado).
   3. Los chips de la columna "Estado" muestran colores distintos y labels humanizados para PENDIENTE, CONFIRMADO, EN_ESPERA, SIENDO_ATENDIDO, FINALIZADO, AUSENTE y CANCELADO (ningún chip aparece sin color o con texto técnico del enum).
-**Plans**: TBD
+**Plans**: 1 plan
+
+Plans:
+- [ ] 49-01-PLAN.md — Helper compartido de estado + filtro de null source B y chips semantizados en TratamientosTab (TRAT-04, TRAT-05, TRAT-06)
 
 ## Progress
 
@@ -233,8 +236,8 @@ Plans:
 | 45. Formulario Primera Consulta | v1.9 | 3/3 | Complete | 2026-06-12 |
 | 46. Auto-aprendizaje vía "Otros" | v1.9 | 4/4 | Complete | 2026-06-13 |
 | 47. Admin UI en Configuración | v1.9 | 2/2 | Complete | 2026-06-13 |
-| 48. Backend — Lectura y Snapshot de Tratamientos | 2/2 | Complete    | 2026-06-22 | - |
-| 49. Frontend — Filtro y Color-coding de Estado | v1.10 | 0/? | Not started | - |
+| 48. Backend — Lectura y Snapshot de Tratamientos | v1.10 | 2/2 | Complete | 2026-06-22 |
+| 49. Frontend — Filtro y Color-coding de Estado | v1.10 | 0/1 | Not started | - |
 
 ---
 *Roadmap initialized: 2026-02-23 | v1.0 shipped: 2026-03-03 | v1.1 shipped: 2026-03-16 | v1.2 shipped: 2026-03-31 | v1.3 shipped: 2026-04-09 | v1.4 shipped: 2026-04-20 | v1.5 shipped: 2026-05-13 | v1.6 shipped: 2026-05-23 | v1.7 shipped: 2026-05-28 | v1.8 shipped: 2026-06-09 | v1.9 shipped: 2026-06-13 | v1.10 started: 2026-06-21*

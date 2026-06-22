@@ -28,7 +28,14 @@ function buildSeedSnapshot() {
   return [
     makeZonaSnap('z-abd', 'Abdomen', true, [], [], 1),
     makeZonaSnap('z-mam', 'Mamas', true, [], [], 2),
-    makeZonaSnap('z-naz', 'Nariz', true, [{ id: 'dx-rin', nombre: 'Rinoplastia', activo: true }], [], 3),
+    makeZonaSnap(
+      'z-naz',
+      'Nariz',
+      true,
+      [{ id: 'dx-rin', nombre: 'Rinoplastia', activo: true }],
+      [],
+      3,
+    ),
     makeZonaSnap('z-fac', 'Facial', true, [], [], 4),
     makeZonaSnap('z-loc', 'Locales', true, [], [], 5),
     makeZonaSnap('z-otr', 'Otros', true, [], [], 9999, true),
@@ -84,12 +91,19 @@ describe('CatalogoHCService.aprenderDesdeZonas', () => {
     prisma.zonaHC.findMany.mockResolvedValue(buildSeedSnapshot() as any);
     // crearZona calls zonaHC.findUnique (idempotency check) then $transaction
     prisma.zonaHC.findUnique.mockResolvedValue(null);
-    const newZona = { id: 'z-new', nombre: 'Cuello', orden: 6, esSistema: false };
-    prisma.$transaction.mockImplementation(async (fn: any) => fn({
-      zonaHC: { create: jest.fn().mockResolvedValue(newZona) },
-      diagnosticoHC: { create: jest.fn().mockResolvedValue({}) },
-      tratamientoHC: { create: jest.fn().mockResolvedValue({}) },
-    }));
+    const newZona = {
+      id: 'z-new',
+      nombre: 'Cuello',
+      orden: 6,
+      esSistema: false,
+    };
+    prisma.$transaction.mockImplementation(async (fn: any) =>
+      fn({
+        zonaHC: { create: jest.fn().mockResolvedValue(newZona) },
+        diagnosticoHC: { create: jest.fn().mockResolvedValue({}) },
+        tratamientoHC: { create: jest.fn().mockResolvedValue({}) },
+      }),
+    );
     prisma.tratamiento.findMany.mockResolvedValue([]);
 
     await service.aprenderDesdeZonas(PROF_ID, [
@@ -98,7 +112,9 @@ describe('CatalogoHCService.aprenderDesdeZonas', () => {
 
     // crearZona is called with orden=6 (max non-system=5, +1)
     expect(prisma.zonaHC.findUnique).toHaveBeenCalledWith({
-      where: { nombre_profesionalId: { nombre: 'Cuello', profesionalId: PROF_ID } },
+      where: {
+        nombre_profesionalId: { nombre: 'Cuello', profesionalId: PROF_ID },
+      },
     });
     // $transaction was called to create the zona
     expect(prisma.$transaction).toHaveBeenCalled();
@@ -113,8 +129,20 @@ describe('CatalogoHCService.aprenderDesdeZonas', () => {
       'Abdomen',
       true,
       [
-        { id: 'dx-1', nombre: 'Piel', activo: true, orden: 1, esSistema: false },
-        { id: 'dx-2', nombre: 'Grasa', activo: true, orden: 2, esSistema: false },
+        {
+          id: 'dx-1',
+          nombre: 'Piel',
+          activo: true,
+          orden: 1,
+          esSistema: false,
+        },
+        {
+          id: 'dx-2',
+          nombre: 'Grasa',
+          activo: true,
+          orden: 2,
+          esSistema: false,
+        },
         // orden 1 and 2, so next = 3
       ],
       [],
@@ -127,7 +155,11 @@ describe('CatalogoHCService.aprenderDesdeZonas', () => {
     prisma.diagnosticoHC.create.mockResolvedValue(createdDx as any);
 
     await service.aprenderDesdeZonas(PROF_ID, [
-      { zona: 'Abdomen', diagnosticos: ['flacidez abdominal'], tratamientos: [] },
+      {
+        zona: 'Abdomen',
+        diagnosticos: ['flacidez abdominal'],
+        tratamientos: [],
+      },
     ]);
 
     expect(prisma.diagnosticoHC.create).toHaveBeenCalledWith({
@@ -149,12 +181,20 @@ describe('CatalogoHCService.aprenderDesdeZonas', () => {
     prisma.zonaHC.findMany.mockResolvedValue([zonaSnap] as any);
     prisma.tratamiento.findMany.mockResolvedValue([]); // no existing Tratamientos
 
-    const createdTratamiento = { id: 't-new', nombre: 'Flacidez cutánea', precio: 0 };
+    const createdTratamiento = {
+      id: 't-new',
+      nombre: 'Flacidez cutánea',
+      precio: 0,
+    };
     prisma.tratamiento.create.mockResolvedValue(createdTratamiento as any);
     prisma.tratamientoHC.create.mockResolvedValue({ id: 'thc-new' } as any);
 
     await service.aprenderDesdeZonas(PROF_ID, [
-      { zona: 'Abdomen', diagnosticos: [], tratamientos: [{ nombre: 'Flacidez cutánea' }] },
+      {
+        zona: 'Abdomen',
+        diagnosticos: [],
+        tratamientos: [{ nombre: 'Flacidez cutánea' }],
+      },
     ]);
 
     expect(prisma.tratamiento.create).toHaveBeenCalledWith({
@@ -187,7 +227,11 @@ describe('CatalogoHCService.aprenderDesdeZonas', () => {
     prisma.tratamientoHC.create.mockResolvedValue({ id: 'thc-1' } as any);
 
     await service.aprenderDesdeZonas(PROF_ID, [
-      { zona: 'Nariz', diagnosticos: [], tratamientos: [{ nombre: 'rinoplastia' }] },
+      {
+        zona: 'Nariz',
+        diagnosticos: [],
+        tratamientos: [{ nombre: 'rinoplastia' }],
+      },
     ]);
 
     // No new Tratamiento should be created
@@ -216,7 +260,10 @@ describe('CatalogoHCService.aprenderDesdeZonas', () => {
       1,
     );
 
-    prisma.zonaHC.findMany.mockResolvedValue([zonaInactiva, zonaConItems] as any);
+    prisma.zonaHC.findMany.mockResolvedValue([
+      zonaInactiva,
+      zonaConItems,
+    ] as any);
     prisma.zonaHC.updateMany.mockResolvedValue({ count: 1 } as any);
     prisma.diagnosticoHC.updateMany.mockResolvedValue({ count: 1 } as any);
     prisma.tratamientoHC.updateMany.mockResolvedValue({ count: 1 } as any);
@@ -224,7 +271,11 @@ describe('CatalogoHCService.aprenderDesdeZonas', () => {
 
     await service.aprenderDesdeZonas(PROF_ID, [
       { zona: 'Cuello', diagnosticos: [], tratamientos: [] },
-      { zona: 'Abdomen', diagnosticos: ['Flacidez'], tratamientos: [{ nombre: 'Lifting' }] },
+      {
+        zona: 'Abdomen',
+        diagnosticos: ['Flacidez'],
+        tratamientos: [{ nombre: 'Lifting' }],
+      },
     ]);
 
     // Zone reactivation
@@ -266,7 +317,11 @@ describe('CatalogoHCService.aprenderDesdeZonas', () => {
     prisma.zonaHC.findMany.mockResolvedValue([zonaSnap] as any);
 
     await service.aprenderDesdeZonas(PROF_ID, [
-      { zona: 'Nariz', diagnosticos: ['Giba'], tratamientos: [{ nombre: 'rinoplastia' }] },
+      {
+        zona: 'Nariz',
+        diagnosticos: ['Giba'],
+        tratamientos: [{ nombre: 'rinoplastia' }],
+      },
     ]);
 
     expect(prisma.zonaHC.updateMany).not.toHaveBeenCalled();
@@ -290,17 +345,28 @@ describe('CatalogoHCService.aprenderDesdeZonas', () => {
     ] as any);
     prisma.zonaHC.findUnique.mockResolvedValue(null);
 
-    const newZona = { id: 'z-cuello', nombre: 'Cuello', orden: 2, esSistema: false };
-    prisma.$transaction.mockImplementation(async (fn: any) => fn({
-      zonaHC: { create: jest.fn().mockResolvedValue(newZona) },
-      diagnosticoHC: { create: jest.fn().mockResolvedValue({}) },
-      tratamientoHC: { create: jest.fn().mockResolvedValue({}) },
-    }));
+    const newZona = {
+      id: 'z-cuello',
+      nombre: 'Cuello',
+      orden: 2,
+      esSistema: false,
+    };
+    prisma.$transaction.mockImplementation(async (fn: any) =>
+      fn({
+        zonaHC: { create: jest.fn().mockResolvedValue(newZona) },
+        diagnosticoHC: { create: jest.fn().mockResolvedValue({}) },
+        tratamientoHC: { create: jest.fn().mockResolvedValue({}) },
+      }),
+    );
 
     prisma.tratamiento.findMany.mockResolvedValue([]);
     prisma.diagnosticoHC.create.mockResolvedValue({ id: 'dx-new' } as any);
     prisma.tratamientoHC.create.mockResolvedValue({ id: 'thc-new' } as any);
-    prisma.tratamiento.create.mockResolvedValue({ id: 't-new', nombre: 'Lifting cervical', precio: 0 } as any);
+    prisma.tratamiento.create.mockResolvedValue({
+      id: 't-new',
+      nombre: 'Lifting cervical',
+      precio: 0,
+    } as any);
 
     await service.aprenderDesdeZonas(PROF_ID, [
       {

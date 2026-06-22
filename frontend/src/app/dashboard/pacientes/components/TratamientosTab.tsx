@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useUIStore } from "@/lib/stores/useUIStore";
 import { TurnoRango, useTurnosRango } from "@/hooks/useTurnosRangos";
+import { getEstadoTurnoChip } from "@/lib/estadoTurno";
 import PatientDrawer from "./PatientDrawer";
 
 const MESES = [
@@ -30,17 +31,6 @@ function formatDateTime(isoString: string): string {
   return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-const ESTADO_LABEL: Record<string, string> = {
-  REALIZADO: "realizados",
-  PROGRAMADO: "programados",
-  CANCELADO: "cancelado",
-};
-
-const ESTADO_BADGE_CLASS: Record<string, string> = {
-  PROGRAMADO: "bg-indigo-100 text-indigo-700",
-  REALIZADO: "bg-green-100 text-green-700",
-  CANCELADO: "bg-gray-100 text-gray-500",
-};
 
 export function TratamientosTab({ profesionalId }: { profesionalId: string | null }) {
   const { focusModeEnabled: fm } = useUIStore();
@@ -67,8 +57,12 @@ export function TratamientosTab({ profesionalId }: { profesionalId: string | nul
   const isFuenteB = (t: TurnoRango) =>
     t.tipoTurno.nombre === "Consulta" && t.tipoEntradaHC === "TRATAMIENTO";
 
+  // TRAT-04/05: source B requires ultimoTratamiento != null (oculta CIRUGIA espurios sin tratamiento real)
+  // Source A (flujoPaciente=TRATAMIENTO) queda siempre visible (turnos agendados, con o sin HC)
   const tratamientoTurnos = (turnosData ?? []).filter(
-    (t) => t.tipoTurno.flujoPaciente === "TRATAMIENTO" || isFuenteB(t)
+    (t) =>
+      t.tipoTurno.flujoPaciente === "TRATAMIENTO" ||
+      (isFuenteB(t) && t.ultimoTratamiento != null)
   );
 
   // Derive unique tipos present in tratamientoTurnos for the dropdown (source A only)
@@ -90,7 +84,7 @@ export function TratamientosTab({ profesionalId }: { profesionalId: string | nul
     return tratamientoTurnos.filter((t) => t.tipoTurno.id === filterTipoId && !isFuenteB(t));
   })();
 
-  // Count by estado for header
+  // Count by estado for header — sobre filas visibles post-filtro (TRAT-06)
   const countByEstado = tratamientoTurnos.reduce<Record<string, number>>(
     (acc, t) => {
       acc[t.estado] = (acc[t.estado] ?? 0) + 1;
@@ -101,10 +95,23 @@ export function TratamientosTab({ profesionalId }: { profesionalId: string | nul
 
   const totalCount = tratamientoTurnos.length;
 
-  const breakdown = Object.entries(ESTADO_LABEL)
-    .filter(([estado]) => (countByEstado[estado] ?? 0) > 0)
-    .map(([estado, label]) => `${countByEstado[estado]} ${label}`)
-    .join(", ");
+  // Agrupación por estados reales del enum
+  const realizados = countByEstado["FINALIZADO"] ?? 0;
+  const programados =
+    (countByEstado["PENDIENTE"] ?? 0) +
+    (countByEstado["CONFIRMADO"] ?? 0) +
+    (countByEstado["EN_ESPERA"] ?? 0) +
+    (countByEstado["SIENDO_ATENDIDO"] ?? 0);
+  const cancelados =
+    (countByEstado["CANCELADO"] ?? 0) + (countByEstado["AUSENTE"] ?? 0);
+
+  const breakdownParts = [
+    realizados > 0 ? `${realizados} realizados` : null,
+    programados > 0 ? `${programados} programados` : null,
+    cancelados > 0 ? `${cancelados} cancelados` : null,
+  ].filter(Boolean);
+
+  const breakdown = breakdownParts.join(", ");
 
   const headerSummary =
     totalCount > 0
@@ -248,14 +255,19 @@ export function TratamientosTab({ profesionalId }: { profesionalId: string | nul
                     {isFuenteB(turno) ? "Consulta → Tratamiento" : turno.tipoTurno.nombre}
                   </td>
                   <td className="py-2 px-3">
-                    <span
-                      className={cn(
-                        "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
-                        ESTADO_BADGE_CLASS[turno.estado] ?? "bg-gray-100 text-gray-500"
-                      )}
-                    >
-                      {turno.estado}
-                    </span>
+                    {(() => {
+                      const chip = getEstadoTurnoChip(turno.estado);
+                      return (
+                        <span
+                          className={cn(
+                            "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
+                            chip.className
+                          )}
+                        >
+                          {chip.label}
+                        </span>
+                      );
+                    })()}
                   </td>
                   <td className="py-2 px-3">
                     {turno.ultimoTratamiento ? (

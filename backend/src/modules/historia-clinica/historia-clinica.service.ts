@@ -164,7 +164,11 @@ export class HistoriaClinicaService {
     let insumosAgregados: Array<{ productoId: string; cantidad: number }> = [];
     let tratamientosSnapshot: Array<{ id: string; nombre: string }> = [];
 
-    if (dto.consumirInsumos && dto.tratamientoIds?.length) {
+    // Snapshot de tratamientos: SIEMPRE que haya tratamientoIds, independiente de
+    // consumirInsumos (TRAT-03 / fix LIVHC-05). El findMany sigue fuera de la
+    // transacción (patrón pgBouncer). La agregación de insumos para la OrdenConsumo
+    // permanece condicionada a consumirInsumos=true más abajo.
+    if (dto.tratamientoIds?.length) {
       const tratamientosConInsumos = await this.prisma.tratamiento.findMany({
         where: { id: { in: dto.tratamientoIds }, profesionalId, activo: true },
         select: {
@@ -179,24 +183,29 @@ export class HistoriaClinicaService {
         nombre: t.nombre,
       }));
 
-      // Aggregate quantities by productoId across all treatments (prevent duplicate rows)
-      const insumosMap = new Map<string, number>();
-      for (const t of tratamientosConInsumos) {
-        for (const ins of t.insumos) {
-          const prev = insumosMap.get(ins.productoId) ?? 0;
-          insumosMap.set(ins.productoId, prev + Number(ins.cantidad));
-        }
-      }
-      insumosAgregados = Array.from(insumosMap.entries()).map(
-        ([productoId, cantidad]) => ({
-          productoId,
-          cantidad,
-        }),
-      );
-
-      // Update tratamiento_en_consultorio contenido with snapshot
+      // Persistir snapshot en el contenido SIEMPRE (puebla la columna "Último
+      // tratamiento" de la planilla aunque no se consuman insumos)
       if (dto.tipo === 'tratamiento_en_consultorio') {
         contenido.tratamientos = tratamientosSnapshot;
+      }
+
+      // Agregación de insumos para la OrdenConsumo: SOLO si se consumen insumos.
+      // Cuando consumirInsumos=false, insumosAgregados queda [] y la orden no se crea.
+      if (dto.consumirInsumos) {
+        // Aggregate quantities by productoId across all treatments (prevent duplicate rows)
+        const insumosMap = new Map<string, number>();
+        for (const t of tratamientosConInsumos) {
+          for (const ins of t.insumos) {
+            const prev = insumosMap.get(ins.productoId) ?? 0;
+            insumosMap.set(ins.productoId, prev + Number(ins.cantidad));
+          }
+        }
+        insumosAgregados = Array.from(insumosMap.entries()).map(
+          ([productoId, cantidad]) => ({
+            productoId,
+            cantidad,
+          }),
+        );
       }
     }
 
@@ -303,14 +312,20 @@ export class HistoriaClinicaService {
 
     // Best-effort catalog learning — must run AFTER the transaction commits so only
     // successfully saved HC entries enrich the catalog. Never blocks the response.
-    if (dto.tipo === 'primera_vez' && Array.isArray(dto.zonas) && dto.zonas.length > 0) {
+    if (
+      dto.tipo === 'primera_vez' &&
+      Array.isArray(dto.zonas) &&
+      dto.zonas.length > 0
+    ) {
       try {
         await this.catalogoHc.aprenderDesdeZonas(
           profesionalId,
           dto.zonas.map((z) => ({
             zona: z.zona,
             diagnosticos: z.diagnosticos ?? [],
-            tratamientos: (z.tratamientos ?? []).map((t) => ({ nombre: t.nombre })),
+            tratamientos: (z.tratamientos ?? []).map((t) => ({
+              nombre: t.nombre,
+            })),
           })),
         );
       } catch (e) {

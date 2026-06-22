@@ -77,9 +77,7 @@ describe('detectarAprendizaje — zonas', () => {
   });
 
   it('zona que matchea ZonaHC inactiva → zonasAReactivar, NO en zonasACrear', () => {
-    const catalogo: SnapshotZona[] = [
-      makeZona('z-cuello', 'Cuello', false),
-    ];
+    const catalogo: SnapshotZona[] = [makeZona('z-cuello', 'Cuello', false)];
     const zonas: ZonaAprendizajeInput[] = [
       { zona: 'Cuello', diagnosticos: [], tratamientos: [] },
     ];
@@ -89,39 +87,46 @@ describe('detectarAprendizaje — zonas', () => {
   });
 
   it('"otros" nunca se aprende', () => {
-    const resultado = detectarAprendizaje([], [
-      { zona: 'otros', diagnosticos: [], tratamientos: [] },
-    ]);
+    const resultado = detectarAprendizaje(
+      [],
+      [{ zona: 'otros', diagnosticos: [], tratamientos: [] }],
+    );
     expect(resultado.zonasACrear).toEqual([]);
     expect(resultado.zonasAReactivar).toEqual([]);
   });
 
   it('"Otros" (capitalizado) nunca se aprende', () => {
-    const resultado = detectarAprendizaje([], [
-      { zona: 'Otros', diagnosticos: [], tratamientos: [] },
-    ]);
+    const resultado = detectarAprendizaje(
+      [],
+      [{ zona: 'Otros', diagnosticos: [], tratamientos: [] }],
+    );
     expect(resultado.zonasACrear).toEqual([]);
   });
 
   it('zona vacía → sin acciones', () => {
-    const resultado = detectarAprendizaje([], [
-      { zona: '', diagnosticos: [], tratamientos: [] },
-    ]);
+    const resultado = detectarAprendizaje(
+      [],
+      [{ zona: '', diagnosticos: [], tratamientos: [] }],
+    );
     expect(resultado.zonasACrear).toEqual([]);
   });
 
   it('zona solo espacios → sin acciones', () => {
-    const resultado = detectarAprendizaje([], [
-      { zona: '   ', diagnosticos: [], tratamientos: [] },
-    ]);
+    const resultado = detectarAprendizaje(
+      [],
+      [{ zona: '   ', diagnosticos: [], tratamientos: [] }],
+    );
     expect(resultado.zonasACrear).toEqual([]);
   });
 
   it('dos zonas del input que normalizan igual → una sola acción (dedupe)', () => {
-    const resultado = detectarAprendizaje([], [
-      { zona: 'cuello', diagnosticos: [], tratamientos: [] },
-      { zona: 'Cuello ', diagnosticos: [], tratamientos: [] },
-    ]);
+    const resultado = detectarAprendizaje(
+      [],
+      [
+        { zona: 'cuello', diagnosticos: [], tratamientos: [] },
+        { zona: 'Cuello ', diagnosticos: [], tratamientos: [] },
+      ],
+    );
     expect(resultado.zonasACrear).toHaveLength(1);
     expect(resultado.zonasACrear).toEqual(['Cuello']);
   });
@@ -249,9 +254,13 @@ describe('detectarAprendizaje — tratamientos', () => {
 
   it('tx existente activo en esa zona → sin acciones', () => {
     const catalogo: SnapshotZona[] = [
-      makeZona('z-abd', 'Abdomen', true, [], [
-        { id: 't1', nombre: 'Dermolipectomía', activo: true },
-      ]),
+      makeZona(
+        'z-abd',
+        'Abdomen',
+        true,
+        [],
+        [{ id: 't1', nombre: 'Dermolipectomía', activo: true }],
+      ),
     ];
     const zonas: ZonaAprendizajeInput[] = [
       {
@@ -267,9 +276,13 @@ describe('detectarAprendizaje — tratamientos', () => {
 
   it('tx que matchea TratamientoHC inactivo → tratamientosAReactivar', () => {
     const catalogo: SnapshotZona[] = [
-      makeZona('z-abd', 'Abdomen', true, [], [
-        { id: 't-lipo', nombre: 'Liposucción', activo: false },
-      ]),
+      makeZona(
+        'z-abd',
+        'Abdomen',
+        true,
+        [],
+        [{ id: 't-lipo', nombre: 'Liposucción', activo: false }],
+      ),
     ];
     const zonas: ZonaAprendizajeInput[] = [
       {
@@ -318,10 +331,7 @@ describe('detectarAprendizaje — tratamientos', () => {
       {
         zona: 'Abdomen',
         diagnosticos: [],
-        tratamientos: [
-          { nombre: 'Liposucción' },
-          { nombre: 'liposuccion ' },
-        ],
+        tratamientos: [{ nombre: 'Liposucción' }, { nombre: 'liposuccion ' }],
       },
     ];
     const resultado = detectarAprendizaje(catalogo, zonas);

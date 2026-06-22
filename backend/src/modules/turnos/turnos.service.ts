@@ -22,6 +22,7 @@ import { ReprogramarTurnoDto } from './dto/reprogramar-turno.dto';
 import { IniciarSesionDto } from './dto/iniciar-sesion.dto';
 import { CerrarSesionDto } from './dto/cerrar-sesion.dto';
 import { CuentasCorrientesService } from '../cuentas-corrientes/cuentas-corrientes.service';
+import { resumirTratamientosDeContenido } from '../historia-clinica/historia-clinica.contenido.helpers';
 
 // Constante de orden CRM — PERDIDO excluido intencionalmente (manejo especial)
 // ADVERTENCIA: El enum EtapaCRM en Prisma NO está en orden lógico de avance.
@@ -543,6 +544,7 @@ export class TurnosService {
         entradaHC: {
           select: {
             tipoEntrada: true,
+            contenido: true,
           },
         },
       },
@@ -550,47 +552,13 @@ export class TurnosService {
 
     if (turnos.length === 0) return [];
 
-    const pacienteIds = [...new Set(turnos.map((t) => t.paciente.id))];
-
-    const historias = await this.prisma.historiaClinica.findMany({
-      where: { pacienteId: { in: pacienteIds } },
-      select: {
-        pacienteId: true,
-        entradas: {
-          orderBy: { fecha: 'desc' },
-          take: 10,
-          select: { contenido: true },
-        },
-      },
-    });
-
-    const ultimoTratamientoMap = new Map<string, string | null>();
-    for (const historia of historias) {
-      const lastEntry = historia.entradas.find((e) => {
-        const c = e.contenido as Record<string, unknown> | null;
-        return (
-          Array.isArray(c?.tratamientos) &&
-          (c!.tratamientos as unknown[]).length > 0
-        );
-      });
-      if (lastEntry) {
-        const tratamientos = (
-          lastEntry.contenido as { tratamientos: Array<{ nombre: string }> }
-        ).tratamientos;
-        ultimoTratamientoMap.set(
-          historia.pacienteId,
-          tratamientos.map((t) => t.nombre).join(', '),
-        );
-      } else {
-        ultimoTratamientoMap.set(historia.pacienteId, null);
-      }
-    }
-
     return turnos.map((t) => {
       const { entradaHC, ...rest } = t;
       return {
         ...rest,
-        ultimoTratamiento: ultimoTratamientoMap.get(t.paciente.id) ?? null,
+        ultimoTratamiento: resumirTratamientosDeContenido(
+          entradaHC?.contenido ?? null,
+        ),
         tipoEntradaHC: entradaHC?.tipoEntrada ?? null,
       };
     });

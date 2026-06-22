@@ -119,9 +119,14 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 - Eliminar el tipo "Cirugía" interno — la agenda quirúrgica lo requiere (v1.8)
 - tipoEntrada retroactivo en entradas HC legacy — backfill innecesario, se tratan como CONSULTA_CIRUGIA por defecto (v1.8)
 
-## Next Milestone
+## Current Milestone: v1.10 Refinamiento Planilla de Tratamientos
 
-Por definir. Próximo paso: `/gsd:new-milestone` (questioning → research → requirements → roadmap).
+**Goal:** Hacer confiable y legible la planilla de Tratamientos (/dashboard/pacientes): que la columna "Último tratamiento" refleje el tratamiento real de cada turno, que no aparezcan pacientes de cirugía sin tratamiento, y que el estado tenga color-coding semántico completo.
+
+**Target features:**
+- Columna "Último tratamiento" poblada desde la HC del turno correspondiente (soporta shapes v1.9 zona-grouped, legacy flat y texto libre; fix LIVHC-05 snapshot)
+- Filtro automático: pacientes con flujo CIRUGIA sin ningún tratamiento real no aparecen en la planilla (preservando el estado dual cirugía+tratamiento de v1.8)
+- Chips de "Estado" con color-coding semántico completo sobre los valores reales de `EstadoTurno`
 
 ## Shipped: v1.9 Plantilla Primera Consulta ✅
 
@@ -255,4 +260,4 @@ Por definir. Próximo paso: `/gsd:new-milestone` (questioning → research → r
 27/27 requisitos completados en 21 días (2026-04-22 → 2026-05-13). 6 fases, 16 planes. Tech debt aceptado: snapshot de tratamientos sin consumirInsumos y rol FACTURADOR en ordenes-consumo. Ver `.planning/milestones/v1.5-ROADMAP.md` para detalles.
 
 ---
-*Last updated: 2026-06-13 after v1.9 Plantilla Primera Consulta milestone*
+*Last updated: 2026-06-21 after starting v1.10 Refinamiento Planilla de Tratamientos milestone*

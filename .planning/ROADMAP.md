@@ -164,7 +164,11 @@ Full details: `.planning/milestones/v1.10-ROADMAP.md`
   3. Una entrada de HC legacy (shape plano `contenido.tratamientos`) muestra sus tratamientos en la columna.
   4. Una entrada de HC de texto libre / tratamiento en consultorio muestra su descripción en la columna.
   5. Al guardar una HC con tratamientos y `consumirInsumos=false`, la columna "Último tratamiento" se puebla en la planilla (fix LIVHC-05).
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 48-01-PLAN.md — Read-path: extractor puro de 3 shapes + resolución por-turno en obtenerTurnosPorRango (TRAT-01, TRAT-02)
+- [ ] 48-02-PLAN.md — Write-path: snapshot de tratamientos incondicional en crearEntrada, fix LIVHC-05 (TRAT-03)
 
 ### Phase 49: Frontend — Filtro y Color-coding de Estado
 **Goal**: La planilla muestra únicamente pacientes con tratamiento real (CIRUGIA sin tratamiento excluidos automáticamente), y los chips de estado son legibles con color semántico.

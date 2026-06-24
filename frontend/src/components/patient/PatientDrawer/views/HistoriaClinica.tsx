@@ -61,6 +61,8 @@ import type {
   TemplateSchema,
   HCEntryFromTemplate,
 } from "@/types/hc-templates";
+import { HCEntryChips, HCEntryFullContent } from "./HCEntryContent";
+import type { ContenidoEntrada as SharedContenidoEntrada } from "./HCEntryContent";
 
 interface Props {
   pacienteId: string;
@@ -485,13 +487,13 @@ function EntryCard({
       <Separator />
 
       {/* Content preview - truncated */}
-      <div className="line-clamp-3">
-        {isTemplateBased ? (
+      {isTemplateBased ? (
+        <div className="line-clamp-3">
           <TemplateEntryPreview answers={entrada.answers} schema={schema} />
-        ) : (
-          <FreeEntryPreview contenido={entrada.contenido} />
-        )}
-      </div>
+        </div>
+      ) : (
+        <FreeEntryPreview contenido={entrada.contenido} />
+      )}
 
       <div className="text-xs text-muted-foreground text-center pt-1">
         Click para ver más detalles
@@ -503,45 +505,7 @@ function EntryCard({
 // ── Free-entry preview (card) ────────────────────────────────────────────────
 
 function FreeEntryPreview({ contenido }: { contenido?: ContenidoEntrada }) {
-  if (!contenido) return <p className="text-sm text-muted-foreground italic">(sin contenido)</p>;
-
-  const c = contenido as ContenidoPrimeraVez & ContenidoLibre;
-
-  if (c.tipo === "primera_vez") {
-    // New grouped shape (v1.9+)
-    if (Array.isArray(c.zonas) && c.zonas.length > 0) {
-      const parts = c.zonas.map((z: ZonaContenido) => {
-        const items: string[] = [];
-        if (z.diagnosticos.length) items.push(z.diagnosticos.join(", "));
-        if (z.tratamientos.length) items.push(z.tratamientos.map((t) => t.nombre).join(", "));
-        return `${z.zona}: ${items.join(" · ")}`;
-      });
-      return (
-        <>
-          <p className="text-sm text-muted-foreground">{parts.join(" | ") || "(sin datos)"}</p>
-          {c.comentario && <p className="text-sm whitespace-pre-line mt-1">{c.comentario}</p>}
-        </>
-      );
-    }
-    // Legacy shape
-    const zonas: string[] = c.diagnostico?.zonas ?? [];
-    const subzonas: string[] = c.diagnostico?.subzonas ?? [];
-    const tratamientos: { nombre: string }[] = c.tratamientos ?? [];
-    const parts: string[] = [];
-    if (zonas.length) parts.push(`Zonas: ${zonas.join(", ")}`);
-    if (subzonas.length) parts.push(`Subzonas: ${subzonas.join(", ")}`);
-    if (tratamientos.length) parts.push(`Tratamientos: ${tratamientos.map((t) => t.nombre).join(", ")}`);
-    return (
-      <>
-        <p className="text-sm text-muted-foreground">{parts.join(" · ") || "(sin datos)"}</p>
-        {c.comentario && <p className="text-sm whitespace-pre-line mt-1">{c.comentario}</p>}
-      </>
-    );
-  }
-
-  if (c.texto) return <p className="text-sm whitespace-pre-line">{c.texto}</p>;
-
-  return <p className="text-sm text-muted-foreground italic">(sin contenido)</p>;
+  return <HCEntryChips contenido={contenido as SharedContenidoEntrada} />;
 }
 
 // ── Free-entry full content (modal) ─────────────────────────────────────────

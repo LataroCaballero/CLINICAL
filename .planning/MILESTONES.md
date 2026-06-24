@@ -1,5 +1,40 @@
 # Milestones
 
+## v1.11 HC Completa en Ficha de Paciente (Shipped: 2026-06-24)
+
+**Phases completed:** 1 phase (50), 1 plan, 4 tasks (3 auto + 1 human-verify checkpoint)
+**Stats:** 1 día (2026-06-24) | 2 archivos de código | +664 / -273 líneas | 6 commits
+**Requirements:** 3/3 v1.11 (HCSHEET-01..03) | Audit: no ejecutado (milestone solo-frontend, verificado vía 50-01-VERIFICATION.md + visual check aprobado)
+**Git range:** feat(50-01) `b62f96f` → docs(phase-50) `a060396`
+
+**Key accomplishments:**
+1. Componente de render HC compartido (HCSHEET-01): nuevo `HCEntryContent.tsx` que exporta `HCEntryChips` (variante tarjeta: badges de color de zona/diagnósticos/tratamientos, sin precios) y `HCEntryFullContent` (variante detalle: chips + bloque de observaciones `otroTexto` + precios ARS por tratamiento + total + comentario), manejando ambos shapes de `contenido` JSONB — v1.9 zona-agrupado (`zonas[]`) y legacy plano — además del caso de texto libre, sin romperse
+2. Tarjetas de lista con chips (HCSHEET-02): `FreeEntryPreview` en `HistoriaClinica.tsx` delega en `HCEntryChips`, reemplazando el resumen truncado en texto plano por badges de color; `line-clamp-3` movido a `TemplateEntryPreview`-only para que los chips envuelvan naturalmente sin recortarse a media fila
+3. Detalle expandido con paridad visual (HCSHEET-03): `FreeEntryFullContent` delega en `HCEntryFullContent`, logrando paridad visual completa con `HistorialClinicoPanel` (LiveTurno) y `TurnoHCModal` (agenda); mantenido como wrapper de delegación fino para conservar la firma esperada por `ExpandedEntryContent`; tipos duplicados locales eliminados (`ContenidoEntrada` aliaseado del export compartido)
+4. Verificación visual aprobada por el usuario: shape v1.9, shape legacy, entradas de texto libre y entradas de plantilla renderizan correctamente tanto en tarjeta como en detalle, sin regresiones; tsc build limpio, ESLint limpio en ambos archivos modificados
+
+**Convención de chips establecida:** zona → `Badge secondary capitalize font-semibold`; diagnósticos → `Badge outline`; tratamientos → `Badge bg-blue-50 text-blue-700 border-blue-200`.
+
+**Tech debt / consolidación futura (no bloqueante):** `HistorialClinicoPanel.tsx` y `TurnoHCModal.tsx` no migrados al componente compartido `HCEntryContent.tsx` (diferido explícitamente por scope; el componente queda disponible para esa consolidación). Pre-existente `no-explicit-any` en `getTituloEntrada` (HistoriaClinica.tsx) fuera de scope.
+
+---
+
+## v1.10 Refinamiento Planilla de Tratamientos (Shipped: 2026-06-22)
+
+**Phases completed:** 2 phases (48–49), 3 plans, 6 tasks
+**Stats:** 1 día (2026-06-22) | 22 archivos | +1,431 / -233 líneas | 11 commits
+**Requirements:** 6/6 v1.10 (TRAT-01..06) | Audit: ✅ PASSED (6/6 req, 2/2 phases, integración WIRED)
+
+**Key accomplishments:**
+1. Read-path por-turno de "Último tratamiento" (TRAT-01/02): extractor puro `resumirTratamientosDeContenido` que normaliza los 3 shapes de contenido HC — v1.9 zona-agrupado (`contenido.zonas[].tratamientos`), legacy plano (`contenido.tratamientos`) y texto libre / tratamiento en consultorio — a `string|null` con resumen-con-conteo (1 nombre → nombre; N → `first +N-1`); integrado en `obtenerTurnosPorRango` resolviendo el tratamiento por turno y eliminando el query N+1 `historiaClinica.findMany`; 14 tests nuevos (25/25 pass), tsc build limpio
+2. Write-path snapshot incondicional (TRAT-03, fix tech debt LIVHC-05): `crearEntrada` persiste `contenido.tratamientos` siempre que haya `tratamientoIds`, independiente de `consumirInsumos`; la agregación de insumos y la `OrdenConsumo` siguen condicionadas a `consumirInsumos=true` (separación de responsabilidades); pre-fetch fuera de `$transaction` (patrón pgBouncer preservado), sin regresión de stock — las entradas nuevas siempre pueblan la columna
+3. Filtro automático source-B (TRAT-04/05): predicado client-side `isFuenteB(t) && t.ultimoTratamiento != null` oculta de la planilla a los pacientes CIRUGIA sin tratamiento real, sin mutar el backend ni romper el estado dual de v1.8 (etapaCRM/flujo intactos); los pacientes CIRUGIA con tratamiento real siguen visibles simultáneamente en kanban y planilla
+4. Color-coding semántico de EstadoTurno (TRAT-06): helper puro `getEstadoTurnoChip` en `@/lib/estadoTurno` que mapea los 7 valores reales del enum (PENDIENTE, CONFIRMADO, EN_ESPERA → violet, SIENDO_ATENDIDO → sky, FINALIZADO, AUSENTE, CANCELADO) a `{label, className}` Tailwind, reemplazando las keys legacy inexistentes PROGRAMADO/REALIZADO; header breakdown remapeado a realizados/programados/cancelados derivado de filas visibles post-filtro
+
+**Tech debt (no bloqueante):** `AppointmentDetailModal` y `CalendarGrid` no migrados a `getEstadoTurnoChip` (diferido para evitar scope creep; helper disponible en `@/lib/estadoTurno` para consolidación futura).
+
+---
+
 ## v1.9 Plantilla Primera Consulta (Shipped: 2026-06-13)
 
 **Phases completed:** 4 phases (44–47), 12 plans

@@ -100,6 +100,13 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 - ✓ Auto-aprendizaje vía "Otros": zonas/diagnósticos/tratamientos nuevos escritos se persisten en BD best-effort al crear la entrada y aparecen en la próxima consulta — v1.9
 - ✓ Tratamiento aprendido se crea también en el catálogo del profesional con precio 0 y FK opcional, listo para completar en Configuración — v1.9
 - ✓ Admin UI "Catálogo HC" en Configuración: ver, renombrar (PATCH) y eliminar (soft-delete con cascada lógica, guard esSistema) zonas/diagnósticos/tratamientos; HC históricas intactas — v1.9
+- ✓ Columna "Último tratamiento" resuelta por turno: extractor puro `resumirTratamientosDeContenido` normaliza los 3 shapes de HC (v1.9 zona-agrupado, legacy plano, texto libre/consultorio) en `obtenerTurnosPorRango`, eliminando el query N+1 — v1.10 (TRAT-01/02)
+- ✓ Snapshot de tratamientos persistido siempre que haya `tratamientoIds`, independiente de `consumirInsumos` (fix LIVHC-05); insumos y OrdenConsumo siguen condicionados al consumo — v1.10 (TRAT-03)
+- ✓ Filtro automático: pacientes CIRUGIA sin tratamiento real ocultos de la planilla (predicado client-side source-B null) preservando el estado dual v1.8 — v1.10 (TRAT-04/05)
+- ✓ Chips de "Estado" con color-coding semántico para los 7 valores reales de `EstadoTurno` vía helper puro `getEstadoTurnoChip` en `@/lib/estadoTurno` — v1.10 (TRAT-06)
+- ✓ Componente compartido `HCEntryContent.tsx` (`HCEntryChips` tarjeta + `HCEntryFullContent` detalle) que renderiza el contenido completo de una entrada HC (chips zona/diagnósticos/tratamientos + observaciones + precios + comentario), soportando los 2 shapes de `contenido` (v1.9 `zonas[]` y legacy plano) y texto libre — v1.11 (HCSHEET-01)
+- ✓ Tarjetas de la lista de HC en PatientSheet con chips de color (reemplazan el resumen truncado en texto plano) vía `HCEntryChips` — v1.11 (HCSHEET-02)
+- ✓ Detalle expandido de una entrada HC en PatientSheet con contenido completo (chips + observaciones + comentario) y paridad visual con `HistorialClinicoPanel` y `TurnoHCModal` vía `HCEntryFullContent` — v1.11 (HCSHEET-03)
 
 ### Active
 
@@ -119,14 +126,17 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 - Eliminar el tipo "Cirugía" interno — la agenda quirúrgica lo requiere (v1.8)
 - tipoEntrada retroactivo en entradas HC legacy — backfill innecesario, se tratan como CONSULTA_CIRUGIA por defecto (v1.8)
 
-## Current Milestone: v1.10 Refinamiento Planilla de Tratamientos
+## Next Milestone: por definir
 
-**Goal:** Hacer confiable y legible la planilla de Tratamientos (/dashboard/pacientes): que la columna "Último tratamiento" refleje el tratamiento real de cada turno, que no aparezcan pacientes de cirugía sin tratamiento, y que el estado tenga color-coding semántico completo.
+Candidatos diferidos para el próximo milestone: automatizaciones de seguimiento por tiempo/etapa, tipos de turno personalizados + color (TIPO-F01/F02), vista de pacientes archivados con desarchivar en lote (CRM-F01/F02), consolidación de `HistorialClinicoPanel`/`TurnoHCModal` al componente compartido `HCEntryContent.tsx`. Usar `/gsd:new-milestone` para definir alcance.
 
-**Target features:**
-- Columna "Último tratamiento" poblada desde la HC del turno correspondiente (soporta shapes v1.9 zona-grouped, legacy flat y texto libre; fix LIVHC-05 snapshot)
-- Filtro automático: pacientes con flujo CIRUGIA sin ningún tratamiento real no aparecen en la planilla (preservando el estado dual cirugía+tratamiento de v1.8)
-- Chips de "Estado" con color-coding semántico completo sobre los valores reales de `EstadoTurno`
+## Shipped: v1.11 HC Completa en Ficha de Paciente ✅
+
+3/3 requisitos completados en 1 día (2026-06-24). 1 fase (50), 1 plan. Las entradas de HC dentro del PatientSheet ahora renderizan el contenido completo con la misma riqueza visual que LiveTurno y la agenda: se creó el componente compartido `HCEntryContent.tsx` (`HCEntryChips` para tarjetas, `HCEntryFullContent` para el detalle) que muestra zona/diagnósticos/tratamientos como chips de color + observaciones + precios + comentario, manejando los 2 shapes de `contenido` (v1.9 `zonas[]` y legacy plano) y el texto libre; cableado en `FreeEntryPreview` (tarjetas) y `FreeEntryFullContent` (detalle), reemplazando el resumen truncado en texto plano. Trabajo solo de frontend (datos ya disponibles vía `useHistoriaClinica`). Verificación visual aprobada por el usuario. Ver `.planning/milestones/v1.11-ROADMAP.md` para detalles.
+
+## Shipped: v1.10 Refinamiento Planilla de Tratamientos ✅
+
+6/6 requisitos completados en 1 día (2026-06-22). 2 fases (48–49), 3 planes. La columna "Último tratamiento" ahora se resuelve por turno desde la HC correspondiente (extractor puro de 3 shapes, sin N+1); el snapshot de tratamientos se persiste siempre que haya `tratamientoIds` aunque `consumirInsumos=false` (fix LIVHC-05); los pacientes CIRUGIA sin tratamiento real se filtran automáticamente de la planilla preservando el estado dual de v1.8; y los chips de "Estado" tienen color-coding semántico para los 7 valores reales de `EstadoTurno` vía helper compartido. Audit ✅ PASSED. Ver `.planning/milestones/v1.10-ROADMAP.md` para detalles.
 
 ## Shipped: v1.9 Plantilla Primera Consulta ✅
 
@@ -146,7 +156,11 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 
 ## Context
 
-**Estado actual (post-v1.9):** La plantilla de Primera Consulta de la HC ahora tiene la zona anatómica como eje único: el profesional selecciona una zona (Abdomen, Mamas, Nariz, Facial, Locales, Otros) y se despliegan sus diagnósticos y tratamientos; con varias zonas la selección se agrupa visualmente. El catálogo de zonas/diagnósticos/tratamientos vive en BD por profesional (modelos ZonaHC/DiagnosticoHC/TratamientoHC con seed idempotente, reemplazando el `zonas-diagnostico.json` hardcodeado) y se autoenriquece: lo que el profesional escribe en "Otros" se persiste para la próxima consulta, y un tratamiento aprendido aparece también en su catálogo de tratamientos con precio 0. Desde Configuración → "Catálogo HC" puede ver, renombrar y eliminar (soft-delete) cualquier ítem, sin afectar las HC históricas. 14/14 requisitos v1.9 completados en 1 día (4 fases, 12 planes).
+**Estado actual (post-v1.11):** La Historia Clínica dentro de la Ficha de Paciente (PatientSheet) ya no muestra resúmenes truncados en texto plano: renderiza el contenido completo de cada entrada con la misma riqueza visual que LiveTurno (`HistorialClinicoPanel`) y la agenda (`TurnoHCModal`). Se creó un componente de render compartido (`frontend/src/components/patient/PatientDrawer/views/HCEntryContent.tsx`) con dos variantes — `HCEntryChips` para las tarjetas de la lista (chips de color de zona/diagnósticos/tratamientos) y `HCEntryFullContent` para el detalle expandido (chips + bloque de observaciones + precios ARS por tratamiento + total + comentario). Ambas variantes manejan los dos shapes de `contenido` JSONB (v1.9 agrupado por zona `zonas[]` y legacy plano) más el caso de texto libre. Se cablearon en `FreeEntryPreview` y `FreeEntryFullContent` dentro de `HistoriaClinica.tsx`. Trabajo solo de frontend: los datos completos ya llegaban vía `useHistoriaClinica`. El componente queda disponible para una futura consolidación de `HistorialClinicoPanel` y `TurnoHCModal` (diferida). 3/3 requisitos v1.11 completados en 1 día (1 fase, 1 plan); verificación visual aprobada.
+
+**Estado previo (post-v1.10):** La planilla de Tratamientos en `/dashboard/pacientes` es ahora confiable y legible. La columna "Último tratamiento" se resuelve por turno: un extractor puro (`resumirTratamientosDeContenido`) lee el `contenido` de la HC de cada turno y normaliza los tres shapes (v1.9 agrupado por zona, legacy plano, texto libre/consultorio) a un resumen-con-conteo, eliminando el query N+1 anterior. El snapshot de tratamientos se persiste siempre que la HC tenga `tratamientoIds`, aunque `consumirInsumos=false` (fix LIVHC-05), manteniendo la OrdenConsumo condicionada al consumo. Los pacientes con flujo CIRUGIA que no tienen ningún tratamiento real se filtran automáticamente de la planilla (predicado client-side sobre la fuente B), sin romper el estado dual de v1.8. Los chips de "Estado" usan un helper compartido (`getEstadoTurnoChip` en `@/lib/estadoTurno`) con color-coding semántico para los 7 valores reales de `EstadoTurno`. 6/6 requisitos v1.10 completados en 1 día (2 fases, 3 planes).
+
+**Estado previo (post-v1.9):** La plantilla de Primera Consulta de la HC ahora tiene la zona anatómica como eje único: el profesional selecciona una zona (Abdomen, Mamas, Nariz, Facial, Locales, Otros) y se despliegan sus diagnósticos y tratamientos; con varias zonas la selección se agrupa visualmente. El catálogo de zonas/diagnósticos/tratamientos vive en BD por profesional (modelos ZonaHC/DiagnosticoHC/TratamientoHC con seed idempotente, reemplazando el `zonas-diagnostico.json` hardcodeado) y se autoenriquece: lo que el profesional escribe en "Otros" se persiste para la próxima consulta, y un tratamiento aprendido aparece también en su catálogo de tratamientos con precio 0. Desde Configuración → "Catálogo HC" puede ver, renombrar y eliminar (soft-delete) cualquier ítem, sin afectar las HC históricas. 14/14 requisitos v1.9 completados en 1 día (4 fases, 12 planes).
 
 **Estado previo (post-v1.8):** Los tipos de turno se simplificaron a 4 públicos (Consulta, Control, Pre-Quirúrgico, Tratamiento) más el tipo interno Cirugía para la agenda quirúrgica. Al cerrar la sesión de una HC, el profesional clasifica el tipo de entrada (CONSULTA_CIRUGIA, TRATAMIENTO, CONTROL, SEGUIMIENTO, PREOPERATORIO) y el sistema actualiza automáticamente el flujo del paciente y su etapa CRM. Un paciente de cirugía que también recibe tratamientos vive en estado dual: aparece en el kanban CRM y en la planilla de tratamientos simultáneamente, sin perder etapa. La secretaria puede archivar pacientes del embudo CRM (`crmArchivado`) sin eliminarlos: desaparecen del kanban y de la lista de acción pero siguen en el sistema. 17/17 requisitos v1.8 completados en 2 días (4 fases, 8 planes).
 
@@ -238,6 +252,14 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 | Helper puro `construirContenidoPrimeraVez`/`detectarAprendizaje` (TDD) — v1.9 | Lógica de agrupación y aprendizaje testeable sin deps NestJS/Prisma (patrón `*.flujo.helpers.ts`) | ✓ Correcto — motores cubiertos por specs RED/GREEN |
 | Aprendizaje `aprenderDesdeZonas` best-effort post-transacción — v1.9 | No bloquear la creación de la HC si el enriquecimiento del catálogo falla; resilience > exactitud (patrón v1.4 crearTurno step 5.5) | ✓ Correcto — la entrada se guarda aunque el aprendizaje falle |
 | Soft-delete con cascada lógica en catálogo HC (no hard delete) — v1.9 | Eliminar un ítem lo saca del formulario pero las HC históricas que lo registraron como texto quedan intactas | ✓ Correcto — ADM-03 verificado: historial sin cambios tras delete |
+| Extractor puro `resumirTratamientosDeContenido` por turno (no query per-paciente) — v1.10 | Resolver el tratamiento del turno desde su `entradaHC.contenido` (3 shapes) en vez del último global del paciente; `contenido: true` en el select reusa la relación existente | ✓ Correcto — elimina query N+1 `historiaClinica.findMany`, 25/25 tests; resuelve TRAT-01/02 |
+| Snapshot de contenido separado del consumo de insumos en `crearEntrada` — v1.10 | El snapshot (`contenido.tratamientos`) se calcula siempre con `tratamientoIds`; la agregación de insumos + OrdenConsumo quedan bajo `if (consumirInsumos)` | ✓ Correcto — fix LIVHC-05 sin regresión de stock (insumosAgregados=[] cuando false); patrón pgBouncer preservado |
+| Filtro source-B null puramente client-side en TratamientosTab — v1.10 | `isFuenteB(t) && t.ultimoTratamiento != null` oculta CIRUGIA sin tratamiento sin tocar el contrato backend (`ultimoTratamiento: string\|null`) | ✓ Correcto — estado dual v1.8 (etapaCRM/flujo) intacto; TRAT-04/05 |
+| `getEstadoTurnoChip` como módulo puro compartido en `@/lib/estadoTurno` — v1.10 | Evita triplicar el mapeo de los 7 EstadoTurno entre TratamientosTab, AppointmentDetailModal y CalendarGrid | ✓ Correcto — reemplaza keys legacy PROGRAMADO/REALIZADO; migración de los otros 2 consumidores diferida (tech debt) |
+| Componente de render HC dedicado (`HCEntryContent.tsx`) en vez de inline en `HistoriaClinica.tsx` — v1.11 | Espeja el patrón existente y habilita la consolidación futura de `HistorialClinicoPanel`/`TurnoHCModal` sin tocarlos ahora | ✓ Correcto — HCSHEET-01/02/03 con paridad visual; componente disponible para reuso |
+| Split `HCEntryChips` (tarjeta, sin precios) vs `HCEntryFullContent` (detalle, con precios + observaciones) — v1.11 | La tarjeta solo necesita chips compactos; el detalle necesita la vista rica completa | ✓ Correcto — ambas variantes manejan los 2 shapes + texto libre |
+| `line-clamp-3` movido a `TemplateEntryPreview`-only — v1.11 | El clamp recortaba los chips a media fila; los badges deben envolver naturalmente en la tarjeta | ✓ Correcto — chips visibles completos sin recorte |
+| `FreeEntryFullContent` mantenido como wrapper de delegación fino — v1.11 | Conserva la firma local esperada por `ExpandedEntryContent` mientras delega el render a `HCEntryFullContent` | ✓ Correcto — sin cambios en el contrato de `ExpandedEntryContent` |
 
 ## Shipped: v1.1 Vista del Facturador ✅
 
@@ -260,4 +282,4 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 27/27 requisitos completados en 21 días (2026-04-22 → 2026-05-13). 6 fases, 16 planes. Tech debt aceptado: snapshot de tratamientos sin consumirInsumos y rol FACTURADOR en ordenes-consumo. Ver `.planning/milestones/v1.5-ROADMAP.md` para detalles.
 
 ---
-*Last updated: 2026-06-21 after starting v1.10 Refinamiento Planilla de Tratamientos milestone*
+*Last updated: 2026-06-24 — after v1.11 HC Completa en Ficha de Paciente milestone*

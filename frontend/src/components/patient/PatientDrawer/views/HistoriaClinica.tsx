@@ -61,6 +61,8 @@ import type {
   TemplateSchema,
   HCEntryFromTemplate,
 } from "@/types/hc-templates";
+import { HCEntryChips, HCEntryFullContent } from "./HCEntryContent";
+import type { ContenidoEntrada as SharedContenidoEntrada } from "./HCEntryContent";
 
 interface Props {
   pacienteId: string;
@@ -383,34 +385,10 @@ export default function HistoriaClinica({ pacienteId, onBack }: Props) {
   );
 }
 
+// Re-export shared types via aliases to maintain internal usage
+type ContenidoEntrada = SharedContenidoEntrada;
+
 // Types for entries
-interface ZonaContenido {
-  zonaId?: string;
-  zona: string;
-  diagnosticos: string[];
-  otroTexto?: string;
-  tratamientos: Array<{ nombre: string; tratamientoId?: string; precio: number }>;
-}
-
-interface ContenidoPrimeraVez {
-  tipo: "primera_vez";
-  comentario?: string;
-  // New grouped shape (v1.9+)
-  zonas?: ZonaContenido[];
-  // Legacy shape
-  diagnostico?: { zonas?: string[]; subzonas?: string[]; otroTexto?: string };
-  tratamientos?: { nombre: string; precio?: number }[];
-  presupuestoTotal?: number;
-  presupuestoId?: string | null;
-}
-
-interface ContenidoLibre {
-  tipo?: "libre" | string;
-  texto?: string;
-}
-
-type ContenidoEntrada = ContenidoPrimeraVez | ContenidoLibre | Record<string, unknown> | null;
-
 interface EntradaType {
   id: string;
   fecha: string;
@@ -485,13 +463,13 @@ function EntryCard({
       <Separator />
 
       {/* Content preview - truncated */}
-      <div className="line-clamp-3">
-        {isTemplateBased ? (
+      {isTemplateBased ? (
+        <div className="line-clamp-3">
           <TemplateEntryPreview answers={entrada.answers} schema={schema} />
-        ) : (
-          <FreeEntryPreview contenido={entrada.contenido} />
-        )}
-      </div>
+        </div>
+      ) : (
+        <FreeEntryPreview contenido={entrada.contenido} />
+      )}
 
       <div className="text-xs text-muted-foreground text-center pt-1">
         Click para ver más detalles
@@ -503,227 +481,13 @@ function EntryCard({
 // ── Free-entry preview (card) ────────────────────────────────────────────────
 
 function FreeEntryPreview({ contenido }: { contenido?: ContenidoEntrada }) {
-  if (!contenido) return <p className="text-sm text-muted-foreground italic">(sin contenido)</p>;
-
-  const c = contenido as ContenidoPrimeraVez & ContenidoLibre;
-
-  if (c.tipo === "primera_vez") {
-    // New grouped shape (v1.9+)
-    if (Array.isArray(c.zonas) && c.zonas.length > 0) {
-      const parts = c.zonas.map((z: ZonaContenido) => {
-        const items: string[] = [];
-        if (z.diagnosticos.length) items.push(z.diagnosticos.join(", "));
-        if (z.tratamientos.length) items.push(z.tratamientos.map((t) => t.nombre).join(", "));
-        return `${z.zona}: ${items.join(" · ")}`;
-      });
-      return (
-        <>
-          <p className="text-sm text-muted-foreground">{parts.join(" | ") || "(sin datos)"}</p>
-          {c.comentario && <p className="text-sm whitespace-pre-line mt-1">{c.comentario}</p>}
-        </>
-      );
-    }
-    // Legacy shape
-    const zonas: string[] = c.diagnostico?.zonas ?? [];
-    const subzonas: string[] = c.diagnostico?.subzonas ?? [];
-    const tratamientos: { nombre: string }[] = c.tratamientos ?? [];
-    const parts: string[] = [];
-    if (zonas.length) parts.push(`Zonas: ${zonas.join(", ")}`);
-    if (subzonas.length) parts.push(`Subzonas: ${subzonas.join(", ")}`);
-    if (tratamientos.length) parts.push(`Tratamientos: ${tratamientos.map((t) => t.nombre).join(", ")}`);
-    return (
-      <>
-        <p className="text-sm text-muted-foreground">{parts.join(" · ") || "(sin datos)"}</p>
-        {c.comentario && <p className="text-sm whitespace-pre-line mt-1">{c.comentario}</p>}
-      </>
-    );
-  }
-
-  if (c.texto) return <p className="text-sm whitespace-pre-line">{c.texto}</p>;
-
-  return <p className="text-sm text-muted-foreground italic">(sin contenido)</p>;
+  return <HCEntryChips contenido={contenido} />;
 }
 
 // ── Free-entry full content (modal) ─────────────────────────────────────────
 
 function FreeEntryFullContent({ contenido }: { contenido?: ContenidoEntrada }) {
-  if (!contenido) {
-    return (
-      <div className="space-y-2">
-        <h4 className="text-sm font-medium text-muted-foreground">Contenido</h4>
-        <p className="text-sm text-muted-foreground italic">(sin contenido)</p>
-      </div>
-    );
-  }
-
-  const c = contenido as any;
-
-  // ── Primera consulta estructurada ──
-  if (c.tipo === "primera_vez") {
-    const comentario: string = c.comentario ?? "";
-    const presupuestoTotal: number = c.presupuestoTotal ?? 0;
-
-    // New grouped shape (v1.9+)
-    if (Array.isArray(c.zonas) && c.zonas.length > 0) {
-      return (
-        <div className="space-y-5">
-          {/* Zonas agrupadas */}
-          {c.zonas.map((z: ZonaContenido, zi: number) => (
-            <div key={zi} className="space-y-2">
-              <h4 className="text-sm font-semibold capitalize">{z.zona}</h4>
-              {z.diagnosticos.length > 0 && (
-                <div className="p-3 bg-muted/40 rounded-lg">
-                  <p className="text-xs text-muted-foreground mb-1">Diagnósticos</p>
-                  <p className="text-sm font-medium">{z.diagnosticos.join(", ")}</p>
-                </div>
-              )}
-              {z.otroTexto && (
-                <div className="p-3 bg-muted/40 rounded-lg">
-                  <p className="text-xs text-muted-foreground mb-1">Observación</p>
-                  <p className="text-sm">{z.otroTexto}</p>
-                </div>
-              )}
-              {z.tratamientos.length > 0 && (
-                <div className="space-y-1">
-                  {z.tratamientos.map((t, ti) => (
-                    <div key={ti} className="flex items-center justify-between p-2.5 bg-muted/40 rounded-lg">
-                      <span className="text-sm">{t.nombre}</span>
-                      {t.precio > 0 && (
-                        <span className="text-sm font-medium text-green-700">
-                          {new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS" }).format(t.precio)}
-                        </span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))}
-
-          {/* Comentario */}
-          {comentario && (
-            <div className="space-y-2">
-              <h4 className="text-sm font-semibold">Comentario</h4>
-              <p className="text-sm whitespace-pre-line p-3 bg-muted/40 rounded-lg">{comentario}</p>
-            </div>
-          )}
-
-          {/* Total */}
-          {presupuestoTotal > 0 && (
-            <div className="flex justify-end pt-1">
-              <span className="text-sm font-semibold text-green-700">
-                Total: {new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS" }).format(presupuestoTotal)}
-              </span>
-            </div>
-          )}
-        </div>
-      );
-    }
-
-    // Legacy shape
-    const zonas: string[] = c.diagnostico?.zonas ?? [];
-    const subzonas: string[] = c.diagnostico?.subzonas ?? [];
-    const otroTexto: string = c.diagnostico?.otroTexto ?? "";
-    const tratamientos: { nombre: string; precio?: number }[] = c.tratamientos ?? [];
-
-    return (
-      <div className="space-y-5">
-        {/* Diagnóstico */}
-        <div className="space-y-2">
-          <h4 className="text-sm font-semibold">Diagnóstico</h4>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="p-3 bg-muted/40 rounded-lg">
-              <p className="text-xs text-muted-foreground mb-1">Zonas</p>
-              <p className="text-sm font-medium">
-                {zonas.length ? zonas.join(", ") : <span className="text-muted-foreground italic">—</span>}
-              </p>
-            </div>
-            <div className="p-3 bg-muted/40 rounded-lg">
-              <p className="text-xs text-muted-foreground mb-1">Subzonas</p>
-              <p className="text-sm font-medium">
-                {subzonas.length ? subzonas.join(", ") : <span className="text-muted-foreground italic">—</span>}
-              </p>
-            </div>
-          </div>
-          {otroTexto && (
-            <div className="p-3 bg-muted/40 rounded-lg">
-              <p className="text-xs text-muted-foreground mb-1">Observación de zona</p>
-              <p className="text-sm">{otroTexto}</p>
-            </div>
-          )}
-        </div>
-
-        {/* Tratamientos */}
-        {tratamientos.length > 0 && (
-          <div className="space-y-2">
-            <h4 className="text-sm font-semibold">Tratamientos</h4>
-            <div className="space-y-1">
-              {tratamientos.map((t, i) => (
-                <div key={i} className="flex items-center justify-between p-2.5 bg-muted/40 rounded-lg">
-                  <span className="text-sm">{t.nombre}</span>
-                  {!!t.precio && (
-                    <span className="text-sm font-medium text-green-700">
-                      {new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS" }).format(t.precio)}
-                    </span>
-                  )}
-                </div>
-              ))}
-            </div>
-            {presupuestoTotal > 0 && (
-              <div className="flex justify-end pt-1">
-                <span className="text-sm font-semibold text-green-700">
-                  Total: {new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS" }).format(presupuestoTotal)}
-                </span>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Comentario */}
-        {comentario && (
-          <div className="space-y-2">
-            <h4 className="text-sm font-semibold">Comentario</h4>
-            <p className="text-sm whitespace-pre-line p-3 bg-muted/40 rounded-lg">{comentario}</p>
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  // ── Texto libre ──
-  if (c.texto) {
-    return (
-      <div className="space-y-2">
-        <h4 className="text-sm font-medium text-muted-foreground">Contenido</h4>
-        <p className="text-sm whitespace-pre-line">{c.texto}</p>
-      </div>
-    );
-  }
-
-  // ── Fallback: cualquier otro objeto ──
-  const entries = Object.entries(c).filter(([, v]) => v !== null && v !== undefined && v !== "");
-  if (entries.length === 0) {
-    return (
-      <div className="space-y-2">
-        <h4 className="text-sm font-medium text-muted-foreground">Contenido</h4>
-        <p className="text-sm text-muted-foreground italic">(sin contenido)</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-2">
-      <h4 className="text-sm font-medium text-muted-foreground">Contenido</h4>
-      <div className="space-y-2">
-        {entries.map(([key, value]) => (
-          <div key={key} className="p-2.5 bg-muted/40 rounded-lg">
-            <p className="text-xs text-muted-foreground mb-0.5">{formatKey(key)}</p>
-            <p className="text-sm">{typeof value === "object" ? JSON.stringify(value) : String(value)}</p>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+  return <HCEntryFullContent contenido={contenido} />;
 }
 
 // Template entry preview (truncated for card view)

@@ -1,16 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.10
-milestone_name: Refinamiento Planilla de Tratamientos
-status: completed
-last_updated: "2026-06-22T21:28:08.584Z"
-last_activity: 2026-06-22 — Milestone v1.10 archivado (complete-milestone)
+milestone: v1.11
+milestone_name: HC Completa en Ficha de Paciente
+status: defining_requirements
+last_updated: "2026-06-24T00:00:00.000Z"
+last_activity: 2026-06-24 — Milestone v1.11 iniciado (new-milestone)
 progress:
-  total_phases: 2
-  completed_phases: 2
-  total_plans: 3
-  completed_plans: 3
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -20,15 +20,17 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-22)
 
 **Core value:** Que un cirujano plástico cierre más cirugías — el sistema hace visible qué pacientes seguir, cuándo y cómo, de la manera más automatizada posible
-**Current focus:** v1.10 shipped ✅ — planificar próximo milestone (`/gsd:new-milestone`)
+**Current focus:** v1.11 HC Completa en Ficha de Paciente — definiendo requisitos
 
 ## Current Position
 
-Milestone v1.10 Refinamiento Planilla de Tratamientos — SHIPPED 2026-06-22 (tag v1.10)
-Status: completo. Sin milestone activo — esperando `/gsd:new-milestone`.
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-06-24 — Milestone v1.11 iniciado
 
 ```
-Progress: [██████████] 100% — 2/2 phases, 3/3 plans (v1.10 complete)
+Progress: [░░░░░░░░░░] 0% — milestone v1.11 (definiendo requisitos)
 ```
 
 ## Decisions

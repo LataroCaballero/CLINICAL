@@ -107,6 +107,7 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 
 ### Active
 
+- [ ] HC en PatientSheet: contenido completo (chips zona/diagnóstico/tratamiento + observaciones + comentario) en tarjetas y detalle expandido, vía componente compartido (v1.11)
 - [ ] Automatizaciones de seguimiento: triggers basados en tiempo/etapa (ej. "30 días sin respuesta → mensaje automático")
 - [ ] Módulos financieros optimizados e interconectados con CRM
 - [ ] Página pública del paciente: historial, presupuestos, documentos
@@ -123,9 +124,18 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 - Eliminar el tipo "Cirugía" interno — la agenda quirúrgica lo requiere (v1.8)
 - tipoEntrada retroactivo en entradas HC legacy — backfill innecesario, se tratan como CONSULTA_CIRUGIA por defecto (v1.8)
 
-## Next Milestone
+## Current Milestone: v1.11 HC Completa en Ficha de Paciente
 
-Planificación pendiente — usar `/gsd:new-milestone` para definir objetivos, requisitos y roadmap. Candidatos diferidos: automatizaciones de seguimiento por tiempo/etapa, tipos de turno personalizados + color (TIPO-F01/F02), vista de pacientes archivados con desarchivar en lote (CRM-F01/F02).
+**Goal:** Que las entradas de Historia Clínica dentro del PatientSheet rendericen el contenido completo (zona/diagnósticos/tratamientos como chips, observaciones, comentario y texto libre) con la misma riqueza visual que las otras vistas (LiveTurno `HistorialClinicoPanel` y agenda `TurnoHCModal`), eliminando el resumen truncado actual.
+
+**Target features:**
+- Componente compartido reutilizable que renderiza el contenido de una entrada HC con chips, soportando los 2 shapes de `contenido` (v1.9 zona-agrupado `zonas[]` y legacy plano)
+- Tarjetas de la lista de entradas en PatientSheet con chips (reemplaza el resumen en texto plano)
+- Vista expandida/detalle de una entrada en PatientSheet con contenido completo (chips + observaciones + comentario)
+
+Trabajo solo de frontend: los datos completos (`contenido`) ya llegan vía `useHistoriaClinica`, sin cambios de backend.
+
+Candidatos diferidos para futuros milestones: automatizaciones de seguimiento por tiempo/etapa, tipos de turno personalizados + color (TIPO-F01/F02), vista de pacientes archivados con desarchivar en lote (CRM-F01/F02).
 
 ## Shipped: v1.10 Refinamiento Planilla de Tratamientos ✅
 
@@ -269,4 +279,4 @@ Planificación pendiente — usar `/gsd:new-milestone` para definir objetivos, r
 27/27 requisitos completados en 21 días (2026-04-22 → 2026-05-13). 6 fases, 16 planes. Tech debt aceptado: snapshot de tratamientos sin consumirInsumos y rol FACTURADOR en ordenes-consumo. Ver `.planning/milestones/v1.5-ROADMAP.md` para detalles.
 
 ---
-*Last updated: 2026-06-22 after v1.10 Refinamiento Planilla de Tratamientos milestone*
+*Last updated: 2026-06-24 — v1.11 HC Completa en Ficha de Paciente milestone started*

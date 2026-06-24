@@ -2,9 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.11
 milestone_name: HC Completa en Ficha de Paciente
-status: ready_to_plan
-last_updated: "2026-06-24T00:00:00.000Z"
-last_activity: 2026-06-24 — Roadmap v1.11 creado (Phase 50, 3/3 requisitos mapeados)
+status: planning
+stopped_at: Phase 50 context gathered
+last_updated: "2026-06-24T15:16:50.494Z"
+last_activity: 2026-06-24 — Roadmap v1.11 creado; HCSHEET-01/02/03 → Phase 50
 progress:
   total_phases: 1
   completed_phases: 0
@@ -67,6 +68,6 @@ Progress: [░░░░░░░░░░] 0% — milestone v1.11 (Phase 50 list
 
 ## Session Continuity
 
-Last session: 2026-06-24
-Stopped at: Roadmap v1.11 creado (ROADMAP.md, STATE.md, REQUIREMENTS.md traceability). Phase 50 lista para planificar.
-Resume file: None — siguiente paso `/gsd:plan-phase 50`
+Last session: 2026-06-24T15:16:50.491Z
+Stopped at: Phase 50 context gathered
+Resume file: .planning/phases/50-hc-completa-en-patientsheet/50-CONTEXT.md

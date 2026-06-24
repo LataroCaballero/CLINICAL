@@ -169,10 +169,10 @@ Full details: `.planning/milestones/v1.10-ROADMAP.md`
   2. En la lista de entradas del PatientSheet (`EntryCard`/`FreeEntryPreview`), cada tarjeta muestra diagnósticos/tratamientos como chips usando el componente compartido, en lugar del resumen truncado en texto plano.
   3. Al expandir/abrir el detalle de una entrada en el PatientSheet (`FreeEntryFullContent`), el usuario ve el contenido completo (chips + observaciones + comentario) con la misma riqueza visual que `HistorialClinicoPanel` y `TurnoHCModal`.
   4. Una entrada legacy (shape plano) y una entrada v1.9 (shape `zonas[]`) se ven correctamente ambas en tarjeta y detalle, sin regresiones en entradas de texto libre.
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 50-01: TBD
+- [ ] 50-01-PLAN.md — Componente de render HC compartido (chips zona/diagnósticos/tratamientos) cableado en tarjeta y detalle del PatientSheet
 
 ## Progress
 
@@ -229,7 +229,7 @@ Plans:
 | 47. Admin UI en Configuración | v1.9 | 2/2 | Complete | 2026-06-13 |
 | 48. Backend — Lectura y Snapshot de Tratamientos | v1.10 | 2/2 | Complete | 2026-06-22 |
 | 49. Frontend — Filtro y Color-coding de Estado | v1.10 | 1/1 | Complete | 2026-06-22 |
-| 50. HC Completa en PatientSheet | v1.11 | 0/1 | Not started | - |
+| 50. HC Completa en PatientSheet | v1.11 | 0/1 | Planned | - |
 
 ---
 *Roadmap initialized: 2026-02-23 | v1.0 shipped: 2026-03-03 | v1.1 shipped: 2026-03-16 | v1.2 shipped: 2026-03-31 | v1.3 shipped: 2026-04-09 | v1.4 shipped: 2026-04-20 | v1.5 shipped: 2026-05-13 | v1.6 shipped: 2026-05-23 | v1.7 shipped: 2026-05-28 | v1.8 shipped: 2026-06-09 | v1.9 shipped: 2026-06-13 | v1.10 shipped: 2026-06-22 | v1.11 roadmap: 2026-06-24*

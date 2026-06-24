@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.11
 milestone_name: HC Completa en Ficha de Paciente
-status: completed
-stopped_at: Completed 50-01-PLAN.md — milestone v1.11 fully delivered
-last_updated: "2026-06-24T15:39:19.809Z"
-last_activity: 2026-06-24 — Phase 50 Plan 01 delivered; HC chips visual parity achieved in PatientSheet
+status: milestone_archived
+stopped_at: v1.11 milestone archived and tagged — planning next milestone
+last_updated: "2026-06-24T15:45:42.338Z"
+last_activity: 2026-06-24 — v1.11 archived (ROADMAP/REQUIREMENTS to milestones/), PROJECT.md evolved, retrospective + tag v1.11
 progress:
   total_phases: 1
   completed_phases: 1
@@ -21,34 +21,27 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-24)
 
 **Core value:** Que un cirujano plástico cierre más cirugías — el sistema hace visible qué pacientes seguir, cuándo y cómo, de la manera más automatizada posible
-**Current focus:** v1.11 HC Completa en Ficha de Paciente — COMPLETE (Phase 50, Plan 01 delivered)
+**Current focus:** Planning next milestone (usar `/gsd:new-milestone`)
 
 ## Current Position
 
-Phase: 50 of 50 (HC Completa en PatientSheet) — COMPLETE
-Plan: 01 of 01 — COMPLETE (visual verification approved)
-Status: Milestone v1.11 complete
-Last activity: 2026-06-24 — Phase 50 Plan 01 delivered; HC chips visual parity achieved in PatientSheet
+Milestone: v1.11 HC Completa en Ficha de Paciente — ✅ SHIPPED & ARCHIVED (2026-06-24)
+Next: por definir — `/gsd:new-milestone`
+Last activity: 2026-06-24 — v1.11 archived, PROJECT.md evolved, retrospective updated, tag v1.11
 
 ```
-Progress: [██████████] 100% — milestone v1.11 COMPLETE
+Progress: v1.11 COMPLETE — sin milestone activo
 ```
 
 ## Decisions
 
 (Full decision log in PROJECT.md Key Decisions table. Cleared on milestone completion.)
-- [Phase 50]: Shared HCEntryContent.tsx component created: HCEntryChips (card) + HCEntryFullContent (detail) handle both v1.9 zonas[] and legacy shapes with color badge chips
-- [Phase 50]: line-clamp-3 moved to TemplateEntryPreview-only so chip badges wrap fully in card preview
-- [Phase 50-hc-completa-en-patientsheet]: Shared HCEntryContent.tsx component completed: HCEntryChips (card) + HCEntryFullContent (detail) handle both v1.9 zonas[] and legacy shapes with color badge chips — visual verification approved
 
 ## Accumulated Context
 
-### v1.11 scope (Phase 50)
-- Milestone pequeño, solo frontend: port de renderizado, sin cambios de backend ni de data fetching. El `contenido` JSONB completo ya llega a PatientSheet vía `useHistoriaClinica`.
-- Lógica de chips PROBADA y existente en 2 componentes a reutilizar como referencia: `frontend/src/components/live-turno/tabs/hc/HistorialClinicoPanel.tsx` (~L87-143) y `frontend/src/app/dashboard/components/TurnoHCModal.tsx` (~L369-429). Ambos renderizan zona/diagnósticos/tratamientos como badges de color y manejan 2 shapes (`contenido.zonas[]` v1.9 agrupado y `contenido.tratamientos` legacy plano).
-- Target a corregir: `frontend/src/components/patient/PatientDrawer/views/HistoriaClinica.tsx` — `EntryCard`/`FreeEntryPreview` (tarjetas de lista) y `FreeEntryFullContent` (detalle expandido) hoy muestran solo resúmenes truncados en texto plano.
-- Plan (HCSHEET-01 → 02 → 03): extraer un componente de render compartido desde la lógica probada → cablearlo en las tarjetas de lista → cablearlo en el detalle expandido con paridad visual.
-- Out of scope: migrar `HistorialClinicoPanel`/`TurnoHCModal` al componente compartido (queda disponible para esa consolidación futura); backend; edición de HC desde PatientSheet.
+### Carry-forward from v1.11
+- Componente de render HC compartido `frontend/src/components/patient/PatientDrawer/views/HCEntryContent.tsx`: exporta `HCEntryChips` (tarjeta) y `HCEntryFullContent` (detalle), maneja los 2 shapes de `contenido` (v1.9 `zonas[]` y legacy plano) + texto libre. Disponible para consolidar `HistorialClinicoPanel.tsx` y `TurnoHCModal.tsx` (diferido).
+- Convención de chips HC: zona → `Badge secondary capitalize font-semibold`; diagnósticos → `Badge outline`; tratamientos → `Badge bg-blue-50 text-blue-700 border-blue-200`.
 
 ### Carry-forward from v1.10
 - `resumirTratamientosDeContenido` (`historia-clinica.contenido.helpers.ts`): extractor puro de los 3 shapes de HC → `string|null` (resumen-con-conteo). Referencia útil del normalizado de shapes.
@@ -63,6 +56,7 @@ Progress: [██████████] 100% — milestone v1.11 COMPLETE
 - HCCreatorForm reutilizable compartido entre LiveTurno y PatientDrawer (patrón de componente HC compartido ya establecido).
 
 ### Known Tech Debt (carry-forward)
+- HistorialClinicoPanel y TurnoHCModal no migrados al componente compartido `HCEntryContent.tsx` (triplicación de chips de HC; consolidación diferida).
 - AppointmentDetailModal y CalendarGrid no migrados a `getEstadoTurnoChip` (diferido).
 - STOCK-03: FACTURADOR excluido del backend de ordenes-consumo pero accede desde frontend.
 - CALL-01: botón "Llamar" placeholder en agenda.
@@ -72,5 +66,5 @@ Progress: [██████████] 100% — milestone v1.11 COMPLETE
 ## Session Continuity
 
 Last session: 2026-06-24T15:36:02.267Z
-Stopped at: Completed 50-01-PLAN.md — milestone v1.11 fully delivered
+Stopped at: v1.11 milestone archived and tagged — ready for /gsd:new-milestone
 Resume file: None

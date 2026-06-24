@@ -4,6 +4,44 @@
 
 ---
 
+## Milestone: v1.11 — HC Completa en Ficha de Paciente
+
+**Shipped:** 2026-06-24
+**Phases:** 1 (50) | **Plans:** 1 | **Timeline:** 1 day (2026-06-24)
+**Stats:** 2 archivos de código | +664 / -273 líneas | 6 commits | 3/3 requisitos (HCSHEET-01..03)
+
+### What Was Built
+- Componente de render HC compartido `HCEntryContent.tsx` con dos variantes: `HCEntryChips` (tarjeta — chips de color zona/diagnósticos/tratamientos, sin precios) y `HCEntryFullContent` (detalle — chips + bloque de observaciones `otroTexto` + precios ARS por tratamiento + total + comentario), manejando los 2 shapes de `contenido` JSONB (v1.9 `zonas[]` y legacy plano) más el texto libre
+- `FreeEntryPreview` (tarjetas de la lista HC en PatientSheet) cableado a `HCEntryChips`, reemplazando el resumen truncado en texto plano por badges de color
+- `FreeEntryFullContent` (detalle expandido) cableado a `HCEntryFullContent`, logrando paridad visual con `HistorialClinicoPanel` (LiveTurno) y `TurnoHCModal` (agenda); mantenido como wrapper de delegación fino para conservar la firma de `ExpandedEntryContent`
+- Verificación visual humana aprobada (shape v1.9, legacy, texto libre y plantilla); tsc + ESLint limpios
+
+### What Worked
+- **Reuso de lógica probada como referencia**: la lógica de chips ya existía y estaba probada en `HistorialClinicoPanel` y `TurnoHCModal`; extraerla a un componente compartido nuevo (en vez de inline) hizo el port mecánico y de bajo riesgo, con paridad visual garantizada al espejar el original
+- **Scope minúsculo y honesto (1 fase / 1 plan, solo frontend)**: el milestone reconoció que los datos completos ya llegaban vía `useHistoriaClinica` — el gap era puramente de renderizado; nada de backend ni data fetching, ejecución en horas
+- **Diferir la consolidación conscientemente**: no migrar `HistorialClinicoPanel`/`TurnoHCModal` al componente nuevo evitó scope creep; el componente queda disponible para esa consolidación futura sin forzarla ahora
+- **Wrapper de delegación fino**: mantener `FreeEntryFullContent` como wrapper en vez de eliminarlo preservó la firma esperada por `ExpandedEntryContent` — cambio quirúrgico sin tocar el contrato
+
+### What Was Inefficient
+- **Las tres deudas de tooling de cierre siguen crónicas (6to milestone)**: `gsd-tools milestone complete` volvió a devolver `accomplishments: []`, omitió la línea de Stats, y dejó la fila de Phase 50 en la Progress table malformada (sin columna Milestone, separadores corridos). Idéntico a v1.8/v1.9/v1.10 — la retro de v1.10 ya recomendó un fix real en `gsd-tools`; sigue sin hacerse y cuesta trabajo manual cada cierre
+- **Sin audit formal este milestone**: a diferencia de v1.9/v1.10 no se corrió `/gsd:audit-milestone` (decisión consciente del usuario por ser solo-frontend y ya verificado vía VERIFICATION.md + visual check). Aceptable para un milestone tan chico, pero rompe la racha de "audit previo paga"
+- **Triplicación de chips aún viva**: ahora hay 3 lugares que renderizan chips de HC (`HistorialClinicoPanel`, `TurnoHCModal`, `HCEntryContent`); el componente compartido existe pero la consolidación se difirió un milestone más — misma forma de tech debt consciente que el chip de EstadoTurno en v1.10
+
+### Patterns Established
+- **Componente de render compartido con variantes tarjeta/detalle**: extraer la lógica de render de contenido multi-shape a un componente dedicado con una variante compacta (chips) y una rica (chips + precios + observaciones) es el patrón para mostrar `contenido` HC en cualquier vista
+- **Convención de chips HC**: zona → `Badge secondary capitalize font-semibold`; diagnósticos → `Badge outline`; tratamientos → `Badge bg-blue-50 text-blue-700 border-blue-200` — convención visual reutilizable
+- **Delegación fina para preservar contratos**: cuando una función local tiene una firma que otros componentes esperan, convertirla en wrapper que delega al componente compartido evita romper el contrato
+
+### Key Lessons
+- **El fix de `gsd-tools` ya no es opcional**: 6 milestones consecutivos con las mismas 3 deudas de cierre (accomplishments vacíos, archivo scoped sobrescrito, progress table rota). Cada cierre paga el mismo costo manual. Priorizar poblar `one_liner` en los SUMMARY y arreglar el CLI antes del próximo milestone grande
+- **Un milestone de "paridad visual" se beneficia de tener el original como oráculo**: cuando el objetivo es replicar UI ya existente, espejar el componente de referencia (no reinventar) hace la verificación trivial — el checkpoint visual humano confirmó la paridad en una pasada
+
+### Cost Observations
+- Milestone mínimo (1 fase, 1 plan, 2 archivos) ejecutado en horas — port de render puro sin backend
+- 3 tareas auto + 1 checkpoint de verificación visual humana (aprobado); sin tests automatizados nuevos (cambio puramente de presentación)
+
+---
+
 ## Milestone: v1.10 — Refinamiento Planilla de Tratamientos
 
 **Shipped:** 2026-06-22
@@ -382,6 +420,8 @@
 | v1.7 CRM Flexible | 5 | 10 | 6 días | ~variable | Audit detectó 3 asimetrías cerradas en Phase 39; human-verify de UX como bottleneck |
 | v1.8 Tipos de Turno y Flujo Clínico | 4 | 8 | 2 días | ~variable | Milestone más rápido por plan — patrones CRM/HC maduros + migración data-only |
 | v1.9 Plantilla Primera Consulta | 4 | 12 | 1 día | ~variable | 12 planes en 1 día — catálogo en BD nuevo + dual-shape JSONB sin migración; audit formal retomado |
+| v1.10 Refinamiento Planilla Tratamientos | 2 | 3 | 1 día | ~variable | Read-path/write-path/frontend en fases secuenciales; extractor puro + TDD; audit PASSED |
+| v1.11 HC Completa en Ficha de Paciente | 1 | 1 | 1 día | ~variable | Milestone mínimo solo-frontend — port de render con componente compartido; sin audit (verificado vía VERIFICATION + visual) |
 
 ### Cumulative Quality
 
@@ -397,14 +437,17 @@
 | v1.7 | ~minimal | <10% | ninguna |
 | v1.8 | 10 TDD tests (resolverNuevoFlujo) | <10% | ninguna |
 | v1.9 | TDD tests (construirContenidoPrimeraVez, detectarAprendizaje, aprenderDesdeZonas, seed-data) | <10% | ninguna |
+| v1.10 | 14 TDD tests (resumirTratamientosDeContenido — 25/25 pass) | <10% | ninguna |
+| v1.11 | ninguno (cambio puramente de presentación) | <10% | ninguna |
 
 ### Recurring Process Debt
 
-| Issue | v1.1 | v1.2 | v1.4 | v1.5 | v1.6 | v1.7 | v1.8 | v1.9 | Fix |
-|-------|------|------|------|------|------|------|------|------|-----|
-| MILESTONES.md accomplishments vacíos | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | Actualizar formato SUMMARY.md con `one_liner:` field |
-| STATE.md progress desactualizado durante ejecución | ✗ | parcial | parcial | parcial | parcial | parcial | parcial | parcial | GSD executor actualiza STATE al final de cada plan |
-| Integration bugs detectados tarde (audit, no verify) | — | ✗ | ✓ | ✓ | sin audit | ✓ | sin audit | ✓ | Audit antes de complete-milestone elimina retrabajo |
-| Audit saltado antes de archivar | — | — | — | — | ✗ | ✓ | ✗ | ✓ | Correr /gsd:audit-milestone antes de /gsd:complete-milestone |
-| Progress table ROADMAP desalineada durante ejecución | — | — | — | — | — | — | ✗ | ✗ | Executor debe respetar header de columnas al agregar filas |
-| CLI sobrescribe archivo milestone-scoped con snapshot completo | — | — | — | — | — | — | — | ✗ | `milestone complete` debería preservar el ROADMAP scoped del roadmapper |
+| Issue | v1.1 | v1.2 | v1.4 | v1.5 | v1.6 | v1.7 | v1.8 | v1.9 | v1.10 | v1.11 | Fix |
+|-------|------|------|------|------|------|------|------|------|-------|-------|-----|
+| MILESTONES.md accomplishments vacíos | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | Actualizar formato SUMMARY.md con `one_liner:` field |
+| STATE.md progress desactualizado durante ejecución | ✗ | parcial | parcial | parcial | parcial | parcial | parcial | parcial | parcial | parcial | GSD executor actualiza STATE al final de cada plan |
+| Integration bugs detectados tarde (audit, no verify) | — | ✗ | ✓ | ✓ | sin audit | ✓ | sin audit | ✓ | ✓ | sin audit | Audit antes de complete-milestone elimina retrabajo |
+| Audit saltado antes de archivar | — | — | — | — | ✗ | ✓ | ✗ | ✓ | ✓ | ✗ | Correr /gsd:audit-milestone antes de /gsd:complete-milestone |
+| Progress table ROADMAP desalineada durante ejecución | — | — | — | — | — | — | ✗ | ✗ | ✗ | ✗ | Executor debe respetar header de columnas al agregar filas |
+| CLI sobrescribe archivo milestone-scoped con snapshot completo | — | — | — | — | — | — | — | ✗ | ✗ | n/a | `milestone complete` debería preservar el ROADMAP scoped del roadmapper |
+| CLI omite línea de Stats en MILESTONES.md | — | — | — | — | — | — | — | — | ✗ | ✗ | `milestone complete` debería poblar Stats desde git/summaries |

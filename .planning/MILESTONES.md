@@ -1,5 +1,24 @@
 # Milestones
 
+## v1.11 HC Completa en Ficha de Paciente (Shipped: 2026-06-24)
+
+**Phases completed:** 1 phase (50), 1 plan, 4 tasks (3 auto + 1 human-verify checkpoint)
+**Stats:** 1 día (2026-06-24) | 2 archivos de código | +664 / -273 líneas | 6 commits
+**Requirements:** 3/3 v1.11 (HCSHEET-01..03) | Audit: no ejecutado (milestone solo-frontend, verificado vía 50-01-VERIFICATION.md + visual check aprobado)
+**Git range:** feat(50-01) `b62f96f` → docs(phase-50) `a060396`
+
+**Key accomplishments:**
+1. Componente de render HC compartido (HCSHEET-01): nuevo `HCEntryContent.tsx` que exporta `HCEntryChips` (variante tarjeta: badges de color de zona/diagnósticos/tratamientos, sin precios) y `HCEntryFullContent` (variante detalle: chips + bloque de observaciones `otroTexto` + precios ARS por tratamiento + total + comentario), manejando ambos shapes de `contenido` JSONB — v1.9 zona-agrupado (`zonas[]`) y legacy plano — además del caso de texto libre, sin romperse
+2. Tarjetas de lista con chips (HCSHEET-02): `FreeEntryPreview` en `HistoriaClinica.tsx` delega en `HCEntryChips`, reemplazando el resumen truncado en texto plano por badges de color; `line-clamp-3` movido a `TemplateEntryPreview`-only para que los chips envuelvan naturalmente sin recortarse a media fila
+3. Detalle expandido con paridad visual (HCSHEET-03): `FreeEntryFullContent` delega en `HCEntryFullContent`, logrando paridad visual completa con `HistorialClinicoPanel` (LiveTurno) y `TurnoHCModal` (agenda); mantenido como wrapper de delegación fino para conservar la firma esperada por `ExpandedEntryContent`; tipos duplicados locales eliminados (`ContenidoEntrada` aliaseado del export compartido)
+4. Verificación visual aprobada por el usuario: shape v1.9, shape legacy, entradas de texto libre y entradas de plantilla renderizan correctamente tanto en tarjeta como en detalle, sin regresiones; tsc build limpio, ESLint limpio en ambos archivos modificados
+
+**Convención de chips establecida:** zona → `Badge secondary capitalize font-semibold`; diagnósticos → `Badge outline`; tratamientos → `Badge bg-blue-50 text-blue-700 border-blue-200`.
+
+**Tech debt / consolidación futura (no bloqueante):** `HistorialClinicoPanel.tsx` y `TurnoHCModal.tsx` no migrados al componente compartido `HCEntryContent.tsx` (diferido explícitamente por scope; el componente queda disponible para esa consolidación). Pre-existente `no-explicit-any` en `getTituloEntrada` (HistoriaClinica.tsx) fuera de scope.
+
+---
+
 ## v1.10 Refinamiento Planilla de Tratamientos (Shipped: 2026-06-22)
 
 **Phases completed:** 2 phases (48–49), 3 plans, 6 tasks

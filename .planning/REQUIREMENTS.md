@@ -9,9 +9,9 @@ Requisitos del milestone. Cada uno mapea a una fase del roadmap.
 
 ### Visualización HC en PatientSheet
 
-- [ ] **HCSHEET-01**: Existe un componente compartido reutilizable que renderiza el contenido de una entrada HC con chips (zona, diagnósticos, tratamientos), observaciones (`otroTexto`) y comentario, soportando los 2 shapes de `contenido` — v1.9 zona-agrupado (`zonas[]`) y legacy plano — y el caso de entrada de texto libre
-- [ ] **HCSHEET-02**: Las tarjetas de la lista de entradas HC en PatientSheet muestran diagnósticos/tratamientos como chips usando el componente compartido, reemplazando el resumen truncado en texto plano
-- [ ] **HCSHEET-03**: La vista expandida/detalle de una entrada HC en PatientSheet muestra el contenido completo con chips + observaciones + comentario, con paridad visual respecto a `HistorialClinicoPanel` y `TurnoHCModal`
+- [x] **HCSHEET-01**: Existe un componente compartido reutilizable que renderiza el contenido de una entrada HC con chips (zona, diagnósticos, tratamientos), observaciones (`otroTexto`) y comentario, soportando los 2 shapes de `contenido` — v1.9 zona-agrupado (`zonas[]`) y legacy plano — y el caso de entrada de texto libre
+- [x] **HCSHEET-02**: Las tarjetas de la lista de entradas HC en PatientSheet muestran diagnósticos/tratamientos como chips usando el componente compartido, reemplazando el resumen truncado en texto plano
+- [x] **HCSHEET-03**: La vista expandida/detalle de una entrada HC en PatientSheet muestra el contenido completo con chips + observaciones + comentario, con paridad visual respecto a `HistorialClinicoPanel` y `TurnoHCModal`
 
 ## Future Requirements
 
@@ -43,9 +43,9 @@ Qué fase cubre cada requisito. Se completa en la creación del roadmap.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| HCSHEET-01 | Phase 50 | Pending |
-| HCSHEET-02 | Phase 50 | Pending |
-| HCSHEET-03 | Phase 50 | Pending |
+| HCSHEET-01 | Phase 50 | Complete |
+| HCSHEET-02 | Phase 50 | Complete |
+| HCSHEET-03 | Phase 50 | Complete |
 
 **Coverage:**
 - v1.11 requirements: 3 total

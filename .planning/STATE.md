@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.11
 milestone_name: HC Completa en Ficha de Paciente
 status: planning
-stopped_at: Phase 50 context gathered
-last_updated: "2026-06-24T15:16:50.494Z"
+stopped_at: Paused at Task 4 checkpoint (human-verify) of 50-01-PLAN.md
+last_updated: "2026-06-24T15:28:46.259Z"
 last_activity: 2026-06-24 — Roadmap v1.11 creado; HCSHEET-01/02/03 → Phase 50
 progress:
   total_phases: 1
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  completed_phases: 1
+  total_plans: 1
+  completed_plans: 1
   percent: 0
 ---
 
@@ -37,6 +37,8 @@ Progress: [░░░░░░░░░░] 0% — milestone v1.11 (Phase 50 list
 ## Decisions
 
 (Full decision log in PROJECT.md Key Decisions table. Cleared on milestone completion.)
+- [Phase 50]: Shared HCEntryContent.tsx component created: HCEntryChips (card) + HCEntryFullContent (detail) handle both v1.9 zonas[] and legacy shapes with color badge chips
+- [Phase 50]: line-clamp-3 moved to TemplateEntryPreview-only so chip badges wrap fully in card preview
 
 ## Accumulated Context
 
@@ -68,6 +70,6 @@ Progress: [░░░░░░░░░░] 0% — milestone v1.11 (Phase 50 list
 
 ## Session Continuity
 
-Last session: 2026-06-24T15:16:50.491Z
-Stopped at: Phase 50 context gathered
-Resume file: .planning/phases/50-hc-completa-en-patientsheet/50-CONTEXT.md
+Last session: 2026-06-24T15:28:46.257Z
+Stopped at: Paused at Task 4 checkpoint (human-verify) of 50-01-PLAN.md
+Resume file: None

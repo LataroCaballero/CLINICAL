@@ -229,7 +229,7 @@ Plans:
 | 47. Admin UI en Configuración | v1.9 | 2/2 | Complete | 2026-06-13 |
 | 48. Backend — Lectura y Snapshot de Tratamientos | v1.10 | 2/2 | Complete | 2026-06-22 |
 | 49. Frontend — Filtro y Color-coding de Estado | v1.10 | 1/1 | Complete | 2026-06-22 |
-| 50. HC Completa en PatientSheet | 1/1 | Complete   | 2026-06-24 | - |
+| 50. HC Completa en PatientSheet | 1/1 | Complete    | 2026-06-24 | - |
 
 ---
 *Roadmap initialized: 2026-02-23 | v1.0 shipped: 2026-03-03 | v1.1 shipped: 2026-03-16 | v1.2 shipped: 2026-03-31 | v1.3 shipped: 2026-04-09 | v1.4 shipped: 2026-04-20 | v1.5 shipped: 2026-05-13 | v1.6 shipped: 2026-05-23 | v1.7 shipped: 2026-05-28 | v1.8 shipped: 2026-06-09 | v1.9 shipped: 2026-06-13 | v1.10 shipped: 2026-06-22 | v1.11 roadmap: 2026-06-24*

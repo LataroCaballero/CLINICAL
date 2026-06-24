@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.11
 milestone_name: HC Completa en Ficha de Paciente
-status: complete
+status: completed
 stopped_at: Completed 50-01-PLAN.md — milestone v1.11 fully delivered
-last_updated: "2026-06-24T15:36:02.268Z"
-last_activity: 2026-06-24 — Roadmap v1.11 creado; HCSHEET-01/02/03 → Phase 50
+last_updated: "2026-06-24T15:39:19.809Z"
+last_activity: 2026-06-24 — Phase 50 Plan 01 delivered; HC chips visual parity achieved in PatientSheet
 progress:
   total_phases: 1
   completed_phases: 1

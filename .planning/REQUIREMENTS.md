@@ -49,9 +49,9 @@ Qué fase cubre cada requisito. Se completa en la creación del roadmap.
 
 **Coverage:**
 - v1.11 requirements: 3 total
-- Mapped to phases: 3 (pendiente confirmación del roadmapper)
+- Mapped to phases: 3 ✓ (todas a Phase 50 — confirmado por el roadmapper)
 - Unmapped: 0
 
 ---
 *Requirements defined: 2026-06-24*
-*Last updated: 2026-06-24 after initial definition*
+*Last updated: 2026-06-24 — traceability confirmada en la creación del roadmap (3/3 mapeadas a Phase 50, 0 huérfanas)*

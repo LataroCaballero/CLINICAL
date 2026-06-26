@@ -235,7 +235,20 @@ export class PacientesController {
     return this.pacientesService.updateFlujo(id, dto.flujo);
   }
 
-  // Portal del Paciente — Generar o consultar el link (staff only, pacienteId desde path)
+  // Portal del Paciente — Recuperar url existente sin generar (sólo lectura)
+  // Hereda @Auth('ADMIN','PROFESIONAL','SECRETARIA','FACTURADOR') del controller
+  @Get(':id/portal-link')
+  async obtenerPortalLink(@Param('id') id: string) {
+    const result = await this.pacientesService.obtenerPortalLink(id);
+    return {
+      url: result.url,
+      alreadyGenerated: result.alreadyGenerated,
+      legacy: result.legacy ?? false,
+      smtpConfigured: this.portalEmail.isSmtpConfigured(),
+    };
+  }
+
+  // Portal del Paciente — Generar o recuperar el link (staff only, pacienteId desde path)
   @Post(':id/portal-link')
   async generarPortalLink(@Param('id') id: string) {
     const result = await this.pacientesService.generarPortalLink(id);

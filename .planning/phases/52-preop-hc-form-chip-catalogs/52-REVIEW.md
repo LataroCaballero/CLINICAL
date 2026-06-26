@@ -16,7 +16,15 @@ findings:
   warning: 4
   info: 4
   total: 9
+  resolved: 2
 status: issues_found
+resolution_note: >
+  CR-01 (critical) and WR-01 (warning) fixed in commit 1f24574 — esPortalUrlValida
+  now rejects query/fragment, validarPortalUrl returns a canonical origin+pathname
+  reflected into the email (never raw dto.url), email shape validated at runtime,
+  7 regression tests added. WR-02/03/04 and the info items are documented as
+  follow-ups (UX of already-generated tokens, token-ownership verification under
+  D-12, and tenant scoping are architectural and out of this gap's scope).
 ---
 
 # Phase 52: Code Review Report

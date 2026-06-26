@@ -1,6 +1,10 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { CATALOGO_HC_QUERY_KEY } from '@/hooks/useCatalogoHC';
+import { ANTECEDENTES_CATALOGO_QUERY_KEY } from '@/hooks/useAntecedentesCatalogo';
+import { ALERGIAS_CATALOGO_QUERY_KEY } from '@/hooks/useAlergiasCatalogo';
+import { MEDICAMENTOS_CATALOGO_QUERY_KEY } from '@/hooks/useMedicamentosCatalogo';
+// antecedentes-catalogo / alergias-catalogo / medicamentos-catalogo (resolved via constants above)
 
 export interface DiagnosticoDto {
   zonas: string[];
@@ -58,6 +62,16 @@ export interface CreateEntradaDto {
   tratamientoIds?: string[];   // IDs of selected catalog treatments
   consumirInsumos?: boolean;   // Whether to create OrdenConsumo on save
   turnoId?: string;            // Present from LiveTurno, absent from PatientDrawer
+  // pre_quirurgico fields (PREOP-03/04/06/07)
+  antecedentes?: string[];
+  alergias?: string[];
+  medicacion?: string[];
+  estudiosComplementarios?: {
+    laboratorio: boolean;
+    ecg: boolean;
+    imagenes: string[];
+  };
+  consentimientoInformado?: boolean;
 }
 
 export type TipoEntradaHCValue = NonNullable<CreateEntradaDto['tipoEntrada']>;
@@ -92,6 +106,10 @@ export function useCreateHistoriaClinicaEntry() {
       qc.invalidateQueries({ queryKey: ['turnos', 'rango'] });
       // Invalida catálogo HC: la próxima consulta trae zonas/dx/tx aprendidos silenciosamente (APR-01/02/03)
       qc.invalidateQueries({ queryKey: [CATALOGO_HC_QUERY_KEY] });
+      // Invalida catálogos planos PREOP: antecedentes/alergias/medicamentos aprendidos vía Otro (PREOP-04)
+      qc.invalidateQueries({ queryKey: [ANTECEDENTES_CATALOGO_QUERY_KEY] });
+      qc.invalidateQueries({ queryKey: [ALERGIAS_CATALOGO_QUERY_KEY] });
+      qc.invalidateQueries({ queryKey: [MEDICAMENTOS_CATALOGO_QUERY_KEY] });
     },
   });
 }

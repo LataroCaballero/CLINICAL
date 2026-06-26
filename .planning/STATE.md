@@ -2,9 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.12
 milestone_name: Prequirúrgico Estructurado + Portal del Paciente
-status: ready_to_plan
-last_updated: "2026-06-25T00:00:00.000Z"
-last_activity: 2026-06-25
+status: planning
+stopped_at: Phase 51 context gathered
+last_updated: "2026-06-26T02:39:22.415Z"
+last_activity: 2026-06-25 — Roadmap v1.12 created (6 phases, 33 requirements mapped)
 progress:
   total_phases: 6
   completed_phases: 0
@@ -34,6 +35,7 @@ Progress: [░░░░░░░░░░] 0%
 ## Performance Metrics
 
 **Velocity:**
+
 - Total plans completed this milestone: 0
 - Average duration: —
 - Total execution time: —
@@ -71,6 +73,6 @@ Progress: [░░░░░░░░░░] 0%
 
 ## Session Continuity
 
-Last session: 2026-06-25
-Stopped at: Roadmap v1.12 creado — 6 fases (51–56), 33/33 reqs mapeados. Siguiente: /gsd:plan-phase 51
-Resume file: None
+Last session: 2026-06-26T02:39:22.412Z
+Stopped at: Phase 51 context gathered
+Resume file: .planning/phases/51-schema-foundation-chat-fix/51-CONTEXT.md

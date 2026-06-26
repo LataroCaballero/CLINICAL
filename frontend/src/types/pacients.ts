@@ -56,4 +56,9 @@ export interface PacienteDetalle {
   | "PRIMERA"
   | "PRACTICA_CONSULTORIO";
   flujo?: 'CIRUGIA' | 'TRATAMIENTO' | 'PENDIENTE' | null;
+
+  // Profile health arrays — used by PreoperatorioForm for chip pre-load (D-09)
+  condiciones?: string[];
+  alergias?: string[];
+  medicacion?: string[];
 }

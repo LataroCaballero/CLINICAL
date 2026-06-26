@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { QRCodeSVG } from 'qrcode.react';
 import { Copy, Check, MessageCircle, QrCode, Mail, Loader2, ExternalLink } from 'lucide-react';
@@ -10,6 +10,7 @@ import {
   useObtenerPortalLink,
   useGenerarPortalLink,
   useEnviarPortalLinkEmail,
+  type ObtenerPortalLinkResponse,
 } from '@/hooks/usePortalLink';
 
 interface Props {
@@ -23,18 +24,12 @@ export function SharePortalPanel({ pacienteId, pacienteEmail }: Props) {
   // Query: carga el link existente al montar (sólo lectura, no genera)
   const { data: actual, isLoading } = useObtenerPortalLink(pacienteId);
 
-  // Link state (se inicializa desde `actual` cuando llega; luego se actualiza por generar)
-  const [url, setUrl] = useState<string | null>(null);
-  const [smtpConfigured, setSmtpConfigured] = useState(false);
-  const [alreadyGenerated, setAlreadyGenerated] = useState(false);
-
-  // Inicializar estado local a partir del resultado del GET en mount
-  useEffect(() => {
-    if (!actual) return;
-    if (actual.url) setUrl(actual.url);
-    setAlreadyGenerated(actual.alreadyGenerated);
-    setSmtpConfigured(actual.smtpConfigured);
-  }, [actual]);
+  // Valores derivados de la query cache (sin mirror en estado local → evita
+  // setState dentro de un effect). handleGenerar actualiza la cache vía
+  // setQueryData, lo que recomputa estos valores en el próximo render.
+  const url = actual?.url ?? null;
+  const alreadyGenerated = actual?.alreadyGenerated ?? false;
+  const smtpConfigured = actual?.smtpConfigured ?? false;
 
   // UI state
   const [copied, setCopied] = useState(false);
@@ -58,20 +53,18 @@ export function SharePortalPanel({ pacienteId, pacienteEmail }: Props) {
   const handleGenerar = async () => {
     try {
       const result = await generarMutation.mutateAsync({ pacienteId });
-      // If alreadyGenerated and url is null, backend returns the stable url on first call.
-      // On second+ calls it may return url:null — we keep the previously fetched url.
-      if (result.url) {
-        setUrl(result.url);
-        // Sincronizar la query cache con el resultado para consistencia de futuras aperturas
-        queryClient.setQueryData(['portal-link', pacienteId], {
-          url: result.url,
+      // Volcamos el resultado a la query cache; los valores derivados (url,
+      // alreadyGenerated, smtpConfigured) se recomputan a partir de `actual`.
+      // En la 2da+ llamada el backend puede devolver url:null → conservamos la url previa.
+      queryClient.setQueryData<ObtenerPortalLinkResponse>(
+        ['portal-link', pacienteId],
+        (prev) => ({
+          url: result.url ?? prev?.url ?? null,
           alreadyGenerated: result.alreadyGenerated,
-          legacy: false,
+          legacy: prev?.legacy ?? false,
           smtpConfigured: result.smtpConfigured,
-        });
-      }
-      setSmtpConfigured(result.smtpConfigured);
-      setAlreadyGenerated(result.alreadyGenerated);
+        }),
+      );
     } catch {
       // Error surfaced by button disabled state
     }

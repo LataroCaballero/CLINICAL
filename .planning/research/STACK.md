@@ -1,210 +1,247 @@
-# Stack Research — v1.5 Catálogos Clínicos y Flujos de Atención
+# Stack Research — v1.12 Historia Clínica Pre-Quirúrgica y Portal del Paciente
 
-**Domain:** Clinical SaaS — catalog extensions, stock-linked items, optimistic UI
-**Researched:** 2026-04-22
+**Domain:** Medical SaaS — surgical consent with drawn signature + token-based patient portal
+**Researched:** 2026-06-25
 **Confidence:** HIGH
 
 ## Summary
 
-v1.5 requires zero new npm packages. Every capability needed — multi-select catalog
-pickers, optimistic mutations, many-to-many Prisma relations with quantities, pending
-consumption orders — is already covered by the installed stack. The work is schema
-additions + service composition + hook patterns, not dependency acquisition.
+v1.12 requires **two new backend packages** and **zero new frontend packages**. The most
+important finding is that `signature_pad@5.1.3` is already installed in the frontend — no
+React wrapper library is needed. On the backend, `@cantoo/pdf-lib` handles stamping
+signatures onto uploaded PDFs (PDFKit cannot modify existing documents), and `@types/multer`
+provides TypeScript types for the multer bindings already bundled inside
+`@nestjs/platform-express`. Static file serving requires no new package.
 
 ---
 
-## New Dependencies: None
+## New Dependencies Required
 
-All v1.5 features map cleanly to existing installed libraries:
+### Backend — add to `backend/`
 
-| Feature | Mechanism | Already Installed |
-|---------|-----------|-------------------|
-| Catalog item → stock linking (m-n with quantity) | Prisma explicit join table | @prisma/client ^6.1.0 |
-| Pending stock consumption orders | New Prisma model + enum | @prisma/client ^6.1.0 |
-| Budget items from catalog (auto-fill price) | PresupuestoItem FK extension + NestJS endpoint | @nestjs/common ^10 |
-| Multi-select catalog picker | cmdk ^1.1.1 + Radix Popover + Command | cmdk ^1.1.1 (installed) |
-| Optimistic UI with rollback | TanStack Query v5 onMutate / onError | @tanstack/react-query ^5.90.6 |
-| Error toasts | sonner ^2.0.7 | sonner ^2.0.7 (installed) |
-| Catalog forms with validation | React Hook Form + Zod | both installed |
+| Package | Version | Why |
+|---------|---------|-----|
+| `@cantoo/pdf-lib` | `^2.7.1` | Load existing consent PDF, embed PNG signature, stamp timestamp text, save signed PDF |
+| `@types/multer` | `^2.1.0` | TypeScript types for multer (runtime already bundled with `@nestjs/platform-express`) |
 
-**Installation:** nothing.
+### Frontend — add to `frontend/`
+
+**None.** `signature_pad@5.1.3` is already installed (`^5.1.1` in package.json). Write a
+thin React wrapper component; no new npm dependency required.
+
+```bash
+# Backend only
+cd backend && npm install @cantoo/pdf-lib
+npm install -D @types/multer
+```
 
 ---
 
-## Recommended Stack (existing, confirmed from package.json inspection)
+## Recommended Stack
 
-### Core Technologies
+### Core Technologies (existing, role in v1.12)
 
-| Technology | Version | Role in v1.5 |
-|------------|---------|--------------|
-| Prisma | ^6.1.0 | New explicit join table `TratamientoInsumo`; new models `CatalogoCirugia`, `CatalogoCirugiaInsumo`, `OrdenConsumo`, `OrdenConsumoItem`; new enum `EstadoOrdenConsumo`; optional FK on `PresupuestoItem` |
-| NestJS | ^10.0.0 | New `catalogos-cirugia` module; extend `tratamientos` service with insumo relations; extend `presupuestos` service for catalog-linked items |
-| @tanstack/react-query | ^5.90.6 | Optimistic mutations via `onMutate` / `cancelQueries` (async) / `setQueryData` / `onError` rollback for flujo change in PatientDrawer |
-| cmdk | ^1.1.1 | Multi-select catalog picker comboboxes — same Popover + Command + CommandInput pattern used in `DiagnosticoCombobox.tsx` and `PlanCombobox.tsx`, extended to multi-select with checkbox state |
-| sonner | ^2.0.7 | Error toasts on mutation failure (`toast.error()`); already wired in `useLiveTurnoActions.ts`, `useCerrarLote.ts`, `useFacturadorDashboard.ts` |
-| Zod | ^4.1.13 | DTO schemas for catalog items, insumo arrays with quantities |
-| React Hook Form | ^7.68.0 | LiveTurno HC "Tratamiento en Consultorio" section: catalog selector + insumo checklist |
-| @radix-ui/react-checkbox | ^1.3.3 | Per-insumo checkboxes inside HC treatment section |
+| Technology | Installed Version | Role in v1.12 |
+|------------|------------------|---------------|
+| `signature_pad` | `^5.1.1` (frontend) | Canvas drawing surface; `toDataURL('image/png')` exports the signature as a PNG data URL to send to backend |
+| `@nestjs/platform-express` | `^10.0.0` (backend) | Already includes multer runtime; powers `@FileInterceptor`, `MulterModule`, `diskStorage` — no separate multer install needed |
+| `pdfkit` | `^0.17.2` (backend) | Unchanged — continues to generate presupuesto / factura PDFs from scratch |
+| `@prisma/client` | `^6.1.0` (backend) | New models: `DocumentoConsentimiento`, `PlantillaPrequirurgica`, `TokenPaciente` |
+
+### New Libraries
+
+| Library | Version | Purpose | Confidence |
+|---------|---------|---------|------------|
+| `@cantoo/pdf-lib` | `^2.7.1` | Load, modify, save existing PDFs in Node.js. API is a drop-in superset of `pdf-lib`. Actively maintained (last release May 2026). | HIGH |
+| `@types/multer` | `^2.1.0` | TypeScript types for `Express.Multer.File` interface — needed as soon as you write `@UploadedFile() file: Express.Multer.File` in a controller. | HIGH |
 
 ### Supporting Libraries (already installed, newly applied)
 
-| Library | Version | New Usage |
-|---------|---------|-----------|
-| @radix-ui/react-popover | ^1.1.15 | Wrap `Command` for catalog picker dropdown anchor |
-| @radix-ui/react-dialog | ^1.1.15 | PatientDrawer flujo-change confirmation prompt |
-| lucide-react | ^0.553.0 | FlaskConical (insumos), Stethoscope (tratamientos), Scissors (cirugías) icons in catalog UI |
-| date-fns | ^4.1.0 | "Último tratamiento" date formatting in Tratamientos tab column |
-| @tanstack/react-table | ^8.21.3 | Insumo table inside catalog item edit form (already used in stock module) |
+| Library | Installed Version | New Usage in v1.12 |
+|---------|------------------|--------------------|
+| `signature_pad` | `^5.1.1` | Thin `'use client'` React wrapper component; `ref.current.toDataURL('image/png')` for export |
+| `crypto` (Node built-in) | N/A | `crypto.randomUUID()` for unique uploaded filenames — no uuid package needed |
+| `path` (Node built-in) | N/A | `path.join(process.cwd(), 'uploads', 'consentimientos')` for disk destination |
+| `fs/promises` (Node built-in) | N/A | Read uploaded PDF bytes for pdf-lib processing |
 
 ---
 
-## Patterns to Apply
+## Integration Points
 
-### 1. Many-to-Many Tratamiento ↔ Producto with Quantity
+### A. Signature Capture (Frontend)
 
-Use an explicit Prisma join table (not implicit m-n) because the relation needs a
-`cantidad` field. Prisma implicit m-n tables cannot carry extra data.
-
-```prisma
-model TratamientoInsumo {
-  id            String      @id @default(uuid())
-  tratamientoId String
-  productoId    String
-  cantidad      Int         @default(1)
-  tratamiento   Tratamiento @relation(fields: [tratamientoId], references: [id], onDelete: Cascade)
-  producto      Producto    @relation(fields: [productoId], references: [id])
-
-  @@unique([tratamientoId, productoId])
-  @@index([tratamientoId])
-}
-```
-
-Same pattern applies to `CatalogoCirugiaInsumo` (many-to-many between `CatalogoCirugia`
-and `Producto`).
-
-### 2. Pending Consumption Orders
-
-New model with status enum rather than writing `MovimientoStock` (SALIDA) directly from
-HC. This mirrors the existing `OrdenCompra` → `MovimientoStock` decoupled pattern:
-
-```prisma
-enum EstadoOrdenConsumo {
-  PENDIENTE
-  CONFIRMADA
-  CANCELADA
-}
-
-model OrdenConsumo {
-  id          String             @id @default(uuid())
-  entradaHCId String
-  profesionalId String
-  estado      EstadoOrdenConsumo @default(PENDIENTE)
-  createdAt   DateTime           @default(now())
-  updatedAt   DateTime           @updatedAt
-  items       OrdenConsumoItem[]
-  entradaHC   HistoriaClinicaEntrada @relation(fields: [entradaHCId], references: [id])
-  profesional Profesional        @relation(fields: [profesionalId], references: [id])
-}
-
-model OrdenConsumoItem {
-  id             String       @id @default(uuid())
-  ordenConsumoId String
-  productoId     String
-  cantidad       Int
-  ordenConsumo   OrdenConsumo @relation(fields: [ordenConsumoId], references: [id], onDelete: Cascade)
-  producto       Producto     @relation(fields: [productoId], references: [id])
-}
-```
-
-The HC write path creates `OrdenConsumo` with `estado = PENDIENTE`. The stock module
-confirms it (transitions to `CONFIRMADA`) and writes the actual `MovimientoStock` SALIDA
-entry then. This is the same audit pattern as `OrdenCompra`.
-
-### 3. Optimistic UI — TanStack Query v5 Pattern
-
-The codebase currently uses only `invalidateQueries` on success — no optimistic updates
-exist yet. The flujo-change action in PatientDrawer warrants optimistic handling because
-it's a user-initiated toggle on a visible field:
+`signature_pad` is already installed and is the underlying engine of any React signature
+library. Write a `SignaturePad` component directly:
 
 ```typescript
-const mutation = useMutation({
-  mutationFn: (flujo: FlujoPaciente) =>
-    api.patch(`/pacientes/${id}/flujo`, { flujo }),
-  onMutate: async (flujo) => {
-    // v5: cancelQueries is async — must be awaited
-    await queryClient.cancelQueries({ queryKey: ['paciente', id] });
-    const prev = queryClient.getQueryData(['paciente', id]);
-    queryClient.setQueryData(['paciente', id], (old: any) => ({ ...old, flujo }));
-    return { prev };
-  },
-  onError: (_err, _vars, context) => {
-    queryClient.setQueryData(['paciente', id], context?.prev);
-    toast.error('Error al cambiar el flujo del paciente');
-  },
-  onSettled: () => {
-    queryClient.invalidateQueries({ queryKey: ['paciente', id] });
-    queryClient.invalidateQueries({ queryKey: ['pacientes'] });
-  },
+// frontend/src/components/ui/SignaturePad.tsx
+'use client';
+import { useEffect, useRef } from 'react';
+import SignaturePadLib from 'signature_pad';
+
+interface SignaturePadProps {
+  onSave: (dataUrl: string) => void;
+}
+
+export function SignaturePad({ onSave }: SignaturePadProps) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const padRef = useRef<SignaturePadLib | null>(null);
+
+  useEffect(() => {
+    if (!canvasRef.current) return;
+    padRef.current = new SignaturePadLib(canvasRef.current, {
+      penColor: 'rgb(0, 0, 0)',
+    });
+    return () => padRef.current?.off();
+  }, []);
+
+  const handleSave = () => {
+    if (padRef.current?.isEmpty()) return;
+    onSave(padRef.current!.toDataURL('image/png'));
+  };
+
+  return (
+    <div>
+      <canvas ref={canvasRef} width={500} height={200} className="border rounded" />
+      <button onClick={() => padRef.current?.clear()}>Limpiar</button>
+      <button onClick={handleSave}>Confirmar firma</button>
+    </div>
+  );
+}
+```
+
+**Next.js SSR requirement:** canvas is a browser-only API. Import with `dynamic()`:
+
+```typescript
+const SignaturePad = dynamic(
+  () => import('@/components/ui/SignaturePad').then(m => m.SignaturePad),
+  { ssr: false }
+);
+```
+
+The `toDataURL('image/png')` result is a `data:image/png;base64,...` string. Strip the
+`data:image/png;base64,` prefix before sending to the backend as a JSON string field, or
+send it as-is and let the backend decode it:
+
+```typescript
+// Backend: decode base64 PNG to Buffer
+const base64Data = signatureDataUrl.replace(/^data:image\/png;base64,/, '');
+const signatureBuffer = Buffer.from(base64Data, 'base64');
+```
+
+### B. PDF Stamping (Backend)
+
+`@cantoo/pdf-lib` loads the doctor-uploaded consent PDF, embeds the PNG signature drawn
+by the patient, stamps a timestamp, and returns the signed PDF bytes for storage and
+archiving:
+
+```typescript
+import { PDFDocument, StandardFonts, rgb } from '@cantoo/pdf-lib';
+
+async stampSignatureOnPdf(
+  existingPdfBytes: Buffer,
+  signaturePngBytes: Buffer,
+  timestamp: string,
+  profesionalName: string,
+): Promise<Buffer> {
+  const pdfDoc = await PDFDocument.load(existingPdfBytes);
+  const pngImage = await pdfDoc.embedPng(signaturePngBytes);
+
+  // Stamp on the last page (where signature block usually lives)
+  const pages = pdfDoc.getPages();
+  const lastPage = pages[pages.length - 1];
+  const { width } = lastPage.getSize();
+
+  // Scale signature to max 200px wide, preserve aspect ratio
+  const { width: imgW, height: imgH } = pngImage.size();
+  const scale = Math.min(200 / imgW, 80 / imgH);
+  const drawW = imgW * scale;
+  const drawH = imgH * scale;
+
+  lastPage.drawImage(pngImage, { x: 60, y: 100, width: drawW, height: drawH });
+
+  const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  lastPage.drawText(`Firmado digitalmente el ${timestamp}`, {
+    x: 60, y: 90, size: 9, font, color: rgb(0.3, 0.3, 0.3),
+  });
+  lastPage.drawText(`Paciente confirmó consentimiento ante: ${profesionalName}`, {
+    x: 60, y: 78, size: 9, font, color: rgb(0.3, 0.3, 0.3),
+  });
+
+  return Buffer.from(await pdfDoc.save());
+}
+```
+
+**Why pdf-lib and not PDFKit:** PDFKit creates PDFs from scratch using a streaming
+document builder pattern (`new PDFDocument()`). It has no ability to load or modify an
+existing PDF file. The consent PDF is a document the doctor uploads — we must stamp
+onto it without recreating it. `@cantoo/pdf-lib`'s `PDFDocument.load()` is the only way
+to do this without a native binary dependency.
+
+### C. File Upload (Backend — NestJS + Multer)
+
+`@nestjs/platform-express` already bundles multer at runtime. Configure a dedicated
+module for consent PDF uploads:
+
+```typescript
+// backend/src/modules/consentimientos/consentimientos.module.ts
+import { MulterModule } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import * as path from 'path';
+import * as crypto from 'crypto';
+
+@Module({
+  imports: [
+    MulterModule.register({
+      storage: diskStorage({
+        destination: path.join(process.cwd(), 'uploads', 'consentimientos'),
+        filename: (_req, _file, cb) =>
+          cb(null, `${crypto.randomUUID()}.pdf`),
+      }),
+      limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB max
+      fileFilter: (_req, file, cb) => {
+        if (file.mimetype === 'application/pdf') {
+          cb(null, true);
+        } else {
+          cb(new BadRequestException('Solo se permiten archivos PDF'), false);
+        }
+      },
+    }),
+  ],
+})
+export class ConsentimientosModule {}
+```
+
+Controller usage:
+
+```typescript
+@Post('upload')
+@UseInterceptors(FileInterceptor('archivo'))
+async uploadConsentimiento(
+  @UploadedFile() file: Express.Multer.File,
+) {
+  // file.path = disk path; file.filename = uuid.pdf
+}
+```
+
+### D. Serving Uploaded Files
+
+`@nestjs/platform-express` (already installed, Express adapter) exposes
+`app.useStaticAssets()`. Add to `main.ts` — no new package needed:
+
+```typescript
+// backend/src/main.ts  (add inside bootstrap())
+import * as path from 'path';
+
+app.useStaticAssets(path.join(process.cwd(), 'uploads'), {
+  prefix: '/uploads/',
 });
 ```
 
-Key v5 difference: `cancelQueries` returns a Promise and must be awaited inside
-`onMutate`. In TanStack Query v4 it was fire-and-forget. Getting this wrong means
-the optimistic write races with an in-flight refetch.
+Uploaded files are then accessible at:
+`${BACKEND_URL}/uploads/consentimientos/{uuid}.pdf`
 
-### 4. Multi-Select Catalog Picker
-
-The existing `cmdk` 1.1.1 + `Popover` + `Command` pattern (used in `DiagnosticoCombobox.tsx`,
-`PlanCombobox.tsx`, `CategoriaProductoCombobox.tsx`) is extended for multi-select by
-maintaining a `string[]` state and preventing auto-close on item selection:
-
-```typescript
-// Pseudocode — no new library, just state management
-const [selected, setSelected] = useState<string[]>([]);
-// In CommandItem onClick: toggle id in/out of selected[]
-// In PopoverTrigger: display selected count or names
-// Keep Popover open until explicit "Done" or outside click
-```
-
-For budget item selection (single catalog entry auto-filling price): single-select,
-same pattern as existing `PlanCombobox.tsx`.
-
-### 5. Catalog-Linked Budget Items
-
-Extend `PresupuestoItem` with optional FK columns to catalog sources. The backend
-service auto-fills `descripcion` and `precioTotal` from catalog when a `catalogoId` is
-provided; `descripcion` remains free-text for manual items (existing behavior):
-
-```prisma
-model PresupuestoItem {
-  // ... existing fields unchanged ...
-  tratamientoId   String?   // nullable: sourced from tratamiento catalog
-  cirugiaId       String?   // nullable: sourced from cirugia catalog
-  precioUSD       Decimal?  @db.Decimal(10, 2) // NEW: USD price for dual-currency display
-}
-```
-
-The frontend catalog picker calls a new `GET /presupuestos/catalogo` endpoint that
-returns combined tratamientos + cirugias list with both ARS and USD prices. Selecting
-an entry pre-populates the item form. Existing free-text item entry path is unchanged.
-
-### 6. New CatalogoCirugia Module
-
-New NestJS module `catalogos-cirugia` scoped per-profesional (same pattern as
-`tratamientos` module with `profesionalId` from JWT or query param for SECRETARIA role):
-
-```
-backend/src/modules/catalogos-cirugia/
-├── catalogos-cirugia.module.ts
-├── catalogos-cirugia.controller.ts
-├── catalogos-cirugia.service.ts
-└── dto/
-    ├── create-catalogo-cirugia.dto.ts
-    └── update-catalogo-cirugia.dto.ts
-```
-
-Frontend hooks follow the existing `useTratamientosProfesional.ts` pattern:
-`useCatalogosCirugia`, `useCreateCatalogoCirugia`, `useUpdateCatalogoCirugia`.
+This mirrors the existing `BACKEND_URL` pattern already used for WhatsApp PDF delivery.
 
 ---
 
@@ -212,12 +249,17 @@ Frontend hooks follow the existing `useTratamientosProfesional.ts` pattern:
 
 | Avoid | Why | Use Instead |
 |-------|-----|-------------|
-| react-select / downshift | ~350KB extra for multi-select already covered by cmdk 1.1.1 | cmdk + Popover (installed, pattern proven in 4 components) |
-| Zustand store for catalog picker selection | Ephemeral form state does not belong in global store | Local `useState` inside picker component |
-| SWR optimistic helpers | Redundant — TanStack Query v5 has native `onMutate` | TanStack Query v5 native optimistic pattern |
-| Direct MovimientoStock SALIDA from HC save | Bypasses stock module confirmation UX, breaks audit trail | OrdenConsumo model with PENDIENTE state |
-| `@tanstack/react-table` for new catalog list UIs | Overkill for simple catalog management lists | Mapped `<div>` rows (pattern used in tratamientos page) — use react-table only if existing stock module integration requires it |
-| Global event bus for HC → stock communication | Adds complexity, bypasses Prisma transaction boundary | OrdenConsumo creation inside HC save service call, stock module reads from it |
+| `react-signature-canvas@1.1.0-alpha.2` | Alpha release; medical-grade application should not depend on alpha libs; `signature_pad` (same underlying library) is already installed | Custom `'use client'` wrapper (~40 lines) around `signature_pad` |
+| `react-signature-pad-v2` | Low maintenance (163 stars vs 540K downloads for signature_pad), older API | `signature_pad` direct wrapper |
+| `pdf-lib@1.17.1` (original) | Unmaintained since November 2021 (zero releases in 3.5 years); npm Snyk marks as "Inactive" | `@cantoo/pdf-lib@2.7.1` — drop-in fork actively maintained (last release May 2026, same API) |
+| `hummus` / `node-poppler` | Native C++ bindings, complex deployment, binary compilation on each Node version upgrade | `@cantoo/pdf-lib` (pure JS, no native deps) |
+| `Puppeteer` for PDF stamping | 300MB+ binary download, headless Chrome overhead; overkill for image+text stamp | `@cantoo/pdf-lib` (pure JS) |
+| `@nestjs/serve-static@5.x` | Requires NestJS 11; backend is on NestJS 10 (`@nestjs/common@^10.0.0`) | `app.useStaticAssets()` from existing Express adapter |
+| `@nestjs/serve-static@4.x` | Works with NestJS 10 but adds a module dependency for a capability the Express adapter already provides | `app.useStaticAssets()` in `main.ts` |
+| `multer` (standalone) | Runtime already bundled with `@nestjs/platform-express`; installing separately can cause version conflicts | Use `MulterModule` from `@nestjs/platform-express`; only add `@types/multer` as devDep |
+| `sharp` for signature processing | PNG resizing not needed; `@cantoo/pdf-lib` accepts raw PNG bytes and scales via draw parameters | `@cantoo/pdf-lib` native `drawImage` with width/height params |
+| `uuid` package | `crypto.randomUUID()` is available in Node 14.17+ (project runs Node 18+) | `crypto.randomUUID()` built-in |
+| `file-type` for deep MIME inspection | The consent PDF upload is staff-initiated (not patient-facing public); multer `fileFilter` on `mimetype` is sufficient | Multer `fileFilter` checking `file.mimetype === 'application/pdf'` |
 
 ---
 
@@ -225,61 +267,41 @@ Frontend hooks follow the existing `useTratamientosProfesional.ts` pattern:
 
 | Recommended | Alternative | Why Not |
 |-------------|-------------|---------|
-| Explicit `TratamientoInsumo` join table | Prisma implicit m-n | Implicit m-n tables cannot carry `cantidad` field — this is a Prisma hard limitation |
-| `OrdenConsumo` pending model | Write `MovimientoStock` SALIDA directly from HC | Tight coupling; stock movements need confirmation step per UX requirement; breaks existing stock audit trail pattern |
-| cmdk multi-select (existing) | react-select | 350KB dependency for a capability already implemented via cmdk; inconsistent UX with existing comboboxes |
-| TanStack Query v5 `onMutate` pattern | Zustand local optimistic state | TanStack already owns server state cache; mixing Zustand adds sync complexity on error rollback |
-| Optional FK on `PresupuestoItem` (nullable) | Separate `PresupuestoItemCatalogo` table | Nullable FK on existing table is simpler; the join table adds no value when one-to-one per item |
+| `@cantoo/pdf-lib` | `pdf-lib@1.17.1` (original) | Same API, but original is unmaintained (last release Nov 2021). For a medical system archiving signed legal documents, use the actively maintained fork. |
+| `@cantoo/pdf-lib` | PDFKit (existing) | PDFKit **cannot load or modify existing PDFs**. It is a document-creation-from-scratch library only. The consent template is an existing PDF uploaded by the doctor. |
+| `signature_pad` (thin wrapper) | `react-signature-canvas` | `react-signature-canvas` wraps `signature_pad` but is in alpha (`1.1.0-alpha.2`). Since `signature_pad` is already installed, the wrapper adds zero value and introduces alpha risk. |
+| `app.useStaticAssets()` | `@nestjs/serve-static` module | `useStaticAssets` is provided by the Express adapter (`@nestjs/platform-express`) already installed. The serve-static module adds module boilerplate without benefit at this scale. |
 
 ---
 
 ## Version Compatibility
 
-| Package | Version | Notes |
-|---------|---------|-------|
-| @prisma/client | ^6.1.0 | Explicit join tables with extra fields: supported since Prisma 4. `onDelete: Cascade` required on the owning side of the join table relation. |
-| @tanstack/react-query | ^5.90.6 | `cancelQueries` in v5 is **async** (returns `Promise<void>`) and must be awaited inside `onMutate`. This is a breaking change from v4 where it was fire-and-forget. Project is already on v5. |
-| cmdk | ^1.1.1 | Multi-select is controlled state in userland, not a cmdk API flag. No version constraints. |
-| sonner | ^2.0.7 | `toast.error(message)` API unchanged since v1. |
-| zod | ^4.1.13 | Project is on Zod 4. New schemas must use Zod 4 API (`.optional()` chains, error handling differ from Zod 3). Do not copy Zod 3 patterns from older files. |
-
----
-
-## Migration File Naming
-
-Follow existing convention: `YYYYMMDDHHMMSS_descripcion_snake_case`
-
-Suggested: `20260422000000_catalogos_clinicos_v15`
-
-Contents (additive, no destructive changes):
-1. `CREATE TYPE "EstadoOrdenConsumo" AS ENUM ('PENDIENTE', 'CONFIRMADA', 'CANCELADA')`
-2. `CREATE TABLE "TratamientoInsumo"` (explicit join table)
-3. `CREATE TABLE "CatalogoCirugia"` (new catalog per-profesional)
-4. `CREATE TABLE "CatalogoCirugiaInsumo"` (explicit join table with cantidad)
-5. `CREATE TABLE "OrdenConsumo"` + `"OrdenConsumoItem"` (consumption orders)
-6. `ALTER TABLE "PresupuestoItem" ADD COLUMN "tratamientoId" TEXT, ADD COLUMN "cirugiaId" TEXT, ADD COLUMN "precioUSD" DECIMAL(10,2)` (nullable, no backfill needed)
-
-```bash
-# From backend/ directory
-npx prisma migrate dev --name catalogos_clinicos_v15
-# After migration:
-npx prisma generate
-```
+| Package | Version | Compatibility Notes |
+|---------|---------|---------------------|
+| `signature_pad` | `^5.1.1` (installed) | Pure ES module, browser canvas API. Must use `dynamic(() => import(...), { ssr: false })` in Next.js App Router. React 19 compatible (no React peer dep — vanilla JS library). |
+| `@cantoo/pdf-lib` | `^2.7.1` | Pure JS, no native dependencies. Works in Node 14+. API fully compatible with `pdf-lib` (same import paths: `from '@cantoo/pdf-lib'`). No conflicts with existing `pdfkit`. |
+| `@types/multer` | `^2.1.0` | DevDep only; provides `Express.Multer.File` type used in NestJS controller params. Must match the multer version bundled inside `@nestjs/platform-express@^10.x` (multer 1.x). |
+| `@nestjs/platform-express` | `^10.0.0` (installed) | Already includes multer 1.x runtime. `MulterModule`, `@FileInterceptor`, `diskStorage` all available without additional installs. |
 
 ---
 
 ## Sources
 
-- Codebase inspection: `frontend/package.json`, `backend/package.json` — confirmed all installed versions (HIGH)
-- Codebase inspection: `frontend/src/components/DiagnosticoCombobox.tsx`, `PlanCombobox.tsx`, `CategoriaProductoCombobox.tsx` — confirmed existing cmdk multi-select pattern (HIGH)
-- Codebase inspection: `backend/src/prisma/schema.prisma` — confirmed `OrdenCompra`/`MovimientoStock` decoupled pattern as consumption order precedent; confirmed `TratamientoInsumo` does not yet exist; confirmed `PresupuestoItem` structure (HIGH)
-- Codebase inspection: `frontend/src/hooks/useLiveTurnoActions.ts`, `useCerrarLote.ts` — confirmed `sonner` toast pattern; confirmed no existing `onMutate` optimistic updates anywhere in hooks/ (HIGH)
-- Codebase inspection: `frontend/src/hooks/useTratamientosProfesional.ts` — confirmed module structure to replicate for CatalogoCirugia (HIGH)
-- TanStack Query v5 official docs — `cancelQueries` async behavior, `onMutate` + `onError` rollback contract (HIGH — v5 is the installed major version)
-- Prisma docs — explicit join table required for m-n relations with extra fields; `onDelete: Cascade` on relation field (HIGH)
+- `frontend/package.json` — confirmed `signature_pad@^5.1.1` installed, React 19.2.0, Next 16.0.7 (HIGH)
+- `backend/package.json` — confirmed `@nestjs/platform-express@^10.0.0`, `pdfkit@^0.17.2`, NestJS 10; no `multer`, no `@types/multer`, no `pdf-lib` (HIGH)
+- `backend/src/main.ts` — confirmed Express adapter, no existing `useStaticAssets` call (HIGH)
+- `npm view react-signature-canvas` — version `1.1.0-alpha.2`, peerDependencies `react: '0.14 - 19'` (HIGH)
+- `npm view @cantoo/pdf-lib` — version `2.7.1`, last published `2026-05-27` (HIGH)
+- `npm view pdf-lib` — version `1.17.1`, `time.modified: 2022-05-12` (HIGH — confirms inactive)
+- `npm view @nestjs/serve-static@5.0.5 peerDependencies` — requires `@nestjs/core@^11.0.2`, incompatible with NestJS 10 (HIGH)
+- `npm view @nestjs/serve-static@4.0.2 peerDependencies` — supports `@nestjs/core@^9||^10` (HIGH)
+- [pdf-lib.js.org](https://pdf-lib.js.org/) — confirmed `PDFDocument.load()`, `embedPng()`, `drawImage()`, `drawText()`, `save()` API (HIGH)
+- [Snyk pdf-lib](https://snyk.io/advisor/npm-package/pdf-lib) — confirmed "Inactive" maintenance status (MEDIUM — third-party assessment)
+- [freecodecamp NestJS Multer guide](https://www.freecodecamp.org/news/how-to-handle-file-uploads-in-nestjs-with-multer/) — confirmed diskStorage, fileFilter, size limits pattern (MEDIUM)
+- [github.com/Hopding/pdf-lib](https://github.com/Hopding/pdf-lib) — confirmed v1.17.1 last release Nov 2021 (HIGH)
 
 ---
 
-*Stack research for: CLINICAL v1.5 — Catálogos Clínicos y Flujos de Atención*
-*Researched: 2026-04-22*
-*Supersedes: v1.4 STACK.md (2026-04-15) for this milestone*
+*Stack research for: CLINICAL v1.12 — Historia Pre-Quirúrgica y Portal del Paciente*
+*Researched: 2026-06-25*
+*Supersedes: v1.5 STACK.md (2026-04-22) for this milestone*

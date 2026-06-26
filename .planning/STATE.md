@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.12
 milestone_name: Prequirúrgico Estructurado + Portal del Paciente
-status: executing
-stopped_at: Phase 51 context gathered
-last_updated: "2026-06-26T03:13:04.442Z"
+status: verifying
+stopped_at: Completed Phase 51 Plan 02 — ready for verification
+last_updated: "2026-06-26T03:43:00.000Z"
 last_activity: 2026-06-26
 progress:
   total_phases: 6
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 2
-  completed_plans: 1
-  percent: 0
+  completed_plans: 2
+  percent: 17
 ---
 
 # Project State
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-06-25)
 
 ## Current Position
 
-Phase: 51 (schema-foundation-chat-fix) — EXECUTING
+Phase: 51 (schema-foundation-chat-fix) — COMPLETE
 Plan: 2 of 2
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-06-26
 
-Progress: [█████░░░░░] 50%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -53,6 +53,8 @@ Progress: [█████░░░░░] 50%
 - INFRA-02 (ThrottlerModule) wired en Phase 53, antes del primer endpoint público del portal (Phase 54)
 - StorageService abstraction para cloud-swap futuro sin tocar consumidores
 - Gate legal pre-go-live: revisión del flujo de consentimiento antes del primer paciente quirúrgico real
+- [51-02] Migración big-bang aplicada via prisma migrate diff + db execute + migrate resolve --applied por drift de timestamp pre-existente (20260415221758 vs 20260416000000)
+- [51-02] CHAT-01 + CHAT-02 desplegados atómicamente — flood eliminado y guard activo en la misma release (SC#3)
 
 ### Carry-forward from v1.11
 
@@ -73,6 +75,6 @@ Progress: [█████░░░░░] 50%
 
 ## Session Continuity
 
-Last session: 2026-06-26T03:13:04.439Z
-Stopped at: Phase 51 context gathered
+Last session: 2026-06-26T03:43:00Z
+Stopped at: Completed 51-02-PLAN.md — migration applied, scheduler guard active, build passing
 Resume file: None

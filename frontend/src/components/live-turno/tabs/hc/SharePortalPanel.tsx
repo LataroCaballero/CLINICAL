@@ -1,11 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { QRCodeSVG } from 'qrcode.react';
 import { Copy, Check, MessageCircle, QrCode, Mail, Loader2, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useGenerarPortalLink, useEnviarPortalLinkEmail } from '@/hooks/usePortalLink';
+import {
+  useObtenerPortalLink,
+  useGenerarPortalLink,
+  useEnviarPortalLinkEmail,
+} from '@/hooks/usePortalLink';
 
 interface Props {
   pacienteId: string;
@@ -13,10 +18,23 @@ interface Props {
 }
 
 export function SharePortalPanel({ pacienteId, pacienteEmail }: Props) {
-  // Link state
+  const queryClient = useQueryClient();
+
+  // Query: carga el link existente al montar (sólo lectura, no genera)
+  const { data: actual, isLoading } = useObtenerPortalLink(pacienteId);
+
+  // Link state (se inicializa desde `actual` cuando llega; luego se actualiza por generar)
   const [url, setUrl] = useState<string | null>(null);
   const [smtpConfigured, setSmtpConfigured] = useState(false);
   const [alreadyGenerated, setAlreadyGenerated] = useState(false);
+
+  // Inicializar estado local a partir del resultado del GET en mount
+  useEffect(() => {
+    if (!actual) return;
+    if (actual.url) setUrl(actual.url);
+    setAlreadyGenerated(actual.alreadyGenerated);
+    setSmtpConfigured(actual.smtpConfigured);
+  }, [actual]);
 
   // UI state
   const [copied, setCopied] = useState(false);
@@ -28,6 +46,7 @@ export function SharePortalPanel({ pacienteId, pacienteEmail }: Props) {
   const [emailErrorMotivo, setEmailErrorMotivo] = useState<
     'sin_destinatario' | 'envio_fallido' | null
   >(null);
+  const [emailErrorCodigo, setEmailErrorCodigo] = useState<string | null>(null);
 
   // Mutations
   const generarMutation = useGenerarPortalLink();
@@ -43,6 +62,13 @@ export function SharePortalPanel({ pacienteId, pacienteEmail }: Props) {
       // On second+ calls it may return url:null — we keep the previously fetched url.
       if (result.url) {
         setUrl(result.url);
+        // Sincronizar la query cache con el resultado para consistencia de futuras aperturas
+        queryClient.setQueryData(['portal-link', pacienteId], {
+          url: result.url,
+          alreadyGenerated: result.alreadyGenerated,
+          legacy: false,
+          smtpConfigured: result.smtpConfigured,
+        });
       }
       setSmtpConfigured(result.smtpConfigured);
       setAlreadyGenerated(result.alreadyGenerated);
@@ -75,6 +101,7 @@ export function SharePortalPanel({ pacienteId, pacienteEmail }: Props) {
     // Reset feedback state
     setEmailEnviado(false);
     setEmailErrorMotivo(null);
+    setEmailErrorCodigo(null);
 
     // If patient has no email, require the user to type one
     const emailToSend = pacienteEmail || emailInput.trim();
@@ -91,11 +118,24 @@ export function SharePortalPanel({ pacienteId, pacienteEmail }: Props) {
         setEmailInput('');
       } else {
         setEmailErrorMotivo(result.motivo ?? 'envio_fallido');
+        if (result.codigo) setEmailErrorCodigo(result.codigo);
       }
     } catch {
       setEmailErrorMotivo('envio_fallido');
     }
   };
+
+  // ---------------------------------------------------------------------------
+  // Render: spinner acotado mientras se carga el estado inicial desde el GET
+  // ---------------------------------------------------------------------------
+  if (isLoading) {
+    return (
+      <div className="flex items-center gap-2 py-4 text-sm text-muted-foreground">
+        <Loader2 className="w-4 h-4 animate-spin" />
+        Cargando link…
+      </div>
+    );
+  }
 
   // ---------------------------------------------------------------------------
   // Render: before link generation
@@ -265,7 +305,9 @@ export function SharePortalPanel({ pacienteId, pacienteEmail }: Props) {
           )}
           {emailErrorMotivo === 'envio_fallido' && (
             <p className="text-xs text-destructive">
-              No se pudo enviar el email. Intentá nuevamente en unos minutos.
+              {emailErrorCodigo
+                ? `No se pudo enviar el email (SMTP: ${emailErrorCodigo}). Revisá la configuración.`
+                : 'No se pudo enviar el email. Intentá nuevamente en unos minutos.'}
             </p>
           )}
         </div>

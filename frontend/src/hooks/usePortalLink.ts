@@ -1,9 +1,18 @@
 import { api } from '@/lib/api';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 
 // ---------------------------------------------------------------------------
 // Response types
 // ---------------------------------------------------------------------------
+
+/** Respuesta del GET /pacientes/:id/portal-link (sólo lectura, no genera). */
+export interface ObtenerPortalLinkResponse {
+  url: string | null;
+  alreadyGenerated: boolean;
+  /** true cuando existe portalToken pero no portalTokenCifrado (token legacy sin cifrar). */
+  legacy: boolean;
+  smtpConfigured: boolean;
+}
 
 export interface GenerarPortalLinkResponse {
   url: string | null;
@@ -15,6 +24,30 @@ export interface EnviarPortalLinkEmailResponse {
   enviado: boolean;
   /** Populated when enviado is false to allow differentiated UI error messages. */
   motivo?: 'sin_destinatario' | 'envio_fallido';
+  /** Código de error SMTP (EAUTH, ECONNECTION, etc.) cuando motivo es 'envio_fallido'. */
+  codigo?: string;
+}
+
+// ---------------------------------------------------------------------------
+// Queries
+// ---------------------------------------------------------------------------
+
+/**
+ * GET /pacientes/:id/portal-link (sólo lectura — NO genera).
+ * Recupera el link existente al montar; si el paciente no tiene token devuelve url:null.
+ * Usa queryKey ['portal-link', pacienteId] para que handleGenerar pueda invalidar/setar.
+ */
+export function useObtenerPortalLink(pacienteId: string) {
+  return useQuery<ObtenerPortalLinkResponse>({
+    queryKey: ['portal-link', pacienteId],
+    queryFn: async () => {
+      const response = await api.get<ObtenerPortalLinkResponse>(
+        `/pacientes/${pacienteId}/portal-link`,
+      );
+      return response.data;
+    },
+    enabled: !!pacienteId,
+  });
 }
 
 // ---------------------------------------------------------------------------

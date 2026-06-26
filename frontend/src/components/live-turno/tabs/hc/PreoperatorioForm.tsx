@@ -11,6 +11,7 @@ import { useMedicamentosCatalogo } from '@/hooks/useMedicamentosCatalogo';
 import { usePaciente } from '@/hooks/usePaciente';
 import type { ZonaSeleccionDto } from '@/hooks/useCreateHistoriaClinicaEntry';
 import { PrimeraConsultaForm, type PrimeraConsultaFormState } from './PrimeraConsultaForm';
+import { SharePortalPanel } from './SharePortalPanel';
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -582,6 +583,17 @@ export function PreoperatorioForm({ pacienteId, profesionalId, obraSocialId, onC
         <p className="text-xs text-muted-foreground mt-1 ml-6">
           Registra que el profesional informó al paciente. La firma del consentimiento se gestiona por separado.
         </p>
+      </section>
+
+      {/* Section: Compartir link del portal (PREOP-11/12) */}
+      <section className="border-t pt-4 space-y-3">
+        <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
+          Compartir link
+        </h3>
+        <SharePortalPanel
+          pacienteId={pacienteId}
+          pacienteEmail={paciente?.email ?? undefined}
+        />
       </section>
     </div>
   );

@@ -3,12 +3,14 @@
 import { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2 } from 'lucide-react';
 import { useAntecedentesCatalogo } from '@/hooks/useAntecedentesCatalogo';
 import { useAlergiasCatalogo } from '@/hooks/useAlergiasCatalogo';
 import { useMedicamentosCatalogo } from '@/hooks/useMedicamentosCatalogo';
 import { usePaciente } from '@/hooks/usePaciente';
 import type { ZonaSeleccionDto } from '@/hooks/useCreateHistoriaClinicaEntry';
+import { PrimeraConsultaForm, type PrimeraConsultaFormState } from './PrimeraConsultaForm';
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -77,11 +79,13 @@ function formatearNombre(raw: string): string {
   return t.charAt(0).toUpperCase() + t.slice(1);
 }
 
+const IMAGENES_OPTIONS = ['Ecografía', 'Tomografía', 'Mamografía', 'Otro'] as const;
+
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
-export function PreoperatorioForm({ pacienteId, profesionalId, obraSocialId: _obraSocialId, onChange }: Props) {
+export function PreoperatorioForm({ pacienteId, profesionalId, obraSocialId, onChange }: Props) {
   // Catalog hooks (per-professional)
   const { data: catalogoAntecedentes = [], isLoading: loadingAnt } = useAntecedentesCatalogo(profesionalId);
   const { data: catalogoAlergias = [], isLoading: loadingAle } = useAlergiasCatalogo(profesionalId);
@@ -108,13 +112,18 @@ export function PreoperatorioForm({ pacienteId, profesionalId, obraSocialId: _ob
   const [medInputAbierto, setMedInputAbierto] = useState(false);
   const [medInputTexto, setMedInputTexto] = useState('');
 
-  // Task 2 state (initialized here so emitChange always includes full shape)
+  // --- Estudios complementarios state (D-10 locked shape) ---
   const [estudiosComplementarios, setEstudiosComplementarios] = useState<{
     laboratorio: boolean;
     ecg: boolean;
     imagenes: string[];
   }>({ laboratorio: false, ecg: false, imagenes: [] });
+
+  // --- Consentimiento informado (D-11) ---
   const [consentimientoInformado, setConsentimientoInformado] = useState(false);
+
+  // --- Optional dx/tratamiento (PREOP-02/D-08) ---
+  const [incluirDx, setIncluirDx] = useState(false);
   const [zonas, setZonas] = useState<ZonaSeleccionDto[]>([]);
 
   // Pre-load guard: run once after patient data arrives
@@ -305,6 +314,22 @@ export function PreoperatorioForm({ pacienteId, profesionalId, obraSocialId: _ob
   };
 
   // ---------------------------------------------------------------------------
+  // Estudios handlers
+  // ---------------------------------------------------------------------------
+  const handleEstudiosChange = (partial: Partial<{ laboratorio: boolean; ecg: boolean; imagenes: string[] }>) => {
+    const next = { ...estudiosComplementarios, ...partial };
+    setEstudiosComplementarios(next);
+    emitChange(antSelected, aleSelected, medSelected, next, consentimientoInformado, zonas);
+  };
+
+  const toggleImagen = (imagen: string) => {
+    const next = estudiosComplementarios.imagenes.includes(imagen)
+      ? estudiosComplementarios.imagenes.filter((i) => i !== imagen)
+      : [...estudiosComplementarios.imagenes, imagen];
+    handleEstudiosChange({ imagenes: next });
+  };
+
+  // ---------------------------------------------------------------------------
   // Render helper: a single chip section
   // ---------------------------------------------------------------------------
   type CatItem = { id: string; nombre: string; esSistema: boolean };
@@ -398,11 +423,6 @@ export function PreoperatorioForm({ pacienteId, profesionalId, obraSocialId: _ob
   // Render
   // ---------------------------------------------------------------------------
 
-  // Keep unused state setters referenced so TS does not complain (Task 2 uses them)
-  void setEstudiosComplementarios;
-  void setConsentimientoInformado;
-  void setZonas;
-
   return (
     <div className="space-y-6">
       {/* Section: Antecedentes */}
@@ -450,7 +470,119 @@ export function PreoperatorioForm({ pacienteId, profesionalId, obraSocialId: _ob
         onEnter: handleMedOtroEnter,
       })}
 
-      {/* Sections for estudios, consentimiento, and dx/tratamiento are added in Task 2 */}
+      {/* Section: Diagnóstico / Tratamiento — optional, collapsed by default (PREOP-02/D-08) */}
+      <section className="space-y-3 border-t pt-4">
+        <div className="flex items-center gap-2">
+          <Checkbox
+            id="incluir-dx"
+            checked={incluirDx}
+            onCheckedChange={(v) => {
+              const checked = Boolean(v);
+              setIncluirDx(checked);
+              if (!checked) {
+                setZonas([]);
+                emitChange(antSelected, aleSelected, medSelected, estudiosComplementarios, consentimientoInformado, []);
+              }
+            }}
+          />
+          <label
+            htmlFor="incluir-dx"
+            className="text-sm font-medium cursor-pointer select-none"
+          >
+            Agregar diagnóstico / tratamiento
+          </label>
+        </div>
+
+        {incluirDx && (
+          <div className="pl-2 border-l-2 border-blue-200">
+            {/* Reuse PrimeraConsultaForm as the zona/dx/tratamiento selector (D-08) */}
+            <PrimeraConsultaForm
+              profesionalId={profesionalId}
+              obraSocialId={obraSocialId}
+              onChange={(state: PrimeraConsultaFormState) => {
+                setZonas(state.zonas);
+                emitChange(antSelected, aleSelected, medSelected, estudiosComplementarios, consentimientoInformado, state.zonas, state.comentario);
+              }}
+              onGenerarPresupuesto={() => {
+                // Presupuesto generation is not applicable in PREOP context
+              }}
+            />
+          </div>
+        )}
+      </section>
+
+      {/* Section: Estudios complementarios (D-10) */}
+      <section className="space-y-3 border-t pt-4">
+        <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
+          Estudios Complementarios
+        </h3>
+
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="est-laboratorio"
+              checked={estudiosComplementarios.laboratorio}
+              onCheckedChange={(v) => handleEstudiosChange({ laboratorio: Boolean(v) })}
+            />
+            <label htmlFor="est-laboratorio" className="text-sm cursor-pointer select-none">
+              Laboratorio
+            </label>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="est-ecg"
+              checked={estudiosComplementarios.ecg}
+              onCheckedChange={(v) => handleEstudiosChange({ ecg: Boolean(v) })}
+            />
+            <label htmlFor="est-ecg" className="text-sm cursor-pointer select-none">
+              ECG
+            </label>
+          </div>
+        </div>
+
+        <div className="space-y-1">
+          <p className="text-xs text-muted-foreground font-medium">Imágenes</p>
+          <div className="flex flex-wrap gap-x-4 gap-y-2">
+            {IMAGENES_OPTIONS.map((imagen) => (
+              <div key={imagen} className="flex items-center gap-2">
+                <Checkbox
+                  id={`imagen-${imagen}`}
+                  checked={estudiosComplementarios.imagenes.includes(imagen)}
+                  onCheckedChange={() => toggleImagen(imagen)}
+                />
+                <label htmlFor={`imagen-${imagen}`} className="text-sm cursor-pointer select-none">
+                  {imagen}
+                </label>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Section: Consentimiento informado (D-11) — "informado" only, NOT signature */}
+      <section className="border-t pt-4">
+        <div className="flex items-center gap-2">
+          <Checkbox
+            id="consentimiento-informado"
+            checked={consentimientoInformado}
+            onCheckedChange={(v) => {
+              const checked = Boolean(v);
+              setConsentimientoInformado(checked);
+              emitChange(antSelected, aleSelected, medSelected, estudiosComplementarios, checked, zonas);
+            }}
+          />
+          <label
+            htmlFor="consentimiento-informado"
+            className="text-sm cursor-pointer select-none"
+          >
+            El paciente fue informado sobre el consentimiento quirúrgico
+          </label>
+        </div>
+        <p className="text-xs text-muted-foreground mt-1 ml-6">
+          Registra que el profesional informó al paciente. La firma del consentimiento se gestiona por separado.
+        </p>
+      </section>
     </div>
   );
 }

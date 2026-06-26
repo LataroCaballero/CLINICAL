@@ -291,12 +291,18 @@ export class PacientesController {
 
     // (5) Send the canonical, validated url — never re-derives it (D-12 intact)
     //     and never reflects the raw client string (CR-01).
-    const enviado = await this.portalEmail.enviarLinkPortal(
+    const result = await this.portalEmail.enviarLinkPortal(
       paciente.email,
       urlSegura,
       paciente.nombreCompleto,
     );
 
-    return enviado ? { enviado: true } : { enviado: false, motivo: 'envio_fallido' };
+    if (result.enviado) {
+      return { enviado: true };
+    }
+    // Incluir codigo SMTP (sólo error.code — sin host/credenciales, T-52-12) cuando está disponible
+    return result.codigo
+      ? { enviado: false, motivo: 'envio_fallido', codigo: result.codigo }
+      : { enviado: false, motivo: 'envio_fallido' };
   }
 }

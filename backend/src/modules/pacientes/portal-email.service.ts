@@ -51,16 +51,18 @@ export class PortalEmailService {
 
   /**
    * Sends the portal link to the patient.
-   * Returns false (never throws) when SMTP is not configured or on send error.
+   * Returns { enviado: true } on success.
+   * Returns { enviado: false, codigo? } on SMTP failure — SÓLO el error.code (EAUTH,
+   * ECONNECTION, etc.); nunca el mensaje completo, host, usuario ni credenciales (T-52-12).
    */
   async enviarLinkPortal(
     to: string,
     url: string,
     pacienteNombre: string,
-  ): Promise<boolean> {
+  ): Promise<{ enviado: boolean; codigo?: string }> {
     if (!this.isSmtpConfigured() || !this.transporter) {
       this.logger.warn('Link de portal no enviado: SMTP no configurado');
-      return false;
+      return { enviado: false };
     }
 
     try {
@@ -77,10 +79,13 @@ export class PortalEmailService {
       });
 
       this.logger.log(`Link de portal enviado a ${to}`);
-      return true;
+      return { enviado: true };
     } catch (error) {
-      this.logger.error(`Error enviando link de portal a ${to}:`, error);
-      return false;
+      // Sólo el error.code (enum corto nodemailer: EAUTH, ECONNECTION, ETIMEDOUT, etc.)
+      // NUNCA el mensaje completo, host, usuario ni credenciales (T-52-12).
+      const codigo = (error as { code?: string })?.code ?? 'UNKNOWN';
+      this.logger.error(`Error enviando link de portal a ${to}: ${codigo}`);
+      return { enviado: false, codigo };
     }
   }
 

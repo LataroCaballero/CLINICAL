@@ -13,12 +13,12 @@ Requisitos del milestone v1.12. Cada uno mapea a una fase del roadmap.
 - [ ] **PREOP-02**: El profesional puede activar un check opcional "Agregar diagnóstico/tratamiento" que despliega el selector de catálogo zona/diagnóstico/tratamiento (el mismo de Primera Consulta)
 - [x] **PREOP-03**: El profesional registra antecedentes patológicos seleccionando chips de un catálogo, con opción "Otro" para ingresar uno que no esté en la lista
 - [x] **PREOP-04**: Un antecedente/alergia/medicación nuevo ingresado vía "Otro" se persiste en el catálogo del profesional (learning) y aparece como chip en futuras entradas
-- [ ] **PREOP-05**: Los antecedentes patológicos seleccionados se guardan también en el perfil del paciente (`condiciones[]`), no sólo en la entrada de HC
-- [ ] **PREOP-06**: El profesional registra alergias con el mismo patrón de chips + "Otro" + learning, guardadas en el perfil del paciente (`alergias[]`)
-- [ ] **PREOP-07**: El profesional registra medicación preexistente con el mismo patrón de chips + "Otro" + learning, guardada en el perfil del paciente (`medicacion[]`, campo nuevo)
-- [ ] **PREOP-08**: El profesional marca con checks los estudios complementarios realizados: Laboratorio, Electrocardiograma e Imágenes (Ecografía, Tomografía, Mamografía, Otro)
-- [ ] **PREOP-09**: El estado de estudios complementarios se almacena de forma consultable, habilitando un futuro reporte de estudios pendientes
-- [ ] **PREOP-10**: El profesional marca un check "Paciente informado del consentimiento" que se registra con fecha para auditoría
+- [x] **PREOP-05**: Los antecedentes patológicos seleccionados se guardan también en el perfil del paciente (`condiciones[]`), no sólo en la entrada de HC
+- [x] **PREOP-06**: El profesional registra alergias con el mismo patrón de chips + "Otro" + learning, guardadas en el perfil del paciente (`alergias[]`)
+- [x] **PREOP-07**: El profesional registra medicación preexistente con el mismo patrón de chips + "Otro" + learning, guardada en el perfil del paciente (`medicacion[]`, campo nuevo)
+- [x] **PREOP-08**: El profesional marca con checks los estudios complementarios realizados: Laboratorio, Electrocardiograma e Imágenes (Ecografía, Tomografía, Mamografía, Otro)
+- [x] **PREOP-09**: El estado de estudios complementarios se almacena de forma consultable, habilitando un futuro reporte de estudios pendientes
+- [x] **PREOP-10**: El profesional marca un check "Paciente informado del consentimiento" que se registra con fecha para auditoría
 - [x] **PREOP-11**: Desde la plantilla, el profesional puede compartir el link de autogestión del paciente copiando un link de WhatsApp y mostrando un QR escaneable
 - [x] **PREOP-12**: Desde la plantilla, el profesional puede enviar el link de autogestión por email; si el paciente no tiene email, puede cargarlo en el momento (si SMTP no está configurado, la opción de email no se ofrece)
 
@@ -92,12 +92,12 @@ Qué fases cubren qué requisitos.
 | PREOP-02 | Phase 52 | Pending |
 | PREOP-03 | Phase 52 | Complete |
 | PREOP-04 | Phase 52 | Complete |
-| PREOP-05 | Phase 52 | Pending |
-| PREOP-06 | Phase 52 | Pending |
-| PREOP-07 | Phase 52 | Pending |
-| PREOP-08 | Phase 52 | Pending |
-| PREOP-09 | Phase 52 | Pending |
-| PREOP-10 | Phase 52 | Pending |
+| PREOP-05 | Phase 52 | Complete |
+| PREOP-06 | Phase 52 | Complete |
+| PREOP-07 | Phase 52 | Complete |
+| PREOP-08 | Phase 52 | Complete |
+| PREOP-09 | Phase 52 | Complete |
+| PREOP-10 | Phase 52 | Complete |
 | PREOP-11 | Phase 52 | Complete |
 | PREOP-12 | Phase 52 | Complete |
 | INFRA-01 | Phase 53 | Pending |

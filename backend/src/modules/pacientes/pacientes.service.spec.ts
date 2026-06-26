@@ -1,0 +1,261 @@
+/**
+ * pacientes.service.spec.ts
+ * Unit tests for the portal-link encrypt/recover feature (52-09, amplía D-12).
+ *
+ * Mock strategy:
+ * - PrismaService: per-test overrides via jest.fn()
+ * - ConfigService: returns FRONTEND_URL = 'http://localhost:3000'
+ * - EncryptionService: symmetric mock — encrypt wraps in 'enc(x)', decrypt unwraps
+ *   (sufficient to verify round-trip logic without AES overhead)
+ */
+import { Test, TestingModule } from '@nestjs/testing';
+import { NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { PacientesService } from './pacientes.service';
+import { PrismaService } from '../../prisma/prisma.service';
+import { EncryptionService } from '../whatsapp/crypto/encryption.service';
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+function mockEncryptionService(): jest.Mocked<EncryptionService> {
+  return {
+    encrypt: jest.fn((plain: string) => `enc(${plain})`),
+    decrypt: jest.fn((stored: string) => {
+      const match = stored.match(/^enc\((.+)\)$/);
+      if (!match) throw new Error('Invalid encrypted value format — mock decrypt');
+      return match[1];
+    }),
+  } as unknown as jest.Mocked<EncryptionService>;
+}
+
+function sha256(value: string): string {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const crypto = require('crypto');
+  return crypto.createHash('sha256').update(value).digest('hex');
+}
+
+// ── Suite ─────────────────────────────────────────────────────────────────────
+
+describe('PacientesService — portal link encrypt/recover (52-09)', () => {
+  let service: PacientesService;
+  let prisma: jest.Mocked<PrismaService>;
+  let encryption: jest.Mocked<EncryptionService>;
+
+  const FRONTEND_URL = 'http://localhost:3000';
+  const PACIENTE_ID = 'paciente-uuid-1234';
+
+  beforeEach(async () => {
+    const mockPrisma = {
+      paciente: {
+        findUnique: jest.fn(),
+        update: jest.fn(),
+      },
+    };
+    const mockConfigService = {
+      get: jest.fn((key: string, fallback?: string) => {
+        if (key === 'FRONTEND_URL') return FRONTEND_URL;
+        return fallback;
+      }),
+    };
+    const mockEnc = mockEncryptionService();
+
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        PacientesService,
+        { provide: PrismaService, useValue: mockPrisma },
+        { provide: ConfigService, useValue: mockConfigService },
+        { provide: EncryptionService, useValue: mockEnc },
+      ],
+    }).compile();
+
+    service = module.get<PacientesService>(PacientesService);
+    prisma = module.get(PrismaService);
+    encryption = module.get(EncryptionService);
+  });
+
+  // ── Caso C: primera generación (sin token) ────────────────────────────────
+
+  describe('generarPortalLink — primera generación (sin token)', () => {
+    it('devuelve url con rawUuid y persiste hash + cifrado; alreadyGenerated false', async () => {
+      (prisma.paciente.findUnique as jest.Mock).mockResolvedValue({
+        portalToken: null,
+        portalTokenCifrado: null,
+        email: 'test@example.com',
+      });
+      (prisma.paciente.update as jest.Mock).mockResolvedValue({});
+
+      const result = await service.generarPortalLink(PACIENTE_ID);
+
+      expect(result.alreadyGenerated).toBe(false);
+      expect(result.url).toMatch(
+        /^http:\/\/localhost:3000\/portal\/[0-9a-f-]{36}$/,
+      );
+
+      // El update debe haber sido llamado con hash + cifrado
+      const updateCall = (prisma.paciente.update as jest.Mock).mock.calls[0][0];
+      const { portalToken, portalTokenCifrado } = updateCall.data;
+
+      // hash = sha256(rawUuid) — verificamos que es 64 chars hex
+      expect(portalToken).toMatch(/^[0-9a-f]{64}$/);
+
+      // cifrado es encrypt(rawUuid)
+      const rawFromUrl = result.url!.split('/portal/')[1];
+      expect(portalTokenCifrado).toBe(`enc(${rawFromUrl})`);
+
+      // round-trip: decrypt(cifrado) === rawUuid
+      const decrypted = encryption.decrypt(portalTokenCifrado);
+      expect(decrypted).toBe(rawFromUrl);
+
+      // hash es sha256 del raw
+      expect(portalToken).toBe(sha256(rawFromUrl));
+    });
+  });
+
+  // ── Caso A: ya generado con cifrado (alreadyGenerated, url estable) ────────
+
+  describe('generarPortalLink — ya generado con portalToken + cifrado', () => {
+    it('devuelve la misma url estable sin escribir BD; alreadyGenerated true', async () => {
+      const rawUuid = 'existing-raw-uuid-abc123';
+      (prisma.paciente.findUnique as jest.Mock).mockResolvedValue({
+        portalToken: sha256(rawUuid),
+        portalTokenCifrado: `enc(${rawUuid})`,
+        email: 'test@example.com',
+      });
+
+      const result = await service.generarPortalLink(PACIENTE_ID);
+
+      expect(result.alreadyGenerated).toBe(true);
+      expect(result.url).toBe(`${FRONTEND_URL}/portal/${rawUuid}`);
+
+      // NO debe escribir BD
+      expect(prisma.paciente.update).not.toHaveBeenCalled();
+    });
+  });
+
+  // ── Caso B: legacy (portalToken presente, portalTokenCifrado null) ─────────
+
+  describe('generarPortalLink — legacy (token sin cifrado)', () => {
+    it('rota el token: genera nuevo uuid, sobrescribe hash + cifrado; devuelve url nueva; alreadyGenerated false', async () => {
+      const oldHash = sha256('old-uuid');
+      (prisma.paciente.findUnique as jest.Mock).mockResolvedValue({
+        portalToken: oldHash,
+        portalTokenCifrado: null,
+        email: 'test@example.com',
+      });
+      (prisma.paciente.update as jest.Mock).mockResolvedValue({});
+
+      const result = await service.generarPortalLink(PACIENTE_ID);
+
+      expect(result.alreadyGenerated).toBe(false);
+      expect(result.url).toMatch(/^http:\/\/localhost:3000\/portal\/.+/);
+
+      const updateCall = (prisma.paciente.update as jest.Mock).mock.calls[0][0];
+      const { portalToken, portalTokenCifrado } = updateCall.data;
+
+      // El nuevo hash debe ser distinto al viejo
+      expect(portalToken).not.toBe(oldHash);
+      expect(portalToken).toMatch(/^[0-9a-f]{64}$/);
+
+      // El nuevo cifrado debe usar el nuevo raw
+      const rawFromUrl = result.url!.split('/portal/')[1];
+      expect(portalTokenCifrado).toBe(`enc(${rawFromUrl})`);
+      expect(portalToken).toBe(sha256(rawFromUrl));
+    });
+  });
+
+  // ── obtenerPortalLink — sólo lectura ──────────────────────────────────────
+
+  describe('obtenerPortalLink', () => {
+    it('paciente no encontrado → NotFoundException', async () => {
+      (prisma.paciente.findUnique as jest.Mock).mockResolvedValue(null);
+      await expect(service.obtenerPortalLink(PACIENTE_ID)).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('con token + cifrado → url estable, alreadyGenerated true, sin escribir BD', async () => {
+      const rawUuid = 'stable-raw-uuid-xyz';
+      (prisma.paciente.findUnique as jest.Mock).mockResolvedValue({
+        portalToken: sha256(rawUuid),
+        portalTokenCifrado: `enc(${rawUuid})`,
+      });
+
+      const result = await service.obtenerPortalLink(PACIENTE_ID);
+
+      expect(result.url).toBe(`${FRONTEND_URL}/portal/${rawUuid}`);
+      expect(result.alreadyGenerated).toBe(true);
+      expect(result.legacy).toBeFalsy();
+      expect(prisma.paciente.update).not.toHaveBeenCalled();
+    });
+
+    it('sin token → url null, alreadyGenerated false', async () => {
+      (prisma.paciente.findUnique as jest.Mock).mockResolvedValue({
+        portalToken: null,
+        portalTokenCifrado: null,
+      });
+
+      const result = await service.obtenerPortalLink(PACIENTE_ID);
+
+      expect(result.url).toBeNull();
+      expect(result.alreadyGenerated).toBe(false);
+      expect(prisma.paciente.update).not.toHaveBeenCalled();
+    });
+
+    it('legacy (token sin cifrado) → url null, alreadyGenerated true, legacy true', async () => {
+      (prisma.paciente.findUnique as jest.Mock).mockResolvedValue({
+        portalToken: sha256('old-uuid'),
+        portalTokenCifrado: null,
+      });
+
+      const result = await service.obtenerPortalLink(PACIENTE_ID);
+
+      expect(result.url).toBeNull();
+      expect(result.alreadyGenerated).toBe(true);
+      expect(result.legacy).toBe(true);
+      expect(prisma.paciente.update).not.toHaveBeenCalled();
+    });
+
+    it('tamper/clave distinta: decrypt throwea → legacy (url null, legacy true), sin 500', async () => {
+      (prisma.paciente.findUnique as jest.Mock).mockResolvedValue({
+        portalToken: sha256('some-uuid'),
+        portalTokenCifrado: 'INVALID_BLOB',
+      });
+      // El mock decrypt lanza para blobs sin formato enc(x)
+      const result = await service.obtenerPortalLink(PACIENTE_ID);
+
+      expect(result.url).toBeNull();
+      expect(result.alreadyGenerated).toBe(true);
+      expect(result.legacy).toBe(true);
+    });
+  });
+
+  // ── Seguridad: raw token nunca aparece en logger ──────────────────────────
+
+  describe('seguridad — raw token no se loguea', () => {
+    it('generarPortalLink no llama a console.log/console.error con el rawUuid', async () => {
+      (prisma.paciente.findUnique as jest.Mock).mockResolvedValue({
+        portalToken: null,
+        portalTokenCifrado: null,
+        email: 'test@example.com',
+      });
+      (prisma.paciente.update as jest.Mock).mockResolvedValue({});
+
+      const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+      const errSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+      const result = await service.generarPortalLink(PACIENTE_ID);
+      const rawUuid = result.url!.split('/portal/')[1];
+
+      // Ningún log debe contener el uuid crudo
+      for (const call of logSpy.mock.calls) {
+        expect(JSON.stringify(call)).not.toContain(rawUuid);
+      }
+      for (const call of errSpy.mock.calls) {
+        expect(JSON.stringify(call)).not.toContain(rawUuid);
+      }
+
+      logSpy.mockRestore();
+      errSpy.mockRestore();
+    });
+  });
+});

@@ -44,8 +44,8 @@ Requisitos del milestone v1.12. Cada uno mapea a una fase del roadmap.
 
 ### Limpieza de Chat y Caja de Consultas (CHAT)
 
-- [ ] **CHAT-01**: El scheduler de seguimiento CRM deja de generar mensajes duplicados diarios para la misma tarea (marcado de notificada / dedupe)
-- [ ] **CHAT-02**: Los mensajes automáticos de "Seguimiento CRM" existentes se limpian del chat en el mismo release que el fix, sin perder datos legítimos ni romper read-receipts
+- [x] **CHAT-01**: El scheduler de seguimiento CRM deja de generar mensajes duplicados diarios para la misma tarea (marcado de notificada / dedupe)
+- [x] **CHAT-02**: Los mensajes automáticos de "Seguimiento CRM" existentes se limpian del chat en el mismo release que el fix, sin perder datos legítimos ni romper read-receipts
 - [ ] **CHAT-03**: El chat distingue origen de mensaje (paciente / staff / sistema) para que las consultas reales del paciente no se pierdan en el ruido
 - [ ] **CHAT-04**: Desde el portal, el paciente puede escribir consultas que llegan al chat del médico (`MensajeInterno` con origen paciente)
 
@@ -86,8 +86,8 @@ Qué fases cubren qué requisitos.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CHAT-01 | Phase 51 | Pending |
-| CHAT-02 | Phase 51 | Pending |
+| CHAT-01 | Phase 51 | Complete |
+| CHAT-02 | Phase 51 | Complete |
 | PREOP-01 | Phase 52 | Pending |
 | PREOP-02 | Phase 52 | Pending |
 | PREOP-03 | Phase 52 | Pending |

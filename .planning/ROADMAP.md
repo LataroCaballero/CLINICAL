@@ -189,7 +189,7 @@ Full details: `.planning/milestones/v1.11-ROADMAP.md`
   3. El fix del scheduler y la migración de limpieza se despliegan en la misma release: no existe ventana en la que los mensajes estén limpiados pero el guard `notificada` no esté activo.
   4. La aplicación funciona normalmente tras la migración — todas las pantallas existentes cargan sin errores (sin regresiones por nuevas columnas/modelos en la BD).
 **Plans**: 2 plans
-- [ ] 51-01-PLAN.md — Big-bang schema edits (catalogs, guard fields, Paciente portal/staging fields, HC estudios JSON) + D-07 seed-data constants
+- [x] 51-01-PLAN.md — Big-bang schema edits (catalogs, guard fields, Paciente portal/staging fields, HC estudios JSON) + D-07 seed-data constants
 - [ ] 51-02-PLAN.md — [BLOCKING] versioned migration + CHAT-02 cleanup DELETE + CHAT-01 scheduler dedupe guard (atomic release)
 
 ### Phase 52: PREOP HC Form + Chip Catalogs
@@ -309,7 +309,7 @@ Full details: `.planning/milestones/v1.11-ROADMAP.md`
 | 48. Backend — Lectura y Snapshot de Tratamientos | v1.10 | 2/2 | Complete | 2026-06-22 |
 | 49. Frontend — Filtro y Color-coding de Estado | v1.10 | 1/1 | Complete | 2026-06-22 |
 | 50. HC Completa en PatientSheet | v1.11 | 1/1 | Complete | 2026-06-24 |
-| 51. Schema Foundation + Chat Fix | v1.12 | 0/2 | Planned | - |
+| 51. Schema Foundation + Chat Fix | v1.12 | 1/2 | In Progress|  |
 | 52. PREOP HC Form + Chip Catalogs | v1.12 | 0/TBD | Not started | - |
 | 53. Storage + Upload + Consent Config | v1.12 | 0/TBD | Not started | - |
 | 54. Portal Backend + Token Security | v1.12 | 0/TBD | Not started | - |

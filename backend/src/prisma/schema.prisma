@@ -19,42 +19,42 @@ model Permiso {
 }
 
 model Usuario {
-  id                    String                  @id @default(uuid())
-  email                 String                  @unique
-  passwordHash          String
-  rol                   RolUsuario
-  nombre                String
-  apellido              String
-  telefono              String?
-  fotoUrl               String?
-  createdAt             DateTime                @default(now())
-  updatedAt             DateTime                @updatedAt
-  AuthSession           AuthSession[]
-  LiquidacionObraSocial LiquidacionObraSocial[]
-  MovimientoStock       MovimientoStock[]
-  paciente              Paciente?
-  profesional           Profesional?
-  tokens                RefreshToken[]
-  secretaria            Secretaria?
-  mensajesEnviados      MensajeInterno[]        @relation("MensajesEnviados")
-  mensajesLeidos        MensajeLectura[]        @relation("MensajesLeidos")
-  reportesSuscripciones ReporteSuscripcion[]
-  contactosRegistrados  ContactoLog[]       @relation("ContactoLogRegistradoPor")
+  id                      String                   @id @default(uuid())
+  email                   String                   @unique
+  passwordHash            String
+  rol                     RolUsuario
+  nombre                  String
+  apellido                String
+  telefono                String?
+  fotoUrl                 String?
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+  AuthSession             AuthSession[]
+  LiquidacionObraSocial   LiquidacionObraSocial[]
+  MovimientoStock         MovimientoStock[]
+  paciente                Paciente?
+  profesional             Profesional?
+  tokens                  RefreshToken[]
+  secretaria              Secretaria?
+  mensajesEnviados        MensajeInterno[]         @relation("MensajesEnviados")
+  mensajesLeidos          MensajeLectura[]         @relation("MensajesLeidos")
+  reportesSuscripciones   ReporteSuscripcion[]
+  contactosRegistrados    ContactoLog[]            @relation("ContactoLogRegistradoPor")
   autorizacionesAprobadas AutorizacionObraSocial[] @relation("AutorizacionAprobacion")
 }
 
 model ReporteSuscripcion {
-  id              String              @id @default(uuid())
-  usuarioId       String
-  tipoReporte     TipoReporteEmail
-  frecuencia      FrecuenciaReporte
-  emailDestino    String?             // Si es null, se usa el email del usuario
-  activo          Boolean             @default(true)
-  ultimoEnvio     DateTime?
-  proximoEnvio    DateTime?
-  createdAt       DateTime            @default(now())
-  updatedAt       DateTime            @updatedAt
-  usuario         Usuario             @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  id           String            @id @default(uuid())
+  usuarioId    String
+  tipoReporte  TipoReporteEmail
+  frecuencia   FrecuenciaReporte
+  emailDestino String? // Si es null, se usa el email del usuario
+  activo       Boolean           @default(true)
+  ultimoEnvio  DateTime?
+  proximoEnvio DateTime?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  usuario      Usuario           @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
 
   @@unique([usuarioId, tipoReporte])
   @@index([proximoEnvio, activo])
@@ -99,43 +99,44 @@ model AuthSession {
 }
 
 model Profesional {
-  id              String                    @id @default(uuid())
-  usuarioId       String                    @unique
-  matricula       String?
-  especialidad    String?
-  bio             String?
-  duracionDefault Int?
-  agenda          Json?
-  createdAt       DateTime                  @default(now())
-  cirugias        Cirugia[]
-  Factura         Factura[]
-  HistoriaClinica HistoriaClinica[]
-  hcTemplates     HistoriaClinicaTemplate[]
-  inventarios     Inventario[]
-  lotes           Lote[]
-  ordenesCompra   OrdenCompra[]
-  pacientes       Paciente[]                @relation("ProfesionalPaciente")
-  practicas       PracticaRealizada[]
-  Presupuesto     Presupuesto[]
-  usuario         Usuario                   @relation(fields: [usuarioId], references: [id])
-  turnos          Turno[]
-  tratamientos    Tratamiento[]
-  ventasProducto  VentaProducto[]
-  configTiposTurno TipoTurnoProfesional[]
-  tareasSeguimiento TareaSeguimiento[]
-  configuracionWABA ConfiguracionWABA?
-  mensajesWhatsApp  MensajeWhatsApp[]
-  contactos         ContactoLog[]
-  configClinica     ConfigClinica?
-  autorizaciones    AutorizacionObraSocial[]
-  limitesFacturacion LimiteFacturacionMensual[]
-  configuracionAFIP  ConfiguracionAFIP?
-  caeaVigentes       CaeaVigente[]
-  cirugiasCatalogo   CirugiaCatalogo[]
-  ordenesConsumo     OrdenConsumo[]
+  id                   String                     @id @default(uuid())
+  usuarioId            String                     @unique
+  matricula            String?
+  especialidad         String?
+  bio                  String?
+  duracionDefault      Int?
+  agenda               Json?
+  createdAt            DateTime                   @default(now())
+  cirugias             Cirugia[]
+  Factura              Factura[]
+  HistoriaClinica      HistoriaClinica[]
+  hcTemplates          HistoriaClinicaTemplate[]
+  inventarios          Inventario[]
+  lotes                Lote[]
+  ordenesCompra        OrdenCompra[]
+  pacientes            Paciente[]                 @relation("ProfesionalPaciente")
+  practicas            PracticaRealizada[]
+  Presupuesto          Presupuesto[]
+  usuario              Usuario                    @relation(fields: [usuarioId], references: [id])
+  turnos               Turno[]
+  tratamientos         Tratamiento[]
+  ventasProducto       VentaProducto[]
+  configTiposTurno     TipoTurnoProfesional[]
+  tareasSeguimiento    TareaSeguimiento[]
+  configuracionWABA    ConfiguracionWABA?
+  mensajesWhatsApp     MensajeWhatsApp[]
+  contactos            ContactoLog[]
+  configClinica        ConfigClinica?
+  autorizaciones       AutorizacionObraSocial[]
+  limitesFacturacion   LimiteFacturacionMensual[]
+  configuracionAFIP    ConfiguracionAFIP?
+  caeaVigentes         CaeaVigente[]
+  cirugiasCatalogo     CirugiaCatalogo[]
+  ordenesConsumo       OrdenConsumo[]
   zonasHC              ZonaHC[]
   alergiasCatalogo     AlergiaCatalogoPro[]
   medicamentosCatalogo MedicamentoCatalogoPro[]
+  antecedentesCatalogo AntecedenteCatalogoPro[]
 }
 
 model Secretaria {
@@ -149,76 +150,76 @@ model Secretaria {
 
 /// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
 model Paciente {
-  id                         String            @id @default(uuid())
-  usuarioId                  String?           @unique
-  nombreCompleto             String
-  dni                        String            @unique
-  fechaNacimiento            DateTime?
-  telefono                   String
-  telefonoAlternativo        String?
-  email                      String?
-  direccion                  String?
-  fotoUrl                    String?
-  obraSocialId               String?
-  plan                       String?
-  alergias                   String[]
-  condiciones                String[]
-  diagnostico                String?
-  tratamiento                String?
-  deriva                     String?
-  lugarIntervencion          String?
-  objetivos                  String?
-  consentimientoFirmado      Boolean           @default(false)
-  indicacionesEnviadas       Boolean           @default(false)
-  fechaIndicaciones          DateTime?
-  estado                     EstadoPaciente    @default(ACTIVO)
-  contactoEmergenciaNombre   String?
-  contactoEmergenciaTelefono String?
-  contactoEmergenciaRelacion String?
-  profesionalId              String?
-  createdAt                  DateTime          @default(now())
-  updatedAt                  DateTime          @updatedAt
-  consentimientosDocumentos  Archivo[]         @relation("PacienteConsentimientos")
-  archivos                   Archivo[]         @relation("ArchivosPaciente")
-  cuentaCorriente            CuentaCorriente?
-  estudios                   EstudioPaciente[]
-  historiasClinicas          HistoriaClinica[]
-  mensajesInternos           MensajeInterno[]
-  obraSocial                 ObraSocial?       @relation(fields: [obraSocialId], references: [id])
-  profesional                Profesional?      @relation("ProfesionalPaciente", fields: [profesionalId], references: [id])
-  usuario                    Usuario?          @relation(fields: [usuarioId], references: [id])
-  presupuestos               Presupuesto[]
-  turnos                     Turno[]
-  cirugias                   Cirugia[]
-  VentaProducto              VentaProducto[]
-  objecionId                 String?
-  objecion                   Objection?        @relation(fields: [objecionId], references: [id])
-  etapaCRM                   EtapaCRM?
-  temperatura                TemperaturaPaciente?
-  scoreConversion            Int               @default(0)
-  motivoPerdida              MotivoPerdidaCRM?
-  flujo                      FlujoPaciente?    @default(PENDIENTE)
-  notasComerciales           String?
-  tareasSeguimiento          TareaSeguimiento[]
-  whatsappOptIn              Boolean           @default(false)
-  whatsappOptInAt            DateTime?
-  mensajesWhatsApp           MensajeWhatsApp[]
-  contactos                  ContactoLog[]
-  enListaEspera              Boolean           @default(false)
-  comentarioListaEspera      String?
-  fechaListaEspera           DateTime?
-  crmArchivado               Boolean           @default(false)
-  autorizaciones             AutorizacionObraSocial[]
-  ordenesConsumo             OrdenConsumo[]
-  medicacion                 String[]
-  adicciones                 String[]
-  consentimientoFirmadoAt    DateTime?
-  portalToken                String?   @unique // SHA-256 hash, never plaintext (PITFALL 1)
-  portalTokenGeneradoAt      DateTime?
+  id                                String                   @id @default(uuid())
+  usuarioId                         String?                  @unique
+  nombreCompleto                    String
+  dni                               String                   @unique
+  fechaNacimiento                   DateTime?
+  telefono                          String
+  telefonoAlternativo               String?
+  email                             String?
+  direccion                         String?
+  fotoUrl                           String?
+  obraSocialId                      String?
+  plan                              String?
+  alergias                          String[]
+  condiciones                       String[]
+  diagnostico                       String?
+  tratamiento                       String?
+  deriva                            String?
+  lugarIntervencion                 String?
+  objetivos                         String?
+  consentimientoFirmado             Boolean                  @default(false)
+  indicacionesEnviadas              Boolean                  @default(false)
+  fechaIndicaciones                 DateTime?
+  estado                            EstadoPaciente           @default(ACTIVO)
+  contactoEmergenciaNombre          String?
+  contactoEmergenciaTelefono        String?
+  contactoEmergenciaRelacion        String?
+  profesionalId                     String?
+  createdAt                         DateTime                 @default(now())
+  updatedAt                         DateTime                 @updatedAt
+  consentimientosDocumentos         Archivo[]                @relation("PacienteConsentimientos")
+  archivos                          Archivo[]                @relation("ArchivosPaciente")
+  cuentaCorriente                   CuentaCorriente?
+  estudios                          EstudioPaciente[]
+  historiasClinicas                 HistoriaClinica[]
+  mensajesInternos                  MensajeInterno[]
+  obraSocial                        ObraSocial?              @relation(fields: [obraSocialId], references: [id])
+  profesional                       Profesional?             @relation("ProfesionalPaciente", fields: [profesionalId], references: [id])
+  usuario                           Usuario?                 @relation(fields: [usuarioId], references: [id])
+  presupuestos                      Presupuesto[]
+  turnos                            Turno[]
+  cirugias                          Cirugia[]
+  VentaProducto                     VentaProducto[]
+  objecionId                        String?
+  objecion                          Objection?               @relation(fields: [objecionId], references: [id])
+  etapaCRM                          EtapaCRM?
+  temperatura                       TemperaturaPaciente?
+  scoreConversion                   Int                      @default(0)
+  motivoPerdida                     MotivoPerdidaCRM?
+  flujo                             FlujoPaciente?           @default(PENDIENTE)
+  notasComerciales                  String?
+  tareasSeguimiento                 TareaSeguimiento[]
+  whatsappOptIn                     Boolean                  @default(false)
+  whatsappOptInAt                   DateTime?
+  mensajesWhatsApp                  MensajeWhatsApp[]
+  contactos                         ContactoLog[]
+  enListaEspera                     Boolean                  @default(false)
+  comentarioListaEspera             String?
+  fechaListaEspera                  DateTime?
+  crmArchivado                      Boolean                  @default(false)
+  autorizaciones                    AutorizacionObraSocial[]
+  ordenesConsumo                    OrdenConsumo[]
+  medicacion                        String[]
+  adicciones                        String[]
+  consentimientoFirmadoAt           DateTime?
+  portalToken                       String?                  @unique // SHA-256 hash, never plaintext (PITFALL 1)
+  portalTokenGeneradoAt             DateTime?
   // Staging fields — written only by the future patient portal (PITFALL 13)
-  alergiasAutoReportadas     String[]
-  antecedentesAutoReportados Json?
-  medicacionAutoReportada    String[]
+  alergiasAutoReportadas            String[]
+  antecedentesAutoReportados        Json?
+  medicacionAutoReportada           String[]
   tratamientosPreviosAutoReportados String?
 
   @@index([dni(ops: raw("gin_trgm_ops"))], map: "idx_paciente_dni_trgm", type: Gin)
@@ -231,14 +232,14 @@ model Paciente {
 }
 
 model MensajeInterno {
-  id              String           @id @default(uuid())
-  mensaje         String
-  prioridad       PrioridadMensaje @default(MEDIA)
-  esSistema       Boolean          @default(false)
-  autorId         String?
-  pacienteId      String
-  origenPaciente  Boolean          @default(false)
-  createdAt       DateTime         @default(now())
+  id             String           @id @default(uuid())
+  mensaje        String
+  prioridad      PrioridadMensaje @default(MEDIA)
+  esSistema      Boolean          @default(false)
+  autorId        String?
+  pacienteId     String
+  origenPaciente Boolean          @default(false)
+  createdAt      DateTime         @default(now())
 
   autor    Usuario?         @relation("MensajesEnviados", fields: [autorId], references: [id], onDelete: SetNull)
   paciente Paciente         @relation(fields: [pacienteId], references: [id])
@@ -298,12 +299,12 @@ model HistoriaClinicaEntrada {
   updatedAt         DateTime @updatedAt
 
   // Campos para entradas basadas en plantillas
-  templateId        String?
-  templateVersionId String?
-  status            EstadoEntradaHC @default(FINALIZED)
+  templateId              String?
+  templateVersionId       String?
+  status                  EstadoEntradaHC @default(FINALIZED)
   answers                 Json?
   computed                Json?
-  estudiosComplementarios Json?  // D-09: {laboratorio: bool, ecg: bool, imagenes: string[]} — consultable via Postgres JSON ops
+  estudiosComplementarios Json? // D-09: {laboratorio: bool, ecg: bool, imagenes: string[]} — consultable via Postgres JSON ops
   tipoEntrada             TipoEntradaHC?
 
   archivos        Archivo[]                       @relation("ArchivosEntradaHC")
@@ -387,7 +388,7 @@ model MovimientoCC {
   tipo                     TipoMovimiento
   medioPago                MedioPago?
   descripcion              String?
-  referencia               String?                 // Número de comprobante, transferencia, etc.
+  referencia               String? // Número de comprobante, transferencia, etc.
   fecha                    DateTime                @default(now())
   anulado                  Boolean                 @default(false)
   fechaAnulacion           DateTime?
@@ -465,7 +466,7 @@ model ConfigClinica {
 }
 
 model ObraSocial {
-  id                    String                  @id @default(uuid())
+  id                    String                   @id @default(uuid())
   nombre                String
   cuit                  String?
   domicilio             String?
@@ -535,7 +536,7 @@ model LiquidacionObraSocial {
 model LimiteFacturacionMensual {
   id            String      @id @default(uuid())
   profesionalId String
-  mes           String      // 'YYYY-MM', e.g. '2026-03'
+  mes           String // 'YYYY-MM', e.g. '2026-03'
   limite        Decimal?    @db.Decimal(10, 2)
   createdAt     DateTime    @default(now())
   profesional   Profesional @relation(fields: [profesionalId], references: [id])
@@ -544,38 +545,38 @@ model LimiteFacturacionMensual {
 }
 
 model Factura {
-  id            String                  @id @default(uuid())
-  tipo          TipoFactura
-  numero        String                  @unique
-  fecha         DateTime                @default(now())
-  estado        EstadoFactura           @default(EMITIDA)
-  cuit          String?
-  razonSocial   String?
-  domicilio             String?
-  condicionIVAReceptor  CondicionIVA  @default(CONSUMIDOR_FINAL)
-  tipoCambio            Decimal       @default(1.0) @db.Decimal(10, 4)
-  moneda                MonedaFactura @default(ARS)
-  concepto              String?
-  subtotal      Decimal                 @db.Decimal(10, 2)
-  impuestos     Decimal                 @db.Decimal(10, 2)
-  total         Decimal                 @db.Decimal(10, 2)
-  profesionalId String
-  movimientoId  String?
-  obraSocialId  String?
-  pacienteId    String?
-  cae              String?   // 14-digit CAE from AFIP (null until real emission in Phase 14)
-  caeFchVto        String?   // CAE expiry 'YYYYMMDD'
-  nroComprobante   Int?      // Sequential invoice number assigned at emission
-  qrData           String?   // Full AFIP QR URL (Phase 15 renders this as a QR code)
-  ptoVta           Int?      // Point of sale used for emission
-  cbteFchHsGen     String?   // Datetime of CAEA invoice generation 'YYYYMMDDHHMMSS' (Phase 16)
-  afipError        String?   // Spanish AFIP error message persisted by CaeEmissionProcessor.onFailed on permanent failure (Phase 17)
-  Archivo       Archivo[]
-  movimiento    MovimientoCC?           @relation(fields: [movimientoId], references: [id])
-  profesional   Profesional             @relation(fields: [profesionalId], references: [id])
-  liquidaciones LiquidacionObraSocial[]
-  practicas     PracticaRealizada[]
-  VentaProducto VentaProducto[]
+  id                   String                  @id @default(uuid())
+  tipo                 TipoFactura
+  numero               String                  @unique
+  fecha                DateTime                @default(now())
+  estado               EstadoFactura           @default(EMITIDA)
+  cuit                 String?
+  razonSocial          String?
+  domicilio            String?
+  condicionIVAReceptor CondicionIVA            @default(CONSUMIDOR_FINAL)
+  tipoCambio           Decimal                 @default(1.0) @db.Decimal(10, 4)
+  moneda               MonedaFactura           @default(ARS)
+  concepto             String?
+  subtotal             Decimal                 @db.Decimal(10, 2)
+  impuestos            Decimal                 @db.Decimal(10, 2)
+  total                Decimal                 @db.Decimal(10, 2)
+  profesionalId        String
+  movimientoId         String?
+  obraSocialId         String?
+  pacienteId           String?
+  cae                  String? // 14-digit CAE from AFIP (null until real emission in Phase 14)
+  caeFchVto            String? // CAE expiry 'YYYYMMDD'
+  nroComprobante       Int? // Sequential invoice number assigned at emission
+  qrData               String? // Full AFIP QR URL (Phase 15 renders this as a QR code)
+  ptoVta               Int? // Point of sale used for emission
+  cbteFchHsGen         String? // Datetime of CAEA invoice generation 'YYYYMMDDHHMMSS' (Phase 16)
+  afipError            String? // Spanish AFIP error message persisted by CaeEmissionProcessor.onFailed on permanent failure (Phase 17)
+  Archivo              Archivo[]
+  movimiento           MovimientoCC?           @relation(fields: [movimientoId], references: [id])
+  profesional          Profesional             @relation(fields: [profesionalId], references: [id])
+  liquidaciones        LiquidacionObraSocial[]
+  practicas            PracticaRealizada[]
+  VentaProducto        VentaProducto[]
 
   @@index([profesionalId, fecha])
   @@index([estado])
@@ -610,23 +611,23 @@ model VentaProductoItem {
 }
 
 model Producto {
-  id                String              @id @default(uuid())
-  nombre            String
-  categoria         String?
-  descripcion       String?
-  sku               String?             @unique
-  imagenUrl         String?
-  tipo              TipoProducto
-  unidadMedida      String?
-  costoBase         Decimal?            @db.Decimal(10, 2)
-  precioSugerido    Decimal?            @db.Decimal(10, 2)
-  requiereLote      Boolean             @default(false)
-  descuentaStock    Boolean             @default(true)
-  inventarios        Inventario[]
-  lotes              Lote[]
-  OrdenCompraItem    OrdenCompraItem[]
-  proveedores        ProductoProveedor[]
-  VentaProductoItem  VentaProductoItem[]
+  id                    String               @id @default(uuid())
+  nombre                String
+  categoria             String?
+  descripcion           String?
+  sku                   String?              @unique
+  imagenUrl             String?
+  tipo                  TipoProducto
+  unidadMedida          String?
+  costoBase             Decimal?             @db.Decimal(10, 2)
+  precioSugerido        Decimal?             @db.Decimal(10, 2)
+  requiereLote          Boolean              @default(false)
+  descuentaStock        Boolean              @default(true)
+  inventarios           Inventario[]
+  lotes                 Lote[]
+  OrdenCompraItem       OrdenCompraItem[]
+  proveedores           ProductoProveedor[]
+  VentaProductoItem     VentaProductoItem[]
   tratamientoInsumos    TratamientoInsumo[]
   cirugiaInsumos        CirugiaInsumo[]
   ordenesConsumoInsumos OrdenConsumoInsumo[]
@@ -681,7 +682,7 @@ model Lote {
 }
 
 model Proveedor {
-  id              String                     @id @default(uuid())
+  id              String                    @id @default(uuid())
   nombre          String
   cuit            String?
   direccion       String?
@@ -707,22 +708,22 @@ model CuentaCorrienteProveedor {
 }
 
 model MovimientoCCProveedor {
-  id                         String                    @id @default(uuid())
+  id                         String                   @id @default(uuid())
   cuentaCorrienteProveedorId String
-  monto                      Decimal                   @db.Decimal(10, 2)
+  monto                      Decimal                  @db.Decimal(10, 2)
   tipo                       TipoMovimiento
   medioPago                  MedioPago?
   descripcion                String?
   referencia                 String?
-  fecha                      DateTime                  @default(now())
-  anulado                    Boolean                   @default(false)
+  fecha                      DateTime                 @default(now())
+  anulado                    Boolean                  @default(false)
   fechaAnulacion             DateTime?
   ordenCompraId              String?
-  cuotaId                    String?                   @unique
+  cuotaId                    String?                  @unique
   usuarioId                  String?
-  cuentaCorriente            CuentaCorrienteProveedor  @relation(fields: [cuentaCorrienteProveedorId], references: [id])
-  ordenCompra                OrdenCompra?              @relation(fields: [ordenCompraId], references: [id])
-  cuota                      CuotaOrdenCompra?         @relation(fields: [cuotaId], references: [id])
+  cuentaCorriente            CuentaCorrienteProveedor @relation(fields: [cuentaCorrienteProveedorId], references: [id])
+  ordenCompra                OrdenCompra?             @relation(fields: [ordenCompraId], references: [id])
+  cuota                      CuotaOrdenCompra?        @relation(fields: [cuotaId], references: [id])
 
   @@index([cuentaCorrienteProveedorId, fecha])
   @@index([tipo, fecha])
@@ -784,29 +785,29 @@ model OrdenCompraItem {
 }
 
 model TipoTurno {
-  id              String                  @id @default(uuid())
-  nombre          String                  @unique
-  descripcion     String?
-  mensajeBase     String?
-  instrucciones   String?
-  duracionDefault Int?
-  esCirugia       Boolean                 @default(false)
-  flujoPaciente   FlujoPaciente?
-  turnos          Turno[]
+  id                  String                 @id @default(uuid())
+  nombre              String                 @unique
+  descripcion         String?
+  mensajeBase         String?
+  instrucciones       String?
+  duracionDefault     Int?
+  esCirugia           Boolean                @default(false)
+  flujoPaciente       FlujoPaciente?
+  turnos              Turno[]
   configProfesionales TipoTurnoProfesional[]
 }
 
 model TipoTurnoProfesional {
-  id              String      @id @default(uuid())
+  id              String   @id @default(uuid())
   profesionalId   String
   tipoTurnoId     String
   duracionMinutos Int?
   colorHex        String?
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
-  profesional     Profesional @relation(fields: [profesionalId], references: [id])
-  tipoTurno       TipoTurno   @relation(fields: [tipoTurnoId], references: [id])
+  profesional Profesional @relation(fields: [profesionalId], references: [id])
+  tipoTurno   TipoTurno   @relation(fields: [tipoTurnoId], references: [id])
 
   @@unique([profesionalId, tipoTurnoId])
   @@index([profesionalId])
@@ -904,19 +905,19 @@ model TratamientoCatalogo {
 }
 
 model Tratamiento {
-  id              String      @id @default(uuid())
+  id              String              @id @default(uuid())
   nombre          String
   descripcion     String?
-  precio          Decimal     @default(0) @db.Decimal(10, 2)
-  indicaciones    String?     @db.Text
-  procedimiento   String?     @db.Text
+  precio          Decimal             @default(0) @db.Decimal(10, 2)
+  indicaciones    String?             @db.Text
+  procedimiento   String?             @db.Text
   duracionMinutos Int?
   profesionalId   String
-  profesional     Profesional @relation(fields: [profesionalId], references: [id])
-  activo          Boolean     @default(true)
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
-  precioBase      Decimal?    @db.Decimal(10, 2)
+  profesional     Profesional         @relation(fields: [profesionalId], references: [id])
+  activo          Boolean             @default(true)
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  precioBase      Decimal?            @db.Decimal(10, 2)
   insumos         TratamientoInsumo[]
   tratamientosHC  TratamientoHC[]
 
@@ -993,10 +994,10 @@ model OrdenConsumo {
 }
 
 model OrdenConsumoInsumo {
-  id             String       @id @default(uuid())
+  id             String  @id @default(uuid())
   ordenConsumoId String
   productoId     String
-  cantidad       Decimal      @db.Decimal(10, 3)
+  cantidad       Decimal @db.Decimal(10, 3)
 
   ordenConsumo OrdenConsumo @relation(fields: [ordenConsumoId], references: [id], onDelete: Cascade)
   producto     Producto     @relation(fields: [productoId], references: [id])
@@ -1047,9 +1048,9 @@ enum MedioPago {
 
 enum EstadoFactura {
   EMITIDA
-  EMISION_PENDIENTE  // Transient: BullMQ job enqueued, CAE not yet assigned
+  EMISION_PENDIENTE // Transient: BullMQ job enqueued, CAE not yet assigned
   ANULADA
-  CAEA_PENDIENTE_INFORMAR  // Issued under CAEA contingency — must be informed to AFIP within 8 days
+  CAEA_PENDIENTE_INFORMAR // Issued under CAEA contingency — must be informed to AFIP within 8 days
 }
 
 enum AmbienteAFIP {
@@ -1208,7 +1209,7 @@ model TareaSeguimiento {
   completada      Boolean              @default(false)
   completadaEn    DateTime?
   nota            String?
-  notificada      Boolean              @default(false)  // CHAT-01 guard: true after first alert sent
+  notificada      Boolean              @default(false) // CHAT-01 guard: true after first alert sent
   notificadaEn    DateTime?
   createdAt       DateTime             @default(now())
   paciente        Paciente             @relation(fields: [pacienteId], references: [id])
@@ -1228,19 +1229,19 @@ enum TipoContacto {
 }
 
 model ContactoLog {
-  id                  String               @id @default(uuid())
-  pacienteId          String
-  profesionalId       String
-  tipo                TipoContacto
-  nota                String?
-  fecha               DateTime             @default(now())
-  etapaCRMPost        EtapaCRM?
-  temperaturaPost     TemperaturaPaciente?
-  proximaAccionFecha  DateTime?
-  createdAt           DateTime             @default(now())
+  id                 String               @id @default(uuid())
+  pacienteId         String
+  profesionalId      String
+  tipo               TipoContacto
+  nota               String?
+  fecha              DateTime             @default(now())
+  etapaCRMPost       EtapaCRM?
+  temperaturaPost    TemperaturaPaciente?
+  proximaAccionFecha DateTime?
+  createdAt          DateTime             @default(now())
 
-  registradoPorId     String?
-  registradoPor       Usuario?   @relation("ContactoLogRegistradoPor", fields: [registradoPorId], references: [id], onDelete: SetNull)
+  registradoPorId String?
+  registradoPor   Usuario? @relation("ContactoLogRegistradoPor", fields: [registradoPorId], references: [id], onDelete: SetNull)
 
   paciente    Paciente    @relation(fields: [pacienteId], references: [id], onDelete: Cascade)
   profesional Profesional @relation(fields: [profesionalId], references: [id])
@@ -1276,9 +1277,9 @@ model ConfiguracionWABA {
   profesionalId        String      @unique
   phoneNumberId        String
   wabaId               String?
-  accessTokenEncrypted String      // AES-256-GCM cifrado — NUNCA retornar en respuestas API
-  displayPhone         String      // Número formateado (ej: "+54 9 11 1234-5678") — retornado por Meta en validación
-  verifiedName         String?     // Nombre del negocio desde Meta
+  accessTokenEncrypted String // AES-256-GCM cifrado — NUNCA retornar en respuestas API
+  displayPhone         String // Número formateado (ej: "+54 9 11 1234-5678") — retornado por Meta en validación
+  verifiedName         String? // Nombre del negocio desde Meta
   activo               Boolean     @default(true)
   createdAt            DateTime    @default(now())
   updatedAt            DateTime    @updatedAt
@@ -1298,7 +1299,7 @@ model AutorizacionObraSocial {
   pacienteId        String
   obraSocialId      String
   profesionalId     String
-  codigos           Json               // [{codigo: string, descripcion: string, monto?: number, coseguro?: number}]
+  codigos           Json // [{codigo: string, descripcion: string, monto?: number, coseguro?: number}]
   estado            EstadoAutorizacion @default(PENDIENTE)
   notaSecretaria    String?
   fechaAutorizacion DateTime?
@@ -1319,29 +1320,29 @@ model AutorizacionObraSocial {
 // ── AFIP Configuration ────────────────────────────────────────────────────────
 
 model ConfiguracionAFIP {
-  id                String       @id @default(uuid())
-  profesionalId     String       @unique
-  cuit              String       // Extracted from cert CN at upload — source of truth
-  certPemEncrypted  String       // AES-256-GCM: iv:authTag:ciphertext — NEVER return in API
-  keyPemEncrypted   String       // AES-256-GCM: iv:authTag:ciphertext — NEVER return in API
-  certExpiresAt     DateTime     // Parsed from cert notAfter at upload time
-  ptoVta            Int          // Validated via FEParamGetPtosVenta at save time
-  ambiente          AmbienteAFIP @default(HOMOLOGACION)
-  createdAt         DateTime     @default(now())
-  updatedAt         DateTime     @updatedAt
-  profesional       Profesional  @relation(fields: [profesionalId], references: [id])
+  id               String       @id @default(uuid())
+  profesionalId    String       @unique
+  cuit             String // Extracted from cert CN at upload — source of truth
+  certPemEncrypted String // AES-256-GCM: iv:authTag:ciphertext — NEVER return in API
+  keyPemEncrypted  String // AES-256-GCM: iv:authTag:ciphertext — NEVER return in API
+  certExpiresAt    DateTime // Parsed from cert notAfter at upload time
+  ptoVta           Int // Validated via FEParamGetPtosVenta at save time
+  ambiente         AmbienteAFIP @default(HOMOLOGACION)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  profesional      Profesional  @relation(fields: [profesionalId], references: [id])
 }
 
 model CaeaVigente {
   id            String      @id @default(uuid())
   profesionalId String
   cuit          String
-  caea          String      // The CAEA code from AFIP
-  periodo       String      // 'YYYYMM'
-  orden         Int         // 1 = first half (days 1–15), 2 = second half (days 16–end)
-  fchVigDesde   String      // Period start 'YYYYMMDD'
-  fchVigHasta   String      // Period end 'YYYYMMDD'
-  fchTopeInf    String      // Last date to inform invoices under this CAEA 'YYYYMMDD'
+  caea          String // The CAEA code from AFIP
+  periodo       String // 'YYYYMM'
+  orden         Int // 1 = first half (days 1–15), 2 = second half (days 16–end)
+  fchVigDesde   String // Period start 'YYYYMMDD'
+  fchVigHasta   String // Period end 'YYYYMMDD'
+  fchTopeInf    String // Last date to inform invoices under this CAEA 'YYYYMMDD'
   createdAt     DateTime    @default(now())
   profesional   Profesional @relation(fields: [profesionalId], references: [id])
 
@@ -1350,22 +1351,22 @@ model CaeaVigente {
 }
 
 model MensajeWhatsApp {
-  id            String          @id @default(uuid())
-  waMessageId   String?         // ID de Meta (nullable hasta que se envíe)
+  id            String             @id @default(uuid())
+  waMessageId   String? // ID de Meta (nullable hasta que se envíe)
   pacienteId    String
   profesionalId String
   tipo          TipoMensajeWA
   direccion     DireccionMensajeWA @default(OUTBOUND)
-  contenido     String?         // Nombre del template o cuerpo del mensaje
-  estado        EstadoMensajeWA @default(PENDIENTE)
+  contenido     String? // Nombre del template o cuerpo del mensaje
+  estado        EstadoMensajeWA    @default(PENDIENTE)
   errorMsg      String?
   sentAt        DateTime?
   deliveredAt   DateTime?
   readAt        DateTime?
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
-  paciente      Paciente        @relation(fields: [pacienteId], references: [id])
-  profesional   Profesional     @relation(fields: [profesionalId], references: [id])
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+  paciente      Paciente           @relation(fields: [pacienteId], references: [id])
+  profesional   Profesional        @relation(fields: [profesionalId], references: [id])
 
   @@index([pacienteId, createdAt])
   @@index([estado])
@@ -1444,6 +1445,20 @@ model AlergiaCatalogoPro {
 }
 
 model MedicamentoCatalogoPro {
+  id            String      @id @default(uuid())
+  nombre        String
+  activo        Boolean     @default(true)
+  esSistema     Boolean     @default(false)
+  profesionalId String
+  profesional   Profesional @relation(fields: [profesionalId], references: [id])
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@unique([nombre, profesionalId])
+  @@index([profesionalId, activo])
+}
+
+model AntecedenteCatalogoPro {
   id            String      @id @default(uuid())
   nombre        String
   activo        Boolean     @default(true)

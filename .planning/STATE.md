@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.12
 milestone_name: Prequirúrgico Estructurado + Portal del Paciente
-status: ready_to_plan
-stopped_at: Phase 51 complete (2/2) — ready to discuss Phase 52
-last_updated: 2026-06-26T03:38:45.034Z
+status: planning
+stopped_at: Phase 52 context gathered
+last_updated: "2026-06-26T03:53:45.790Z"
 last_activity: 2026-06-26
 progress:
   total_phases: 6
   completed_phases: 1
   total_plans: 2
-  completed_plans: 55
+  completed_plans: 2
   percent: 17
 ---
 
@@ -75,6 +75,6 @@ Progress: [██████████] 100%
 
 ## Session Continuity
 
-Last session: 2026-06-26T03:43:00Z
-Stopped at: Completed 51-02-PLAN.md — migration applied, scheduler guard active, build passing
-Resume file: None
+Last session: 2026-06-26T03:53:45.786Z
+Stopped at: Phase 52 context gathered
+Resume file: .planning/phases/52-preop-hc-form-chip-catalogs/52-CONTEXT.md

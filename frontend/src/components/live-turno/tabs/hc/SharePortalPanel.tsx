@@ -25,7 +25,9 @@ export function SharePortalPanel({ pacienteId, pacienteEmail }: Props) {
   // Email state (SMTP-gated, D-13)
   const [emailInput, setEmailInput] = useState('');
   const [emailEnviado, setEmailEnviado] = useState(false);
-  const [emailError, setEmailError] = useState(false);
+  const [emailErrorMotivo, setEmailErrorMotivo] = useState<
+    'sin_destinatario' | 'envio_fallido' | null
+  >(null);
 
   // Mutations
   const generarMutation = useGenerarPortalLink();
@@ -64,12 +66,15 @@ export function SharePortalPanel({ pacienteId, pacienteEmail }: Props) {
   };
 
   // ---------------------------------------------------------------------------
-  // Send email
+  // Send email — passes the url already in state so the backend doesn't need
+  // to re-derive it (fix for UAT Test 13 / PREOP-12 root cause).
   // ---------------------------------------------------------------------------
   const handleEnviarEmail = async () => {
     if (!url) return;
+
+    // Reset feedback state
     setEmailEnviado(false);
-    setEmailError(false);
+    setEmailErrorMotivo(null);
 
     // If patient has no email, require the user to type one
     const emailToSend = pacienteEmail || emailInput.trim();
@@ -78,16 +83,17 @@ export function SharePortalPanel({ pacienteId, pacienteEmail }: Props) {
     try {
       const result = await emailMutation.mutateAsync({
         pacienteId,
+        url,
         email: emailToSend !== pacienteEmail ? emailToSend : undefined,
       });
       if (result.enviado) {
         setEmailEnviado(true);
         setEmailInput('');
       } else {
-        setEmailError(true);
+        setEmailErrorMotivo(result.motivo ?? 'envio_fallido');
       }
     } catch {
-      setEmailError(true);
+      setEmailErrorMotivo('envio_fallido');
     }
   };
 
@@ -252,9 +258,14 @@ export function SharePortalPanel({ pacienteId, pacienteEmail }: Props) {
               Email enviado correctamente.
             </p>
           )}
-          {emailError && (
+          {emailErrorMotivo === 'sin_destinatario' && (
             <p className="text-xs text-destructive">
-              No se pudo enviar el email. Verificá la dirección e intenta nuevamente.
+              Ingresá un email válido para enviar el link.
+            </p>
+          )}
+          {emailErrorMotivo === 'envio_fallido' && (
+            <p className="text-xs text-destructive">
+              No se pudo enviar el email. Intentá nuevamente en unos minutos.
             </p>
           )}
         </div>

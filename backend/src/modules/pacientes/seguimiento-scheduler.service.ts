@@ -21,6 +21,7 @@ export class SeguimientoSchedulerService {
     const tareasPendientes = await this.prisma.tareaSeguimiento.findMany({
       where: {
         completada: false,
+        notificada: false, // CHAT-01: skip already-notified tasks
         fechaProgramada: { lte: ahora },
       },
       include: {
@@ -58,9 +59,15 @@ export class SeguimientoSchedulerService {
           },
         });
 
-        // Marcar tarea como "notificada" — el usuario la completa manualmente
-        // La dejamos pendiente para que el profesional la marque cuando contacte
-        // (solo registramos en log por ahora)
+        // CHAT-01: mark task as notified — alerted exactly once, stays completada:false until professional closes it (D-05)
+        await this.prisma.tareaSeguimiento.update({
+          where: { id: tarea.id },
+          data: {
+            notificada: true,
+            notificadaEn: ahora,
+          },
+        });
+
         this.logger.log(
           `Alerta creada para paciente ${tarea.paciente.nombreCompleto} — ${tarea.tipo}`,
         );

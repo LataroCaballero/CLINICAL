@@ -133,7 +133,9 @@ model Profesional {
   caeaVigentes       CaeaVigente[]
   cirugiasCatalogo   CirugiaCatalogo[]
   ordenesConsumo     OrdenConsumo[]
-  zonasHC            ZonaHC[]
+  zonasHC              ZonaHC[]
+  alergiasCatalogo     AlergiaCatalogoPro[]
+  medicamentosCatalogo MedicamentoCatalogoPro[]
 }
 
 model Secretaria {
@@ -208,6 +210,16 @@ model Paciente {
   crmArchivado               Boolean           @default(false)
   autorizaciones             AutorizacionObraSocial[]
   ordenesConsumo             OrdenConsumo[]
+  medicacion                 String[]
+  adicciones                 String[]
+  consentimientoFirmadoAt    DateTime?
+  portalToken                String?   @unique // SHA-256 hash, never plaintext (PITFALL 1)
+  portalTokenGeneradoAt      DateTime?
+  // Staging fields — written only by the future patient portal (PITFALL 13)
+  alergiasAutoReportadas     String[]
+  antecedentesAutoReportados Json?
+  medicacionAutoReportada    String[]
+  tratamientosPreviosAutoReportados String?
 
   @@index([dni(ops: raw("gin_trgm_ops"))], map: "idx_paciente_dni_trgm", type: Gin)
   @@index([telefono(ops: raw("gin_trgm_ops"))], map: "idx_paciente_telefono_trgm", type: Gin)
@@ -219,15 +231,16 @@ model Paciente {
 }
 
 model MensajeInterno {
-  id         String           @id @default(uuid())
-  mensaje    String
-  prioridad  PrioridadMensaje @default(MEDIA)
-  esSistema  Boolean          @default(false)
-  autorId    String
-  pacienteId String
-  createdAt  DateTime         @default(now())
+  id              String           @id @default(uuid())
+  mensaje         String
+  prioridad       PrioridadMensaje @default(MEDIA)
+  esSistema       Boolean          @default(false)
+  autorId         String?
+  pacienteId      String
+  origenPaciente  Boolean          @default(false)
+  createdAt       DateTime         @default(now())
 
-  autor    Usuario          @relation("MensajesEnviados", fields: [autorId], references: [id])
+  autor    Usuario?         @relation("MensajesEnviados", fields: [autorId], references: [id], onDelete: SetNull)
   paciente Paciente         @relation(fields: [pacienteId], references: [id])
   lecturas MensajeLectura[]
 
@@ -288,9 +301,10 @@ model HistoriaClinicaEntrada {
   templateId        String?
   templateVersionId String?
   status            EstadoEntradaHC @default(FINALIZED)
-  answers           Json?
-  computed          Json?
-  tipoEntrada       TipoEntradaHC?
+  answers                 Json?
+  computed                Json?
+  estudiosComplementarios Json?  // D-09: {laboratorio: bool, ecg: bool, imagenes: string[]} — consultable via Postgres JSON ops
+  tipoEntrada             TipoEntradaHC?
 
   archivos        Archivo[]                       @relation("ArchivosEntradaHC")
   historiaClinica HistoriaClinica                 @relation(fields: [historiaClinicaId], references: [id])
@@ -1194,12 +1208,14 @@ model TareaSeguimiento {
   completada      Boolean              @default(false)
   completadaEn    DateTime?
   nota            String?
+  notificada      Boolean              @default(false)  // CHAT-01 guard: true after first alert sent
+  notificadaEn    DateTime?
   createdAt       DateTime             @default(now())
   paciente        Paciente             @relation(fields: [pacienteId], references: [id])
   profesional     Profesional          @relation(fields: [profesionalId], references: [id])
 
   @@index([pacienteId])
-  @@index([profesionalId, completada, fechaProgramada])
+  @@index([profesionalId, completada, notificada, fechaProgramada])
 }
 
 // ── Log de Contactos ─────────────────────────────────────────────────────────
@@ -1409,4 +1425,34 @@ model TratamientoHC {
   @@unique([nombre, zonaId])
   @@index([zonaId, activo])
   @@index([profesionalId])
+}
+
+// ─── Catálogos Prequirúrgico por profesional ─────────────────────────────────
+
+model AlergiaCatalogoPro {
+  id            String      @id @default(uuid())
+  nombre        String
+  activo        Boolean     @default(true)
+  esSistema     Boolean     @default(false)
+  profesionalId String
+  profesional   Profesional @relation(fields: [profesionalId], references: [id])
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@unique([nombre, profesionalId])
+  @@index([profesionalId, activo])
+}
+
+model MedicamentoCatalogoPro {
+  id            String      @id @default(uuid())
+  nombre        String
+  activo        Boolean     @default(true)
+  esSistema     Boolean     @default(false)
+  profesionalId String
+  profesional   Profesional @relation(fields: [profesionalId], references: [id])
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@unique([nombre, profesionalId])
+  @@index([profesionalId, activo])
 }

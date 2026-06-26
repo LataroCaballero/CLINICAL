@@ -1,9 +1,9 @@
 ---
-status: diagnosed
+status: resolved
 phase: 52-preop-hc-form-chip-catalogs
 source: [52-01-SUMMARY.md, 52-02-SUMMARY.md, 52-03-SUMMARY.md, 52-04-SUMMARY.md, 52-05-SUMMARY.md, 52-06-SUMMARY.md, 52-07-SUMMARY.md]
 started: 2026-06-26T13:52:52Z
-updated: 2026-06-26T19:40:00Z
+updated: 2026-06-26T20:10:00Z
 ---
 
 ## Current Test
@@ -99,7 +99,8 @@ blocked: 0
 
 # --- Gap B (new regression): existing-link patient shows nothing (link unrecoverable) ---
 - truth: "Opening the share panel for a patient who already generated a portal link shows that existing link with the share options, so it can still be copied/shared"
-  status: failed
+  status: resolved
+  resolved_by: "Plans 52-09 (backend: portalTokenCifrado AES-256-GCM + obtenerPortalLink + GET :id/portal-link) and 52-10 (frontend: useObtenerPortalLink mount-load + SharePortalPanel renders existing link). Code verified 12/12 in 52-VERIFICATION.md; visual browser re-test tracked as items 7-8 in 52-HUMAN-UAT.md."
   reason: "User reported on re-test: si el paciente YA generó el link, el spinner carga, deja de cargar y no pasa nada — el link existente no se muestra, queda inaccesible / se pierde y no se puede compartir. Solicitud explícita: si ya tiene link, mostrarlo igual para poder compartirlo."
   severity: major
   test: 13

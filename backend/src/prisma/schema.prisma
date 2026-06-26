@@ -216,6 +216,7 @@ model Paciente {
   consentimientoFirmadoAt           DateTime?
   portalToken                       String?                  @unique // SHA-256 hash, never plaintext (PITFALL 1)
   portalTokenGeneradoAt             DateTime?
+  portalTokenCifrado                String? // raw portal token cifrado AES-256-GCM (recuperable); lookup sigue por portalToken hash (amplía D-12)
   // Staging fields — written only by the future patient portal (PITFALL 13)
   alergiasAutoReportadas            String[]
   antecedentesAutoReportados        Json?

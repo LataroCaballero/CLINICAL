@@ -11,8 +11,8 @@ Requisitos del milestone v1.12. Cada uno mapea a una fase del roadmap.
 
 - [ ] **PREOP-01**: Al crear una entrada de HC tipo Prequirúrgico, el profesional ve un formulario estructurado por secciones paso a paso (no un campo de texto libre)
 - [ ] **PREOP-02**: El profesional puede activar un check opcional "Agregar diagnóstico/tratamiento" que despliega el selector de catálogo zona/diagnóstico/tratamiento (el mismo de Primera Consulta)
-- [ ] **PREOP-03**: El profesional registra antecedentes patológicos seleccionando chips de un catálogo, con opción "Otro" para ingresar uno que no esté en la lista
-- [ ] **PREOP-04**: Un antecedente/alergia/medicación nuevo ingresado vía "Otro" se persiste en el catálogo del profesional (learning) y aparece como chip en futuras entradas
+- [x] **PREOP-03**: El profesional registra antecedentes patológicos seleccionando chips de un catálogo, con opción "Otro" para ingresar uno que no esté en la lista
+- [x] **PREOP-04**: Un antecedente/alergia/medicación nuevo ingresado vía "Otro" se persiste en el catálogo del profesional (learning) y aparece como chip en futuras entradas
 - [ ] **PREOP-05**: Los antecedentes patológicos seleccionados se guardan también en el perfil del paciente (`condiciones[]`), no sólo en la entrada de HC
 - [ ] **PREOP-06**: El profesional registra alergias con el mismo patrón de chips + "Otro" + learning, guardadas en el perfil del paciente (`alergias[]`)
 - [ ] **PREOP-07**: El profesional registra medicación preexistente con el mismo patrón de chips + "Otro" + learning, guardada en el perfil del paciente (`medicacion[]`, campo nuevo)
@@ -90,8 +90,8 @@ Qué fases cubren qué requisitos.
 | CHAT-02 | Phase 51 | Complete |
 | PREOP-01 | Phase 52 | Pending |
 | PREOP-02 | Phase 52 | Pending |
-| PREOP-03 | Phase 52 | Pending |
-| PREOP-04 | Phase 52 | Pending |
+| PREOP-03 | Phase 52 | Complete |
+| PREOP-04 | Phase 52 | Complete |
 | PREOP-05 | Phase 52 | Pending |
 | PREOP-06 | Phase 52 | Pending |
 | PREOP-07 | Phase 52 | Pending |

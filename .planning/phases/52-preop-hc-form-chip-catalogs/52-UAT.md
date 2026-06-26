@@ -77,9 +77,10 @@ blocked: 0
 
 ## Gaps
 
-# --- Gap A (re-opened on re-test): email send still fails ---
+# --- Gap A (re-opened on re-test): email send still fails → RESOLVED (infra/DNS) ---
 - truth: "Sending the portal link by email delivers it to the patient's address and reports success"
-  status: failed
+  status: resolved
+  resolution: "RESOLVED by user (2026-06-26): infra cause confirmed — DNS for the SMTP host was misconfigured, so nodemailer's sendMail threw at runtime (host unreachable), which the service caught and collapsed into motivo:'envio_fallido'. After fixing the DNS config the email now sends correctly. This matches the diagnosis: code path was correct post-52-08; the failure was environmental (isSmtpConfigured only checks var presence, not reachability). No code change required for delivery. OPTIONAL hardening still open: surface the real SMTP error code instead of the generic banner so a future misconfig is diagnosable from the UI."
   reason: "User reported on re-test (after 52-08): para un paciente sin link previo, el link y las opciones cargan bien, pero al enviar por email sale 'No se pudo enviar el email. Intentá nuevamente en unos minutos.' (mensaje de error genérico de envío, NO el de 'dirección' anterior). Fix 52-08 cambió el síntoma pero el envío sigue fallando."
   severity: major
   test: 13

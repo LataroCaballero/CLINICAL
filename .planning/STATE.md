@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.12
 milestone_name: Prequirúrgico Estructurado + Portal del Paciente
-status: executing
-stopped_at: Completed 52-09-PLAN.md
-last_updated: "2026-06-26T19:24:35Z"
+status: verifying
+stopped_at: Completed 52-10-PLAN.md
+last_updated: "2026-06-26T19:45:00Z"
 last_activity: 2026-06-26
 progress:
   total_phases: 6
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 12
-  completed_plans: 11
-  percent: 92
+  completed_plans: 12
+  percent: 33
 ---
 
 # Project State
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-06-25)
 
 ## Current Position
 
-Phase: 52 (preop-hc-form-chip-catalogs) — EXECUTING
-Plan: 10 of 10 (52-09 completado)
-Status: Executing Phase 52
+Phase: 52 (preop-hc-form-chip-catalogs) — COMPLETE
+Plan: 10 of 10 (52-10 completado)
+Status: Phase 52 complete — ready for verification / Phase 53
 Last activity: 2026-06-26
 
-Progress: [█████████░] 92%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -56,6 +56,7 @@ Progress: [█████████░] 92%
 - [51-02] Migración big-bang aplicada via prisma migrate diff + db execute + migrate resolve --applied por drift de timestamp pre-existente (20260415221758 vs 20260416000000)
 - [51-02] CHAT-01 + CHAT-02 desplegados atómicamente — flood eliminado y guard activo en la misma release (SC#3)
 - [52-09] D-12 ampliada: portalTokenCifrado persiste raw token AES-256-GCM at-rest; GET portal-link sólo lectura vía obtenerPortalLink; lookups siguen por hash SHA-256 (Gap B cerrado)
+- [52-10] useQuery (no mutation) para GET portal-link en mount; queryClient.setQueryData tras generar exitoso; portal-email.service retorna { enviado, codigo? } — solo error.code SMTP (T-52-12)
 
 ### Carry-forward from v1.11
 
@@ -76,6 +77,6 @@ Progress: [█████████░] 92%
 
 ## Session Continuity
 
-Last session: 2026-06-26T19:24:35Z
-Stopped at: Completed 52-09-PLAN.md
+Last session: 2026-06-26T19:45:00Z
+Stopped at: Completed 52-10-PLAN.md
 Resume file: None

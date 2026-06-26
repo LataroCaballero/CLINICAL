@@ -18,14 +18,14 @@ result: [pending]
 
 ### 2. Decide on WR-02: bounded 23-message burst acceptable or requires backfill?
 expected: Human confirms the one-time wave of up to 23 new esSistema=true messages that will appear on the next 09:00 cron is intentional (first-and-only alert for each overdue task) OR requests a backfill UPDATE so the tasks start with notificada=true and the chat stays clean
-result: [pending]
+result: passed — 2026-06-26 user accepted the bounded 23-message burst as intentional first-notification for the overdue backlog (one alert per task, then permanent silence). No backfill applied. WR-01 transaction gap also accepted as low risk.
 
 ## Summary
 
 total: 2
-passed: 0
+passed: 1
 issues: 0
-pending: 2
+pending: 1
 skipped: 0
 blocked: 0
 

@@ -1,7 +1,8 @@
 ---
 phase: 51-schema-foundation-chat-fix
 verified: 2026-06-26T04:00:00Z
-status: human_needed
+status: passed
+human_decision: "2026-06-26 — User accepted WR-02 bounded burst as intentional first-notification for the overdue backlog (23 tasks, one alert each then permanent silence); WR-01 transaction gap accepted as low risk. No backfill, no code change. SC#4 smoke-test deferred to manual UAT (51-HUMAN-UAT.md)."
 score: 4/4 must-haves verified
 overrides_applied: 0
 re_verification: false

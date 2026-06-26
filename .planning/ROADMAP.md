@@ -309,7 +309,7 @@ Full details: `.planning/milestones/v1.11-ROADMAP.md`
 | 48. Backend — Lectura y Snapshot de Tratamientos | v1.10 | 2/2 | Complete | 2026-06-22 |
 | 49. Frontend — Filtro y Color-coding de Estado | v1.10 | 1/1 | Complete | 2026-06-22 |
 | 50. HC Completa en PatientSheet | v1.11 | 1/1 | Complete | 2026-06-24 |
-| 51. Schema Foundation + Chat Fix | v1.12 | 2/2 | Complete   | 2026-06-26 |
+| 51. Schema Foundation + Chat Fix | v1.12 | 2/2 | Complete    | 2026-06-26 |
 | 52. PREOP HC Form + Chip Catalogs | v1.12 | 0/TBD | Not started | - |
 | 53. Storage + Upload + Consent Config | v1.12 | 0/TBD | Not started | - |
 | 54. Portal Backend + Token Security | v1.12 | 0/TBD | Not started | - |

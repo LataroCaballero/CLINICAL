@@ -19,8 +19,8 @@ Requisitos del milestone v1.12. Cada uno mapea a una fase del roadmap.
 - [ ] **PREOP-08**: El profesional marca con checks los estudios complementarios realizados: Laboratorio, Electrocardiograma e Imágenes (Ecografía, Tomografía, Mamografía, Otro)
 - [ ] **PREOP-09**: El estado de estudios complementarios se almacena de forma consultable, habilitando un futuro reporte de estudios pendientes
 - [ ] **PREOP-10**: El profesional marca un check "Paciente informado del consentimiento" que se registra con fecha para auditoría
-- [ ] **PREOP-11**: Desde la plantilla, el profesional puede compartir el link de autogestión del paciente copiando un link de WhatsApp y mostrando un QR escaneable
-- [ ] **PREOP-12**: Desde la plantilla, el profesional puede enviar el link de autogestión por email; si el paciente no tiene email, puede cargarlo en el momento (si SMTP no está configurado, la opción de email no se ofrece)
+- [x] **PREOP-11**: Desde la plantilla, el profesional puede compartir el link de autogestión del paciente copiando un link de WhatsApp y mostrando un QR escaneable
+- [x] **PREOP-12**: Desde la plantilla, el profesional puede enviar el link de autogestión por email; si el paciente no tiene email, puede cargarlo en el momento (si SMTP no está configurado, la opción de email no se ofrece)
 
 ### Portal de Autogestión — Acceso y Datos (PORTAL)
 
@@ -98,8 +98,8 @@ Qué fases cubren qué requisitos.
 | PREOP-08 | Phase 52 | Pending |
 | PREOP-09 | Phase 52 | Pending |
 | PREOP-10 | Phase 52 | Pending |
-| PREOP-11 | Phase 52 | Pending |
-| PREOP-12 | Phase 52 | Pending |
+| PREOP-11 | Phase 52 | Complete |
+| PREOP-12 | Phase 52 | Complete |
 | INFRA-01 | Phase 53 | Pending |
 | INFRA-02 | Phase 53 | Pending |
 | INFRA-03 | Phase 53 | Pending |

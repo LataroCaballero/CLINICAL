@@ -30,7 +30,14 @@ import { BadRequestException } from '@nestjs/common';
 import { UpdatePacienteSectionDto } from './dto/update-paciente-section.dto';
 import { CreateContactoDto } from './dto/create-contacto.dto';
 import { UpdateListaEsperaDto } from './dto/update-lista-espera.dto';
-import { esPortalUrlValida } from './portal-url.helper';
+import { esPortalUrlValida, normalizarPortalUrl } from './portal-url.helper';
+
+/**
+ * Conservative email shape check (WR-01). No global ValidationPipe is active, so
+ * the `@IsEmail()` decorator on the DTO is inert — we MUST re-check at runtime
+ * before persisting an address or using it as an SMTP `to:`.
+ */
+const EMAIL_SHAPE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 @Injectable()
 export class PacientesService {
@@ -1014,14 +1021,18 @@ export class PacientesService {
    * valid UUID-path shape before any email is sent (T-52-01).
    * Throws BadRequestException if invalid so the controller returns HTTP 400.
    */
-  validarPortalUrl(url: string): void {
+  validarPortalUrl(url: string): string {
     const frontendUrl = this.configService.get<string>(
       'FRONTEND_URL',
       'http://localhost:3000',
     );
-    if (!esPortalUrlValida(url, frontendUrl)) {
+    const normalizada = normalizarPortalUrl(url, frontendUrl);
+    if (!normalizada) {
       throw new BadRequestException('URL de portal inválida');
     }
+    // Return the canonical origin+pathname so callers reflect only
+    // validator-approved bytes into the email body (CR-01 defense-in-depth).
+    return normalizada;
   }
 
   /**
@@ -1069,6 +1080,11 @@ export class PacientesService {
    * Usado en el flujo de share-link para pacientes sin email en ficha.
    */
   async setEmailSiFalta(pacienteId: string, email: string): Promise<void> {
+    // WR-01: reject malformed addresses at runtime before persisting.
+    if (!EMAIL_SHAPE.test(email)) {
+      throw new BadRequestException('Email inválido');
+    }
+
     const paciente = await this.prisma.paciente.findUnique({
       where: { id: pacienteId },
       select: { email: true },

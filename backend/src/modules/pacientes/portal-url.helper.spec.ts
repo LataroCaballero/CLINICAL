@@ -5,7 +5,7 @@
  * before relying on class-validator decorators (which are not active
  * at runtime — no global ValidationPipe).
  */
-import { esPortalUrlValida } from './portal-url.helper';
+import { esPortalUrlValida, normalizarPortalUrl } from './portal-url.helper';
 
 const FRONTEND_URL = 'http://localhost:3000';
 const FRONTEND_URL_TRAILING = 'http://localhost:3000/';
@@ -163,5 +163,69 @@ describe('esPortalUrlValida', () => {
         'not-a-url',
       ),
     ).toBe(false);
+  });
+
+  // ---------------------------------------------------------------------------
+  // CR-01: query string / fragment injection boundary
+  // Same-origin, valid uuid path, but a payload smuggled in search/hash must be
+  // rejected — otherwise it survives into the reflected email body.
+  // ---------------------------------------------------------------------------
+  it('same-origin valid path but with query string → false (CR-01)', () => {
+    expect(
+      esPortalUrlValida(
+        `${FRONTEND_URL}/portal/${VALID_UUID}?x=1`,
+        FRONTEND_URL,
+      ),
+    ).toBe(false);
+  });
+
+  it('query-string XSS payload → false (CR-01)', () => {
+    expect(
+      esPortalUrlValida(
+        `${FRONTEND_URL}/portal/${VALID_UUID}?x="><script>alert(1)</script>`,
+        FRONTEND_URL,
+      ),
+    ).toBe(false);
+  });
+
+  it('same-origin valid path but with fragment → false (CR-01)', () => {
+    expect(
+      esPortalUrlValida(
+        `${FRONTEND_URL}/portal/${VALID_UUID}#section`,
+        FRONTEND_URL,
+      ),
+    ).toBe(false);
+  });
+
+  it('fragment XSS payload → false (CR-01)', () => {
+    expect(
+      esPortalUrlValida(
+        `${FRONTEND_URL}/portal/${VALID_UUID}#"><img src=x onerror=alert(1)>`,
+        FRONTEND_URL,
+      ),
+    ).toBe(false);
+  });
+});
+
+describe('normalizarPortalUrl', () => {
+  it('valid url → canonical origin+pathname', () => {
+    expect(
+      normalizarPortalUrl(`${FRONTEND_URL}/portal/${VALID_UUID}`, FRONTEND_URL),
+    ).toBe(`${FRONTEND_URL}/portal/${VALID_UUID}`);
+  });
+
+  it('invalid url (query payload) → null (CR-01)', () => {
+    expect(
+      normalizarPortalUrl(
+        `${FRONTEND_URL}/portal/${VALID_UUID}?x="><script>alert(1)</script>`,
+        FRONTEND_URL,
+      ),
+    ).toBeNull();
+  });
+
+  it('foreign origin → null', () => {
+    expect(
+      normalizarPortalUrl(`https://evil.com/portal/${VALID_UUID}`, FRONTEND_URL),
+    ).toBeNull();
   });
 });

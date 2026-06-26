@@ -254,8 +254,10 @@ export class PacientesController {
     @Param('id') id: string,
     @Body() dto: EnviarPortalLinkEmailDto,
   ) {
-    // (1) Validate the client-supplied url server-side (T-52-01). Throws 400 if invalid.
-    this.pacientesService.validarPortalUrl(dto.url);
+    // (1) Validate the client-supplied url server-side (T-52-01). Throws 400 if
+    // invalid. Returns the canonical origin+pathname — we reflect THIS into the
+    // email, never the raw client string (CR-01).
+    const urlSegura = this.pacientesService.validarPortalUrl(dto.url);
 
     // (2) Capture email if patient has none on file and one was provided.
     if (dto.email) {
@@ -274,10 +276,11 @@ export class PacientesController {
       return { enviado: false, motivo: 'sin_destinatario' };
     }
 
-    // (5) Send the client-supplied (validated) url — never re-derives it (D-12 intact).
+    // (5) Send the canonical, validated url — never re-derives it (D-12 intact)
+    //     and never reflects the raw client string (CR-01).
     const enviado = await this.portalEmail.enviarLinkPortal(
       paciente.email,
-      dto.url,
+      urlSegura,
       paciente.nombreCompleto,
     );
 

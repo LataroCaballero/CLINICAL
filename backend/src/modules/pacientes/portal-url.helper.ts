@@ -13,6 +13,10 @@
  * 2. Protocol must be http: or https: (rejects javascript:, data:, ftp:, etc.)
  * 3. Origin must exactly match the FRONTEND_URL origin (rejects foreign domains/ports)
  * 4. Pathname must match /portal/<uuid-v4-shape> exactly (rejects arbitrary paths)
+ * 5. Must carry no query string or fragment (CR-01): a same-origin URL such as
+ *    `…/portal/<uuid>?x="><script>…` or `…#"><img onerror=…>` otherwise passes
+ *    rules 1–4 yet smuggles HTML into the email body when reflected. Rejecting
+ *    `search`/`hash` removes the only place attacker bytes could survive.
  */
 
 const UUID_V4_SHAPE =
@@ -20,7 +24,8 @@ const UUID_V4_SHAPE =
 
 /**
  * Returns true iff `url` is a well-formed portal URL on the same origin as
- * `frontendBaseUrl` and has a valid UUID-shaped path segment.
+ * `frontendBaseUrl`, has a valid UUID-shaped path segment, and carries no
+ * query string or fragment.
  *
  * Never throws — all parsing errors result in false.
  */
@@ -47,8 +52,31 @@ export function esPortalUrlValida(
       return false;
     }
 
+    // Rule 5: no query string or fragment (CR-01 injection boundary)
+    if (parsed.search !== '' || parsed.hash !== '') {
+      return false;
+    }
+
     return true;
   } catch {
     return false;
   }
+}
+
+/**
+ * Returns the canonical, injection-safe portal URL (`origin + pathname`) for a
+ * url that has already passed {@link esPortalUrlValida}, or `null` if it has
+ * not. Callers reflect THIS value (never the raw client string) into the email
+ * body so that only validator-approved bytes can ever reach the recipient
+ * (defense-in-depth behind rule 5).
+ */
+export function normalizarPortalUrl(
+  url: string,
+  frontendBaseUrl: string,
+): string | null {
+  if (!esPortalUrlValida(url, frontendBaseUrl)) {
+    return null;
+  }
+  const parsed = new URL(url);
+  return `${parsed.origin}${parsed.pathname}`;
 }

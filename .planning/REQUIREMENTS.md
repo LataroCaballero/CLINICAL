@@ -82,23 +82,49 @@ Excluidos explícitamente. Documentado para prevenir scope creep.
 
 ## Traceability
 
-Qué fases cubren qué requisitos. Se completa durante la creación del roadmap.
+Qué fases cubren qué requisitos.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| INFRA-01 | TBD | Pending |
-| INFRA-02 | TBD | Pending |
-| INFRA-03 | TBD | Pending |
-| PREOP-01..12 | TBD | Pending |
-| PORTAL-01..06 | TBD | Pending |
-| CONS-01..08 | TBD | Pending |
-| CHAT-01..04 | TBD | Pending |
+| CHAT-01 | Phase 51 | Pending |
+| CHAT-02 | Phase 51 | Pending |
+| PREOP-01 | Phase 52 | Pending |
+| PREOP-02 | Phase 52 | Pending |
+| PREOP-03 | Phase 52 | Pending |
+| PREOP-04 | Phase 52 | Pending |
+| PREOP-05 | Phase 52 | Pending |
+| PREOP-06 | Phase 52 | Pending |
+| PREOP-07 | Phase 52 | Pending |
+| PREOP-08 | Phase 52 | Pending |
+| PREOP-09 | Phase 52 | Pending |
+| PREOP-10 | Phase 52 | Pending |
+| PREOP-11 | Phase 52 | Pending |
+| PREOP-12 | Phase 52 | Pending |
+| INFRA-01 | Phase 53 | Pending |
+| INFRA-02 | Phase 53 | Pending |
+| INFRA-03 | Phase 53 | Pending |
+| CONS-01 | Phase 53 | Pending |
+| CONS-02 | Phase 53 | Pending |
+| PORTAL-01 | Phase 54 | Pending |
+| PORTAL-04 | Phase 54 | Pending |
+| PORTAL-06 | Phase 54 | Pending |
+| PORTAL-02 | Phase 55 | Pending |
+| PORTAL-03 | Phase 55 | Pending |
+| PORTAL-05 | Phase 55 | Pending |
+| CHAT-04 | Phase 55 | Pending |
+| CONS-03 | Phase 56 | Pending |
+| CONS-04 | Phase 56 | Pending |
+| CONS-05 | Phase 56 | Pending |
+| CONS-06 | Phase 56 | Pending |
+| CONS-07 | Phase 56 | Pending |
+| CONS-08 | Phase 56 | Pending |
+| CHAT-03 | Phase 56 | Pending |
 
 **Coverage:**
 - v1 requirements: 33 total
-- Mapped to phases: 0 (roadmap pending)
-- Unmapped: 33 ⚠️
+- Mapped to phases: 33/33 ✓
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-06-25*
-*Last updated: 2026-06-25 after initial definition*
+*Last updated: 2026-06-25 — traceability complete after roadmap creation*

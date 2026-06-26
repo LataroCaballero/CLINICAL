@@ -4,9 +4,10 @@ import { PacientesController } from './pacientes.controller';
 import { PacientesService } from './pacientes.service';
 import { SeguimientoSchedulerService } from './seguimiento-scheduler.service';
 import { PortalEmailService } from './portal-email.service';
+import { WhatsappModule } from '../whatsapp/whatsapp.module';
 
 @Module({
-  imports: [ScheduleModule.forRoot()],
+  imports: [ScheduleModule.forRoot(), WhatsappModule],
   controllers: [PacientesController],
   providers: [PacientesService, SeguimientoSchedulerService, PortalEmailService],
 })

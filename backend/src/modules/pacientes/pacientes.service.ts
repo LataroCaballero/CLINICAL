@@ -30,6 +30,7 @@ import { BadRequestException } from '@nestjs/common';
 import { UpdatePacienteSectionDto } from './dto/update-paciente-section.dto';
 import { CreateContactoDto } from './dto/create-contacto.dto';
 import { UpdateListaEsperaDto } from './dto/update-lista-espera.dto';
+import { esPortalUrlValida } from './portal-url.helper';
 
 @Injectable()
 export class PacientesService {
@@ -1007,6 +1008,21 @@ export class PacientesService {
   }
 
   // ── Portal del Paciente ─────────────────────────────────────────────────────
+
+  /**
+   * Validates that the client-supplied portal URL is same-origin and has a
+   * valid UUID-path shape before any email is sent (T-52-01).
+   * Throws BadRequestException if invalid so the controller returns HTTP 400.
+   */
+  validarPortalUrl(url: string): void {
+    const frontendUrl = this.configService.get<string>(
+      'FRONTEND_URL',
+      'http://localhost:3000',
+    );
+    if (!esPortalUrlValida(url, frontendUrl)) {
+      throw new BadRequestException('URL de portal inválida');
+    }
+  }
 
   /**
    * Genera un token de portal para el paciente de forma idempotente (D-12).

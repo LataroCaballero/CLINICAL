@@ -33,6 +33,7 @@ import { UpdateCrmArchivoDto } from './dto/update-crm-archivo.dto';
 import { CreateContactoDto } from './dto/create-contacto.dto';
 import { UpdateListaEsperaDto } from './dto/update-lista-espera.dto';
 import { PortalEmailService } from './portal-email.service';
+import { EnviarPortalLinkEmailDto } from './dto/enviar-portal-link-email.dto';
 
 @Auth('ADMIN', 'PROFESIONAL', 'SECRETARIA', 'FACTURADOR')
 @Controller('pacientes')
@@ -245,37 +246,41 @@ export class PacientesController {
     };
   }
 
-  // Portal del Paciente — Enviar link por email; opcionalmente establece email si falta
+  // Portal del Paciente — Enviar link por email; opcionalmente establece email si falta.
+  // Fix (D-12): usa la url ya generada que el cliente tiene en estado, en vez de
+  // re-derivarla con generarPortalLink (que devuelve url:null cuando el token ya existe).
   @Post(':id/portal-link/email')
   async enviarPortalLinkEmail(
     @Param('id') id: string,
-    @Body() body: { email?: string },
+    @Body() dto: EnviarPortalLinkEmailDto,
   ) {
-    if (body.email) {
-      await this.pacientesService.setEmailSiFalta(id, body.email);
+    // (1) Validate the client-supplied url server-side (T-52-01). Throws 400 if invalid.
+    this.pacientesService.validarPortalUrl(dto.url);
+
+    // (2) Capture email if patient has none on file and one was provided.
+    if (dto.email) {
+      await this.pacientesService.setEmailSiFalta(id, dto.email);
     }
 
-    const { url } = await this.pacientesService.generarPortalLink(id);
-    if (!url) {
-      // Token ya generado previamente; raw UUID no recuperable por diseño (D-12)
-      return { enviado: false };
-    }
-
+    // (3) Resolve the recipient from the database (not from the request body).
     const paciente = await this.prisma.paciente.findUnique({
       where: { id },
       select: { email: true, nombreCompleto: true },
     });
+    if (!paciente) throw new NotFoundException('Paciente no encontrado');
 
-    if (!paciente?.email) {
-      return { enviado: false };
+    // (4) No recipient → return sin_destinatario without sending.
+    if (!paciente.email) {
+      return { enviado: false, motivo: 'sin_destinatario' };
     }
 
+    // (5) Send the client-supplied (validated) url — never re-derives it (D-12 intact).
     const enviado = await this.portalEmail.enviarLinkPortal(
       paciente.email,
-      url,
+      dto.url,
       paciente.nombreCompleto,
     );
 
-    return { enviado };
+    return enviado ? { enviado: true } : { enviado: false, motivo: 'envio_fallido' };
   }
 }

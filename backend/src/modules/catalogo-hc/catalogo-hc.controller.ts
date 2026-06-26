@@ -64,6 +64,39 @@ export class CatalogoHCController {
   }
 
   // ---------------------------------------------------------------------------
+  // Flat per-professional catalog endpoints (antecedentes / alergias / medicamentos)
+  // All scoped to the JWT-resolved profesionalId via getProfesionalId (PITFALL 12).
+  // profesionalId is NEVER read from the request body.
+  // ---------------------------------------------------------------------------
+
+  @Get('antecedentes')
+  async getAntecedentes(
+    @Req() req: any,
+    @Query('profesionalId') profesionalId?: string,
+  ) {
+    const pid = await this.getProfesionalId(req.user, profesionalId);
+    return this.service.getAntecedentesConSeed(pid);
+  }
+
+  @Get('alergias')
+  async getAlergias(
+    @Req() req: any,
+    @Query('profesionalId') profesionalId?: string,
+  ) {
+    const pid = await this.getProfesionalId(req.user, profesionalId);
+    return this.service.getAlergiasConSeed(pid);
+  }
+
+  @Get('medicamentos')
+  async getMedicamentos(
+    @Req() req: any,
+    @Query('profesionalId') profesionalId?: string,
+  ) {
+    const pid = await this.getProfesionalId(req.user, profesionalId);
+    return this.service.getMedicamentosConSeed(pid);
+  }
+
+  // ---------------------------------------------------------------------------
   // Rename endpoints
   // ---------------------------------------------------------------------------
 

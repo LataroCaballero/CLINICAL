@@ -102,6 +102,18 @@ export class HistoriaClinicaService {
         presupuestoId: dto.presupuestoId,
         presupuestoTotal: dto.presupuestoTotal,
       });
+    } else if (dto.tipo === 'pre_quirurgico') {
+      contenido = {
+        tipo: 'pre_quirurgico',
+        antecedentes: dto.antecedentes ?? [],
+        alergias: dto.alergias ?? [],
+        medicacion: dto.medicacion ?? [],
+        estudiosComplementarios: dto.estudiosComplementarios ?? null,
+        consentimientoInformadoAt: dto.consentimientoInformado
+          ? new Date().toISOString()
+          : null,
+        comentario: dto.comentario ?? null,
+      };
     } else if (dto.tipo === 'tratamiento_en_consultorio') {
       contenido = {
         tipo: 'tratamiento_en_consultorio',
@@ -232,8 +244,19 @@ export class HistoriaClinicaService {
         data: {
           historiaClinicaId: historia.id,
           contenido,
-          tipoEntrada: dto.tipoEntrada ?? undefined,
+          // pre_quirurgico forces tipoEntrada PREOPERATORIO regardless of what client passes
+          tipoEntrada:
+            dto.tipo === 'pre_quirurgico'
+              ? 'PREOPERATORIO'
+              : (dto.tipoEntrada ?? undefined),
           ...(fechaFinal && { fecha: fechaFinal }),
+          // D-10: persist estudios in dedicated queryable column (PREOP-09)
+          ...(dto.tipo === 'pre_quirurgico' && dto.estudiosComplementarios
+            ? {
+                estudiosComplementarios:
+                  dto.estudiosComplementarios as unknown as Prisma.InputJsonValue,
+              }
+            : {}),
         },
       });
 
@@ -257,6 +280,33 @@ export class HistoriaClinicaService {
             ...(nuevoFlujo && { flujo: nuevoFlujo }),
           },
         });
+      }
+
+      // D-09: Union-dedup profile merge for pre_quirurgico
+      // Merges confirmed antecedentes→condiciones, alergias, medicacion into the patient
+      // profile. NEVER replaces — existing values are always preserved. Does NOT touch
+      // consentimientoFirmadoAt or *AutoReportada(o)s staging fields (D-11 / T-52-07).
+      if (dto.tipo === 'pre_quirurgico') {
+        const perfil = await tx.paciente.findUnique({
+          where: { id: pacienteId },
+          select: { condiciones: true, alergias: true, medicacion: true },
+        });
+        if (perfil) {
+          await tx.paciente.update({
+            where: { id: pacienteId },
+            data: {
+              condiciones: Array.from(
+                new Set([...perfil.condiciones, ...(dto.antecedentes ?? [])]),
+              ),
+              alergias: Array.from(
+                new Set([...perfil.alergias, ...(dto.alergias ?? [])]),
+              ),
+              medicacion: Array.from(
+                new Set([...perfil.medicacion, ...(dto.medicacion ?? [])]),
+              ),
+            },
+          });
+        }
       }
 
       // Inline autorizaciones de obra social
@@ -331,6 +381,24 @@ export class HistoriaClinicaService {
       } catch (e) {
         this.logger.warn(
           `Aprendizaje de catálogo HC falló (no bloqueante): ${e?.message ?? e}`,
+        );
+      }
+    }
+
+    // D-06: Best-effort flat catalog learning for pre_quirurgico
+    // Runs post-transaction so a learning failure never rolls back the saved entry.
+    // aprenderDesdePreoperatorio already guards per-section; outer try/catch is extra safety.
+    // SECURITY: profesionalId is the JWT-derived argument, never from dto (T-52-06).
+    if (dto.tipo === 'pre_quirurgico') {
+      try {
+        await this.catalogoHc.aprenderDesdePreoperatorio(profesionalId, {
+          antecedentes: dto.antecedentes ?? [],
+          alergias: dto.alergias ?? [],
+          medicacion: dto.medicacion ?? [],
+        });
+      } catch (e) {
+        this.logger.warn(
+          `Aprendizaje preoperatorio HC falló (no bloqueante): ${(e as Error)?.message ?? e}`,
         );
       }
     }

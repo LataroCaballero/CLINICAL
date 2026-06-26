@@ -171,7 +171,7 @@ Full details: `.planning/milestones/v1.11-ROADMAP.md`
 **Milestone Goal:** Estructurar la HC prequirúrgica paso a paso y darle al paciente un portal de autogestión por token para que complete sus datos, firme el consentimiento y consulte al médico — reduciendo carga administrativa y reforzando el respaldo legal.
 
 - [x] **Phase 51: Schema Foundation + Chat Fix** (2 planes) - Migración schema completa del milestone + fix atómico del spam del scheduler de seguimiento CRM (completed 2026-06-26)
-- [ ] **Phase 52: PREOP HC Form + Chip Catalogs** - Formulario estructurado HC Prequirúrgico con chips de antecedentes/alergias/medicación con learning y link compartir portal
+- [x] **Phase 52: PREOP HC Form + Chip Catalogs** - Formulario estructurado HC Prequirúrgico con chips de antecedentes/alergias/medicación con learning y link compartir portal (completed 2026-06-26)
 - [ ] **Phase 53: Storage + Upload + Consent Config** - StorageService (disk local, cloud-ready), upload seguro de PDF de consentimiento, links de indicaciones y rate limiting
 - [ ] **Phase 54: Portal Backend + Token Security** - Módulo paciente-portal público, token SHA-256 hasheado, endpoints protegidos con DTOs estrictos
 - [ ] **Phase 55: Portal Frontend** - Wizard mobile-first 4 pasos: datos personales, salud staged, consentimiento placeholder y consultas al médico
@@ -310,7 +310,7 @@ Full details: `.planning/milestones/v1.11-ROADMAP.md`
 | 49. Frontend — Filtro y Color-coding de Estado | v1.10 | 1/1 | Complete | 2026-06-22 |
 | 50. HC Completa en PatientSheet | v1.11 | 1/1 | Complete | 2026-06-24 |
 | 51. Schema Foundation + Chat Fix | v1.12 | 2/2 | Complete    | 2026-06-26 |
-| 52. PREOP HC Form + Chip Catalogs | v1.12 | 6/7 | In Progress|  |
+| 52. PREOP HC Form + Chip Catalogs | v1.12 | 7/7 | Complete   | 2026-06-26 |
 | 53. Storage + Upload + Consent Config | v1.12 | 0/TBD | Not started | - |
 | 54. Portal Backend + Token Security | v1.12 | 0/TBD | Not started | - |
 | 55. Portal Frontend | v1.12 | 0/TBD | Not started | - |

@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.12
 milestone_name: Prequirúrgico Estructurado + Portal del Paciente
-status: completed
-stopped_at: Completed 52-01-PLAN.md
-last_updated: "2026-06-26T17:43:02.046Z"
-last_activity: 2026-06-26 -- Phase 52 marked complete
+status: executing
+stopped_at: Completed 52-09-PLAN.md
+last_updated: "2026-06-26T19:24:35Z"
+last_activity: 2026-06-26
 progress:
   total_phases: 6
-  completed_phases: 2
-  total_plans: 10
-  completed_plans: 10
-  percent: 33
+  completed_phases: 1
+  total_plans: 12
+  completed_plans: 11
+  percent: 92
 ---
 
 # Project State
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-06-25)
 
 ## Current Position
 
-Phase: 52 — COMPLETE
-Plan: 1 of 8
-Status: Phase 52 complete
-Last activity: 2026-06-26 -- Phase 52 marked complete
+Phase: 52 (preop-hc-form-chip-catalogs) — EXECUTING
+Plan: 10 of 10 (52-09 completado)
+Status: Executing Phase 52
+Last activity: 2026-06-26
 
-Progress: [██████████] 100%
+Progress: [█████████░] 92%
 
 ## Performance Metrics
 
@@ -55,6 +55,7 @@ Progress: [██████████] 100%
 - Gate legal pre-go-live: revisión del flujo de consentimiento antes del primer paciente quirúrgico real
 - [51-02] Migración big-bang aplicada via prisma migrate diff + db execute + migrate resolve --applied por drift de timestamp pre-existente (20260415221758 vs 20260416000000)
 - [51-02] CHAT-01 + CHAT-02 desplegados atómicamente — flood eliminado y guard activo en la misma release (SC#3)
+- [52-09] D-12 ampliada: portalTokenCifrado persiste raw token AES-256-GCM at-rest; GET portal-link sólo lectura vía obtenerPortalLink; lookups siguen por hash SHA-256 (Gap B cerrado)
 
 ### Carry-forward from v1.11
 
@@ -75,6 +76,6 @@ Progress: [██████████] 100%
 
 ## Session Continuity
 
-Last session: 2026-06-26T13:06:54.306Z
-Stopped at: Completed 52-01-PLAN.md
+Last session: 2026-06-26T19:24:35Z
+Stopped at: Completed 52-09-PLAN.md
 Resume file: None

@@ -32,6 +32,7 @@ import { UpdateWhatsappOptInDto } from './dto/update-whatsapp-opt-in.dto';
 import { UpdateCrmArchivoDto } from './dto/update-crm-archivo.dto';
 import { CreateContactoDto } from './dto/create-contacto.dto';
 import { UpdateListaEsperaDto } from './dto/update-lista-espera.dto';
+import { PortalEmailService } from './portal-email.service';
 
 @Auth('ADMIN', 'PROFESIONAL', 'SECRETARIA', 'FACTURADOR')
 @Controller('pacientes')
@@ -39,6 +40,7 @@ export class PacientesController {
   constructor(
     private readonly pacientesService: PacientesService,
     private readonly prisma: PrismaService,
+    private readonly portalEmail: PortalEmailService,
   ) {}
 
   // RF-007 — Alta de pacientes
@@ -230,5 +232,50 @@ export class PacientesController {
   @Patch(':id/flujo')
   updateFlujo(@Param('id') id: string, @Body() dto: UpdateFlujoDto) {
     return this.pacientesService.updateFlujo(id, dto.flujo);
+  }
+
+  // Portal del Paciente — Generar o consultar el link (staff only, pacienteId desde path)
+  @Post(':id/portal-link')
+  async generarPortalLink(@Param('id') id: string) {
+    const result = await this.pacientesService.generarPortalLink(id);
+    return {
+      url: result.url,
+      alreadyGenerated: result.alreadyGenerated,
+      smtpConfigured: this.portalEmail.isSmtpConfigured(),
+    };
+  }
+
+  // Portal del Paciente — Enviar link por email; opcionalmente establece email si falta
+  @Post(':id/portal-link/email')
+  async enviarPortalLinkEmail(
+    @Param('id') id: string,
+    @Body() body: { email?: string },
+  ) {
+    if (body.email) {
+      await this.pacientesService.setEmailSiFalta(id, body.email);
+    }
+
+    const { url } = await this.pacientesService.generarPortalLink(id);
+    if (!url) {
+      // Token ya generado previamente; raw UUID no recuperable por diseño (D-12)
+      return { enviado: false };
+    }
+
+    const paciente = await this.prisma.paciente.findUnique({
+      where: { id },
+      select: { email: true, nombreCompleto: true },
+    });
+
+    if (!paciente?.email) {
+      return { enviado: false };
+    }
+
+    const enviado = await this.portalEmail.enviarLinkPortal(
+      paciente.email,
+      url,
+      paciente.nombreCompleto,
+    );
+
+    return { enviado };
   }
 }

@@ -1,9 +1,9 @@
 ---
-status: complete
+status: resolved
 phase: 52-preop-hc-form-chip-catalogs
 source: [52-01-SUMMARY.md, 52-02-SUMMARY.md, 52-03-SUMMARY.md, 52-04-SUMMARY.md, 52-05-SUMMARY.md, 52-06-SUMMARY.md, 52-07-SUMMARY.md]
 started: 2026-06-26T13:52:52Z
-updated: 2026-06-26T13:52:52Z
+updated: 2026-06-26T18:00:00Z
 ---
 
 ## Current Test
@@ -78,11 +78,20 @@ blocked: 0
 ## Gaps
 
 - truth: "Sending the portal link by email delivers it to the patient's address and reports success"
-  status: failed
+  status: resolved
+  resolution: "Closed by gap-closure plan 52-08 (+ CR-01 hardening). The email path is decoupled from link regeneration: the frontend passes the URL it already holds; the controller validates it (esPortalUrlValida — same-origin + UUID path + no query/fragment) and sends the canonical URL via portalEmail.enviarLinkPortal. No-recipient now returns motivo:'sin_destinatario' with a banner that prompts for an email instead of blaming the address. See 52-VERIFICATION.md gap-closure section. Remaining: live SMTP delivery is a human check."
   reason: "User reported: Me aparece la opcion pero me da como un error al querer enviar y me dice direccion no encontrada o algo asi"
   severity: major
   test: 13
-  root_cause: ""     # Filled by diagnosis
-  artifacts: []      # Filled by diagnosis
-  missing: []        # Filled by diagnosis
-  debug_session: ""  # Filled by diagnosis
+  root_cause: "Email-send endpoint re-calls idempotent generarPortalLink, which returns url:null once a token exists, so the controller short-circuits to {enviado:false} BEFORE ever sending — nodemailer is never called. The 'dirección' wording is the frontend's own generic error banner ('Verificá la dirección'), not an SMTP/address error. Structurally unreachable: the email UI only renders after a link is generated, so portalToken always exists by then and the second generarPortalLink call always returns url:null."
+  artifacts:
+    - path: "backend/src/modules/pacientes/pacientes.controller.ts"
+      issue: "Lines 258-262: re-calls idempotent generarPortalLink and returns {enviado:false} when url is null, before reaching portalEmail.enviarLinkPortal"
+    - path: "backend/src/modules/pacientes/pacientes.service.ts"
+      issue: "Lines 1025-1048: generarPortalLink is idempotent and the raw UUID is never persisted (D-12), so the URL is unrecoverable on any call after the first"
+    - path: "frontend/src/components/live-turno/tabs/hc/SharePortalPanel.tsx"
+      issue: "Lines 255-259: misleading 'Verificá la dirección' banner shown whenever enviado===false"
+  missing:
+    - "Decouple email sending from link regeneration: frontend passes the url it already holds to the email endpoint; controller sends that url (after setEmailSiFalta + email validation) instead of re-deriving it"
+    - "Distinguish enviado:false due to not-sent (url null) from a genuine address/SMTP failure so the banner stops blaming the address"
+  debug_session: ".planning/debug/portal-link-email-direccion-no-encontrada.md"

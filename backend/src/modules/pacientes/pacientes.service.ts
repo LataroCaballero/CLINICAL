@@ -5,6 +5,8 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
+import * as crypto from 'crypto';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreatePacienteDto } from './dto/create-paciente.dto';
 import { UpdatePacienteDto } from './dto/update-paciente.dto';
@@ -31,7 +33,10 @@ import { UpdateListaEsperaDto } from './dto/update-lista-espera.dto';
 
 @Injectable()
 export class PacientesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private readonly configService: ConfigService,
+  ) {}
 
   // Crear
   async create(dto: CreatePacienteDto) {
@@ -999,5 +1004,66 @@ export class PacientesService {
           ]
         : []),
     ]);
+  }
+
+  // ── Portal del Paciente ─────────────────────────────────────────────────────
+
+  /**
+   * Genera un token de portal para el paciente de forma idempotente (D-12).
+   * El raw UUID nunca se persiste — solo el hash SHA-256 de 64 caracteres hex.
+   * Si el token ya existe devuelve { url: null, alreadyGenerated: true } sin modificar la BD.
+   */
+  async generarPortalLink(
+    pacienteId: string,
+  ): Promise<{ url: string | null; alreadyGenerated: boolean }> {
+    const paciente = await this.prisma.paciente.findUnique({
+      where: { id: pacienteId },
+      select: { portalToken: true, email: true },
+    });
+    if (!paciente) throw new NotFoundException('Paciente no encontrado');
+
+    if (paciente.portalToken) {
+      // D-12: never re-hash or regenerate an existing token
+      return { url: null, alreadyGenerated: true };
+    }
+
+    const rawUuid = crypto.randomUUID();
+    const hash = crypto
+      .createHash('sha256')
+      .update(rawUuid)
+      .digest('hex'); // 64-char hex; raw UUID is NEVER persisted
+
+    await this.prisma.paciente.update({
+      where: { id: pacienteId },
+      data: {
+        portalToken: hash,
+        portalTokenGeneradoAt: new Date(),
+      },
+    });
+
+    const frontendUrl = this.configService.get<string>(
+      'FRONTEND_URL',
+      'http://localhost:3000',
+    );
+    return { url: `${frontendUrl}/portal/${rawUuid}`, alreadyGenerated: false };
+  }
+
+  /**
+   * Establece el email del paciente sólo si actualmente no tiene uno registrado.
+   * Usado en el flujo de share-link para pacientes sin email en ficha.
+   */
+  async setEmailSiFalta(pacienteId: string, email: string): Promise<void> {
+    const paciente = await this.prisma.paciente.findUnique({
+      where: { id: pacienteId },
+      select: { email: true },
+    });
+    if (!paciente) throw new NotFoundException('Paciente no encontrado');
+
+    if (!paciente.email) {
+      await this.prisma.paciente.update({
+        where: { id: pacienteId },
+        data: { email },
+      });
+    }
   }
 }

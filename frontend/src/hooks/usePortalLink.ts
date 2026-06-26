@@ -13,6 +13,8 @@ export interface GenerarPortalLinkResponse {
 
 export interface EnviarPortalLinkEmailResponse {
   enviado: boolean;
+  /** Populated when enviado is false to allow differentiated UI error messages. */
+  motivo?: 'sin_destinatario' | 'envio_fallido';
 }
 
 // ---------------------------------------------------------------------------
@@ -38,18 +40,19 @@ export function useGenerarPortalLink() {
 
 /**
  * POST /pacientes/:id/portal-link/email
- * Sends the portal link via email. Optionally accepts an email address
- * to use/capture when the patient has no email on file.
+ * Sends the portal link via email. Accepts the URL already held in client
+ * state (generated in a prior request) plus an optional email address to
+ * capture when the patient has no email on file.
  * The patient id is used only in the URL path.
  */
 export function useEnviarPortalLinkEmail() {
   return useMutation<
     EnviarPortalLinkEmailResponse,
     Error,
-    { pacienteId: string; email?: string }
+    { pacienteId: string; url: string; email?: string }
   >({
-    mutationFn: async ({ pacienteId, email }) => {
-      const body: { email?: string } = {};
+    mutationFn: async ({ pacienteId, url, email }) => {
+      const body: { url: string; email?: string } = { url };
       if (email) body.email = email;
       const response = await api.post<EnviarPortalLinkEmailResponse>(
         `/pacientes/${pacienteId}/portal-link/email`,

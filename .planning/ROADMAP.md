@@ -215,8 +215,13 @@ Full details: `.planning/milestones/v1.11-ROADMAP.md`
   3. El médico puede cargar y guardar links de indicaciones preoperatorias por procedimiento desde Configuración; los links persisten y aparecen correctamente tras recargar la página.
   4. Los endpoints de la API responden con HTTP 429 tras superar el límite de requests configurado (ThrottlerModule cableado en AppModule, verificable con herramienta HTTP de flood).
   5. El `StorageService` existe como abstracción con interfaz `save(buffer, filename) → relativePath`; los consumidores no usan `fs` directamente — cambiar de disco a cloud es una implementación swap sin tocar consumidores.
-**Plans**: TBD
+**Plans**: 3 plans
 **UI hint**: yes
+
+Plans:
+- [ ] 53-01-PLAN.md — Backend: StorageService (disk, cloud-ready) + UploadsController (path-traversal guard, attachment) + global ThrottlerModule/APP_GUARD + strict tier on presupuestos/public
+- [ ] 53-02-PLAN.md — Backend: schema (ZonaHC.indicacionesUrl, CirugiaCatalogo.zonaId, ConsentimientoZonaArchivo) + migration + consentimientos module (magic-byte upload, versioned history) + catalogo-hc indicaciones endpoint
+- [ ] 53-03-PLAN.md — Frontend: "Consentimientos" tab in Configuración (per-zona consent PDF upload + indicaciones URL) with types + TanStack Query hooks
 
 ### Phase 54: Portal Backend + Token Security
 **Goal**: El backend del portal de autogestión está operativo: cada paciente tiene un link persistente cuyo token está SHA-256 hasheado en la BD, los endpoints públicos usan DTOs estrictos que protegen campos clínicos y los datos de salud se almacenan staged sin tocar los registros curados.

@@ -30,6 +30,10 @@ import { WsaaModule } from './modules/wsaa/wsaa.module';
 import { AfipConfigModule } from './modules/afip-config/afip-config.module';
 import { OrdenesConsumoModule } from './modules/ordenes-consumo/ordenes-consumo.module';
 import { CatalogoHCModule } from './modules/catalogo-hc/catalogo-hc.module';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
+import { StorageModule } from './modules/storage/storage.module';
+import { UploadsModule } from './modules/uploads/uploads.module';
 
 @Module({
   imports: [
@@ -37,6 +41,9 @@ import { CatalogoHCModule } from './modules/catalogo-hc/catalogo-hc.module';
       isGlobal: true,
       envFilePath: '.env', // <- carga el .env desde ./backend/.env
     }),
+    // Global rate limiting — D-07: ttl 60s / limit 100 req per IP
+    // Must come before module registration so APP_GUARD applies to all routes
+    ThrottlerModule.forRoot([{ ttl: 60000, limit: 100 }]),
     // BullMQ global Redis connection — must come before WhatsappModule
     BullModule.forRootAsync({
       inject: [ConfigService],
@@ -81,6 +88,13 @@ import { CatalogoHCModule } from './modules/catalogo-hc/catalogo-hc.module';
     AutorizacionesModule,
     WsaaModule,
     AfipConfigModule,
+    StorageModule,
+    UploadsModule,
+  ],
+  providers: [
+    // First global guard in this project — ThrottlerGuard runs for all routes (D-07/INFRA-02)
+    // Existing per-controller JwtRolesGuard remains intact (guards stack)
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
   ],
 })
 export class AppModule implements NestModule {

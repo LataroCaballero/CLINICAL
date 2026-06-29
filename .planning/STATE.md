@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.12
 milestone_name: Prequirúrgico Estructurado + Portal del Paciente
 status: executing
-stopped_at: Phase 53 context gathered
-last_updated: "2026-06-27T20:36:13.061Z"
-last_activity: 2026-06-27 -- Phase 53 planning complete
+stopped_at: Phase 53 Plan 01 complete
+last_updated: "2026-06-29T23:30:00.000Z"
+last_activity: 2026-06-29 -- Phase 53 Plan 01 executed (StorageService + UploadsController + ThrottlerModule)
 progress:
   total_phases: 6
   completed_phases: 2
   total_plans: 15
-  completed_plans: 12
+  completed_plans: 13
   percent: 33
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-25)
 
 **Core value:** Que un cirujano plástico cierre más cirugías — el sistema hace visible qué pacientes seguir, cuándo y cómo, de la manera más automatizada posible
-**Current focus:** Phase 53 — storage + upload + consent config
+**Current focus:** Phase 53 — storage-upload-consent-config
 
 ## Current Position
 
-Phase: 53
-Plan: Not started
-Status: Ready to execute
-Last activity: 2026-06-27 -- Phase 53 planning complete
+Phase: 53 (storage-upload-consent-config) — EXECUTING
+Plan: 2 of 3
+Status: Executing Phase 53
+Last activity: 2026-06-29 -- Phase 53 Plan 01 complete (StorageService + UploadsController + ThrottlerModule)
 
 Progress: [██████████] 100%
 
@@ -57,6 +57,9 @@ Progress: [██████████] 100%
 - [51-02] CHAT-01 + CHAT-02 desplegados atómicamente — flood eliminado y guard activo en la misma release (SC#3)
 - [52-09] D-12 ampliada: portalTokenCifrado persiste raw token AES-256-GCM at-rest; GET portal-link sólo lectura vía obtenerPortalLink; lookups siguen por hash SHA-256 (Gap B cerrado)
 - [52-10] useQuery (no mutation) para GET portal-link en mount; queryClient.setQueryData tras generar exitoso; portal-email.service retorna { enviado, codigo? } — solo error.code SMTP (T-52-12)
+- [53-01] ThrottlerModule.forRoot([{ ttl: 60000, limit: 100 }]) como APP_GUARD global (D-07); strict @Throttle (limit 20/min) en ambas rutas públicas (presupuestos/public + uploads) (D-08)
+- [53-01] StorageService: uploads/{profesionalId}/{uuid}.pdf en disco; resolvePath con guard traversal BadRequestException; sin delete (D-05/D-10/D-13)
+- [53-01] UploadsController: GET /uploads/:profesionalId/:filename público sin @Auth, Content-Disposition: attachment, strict throttle (D-09/D-15)
 
 ### Carry-forward from v1.11
 
@@ -77,6 +80,6 @@ Progress: [██████████] 100%
 
 ## Session Continuity
 
-Last session: 2026-06-26T20:07:56.521Z
-Stopped at: Phase 53 context gathered
-Resume file: .planning/phases/53-storage-upload-consent-config/53-CONTEXT.md
+Last session: 2026-06-29T23:30:00.000Z
+Stopped at: Phase 53 Plan 01 complete
+Resume file: .planning/phases/53-storage-upload-consent-config/53-01-SUMMARY.md

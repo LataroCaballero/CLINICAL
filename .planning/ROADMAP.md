@@ -231,7 +231,7 @@ Full details: `.planning/milestones/v1.11-ROADMAP.md`
 Plans:
 **Wave 1**
 
-- [ ] 53-01-PLAN.md — Backend: StorageService (disk, cloud-ready) + UploadsController (path-traversal guard, attachment) + global ThrottlerModule/APP_GUARD + strict tier on presupuestos/public
+- [x] 53-01-PLAN.md — Backend: StorageService (disk, cloud-ready) + UploadsController (path-traversal guard, attachment) + global ThrottlerModule/APP_GUARD + strict tier on presupuestos/public
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -343,7 +343,7 @@ Plans:
 | 50. HC Completa en PatientSheet | v1.11 | 1/1 | Complete | 2026-06-24 |
 | 51. Schema Foundation + Chat Fix | v1.12 | 2/2 | Complete    | 2026-06-26 |
 | 52. PREOP HC Form + Chip Catalogs | v1.12 | 10/10 | Complete    | 2026-06-26 |
-| 53. Storage + Upload + Consent Config | v1.12 | 0/TBD | Not started | - |
+| 53. Storage + Upload + Consent Config | v1.12 | 1/3 | In progress | 2026-06-29 |
 | 54. Portal Backend + Token Security | v1.12 | 0/TBD | Not started | - |
 | 55. Portal Frontend | v1.12 | 0/TBD | Not started | - |
 | 56. Signed Consent + Chat Badge | v1.12 | 0/TBD | Not started | - |

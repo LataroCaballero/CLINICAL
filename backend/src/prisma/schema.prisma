@@ -946,6 +946,8 @@ model CirugiaCatalogo {
   precioBase      Decimal?        @db.Decimal(10, 2)
   duracionMinutos Int?
   profesionalId   String
+  zonaId          String?
+  zona            ZonaHC?         @relation(fields: [zonaId], references: [id])
   activo          Boolean         @default(true)
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
@@ -954,6 +956,7 @@ model CirugiaCatalogo {
 
   @@unique([nombre, profesionalId])
   @@index([profesionalId, activo])
+  @@index([zonaId])
 }
 
 model CirugiaInsumo {
@@ -1384,13 +1387,30 @@ model ZonaHC {
   esSistema     Boolean         @default(false)
   profesionalId String
   profesional   Profesional     @relation(fields: [profesionalId], references: [id])
-  diagnosticos  DiagnosticoHC[]
-  tratamientos  TratamientoHC[]
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
+  diagnosticos           DiagnosticoHC[]
+  tratamientos           TratamientoHC[]
+  indicacionesUrl        String?
+  consentimientoArchivos ConsentimientoZonaArchivo[]
+  cirugiasCatalogo       CirugiaCatalogo[]
+  createdAt              DateTime        @default(now())
+  updatedAt              DateTime        @updatedAt
 
   @@unique([nombre, profesionalId])
   @@index([profesionalId, activo])
+}
+
+model ConsentimientoZonaArchivo {
+  id             String   @id @default(uuid())
+  zonaId         String
+  zona           ZonaHC   @relation(fields: [zonaId], references: [id], onDelete: Cascade)
+  profesionalId  String
+  path           String
+  nombreOriginal String
+  uploadedAt     DateTime @default(now())
+  vigente        Boolean  @default(true)
+
+  @@index([zonaId, vigente])
+  @@index([profesionalId])
 }
 
 model DiagnosticoHC {

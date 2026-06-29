@@ -30,6 +30,7 @@ import { WsaaModule } from './modules/wsaa/wsaa.module';
 import { AfipConfigModule } from './modules/afip-config/afip-config.module';
 import { OrdenesConsumoModule } from './modules/ordenes-consumo/ordenes-consumo.module';
 import { CatalogoHCModule } from './modules/catalogo-hc/catalogo-hc.module';
+import { ConsentimientosModule } from './modules/consentimientos/consentimientos.module';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { StorageModule } from './modules/storage/storage.module';
@@ -90,6 +91,7 @@ import { UploadsModule } from './modules/uploads/uploads.module';
     AfipConfigModule,
     StorageModule,
     UploadsModule,
+    ConsentimientosModule,
   ],
   providers: [
     // First global guard in this project — ThrottlerGuard runs for all routes (D-07/INFRA-02)

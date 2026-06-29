@@ -81,7 +81,7 @@ describe('ConsentimientosService', () => {
       );
 
       // $transaction receives an array of promises (Prisma batch transaction)
-      mockPrisma.$transaction.mockImplementation(async (ops: any[]) => {
+      mockPrisma.$transaction.mockImplementation(async () => {
         return [null, createdRow];
       });
 
@@ -99,7 +99,10 @@ describe('ConsentimientosService', () => {
       });
 
       // Assert — storage save called (valid PDF persisted)
-      expect(mockStorage.save).toHaveBeenCalledWith(validPdfBuffer, PROFESIONAL_ID);
+      expect(mockStorage.save).toHaveBeenCalledWith(
+        validPdfBuffer,
+        PROFESIONAL_ID,
+      );
 
       // Assert — transaction includes updateMany (vigente=false) + create (new row)
       expect(mockPrisma.$transaction).toHaveBeenCalled();
@@ -204,7 +207,9 @@ describe('ConsentimientosService', () => {
         }),
       );
       expect(result).toHaveLength(1);
-      expect(result[0].indicacionesUrl).toBe('https://example.com/indicaciones');
+      expect(result[0].indicacionesUrl).toBe(
+        'https://example.com/indicaciones',
+      );
       expect(result[0].consentimientoVigente).not.toBeNull();
       expect(result[0].consentimientoVigente?.path).toBe(savedPath);
     });

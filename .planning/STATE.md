@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.12
 milestone_name: Prequirúrgico Estructurado + Portal del Paciente
 status: executing
-stopped_at: Phase 53 Plan 01 complete
-last_updated: "2026-06-29T23:30:00.000Z"
-last_activity: 2026-06-29 -- Phase 53 Plan 01 executed (StorageService + UploadsController + ThrottlerModule)
+stopped_at: Phase 53 Plan 02 complete
+last_updated: "2026-06-29T23:07:54.007Z"
+last_activity: 2026-06-29
 progress:
   total_phases: 6
   completed_phases: 2
   total_plans: 15
-  completed_plans: 13
+  completed_plans: 14
   percent: 33
 ---
 
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-06-25)
 ## Current Position
 
 Phase: 53 (storage-upload-consent-config) — EXECUTING
-Plan: 2 of 3
-Status: Executing Phase 53
-Last activity: 2026-06-29 -- Phase 53 Plan 01 complete (StorageService + UploadsController + ThrottlerModule)
+Plan: 3 of 3
+Status: Ready to execute
+Last activity: 2026-06-29 -- Phase 53 Plan 02 complete (ConsentimientosModule + indicaciones endpoint + Prisma migration)
 
-Progress: [██████████] 100%
+Progress: [█████████░] 93%
 
 ## Performance Metrics
 
@@ -60,6 +60,10 @@ Progress: [██████████] 100%
 - [53-01] ThrottlerModule.forRoot([{ ttl: 60000, limit: 100 }]) como APP_GUARD global (D-07); strict @Throttle (limit 20/min) en ambas rutas públicas (presupuestos/public + uploads) (D-08)
 - [53-01] StorageService: uploads/{profesionalId}/{uuid}.pdf en disco; resolvePath con guard traversal BadRequestException; sin delete (D-05/D-10/D-13)
 - [53-01] UploadsController: GET /uploads/:profesionalId/:filename público sin @Auth, Content-Disposition: attachment, strict throttle (D-09/D-15)
+- [53-02] ConsentimientosModule: magic-byte %PDF- check en buffer (no mimetype del cliente) antes de StorageService.save — non-PDF → 400 y nada persiste (D-14/INFRA-03/T-53-06)
+- [53-02] ConsentimientoZonaArchivo: version-roll con vigente=false en row anterior + create new vigente row — historial nunca eliminado (D-05/T-53-09)
+- [53-02] PATCH /catalogo-hc/zonas/:id/indicaciones: @IsUrl + @MaxLength(2048) + @ValidateIf(null) para permitir limpieza; ownership guard en service (CONS-02/T-53-11)
+- [53-02] Migración aplicada via prisma diff+db execute+resolve (mismo patrón Phase 51 — pgBouncer Supabase bloquea migrate dev con drift)
 
 ### Carry-forward from v1.11
 
@@ -80,6 +84,6 @@ Progress: [██████████] 100%
 
 ## Session Continuity
 
-Last session: 2026-06-29T23:30:00.000Z
+Last session: 2026-06-29T23:07:54.003Z
 Stopped at: Phase 53 Plan 01 complete
-Resume file: .planning/phases/53-storage-upload-consent-config/53-01-SUMMARY.md
+Resume file: None

@@ -33,8 +33,8 @@ Requisitos del milestone v1.12. Cada uno mapea a una fase del roadmap.
 
 ### Consentimiento e Indicaciones (CONS)
 
-- [ ] **CONS-01**: El médico puede subir un PDF de consentimiento desde Configuración (upload a disco local, servido vía `BACKEND_URL`)
-- [ ] **CONS-02**: El médico puede cargar links de indicaciones por procedimiento desde Configuración
+- [x] **CONS-01**: El médico puede subir un PDF de consentimiento desde Configuración (upload a disco local, servido vía `BACKEND_URL`)
+- [x] **CONS-02**: El médico puede cargar links de indicaciones por procedimiento desde Configuración
 - [ ] **CONS-03**: En el portal, el paciente puede ver y descargar el PDF de consentimiento subido por el médico
 - [ ] **CONS-04**: El paciente firma el consentimiento dibujando su firma (signature pad), con fallback si el dispositivo no lo soporta
 - [ ] **CONS-05**: La firma dibujada se estampa en el PDF del consentimiento, generando un PDF firmado que se archiva como artefacto legal (separado del template original)
@@ -53,7 +53,7 @@ Requisitos del milestone v1.12. Cada uno mapea a una fase del roadmap.
 
 - [ ] **INFRA-01**: Existe un `StorageService` de almacenamiento de archivos con backend en disco local, diseñado para poder cambiar a cloud storage (S3/Supabase) más adelante sin reescribir consumidores
 - [ ] **INFRA-02**: Los endpoints públicos del portal (y del portal de presupuestos existente) están protegidos con rate limiting (`ThrottlerModule` cableado)
-- [ ] **INFRA-03**: El upload de archivos valida tipo MIME y tamaño y previene path traversal; los archivos se sirven de forma segura
+- [x] **INFRA-03**: El upload de archivos valida tipo MIME y tamaño y previene path traversal; los archivos se sirven de forma segura
 
 ## v2 Requirements
 
@@ -102,9 +102,9 @@ Qué fases cubren qué requisitos.
 | PREOP-12 | Phase 52 | Complete |
 | INFRA-01 | Phase 53 | Pending |
 | INFRA-02 | Phase 53 | Pending |
-| INFRA-03 | Phase 53 | Pending |
-| CONS-01 | Phase 53 | Pending |
-| CONS-02 | Phase 53 | Pending |
+| INFRA-03 | Phase 53 | Complete |
+| CONS-01 | Phase 53 | Complete |
+| CONS-02 | Phase 53 | Complete |
 | PORTAL-01 | Phase 54 | Pending |
 | PORTAL-04 | Phase 54 | Pending |
 | PORTAL-06 | Phase 54 | Pending |

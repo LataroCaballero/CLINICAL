@@ -290,13 +290,16 @@ export class CatalogoHCService {
    * Returns active rows ordered by esSistema desc then nombre asc.
    * On first access (empty catalog), seeds from SEED_ANTECEDENTES.
    */
-  async getAntecedentesConSeed(
-    profesionalId: string,
-  ): Promise<{ id: string; nombre: string; esSistema: boolean; activo: boolean; profesionalId: string }[]> {
-    const order = [
-      { esSistema: 'desc' as const },
-      { nombre: 'asc' as const },
-    ];
+  async getAntecedentesConSeed(profesionalId: string): Promise<
+    {
+      id: string;
+      nombre: string;
+      esSistema: boolean;
+      activo: boolean;
+      profesionalId: string;
+    }[]
+  > {
+    const order = [{ esSistema: 'desc' as const }, { nombre: 'asc' as const }];
     let items = await this.prisma.antecedenteCatalogoPro.findMany({
       where: { profesionalId, activo: true },
       orderBy: order,
@@ -314,13 +317,16 @@ export class CatalogoHCService {
   /**
    * Lazy-seed list getter for alergias.
    */
-  async getAlergiasConSeed(
-    profesionalId: string,
-  ): Promise<{ id: string; nombre: string; esSistema: boolean; activo: boolean; profesionalId: string }[]> {
-    const order = [
-      { esSistema: 'desc' as const },
-      { nombre: 'asc' as const },
-    ];
+  async getAlergiasConSeed(profesionalId: string): Promise<
+    {
+      id: string;
+      nombre: string;
+      esSistema: boolean;
+      activo: boolean;
+      profesionalId: string;
+    }[]
+  > {
+    const order = [{ esSistema: 'desc' as const }, { nombre: 'asc' as const }];
     let items = await this.prisma.alergiaCatalogoPro.findMany({
       where: { profesionalId, activo: true },
       orderBy: order,
@@ -338,13 +344,16 @@ export class CatalogoHCService {
   /**
    * Lazy-seed list getter for medicamentos.
    */
-  async getMedicamentosConSeed(
-    profesionalId: string,
-  ): Promise<{ id: string; nombre: string; esSistema: boolean; activo: boolean; profesionalId: string }[]> {
-    const order = [
-      { esSistema: 'desc' as const },
-      { nombre: 'asc' as const },
-    ];
+  async getMedicamentosConSeed(profesionalId: string): Promise<
+    {
+      id: string;
+      nombre: string;
+      esSistema: boolean;
+      activo: boolean;
+      profesionalId: string;
+    }[]
+  > {
+    const order = [{ esSistema: 'desc' as const }, { nombre: 'asc' as const }];
     let items = await this.prisma.medicamentoCatalogoPro.findMany({
       where: { profesionalId, activo: true },
       orderBy: order,
@@ -373,13 +382,18 @@ export class CatalogoHCService {
   private async aprenderDesdeFlat(
     profesionalId: string,
     nombres: string[],
-    modelo: 'antecedenteCatalogoPro' | 'alergiaCatalogoPro' | 'medicamentoCatalogoPro',
+    modelo:
+      | 'antecedenteCatalogoPro'
+      | 'alergiaCatalogoPro'
+      | 'medicamentoCatalogoPro',
   ): Promise<void> {
     if (nombres.length === 0) return;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const delegate = (this.prisma as any)[modelo] as {
-      findMany: (args: any) => Promise<{ id: string; nombre: string; activo: boolean }[]>;
+      findMany: (
+        args: any,
+      ) => Promise<{ id: string; nombre: string; activo: boolean }[]>;
       create: (args: any) => Promise<unknown>;
       updateMany: (args: any) => Promise<{ count: number }>;
     };
@@ -391,7 +405,10 @@ export class CatalogoHCService {
 
     const normMap = new Map<string, { id: string; activo: boolean }>();
     for (const row of snapshot) {
-      normMap.set(normalizarNombre(row.nombre), { id: row.id, activo: row.activo });
+      normMap.set(normalizarNombre(row.nombre), {
+        id: row.id,
+        activo: row.activo,
+      });
     }
 
     const toReactivate: string[] = [];
@@ -732,6 +749,27 @@ export class CatalogoHCService {
       }
       throw err;
     }
+  }
+
+  /**
+   * Saves or clears the indicacionesUrl for a ZonaHC (CONS-02).
+   * Ownership guard mirrors renombrarZona: NotFoundException for non-owned or missing zona.
+   * profesionalId comes from JWT scope — never from request body (T-53-08).
+   * Allows null to clear the URL (D-02 / T-53-11 @IsUrl validated in DTO).
+   */
+  async actualizarIndicacionesUrl(
+    profesionalId: string,
+    zonaId: string,
+    indicacionesUrl: string | null,
+  ) {
+    const zona = await this.prisma.zonaHC.findUnique({ where: { id: zonaId } });
+    if (!zona || zona.profesionalId !== profesionalId) {
+      throw new NotFoundException('Zona no encontrada');
+    }
+    return this.prisma.zonaHC.update({
+      where: { id: zonaId },
+      data: { indicacionesUrl },
+    });
   }
 
   /**

@@ -113,10 +113,10 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 **Milestone v1.12** (ver `.planning/REQUIREMENTS.md` — 33 requisitos):
 - [ ] Plantilla HC Prequirúrgico estructurada: secciones paso a paso, chips de antecedentes/alergias/medicación con learning, estudios complementarios, check de consentimiento informado, compartir link (PREOP-01..12)
 - [ ] Portal de autogestión del paciente por token persistente: datos básicos + auto-reporte de salud staged (PORTAL-01..06)
-- [ ] Consentimiento: upload de PDF desde Configuración, firma dibujada estampada en PDF firmado, auditoría forense, indicaciones por link (CONS-01..08)
+- [~] Consentimiento: upload de PDF desde Configuración, firma dibujada estampada en PDF firmado, auditoría forense, indicaciones por link (CONS-01..08) — CONS-01 (upload PDF magic-byte validado) y CONS-02 (indicaciones por link) validados en Phase 53; firma/forense (CONS-03..08) pendientes (Phase 56)
 - [~] Limpieza de chat (fix del spam de seguimiento + dedupe) y caja de consultas del paciente (CHAT-01..04) — CHAT-01 (dedupe guard) y CHAT-02 (cleanup del flood) validados en Phase 51; caja de consultas (CHAT-03/04) pendiente
 - [x] Schema foundation completo del milestone v1.12 (catálogos preop, columnas portal/staging, estudios complementarios, guard fields) en una migración big-bang — Phase 51
-- [ ] Infraestructura: StorageService en disco local (cloud-ready), rate limiting, validación de upload (INFRA-01..03)
+- [x] Infraestructura: StorageService en disco local (cloud-ready), rate limiting, validación de upload (INFRA-01..03) — validado en Phase 53
 
 **Diferido (no en v1.12):**
 - [ ] Automatizaciones de seguimiento: triggers basados en tiempo/etapa (ej. "30 días sin respuesta → mensaje automático")
@@ -315,4 +315,5 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-06-26 — Phase 51 (Schema Foundation + Chat Fix) complete: milestone schema migrated, scheduler spam fixed (CHAT-01/CHAT-02)*
+*Last updated: 2026-06-30 — Phase 53 (Storage + Upload + Consent Config) complete: StorageService cloud-ready, upload PDF seguro (magic-byte + path-traversal), ThrottlerModule global, tab Consentimientos + indicaciones por link (INFRA-01..03, CONS-01/02). Pre-Phase-54 blocker abierto: CR-01 (validación server-side de indicacionesUrl) — ver .planning/todos/pending/*
+*

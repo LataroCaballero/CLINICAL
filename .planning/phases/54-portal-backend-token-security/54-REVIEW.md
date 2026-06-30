@@ -20,7 +20,8 @@ findings:
   warning: 2
   info: 3
   total: 6
-status: issues_found
+status: resolved
+resolution: "CR-01 (BLOCKER), WR-01, WR-02 fixed in commit ed568d8 with 4 regression specs (portal spec 15/15, build clean). INFO items left as advisory."
 ---
 
 # Phase 54: Code Review Report

@@ -217,6 +217,8 @@ model Paciente {
   portalToken                       String?                  @unique // SHA-256 hash, never plaintext (PITFALL 1)
   portalTokenGeneradoAt             DateTime?
   portalTokenCifrado                String? // raw portal token cifrado AES-256-GCM (recuperable); lookup sigue por portalToken hash (amplía D-12)
+  portalIntentosFallidos            Int                      @default(0) // brute-force counter (D-01)
+  portalBloqueadoHasta              DateTime? // lock window expiry; > now ⇒ 429 (D-01/D-02)
   // Staging fields — written only by the future patient portal (PITFALL 13)
   alergiasAutoReportadas            String[]
   antecedentesAutoReportados        Json?

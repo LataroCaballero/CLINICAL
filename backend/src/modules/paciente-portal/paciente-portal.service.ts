@@ -184,6 +184,12 @@ export class PacientePortalService {
     }
 
     // (3) Normalize input exactly as presupuestos.service (D-04).
+    // WR-01: the public `verificar` body is unvalidated (no DTO/ValidationPipe),
+    // so a non-string `dni` (e.g. `{ "dni": {} }`) would throw on `.trim()` and
+    // surface as a 500. Treat any non-string as a wrong DNI (401), never a crash.
+    if (typeof dni !== 'string') {
+      throw new UnauthorizedException('DNI incorrecto');
+    }
     const dniInput = dni.trim().replace(/\s/g, '').replace(/\./g, '');
 
     if (dniInput.toLowerCase() !== dniStored.toLowerCase()) {
@@ -242,9 +248,22 @@ export class PacientePortalService {
       'contactoEmergenciaTelefono',
       'contactoEmergenciaRelacion',
     ]);
+    // CR-01: a bare `update` returns the FULL Paciente row by default (token
+    // cifrado, curated clinical arrays, CRM columns) — the same data getDatos
+    // deliberately hides. Mirror getDatos' safe contact subset so the 200 PATCH
+    // response can never leak protected fields (SC#4, D-08/D-09).
     return this.prisma.paciente.update({
       where: { id: pacienteId },
       data,
+      select: {
+        telefono: true,
+        telefonoAlternativo: true,
+        email: true,
+        direccion: true,
+        contactoEmergenciaNombre: true,
+        contactoEmergenciaTelefono: true,
+        contactoEmergenciaRelacion: true,
+      },
     });
   }
 
@@ -261,9 +280,18 @@ export class PacientePortalService {
       'medicacionAutoReportada',
       'tratamientosPreviosAutoReportados',
     ]);
+    // CR-01: scope the returned payload to the four staged keys only — a bare
+    // `update` would echo back the curated clinical/CRM/token columns the portal
+    // exists to protect (SC#4, D-08/D-09).
     return this.prisma.paciente.update({
       where: { id: pacienteId },
       data,
+      select: {
+        alergiasAutoReportadas: true,
+        antecedentesAutoReportados: true,
+        medicacionAutoReportada: true,
+        tratamientosPreviosAutoReportados: true,
+      },
     });
   }
 
@@ -279,7 +307,10 @@ export class PacientePortalService {
     const data: Record<string, unknown> = {};
     for (const key of allowed) {
       const value = (input as Record<string, unknown>)[key];
-      if (value !== undefined) data[key] = value;
+      // WR-02: `@IsOptional()` lets an explicit `null` pass DTO validation, but
+      // forwarding `null` into a non-nullable column (e.g. `telefono`) throws at
+      // the DB layer (500). Treat `null` like an absent field — no change.
+      if (value !== undefined && value !== null) data[key] = value;
     }
     return data;
   }

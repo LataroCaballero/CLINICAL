@@ -229,6 +229,30 @@ describe('PacientePortalService', () => {
       expect(data).not.toHaveProperty('obraSocialId');
       expect(data).not.toHaveProperty('etapaCRM');
     });
+
+    it('CR-01: scopes the returned payload via select to safe contact fields only', async () => {
+      await service.updateContacto(PAC_ID, { telefono: '111' } as never);
+
+      const select = mockPrisma.paciente.update.mock.calls[0][0].select;
+      expect(select).toBeDefined();
+      // never echo back protected columns the portal exists to hide
+      expect(select).not.toHaveProperty('portalToken');
+      expect(select).not.toHaveProperty('portalTokenCifrado');
+      expect(select).not.toHaveProperty('etapaCRM');
+      expect(select).not.toHaveProperty('alergias');
+      expect(select.telefono).toBe(true);
+    });
+
+    it('WR-02: drops an explicit null so it never reaches a non-nullable column', async () => {
+      await service.updateContacto(PAC_ID, {
+        telefono: null,
+        email: 'a@b.com',
+      } as never);
+
+      const data = mockPrisma.paciente.update.mock.calls[0][0].data;
+      expect(data).toEqual({ email: 'a@b.com' });
+      expect(data).not.toHaveProperty('telefono');
+    });
   });
 
   describe('updateSaludStaged', () => {
@@ -252,6 +276,35 @@ describe('PacientePortalService', () => {
       expect(data).not.toHaveProperty('alergias');
       expect(data).not.toHaveProperty('condiciones');
       expect(data).not.toHaveProperty('medicacion');
+    });
+
+    it('CR-01: scopes the returned payload via select to the four staged keys only', async () => {
+      await service.updateSaludStaged(PAC_ID, {
+        alergiasAutoReportadas: ['polen'],
+      } as never);
+
+      const select = mockPrisma.paciente.update.mock.calls[0][0].select;
+      expect(select).toEqual({
+        alergiasAutoReportadas: true,
+        antecedentesAutoReportados: true,
+        medicacionAutoReportada: true,
+        tratamientosPreviosAutoReportados: true,
+      });
+      expect(select).not.toHaveProperty('alergias');
+      expect(select).not.toHaveProperty('portalTokenCifrado');
+    });
+  });
+
+  describe('verificar — malformed input (WR-01)', () => {
+    it('rejects a non-string DNI as 401 instead of throwing a 500', async () => {
+      mockPrisma.paciente.findUnique.mockResolvedValue({
+        ...basePaciente,
+        portalIntentosFallidos: 0,
+        portalBloqueadoHasta: null,
+      });
+      await expect(
+        service.verificar(RAW_TOKEN, {} as never),
+      ).rejects.toBeInstanceOf(UnauthorizedException);
     });
   });
 });

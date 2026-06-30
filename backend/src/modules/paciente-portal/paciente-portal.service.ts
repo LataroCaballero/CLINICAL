@@ -1,4 +1,10 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as crypto from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -134,5 +140,100 @@ export class PacientePortalService {
         tratamientosPreviosAutoReportados: paciente.tratamientosPreviosAutoReportados,
       },
     };
+  }
+
+  /**
+   * DNI verification with a persistent brute-force lock + portal-JWT emission
+   * (Plan 03 `@Post(':token/verificar')`, PORTAL-01).
+   *
+   * Lock is the **block-duration model** (D-03): with only the two columns
+   * `portalIntentosFallidos` + `portalBloqueadoHasta` (no per-attempt timestamp)
+   * a true rolling window is impossible — instead 3 consecutive failures set a
+   * single 15-min block, and a fresh 3 attempts are granted only once the block
+   * has expired. The counter is reset to 0 ONLY when a prior block has just
+   * expired (`portalBloqueadoHasta` is SET AND `< now`) — never on the `null`
+   * case, otherwise attempts 1-2 would zero the counter and 429 would be dead code.
+   */
+  async verificar(rawToken: string, dni: string): Promise<string> {
+    const paciente = await this.findByRawToken(rawToken);
+    const now = Date.now();
+
+    // (1) Active block → 429 immediately, before any DNI comparison (D-01/D-02).
+    if (
+      paciente.portalBloqueadoHasta &&
+      paciente.portalBloqueadoHasta.getTime() > now
+    ) {
+      throw this.bloqueadoException(paciente.portalBloqueadoHasta);
+    }
+
+    // (2) No-DNI edge case: a blank stored DNI must NOT match a blank input (T-54-07).
+    const dniStored = (paciente.dni ?? '')
+      .trim()
+      .replace(/\s/g, '')
+      .replace(/\./g, '');
+    if (dniStored === '') {
+      throw new UnauthorizedException('DNI incorrecto');
+    }
+
+    // (3) Normalize input exactly as presupuestos.service (D-04).
+    const dniInput = dni.trim().replace(/\s/g, '').replace(/\./g, '');
+
+    if (dniInput.toLowerCase() !== dniStored.toLowerCase()) {
+      // (4) Mismatch. Reset the counter ONLY when a prior block has just expired.
+      const blockExpired =
+        !!paciente.portalBloqueadoHasta &&
+        paciente.portalBloqueadoHasta.getTime() < now;
+      const base = blockExpired ? 0 : paciente.portalIntentosFallidos;
+      const nuevoIntentos = base + 1;
+
+      if (nuevoIntentos >= PacientePortalService.MAX_INTENTOS) {
+        const bloqueadoHasta = new Date(now + PacientePortalService.BLOQUEO_MS);
+        await this.prisma.paciente.update({
+          where: { id: paciente.id },
+          data: {
+            portalIntentosFallidos: nuevoIntentos,
+            portalBloqueadoHasta: bloqueadoHasta,
+          },
+        });
+        throw this.bloqueadoException(bloqueadoHasta);
+      }
+
+      await this.prisma.paciente.update({
+        where: { id: paciente.id },
+        data: {
+          portalIntentosFallidos: nuevoIntentos,
+          portalBloqueadoHasta: null,
+        },
+      });
+      throw new UnauthorizedException('DNI incorrecto');
+    }
+
+    // (5) Match → reset counter, clear block, emit a short portal-scoped JWT (D-03/D-05).
+    await this.prisma.paciente.update({
+      where: { id: paciente.id },
+      data: { portalIntentosFallidos: 0, portalBloqueadoHasta: null },
+    });
+    return this.jwt.sign(
+      { sub: paciente.id, scope: 'portal-paciente' },
+      { expiresIn: '45m' },
+    );
+  }
+
+  /** 429 response for an active brute-force block (D). */
+  private bloqueadoException(bloqueadoHasta: Date): HttpException {
+    const retryAfter = Math.max(
+      0,
+      Math.ceil((bloqueadoHasta.getTime() - Date.now()) / 1000),
+    );
+    return new HttpException(
+      {
+        statusCode: HttpStatus.TOO_MANY_REQUESTS,
+        message:
+          'Demasiados intentos fallidos. Volvé a intentar en unos minutos.',
+        bloqueadoHasta,
+        retryAfter,
+      },
+      HttpStatus.TOO_MANY_REQUESTS,
+    );
   }
 }

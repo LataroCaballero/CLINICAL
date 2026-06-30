@@ -1,6 +1,23 @@
-import { Controller, Get, Post, Param, Body } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Param,
+  Body,
+  Req,
+  UseGuards,
+  ValidationPipe,
+} from '@nestjs/common';
+import { Request } from 'express';
 import { Throttle } from '@nestjs/throttler';
 import { PacientePortalService } from './paciente-portal.service';
+import { PortalJwtGuard } from './guards/portal-jwt.guard';
+import { UpdateContactoPortalDto } from './dto/update-contacto-portal.dto';
+import { UpdateSaludStagedDto } from './dto/update-salud-staged.dto';
+
+/** Shape the portal-jwt strategy attaches to `req.user` (scope from JWT, never body). */
+type PortalRequest = Request & { user: { pacienteId: string } };
 
 /**
  * Patient-portal HTTP surface.
@@ -41,5 +58,50 @@ export class PacientePortalController {
   @Post(':token/verificar')
   verificar(@Param('token') token: string, @Body() body: { dni: string }) {
     return this.service.verificar(token, body.dni);
+  }
+
+  /**
+   * Authenticated read (D-08/D-09). `pacienteId` comes from the verified portal
+   * JWT (`req.user`), NEVER from the URL or body (pitfall 12, T-54-11). Returns
+   * editable contact + read-only context + staged `*AutoReportad*` values.
+   */
+  @UseGuards(PortalJwtGuard)
+  @Get()
+  getDatos(@Req() req: PortalRequest) {
+    return this.service.getDatos(req.user.pacienteId);
+  }
+
+  /**
+   * Confined contact update (PORTAL-04, D-11/D-12). The explicit per-route
+   * `new ValidationPipe({ whitelist: true })` is the load-bearing SC#3 guard —
+   * there is NO global ValidationPipe in this project, so without it the narrow
+   * DTO would be decorative. Whitelist-only (the reject-on-extra option is
+   * deliberately omitted): prohibited fields (alergias / etapaCRM / dni /
+   * obraSocialId ...) are SILENTLY stripped, the request still returns 200 (D-12).
+   */
+  @UseGuards(PortalJwtGuard)
+  @Patch('datos-personales')
+  updateContacto(
+    @Req() req: PortalRequest,
+    @Body(new ValidationPipe({ whitelist: true }))
+    dto: UpdateContactoPortalDto,
+  ) {
+    return this.service.updateContacto(req.user.pacienteId, dto);
+  }
+
+  /**
+   * Confined staged-health write (PORTAL-06, D-13). Same explicit per-route
+   * `new ValidationPipe({ whitelist: true })` (whitelist-only, reject-on-extra
+   * omitted) — only the four `*AutoReportad*` staging keys survive; any clinical field
+   * injected in the body is silently dropped (200), never written (SC#3/SC#4).
+   */
+  @UseGuards(PortalJwtGuard)
+  @Patch('salud')
+  updateSaludStaged(
+    @Req() req: PortalRequest,
+    @Body(new ValidationPipe({ whitelist: true }))
+    dto: UpdateSaludStagedDto,
+  ) {
+    return this.service.updateSaludStaged(req.user.pacienteId, dto);
   }
 }

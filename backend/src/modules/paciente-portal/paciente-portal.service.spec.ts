@@ -95,10 +95,12 @@ describe('PacientePortalService', () => {
         portalIntentosFallidos: 0,
         portalBloqueadoHasta: null,
       });
-      await expect(service.verificar(RAW_TOKEN, '99999999')).rejects.toBeInstanceOf(
-        UnauthorizedException,
-      );
-      expect(mockPrisma.paciente.update.mock.calls[0][0].data.portalIntentosFallidos).toBe(1);
+      await expect(
+        service.verificar(RAW_TOKEN, '99999999'),
+      ).rejects.toBeInstanceOf(UnauthorizedException);
+      expect(
+        mockPrisma.paciente.update.mock.calls[0][0].data.portalIntentosFallidos,
+      ).toBe(1);
 
       // 2nd failure: counter 1 → 2 (NOT reset back to 1)
       mockPrisma.paciente.findUnique.mockResolvedValueOnce({
@@ -106,10 +108,12 @@ describe('PacientePortalService', () => {
         portalIntentosFallidos: 1,
         portalBloqueadoHasta: null,
       });
-      await expect(service.verificar(RAW_TOKEN, '99999999')).rejects.toBeInstanceOf(
-        UnauthorizedException,
-      );
-      expect(mockPrisma.paciente.update.mock.calls[1][0].data.portalIntentosFallidos).toBe(2);
+      await expect(
+        service.verificar(RAW_TOKEN, '99999999'),
+      ).rejects.toBeInstanceOf(UnauthorizedException);
+      expect(
+        mockPrisma.paciente.update.mock.calls[1][0].data.portalIntentosFallidos,
+      ).toBe(2);
     });
 
     it('3rd consecutive wrong DNI sets a ~15-min block and throws 429', async () => {
@@ -126,7 +130,9 @@ describe('PacientePortalService', () => {
         thrown = e;
       }
       expect(thrown).toBeInstanceOf(HttpException);
-      expect((thrown as HttpException).getStatus()).toBe(HttpStatus.TOO_MANY_REQUESTS);
+      expect((thrown as HttpException).getStatus()).toBe(
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
 
       const data = mockPrisma.paciente.update.mock.calls[0][0].data;
       expect(data.portalIntentosFallidos).toBe(3);
@@ -148,7 +154,9 @@ describe('PacientePortalService', () => {
         thrown = e;
       }
       expect(thrown).toBeInstanceOf(HttpException);
-      expect((thrown as HttpException).getStatus()).toBe(HttpStatus.TOO_MANY_REQUESTS);
+      expect((thrown as HttpException).getStatus()).toBe(
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
       expect(mockPrisma.paciente.update).not.toHaveBeenCalled();
     });
 
@@ -158,9 +166,9 @@ describe('PacientePortalService', () => {
         portalIntentosFallidos: 3,
         portalBloqueadoHasta: new Date(Date.now() - 60_000), // expired
       });
-      await expect(service.verificar(RAW_TOKEN, '99999999')).rejects.toBeInstanceOf(
-        UnauthorizedException,
-      );
+      await expect(
+        service.verificar(RAW_TOKEN, '99999999'),
+      ).rejects.toBeInstanceOf(UnauthorizedException);
       const data = mockPrisma.paciente.update.mock.calls[0][0].data;
       expect(data.portalIntentosFallidos).toBe(1); // reset from 3 → fresh attempt 1
       expect(data.portalBloqueadoHasta).toBeNull();
@@ -197,6 +205,53 @@ describe('PacientePortalService', () => {
         UnauthorizedException,
       );
       expect(mockPrisma.paciente.update).not.toHaveBeenCalled();
+    });
+  });
+
+  // ── confined write methods ──────────────────────────────────────────────────
+
+  describe('updateContacto', () => {
+    it('forwards only contact keys to the prisma update data object', async () => {
+      const dto = {
+        telefono: '111',
+        email: 'a@b.com',
+        // attacker-injected non-contact keys (defense in depth — no pipe in test)
+        dni: '99999999',
+        obraSocialId: 'os-evil',
+        etapaCRM: 'GANADO',
+      } as never;
+
+      await service.updateContacto(PAC_ID, dto);
+
+      const data = mockPrisma.paciente.update.mock.calls[0][0].data;
+      expect(data).toEqual({ telefono: '111', email: 'a@b.com' });
+      expect(data).not.toHaveProperty('dni');
+      expect(data).not.toHaveProperty('obraSocialId');
+      expect(data).not.toHaveProperty('etapaCRM');
+    });
+  });
+
+  describe('updateSaludStaged', () => {
+    it('writes only the *AutoReportad* staging keys, never curated clinical fields', async () => {
+      const dto = {
+        alergiasAutoReportadas: ['polen'],
+        medicacionAutoReportada: ['ibuprofeno'],
+        // attacker-injected curated clinical keys must NOT reach prisma (SC#4)
+        alergias: ['curated'],
+        condiciones: ['curated'],
+        medicacion: ['curated'],
+      } as never;
+
+      await service.updateSaludStaged(PAC_ID, dto);
+
+      const data = mockPrisma.paciente.update.mock.calls[0][0].data;
+      expect(data).toEqual({
+        alergiasAutoReportadas: ['polen'],
+        medicacionAutoReportada: ['ibuprofeno'],
+      });
+      expect(data).not.toHaveProperty('alergias');
+      expect(data).not.toHaveProperty('condiciones');
+      expect(data).not.toHaveProperty('medicacion');
     });
   });
 });

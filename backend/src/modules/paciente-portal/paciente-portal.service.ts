@@ -8,6 +8,8 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import * as crypto from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
+import { UpdateContactoPortalDto } from './dto/update-contacto-portal.dto';
+import { UpdateSaludStagedDto } from './dto/update-salud-staged.dto';
 
 /**
  * Patient-portal service: hash-based token lookup, DNI verification with a
@@ -64,7 +66,9 @@ export class PacientePortalService {
    * (200) plus a `bloqueado` flag for the 429 UX — NO name, NO patient data (D-07).
    * An unknown token surfaces as 404 from `findByRawToken`.
    */
-  async preVerify(rawToken: string): Promise<{ existe: true; bloqueado: boolean }> {
+  async preVerify(
+    rawToken: string,
+  ): Promise<{ existe: true; bloqueado: boolean }> {
     const paciente = await this.findByRawToken(rawToken);
     const bloqueado =
       !!paciente.portalBloqueadoHasta &&
@@ -120,7 +124,10 @@ export class PacientePortalService {
       dni: paciente.dni,
       obraSocial: paciente.obraSocial?.nombre ?? null,
       proximaCirugia: proximaCirugia
-        ? { fecha: proximaCirugia.fecha, procedimiento: proximaCirugia.procedimiento }
+        ? {
+            fecha: proximaCirugia.fecha,
+            procedimiento: proximaCirugia.procedimiento,
+          }
         : null,
       // editable contact
       contacto: {
@@ -137,7 +144,8 @@ export class PacientePortalService {
         alergiasAutoReportadas: paciente.alergiasAutoReportadas,
         antecedentesAutoReportados: paciente.antecedentesAutoReportados,
         medicacionAutoReportada: paciente.medicacionAutoReportada,
-        tratamientosPreviosAutoReportados: paciente.tratamientosPreviosAutoReportados,
+        tratamientosPreviosAutoReportados:
+          paciente.tratamientosPreviosAutoReportados,
       },
     };
   }
@@ -217,6 +225,63 @@ export class PacientePortalService {
       { sub: paciente.id, scope: 'portal-paciente' },
       { expiresIn: '45m' },
     );
+  }
+
+  /**
+   * Confined contact write (Plan 03 JWT-guarded `@Patch`, PORTAL-03 backend, D-11).
+   * The prisma `data` object is built from an explicit allow-list of contact keys,
+   * so no identity / clinical / insurance / CRM field can ever be mass-assigned.
+   */
+  async updateContacto(pacienteId: string, dto: UpdateContactoPortalDto) {
+    const data = this.pickPresent(dto, [
+      'telefono',
+      'telefonoAlternativo',
+      'email',
+      'direccion',
+      'contactoEmergenciaNombre',
+      'contactoEmergenciaTelefono',
+      'contactoEmergenciaRelacion',
+    ]);
+    return this.prisma.paciente.update({
+      where: { id: pacienteId },
+      data,
+    });
+  }
+
+  /**
+   * Confined staged-health write (Plan 03 JWT-guarded route, PORTAL-06, D-13).
+   * The prisma `data` object contains ONLY the four `*AutoReportad*` staging keys.
+   * Curated staff-only clinical arrays are never present here — a patient
+   * self-report can never overwrite curated clinical data (T-54-06/SC#4).
+   */
+  async updateSaludStaged(pacienteId: string, dto: UpdateSaludStagedDto) {
+    const data = this.pickPresent(dto, [
+      'alergiasAutoReportadas',
+      'antecedentesAutoReportados',
+      'medicacionAutoReportada',
+      'tratamientosPreviosAutoReportados',
+    ]);
+    return this.prisma.paciente.update({
+      where: { id: pacienteId },
+      data,
+    });
+  }
+
+  /**
+   * Defense in depth: build a prisma `data` object from ONLY the allow-listed
+   * keys that are actually present (not `undefined`) on the input — extra keys
+   * passed at runtime are dropped even if the per-route ValidationPipe is absent.
+   */
+  private pickPresent<T extends object>(
+    input: T,
+    allowed: readonly string[],
+  ): Record<string, unknown> {
+    const data: Record<string, unknown> = {};
+    for (const key of allowed) {
+      const value = (input as Record<string, unknown>)[key];
+      if (value !== undefined) data[key] = value;
+    }
+    return data;
   }
 
   /** 429 response for an active brute-force block (D). */

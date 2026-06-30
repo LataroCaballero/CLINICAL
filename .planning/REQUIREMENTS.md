@@ -51,8 +51,8 @@ Requisitos del milestone v1.12. Cada uno mapea a una fase del roadmap.
 
 ### Infraestructura (INFRA)
 
-- [ ] **INFRA-01**: Existe un `StorageService` de almacenamiento de archivos con backend en disco local, diseñado para poder cambiar a cloud storage (S3/Supabase) más adelante sin reescribir consumidores
-- [ ] **INFRA-02**: Los endpoints públicos del portal (y del portal de presupuestos existente) están protegidos con rate limiting (`ThrottlerModule` cableado)
+- [x] **INFRA-01**: Existe un `StorageService` de almacenamiento de archivos con backend en disco local, diseñado para poder cambiar a cloud storage (S3/Supabase) más adelante sin reescribir consumidores
+- [x] **INFRA-02**: Los endpoints públicos del portal (y del portal de presupuestos existente) están protegidos con rate limiting (`ThrottlerModule` cableado)
 - [x] **INFRA-03**: El upload de archivos valida tipo MIME y tamaño y previene path traversal; los archivos se sirven de forma segura
 
 ## v2 Requirements
@@ -100,8 +100,8 @@ Qué fases cubren qué requisitos.
 | PREOP-10 | Phase 52 | Complete |
 | PREOP-11 | Phase 52 | Complete |
 | PREOP-12 | Phase 52 | Complete |
-| INFRA-01 | Phase 53 | Pending |
-| INFRA-02 | Phase 53 | Pending |
+| INFRA-01 | Phase 53 | Complete |
+| INFRA-02 | Phase 53 | Complete |
 | INFRA-03 | Phase 53 | Complete |
 | CONS-01 | Phase 53 | Complete |
 | CONS-02 | Phase 53 | Complete |

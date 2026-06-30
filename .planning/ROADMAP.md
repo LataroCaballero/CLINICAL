@@ -173,7 +173,7 @@ Full details: `.planning/milestones/v1.11-ROADMAP.md`
 - [x] **Phase 51: Schema Foundation + Chat Fix** (2 planes) - Migración schema completa del milestone + fix atómico del spam del scheduler de seguimiento CRM (completed 2026-06-26)
 - [x] **Phase 52: PREOP HC Form + Chip Catalogs** - Formulario estructurado HC Prequirúrgico con chips de antecedentes/alergias/medicación con learning y link compartir portal (completed 2026-06-26)
 - [x] **Phase 53: Storage + Upload + Consent Config** - StorageService (disk local, cloud-ready), upload seguro de PDF de consentimiento, links de indicaciones y rate limiting (completed 2026-06-29)
-- [ ] **Phase 54: Portal Backend + Token Security** - Módulo paciente-portal público, token SHA-256 hasheado, endpoints protegidos con DTOs estrictos
+- [x] **Phase 54: Portal Backend + Token Security** - Módulo paciente-portal público, token SHA-256 hasheado, endpoints protegidos con DTOs estrictos (completed 2026-06-30)
 - [ ] **Phase 55: Portal Frontend** - Wizard mobile-first 4 pasos: datos personales, salud staged, consentimiento placeholder y consultas al médico
 - [ ] **Phase 56: Signed Consent + Chat Badge** - Firma dibujada estampada en PDF con metadata forense legal + badge de origen de mensajes en chat
 
@@ -256,7 +256,7 @@ Plans:
 **Plans**: 3 plans
 - [x] 54-01-PLAN.md — Schema migration (intentos/bloqueo columns) + narrow DTOs + portal-jwt strategy/guard
 - [x] 54-02-PLAN.md — Portal service: hashed token lookup, DNI brute-force lock (429), portal-JWT emission, confined writes
-- [ ] 54-03-PLAN.md — Public + JWT-guarded controller (strict throttle, whitelist pipes) + module/AppModule wiring
+- [x] 54-03-PLAN.md — Public + JWT-guarded controller (strict throttle, whitelist pipes) + module/AppModule wiring
 
 ### Phase 55: Portal Frontend
 
@@ -347,7 +347,7 @@ Plans:
 | 51. Schema Foundation + Chat Fix | v1.12 | 2/2 | Complete    | 2026-06-26 |
 | 52. PREOP HC Form + Chip Catalogs | v1.12 | 10/10 | Complete    | 2026-06-26 |
 | 53. Storage + Upload + Consent Config | v1.12 | 3/3 | Complete    | 2026-06-30 |
-| 54. Portal Backend + Token Security | v1.12 | 2/3 | In Progress|  |
+| 54. Portal Backend + Token Security | v1.12 | 3/3 | Complete   | 2026-06-30 |
 | 55. Portal Frontend | v1.12 | 0/TBD | Not started | - |
 | 56. Signed Consent + Chat Badge | v1.12 | 0/TBD | Not started | - |
 

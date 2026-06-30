@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.12
 milestone_name: Prequirúrgico Estructurado + Portal del Paciente
-status: executing
-stopped_at: Completed 54-01-PLAN.md
-last_updated: "2026-06-30T19:52:13.107Z"
+status: verifying
+stopped_at: Completed 54-03-PLAN.md
+last_updated: "2026-06-30T19:57:21.069Z"
 last_activity: 2026-06-30
 progress:
   total_phases: 6
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 18
-  completed_plans: 17
-  percent: 50
+  completed_plans: 18
+  percent: 67
 ---
 
 # Project State
@@ -27,18 +27,18 @@ See: .planning/PROJECT.md (updated 2026-06-25)
 
 Phase: 54 (portal-backend-token-security) — EXECUTING
 Plan: 3 of 3
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-06-30
 
-Progress: [█████████░] 94%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed this milestone: 0
-- Average duration: —
-- Total execution time: —
+- Total plans completed this milestone: 3 (Phase 54: 54-01, 54-02, 54-03)
+- Average duration: ~4 min/plan
+- Total execution time: ~12 min (54-01 4min + 54-02 5min + 54-03 3min)
 
 *Updated after each plan completion*
 
@@ -67,6 +67,10 @@ Progress: [█████████░] 94%
 - [54-01] Columnas brute-force portalIntentosFallidos (Int default 0) + portalBloqueadoHasta (DateTime?) en Paciente; migración 20260630000000_portal_intentos_bloqueo via diff+db execute+resolve (ALTER TABLE aditivo, no migrate dev) (D-01)
 - [54-01] Strategy NOMBRADA portal-jwt (PassportStrategy(Strategy,'portal-jwt')) + scope-claim gate (scope=portal-paciente, return null→401) mantiene tokens de staff fuera del portal (D-05/T-54-01); ignoreExpiration:false fuerza re-verify DNI (D-06); valida returns { pacienteId } sin cargar Usuario
 - [54-01] DTOs estrechos opcionales (UpdateContactoPortalDto contacto-only / UpdateSaludStagedDto *AutoReportad*-only) como superficie de escritura SC#3/SC#4; whitelist se aplica por-ruta en Plan 03 (NO hay ValidationPipe global)
+- [54-02] Lock brute-force por bloque-de-duración (no rolling window): 3 fallos → bloqueo 15 min → 3 intentos nuevos solo tras expirar; counter resetea sólo cuando portalBloqueadoHasta está SET y < now (evita rama 429 muerta) (D-03)
+- [54-02] pickPresent(input, allowed[]) confina el data de prisma a una allow-list de claves (defense-in-depth junto al whitelist pipe de Plan 03); getDatos nunca selecciona arrays clínicos curados ni columnas CRM (D-08/D-09)
+- [54-03] new ValidationPipe({ whitelist: true }) por-ruta en cada write es el único guard SC#3 de mass-assignment (no hay pipe global); reject-on-extra omitido → campos prohibidos se descartan en silencio (200) (D-12)
+- [54-03] PacientePortalModule registra su propio PassportModule + JwtModule.register({ secret: JWT_SECRET }) (AuthModule @Global no exporta JwtService); rutas públicas sin guard + strict @Throttle 20/min, rutas read/write con PortalJwtGuard y pacienteId desde req.user (pitfall 12)
 
 ### Carry-forward from v1.11
 
@@ -87,6 +91,6 @@ Progress: [█████████░] 94%
 
 ## Session Continuity
 
-Last session: 2026-06-30T19:52:02.405Z
-Stopped at: Completed 54-01-PLAN.md
+Last session: 2026-06-30T19:57:21.066Z
+Stopped at: Completed 54-03-PLAN.md
 Resume file: None

@@ -315,5 +315,5 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-06-30 — Phase 53 (Storage + Upload + Consent Config) complete: StorageService cloud-ready, upload PDF seguro (magic-byte + path-traversal), ThrottlerModule global, tab Consentimientos + indicaciones por link (INFRA-01..03, CONS-01/02). Pre-Phase-54 blocker abierto: CR-01 (validación server-side de indicacionesUrl) — ver .planning/todos/pending/*
+*Last updated: 2026-06-30 — Phase 54 (Portal Backend + Token Security) complete: módulo paciente-portal con token SHA-256 hasheado, lock anti-fuerza-bruta por DNI (3 intentos/15 min) + JWT portal-scoped, lectura clínica-segura y escrituras confinadas (contacto + salud staged) con ValidationPipe por-ruta y respuestas scoped vía select (PORTAL-01/04/06). Verificación 5/5; 3 ítems de UAT humana pendientes (server vivo). **Sigue abierto el blocker crítico CR-01 (stored-XSS: validación server-side de indicacionesUrl en catalogo-hc) — NO resuelto por Phase 54, ver .planning/todos/pending/**. Phase 53 previa: Storage + Upload + Consent Config (INFRA-01..03, CONS-01/02).*
 *

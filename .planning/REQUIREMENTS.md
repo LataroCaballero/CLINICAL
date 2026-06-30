@@ -24,7 +24,7 @@ Requisitos del milestone v1.12. Cada uno mapea a una fase del roadmap.
 
 ### Portal de Autogestión — Acceso y Datos (PORTAL)
 
-- [ ] **PORTAL-01**: Cada paciente tiene un link de autogestión persistente y reutilizable, accesible sin login mediante un token (almacenado hasheado, no en texto plano)
+- [x] **PORTAL-01**: Cada paciente tiene un link de autogestión persistente y reutilizable, accesible sin login mediante un token (almacenado hasheado, no en texto plano)
 - [ ] **PORTAL-02**: El portal presenta la información paso a paso (wizard), claro y mobile-first, operable por un paciente no técnico
 - [ ] **PORTAL-03**: En "Información básica", el paciente revisa y corrige/completa sus datos personales de contacto (teléfono, email, dirección, contacto de emergencia)
 - [x] **PORTAL-04**: El paciente NO puede editar obra social ni campos clínicos sensibles desde el portal
@@ -105,7 +105,7 @@ Qué fases cubren qué requisitos.
 | INFRA-03 | Phase 53 | Complete |
 | CONS-01 | Phase 53 | Complete |
 | CONS-02 | Phase 53 | Complete |
-| PORTAL-01 | Phase 54 | Pending |
+| PORTAL-01 | Phase 54 | Complete |
 | PORTAL-04 | Phase 54 | Complete |
 | PORTAL-06 | Phase 54 | Complete |
 | PORTAL-02 | Phase 55 | Pending |

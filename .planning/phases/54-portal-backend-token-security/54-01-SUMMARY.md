@@ -124,6 +124,10 @@ None - no external service configuration required.
 - Schema columns, narrow DTOs, and portal-jwt strategy/guard are ready for Plan 02/03 to wire the public controller, brute-force lock service, JWT emission, and per-route `ValidationPipe({ whitelist: true })`.
 - Reminder for downstream: the project has NO global `ValidationPipe` — the narrow DTOs only enforce SC#3/SC#4 once each write route applies `@Body(new ValidationPipe({ whitelist: true }))`.
 
+## Self-Check: PASSED
+
+All 5 created files + SUMMARY exist on disk; all 4 commits (394c187, 6a2fc92, 9a9255e, 366be28) present in git log.
+
 ---
 *Phase: 54-portal-backend-token-security*
 *Completed: 2026-06-30*

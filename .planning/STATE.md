@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.12
 milestone_name: Prequirúrgico Estructurado + Portal del Paciente
 status: executing
-stopped_at: Phase 54 context gathered
-last_updated: "2026-06-30T16:39:02.268Z"
-last_activity: 2026-06-30 -- Phase 54 planning complete
+stopped_at: Completed 54-01-PLAN.md
+last_updated: "2026-06-30T19:45:24.471Z"
+last_activity: 2026-06-30
 progress:
   total_phases: 6
   completed_phases: 3
   total_plans: 18
-  completed_plans: 15
+  completed_plans: 16
   percent: 50
 ---
 
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-25)
 
 **Core value:** Que un cirujano plástico cierre más cirugías — el sistema hace visible qué pacientes seguir, cuándo y cómo, de la manera más automatizada posible
-**Current focus:** Phase 54 — portal backend + token security
+**Current focus:** Phase 54 — portal-backend-token-security
 
 ## Current Position
 
-Phase: 54
-Plan: Not started
+Phase: 54 (portal-backend-token-security) — EXECUTING
+Plan: 2 of 3
 Status: Ready to execute
-Last activity: 2026-06-30 -- Phase 54 planning complete
+Last activity: 2026-06-30 -- Completed 54-01 (portal brute-force columns + narrow DTOs + portal-jwt strategy/guard)
 
-Progress: [█████████░] 93%
+Progress: [█████████░] 89%
 
 ## Performance Metrics
 
@@ -64,6 +64,9 @@ Progress: [█████████░] 93%
 - [53-02] ConsentimientoZonaArchivo: version-roll con vigente=false en row anterior + create new vigente row — historial nunca eliminado (D-05/T-53-09)
 - [53-02] PATCH /catalogo-hc/zonas/:id/indicaciones: @IsUrl + @MaxLength(2048) + @ValidateIf(null) para permitir limpieza; ownership guard en service (CONS-02/T-53-11)
 - [53-02] Migración aplicada via prisma diff+db execute+resolve (mismo patrón Phase 51 — pgBouncer Supabase bloquea migrate dev con drift)
+- [54-01] Columnas brute-force portalIntentosFallidos (Int default 0) + portalBloqueadoHasta (DateTime?) en Paciente; migración 20260630000000_portal_intentos_bloqueo via diff+db execute+resolve (ALTER TABLE aditivo, no migrate dev) (D-01)
+- [54-01] Strategy NOMBRADA portal-jwt (PassportStrategy(Strategy,'portal-jwt')) + scope-claim gate (scope=portal-paciente, return null→401) mantiene tokens de staff fuera del portal (D-05/T-54-01); ignoreExpiration:false fuerza re-verify DNI (D-06); valida returns { pacienteId } sin cargar Usuario
+- [54-01] DTOs estrechos opcionales (UpdateContactoPortalDto contacto-only / UpdateSaludStagedDto *AutoReportad*-only) como superficie de escritura SC#3/SC#4; whitelist se aplica por-ruta en Plan 03 (NO hay ValidationPipe global)
 
 ### Carry-forward from v1.11
 
@@ -84,6 +87,6 @@ Progress: [█████████░] 93%
 
 ## Session Continuity
 
-Last session: 2026-06-30T16:15:05.416Z
-Stopped at: Phase 54 context gathered
-Resume file: .planning/phases/54-portal-backend-token-security/54-CONTEXT.md
+Last session: 2026-06-30T19:45:14.167Z
+Stopped at: Completed 54-01-PLAN.md
+Resume file: None

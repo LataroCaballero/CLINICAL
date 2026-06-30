@@ -27,9 +27,9 @@ Requisitos del milestone v1.12. Cada uno mapea a una fase del roadmap.
 - [ ] **PORTAL-01**: Cada paciente tiene un link de autogestión persistente y reutilizable, accesible sin login mediante un token (almacenado hasheado, no en texto plano)
 - [ ] **PORTAL-02**: El portal presenta la información paso a paso (wizard), claro y mobile-first, operable por un paciente no técnico
 - [ ] **PORTAL-03**: En "Información básica", el paciente revisa y corrige/completa sus datos personales de contacto (teléfono, email, dirección, contacto de emergencia)
-- [ ] **PORTAL-04**: El paciente NO puede editar obra social ni campos clínicos sensibles desde el portal
+- [x] **PORTAL-04**: El paciente NO puede editar obra social ni campos clínicos sensibles desde el portal
 - [ ] **PORTAL-05**: En "Información de salud", el paciente auto-reporta adicciones/drogas, enfermedades y tratamientos previos relacionados a la cirugía
-- [ ] **PORTAL-06**: Los datos de salud auto-reportados quedan registrados como declaración del paciente (respaldo legal) y NO sobrescriben los campos clínicos curados por el profesional — quedan staged para revisión del médico
+- [x] **PORTAL-06**: Los datos de salud auto-reportados quedan registrados como declaración del paciente (respaldo legal) y NO sobrescriben los campos clínicos curados por el profesional — quedan staged para revisión del médico
 
 ### Consentimiento e Indicaciones (CONS)
 
@@ -106,8 +106,8 @@ Qué fases cubren qué requisitos.
 | CONS-01 | Phase 53 | Complete |
 | CONS-02 | Phase 53 | Complete |
 | PORTAL-01 | Phase 54 | Pending |
-| PORTAL-04 | Phase 54 | Pending |
-| PORTAL-06 | Phase 54 | Pending |
+| PORTAL-04 | Phase 54 | Complete |
+| PORTAL-06 | Phase 54 | Complete |
 | PORTAL-02 | Phase 55 | Pending |
 | PORTAL-03 | Phase 55 | Pending |
 | PORTAL-05 | Phase 55 | Pending |

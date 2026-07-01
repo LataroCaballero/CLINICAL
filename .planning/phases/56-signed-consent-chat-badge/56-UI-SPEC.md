@@ -67,16 +67,18 @@ Exceptions:
 
 Source: F55 D-12 ("≥16px legible sin zoom"), existing portal page code (`text-2xl`, `text-base`, `text-xs`).
 
+Exactly THREE sizes (24 / 16 / 12) and exactly TWO weights (400 / 600) are declared for this phase. No other size or weight utility may appear anywhere in the implementation.
+
 | Role | Size | Weight | Line Height | Usage |
 |------|------|--------|-------------|-------|
-| Heading | 24px (`text-2xl`) | 700 (`font-bold`) | 1.2 | Page-level h1 only ("Tu Portal de Salud") |
-| Body | 16px (`text-base`) | 400 (`font-normal`) | 1.5 | All portal instructional text, zone names, empty-state messages, canvas fallback |
-| Label | 16px (`text-base`) | 600 (`font-semibold`) | 1.2 | Accordion triggers, button text, form field labels, section headings within PortalConsentimiento |
-| Caption | 12px (`text-xs`) | 400 (`font-normal`) | 1.4 | Timestamps in chat (horaFormateada, fechaFormateada), "Paciente" badge label above bubble, forensic date next to staff checkbox |
+| Heading | 24px (`text-2xl`) | 600 (`font-semibold`) | 1.2 | Page-level h1 only ("Tu Portal de Salud") |
+| Body | 16px (`text-base`) | 400 (`font-normal`) | 1.5 | All portal instructional text, zone names, empty-state messages, canvas fallback, chat message bubble body |
+| Label | 16px (`text-base`) | 600 (`font-semibold`) | 1.2 | Accordion triggers, button text, form field labels, links, section/zone headings, post-sign heading |
+| Caption | 12px (`text-xs`) | 400 (`font-normal`) | 1.4 | Chat timestamps, "Paciente" badge label, forensic date next to staff checkbox, canvas instruction label, inline validation errors |
 
-Two declared weights: 400 (regular) + 600 (semibold). Bold (700) reserved for page h1 only.
+Two declared weights ONLY: 400 (`font-normal`) + 600 (`font-semibold`). There is NO 700/`font-bold` and NO 500/`font-medium` anywhere in this phase — every emphasized text uses `font-semibold` (600). Three declared sizes ONLY: 24px (`text-2xl`), 16px (`text-base`), 12px (`text-xs`). `text-sm` (14px) and `text-[10px]` are PROHIBITED and must never appear in any snippet or implementation.
 
-ENFORCEMENT: No text below 16px may appear in the primary flow of PortalConsentimiento (canvas instructions, zone titles, CTA, indicaciones checkbox label, download link, empty states, post-sign confirmation). Captions (12px) are permitted only for timestamps and metadata. This is a LOCKED constraint from F55 D-12 / ROADMAP SC#1.
+ENFORCEMENT: No text below 16px may appear as body content in the primary flow of PortalConsentimiento (canvas fallback, zone titles, CTA, indicaciones checkbox label, download link, empty states, post-sign confirmation). The 12px Caption role is permitted ONLY for: chat timestamps, the "Paciente" chat badge label, the staff forensic date pill, the canvas instruction micro-label, and inline validation errors. This is a LOCKED constraint from F55 D-12 / ROADMAP SC#1.
 
 ---
 
@@ -192,7 +194,7 @@ Zones are stacked with `<div className="space-y-4">` wrapping them.
   href={pdfUrl}
   target="_blank"
   rel="noopener noreferrer"
-  className="inline-flex items-center gap-2 border border-gray-300 rounded-lg px-4 py-3 text-base font-medium text-gray-700 hover:bg-gray-50 w-full justify-center"
+  className="inline-flex items-center gap-2 border border-gray-300 rounded-lg px-4 py-3 text-base font-semibold text-gray-700 hover:bg-gray-50 w-full justify-center"
 >
   <FileDown className="w-5 h-5 text-gray-500" />
   Descargar / ver el consentimiento
@@ -218,7 +220,7 @@ GATE: This checkbox must be checked to enable the "Confirmar firma" button.
       href={safeIndicacionesUrl}
       target="_blank"
       rel="noopener noreferrer"
-      className="text-teal-600 underline font-medium"
+      className="text-teal-600 underline font-semibold"
     >
       indicaciones del médico
     </a>
@@ -275,11 +277,11 @@ Canvas dimensions:
 - Height: `160px` (explicit height on the `<canvas>` element)
 - The container inherits `max-w-lg` from the parent portal page
 
-Canvas visual label above the canvas area:
+Canvas instruction micro-label above the canvas area (Caption role, 12px):
 ```tsx
-<p className="text-sm text-gray-500 mb-2">Dibujá tu firma acá abajo:</p>
+<p className="text-xs text-gray-500 mb-2">Dibujá tu firma acá abajo:</p>
 ```
-(14px is acceptable for this label because it is secondary instruction above the canvas, not body content. Body text ≥16px applies to content paragraphs, not micro-labels.)
+This is a Caption-role micro-label (12px), not body content — permitted per the ENFORCEMENT list. Body content paragraphs remain ≥16px.
 
 SignaturePad initialization:
 ```tsx
@@ -305,7 +307,7 @@ Two buttons placed side by side below the canvas:
   <button
     type="button"
     onClick={handleFirmar}
-    disabled={!indicacionesLeidas || isSubmitting || !canvasSupported}
+    disabled={!indicacionesLeidas || (padRef.current?.isEmpty() ?? true) || isSubmitting || !canvasSupported}
     className="flex-1 h-12 bg-gray-900 text-white rounded-lg text-base font-semibold disabled:opacity-40 disabled:pointer-events-none"
   >
     {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : 'Confirmar firma'}
@@ -313,18 +315,18 @@ Two buttons placed side by side below the canvas:
 </div>
 ```
 
-- "Limpiar" does NOT require indicaciones to be checked; it just clears the canvas
-- "Confirmar firma" is disabled until BOTH `indicacionesLeidas === true` AND `!padRef.current?.isEmpty()`
+- "Limpiar" does NOT require indicaciones to be checked; it just clears the canvas (non-blocking flag)
+- "Confirmar firma" is reactively disabled until ALL of: `indicacionesLeidas === true`, canvas is non-empty (`!padRef.current?.isEmpty()`), not submitting, and canvas supported. Reactive-disable is the authoritative UX contract (see Interaction Contracts). Because `signature_pad` stroke changes do not trigger a React re-render on their own, the component MUST subscribe to pad activity (e.g. the pad's stroke-end event / `onEnd`) and mirror emptiness into React state so the `disabled` prop re-evaluates after each stroke. The `(padRef.current?.isEmpty() ?? true)` expression above is the binding condition; wiring it to state is an implementation requirement.
 - `isSubmitting` disables the button while the POST is in flight
 - The button uses `bg-gray-900` (primary color in shadcn neutral preset) NOT indigo — indigo is the progress indicator color only
 
 #### 5. Inline Validation Error
 
-When the user clicks "Confirmar firma" and the canvas is empty:
+Defense-in-depth: even though the button is reactively disabled while the canvas is empty, if a submit ever reaches `handleFirmar` with an empty canvas, show (Caption role, 12px):
 ```tsx
-<p className="text-sm text-red-600 mt-2" role="alert">Dibujá tu firma antes de confirmar.</p>
+<p className="text-xs text-red-600 mt-2" role="alert">Dibujá tu firma antes de confirmar.</p>
 ```
-(14px red text as inline field error, consistent with existing `dniError` pattern in portal.)
+Inline field errors use the 12px Caption role, consistent with the existing `dniError` treatment in the portal.
 
 #### 6. Post-Sign Success State (CONS-04/05 complete)
 
@@ -369,10 +371,10 @@ Left side:
 │ [teal circle, w-8 h-8]  │  "Paciente" [xs semibold teal-700]  [PriorityBadge]  │
 │ [UserRound w-4 h-4]     │  ┌──────────────────────────────────────┐           │
 │ teal-600 on teal-100    │  │ bubble: bg-teal-50 border-teal-200   │           │
-│                         │  │ text-sm text-teal-900                │           │
+│                         │  │ text-base text-teal-900              │           │
 │                         │  │ mensaje text                         │           │
 │                         │  └──────────────────────────────────────┘           │
-│                         │  [timestamp 10px muted-foreground]                  │
+│                         │  [timestamp 12px muted-foreground]                  │
 └───────────────────────────────────────────────┘
 ```
 
@@ -384,28 +386,30 @@ Exact Tailwind classes:
   <UserRound className="h-4 w-4 text-teal-600" />
 </div>
 
-// Badge label row
+// Badge label row (Caption role: 12px semibold)
 <div className="flex items-center gap-2 mb-1">
   <span className="text-xs font-semibold text-teal-700">Paciente</span>
   <PriorityBadge prioridad={prioridad} size="sm" showLabel={false} />
 </div>
 
-// Bubble
+// Bubble (Body role: 16px)
 <div className={cn(
-  'rounded-2xl rounded-tl-sm px-3 py-2 text-sm',
+  'rounded-2xl rounded-tl-sm px-3 py-2 text-base',
   'bg-teal-50 border border-teal-200 text-teal-900',
   prioridad === 'ALTA' && 'border-l-2 border-red-500'
 )}>
   <p className="whitespace-pre-wrap break-words">{mensaje}</p>
 </div>
 
-// Timestamp (no leido tick — patient messages are not esPropio)
-<span className="text-[10px] text-muted-foreground mt-1">
+// Timestamp (Caption role: 12px; no leido tick — patient messages are not esPropio)
+<span className="text-xs text-muted-foreground mt-1">
   {fechaFormateada} {horaFormateada}
 </span>
 ```
 
 Container: `<div className="flex gap-2 max-w-[85%] mr-auto">` — left-aligned (same as other-staff).
+
+The patient message bubble body uses 16px (`text-base`) — larger and more prominent than the existing staff bubbles — deliberately supporting D-13's goal that real patient queries do not get lost in the noise.
 
 ### Props Change
 
@@ -441,7 +445,7 @@ Extend the existing `FieldRow` value for "Consentimiento firmado" to append a da
         onChange={(v) => setEstadoForm((f) => ({ ...f, consentimientoFirmado: v }))}
       />
       {paciente.consentimientoFirmadoAt && (
-        <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-300 rounded-md px-2 py-0.5">
+        <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-300 rounded-md px-2 py-0.5">
           <CheckCircle2 className="w-3.5 h-3.5" />
           {new Date(paciente.consentimientoFirmadoAt).toLocaleDateString('es-AR')}
         </span>
@@ -451,7 +455,7 @@ Extend the existing `FieldRow` value for "Consentimiento firmado" to append a da
 />
 ```
 
-Date format: `toLocaleDateString('es-AR')` → e.g. `"1/7/2026"` (Argentine locale: day/month/year).
+Date format: `toLocaleDateString('es-AR')` → e.g. `"1/7/2026"` (Argentine locale: day/month/year). The date pill uses the 12px Caption role.
 
 `CheckCircle2` icon from lucide-react (already installed). Import must be added to DatosCompletos.tsx imports.
 
@@ -491,26 +495,28 @@ No destructive actions in this phase (D-06/D-08: artifact is immutable, no delet
 
 ### indicaciones Checkbox + Canvas Gate
 
+Reactive-disable is the AUTHORITATIVE UX contract. The "Confirmar firma" button reflects this table at all times:
+
 | indicaciones checked | Canvas has strokes | "Confirmar firma" state |
 |---------------------|--------------------|------------------------|
 | false | any | disabled (opacity 40%) |
 | true | false | disabled (opacity 40%) |
 | true | true | enabled |
 
-The button is enabled only when BOTH conditions are true. The gate is enforced at the React level via `disabled` prop — no server-side validation needed for this gate (server validates independently).
+The button is enabled only when BOTH conditions are true. The gate is enforced reactively via the `disabled` prop: `disabled={!indicacionesLeidas || (padRef.current?.isEmpty() ?? true) || isSubmitting || !canvasSupported}`. Because `signature_pad` does not trigger React re-renders, the component subscribes to the pad's stroke-end event and mirrors emptiness into React state so the prop re-evaluates. The on-click empty-canvas error (Inline Validation Error) is defense-in-depth only; the binding contract is the reactive disable.
 
 ### Submit Flow (isSubmitting)
 
-1. User clicks "Confirmar firma"
+1. User clicks "Confirmar firma" (only reachable when the button is enabled)
 2. `isSubmitting = true`, button shows `<Loader2>` spinner, click disabled
 3. POST to `/paciente-portal/consentimiento/firmar` with `{ zonaId, signaturePngDataUrl, indicacionesLeidas: true }`
 4. On success (200): replace zone card with post-sign success state
-5. On error: show `<p role="alert" className="text-sm text-red-600 mt-2">` with message; reset `isSubmitting = false`
+5. On error: show `<p role="alert" className="text-xs text-red-600 mt-2">` with message; reset `isSubmitting = false`
 6. On conflict (409, already signed race condition): show already-signed state
 
 ### Canvas Resize Handling
 
-On window resize, the canvas must be resized to maintain correct pixel ratio for high-DPI screens. Standard signature_pad pattern: listen to `resize` on `window`, call a `resizeCanvas()` function that reads `canvasRef.current.offsetWidth` and sets `canvas.width = offsetWidth * devicePixelRatio`. This prevents the "stretched signature" bug on orientation change (mobile).
+On window resize, the canvas must be resized to maintain correct pixel ratio for high-DPI screens. Standard signature_pad pattern: listen to `resize` on `window`, call a `resizeCanvas()` function that reads `canvasRef.current.offsetWidth` and sets `canvas.width = offsetWidth * devicePixelRatio`. This prevents the "stretched signature" bug on orientation change (mobile). Note: resizing the canvas clears its bitmap, so re-evaluate the empty-state after resize (the reactive disable must reflect the cleared canvas).
 
 ---
 
@@ -571,12 +577,13 @@ No new shadcn components need to be installed for this phase. The signature canv
 | Font: Geist Sans | `frontend/src/app/globals.css` (detected) |
 | Icon library: lucide-react | `components.json` iconLibrary field |
 | Body ≥16px, tuteo, mobile-first | F55-CONTEXT.md D-12 / ROADMAP SC#1 (locked) |
+| Typography: 3 sizes (24/16/12), 2 weights (400/600) | Collapsed per checker Dimension 4 (revised) |
 | Portal layout: Accordion, max-w-lg, px-4 py-8 | `portal/[token]/page.tsx` (inspected) |
 | Teal for patient badge | 56-CONTEXT.md D-13 (locked) |
 | UserRound icon | 56-RESEARCH.md Pattern 6 (Claude's Discretion resolved) |
 | Empty state copy (5 variants) | 56-RESEARCH.md D-09/D-10 table |
 | Post-sign success copy | 56-CONTEXT.md D-08 / 56-RESEARCH.md (no re-sign = terminal state) |
-| indicaciones gate mandatory | 56-CONTEXT.md D-11 (locked) |
+| indicaciones gate mandatory + reactive disable | 56-CONTEXT.md D-11 (locked) + checker recommendation |
 | Canvas fallback copy | 56-RESEARCH.md Pattern 3 |
 | Staff badge emerald (not teal) | Claude's Discretion — avoids collision with chat teal |
 | Staff badge drawer-only | ROADMAP SC#3 + 56-RESEARCH.md Open Question 2 |

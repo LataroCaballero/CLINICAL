@@ -272,7 +272,7 @@ Plans:
 
 **Plans**: 4 plans
 - [x] 55-01-PLAN.md — Backend POST /consulta (CHAT-04): endpoint MensajeInterno origenPaciente=true tras PortalJwtGuard
-- [ ] 55-02-PLAN.md — Portal foundation (PORTAL-02): portal-api client, hooks, shell DNI-gate + layout navegable 4 secciones
+- [x] 55-02-PLAN.md — Portal foundation (PORTAL-02): portal-api client, hooks, shell DNI-gate + layout navegable 4 secciones
 - [ ] 55-03-PLAN.md — Info básica + Salud (PORTAL-03/PORTAL-05): forms RHF+Zod y chips staged *AutoReportad*
 - [ ] 55-04-PLAN.md — Consultas (CHAT-04 frontend): envío one-way al chat del staff con confirmación
 **UI hint**: yes
@@ -352,7 +352,7 @@ Plans:
 | 52. PREOP HC Form + Chip Catalogs | v1.12 | 10/10 | Complete    | 2026-06-26 |
 | 53. Storage + Upload + Consent Config | v1.12 | 3/3 | Complete    | 2026-06-30 |
 | 54. Portal Backend + Token Security | v1.12 | 3/3 | Complete    | 2026-06-30 |
-| 55. Portal Frontend | v1.12 | 1/4 | In Progress|  |
+| 55. Portal Frontend | v1.12 | 2/4 | In Progress|  |
 | 56. Signed Consent + Chat Badge | v1.12 | 0/TBD | Not started | - |
 
 ---

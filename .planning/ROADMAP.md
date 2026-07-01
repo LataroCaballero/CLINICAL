@@ -270,7 +270,11 @@ Plans:
   3. En el paso "Salud", el paciente puede seleccionar/escribir condiciones, alergias, medicación y tratamientos previos; los datos quedan en campos staged en la BD sin modificar los registros clínicos curados por el profesional.
   4. En el paso "Consultas", el paciente puede enviar una pregunta al médico que aparece en el chat interno del staff diferenciada de los mensajes de staff regulares.
 
-**Plans**: TBD
+**Plans**: 4 plans
+- [ ] 55-01-PLAN.md — Backend POST /consulta (CHAT-04): endpoint MensajeInterno origenPaciente=true tras PortalJwtGuard
+- [ ] 55-02-PLAN.md — Portal foundation (PORTAL-02): portal-api client, hooks, shell DNI-gate + layout navegable 4 secciones
+- [ ] 55-03-PLAN.md — Info básica + Salud (PORTAL-03/PORTAL-05): forms RHF+Zod y chips staged *AutoReportad*
+- [ ] 55-04-PLAN.md — Consultas (CHAT-04 frontend): envío one-way al chat del staff con confirmación
 **UI hint**: yes
 
 ### Phase 56: Signed Consent + Chat Badge

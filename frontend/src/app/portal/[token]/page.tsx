@@ -24,6 +24,7 @@ import { usePortalDatos } from "@/hooks/usePortalDatos";
 import { PortalInfoBasica } from "@/components/portal/PortalInfoBasica";
 import { PortalSalud } from "@/components/portal/PortalSalud";
 import { PortalConsultas } from "@/components/portal/PortalConsultas";
+import { PortalConsentimiento } from "@/components/portal/PortalConsentimiento";
 
 // ── State machine ────────────────────────────────────────────────────────────
 type PageState = "loading" | "dni-gate" | "blocked" | "ready" | "error";
@@ -354,9 +355,7 @@ export default function PortalPacientePage() {
             </div>
           </AccordionTrigger>
           <AccordionContent>
-            <div className="py-2 text-base text-gray-500">
-              Próximamente vas a poder firmar tu consentimiento informado acá.
-            </div>
+            <PortalConsentimiento />
           </AccordionContent>
         </AccordionItem>
 

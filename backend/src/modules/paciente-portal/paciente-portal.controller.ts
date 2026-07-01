@@ -130,4 +130,21 @@ export class PacientePortalController {
   ) {
     return this.service.crearConsulta(req.user.pacienteId, dto);
   }
+
+  /**
+   * Consent resolver (CONS-03, D-09/D-10, T-56-09).
+   *
+   * Returns a per-zone array of discriminated status items so the frontend can
+   * render the correct consent UI without client-side inference.
+   *
+   * Security: `pacienteId` comes exclusively from the portal-scoped JWT
+   * (`req.user`) — it is NEVER read from @Param, @Body or @Query (T-56-09,
+   * pitfall 12). `@UseGuards(PortalJwtGuard)` is per-route so the public
+   * preVerify/verificar routes stay reachable (no class-level guard).
+   */
+  @UseGuards(PortalJwtGuard)
+  @Get('consentimiento')
+  getConsentimiento(@Req() req: PortalRequest) {
+    return this.service.getConsentimientosParaFirmar(req.user.pacienteId);
+  }
 }

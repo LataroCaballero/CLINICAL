@@ -1,10 +1,11 @@
 ---
 phase: 56
 slug: signed-consent-chat-badge
-status: draft
+status: approved
 shadcn_initialized: true
 preset: "new-york / neutral / cssVariables"
 created: 2026-07-01
+reviewed_at: 2026-07-01
 ---
 
 # Phase 56 — UI Design Contract

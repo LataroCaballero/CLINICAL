@@ -6,6 +6,7 @@ export interface Mensaje {
   mensaje: string;
   prioridad: 'ALTA' | 'MEDIA' | 'BAJA';
   esSistema: boolean;
+  origenPaciente: boolean;
   createdAt: string;
   autorId: string;
   autor: {

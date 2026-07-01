@@ -30,9 +30,17 @@ const mockPrisma = {
   },
   cirugia: {
     findFirst: jest.fn(),
+    findMany: jest.fn(),
   },
   mensajeInterno: {
     create: jest.fn(),
+  },
+  // 56-09: consent resolver unions surgery zonas + HC-entry zonas.
+  historiaClinica: {
+    findMany: jest.fn(),
+  },
+  zonaHC: {
+    findMany: jest.fn(),
   },
 };
 
@@ -381,6 +389,85 @@ describe('PacientePortalService', () => {
         service.crearConsulta('non-existent-id', { mensaje: MSG }),
       ).rejects.toBeInstanceOf(NotFoundException);
       expect(mockPrisma.mensajeInterno.create).not.toHaveBeenCalled();
+    });
+  });
+
+  // ── getConsentimientosParaFirmar (56-04 + 56-09 union) ──────────────────────
+  describe('getConsentimientosParaFirmar', () => {
+    const zonaSignable = (id: string, nombre: string) => ({
+      id,
+      nombre,
+      indicacionesUrl: null,
+      consentimientoArchivos: [
+        { id: `arch-${id}`, path: `p/${id}.pdf`, version: 1 },
+      ],
+      consentimientosFirmados: [],
+    });
+
+    beforeEach(() => {
+      // Default: no surgeries, no HC, no zonas — overridden per test.
+      mockPrisma.cirugia.findMany.mockResolvedValue([]);
+      mockPrisma.historiaClinica.findMany.mockResolvedValue([]);
+      mockPrisma.zonaHC.findMany.mockResolvedValue([]);
+      mockStorage.getPublicUrl.mockImplementation((p: string) => `http://x/${p}`);
+    });
+
+    it('returns SIN_CIRUGIA when neither a pending surgery nor an HC zona exists', async () => {
+      const res = await service.getConsentimientosParaFirmar(PAC_ID);
+      expect(res).toEqual([{ estado: 'SIN_CIRUGIA' }]);
+    });
+
+    it('resolves a signable consent from an HC zona even with NO programmed surgery (56-09)', async () => {
+      mockPrisma.cirugia.findMany.mockResolvedValue([]);
+      mockPrisma.historiaClinica.findMany.mockResolvedValue([
+        { entradas: [{ contenido: { zonas: [{ zonaId: 'z1' }] } }] },
+      ]);
+      mockPrisma.zonaHC.findMany.mockResolvedValue([zonaSignable('z1', 'Mamas')]);
+
+      const res = await service.getConsentimientosParaFirmar(PAC_ID);
+
+      // zonaHC was queried for exactly the HC-derived id.
+      expect(mockPrisma.zonaHC.findMany.mock.calls[0][0].where.id.in).toEqual([
+        'z1',
+      ]);
+      expect(res).toHaveLength(1);
+      expect(res[0]).toMatchObject({ estado: 'PARA_FIRMAR', zonaId: 'z1' });
+    });
+
+    it('deduplicates a zona reachable from BOTH a surgery and the HC (D-08)', async () => {
+      mockPrisma.cirugia.findMany.mockResolvedValue([
+        { cirugiaCatalogo: { zonaId: 'z1' } },
+      ]);
+      mockPrisma.historiaClinica.findMany.mockResolvedValue([
+        { entradas: [{ contenido: { zonas: [{ zonaId: 'z1' }] } }] },
+      ]);
+      mockPrisma.zonaHC.findMany.mockResolvedValue([zonaSignable('z1', 'Mamas')]);
+
+      const res = await service.getConsentimientosParaFirmar(PAC_ID);
+
+      // Union deduped to a single zonaId before the classify query.
+      expect(mockPrisma.zonaHC.findMany.mock.calls[0][0].where.id.in).toEqual([
+        'z1',
+      ]);
+      expect(res).toHaveLength(1);
+      expect(res[0]).toMatchObject({ estado: 'PARA_FIRMAR', zonaId: 'z1' });
+    });
+
+    it('emits SIN_CATALOGO for a pending surgery with no catalog link, alongside HC zonas', async () => {
+      mockPrisma.cirugia.findMany.mockResolvedValue([{ cirugiaCatalogo: null }]);
+      mockPrisma.historiaClinica.findMany.mockResolvedValue([
+        { entradas: [{ contenido: { zonas: [{ zonaId: 'z2' }] } }] },
+      ]);
+      mockPrisma.zonaHC.findMany.mockResolvedValue([zonaSignable('z2', 'Abdomen')]);
+
+      const res = await service.getConsentimientosParaFirmar(PAC_ID);
+
+      expect(res).toEqual(
+        expect.arrayContaining([
+          { estado: 'SIN_CATALOGO' },
+          expect.objectContaining({ estado: 'PARA_FIRMAR', zonaId: 'z2' }),
+        ]),
+      );
     });
   });
 });

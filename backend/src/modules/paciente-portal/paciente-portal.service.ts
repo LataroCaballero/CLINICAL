@@ -343,8 +343,15 @@ export class PacientePortalService {
   /**
    * Consent resolver (CONS-03, D-09/D-10, T-56-09/T-56-10/T-56-11).
    *
-   * Walks the chain: pending Cirugia → cirugiaCatalogo → zona →
-   * vigente ConsentimientoZonaArchivo, returning one item per surgery.
+   * Resolves the set of consent zonas the patient may sign from TWO sources,
+   * deduplicated by zonaId (a zona reachable from both sources appears once):
+   *   1. Pending surgeries (D-09 chain): Cirugia (PROGRAMADA/EN_CURSO) →
+   *      cirugiaCatalogo → zona.
+   *   2. The patient's current diagnosis/treatment: every zonaId referenced by a
+   *      FINALIZED HistoriaClinica entry (new "zonas[]" contenido shape). This lets
+   *      patients without a scheduled surgery still see the consents for the zonas
+   *      under active clinical work. Legacy entries store zona NAMES (not ids) and
+   *      cannot map to a ConsentimientoZonaArchivo, so they are skipped.
    *
    * Security invariants:
    * - `pacienteId` is ALWAYS from the portal-scoped JWT (method arg), NEVER from
@@ -354,10 +361,11 @@ export class PacientePortalService {
    * - YA_FIRMADO derives from a ConsentimientoFirmado row scoped to
    *   pacienteId + zonaId — prevents issuing a second signable payload (T-56-11/D-08).
    *
-   * Six discriminated states (D-10):
-   * - SIN_CIRUGIA   — no pending (PROGRAMADA/EN_CURSO) cirugias for the patient.
-   * - SIN_CATALOGO  — cirugia exists but cirugiaCatalogoId is null (staff gap).
-   * - SIN_ZONA      — catalog item has no zona linked (staff gap).
+   * Discriminated states (D-10):
+   * - SIN_CIRUGIA   — nothing signable from EITHER source (no pending surgery and
+   *                   no HC zonas resolvable to a consent).
+   * - SIN_CATALOGO  — a pending cirugia exists but cirugiaCatalogoId is null (staff gap).
+   * - SIN_ZONA      — a pending cirugia's catalog item has no zona linked (staff gap).
    * - SIN_PDF       — zona has no vigente ConsentimientoZonaArchivo (staff gap).
    * - YA_FIRMADO    — patient already signed for this zona+version; includes firmadoAt.
    * - PARA_FIRMAR   — happy path; includes pdfUrl (via StorageService), zonaId,
@@ -366,87 +374,139 @@ export class PacientePortalService {
   async getConsentimientosParaFirmar(
     pacienteId: string,
   ): Promise<Array<Record<string, unknown>>> {
+    const result: Array<Record<string, unknown>> = [];
+    // Zonas that resolve to a real ZonaHC (from either source) are classified
+    // once below; a Set dedups a zona reachable from both surgery and HC (D-08).
+    const zonaIdsAResolver = new Set<string>();
+
+    // ── Source 1: pending surgeries (D-09 chain) ─────────────────────────────
     const cirugias = await this.prisma.cirugia.findMany({
       where: {
         pacienteId,
         estado: { in: ['PROGRAMADA', 'EN_CURSO'] },
       },
       include: {
-        cirugiaCatalogo: {
-          include: {
-            zona: {
-              include: {
-                consentimientoArchivos: {
-                  where: { vigente: true },
-                  orderBy: { uploadedAt: 'desc' },
-                  take: 1,
-                },
-                // Scoped to this patient — any row = already signed (D-08/T-56-11).
-                consentimientosFirmados: {
-                  where: { pacienteId },
-                  take: 1,
-                },
-              },
-            },
-          },
-        },
+        cirugiaCatalogo: { select: { zonaId: true } },
       },
     });
 
-    // D-10 case 1: no pending surgeries — no signable zones for this patient.
-    if (cirugias.length === 0) {
-      return [{ estado: 'SIN_CIRUGIA' }];
-    }
-
-    const result: Array<Record<string, unknown>> = [];
-
     for (const cirugia of cirugias) {
-      // D-10 case 2: surgery not linked to catalog — staff must complete setup.
+      // Setup-gap signals stay per-surgery (no resolvable zona) so staff can see
+      // what to complete; surgeries WITH a zona feed the dedup Set below.
       if (!cirugia.cirugiaCatalogo) {
         result.push({ estado: 'SIN_CATALOGO' });
         continue;
       }
-
-      const zona = cirugia.cirugiaCatalogo.zona;
-
-      // D-10 case 3: catalog item has no zona — staff must link the zona.
-      if (!zona) {
+      if (!cirugia.cirugiaCatalogo.zonaId) {
         result.push({ estado: 'SIN_ZONA' });
         continue;
       }
+      zonaIdsAResolver.add(cirugia.cirugiaCatalogo.zonaId);
+    }
 
-      // D-10 case 4: zona exists but no vigente consent PDF uploaded yet.
-      if (zona.consentimientoArchivos.length === 0) {
-        result.push({ estado: 'SIN_PDF' });
-        continue;
+    // ── Source 2: current diagnosis/treatment zonas from the patient's HC ─────
+    // Union of every zonaId referenced by any FINALIZED HC entry (new "zonas[]"
+    // shape). Legacy entries store names, not ids, so they are skipped.
+    const historias = await this.prisma.historiaClinica.findMany({
+      where: { pacienteId },
+      select: {
+        entradas: {
+          where: { status: 'FINALIZED' },
+          select: { contenido: true },
+        },
+      },
+    });
+    for (const historia of historias) {
+      for (const entrada of historia.entradas) {
+        for (const zonaId of this.extraerZonaIdsDeContenido(entrada.contenido)) {
+          zonaIdsAResolver.add(zonaId);
+        }
       }
+    }
 
-      // D-10 case 5: patient already signed for this zona (D-08/T-56-11).
-      if (zona.consentimientosFirmados.length > 0) {
+    // ── Classify each unique zona once (dedup across surgery + HC sources) ────
+    if (zonaIdsAResolver.size > 0) {
+      const zonas = await this.prisma.zonaHC.findMany({
+        where: { id: { in: [...zonaIdsAResolver] } },
+        include: {
+          consentimientoArchivos: {
+            where: { vigente: true },
+            orderBy: { uploadedAt: 'desc' },
+            take: 1,
+          },
+          // Scoped to this patient — any row = already signed (D-08/T-56-11).
+          consentimientosFirmados: {
+            where: { pacienteId },
+            take: 1,
+          },
+        },
+      });
+
+      for (const zona of zonas) {
+        // D-10 case 4: zona exists but no vigente consent PDF uploaded yet.
+        if (zona.consentimientoArchivos.length === 0) {
+          result.push({
+            estado: 'SIN_PDF',
+            zonaId: zona.id,
+            zonaNombre: zona.nombre,
+          });
+          continue;
+        }
+
+        // D-10 case 5: patient already signed for this zona (D-08/T-56-11).
+        if (zona.consentimientosFirmados.length > 0) {
+          result.push({
+            estado: 'YA_FIRMADO',
+            zonaId: zona.id,
+            zonaNombre: zona.nombre,
+            firmadoAt: zona.consentimientosFirmados[0].firmadoAt,
+          });
+          continue;
+        }
+
+        // D-10 case 6 (happy path): signable payload with public PDF URL.
+        // pdfUrl is built via StorageService — NEVER for other states (T-56-10).
+        const archivo = zona.consentimientoArchivos[0];
         result.push({
-          estado: 'YA_FIRMADO',
+          estado: 'PARA_FIRMAR',
           zonaId: zona.id,
           zonaNombre: zona.nombre,
-          firmadoAt: zona.consentimientosFirmados[0].firmadoAt,
+          pdfUrl: this.storage.getPublicUrl(archivo.path),
+          consentimientoZonaArchivoId: archivo.id,
+          version: archivo.version,
+          indicacionesUrl: zona.indicacionesUrl ?? null,
         });
-        continue;
       }
+    }
 
-      // D-10 case 6 (happy path): return signable payload with public PDF URL.
-      // pdfUrl is built via StorageService — NEVER returned for other states (T-56-10).
-      const archivo = zona.consentimientoArchivos[0];
-      result.push({
-        estado: 'PARA_FIRMAR',
-        zonaId: zona.id,
-        zonaNombre: zona.nombre,
-        pdfUrl: this.storage.getPublicUrl(archivo.path),
-        consentimientoZonaArchivoId: archivo.id,
-        version: archivo.version,
-        indicacionesUrl: zona.indicacionesUrl ?? null,
-      });
+    // D-10 case 1: nothing signable from either source.
+    if (result.length === 0) {
+      return [{ estado: 'SIN_CIRUGIA' }];
     }
 
     return result;
+  }
+
+  /**
+   * Pure extractor: pulls ZonaHC ids out of a stored HC entry `contenido` JSON.
+   * Only the new "zonas[]" shape carries a `zonaId` per zona; legacy/other shapes
+   * (zona names only) yield nothing. Defensive against null/non-object contenido.
+   */
+  private extraerZonaIdsDeContenido(contenido: unknown): string[] {
+    if (!contenido || typeof contenido !== 'object') return [];
+    const zonas = (contenido as { zonas?: unknown }).zonas;
+    if (!Array.isArray(zonas)) return [];
+    const ids: string[] = [];
+    for (const z of zonas) {
+      if (
+        z &&
+        typeof z === 'object' &&
+        typeof (z as { zonaId?: unknown }).zonaId === 'string'
+      ) {
+        ids.push((z as { zonaId: string }).zonaId);
+      }
+    }
+    return ids;
   }
 
   /**

@@ -375,11 +375,10 @@ export class PacientePortalService {
     pacienteId: string,
   ): Promise<Array<Record<string, unknown>>> {
     const result: Array<Record<string, unknown>> = [];
-    // Zonas that resolve to a real ZonaHC (from either source) are classified
-    // once below; a Set dedups a zona reachable from both surgery and HC (D-08).
-    const zonaIdsAResolver = new Set<string>();
 
-    // ── Source 1: pending surgeries (D-09 chain) ─────────────────────────────
+    // Per-surgery setup-gap signals (SIN_CATALOGO / SIN_ZONA) stay so staff can
+    // see what to complete. Surgeries WITH a zona contribute to the signable
+    // union computed by the shared helper below.
     const cirugias = await this.prisma.cirugia.findMany({
       where: {
         pacienteId,
@@ -391,8 +390,6 @@ export class PacientePortalService {
     });
 
     for (const cirugia of cirugias) {
-      // Setup-gap signals stay per-surgery (no resolvable zona) so staff can see
-      // what to complete; surgeries WITH a zona feed the dedup Set below.
       if (!cirugia.cirugiaCatalogo) {
         result.push({ estado: 'SIN_CATALOGO' });
         continue;
@@ -401,28 +398,13 @@ export class PacientePortalService {
         result.push({ estado: 'SIN_ZONA' });
         continue;
       }
-      zonaIdsAResolver.add(cirugia.cirugiaCatalogo.zonaId);
     }
 
-    // ── Source 2: current diagnosis/treatment zonas from the patient's HC ─────
-    // Union of every zonaId referenced by any FINALIZED HC entry (new "zonas[]"
-    // shape). Legacy entries store names, not ids, so they are skipped.
-    const historias = await this.prisma.historiaClinica.findMany({
-      where: { pacienteId },
-      select: {
-        entradas: {
-          where: { status: 'FINALIZED' },
-          select: { contenido: true },
-        },
-      },
-    });
-    for (const historia of historias) {
-      for (const entrada of historia.entradas) {
-        for (const zonaId of this.extraerZonaIdsDeContenido(entrada.contenido)) {
-          zonaIdsAResolver.add(zonaId);
-        }
-      }
-    }
+    // Signable zona set = pending-surgery zonas ∪ current-HC zonas. This is the
+    // SINGLE source of truth shared with firmarConsentimiento — the write path
+    // validates dto.zonaId against exactly this set, so read and write can never
+    // disagree about which zonas a patient may sign (dedup by zonaId, D-08).
+    const zonaIdsAResolver = await this.resolverZonaIdsFirmables(pacienteId);
 
     // ── Classify each unique zona once (dedup across surgery + HC sources) ────
     if (zonaIdsAResolver.size > 0) {
@@ -510,6 +492,52 @@ export class PacientePortalService {
   }
 
   /**
+   * SINGLE source of truth for "which zonas may this patient sign a consent for".
+   * Union (deduped by zonaId) of:
+   *   - zonas of the patient's pending (PROGRAMADA/EN_CURSO) surgeries, and
+   *   - zonas referenced by the patient's FINALIZED HC entries (new zonas[] shape).
+   *
+   * Both `getConsentimientosParaFirmar` (read) and `firmarConsentimiento` (write)
+   * call this so the set of offered zonas and the set of accepted zonas are
+   * identical — a patient can only ever sign a zona the read path would surface,
+   * and a signable HC zona is never rejected at write time (pitfall E, T-56-12).
+   */
+  private async resolverZonaIdsFirmables(
+    pacienteId: string,
+  ): Promise<Set<string>> {
+    const zonaIds = new Set<string>();
+
+    const cirugias = await this.prisma.cirugia.findMany({
+      where: { pacienteId, estado: { in: ['PROGRAMADA', 'EN_CURSO'] } },
+      include: { cirugiaCatalogo: { select: { zonaId: true } } },
+    });
+    for (const cirugia of cirugias) {
+      if (cirugia.cirugiaCatalogo?.zonaId) {
+        zonaIds.add(cirugia.cirugiaCatalogo.zonaId);
+      }
+    }
+
+    const historias = await this.prisma.historiaClinica.findMany({
+      where: { pacienteId },
+      select: {
+        entradas: {
+          where: { status: 'FINALIZED' },
+          select: { contenido: true },
+        },
+      },
+    });
+    for (const historia of historias) {
+      for (const entrada of historia.entradas) {
+        for (const zonaId of this.extraerZonaIdsDeContenido(entrada.contenido)) {
+          zonaIds.add(zonaId);
+        }
+      }
+    }
+
+    return zonaIds;
+  }
+
+  /**
    * Consent signing orchestration (CONS-04/05/06/07, D-06/07/08/11).
    *
    * Full pipeline: validate zona ownership → block re-signing (D-08) → confirm
@@ -535,40 +563,30 @@ export class PacientePortalService {
     ip: string,
     userAgent: string,
   ): Promise<{ ok: true }> {
-    // (1) Re-resolve zona via the patient's pending cirugia chain (pitfall E, T-56-12).
-    // This validates that dto.zonaId belongs to the patient's profesional — never trusted blindly.
-    const cirugia = await this.prisma.cirugia.findFirst({
-      where: {
-        pacienteId,
-        estado: { in: ['PROGRAMADA', 'EN_CURSO'] },
-        cirugiaCatalogo: { zonaId: dto.zonaId },
-      },
-      include: {
-        cirugiaCatalogo: {
-          include: {
-            zona: {
-              include: {
-                consentimientoArchivos: {
-                  where: { vigente: true },
-                  orderBy: { uploadedAt: 'desc' },
-                  take: 1,
-                },
-              },
-            },
-          },
-        },
-      },
-    });
-
-    if (!cirugia?.cirugiaCatalogo?.zona) {
+    // (1) Validate dto.zonaId belongs to THIS patient's signable set — the union
+    // of pending-surgery zonas AND current-HC zonas (pitfall E, T-56-12). The set
+    // is computed by the SAME helper the read path uses, so the write path can
+    // never accept a zona the read path would not have offered (and vice-versa).
+    // A patient without a scheduled surgery can now sign an HC-derived consent.
+    const zonaIdsFirmables = await this.resolverZonaIdsFirmables(pacienteId);
+    if (!zonaIdsFirmables.has(dto.zonaId)) {
       throw new NotFoundException(
         'Zona de consentimiento no encontrada para esta paciente',
       );
     }
 
-    const zona = cirugia.cirugiaCatalogo.zona;
+    const zona = await this.prisma.zonaHC.findUnique({
+      where: { id: dto.zonaId },
+      include: {
+        consentimientoArchivos: {
+          where: { vigente: true },
+          orderBy: { uploadedAt: 'desc' },
+          take: 1,
+        },
+      },
+    });
 
-    if (zona.consentimientoArchivos.length === 0) {
+    if (!zona || zona.consentimientoArchivos.length === 0) {
       throw new NotFoundException('No hay consentimiento vigente para esta zona');
     }
 

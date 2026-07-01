@@ -41,6 +41,11 @@ const mockPrisma = {
   },
   zonaHC: {
     findMany: jest.fn(),
+    findUnique: jest.fn(),
+  },
+  consentimientoFirmado: {
+    findFirst: jest.fn(),
+    create: jest.fn(),
   },
 };
 
@@ -52,12 +57,12 @@ const mockJwt = {
 const mockStorage = {
   getPublicUrl: jest.fn(),
   save: jest.fn(),
+  readFile: jest.fn(),
 };
 
 // 56-05 injected ConsentStampService (constructor index [3]) to stamp signatures.
 const mockStamp = {
-  validatePng: jest.fn(),
-  stampSignature: jest.fn(),
+  stampConsentimiento: jest.fn(),
 };
 
 // ─── Tests ───────────────────────────────────────────────────────────────────
@@ -468,6 +473,63 @@ describe('PacientePortalService', () => {
           expect.objectContaining({ estado: 'PARA_FIRMAR', zonaId: 'z2' }),
         ]),
       );
+    });
+  });
+
+  // ── firmarConsentimiento write path (56-05 + 56-09 union validation) ────────
+  describe('firmarConsentimiento', () => {
+    const dto = {
+      zonaId: 'z1',
+      signaturePngDataUrl: 'data:image/png;base64,iVBORw0KGgo=',
+      indicacionesLeidas: true,
+    };
+
+    it('signs an HC-derived consent even with NO programmed surgery (write path unioned with read path — 56-09)', async () => {
+      // No surgery, but the patient's FINALIZED HC references zona z1.
+      mockPrisma.cirugia.findMany.mockResolvedValue([]);
+      mockPrisma.historiaClinica.findMany.mockResolvedValue([
+        { entradas: [{ contenido: { zonas: [{ zonaId: 'z1' }] } }] },
+      ]);
+      mockPrisma.zonaHC.findUnique.mockResolvedValue({
+        id: 'z1',
+        nombre: 'Mamas',
+        consentimientoArchivos: [
+          { id: 'arch1', path: 'tpl.pdf', version: 2, profesionalId: 'prof1' },
+        ],
+      });
+      mockPrisma.consentimientoFirmado.findFirst.mockResolvedValue(null);
+      mockStorage.readFile.mockResolvedValue(Buffer.from('%PDF-'));
+      mockStamp.stampConsentimiento.mockResolvedValue({
+        pdfBuffer: Buffer.from('signed'),
+        hashSha256: 'deadbeef',
+      });
+      mockStorage.save.mockResolvedValue('signed/z1.pdf');
+      mockPrisma.consentimientoFirmado.create.mockResolvedValue({});
+
+      const res = await service.firmarConsentimiento(PAC_ID, dto, '1.2.3.4', 'UA');
+
+      expect(res).toEqual({ ok: true });
+      expect(mockPrisma.consentimientoFirmado.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            pacienteId: PAC_ID,
+            zonaId: 'z1',
+            consentimientoZonaArchivoId: 'arch1',
+            versionNumero: 2,
+            hashSha256: 'deadbeef',
+          }),
+        }),
+      );
+    });
+
+    it('rejects a zonaId that is in neither the surgery chain nor the HC (T-56-12)', async () => {
+      mockPrisma.cirugia.findMany.mockResolvedValue([]);
+      mockPrisma.historiaClinica.findMany.mockResolvedValue([]);
+
+      await expect(
+        service.firmarConsentimiento(PAC_ID, dto, '1.2.3.4', 'UA'),
+      ).rejects.toBeInstanceOf(NotFoundException);
+      expect(mockPrisma.consentimientoFirmado.create).not.toHaveBeenCalled();
     });
   });
 });

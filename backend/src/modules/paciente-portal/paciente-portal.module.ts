@@ -5,6 +5,7 @@ import { PacientePortalController } from './paciente-portal.controller';
 import { PacientePortalService } from './paciente-portal.service';
 import { PortalJwtStrategy } from './strategies/portal-jwt.strategy';
 import { PortalJwtGuard } from './guards/portal-jwt.guard';
+import { StorageModule } from '../storage/storage.module';
 
 /**
  * Patient-portal module.
@@ -18,11 +19,15 @@ import { PortalJwtGuard } from './guards/portal-jwt.guard';
  * PrismaService is global (PrismaModule @Global) — no import needed. The global
  * ThrottlerGuard (APP_GUARD in app.module.ts) already covers the new public
  * routes, with the controller's class-level @Throttle tightening the tier.
+ *
+ * StorageModule is imported so StorageService is injectable into
+ * PacientePortalService for building public PDF URLs (D-09/CONS-03, Plan 04).
  */
 @Module({
   imports: [
     PassportModule,
     JwtModule.register({ secret: process.env.JWT_SECRET }),
+    StorageModule,
   ],
   controllers: [PacientePortalController],
   providers: [PacientePortalService, PortalJwtStrategy, PortalJwtGuard],

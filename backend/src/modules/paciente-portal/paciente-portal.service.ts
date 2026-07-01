@@ -8,6 +8,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import * as crypto from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
+import { StorageService } from '../storage/storage.service';
 import { UpdateContactoPortalDto } from './dto/update-contacto-portal.dto';
 import { UpdateSaludStagedDto } from './dto/update-salud-staged.dto';
 import { CreateConsultaPortalDto } from './dto/create-consulta-portal.dto';
@@ -36,6 +37,7 @@ export class PacientePortalService {
   constructor(
     private prisma: PrismaService,
     private jwt: JwtService,
+    private readonly storage: StorageService,
   ) {}
 
   /** SHA-256 of the raw URL token → the 64-char hex stored in `portalToken`. */
@@ -331,6 +333,115 @@ export class PacientePortalService {
         createdAt: true,
       },
     });
+  }
+
+  /**
+   * Consent resolver (CONS-03, D-09/D-10, T-56-09/T-56-10/T-56-11).
+   *
+   * Walks the chain: pending Cirugia → cirugiaCatalogo → zona →
+   * vigente ConsentimientoZonaArchivo, returning one item per surgery.
+   *
+   * Security invariants:
+   * - `pacienteId` is ALWAYS from the portal-scoped JWT (method arg), NEVER from
+   *   the request body or query params (T-56-09, pitfall 12).
+   * - `pdfUrl` is built via StorageService.getPublicUrl and returned ONLY for
+   *   PARA_FIRMAR zones belonging to the JWT patient (T-56-10).
+   * - YA_FIRMADO derives from a ConsentimientoFirmado row scoped to
+   *   pacienteId + zonaId — prevents issuing a second signable payload (T-56-11/D-08).
+   *
+   * Six discriminated states (D-10):
+   * - SIN_CIRUGIA   — no pending (PROGRAMADA/EN_CURSO) cirugias for the patient.
+   * - SIN_CATALOGO  — cirugia exists but cirugiaCatalogoId is null (staff gap).
+   * - SIN_ZONA      — catalog item has no zona linked (staff gap).
+   * - SIN_PDF       — zona has no vigente ConsentimientoZonaArchivo (staff gap).
+   * - YA_FIRMADO    — patient already signed for this zona+version; includes firmadoAt.
+   * - PARA_FIRMAR   — happy path; includes pdfUrl (via StorageService), zonaId,
+   *                   zonaNombre, consentimientoZonaArchivoId, version, indicacionesUrl.
+   */
+  async getConsentimientosParaFirmar(
+    pacienteId: string,
+  ): Promise<Array<Record<string, unknown>>> {
+    const cirugias = await this.prisma.cirugia.findMany({
+      where: {
+        pacienteId,
+        estado: { in: ['PROGRAMADA', 'EN_CURSO'] },
+      },
+      include: {
+        cirugiaCatalogo: {
+          include: {
+            zona: {
+              include: {
+                consentimientoArchivos: {
+                  where: { vigente: true },
+                  orderBy: { uploadedAt: 'desc' },
+                  take: 1,
+                },
+                // Scoped to this patient — any row = already signed (D-08/T-56-11).
+                consentimientosFirmados: {
+                  where: { pacienteId },
+                  take: 1,
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    // D-10 case 1: no pending surgeries — no signable zones for this patient.
+    if (cirugias.length === 0) {
+      return [{ estado: 'SIN_CIRUGIA' }];
+    }
+
+    const result: Array<Record<string, unknown>> = [];
+
+    for (const cirugia of cirugias) {
+      // D-10 case 2: surgery not linked to catalog — staff must complete setup.
+      if (!cirugia.cirugiaCatalogo) {
+        result.push({ estado: 'SIN_CATALOGO' });
+        continue;
+      }
+
+      const zona = cirugia.cirugiaCatalogo.zona;
+
+      // D-10 case 3: catalog item has no zona — staff must link the zona.
+      if (!zona) {
+        result.push({ estado: 'SIN_ZONA' });
+        continue;
+      }
+
+      // D-10 case 4: zona exists but no vigente consent PDF uploaded yet.
+      if (zona.consentimientoArchivos.length === 0) {
+        result.push({ estado: 'SIN_PDF' });
+        continue;
+      }
+
+      // D-10 case 5: patient already signed for this zona (D-08/T-56-11).
+      if (zona.consentimientosFirmados.length > 0) {
+        result.push({
+          estado: 'YA_FIRMADO',
+          zonaId: zona.id,
+          zonaNombre: zona.nombre,
+          firmadoAt: zona.consentimientosFirmados[0].firmadoAt,
+        });
+        continue;
+      }
+
+      // D-10 case 6 (happy path): return signable payload with public PDF URL.
+      // pdfUrl is built via StorageService — NEVER returned for other states (T-56-10).
+      const archivo = zona.consentimientoArchivos[0];
+      result.push({
+        estado: 'PARA_FIRMAR',
+        zonaId: zona.id,
+        zonaNombre: zona.nombre,
+        pdfUrl: this.storage.getPublicUrl(archivo.path),
+        consentimientoZonaArchivoId: archivo.id,
+        version: archivo.version,
+        indicacionesUrl: zona.indicacionesUrl ?? null,
+      });
+    }
+
+    return result;
   }
 
   /**

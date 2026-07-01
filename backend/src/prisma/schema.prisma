@@ -224,6 +224,7 @@ model Paciente {
   antecedentesAutoReportados        Json?
   medicacionAutoReportada           String[]
   tratamientosPreviosAutoReportados String?
+  consentimientosFirmados           ConsentimientoFirmado[] // back-relation D-04
 
   @@index([dni(ops: raw("gin_trgm_ops"))], map: "idx_paciente_dni_trgm", type: Gin)
   @@index([telefono(ops: raw("gin_trgm_ops"))], map: "idx_paciente_telefono_trgm", type: Gin)
@@ -870,9 +871,11 @@ model Cirugia {
   createdAt            DateTime       @default(now())
   updatedAt            DateTime       @default(now()) @updatedAt
 
-  paciente    Paciente    @relation(fields: [pacienteId], references: [id])
-  profesional Profesional @relation(fields: [profesionalId], references: [id])
-  turnos      Turno[]
+  cirugiaCatalogoId String? // NEW FK — enables D-09 consent-resolution chain
+  paciente          Paciente         @relation(fields: [pacienteId], references: [id])
+  profesional       Profesional      @relation(fields: [profesionalId], references: [id])
+  cirugiaCatalogo   CirugiaCatalogo? @relation(fields: [cirugiaCatalogoId], references: [id], onDelete: SetNull)
+  turnos            Turno[]
 
   @@index([pacienteId])
   @@index([profesionalId])
@@ -955,6 +958,7 @@ model CirugiaCatalogo {
   updatedAt       DateTime        @updatedAt
   profesional     Profesional     @relation(fields: [profesionalId], references: [id])
   insumos         CirugiaInsumo[]
+  cirugias        Cirugia[] // NEW inverse relation — D-09
 
   @@unique([nombre, profesionalId])
   @@index([profesionalId, activo])
@@ -1389,13 +1393,14 @@ model ZonaHC {
   esSistema     Boolean         @default(false)
   profesionalId String
   profesional   Profesional     @relation(fields: [profesionalId], references: [id])
-  diagnosticos           DiagnosticoHC[]
-  tratamientos           TratamientoHC[]
-  indicacionesUrl        String?
-  consentimientoArchivos ConsentimientoZonaArchivo[]
-  cirugiasCatalogo       CirugiaCatalogo[]
-  createdAt              DateTime        @default(now())
-  updatedAt              DateTime        @updatedAt
+  diagnosticos            DiagnosticoHC[]
+  tratamientos            TratamientoHC[]
+  indicacionesUrl         String?
+  consentimientoArchivos  ConsentimientoZonaArchivo[]
+  cirugiasCatalogo        CirugiaCatalogo[]
+  consentimientosFirmados ConsentimientoFirmado[] // back-relation D-04
+  createdAt               DateTime        @default(now())
+  updatedAt               DateTime        @updatedAt
 
   @@unique([nombre, profesionalId])
   @@index([profesionalId, activo])
@@ -1410,9 +1415,34 @@ model ConsentimientoZonaArchivo {
   nombreOriginal String
   uploadedAt     DateTime @default(now())
   vigente        Boolean  @default(true)
+  version        Int      @default(1) // D-03 — incremental per zona, backfilled by migration
+
+  consentimientosFirmados ConsentimientoFirmado[] // back-relation D-04
 
   @@index([zonaId, vigente])
   @@index([profesionalId])
+}
+
+model ConsentimientoFirmado {
+  id                          String   @id @default(uuid())
+  pacienteId                  String
+  zonaId                      String
+  consentimientoZonaArchivoId String // exact version that was signed
+  pdfFirmadoPath              String // relative path via StorageService
+  ip                          String
+  userAgent                   String
+  versionNumero               Int // snapshot from ConsentimientoZonaArchivo.version
+  hashSha256                  String // SHA-256 of signed PDF buffer
+  firmadoAt                   DateTime @default(now()) // UTC, DB default — T-56-02
+  indicacionesLeidasAt        DateTime // set at signing time, required
+
+  paciente                  Paciente                  @relation(fields: [pacienteId], references: [id])
+  zona                      ZonaHC                    @relation(fields: [zonaId], references: [id])
+  consentimientoZonaArchivo ConsentimientoZonaArchivo @relation(fields: [consentimientoZonaArchivoId], references: [id], onDelete: Restrict) // T-56-01 write-once immutability
+
+  @@index([pacienteId])
+  @@index([zonaId])
+  @@index([pacienteId, zonaId]) // "already signed this zone?" check D-08
 }
 
 model DiagnosticoHC {

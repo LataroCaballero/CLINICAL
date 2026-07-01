@@ -4,6 +4,7 @@ import {
   ForbiddenException,
   NotFoundException,
   ConflictException,
+  BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import {
@@ -762,6 +763,20 @@ export class CatalogoHCService {
     zonaId: string,
     indicacionesUrl: string | null,
   ) {
+    if (indicacionesUrl !== null) {
+      if (indicacionesUrl.length > 2048) {
+        throw new BadRequestException('URL de indicaciones demasiado larga (máx 2048 caracteres)');
+      }
+      let parsed: URL;
+      try {
+        parsed = new URL(indicacionesUrl);
+      } catch {
+        throw new BadRequestException('URL de indicaciones inválida');
+      }
+      if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+        throw new BadRequestException('URL de indicaciones debe usar protocolo http o https');
+      }
+    }
     const zona = await this.prisma.zonaHC.findUnique({ where: { id: zonaId } });
     if (!zona || zona.profesionalId !== profesionalId) {
       throw new NotFoundException('Zona no encontrada');

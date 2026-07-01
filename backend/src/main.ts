@@ -8,6 +8,7 @@ if (!globalThis.crypto) {
 import { NestFactory, HttpAdapterHost } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { PrismaClientExceptionFilter } from './prisma-client-exception/prisma-client-exception.filter';
+import * as express from 'express';
 
 async function bootstrap() {
   console.log('DATABASE_URL desde Nest:', process.env.DATABASE_URL);
@@ -37,6 +38,9 @@ async function bootstrap() {
     },
     credentials: true,
   });
+
+  app.use(express.json({ limit: '2mb' }));
+  app.use(express.urlencoded({ extended: true, limit: '2mb' }));
 
   const { httpAdapter } = app.get(HttpAdapterHost);
   app.useGlobalFilters(new PrismaClientExceptionFilter(httpAdapter));

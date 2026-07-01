@@ -114,6 +114,7 @@ export class MensajesInternosService {
         mensaje: true,
         prioridad: true,
         esSistema: true,
+        origenPaciente: true,
         createdAt: true,
         autorId: true,
         autor: {
@@ -136,6 +137,7 @@ export class MensajesInternosService {
       ...m,
       leido: m.lecturas.length > 0,
       esPropio: m.autorId === userId && !m.esSistema,
+      origenPaciente: m.origenPaciente,
     }));
   }
 

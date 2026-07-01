@@ -174,7 +174,7 @@ Full details: `.planning/milestones/v1.11-ROADMAP.md`
 - [x] **Phase 52: PREOP HC Form + Chip Catalogs** - Formulario estructurado HC Prequirúrgico con chips de antecedentes/alergias/medicación con learning y link compartir portal (completed 2026-06-26)
 - [x] **Phase 53: Storage + Upload + Consent Config** - StorageService (disk local, cloud-ready), upload seguro de PDF de consentimiento, links de indicaciones y rate limiting (completed 2026-06-29)
 - [x] **Phase 54: Portal Backend + Token Security** - Módulo paciente-portal público, token SHA-256 hasheado, endpoints protegidos con DTOs estrictos (completed 2026-06-30)
-- [ ] **Phase 55: Portal Frontend** - Wizard mobile-first 4 pasos: datos personales, salud staged, consentimiento placeholder y consultas al médico
+- [x] **Phase 55: Portal Frontend** - Wizard mobile-first 4 pasos: datos personales, salud staged, consentimiento placeholder y consultas al médico (completed 2026-07-01)
 - [ ] **Phase 56: Signed Consent + Chat Badge** - Firma dibujada estampada en PDF con metadata forense legal + badge de origen de mensajes en chat
 
 ## Phase Details
@@ -274,7 +274,7 @@ Plans:
 - [x] 55-01-PLAN.md — Backend POST /consulta (CHAT-04): endpoint MensajeInterno origenPaciente=true tras PortalJwtGuard
 - [x] 55-02-PLAN.md — Portal foundation (PORTAL-02): portal-api client, hooks, shell DNI-gate + layout navegable 4 secciones
 - [x] 55-03-PLAN.md — Info básica + Salud (PORTAL-03/PORTAL-05): forms RHF+Zod y chips staged *AutoReportad*
-- [ ] 55-04-PLAN.md — Consultas (CHAT-04 frontend): envío one-way al chat del staff con confirmación
+- [x] 55-04-PLAN.md — Consultas (CHAT-04 frontend): envío one-way al chat del staff con confirmación
 **UI hint**: yes
 
 ### Phase 56: Signed Consent + Chat Badge
@@ -352,7 +352,7 @@ Plans:
 | 52. PREOP HC Form + Chip Catalogs | v1.12 | 10/10 | Complete    | 2026-06-26 |
 | 53. Storage + Upload + Consent Config | v1.12 | 3/3 | Complete    | 2026-06-30 |
 | 54. Portal Backend + Token Security | v1.12 | 3/3 | Complete    | 2026-06-30 |
-| 55. Portal Frontend | v1.12 | 3/4 | In Progress|  |
+| 55. Portal Frontend | v1.12 | 4/4 | Complete   | 2026-07-01 |
 | 56. Signed Consent + Chat Badge | v1.12 | 0/TBD | Not started | - |
 
 ---

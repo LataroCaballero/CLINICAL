@@ -10,6 +10,7 @@ import * as crypto from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { UpdateContactoPortalDto } from './dto/update-contacto-portal.dto';
 import { UpdateSaludStagedDto } from './dto/update-salud-staged.dto';
+import { CreateConsultaPortalDto } from './dto/create-consulta-portal.dto';
 
 /**
  * Patient-portal service: hash-based token lookup, DNI verification with a
@@ -291,6 +292,43 @@ export class PacientePortalService {
         antecedentesAutoReportados: true,
         medicacionAutoReportada: true,
         tratamientosPreviosAutoReportados: true,
+      },
+    });
+  }
+
+  /**
+   * Patient consult write (CHAT-04, T-55-01/T-55-02/T-55-05).
+   *
+   * Creates a `MensajeInterno` with `origenPaciente=true` and `autorId=null` so
+   * the staff chat distinguishes it from staff messages. The `pacienteId` is
+   * ALWAYS taken from the `pacienteId` argument (derived from the portal-scoped
+   * JWT in the controller) — it is NEVER read from `dto` (D-03, pitfall 12).
+   * `prioridad` is intentionally omitted so the schema default (MEDIA) applies.
+   * No `MensajeLectura` auto-read record is created because the patient is not a
+   * `Usuario` in the system (contrast with MensajesInternosService.create).
+   * Returns only `{ id, createdAt }` — never the full Paciente row or clinical data.
+   */
+  async crearConsulta(
+    pacienteId: string,
+    dto: CreateConsultaPortalDto,
+  ): Promise<{ id: string; createdAt: Date }> {
+    // Defensive existence check — surfaces as 404 if the JWT references a deleted patient.
+    const exists = await this.prisma.paciente.findUnique({
+      where: { id: pacienteId },
+      select: { id: true },
+    });
+    if (!exists) throw new NotFoundException();
+
+    return this.prisma.mensajeInterno.create({
+      data: {
+        mensaje: dto.mensaje,
+        pacienteId,
+        origenPaciente: true,
+        autorId: null,
+      },
+      select: {
+        id: true,
+        createdAt: true,
       },
     });
   }

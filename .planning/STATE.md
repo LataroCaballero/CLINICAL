@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.12
 milestone_name: Prequirúrgico Estructurado + Portal del Paciente
-status: ready_to_plan
-stopped_at: Phase 55 complete (4/4) — ready to discuss Phase 56
-last_updated: 2026-07-01T19:46:27.434Z
+status: planning
+stopped_at: Phase 56 context gathered
+last_updated: "2026-07-01T20:44:23.513Z"
 last_activity: 2026-07-01
 progress:
   total_phases: 6
   completed_phases: 5
   total_plans: 22
-  completed_plans: 75
+  completed_plans: 22
   percent: 83
 ---
 
@@ -93,6 +93,6 @@ Progress: [██████████] 100%
 
 ## Session Continuity
 
-Last session: 2026-07-01T16:48:02.393Z
-Stopped at: Completed 55-04-PLAN.md (CHAT-04 frontend, one-way consulta)
-Resume file: None
+Last session: 2026-07-01T20:44:23.509Z
+Stopped at: Phase 56 context gathered
+Resume file: .planning/phases/56-signed-consent-chat-badge/56-CONTEXT.md

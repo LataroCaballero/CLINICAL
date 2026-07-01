@@ -16,6 +16,7 @@ import { PortalJwtGuard } from './guards/portal-jwt.guard';
 import { UpdateContactoPortalDto } from './dto/update-contacto-portal.dto';
 import { UpdateSaludStagedDto } from './dto/update-salud-staged.dto';
 import { CreateConsultaPortalDto } from './dto/create-consulta-portal.dto';
+import { FirmarConsentimientoPortalDto } from './dto/firmar-consentimiento-portal.dto';
 
 /** Shape the portal-jwt strategy attaches to `req.user` (scope from JWT, never body). */
 type PortalRequest = Request & { user: { pacienteId: string } };
@@ -146,5 +147,44 @@ export class PacientePortalController {
   @Get('consentimiento')
   getConsentimiento(@Req() req: PortalRequest) {
     return this.service.getConsentimientosParaFirmar(req.user.pacienteId);
+  }
+
+  /**
+   * Consent signing endpoint (CONS-04/05/06/07, D-06/07/08/11/12, T-56-12/13/14/15).
+   *
+   * Stamps the patient's drawn signature onto the template PDF, archives it
+   * immutably, and records the full forensic audit trail.
+   *
+   * Security invariants:
+   * - `pacienteId` comes ONLY from the portal-scoped JWT (`req.user`) — NEVER from
+   *   @Body or @Param (D-12, pitfall 12, T-56-12).
+   * - `ip` is captured from `x-forwarded-for` header (first hop) or `req.socket` as
+   *   server-side fallback — NEVER from the request body (T-56-13).
+   * - `userAgent` is captured from the `user-agent` header — NEVER from body (T-56-13).
+   * - `new ValidationPipe({ whitelist: true })` per-route is the load-bearing SC#3
+   *   mass-assignment guard; there is NO global ValidationPipe in this project.
+   * - `@UseGuards(PortalJwtGuard)` is per-route so the public preVerify/verificar
+   *   routes remain unrestricted (no class-level guard).
+   */
+  @UseGuards(PortalJwtGuard)
+  @Post('consentimiento/firmar')
+  firmarConsentimiento(
+    @Req() req: PortalRequest,
+    @Body(new ValidationPipe({ whitelist: true }))
+    dto: FirmarConsentimientoPortalDto,
+  ) {
+    // IP: prefer x-forwarded-for (first hop) over socket.remoteAddress (T-56-13).
+    // Never read from body — server-side capture only.
+    const ip =
+      (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ??
+      req.socket?.remoteAddress ??
+      'unknown';
+    const userAgent = (req.headers['user-agent'] as string) ?? 'unknown';
+    return this.service.firmarConsentimiento(
+      req.user.pacienteId,
+      dto,
+      ip,
+      userAgent,
+    );
   }
 }

@@ -1,4 +1,6 @@
 import {
+  BadRequestException,
+  ConflictException,
   HttpException,
   HttpStatus,
   Injectable,
@@ -9,9 +11,11 @@ import { JwtService } from '@nestjs/jwt';
 import * as crypto from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { StorageService } from '../storage/storage.service';
+import { ConsentStampService } from '../consentimientos/consent-stamp.service';
 import { UpdateContactoPortalDto } from './dto/update-contacto-portal.dto';
 import { UpdateSaludStagedDto } from './dto/update-salud-staged.dto';
 import { CreateConsultaPortalDto } from './dto/create-consulta-portal.dto';
+import { FirmarConsentimientoPortalDto } from './dto/firmar-consentimiento-portal.dto';
 
 /**
  * Patient-portal service: hash-based token lookup, DNI verification with a
@@ -38,6 +42,7 @@ export class PacientePortalService {
     private prisma: PrismaService,
     private jwt: JwtService,
     private readonly storage: StorageService,
+    private readonly stamp: ConsentStampService,
   ) {}
 
   /** SHA-256 of the raw URL token → the 64-char hex stored in `portalToken`. */
@@ -442,6 +447,143 @@ export class PacientePortalService {
     }
 
     return result;
+  }
+
+  /**
+   * Consent signing orchestration (CONS-04/05/06/07, D-06/07/08/11).
+   *
+   * Full pipeline: validate zona ownership → block re-signing (D-08) → confirm
+   * indicacionesLeidas (D-11) → strip + validate PNG → stamp PDF (ConsentStampService)
+   * → archive immutably (StorageService) → create forensic record → set aggregate flag.
+   *
+   * Security invariants:
+   * - `pacienteId` is ALWAYS from the portal-scoped JWT (method arg), NEVER from dto
+   *   (T-56-12, pitfall 12).
+   * - `dto.zonaId` is re-validated against the patient's pending cirugia chain so a
+   *   patient cannot sign a zone they are not associated with (pitfall E, T-56-12).
+   * - `ip` and `userAgent` are captured server-side in the controller from request
+   *   headers — never from `dto` (T-56-13).
+   * - Re-signing is blocked by a `ConflictException` (409) when a `ConsentimientoFirmado`
+   *   row already exists for `pacienteId + zonaId` (D-08, T-56-14).
+   * - PNG bytes are magic-byte + size validated before being passed to pdf-lib (T-56-15).
+   * - Returns only `{ ok: true }` — the signed PDF URL is NOT returned to the portal
+   *   (T-56-10 / UI-SPEC post-sign state).
+   */
+  async firmarConsentimiento(
+    pacienteId: string,
+    dto: FirmarConsentimientoPortalDto,
+    ip: string,
+    userAgent: string,
+  ): Promise<{ ok: true }> {
+    // (1) Re-resolve zona via the patient's pending cirugia chain (pitfall E, T-56-12).
+    // This validates that dto.zonaId belongs to the patient's profesional — never trusted blindly.
+    const cirugia = await this.prisma.cirugia.findFirst({
+      where: {
+        pacienteId,
+        estado: { in: ['PROGRAMADA', 'EN_CURSO'] },
+        cirugiaCatalogo: { zonaId: dto.zonaId },
+      },
+      include: {
+        cirugiaCatalogo: {
+          include: {
+            zona: {
+              include: {
+                consentimientoArchivos: {
+                  where: { vigente: true },
+                  orderBy: { uploadedAt: 'desc' },
+                  take: 1,
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!cirugia?.cirugiaCatalogo?.zona) {
+      throw new NotFoundException(
+        'Zona de consentimiento no encontrada para esta paciente',
+      );
+    }
+
+    const zona = cirugia.cirugiaCatalogo.zona;
+
+    if (zona.consentimientoArchivos.length === 0) {
+      throw new NotFoundException('No hay consentimiento vigente para esta zona');
+    }
+
+    const archivo = zona.consentimientoArchivos[0];
+
+    // (2) D-08 guard: block re-signing (409, T-56-14, no re-sign).
+    const existingSignature = await this.prisma.consentimientoFirmado.findFirst({
+      where: { pacienteId, zonaId: dto.zonaId },
+    });
+    if (existingSignature) {
+      throw new ConflictException(
+        'El consentimiento para esta zona ya fue firmado.',
+      );
+    }
+
+    // (3) D-11: indicacionesLeidas must be true before signing is allowed.
+    if (!dto.indicacionesLeidas) {
+      throw new BadRequestException(
+        'Debe confirmar que ha leído las indicaciones antes de firmar.',
+      );
+    }
+
+    // (4) Strip data URL prefix server-side (T-56-15 — never trust client to strip).
+    const b64 = dto.signaturePngDataUrl.split(',')[1];
+    if (!b64) throw new BadRequestException('Firma inválida');
+    const pngBuffer = Buffer.from(b64, 'base64');
+
+    // Size guard — raw PNG from canvas ~50-200KB; 1MB is a generous upper bound (T-56-15/T-56-16).
+    if (pngBuffer.length > 1_000_000) {
+      throw new BadRequestException('Imagen de firma demasiado grande');
+    }
+
+    // (5) Read template PDF from disk + stamp (PNG magic-byte validation inside ConsentStampService).
+    const templateBuffer = await this.storage.readFile(archivo.path);
+    const { pdfBuffer, hashSha256 } = await this.stamp.stampConsentimiento({
+      templateBuffer,
+      signaturePngBuffer: pngBuffer,
+      metadata: {
+        fechaUtc: new Date().toISOString(),
+        ip,
+        userAgent,
+        version: archivo.version,
+      },
+    });
+
+    // (6) Archive signed PDF immutably via StorageService (T-56-14 — no overwrite/delete path).
+    const signedPath = await this.storage.save(pdfBuffer, archivo.profesionalId);
+
+    // (7) Create forensic record with all 10 required fields (D-06, CONS-07).
+    // firmadoAt defaults to now() via the Prisma schema @default(now()).
+    await this.prisma.consentimientoFirmado.create({
+      data: {
+        pacienteId,
+        zonaId: dto.zonaId,
+        consentimientoZonaArchivoId: archivo.id,
+        pdfFirmadoPath: signedPath,
+        ip,
+        userAgent,
+        versionNumero: archivo.version,
+        hashSha256,
+        indicacionesLeidasAt: new Date(),
+      },
+    });
+
+    // (8) Set Paciente aggregate flag once ≥ 1 ConsentimientoFirmado row exists (D-07, CONS-08).
+    await this.prisma.paciente.update({
+      where: { id: pacienteId },
+      data: {
+        consentimientoFirmado: true,
+        consentimientoFirmadoAt: new Date(),
+      },
+    });
+
+    // D-10 / UI-SPEC: do NOT return the signed PDF URL — portal shows static confirmation (T-56-10).
+    return { ok: true };
   }
 
   /**

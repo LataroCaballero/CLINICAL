@@ -6,6 +6,7 @@ import { PacientePortalService } from './paciente-portal.service';
 import { PortalJwtStrategy } from './strategies/portal-jwt.strategy';
 import { PortalJwtGuard } from './guards/portal-jwt.guard';
 import { StorageModule } from '../storage/storage.module';
+import { ConsentimientosModule } from '../consentimientos/consentimientos.module';
 
 /**
  * Patient-portal module.
@@ -22,12 +23,17 @@ import { StorageModule } from '../storage/storage.module';
  *
  * StorageModule is imported so StorageService is injectable into
  * PacientePortalService for building public PDF URLs (D-09/CONS-03, Plan 04).
+ *
+ * ConsentimientosModule is imported so ConsentStampService (exported from that
+ * module) is injectable into PacientePortalService for PDF stamping (CONS-05/CONS-06,
+ * Plan 05). StorageModule is already present — not duplicated here.
  */
 @Module({
   imports: [
     PassportModule,
     JwtModule.register({ secret: process.env.JWT_SECRET }),
     StorageModule,
+    ConsentimientosModule,
   ],
   controllers: [PacientePortalController],
   providers: [PacientePortalService, PortalJwtStrategy, PortalJwtGuard],

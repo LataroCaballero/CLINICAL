@@ -289,7 +289,14 @@ Plans:
   3. La PatientSheet del profesional muestra un badge "Consentimiento firmado" con la fecha para los pacientes que completaron el flujo.
   4. En el chat interno del staff, los mensajes enviados por el paciente vía portal tienen un badge visual "Paciente" (ícono diferente + color teal) distinguible de mensajes de staff y de notificaciones del sistema.
 
-**Plans**: TBD
+**Plans**: 7 plans
+- [ ] 56-01-PLAN.md — Schema foundation + forensic migration (ConsentimientoFirmado, version, Cirugia FK)
+- [ ] 56-02-PLAN.md — Backend enablers: CHAT-03 DTO field, CR-01 URL XSS fix, 2mb body limit
+- [ ] 56-03-PLAN.md — pdf-lib stamping service + forensic hash + version-roll
+- [ ] 56-04-PLAN.md — Portal read path: consent resolver (D-09/D-10) + GET endpoint
+- [ ] 56-05-PLAN.md — Portal write path: firmar + immutable signed PDF + forensic record
+- [ ] 56-06-PLAN.md — Portal Consentimiento frontend: canvas, gate, states, XSS-safe links
+- [ ] 56-07-PLAN.md — Staff badges: teal Paciente chat bubble + emerald consent date badge
 **UI hint**: yes
 
 ## Progress

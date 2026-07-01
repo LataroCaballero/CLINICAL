@@ -27,6 +27,9 @@ const mockPrisma = {
   consentimientoZonaArchivo: {
     updateMany: jest.fn(),
     create: jest.fn(),
+    // D-03: uploadConsentimiento computes next version via aggregate(_max.version)
+    // before the $transaction. Default to no prior version → nextVersion = 1.
+    aggregate: jest.fn().mockResolvedValue({ _max: { version: null } }),
   },
   $transaction: jest.fn(),
 };

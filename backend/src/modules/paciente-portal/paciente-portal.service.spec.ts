@@ -8,6 +8,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { PacientePortalService } from './paciente-portal.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { StorageService } from '../storage/storage.service';
 
 // ─── Mocks ──────────────────────────────────────────────────────────────────
 
@@ -38,6 +39,12 @@ const mockJwt = {
   sign: jest.fn(),
 };
 
+// 56-04 injected StorageService (constructor index [2]) to build consent pdfUrls.
+const mockStorage = {
+  getPublicUrl: jest.fn(),
+  save: jest.fn(),
+};
+
 // ─── Tests ───────────────────────────────────────────────────────────────────
 
 describe('PacientePortalService', () => {
@@ -52,6 +59,7 @@ describe('PacientePortalService', () => {
         PacientePortalService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: JwtService, useValue: mockJwt },
+        { provide: StorageService, useValue: mockStorage },
       ],
     }).compile();
 

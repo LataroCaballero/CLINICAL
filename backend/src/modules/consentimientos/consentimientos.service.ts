@@ -48,7 +48,16 @@ export class ConsentimientosService {
     // Step 3: Persist file via StorageService (UUID filename, D-13)
     const filePath = await this.storage.save(buffer, profesionalId);
 
-    // Step 4: Version-roll — mark prior vigente=false, create new vigente row (D-05)
+    // Step 4a: Compute next version number for this zona (D-03 — incremental per zona)
+    const maxVersionResult =
+      await this.prisma.consentimientoZonaArchivo.aggregate({
+        where: { zonaId },
+        _max: { version: true },
+      });
+    const nextVersion = (maxVersionResult._max.version ?? 0) + 1;
+
+    // Step 4b: Version-roll — mark prior vigente=false, create new vigente row (D-05)
+    // new row carries nextVersion (D-03)
     const [, createdRow] = await this.prisma.$transaction([
       this.prisma.consentimientoZonaArchivo.updateMany({
         where: { zonaId, vigente: true },
@@ -61,6 +70,7 @@ export class ConsentimientosService {
           path: filePath,
           nombreOriginal: originalName,
           vigente: true,
+          version: nextVersion,
         },
       }),
     ]);

@@ -9,6 +9,7 @@ import { JwtService } from '@nestjs/jwt';
 import { PacientePortalService } from './paciente-portal.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { StorageService } from '../storage/storage.service';
+import { ConsentStampService } from '../consentimientos/consent-stamp.service';
 
 // ─── Mocks ──────────────────────────────────────────────────────────────────
 
@@ -45,6 +46,12 @@ const mockStorage = {
   save: jest.fn(),
 };
 
+// 56-05 injected ConsentStampService (constructor index [3]) to stamp signatures.
+const mockStamp = {
+  validatePng: jest.fn(),
+  stampSignature: jest.fn(),
+};
+
 // ─── Tests ───────────────────────────────────────────────────────────────────
 
 describe('PacientePortalService', () => {
@@ -60,6 +67,7 @@ describe('PacientePortalService', () => {
         { provide: PrismaService, useValue: mockPrisma },
         { provide: JwtService, useValue: mockJwt },
         { provide: StorageService, useValue: mockStorage },
+        { provide: ConsentStampService, useValue: mockStamp },
       ],
     }).compile();
 

@@ -944,21 +944,20 @@ await prisma.paciente.update({
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Who links Cirugia → CirugiaCatalogo in practice?**
+1. **Who links Cirugia → CirugiaCatalogo in practice?** — **RESOLVED**
    - What we know: `Cirugia.cirugiaCatalogoId` doesn't exist yet; staff creates Cirugias from the agenda/operational view.
    - What's unclear: Does the staff flow for creating a `Cirugia` already use `CirugiaCatalogo`? The current schema has `Cirugia.procedimiento String?` as free text with no catalog link.
-   - Recommendation: The planner should add the FK migration AND update the Cirugia creation UI to select from `CirugiaCatalogo` (or add a linking step to existing records). Alternatively: for F56, accept that only NEW cirugias with the FK set will show consent; old ones fall into D-10 empty-state gracefully.
+   - **RESOLUTION (user decision — CONTEXT.md "Add catalog selector"):** The professional links a surgery to a `CirugiaCatalogo` via a **catalog selector added to the agenda surgery create modal** (`SurgeryAppointmentModal.tsx`). Plan 01 adds the `Cirugia.cirugiaCatalogoId` FK (`onDelete: SetNull`); **Plan 08** adds the optional `cirugiaCatalogoId` to the create DTO (`create-cirugia-turno.dto.ts`), persists it in `turnos.service.ts crearTurnoCirugia`, and adds the `CirugiaCatalogo` `Select` to the modal. The codebase has NO cirugia edit/update endpoint (only turno-status `@Patch` routes), so linking happens at create time; this is sufficient — newly-created surgeries carry the FK, and existing unlinked cirugias fall to the D-10 `SIN_CATALOGO` empty-state gracefully (no backfill required).
 
-2. **Should `consentimientoFirmadoAt` appear in the findAll list response (patient list view)?**
+2. **Should `consentimientoFirmadoAt` appear in the findAll list response (patient list view)?** — **RESOLVED**
    - What we know: `findOne` (detail) returns all Paciente fields including `consentimientoFirmadoAt`. `findAll` explicitly maps `consentimientoFirmado: p.consentimientoFirmado` but NOT the date.
-   - What's unclear: Does the CONS-08 badge need to appear in the patient list cards (findAll) or only in the drawer detail view?
-   - Recommendation: CONS-08 success criterion says "PatientSheet del profesional muestra un badge" — the Sheet uses the detail view (findOne). Add to findAll only if the list needs it.
+   - **RESOLUTION:** CONS-08 (badge in the professional PatientSheet/drawer) is served by the **`findOne` detail view only** — no `findAll` change is needed. Plan 07 renders the emerald badge in `DatosCompletos.tsx` (drawer detail), and `findOne` already returns `consentimientoFirmadoAt`. The badge is **not** added to the patient list cards.
 
-3. **`onDelete` behavior for `ConsentimientoFirmado.consentimientoZonaArchivoId`?**
+3. **`onDelete` behavior for `ConsentimientoFirmado.consentimientoZonaArchivoId`?** — **RESOLVED**
    - What we know: D-06 says the forensic record is immutable and must never be deleted. If a `ConsentimientoZonaArchivo` row is deleted (though the current code never deletes them), the FK would cascade/restrict.
-   - Recommendation: Use `onDelete: Restrict` on the relation to prevent deletion of a `ConsentimientoZonaArchivo` that has been signed. This surfaces the immutability constraint at DB level.
+   - **RESOLUTION:** Use **`onDelete: Restrict`** on the `consentimientoZonaArchivo` relation (implemented in Plan 01, Task 1) to block deletion of a signed template version — surfacing the D-06 immutability constraint at the DB level.
 
 ---
 

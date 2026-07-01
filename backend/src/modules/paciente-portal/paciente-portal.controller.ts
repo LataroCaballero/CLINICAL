@@ -44,6 +44,28 @@ export class PacientePortalController {
   constructor(private readonly service: PacientePortalService) {}
 
   /**
+   * Consent resolver (CONS-03, D-09/D-10, T-56-09).
+   *
+   * Returns a per-zone array of discriminated status items so the frontend can
+   * render the correct consent UI without client-side inference.
+   *
+   * ROUTE ORDER: this static `consentimiento` route MUST be declared before the
+   * `@Get(':token')` param route below — Express matches in declaration order, so
+   * if `:token` came first it would capture `GET .../consentimiento` as
+   * `token="consentimiento"` and 404 in preVerify (route-shadowing bug).
+   *
+   * Security: `pacienteId` comes exclusively from the portal-scoped JWT
+   * (`req.user`) — it is NEVER read from @Param, @Body or @Query (T-56-09,
+   * pitfall 12). `@UseGuards(PortalJwtGuard)` is per-route so the public
+   * preVerify/verificar routes stay reachable (no class-level guard).
+   */
+  @UseGuards(PortalJwtGuard)
+  @Get('consentimiento')
+  getConsentimiento(@Req() req: PortalRequest) {
+    return this.service.getConsentimientosParaFirmar(req.user.pacienteId);
+  }
+
+  /**
    * Public pre-verification (D-07). Returns existence (200) + a `bloqueado` flag
    * only; an unknown token surfaces as 404. No patient data is ever returned here.
    */
@@ -130,23 +152,6 @@ export class PacientePortalController {
     dto: CreateConsultaPortalDto,
   ) {
     return this.service.crearConsulta(req.user.pacienteId, dto);
-  }
-
-  /**
-   * Consent resolver (CONS-03, D-09/D-10, T-56-09).
-   *
-   * Returns a per-zone array of discriminated status items so the frontend can
-   * render the correct consent UI without client-side inference.
-   *
-   * Security: `pacienteId` comes exclusively from the portal-scoped JWT
-   * (`req.user`) — it is NEVER read from @Param, @Body or @Query (T-56-09,
-   * pitfall 12). `@UseGuards(PortalJwtGuard)` is per-route so the public
-   * preVerify/verificar routes stay reachable (no class-level guard).
-   */
-  @UseGuards(PortalJwtGuard)
-  @Get('consentimiento')
-  getConsentimiento(@Req() req: PortalRequest) {
-    return this.service.getConsentimientosParaFirmar(req.user.pacienteId);
   }
 
   /**

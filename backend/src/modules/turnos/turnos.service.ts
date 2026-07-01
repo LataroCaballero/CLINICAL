@@ -766,6 +766,7 @@ export class TurnosService {
           ayudante: dto.ayudante,
           anestesiologo: dto.anestesiologo,
           notasPreoperatorias: dto.notasPreoperatorias,
+          cirugiaCatalogoId: dto.cirugiaCatalogoId ?? null,
           estado: EstadoCirugia.PROGRAMADA,
         },
       });

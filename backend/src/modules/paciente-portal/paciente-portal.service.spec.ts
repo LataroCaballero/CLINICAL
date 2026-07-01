@@ -29,6 +29,9 @@ const mockPrisma = {
   cirugia: {
     findFirst: jest.fn(),
   },
+  mensajeInterno: {
+    create: jest.fn(),
+  },
 };
 
 const mockJwt = {
@@ -305,6 +308,63 @@ describe('PacientePortalService', () => {
       await expect(
         service.verificar(RAW_TOKEN, {} as never),
       ).rejects.toBeInstanceOf(UnauthorizedException);
+    });
+  });
+
+  // ── crearConsulta (CHAT-04) ───────────────────────────────────────────────
+
+  describe('crearConsulta', () => {
+    const MSG = 'Hola doctor, tengo una consulta.';
+
+    beforeEach(() => {
+      // Paciente exists
+      mockPrisma.paciente.findUnique.mockResolvedValue({ id: PAC_ID });
+      // mensajeInterno.create returns the scoped payload
+      mockPrisma.mensajeInterno.create.mockResolvedValue({
+        id: 'msg-1',
+        createdAt: new Date(),
+      });
+    });
+
+    it('calls mensajeInterno.create with origenPaciente=true, autorId=null and the pacienteId argument', async () => {
+      await service.crearConsulta(PAC_ID, { mensaje: MSG });
+
+      expect(mockPrisma.mensajeInterno.create).toHaveBeenCalledTimes(1);
+      const createCall = mockPrisma.mensajeInterno.create.mock.calls[0][0];
+      expect(createCall.data.origenPaciente).toBe(true);
+      expect(createCall.data.autorId).toBeNull();
+      expect(createCall.data.pacienteId).toBe(PAC_ID);
+      expect(createCall.data.mensaje).toBe(MSG);
+    });
+
+    it('derives pacienteId from the argument, never from the dto', async () => {
+      const dto = {
+        mensaje: MSG,
+        // attacker-injected pacienteId in dto must NOT reach the create call
+        pacienteId: 'evil-id',
+      } as never;
+
+      await service.crearConsulta(PAC_ID, dto);
+
+      const createCall = mockPrisma.mensajeInterno.create.mock.calls[0][0];
+      expect(createCall.data.pacienteId).toBe(PAC_ID);
+      expect(createCall.data.pacienteId).not.toBe('evil-id');
+    });
+
+    it('returns a scoped payload with id and createdAt only', async () => {
+      const result = await service.crearConsulta(PAC_ID, { mensaje: MSG });
+
+      expect(result).toHaveProperty('id');
+      expect(result).toHaveProperty('createdAt');
+    });
+
+    it('throws NotFoundException when the paciente does not exist', async () => {
+      mockPrisma.paciente.findUnique.mockResolvedValue(null);
+
+      await expect(
+        service.crearConsulta('non-existent-id', { mensaje: MSG }),
+      ).rejects.toBeInstanceOf(NotFoundException);
+      expect(mockPrisma.mensajeInterno.create).not.toHaveBeenCalled();
     });
   });
 });

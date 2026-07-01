@@ -292,12 +292,12 @@ Plans:
 **Plans**: 8 plans
 - [x] 56-01-PLAN.md — Schema foundation + forensic migration (ConsentimientoFirmado, version, Cirugia FK)
 - [x] 56-02-PLAN.md — Backend enablers: CHAT-03 DTO field, CR-01 URL XSS fix, 2mb body limit
-- [ ] 56-03-PLAN.md — pdf-lib stamping service + forensic hash + version-roll
-- [ ] 56-04-PLAN.md — Portal read path: StorageService wiring + consent resolver (D-09/D-10) + GET endpoint
+- [x] 56-03-PLAN.md — pdf-lib stamping service + forensic hash + version-roll
+- [x] 56-04-PLAN.md — Portal read path: StorageService wiring + consent resolver (D-09/D-10) + GET endpoint
 - [ ] 56-05-PLAN.md — Portal write path: firmar + immutable signed PDF + forensic record
 - [ ] 56-06-PLAN.md — Portal Consentimiento frontend: canvas, gate, states, XSS-safe links
-- [ ] 56-07-PLAN.md — Staff badges: teal Paciente chat bubble + emerald consent date badge
-- [ ] 56-08-PLAN.md — Cirugia↔catalog selector: FK populated at surgery create (unblocks D-09 resolver)
+- [x] 56-07-PLAN.md — Staff badges: teal Paciente chat bubble + emerald consent date badge
+- [x] 56-08-PLAN.md — Cirugia↔catalog selector: FK populated at surgery create (unblocks D-09 resolver)
 **UI hint**: yes
 
 ## Progress
@@ -361,7 +361,7 @@ Plans:
 | 53. Storage + Upload + Consent Config | v1.12 | 3/3 | Complete    | 2026-06-30 |
 | 54. Portal Backend + Token Security | v1.12 | 3/3 | Complete    | 2026-06-30 |
 | 55. Portal Frontend | v1.12 | 4/4 | Complete    | 2026-07-01 |
-| 56. Signed Consent + Chat Badge | v1.12 | 2/8 | In Progress|  |
+| 56. Signed Consent + Chat Badge | v1.12 | 6/8 | In Progress|  |
 
 ---
 *Roadmap initialized: 2026-02-23 | v1.0 shipped: 2026-03-03 | v1.1 shipped: 2026-03-16 | v1.2 shipped: 2026-03-31 | v1.3 shipped: 2026-04-09 | v1.4 shipped: 2026-04-20 | v1.5 shipped: 2026-05-13 | v1.6 shipped: 2026-05-23 | v1.7 shipped: 2026-05-28 | v1.8 shipped: 2026-06-09 | v1.9 shipped: 2026-06-13 | v1.10 shipped: 2026-06-22 | v1.11 shipped: 2026-06-24 | v1.12 started: 2026-06-25*

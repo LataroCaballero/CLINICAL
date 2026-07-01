@@ -36,6 +36,7 @@ import { toast } from "sonner";
 
 import AutocompletePaciente from "@/components/AutocompletePaciente";
 import { useEffectiveProfessionalId } from "@/hooks/useEffectiveProfessionalId";
+import { useCirugiasCatalogo } from "@/hooks/useCirugiasCatalogo";
 import { api } from "@/lib/api";
 
 type TipoAnestesia = "LOCAL" | "SEDACION" | "GENERAL" | "REGIONAL" | "NINGUNA";
@@ -53,6 +54,7 @@ type FormValues = {
   anestesiologo: string;
   notasPreoperatorias: string;
   duracionMinutos: number;
+  cirugiaCatalogoId: string;
 };
 
 type Props = {
@@ -77,6 +79,8 @@ export default function SurgeryAppointmentModal({
   const qc = useQueryClient();
   const effectiveProfessionalId = useEffectiveProfessionalId();
 
+  const { data: catalogoCirugias = [] } = useCirugiasCatalogo(effectiveProfessionalId ?? undefined);
+
   const [pacienteFotoUrl, setPacienteFotoUrl] = useState<string | null>(null);
 
   const {
@@ -99,6 +103,7 @@ export default function SurgeryAppointmentModal({
       anestesiologo: "",
       notasPreoperatorias: "",
       duracionMinutos: 120,
+      cirugiaCatalogoId: "",
     },
   });
 
@@ -118,6 +123,7 @@ export default function SurgeryAppointmentModal({
   const pacienteNombre = watch("pacienteNombre");
   const fecha = watch("fecha");
   const tipoAnestesia = watch("tipoAnestesia");
+  const cirugiaCatalogoId = watch("cirugiaCatalogoId");
 
   const createMutation = useMutation({
     mutationFn: async (data: FormValues) => {
@@ -134,6 +140,7 @@ export default function SurgeryAppointmentModal({
         anestesiologo: data.anestesiologo || undefined,
         notasPreoperatorias: data.notasPreoperatorias || undefined,
         duracionMinutos: data.duracionMinutos || 120,
+        cirugiaCatalogoId: data.cirugiaCatalogoId || undefined,
       };
 
       const { data: result } = await api.post("/turnos/cirugia", payload);
@@ -263,6 +270,26 @@ export default function SurgeryAppointmentModal({
               step={15}
               {...register("duracionMinutos", { valueAsNumber: true })}
             />
+          </div>
+
+          {/* Cirugía (catálogo) */}
+          <div className="space-y-1">
+            <Label>Cirugía (catálogo)</Label>
+            <Select
+              value={cirugiaCatalogoId}
+              onValueChange={(v) => setValue("cirugiaCatalogoId", v)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Vincular con catálogo (opcional)" />
+              </SelectTrigger>
+              <SelectContent>
+                {catalogoCirugias.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.nombre}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Tipo de anestesia */}

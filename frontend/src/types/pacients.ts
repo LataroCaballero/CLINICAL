@@ -18,6 +18,7 @@ export interface PacienteListItem {
   | "PRIMERA"
   | "PRACTICA_CONSULTORIO";
   consentimientoFirmado: boolean;
+  consentimientoFirmadoAt?: string | null;
   indicacionesEnviadas?: boolean;
   estudiosPendientes: number;
   presupuestoEstado?: string | null;
@@ -45,6 +46,7 @@ export interface PacienteDetalle {
   plan?: string | null;
 
   consentimientoFirmado: boolean;
+  consentimientoFirmadoAt?: string | null;
   indicacionesEnviadas?: boolean;
   fechaIndicaciones?: string | null;
 

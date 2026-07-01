@@ -4,7 +4,7 @@ import { MedicalChips } from "@/components/ui/MedicalChips";
 import { EditableChips } from "@/components/ui/EditableChip"
 import { useObrasSociales } from "@/hooks/useObrasSociales";
 import { usePlanesByObraSocial } from "@/hooks/usePlanesByObrasSociales";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, CheckCircle2 } from "lucide-react";
 import { useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -820,13 +820,21 @@ export default function DatosCompletos({
                 <FieldRow
                     label="Consentimiento firmado"
                     value={
-                        <EditableCheckbox
-                            disabled={!isEditing("estado") || saving}
-                            checked={estadoForm.consentimientoFirmado}
-                            onChange={(v) =>
-                                setEstadoForm((f) => ({ ...f, consentimientoFirmado: v }))
-                            }
-                        />
+                        <div className="flex items-center gap-3 flex-wrap">
+                            <EditableCheckbox
+                                disabled={!isEditing("estado") || saving}
+                                checked={estadoForm.consentimientoFirmado}
+                                onChange={(v) =>
+                                    setEstadoForm((f) => ({ ...f, consentimientoFirmado: v }))
+                                }
+                            />
+                            {paciente.consentimientoFirmadoAt && (
+                                <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-300 rounded-md px-2 py-0.5">
+                                    <CheckCircle2 className="w-3.5 h-3.5" />
+                                    {new Date(paciente.consentimientoFirmadoAt).toLocaleDateString('es-AR')}
+                                </span>
+                            )}
+                        </div>
                     }
                 />
 

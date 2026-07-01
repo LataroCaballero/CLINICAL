@@ -15,6 +15,7 @@ import { PacientePortalService } from './paciente-portal.service';
 import { PortalJwtGuard } from './guards/portal-jwt.guard';
 import { UpdateContactoPortalDto } from './dto/update-contacto-portal.dto';
 import { UpdateSaludStagedDto } from './dto/update-salud-staged.dto';
+import { CreateConsultaPortalDto } from './dto/create-consulta-portal.dto';
 
 /** Shape the portal-jwt strategy attaches to `req.user` (scope from JWT, never body). */
 type PortalRequest = Request & { user: { pacienteId: string } };
@@ -103,5 +104,30 @@ export class PacientePortalController {
     dto: UpdateSaludStagedDto,
   ) {
     return this.service.updateSaludStaged(req.user.pacienteId, dto);
+  }
+
+  /**
+   * Patient consult write (CHAT-04, T-55-01/T-55-02/T-55-03).
+   *
+   * `pacienteId` comes from the portal-scoped JWT (`req.user`), NEVER from the
+   * URL or request body (D-03, pitfall 12, T-55-01).
+   *
+   * `new ValidationPipe({ whitelist: true })` per-route is the load-bearing
+   * SC#3 guard for mass-assignment (T-55-02). There is NO global ValidationPipe
+   * in this project — without the per-route pipe the narrow DTO would be
+   * decorative. `forbidNonWhitelisted` is intentionally omitted: extra fields
+   * (autorId, prioridad, pacienteId) are silently discarded, not rejected (D-12).
+   *
+   * `@UseGuards(PortalJwtGuard)` is per-route (T-55-03) — it is NEVER applied
+   * at class level so the public `preVerify` and `verificar` routes remain reachable.
+   */
+  @UseGuards(PortalJwtGuard)
+  @Post('consulta')
+  enviarConsulta(
+    @Req() req: PortalRequest,
+    @Body(new ValidationPipe({ whitelist: true }))
+    dto: CreateConsultaPortalDto,
+  ) {
+    return this.service.crearConsulta(req.user.pacienteId, dto);
   }
 }

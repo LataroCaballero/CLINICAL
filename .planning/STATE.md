@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.12
 milestone_name: Prequirúrgico Estructurado + Portal del Paciente
 status: executing
-stopped_at: Phase 55 context gathered
-last_updated: "2026-07-01T16:21:59.904Z"
+stopped_at: Completed 55-03 — PortalInfoBasica + SaludChips + PortalSalud
+last_updated: "2026-07-01T16:40:10.497Z"
 last_activity: 2026-07-01
 progress:
   total_phases: 6
   completed_phases: 4
   total_plans: 22
-  completed_plans: 20
+  completed_plans: 21
   percent: 67
 ---
 
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-06-25)
 ## Current Position
 
 Phase: 55 (portal-frontend) — EXECUTING
-Plan: 3 of 4
+Plan: 4 of 4
 Status: Ready to execute
 Last activity: 2026-07-01
 
-Progress: [█████████░] 91%
+Progress: [██████████] 95%
 
 ## Performance Metrics
 
@@ -71,6 +71,8 @@ Progress: [█████████░] 91%
 - [54-02] pickPresent(input, allowed[]) confina el data de prisma a una allow-list de claves (defense-in-depth junto al whitelist pipe de Plan 03); getDatos nunca selecciona arrays clínicos curados ni columnas CRM (D-08/D-09)
 - [54-03] new ValidationPipe({ whitelist: true }) por-ruta en cada write es el único guard SC#3 de mass-assignment (no hay pipe global); reject-on-extra omitido → campos prohibidos se descartan en silencio (200) (D-12)
 - [54-03] PacientePortalModule registra su propio PassportModule + JwtModule.register({ secret: JWT_SECRET }) (AuthModule @Global no exporta JwtService); rutas públicas sin guard + strict @Throttle 20/min, rutas read/write con PortalJwtGuard y pacienteId desde req.user (pitfall 12)
+- [55-03] antecedentesAutoReportados serialized as Object.fromEntries(condiciones.map(c=>[c,true])) — keys are condition names, round-trips via Object.keys on pre-fill; matches Record<string,unknown> DTO shape
+- [55-03] SaludChips emits string[] (no .join) to match UpdateSaludStagedDto; AlergiasChips analog adapted for portal mobile-first; PortalSalud payload confined to 4 *AutoReportad* keys (D-06, T-55-10)
 
 ### Carry-forward from v1.11
 
@@ -91,6 +93,6 @@ Progress: [█████████░] 91%
 
 ## Session Continuity
 
-Last session: 2026-07-01T16:21:59.898Z
-Stopped at: Phase 55 context gathered
+Last session: 2026-07-01T16:45:00.000Z
+Stopped at: Completed 55-03 — PortalInfoBasica + SaludChips + PortalSalud
 Resume file: None

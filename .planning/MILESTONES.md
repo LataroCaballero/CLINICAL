@@ -1,5 +1,24 @@
 # Milestones
 
+## v1.12 Prequirúrgico Estructurado + Portal del Paciente (Shipped: 2026-07-02)
+
+**Phases completed:** 6 phases (51–56), 30 plans, 58 tasks
+**Stats:** 8 días (2026-06-25 → 2026-07-02) | 83 archivos de código | +8,259 / −302 líneas (backend/frontend src) | 72 commits `feat(`
+**Requirements:** 33/33 v1 completos ✓ | **Audit:** PASSED (30/30 reqs, 6/6 flujos E2E)
+
+**Key accomplishments:**
+
+1. **Schema big-bang + fix del spam CRM (Phase 51):** una sola migración atómica añadió los catálogos prequirúrgicos por profesional, columnas guard `notificada` en TareaSeguimiento, `autorId` nullable en MensajeInterno, `estudiosComplementarios` JSON y los campos portal/staging de Paciente; el scheduler CRM ahora alerta cada tarea una sola vez (CHAT-01) y el flood histórico se limpió en el mismo release (CHAT-02).
+2. **Plantilla HC Prequirúrgico estructurada (Phase 52):** formulario seccionado con chips de antecedentes/alergias/medicación desde catálogos por profesional, auto-aprendizaje vía "Otro", checklist de estudios complementarios, check de consentimiento con timestamp, y compartir el link del portal (WhatsApp + QR + email); los datos confirmados se sincronizan al perfil del paciente (`condiciones[]`/`alergias[]`/`medicacion[]`).
+3. **Infraestructura de almacenamiento y seguridad (Phase 53):** `StorageService` en disco (cloud-ready), upload de PDF validado por magic-bytes con nombres UUID y `Content-Disposition: attachment`, `ThrottlerModule` global + strict tier en rutas públicas, y tab "Consentimientos" en Configuración (PDF por zona + links de indicaciones).
+4. **Backend del portal con token hasheado (Phase 54):** token SHA-256 en BD (URL lleva el UUID crudo), lock anti-fuerza-bruta por DNI (3 intentos / 15 min → 429), JWT portal-scoped, lectura clínica-segura y escrituras confinadas a campos staged vía `ValidationPipe({ whitelist })` por-ruta.
+5. **Portal frontend mobile-first (Phase 55):** wizard de 4 pasos sin login (DNI-gate, Info básica editable, Salud staged con chips `*AutoReportad*`, caja de Consultas one-way → `MensajeInterno origenPaciente=true`), JWT de portal aislado del staff en sessionStorage.
+6. **Consentimiento firmado + badges de chat (Phase 56):** firma dibujada estampada sobre el PDF original con pdf-lib, PDF firmado archivado con metadata forense (fecha/IP/userAgent/versión/hash SHA-256), badge "Consentimiento firmado" en PatientSheet y badge visual "Paciente" (teal) en el chat del staff.
+
+**Known deferred items at close:** 17 (see STATE.md → Deferred Items). Resumen: 5 UAT gaps (Phases 51/52/55 human-UAT parciales) + 10 verification gaps `human_needed` (4 de v1.12: Phases 52/53/54/55; 6 carryovers de milestones previos) + 1 quick-task incompleto + 1 TODO (CR-01, resuelto en 56-02). El audit del milestone pasó; los ítems son stubs de verificación humana, no bloqueantes.
+
+---
+
 ## v1.11 HC Completa en Ficha de Paciente (Shipped: 2026-06-24)
 
 **Phases completed:** 1 phase (50), 1 plan, 4 tasks (3 auto + 1 human-verify checkpoint)
@@ -8,6 +27,7 @@
 **Git range:** feat(50-01) `b62f96f` → docs(phase-50) `a060396`
 
 **Key accomplishments:**
+
 1. Componente de render HC compartido (HCSHEET-01): nuevo `HCEntryContent.tsx` que exporta `HCEntryChips` (variante tarjeta: badges de color de zona/diagnósticos/tratamientos, sin precios) y `HCEntryFullContent` (variante detalle: chips + bloque de observaciones `otroTexto` + precios ARS por tratamiento + total + comentario), manejando ambos shapes de `contenido` JSONB — v1.9 zona-agrupado (`zonas[]`) y legacy plano — además del caso de texto libre, sin romperse
 2. Tarjetas de lista con chips (HCSHEET-02): `FreeEntryPreview` en `HistoriaClinica.tsx` delega en `HCEntryChips`, reemplazando el resumen truncado en texto plano por badges de color; `line-clamp-3` movido a `TemplateEntryPreview`-only para que los chips envuelvan naturalmente sin recortarse a media fila
 3. Detalle expandido con paridad visual (HCSHEET-03): `FreeEntryFullContent` delega en `HCEntryFullContent`, logrando paridad visual completa con `HistorialClinicoPanel` (LiveTurno) y `TurnoHCModal` (agenda); mantenido como wrapper de delegación fino para conservar la firma esperada por `ExpandedEntryContent`; tipos duplicados locales eliminados (`ContenidoEntrada` aliaseado del export compartido)
@@ -26,6 +46,7 @@
 **Requirements:** 6/6 v1.10 (TRAT-01..06) | Audit: ✅ PASSED (6/6 req, 2/2 phases, integración WIRED)
 
 **Key accomplishments:**
+
 1. Read-path por-turno de "Último tratamiento" (TRAT-01/02): extractor puro `resumirTratamientosDeContenido` que normaliza los 3 shapes de contenido HC — v1.9 zona-agrupado (`contenido.zonas[].tratamientos`), legacy plano (`contenido.tratamientos`) y texto libre / tratamiento en consultorio — a `string|null` con resumen-con-conteo (1 nombre → nombre; N → `first +N-1`); integrado en `obtenerTurnosPorRango` resolviendo el tratamiento por turno y eliminando el query N+1 `historiaClinica.findMany`; 14 tests nuevos (25/25 pass), tsc build limpio
 2. Write-path snapshot incondicional (TRAT-03, fix tech debt LIVHC-05): `crearEntrada` persiste `contenido.tratamientos` siempre que haya `tratamientoIds`, independiente de `consumirInsumos`; la agregación de insumos y la `OrdenConsumo` siguen condicionadas a `consumirInsumos=true` (separación de responsabilidades); pre-fetch fuera de `$transaction` (patrón pgBouncer preservado), sin regresión de stock — las entradas nuevas siempre pueblan la columna
 3. Filtro automático source-B (TRAT-04/05): predicado client-side `isFuenteB(t) && t.ultimoTratamiento != null` oculta de la planilla a los pacientes CIRUGIA sin tratamiento real, sin mutar el backend ni romper el estado dual de v1.8 (etapaCRM/flujo intactos); los pacientes CIRUGIA con tratamiento real siguen visibles simultáneamente en kanban y planilla
@@ -42,6 +63,7 @@
 **Requirements:** 14/14 v1.9 (ZONA-01..03, FORM-01..04, APR-01..04, ADM-01..03)
 
 **Key accomplishments:**
+
 1. Catálogo HC en BD por profesional (ZONA-01/02/03): 3 modelos Prisma nuevos (ZonaHC/DiagnosticoHC/TratamientoHC) con FK al profesional, flag `esSistema` y soft-delete; migración DDL pura (patrón pgBouncer `migrate deploy`); `CatalogoHCModule` con seed idempotente de 6 zonas (Abdomen, Mamas, Nariz, Facial, Locales, Otros) lazy + hook al crear usuario PROFESIONAL; `GET /catalogo-hc` con diagnósticos/tratamientos anidados y precio resuelto — reemplaza el JSON hardcodeado `zonas-diagnostico.json` (eliminado)
 2. PrimeraConsultaForm rediseñado zona-céntrico (FORM-01/02/03/04): la zona es el eje único, seleccionarla despliega sus grupos de diagnósticos y tratamientos; con dos o más zonas la selección se agrupa visualmente por zona; la HC persiste JSONB agrupado por zona vía helper puro `construirContenidoPrimeraVez` (dual-shape, sin migración de entradas legacy); 3 lectores de historial renderizan ambos shapes; lookup de precio catálogo→fallback `tratamientosProfesional` preservado con el flujo "Generar presupuesto"
 3. Auto-aprendizaje vía "Otros" (APR-01/02/03/04): motor puro `detectarAprendizaje` (TDD) computa zonas/diagnósticos/tratamientos a crear o reactivar; `aprenderDesdeZonas` aplica los cambios en BD best-effort post-transacción al crear la entrada; lo escrito en "Otros" persiste para la próxima consulta; un tratamiento aprendido se crea también en el catálogo del profesional con precio 0 y FK opcional; UX Enter→chip en el formulario
@@ -58,6 +80,7 @@
 **Requirements:** 17/17 v1.8 (TIPO-01..06, HC-01..04, DUAL-01..03, ARCH-01..04)
 
 **Key accomplishments:**
+
 1. Migración de datos TipoTurno a 4 tipos públicos claros (Consulta, Control, Pre-Quirúrgico, Tratamiento): SQL data-only sin DDL, configs de TipoTurnoProfesional transferidas vía INSERT ON CONFLICT, filtro `esCirugia=false` en `findAll()` que preserva el tipo interno Cirugía para la agenda quirúrgica; seed idempotente (`seed-tipos-turno.ts`) + branch de color naranja para Pre-Quirúrgico en CalendarGrid
 2. Tipo de Entrada en Historia Clínica: enum `TipoEntradaHC` (CONSULTA_CIRUGIA, TRATAMIENTO, CONTROL, SEGUIMIENTO, PREOPERATORIO) + campo `tipoEntrada` opcional; helper puro `resolverNuevoFlujo` con suite de 10 casos (extracción a `*.flujo.helpers.ts` para tests Jest sin deps NestJS); selector obligatorio "Tipo de consulta" en HCCreatorForm con mapeo PLANTILLA_TO_TIPO_ENTRADA editable
 3. Transición automática de flujo/etapa CRM al cerrar sesión (HC-03/HC-04): CONSULTA_CIRUGIA en paciente PENDIENTE → flujo CIRUGIA + etapa CONSULTADO; TRATAMIENTO en paciente PENDIENTE → flujo TRATAMIENTO; TRATAMIENTO en paciente CIRUGIA → dual-state preservado (sin cambio de flujo); pre-fetch de `turno.esCirugia` fuera de `$transaction` (patrón pgBouncer)
@@ -72,6 +95,7 @@
 **Stats:** 6 días (2026-05-23 → 2026-05-28) | 53 archivos | +7,798 / -323 líneas | 57 commits
 
 **Key accomplishments:**
+
 1. Movimiento libre de etapas CRM: eliminada la validación CONFIRMADO+presupuesto en updateEtapaCRM; guard forward-only (`isAutoTransitionBlocked` + `ETAPA_ORDEN`) en 5 call sites de auto-transición — las decisiones manuales del profesional ya no son sobreescritas por eventos del sistema
 2. Warning infrastructure: `getEtapaWarning` en lib dedicada (`crm-warnings.ts`) + `KanbanPatient.flujo` field; drag-and-drop con toast amber no bloqueante para PRESUPUESTO_ENVIADO y CONFIRMADO; snap-back preservado vía `onSettled`
 3. Sheet rediseñado: 4 nuevos sub-componentes CRM (`CRMFlujoBadge`, `EtapaStepper` 6-pasos + PERDIDO separado, `ContactoRapidoModal` Dialog, `ListaEsperaDialog` dual-mode); `CardActionsSheet` refactorizado como stepper-centric; panel de acciones rápidas removido
@@ -86,6 +110,7 @@
 **Stats:** 2 días (2026-05-13 → 2026-05-14) | 56 archivos | +3,004 / -250 líneas | ~34,600 LOC TypeScript total
 
 **Key accomplishments:**
+
 1. EstadoTurno extendido con EN_ESPERA y SIENDO_ATENDIDO en schema PostgreSQL/Prisma; migración SQL manual (pgBouncer workaround); 3 endpoints PATCH de transición de estado (marcarEnEspera, marcarAusente, reactivar) + iniciarSesion corregido a SIENDO_ATENDIDO
 2. UpcomingAppointments actualizado a herramienta operativa diaria: columnas reordenadas (Tipo de Turno antes de Tratamiento), nombre del paciente clickeable abre PatientDrawer, badges amber (EN_ESPERA) e indigo+pulse (SIENDO_ATENDIDO)
 3. Menú ⋮ contextual por estado: En espera / Ausente / Reactivar / Llamar (placeholder) según estado del turno; SIENDO_ATENDIDO excluido del menú (debe cerrar sesión primero)
@@ -100,6 +125,7 @@
 **Stats:** 21 días (2026-04-22 → 2026-05-13) | 120 archivos | +10,444 / -6,571 líneas
 
 **Key accomplishments:**
+
 1. Schema extendido con TratamientoInsumo, CirugiaCatalogo y CirugiaInsumo; full CRUD de catálogos de cirugías por profesional en Configuración con precios ARS/USD, insumos y cálculo de precio base desde inventario
 2. HCCreatorForm extraído como componente reutilizable; LiveTurno HC recibe selector multi-catálogo "Tratamiento en Consultorio" con checkbox de insumos — al guardar, crea OrdenConsumo PENDIENTE en $transaction atómica
 3. PatientDrawer: botón "+ Nueva HC" lanza el mismo HCCreatorForm sin turno activo, con DatePicker retroactivo; unificación total del creator de HC en un único componente
@@ -109,6 +135,7 @@
 7. Consumo de stock end-to-end: POST /ordenes-consumo/:id/confirmar con guard de idempotencia, validación de stock suficiente, MovimientoStock SALIDA + stockActual decrementado en $transaction; página /dashboard/stock/consumo con skeleton/error/empty states
 
 **Known gaps (tech debt accepted):**
+
 - LIVHC-05/PAC-01: `contenido.tratamientos` snapshot no se escribe cuando `consumirInsumos=false`; columna "Último tratamiento" muestra `—` para tratamientos sin insumos
 - STOCK-03: backend `@Auth` excluye FACTURADOR de ordenes-consumo (frontend sí le da acceso)
 
@@ -120,6 +147,7 @@
 **Stats:** 5 días (2026-04-15 → 2026-04-20) | 51 archivos | +5,197 / -77 líneas | 82,500 LOC TypeScript total
 
 **Key accomplishments:**
+
 1. Schema FlujoPaciente: enum PostgreSQL + Paciente.flujo + TipoTurno.flujoPaciente con migración transaccional y backfill de pacientes existentes (CIRUGIA para pacientes con historial de cirugía, null para el resto)
 2. 5 nuevos tipos de turno (Consulta para cirugía, Consulta para tratamiento en consultorio, Pre-operatorio, Control, Consulta pendiente) reemplazando los 3 tipos legacy
 3. Auto-clasificación en booking: crearTurno() actualiza flujo a CIRUGIA/TRATAMIENTO según tipo de turno (guard PENDIENTE-only preserva clasificaciones existentes)
@@ -135,6 +163,7 @@
 **Stats:** 50 días (2026-02-09 → 2026-03-31) | 399 archivos | +70,242 líneas | ~82K LOC TypeScript total
 
 **Key accomplishments:**
+
 1. Schema AFIP completo por tenant: ConfiguracionAFIP (cert+key AES-256-GCM), CaeaVigente, AFIP fields en Factura, cert expiry email scheduler
 2. WSAA Token Service: firma CMS in-process con node-forge, Redis cache con mutex por CUIT — elimina openssl subprocess y exposición de clave en /tmp
 3. Emisión CAE real via WSFEv1: pg_advisory_xact_lock dentro de $transaction(45s), AfipBusinessError → DLQ inmediato, AfipTransientError → backoff exponencial
@@ -150,6 +179,7 @@
 **Stats:** 3 días (2026-03-13 → 2026-03-16) | 47 archivos | +7,174 líneas
 
 **Key accomplishments:**
+
 1. Schema DB extendido con tipos AFIP-ready (CondicionIVA, MonedaFactura), modelo LimiteFacturacionMensual y campos de auditoría en PracticaRealizada vía migración hand-written segura
 2. Documento de referencia AFIP/ARCA (774 líneas) con contrato TypeScript EmitirComprobante, patrones WSAA, WSFEv1, CAEA y advisory lock para CAE — listo para implementación real en v1.2
 3. Capa backend de facturación: getMonthBoundariesART() UTC-3 + 5 métodos FinanzasService + 7 endpoints nuevos (ADMIN+FACTURADOR) + AfipStubService tipado
@@ -165,6 +195,7 @@
 **Stats:** 114 commits | 163 archivos | +23,597 líneas | 8 días (2026-02-23 → 2026-03-02)
 
 **Key accomplishments:**
+
 1. Infraestructura BullMQ + Redis con retry exponencial y credenciales WABA cifradas AES-256-GCM por tenant
 2. Sistema de log de contactos con scoring automático de prioridad y Lista de Acción diaria del coordinador
 3. Presupuestos completos: PDF con branding, envío por email, página pública de aceptación/rechazo con token, CRM auto-transitions
@@ -173,9 +204,9 @@
 6. 4 fases de gap-closure (2.1, 4.1, 6, 7): SECRETARIA FK fix, email-channel removal, registradoPorId attribution, PROCEDIMIENTO_REALIZADO en funnel, historial completo de contactos
 
 **Known tech debt:**
+
 - EncryptionService dev fallback key — requiere ENCRYPTION_KEY en .env de producción
 - console.log('DTO RECIBIDO') en pacientes.service.ts — expone PII en logs
 - SMTP password decryption no implementada per-tenant
 
 ---
-

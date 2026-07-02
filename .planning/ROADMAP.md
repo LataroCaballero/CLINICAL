@@ -14,7 +14,7 @@
 - ✅ **v1.9 Plantilla Primera Consulta** — Fases 44–47 (shipped 2026-06-13)
 - ✅ **v1.10 Refinamiento Planilla de Tratamientos** — Fases 48–49 (shipped 2026-06-22)
 - ✅ **v1.11 HC Completa en Ficha de Paciente** — Fase 50 (shipped 2026-06-24)
-- 🚧 **v1.12 Prequirúrgico Estructurado + Portal del Paciente** — Fases 51–56 (in progress)
+- ✅ **v1.12 Prequirúrgico Estructurado + Portal del Paciente** — Fases 51–56 (shipped 2026-07-02)
 
 ## Phases
 
@@ -166,139 +166,21 @@ Full details: `.planning/milestones/v1.11-ROADMAP.md`
 
 </details>
 
-### 🚧 v1.12 Prequirúrgico Estructurado + Portal del Paciente (In Progress)
+<details>
+<summary>✅ v1.12 Prequirúrgico Estructurado + Portal del Paciente (Fases 51–56) — SHIPPED 2026-07-02</summary>
 
-**Milestone Goal:** Estructurar la HC prequirúrgica paso a paso y darle al paciente un portal de autogestión por token para que complete sus datos, firme el consentimiento y consulte al médico — reduciendo carga administrativa y reforzando el respaldo legal.
+**Goal:** Estructurar la HC prequirúrgica paso a paso y darle al paciente un portal de autogestión por token para que complete sus datos, firme el consentimiento y consulte al médico — reduciendo carga administrativa y reforzando el respaldo legal.
 
-- [x] **Phase 51: Schema Foundation + Chat Fix** (2 planes) - Migración schema completa del milestone + fix atómico del spam del scheduler de seguimiento CRM (completed 2026-06-26)
-- [x] **Phase 52: PREOP HC Form + Chip Catalogs** - Formulario estructurado HC Prequirúrgico con chips de antecedentes/alergias/medicación con learning y link compartir portal (completed 2026-06-26)
-- [x] **Phase 53: Storage + Upload + Consent Config** - StorageService (disk local, cloud-ready), upload seguro de PDF de consentimiento, links de indicaciones y rate limiting (completed 2026-06-29)
-- [x] **Phase 54: Portal Backend + Token Security** - Módulo paciente-portal público, token SHA-256 hasheado, endpoints protegidos con DTOs estrictos (completed 2026-06-30)
-- [x] **Phase 55: Portal Frontend** - Wizard mobile-first 4 pasos: datos personales, salud staged, consentimiento placeholder y consultas al médico (completed 2026-07-01)
-- [x] **Phase 56: Signed Consent + Chat Badge** - Firma dibujada estampada en PDF con metadata forense legal + badge de origen de mensajes en chat (completed 2026-07-02)
+- [x] Phase 51: Schema Foundation + Chat Fix (2/2 planes) — completado 2026-06-26
+- [x] Phase 52: PREOP HC Form + Chip Catalogs (10/10 planes) — completado 2026-06-26
+- [x] Phase 53: Storage + Upload + Consent Config (3/3 planes) — completado 2026-06-30
+- [x] Phase 54: Portal Backend + Token Security (3/3 planes) — completado 2026-06-30
+- [x] Phase 55: Portal Frontend (4/4 planes) — completado 2026-07-01
+- [x] Phase 56: Signed Consent + Chat Badge (8/8 planes) — completado 2026-07-02
 
-## Phase Details
+Full details: `.planning/milestones/v1.12-ROADMAP.md`
 
-### Phase 51: Schema Foundation + Chat Fix
-
-**Goal**: La base de datos queda migrada para el milestone completo y el spam diario de mensajes "Seguimiento CRM" se detiene de forma permanente en una sola release atómica.
-**Depends on**: Phase 50 (v1.11 complete)
-**Requirements**: CHAT-01, CHAT-02
-**Success Criteria** (what must be TRUE):
-
-  1. Después del deploy, el scheduler de seguimiento CRM no genera un nuevo mensaje "Seguimiento CRM" para tareas ya notificadas: una tarea pendiente = un solo mensaje de notificación, sin importar cuántos días pasen sin que el profesional la marque completa.
-  2. El chat de pacientes con seguimientos históricos muestra únicamente mensajes legítimos; el flood acumulado de mensajes "Seguimiento CRM" previos al deploy desaparece del chat.
-  3. El fix del scheduler y la migración de limpieza se despliegan en la misma release: no existe ventana en la que los mensajes estén limpiados pero el guard `notificada` no esté activo.
-  4. La aplicación funciona normalmente tras la migración — todas las pantallas existentes cargan sin errores (sin regresiones por nuevas columnas/modelos en la BD).
-
-**Plans**: 2 plans
-
-- [x] 51-01-PLAN.md — Big-bang schema edits (catalogs, guard fields, Paciente portal/staging fields, HC estudios JSON) + D-07 seed-data constants
-- [x] 51-02-PLAN.md — [BLOCKING] versioned migration + CHAT-02 cleanup DELETE + CHAT-01 scheduler dedupe guard (atomic release)
-
-### Phase 52: PREOP HC Form + Chip Catalogs
-
-**Goal**: Los profesionales pueden registrar una entrada de HC tipo Prequirúrgico mediante un formulario estructurado paso a paso, con chips de antecedentes/alergias/medicación con auto-learning, checklist de estudios, check de consentimiento con timestamp y la capacidad de compartir el link del portal del paciente desde la plantilla.
-**Depends on**: Phase 51
-**Requirements**: PREOP-01, PREOP-02, PREOP-03, PREOP-04, PREOP-05, PREOP-06, PREOP-07, PREOP-08, PREOP-09, PREOP-10, PREOP-11, PREOP-12
-**Success Criteria** (what must be TRUE):
-
-  1. Al crear una HC con tipo "Prequirúrgico", el profesional ve un formulario estructurado en secciones (no un textarea libre): puede seleccionar/agregar antecedentes, alergias y medicación como chips desde catálogos por profesional, con campo "Otro" en cada sección.
-  2. Un valor nuevo ingresado como "Otro" en cualquier sección de chips aparece como sugerencia seleccionable en la próxima apertura del formulario prequirúrgico del mismo profesional (auto-learning).
-  3. Los antecedentes, alergias y medicación confirmados quedan guardados en el perfil del paciente (`condiciones[]`, `alergias[]`, `medicacion[]`) además de en el contenido JSONB de la entrada de HC.
-  4. El profesional puede marcar los estudios complementarios realizados (Laboratorio, ECG, Imágenes) y activar el check "Paciente informado del consentimiento", ambos con timestamp de auditoría registrado.
-  5. Desde la plantilla prequirúrgica, el profesional puede copiar el link del portal del paciente, mostrar el QR escaneable o enviarlo por email; si SMTP no está configurado la opción email no aparece.
-
-**Plans**: TBD
-**UI hint**: yes
-
-### Phase 53: Storage + Upload + Consent Config
-
-**Goal**: La clínica puede subir el PDF de consentimiento y configurar links de indicaciones preoperatorias desde Configuración, respaldado por un StorageService preparado para cloud, validación de upload segura y rate limiting activo en todos los endpoints de la API.
-**Depends on**: Phase 51
-**Requirements**: INFRA-01, INFRA-02, INFRA-03, CONS-01, CONS-02
-**Success Criteria** (what must be TRUE):
-
-  1. El médico puede subir un PDF de consentimiento desde Configuración; el archivo se almacena con nombre UUID (nunca el original del cliente) y es accesible vía `${BACKEND_URL}/uploads/...` con `Content-Disposition: attachment`.
-  2. Intentar subir un archivo que no sea un PDF válido (verificado por magic bytes tras escritura a disco, no por header MIME del cliente) resulta en HTTP 400 y el archivo no persiste.
-  3. El médico puede cargar y guardar links de indicaciones preoperatorias por procedimiento desde Configuración; los links persisten y aparecen correctamente tras recargar la página.
-  4. Los endpoints de la API responden con HTTP 429 tras superar el límite de requests configurado (ThrottlerModule cableado en AppModule, verificable con herramienta HTTP de flood).
-  5. El `StorageService` existe como abstracción con interfaz `save(buffer, filename) → relativePath`; los consumidores no usan `fs` directamente — cambiar de disco a cloud es una implementación swap sin tocar consumidores.
-
-**Plans**: 3 plans
-**UI hint**: yes
-
-Plans:
-**Wave 1**
-
-- [x] 53-01-PLAN.md — Backend: StorageService (disk, cloud-ready) + UploadsController (path-traversal guard, attachment) + global ThrottlerModule/APP_GUARD + strict tier on presupuestos/public
-
-**Wave 2** *(blocked on Wave 1 completion)*
-
-- [x] 53-02-PLAN.md — Backend: schema (ZonaHC.indicacionesUrl, CirugiaCatalogo.zonaId, ConsentimientoZonaArchivo) + migration + consentimientos module (magic-byte upload, versioned history) + catalogo-hc indicaciones endpoint
-
-**Wave 3** *(blocked on Wave 2 completion)*
-
-- [x] 53-03-PLAN.md — Frontend: "Consentimientos" tab in Configuración (per-zona consent PDF upload + indicaciones URL) with types + TanStack Query hooks
-
-### Phase 54: Portal Backend + Token Security
-
-**Goal**: El backend del portal de autogestión está operativo: cada paciente tiene un link persistente cuyo token está SHA-256 hasheado en la BD, los endpoints públicos usan DTOs estrictos que protegen campos clínicos y los datos de salud se almacenan staged sin tocar los registros curados.
-**Depends on**: Phases 52, 53
-**Requirements**: PORTAL-01, PORTAL-04, PORTAL-06
-**Success Criteria** (what must be TRUE):
-
-  1. El staff puede generar el link del portal para un paciente desde la app; el token en la URL es el UUID crudo, y el valor en la BD es su hash SHA-256 en hex de 64 caracteres (verificable con SELECT — debe ser 64-char hex, no UUID).
-  2. El paciente puede acceder al portal con su token y verificar identidad con DNI; tras 3 intentos fallidos consecutivos para el mismo token dentro de 15 minutos, el endpoint bloquea con 429.
-  3. Los endpoints del portal no permiten modificar `alergias[]`, `condiciones[]`, `etapaCRM`, `flujo`, `DNI` ni ningún campo clínico — un request que los incluya en el body es ignorado (narrow DTO).
-  4. Los datos de salud enviados por el paciente aparecen en campos staging separados (`alergiasAutoReportadas`, `antecedentesAutoReportados`, `medicacionAutoReportada`) sin alterar los campos clínicos curados por el profesional.
-
-**Plans**: 3 plans
-- [x] 54-01-PLAN.md — Schema migration (intentos/bloqueo columns) + narrow DTOs + portal-jwt strategy/guard
-- [x] 54-02-PLAN.md — Portal service: hashed token lookup, DNI brute-force lock (429), portal-JWT emission, confined writes
-- [x] 54-03-PLAN.md — Public + JWT-guarded controller (strict throttle, whitelist pipes) + module/AppModule wiring
-
-### Phase 55: Portal Frontend
-
-**Goal**: El paciente puede completar su información personal, auto-reportar antecedentes de salud y enviar consultas al médico mediante un wizard mobile-first de 4 pasos accesible sin login.
-**Depends on**: Phase 54
-**Requirements**: PORTAL-02, PORTAL-03, PORTAL-05, CHAT-04
-**Success Criteria** (what must be TRUE):
-
-  1. El paciente abre el link del portal en su celular y ve un wizard con indicador "Paso X de 4" en español informal (tuteo), con texto mínimo de 16px legible sin necesidad de hacer zoom.
-  2. En el paso "Información básica", el paciente puede revisar y corregir/completar teléfono, email, dirección y contacto de emergencia; los cambios se guardan al avanzar al siguiente paso.
-  3. En el paso "Salud", el paciente puede seleccionar/escribir condiciones, alergias, medicación y tratamientos previos; los datos quedan en campos staged en la BD sin modificar los registros clínicos curados por el profesional.
-  4. En el paso "Consultas", el paciente puede enviar una pregunta al médico que aparece en el chat interno del staff diferenciada de los mensajes de staff regulares.
-
-**Plans**: 4 plans
-- [x] 55-01-PLAN.md — Backend POST /consulta (CHAT-04): endpoint MensajeInterno origenPaciente=true tras PortalJwtGuard
-- [x] 55-02-PLAN.md — Portal foundation (PORTAL-02): portal-api client, hooks, shell DNI-gate + layout navegable 4 secciones
-- [x] 55-03-PLAN.md — Info básica + Salud (PORTAL-03/PORTAL-05): forms RHF+Zod y chips staged *AutoReportad*
-- [x] 55-04-PLAN.md — Consultas (CHAT-04 frontend): envío one-way al chat del staff con confirmación
-**UI hint**: yes
-
-### Phase 56: Signed Consent + Chat Badge
-
-**Goal**: El paciente puede firmar el consentimiento informado dibujando su firma en el portal, generando un PDF archivado con firma estampada y metadata forense legal; el staff ve el estado del consentimiento en la ficha del paciente y puede distinguir visualmente mensajes del paciente vs. sistema en el chat.
-**Depends on**: Phases 53, 54, 55
-**Requirements**: CONS-03, CONS-04, CONS-05, CONS-06, CONS-07, CONS-08, CHAT-03
-**Success Criteria** (what must be TRUE):
-
-  1. El paciente puede ver y/o descargar el PDF de consentimiento subido por el médico desde el portal (paso 3 del wizard).
-  2. El paciente puede dibujar su firma en un canvas; al confirmar, se genera un PDF firmado con la firma visible estampada sobre el PDF original, archivado con fecha/hora servidor (UTC), IP, userAgent, versión del consentimiento y hash SHA-256 del PDF firmado — todos los 5 campos presentes en el registro de auditoría.
-  3. La PatientSheet del profesional muestra un badge "Consentimiento firmado" con la fecha para los pacientes que completaron el flujo.
-  4. En el chat interno del staff, los mensajes enviados por el paciente vía portal tienen un badge visual "Paciente" (ícono diferente + color teal) distinguible de mensajes de staff y de notificaciones del sistema.
-
-**Plans**: 8 plans
-- [x] 56-01-PLAN.md — Schema foundation + forensic migration (ConsentimientoFirmado, version, Cirugia FK)
-- [x] 56-02-PLAN.md — Backend enablers: CHAT-03 DTO field, CR-01 URL XSS fix, 2mb body limit
-- [x] 56-03-PLAN.md — pdf-lib stamping service + forensic hash + version-roll
-- [x] 56-04-PLAN.md — Portal read path: StorageService wiring + consent resolver (D-09/D-10) + GET endpoint
-- [x] 56-05-PLAN.md — Portal write path: firmar + immutable signed PDF + forensic record
-- [x] 56-06-PLAN.md — Portal Consentimiento frontend: canvas, gate, states, XSS-safe links
-- [x] 56-07-PLAN.md — Staff badges: teal Paciente chat bubble + emerald consent date badge
-- [x] 56-08-PLAN.md — Cirugia↔catalog selector: FK populated at surgery create (unblocks D-09 resolver)
-**UI hint**: yes
+</details>
 
 ## Progress
 

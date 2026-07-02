@@ -2,35 +2,33 @@
 gsd_state_version: 1.0
 milestone: v1.12
 milestone_name: Prequirúrgico Estructurado + Portal del Paciente
-status: executing
+status: Awaiting next milestone
 stopped_at: Phase 56 UI-SPEC approved
-last_updated: "2026-07-02T16:08:46.122Z"
-last_activity: 2026-07-01 -- Phase 56 execution started
+last_updated: "2026-07-02T19:24:11.952Z"
+last_activity: 2026-07-02 — Milestone v1.12 completed and archived
 progress:
   total_phases: 6
-  completed_phases: 5
+  completed_phases: 6
   total_plans: 30
-  completed_plans: 22
-  percent: 73
+  completed_plans: 30
+  percent: 100
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-06-25)
+See: .planning/PROJECT.md (updated 2026-07-02)
 
 **Core value:** Que un cirujano plástico cierre más cirugías — el sistema hace visible qué pacientes seguir, cuándo y cómo, de la manera más automatizada posible
-**Current focus:** Phase 56 — signed-consent-chat-badge
+**Current focus:** Planning next milestone (v1.12 shipped 2026-07-02)
 
 ## Current Position
 
-Phase: 56 (signed-consent-chat-badge) — EXECUTING
-Plan: 1 of 8
-Status: Executing Phase 56
-Last activity: 2026-07-01 -- Phase 56 execution started
-
-Progress: [██████████] 100%
+Phase: Milestone v1.12 complete
+Plan: —
+Status: Awaiting next milestone
+Last activity: 2026-07-02 — Milestone v1.12 completed and archived
 
 ## Performance Metrics
 
@@ -44,35 +42,9 @@ Progress: [██████████] 100%
 
 ## Accumulated Context
 
-### Decisions (v1.12 planning)
+### Decisions
 
-- Token portal SHA-256 hasheado (portalToken en BD = 64-char hex, URL lleva el UUID crudo)
-- @cantoo/pdf-lib para estampar firma en PDF subido (PDFKit no puede modificar archivos existentes)
-- Datos de salud del paciente en staging fields separados; alergias[]/condiciones[] son staff-only
-- CHAT-01 + CHAT-02 misma release atómica (cleanup regrow en 24h sin el guard notificada)
-- INFRA-02 (ThrottlerModule) wired en Phase 53, antes del primer endpoint público del portal (Phase 54)
-- StorageService abstraction para cloud-swap futuro sin tocar consumidores
-- Gate legal pre-go-live: revisión del flujo de consentimiento antes del primer paciente quirúrgico real
-- [51-02] Migración big-bang aplicada via prisma migrate diff + db execute + migrate resolve --applied por drift de timestamp pre-existente (20260415221758 vs 20260416000000)
-- [51-02] CHAT-01 + CHAT-02 desplegados atómicamente — flood eliminado y guard activo en la misma release (SC#3)
-- [52-09] D-12 ampliada: portalTokenCifrado persiste raw token AES-256-GCM at-rest; GET portal-link sólo lectura vía obtenerPortalLink; lookups siguen por hash SHA-256 (Gap B cerrado)
-- [52-10] useQuery (no mutation) para GET portal-link en mount; queryClient.setQueryData tras generar exitoso; portal-email.service retorna { enviado, codigo? } — solo error.code SMTP (T-52-12)
-- [53-01] ThrottlerModule.forRoot([{ ttl: 60000, limit: 100 }]) como APP_GUARD global (D-07); strict @Throttle (limit 20/min) en ambas rutas públicas (presupuestos/public + uploads) (D-08)
-- [53-01] StorageService: uploads/{profesionalId}/{uuid}.pdf en disco; resolvePath con guard traversal BadRequestException; sin delete (D-05/D-10/D-13)
-- [53-01] UploadsController: GET /uploads/:profesionalId/:filename público sin @Auth, Content-Disposition: attachment, strict throttle (D-09/D-15)
-- [53-02] ConsentimientosModule: magic-byte %PDF- check en buffer (no mimetype del cliente) antes de StorageService.save — non-PDF → 400 y nada persiste (D-14/INFRA-03/T-53-06)
-- [53-02] ConsentimientoZonaArchivo: version-roll con vigente=false en row anterior + create new vigente row — historial nunca eliminado (D-05/T-53-09)
-- [53-02] PATCH /catalogo-hc/zonas/:id/indicaciones: @IsUrl + @MaxLength(2048) + @ValidateIf(null) para permitir limpieza; ownership guard en service (CONS-02/T-53-11)
-- [53-02] Migración aplicada via prisma diff+db execute+resolve (mismo patrón Phase 51 — pgBouncer Supabase bloquea migrate dev con drift)
-- [54-01] Columnas brute-force portalIntentosFallidos (Int default 0) + portalBloqueadoHasta (DateTime?) en Paciente; migración 20260630000000_portal_intentos_bloqueo via diff+db execute+resolve (ALTER TABLE aditivo, no migrate dev) (D-01)
-- [54-01] Strategy NOMBRADA portal-jwt (PassportStrategy(Strategy,'portal-jwt')) + scope-claim gate (scope=portal-paciente, return null→401) mantiene tokens de staff fuera del portal (D-05/T-54-01); ignoreExpiration:false fuerza re-verify DNI (D-06); valida returns { pacienteId } sin cargar Usuario
-- [54-01] DTOs estrechos opcionales (UpdateContactoPortalDto contacto-only / UpdateSaludStagedDto *AutoReportad*-only) como superficie de escritura SC#3/SC#4; whitelist se aplica por-ruta en Plan 03 (NO hay ValidationPipe global)
-- [54-02] Lock brute-force por bloque-de-duración (no rolling window): 3 fallos → bloqueo 15 min → 3 intentos nuevos solo tras expirar; counter resetea sólo cuando portalBloqueadoHasta está SET y < now (evita rama 429 muerta) (D-03)
-- [54-02] pickPresent(input, allowed[]) confina el data de prisma a una allow-list de claves (defense-in-depth junto al whitelist pipe de Plan 03); getDatos nunca selecciona arrays clínicos curados ni columnas CRM (D-08/D-09)
-- [54-03] new ValidationPipe({ whitelist: true }) por-ruta en cada write es el único guard SC#3 de mass-assignment (no hay pipe global); reject-on-extra omitido → campos prohibidos se descartan en silencio (200) (D-12)
-- [54-03] PacientePortalModule registra su propio PassportModule + JwtModule.register({ secret: JWT_SECRET }) (AuthModule @Global no exporta JwtService); rutas públicas sin guard + strict @Throttle 20/min, rutas read/write con PortalJwtGuard y pacienteId desde req.user (pitfall 12)
-- [55-03] antecedentesAutoReportados serialized as Object.fromEntries(condiciones.map(c=>[c,true])) — keys are condition names, round-trips via Object.keys on pre-fill; matches Record<string,unknown> DTO shape
-- [55-03] SaludChips emits string[] (no .join) to match UpdateSaludStagedDto; AlergiasChips analog adapted for portal mobile-first; PortalSalud payload confined to 4 *AutoReportad* keys (D-06, T-55-10)
+Full v1.12 decision log capturado en `.planning/PROJECT.md` (Key Decisions) y en `.planning/milestones/v1.12-ROADMAP.md`. Resueltas — no requieren acción.
 
 ### Carry-forward from v1.11
 
@@ -91,8 +63,36 @@ Progress: [██████████] 100%
 - EncryptionService dev fallback key — configurar ENCRYPTION_KEY en .env prod.
 - console.log('DTO RECIBIDO') en pacientes.service.ts — expone PII en logs.
 
+## Deferred Items
+
+Items acknowledged and deferred at milestone close on 2026-07-02 (audit PASSED; these are human-verify stubs and stale carryovers, not blockers):
+
+| Category | Item | Status |
+|----------|------|--------|
+| uat_gap | 51-HUMAN-UAT | partial |
+| uat_gap | 52-HUMAN-UAT | partial |
+| uat_gap | 55-HUMAN-UAT | partial |
+| verification_gap | 52-VERIFICATION | human_needed |
+| verification_gap | 53-VERIFICATION | human_needed |
+| verification_gap | 54-VERIFICATION | human_needed |
+| verification_gap | 55-VERIFICATION | human_needed |
+| verification_gap | 10-VERIFICATION (v1.1 carryover) | gaps_found |
+| verification_gap | 27-VERIFICATION (v1.5 carryover) | human_needed |
+| verification_gap | 28-VERIFICATION (v1.5 carryover) | human_needed |
+| verification_gap | 29-VERIFICATION (v1.5 carryover) | human_needed |
+| verification_gap | 30-VERIFICATION (v1.5 carryover) | human_needed |
+| verification_gap | 49-VERIFICATION (v1.10 carryover) | human_needed |
+| quick_task | 1-eliminar-dropdown-tipo-de-consulta-de-hc | missing |
+| todo | cr-01-indicaciones-url-validation (fixed in 56-02) | resolved |
+
+Total: 17 items (2 already resolved in-code: CHAT/UAT partials pending live-server human confirmation).
+
 ## Session Continuity
 
 Last session: 2026-07-01T21:25:55.628Z
 Stopped at: Phase 56 UI-SPEC approved
 Resume file: .planning/phases/56-signed-consent-chat-badge/56-UI-SPEC.md
+
+## Operator Next Steps
+
+- Start the next milestone with /gsd-new-milestone

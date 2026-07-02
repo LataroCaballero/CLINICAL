@@ -4,6 +4,52 @@
 
 ---
 
+## Milestone: v1.12 — Prequirúrgico Estructurado + Portal del Paciente
+
+**Shipped:** 2026-07-02
+**Phases:** 6 (51–56) | **Plans:** 30 | **Timeline:** 8 días (2026-06-25 → 2026-07-02)
+**Stats:** 83 archivos de código | +8,259 / −302 líneas (backend/frontend src) | 72 commits `feat(` | 33/33 requisitos | audit PASSED (30/30 reqs, 6/6 flujos E2E)
+
+### What Was Built
+- **Schema big-bang del milestone (Phase 51)**: una sola migración atómica con catálogos preop por profesional, guard `notificada` en TareaSeguimiento, `autorId` nullable en MensajeInterno, `estudiosComplementarios` JSON y campos portal/staging de Paciente; fix del spam "Seguimiento CRM" (dedupe guard + limpieza del flood histórico) en el mismo release
+- **Plantilla HC Prequirúrgico estructurada (Phase 52)**: formulario seccionado con chips de antecedentes/alergias/medicación desde catálogos por profesional, auto-learning vía "Otro", checklist de estudios, check de consentimiento con timestamp, compartir link (WhatsApp/QR/email); sincroniza al perfil del paciente (`condiciones[]`/`alergias[]`/`medicacion[]`)
+- **Infraestructura de storage y seguridad (Phase 53)**: `StorageService` en disco cloud-ready, upload de PDF validado por magic-bytes (UUID + attachment), `ThrottlerModule` global + strict tier, tab "Consentimientos" en Configuración (PDF por zona con version-roll + links de indicaciones)
+- **Backend del portal con token hasheado (Phase 54)**: token SHA-256 en BD (URL con UUID crudo), lock anti-fuerza-bruta por DNI (3 intentos/15 min → 429), JWT portal-scoped, escrituras confinadas a campos staged vía `ValidationPipe({ whitelist })` por-ruta
+- **Portal frontend mobile-first (Phase 55)**: wizard de 4 pasos sin login (DNI-gate, Info básica editable, Salud staged, Consultas one-way → `MensajeInterno origenPaciente=true`), JWT de portal aislado del staff en sessionStorage
+- **Consentimiento firmado + badges (Phase 56)**: firma dibujada estampada sobre el PDF original con pdf-lib, PDF firmado archivado con metadata forense (fecha/IP/userAgent/versión/hash SHA-256), badge "Consentimiento firmado" en PatientSheet, badge "Paciente" (teal) en chat del staff; CR-01 (stored-XSS de indicacionesUrl) resuelto en 56-02
+
+### What Worked
+- **Schema big-bang up-front (Phase 51)**: migrar todo el schema del milestone en una fase eliminó el drift entre fases y la ventana peligrosa donde el cleanup CHAT-02 podía correr sin el guard CHAT-01. Release atómica = una sola verificación de integridad de BD para 6 fases de trabajo
+- **Contratos primero, seguridad después construye contra ellos**: Phase 54 definió DTOs estrechos + strategy portal-jwt + columnas de brute-force ANTES de escribir el service/controller; el resto del portal se construyó contra superficies ya acotadas, lo que hizo la revisión de seguridad (SC#3/SC#4) mecánica
+- **Defense-in-depth en el portal público**: hash del token + `pickPresent` allow-list en el service + `ValidationPipe({ whitelist })` por-ruta + strict throttle — capas redundantes que hacen que un solo olvido no exponga campos clínicos. Verificado con specs TDD (11-case brute-force lock)
+- **Reuso agresivo de patrones v1.9**: los catálogos preop por profesional clonaron exactamente el patrón `ZonaHC` (esSistema, soft-delete, learning best-effort post-tx); el selector dx/tratamiento reusó `PrimeraConsultaForm`. Poco código nuevo de lógica, mucho ensamblaje
+- **Audit previo al cierre pagó de nuevo**: `/gsd:audit-milestone` corrió y pasó (30/30, 6/6) antes de completar — el cierre fue confiado, no un salto de fe
+
+### What Was Inefficient
+- **7mo milestone con el mismo bug de cierre de `gsd-tools`**: `milestone.complete` volvió a extraer accomplishments basura — esta vez entradas `"One-liner:"`, `"Prisma (Task 1):"`, `"paciente-portal.module.ts:"` de SUMMARY files cuyo campo one-liner no quedó bien poblado. Requirió reescribir a mano las 6 accomplishments del MILESTONES.md. Idéntico patrón a v1.8–v1.11; la deuda de tooling sigue sin arreglarse
+- **VERIFICATION.md quedó en `human_needed` para 4 de las 6 fases v1.12**: la verificación automatizada corrió pero nadie confirmó en server vivo; sumado a 3 HUMAN-UAT parciales, se cerró con 17 ítems diferidos. No es un fallo (el audit cubre coverage), pero indica que la verificación humana se acumula en vez de resolverse fase a fase
+- **Carryovers de verificación de milestones viejos nunca limpiados**: 6 VERIFICATION.md de v1.1/v1.5/v1.10 seguían apareciendo como `human_needed`/`gaps_found` en el audit de artefactos abiertos. Ruido que ensucia cada cierre; un `/gsd:cleanup` retroactivo los sacaría
+- **Gate legal como tech debt vivo**: el flujo de consentimiento firmado está construido pero la revisión legal (Ley 25506/26529) sigue pendiente pre-go-live — una dependencia externa que el código no puede cerrar solo
+
+### Patterns Established
+- **Migración big-bang por milestone**: cuando varias fases comparten cambios de schema, aplicar todo el DDL en la Fase 1 (via `prisma diff + db execute + migrate resolve`, patrón pgBouncer) evita drift y ventanas de inconsistencia entre fases
+- **Portal público seguro por capas**: token hasheado (SHA-256 en BD, raw sólo en URL/cifrado) + lock por bloque-de-duración + allow-list en service + `ValidationPipe({ whitelist })` por-ruta + strict throttle. Plantilla reutilizable para cualquier endpoint público futuro
+- **Datos externos staged, nunca in-place**: input del paciente/tercero va a campos `*AutoReportad*`/staging separados; los registros curados por el profesional son la fuente de verdad. Respaldo legal sin corromper datos clínicos
+- **Estampado forense de documentos con pdf-lib**: cargar el PDF original, estampar firma + caja de metadata visible, re-emitir, hashear el buffer final (SHA-256) y archivar inmutable — patrón para cualquier artefacto legal firmado
+
+### Key Lessons
+- **El fix de `gsd-tools`/one-liner ya es urgente (7 milestones)**: cada cierre paga el mismo costo manual de reescribir accomplishments. La raíz es que los SUMMARY no pueblan bien el campo `one_liner`; arreglar la plantilla de SUMMARY + el extractor del CLI antes del próximo milestone grande dejaría de sangrar tiempo
+- **La verificación humana no se cierra sola — hay que forzarla por fase**: diferir HUMAN-UAT/VERIFICATION "para después" garantiza que se acumule hasta el cierre. Para features con superficie de usuario real (portal del paciente), agendar la verificación en server vivo como gate de fase, no de milestone
+- **Correr `/gsd:cleanup` periódicamente**: los artefactos de verificación de milestones cerrados hace meses siguen contaminando el audit de apertura; limpiarlos retroactivamente haría cada cierre más legible
+- **Un feature con implicancia legal necesita un gate no-código explícito**: el consentimiento firmado quedó técnicamente completo pero bloqueado por revisión legal externa — registrarlo como gate pre-go-live visible (no como tech debt enterrado) evita un deploy prematuro
+
+### Cost Observations
+- Milestone mediano-grande (6 fases, 30 planes, 58 tareas, +8.3k LOC) en 8 días — el más grande desde v1.5
+- Mix de TDD (brute-force lock 11 casos, catalogo-hc 101 tests) + ensamblaje de patrones existentes; la seguridad del portal justificó el costo extra de specs
+- Cierre con 17 ítems diferidos (mayormente verificación humana en server vivo) — aceptado con audit PASSED de respaldo
+
+---
+
 ## Milestone: v1.11 — HC Completa en Ficha de Paciente
 
 **Shipped:** 2026-06-24
@@ -422,6 +468,7 @@
 | v1.9 Plantilla Primera Consulta | 4 | 12 | 1 día | ~variable | 12 planes en 1 día — catálogo en BD nuevo + dual-shape JSONB sin migración; audit formal retomado |
 | v1.10 Refinamiento Planilla Tratamientos | 2 | 3 | 1 día | ~variable | Read-path/write-path/frontend en fases secuenciales; extractor puro + TDD; audit PASSED |
 | v1.11 HC Completa en Ficha de Paciente | 1 | 1 | 1 día | ~variable | Milestone mínimo solo-frontend — port de render con componente compartido; sin audit (verificado vía VERIFICATION + visual) |
+| v1.12 Prequirúrgico + Portal del Paciente | 6 | 30 | 8 días | ~variable | Milestone más grande desde v1.5; schema big-bang up-front + portal público seguro por capas; audit PASSED; 17 ítems de verificación humana diferidos |
 
 ### Cumulative Quality
 
@@ -439,15 +486,16 @@
 | v1.9 | TDD tests (construirContenidoPrimeraVez, detectarAprendizaje, aprenderDesdeZonas, seed-data) | <10% | ninguna |
 | v1.10 | 14 TDD tests (resumirTratamientosDeContenido — 25/25 pass) | <10% | ninguna |
 | v1.11 | ninguno (cambio puramente de presentación) | <10% | ninguna |
+| v1.12 | TDD tests (brute-force lock 11 casos, catalogo-hc 101 total) | <10% | pdf-lib 1.17.1, @nestjs/throttler (cableado), multer + @types/multer |
 
 ### Recurring Process Debt
 
-| Issue | v1.1 | v1.2 | v1.4 | v1.5 | v1.6 | v1.7 | v1.8 | v1.9 | v1.10 | v1.11 | Fix |
-|-------|------|------|------|------|------|------|------|------|-------|-------|-----|
-| MILESTONES.md accomplishments vacíos | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | Actualizar formato SUMMARY.md con `one_liner:` field |
-| STATE.md progress desactualizado durante ejecución | ✗ | parcial | parcial | parcial | parcial | parcial | parcial | parcial | parcial | parcial | GSD executor actualiza STATE al final de cada plan |
-| Integration bugs detectados tarde (audit, no verify) | — | ✗ | ✓ | ✓ | sin audit | ✓ | sin audit | ✓ | ✓ | sin audit | Audit antes de complete-milestone elimina retrabajo |
-| Audit saltado antes de archivar | — | — | — | — | ✗ | ✓ | ✗ | ✓ | ✓ | ✗ | Correr /gsd:audit-milestone antes de /gsd:complete-milestone |
-| Progress table ROADMAP desalineada durante ejecución | — | — | — | — | — | — | ✗ | ✗ | ✗ | ✗ | Executor debe respetar header de columnas al agregar filas |
-| CLI sobrescribe archivo milestone-scoped con snapshot completo | — | — | — | — | — | — | — | ✗ | ✗ | n/a | `milestone complete` debería preservar el ROADMAP scoped del roadmapper |
-| CLI omite línea de Stats en MILESTONES.md | — | — | — | — | — | — | — | — | ✗ | ✗ | `milestone complete` debería poblar Stats desde git/summaries |
+| Issue | v1.1 | v1.2 | v1.4 | v1.5 | v1.6 | v1.7 | v1.8 | v1.9 | v1.10 | v1.11 | v1.12 | Fix |
+|-------|------|------|------|------|------|------|------|------|-------|-------|-----------|------|
+| MILESTONES.md accomplishments vacíos | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | Actualizar formato SUMMARY.md con `one_liner:` field |
+| STATE.md progress desactualizado durante ejecución | ✗ | parcial | parcial | parcial | parcial | parcial | parcial | parcial | parcial | parcial | parcial | GSD executor actualiza STATE al final de cada plan |
+| Integration bugs detectados tarde (audit, no verify) | — | ✗ | ✓ | ✓ | sin audit | ✓ | sin audit | ✓ | ✓ | sin audit | ✓ | Audit antes de complete-milestone elimina retrabajo |
+| Audit saltado antes de archivar | — | — | — | — | ✗ | ✓ | ✗ | ✓ | ✓ | ✗ | ✓ | Correr /gsd:audit-milestone antes de /gsd:complete-milestone |
+| Progress table ROADMAP desalineada durante ejecución | — | — | — | — | — | — | ✗ | ✗ | ✗ | ✗ | ✗ | Executor debe respetar header de columnas al agregar filas |
+| CLI sobrescribe archivo milestone-scoped con snapshot completo | — | — | — | — | — | — | — | ✗ | ✗ | n/a | ✓ | `milestone complete` debería preservar el ROADMAP scoped del roadmapper |
+| CLI omite línea de Stats en MILESTONES.md | — | — | — | — | — | — | — | — | ✗ | ✗ | ✗ | `milestone complete` debería poblar Stats desde git/summaries |

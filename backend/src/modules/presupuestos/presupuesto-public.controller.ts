@@ -1,10 +1,13 @@
 import { Controller, Get, Post, Param, Body, Res } from '@nestjs/common';
 import { Response } from 'express';
+import { Throttle } from '@nestjs/throttler';
 import { PresupuestosService } from './presupuestos.service';
 
 // No @Auth() decorator = public, no JWT required
 // Auth guard is controller-scoped via @Auth() on PresupuestosController,
 // so this separate controller class has no guard applied.
+// Strict public throttle tier (D-08): 20 req/min (lower than global 100 req/60s)
+@Throttle({ default: { ttl: 60000, limit: 20 } })
 @Controller('presupuestos/public')
 export class PresupuestoPublicController {
   constructor(private readonly service: PresupuestosService) {}

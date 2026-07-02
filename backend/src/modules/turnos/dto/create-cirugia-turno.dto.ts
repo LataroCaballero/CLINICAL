@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsEnum, IsDateString } from 'class-validator';
+import { IsString, IsOptional, IsEnum, IsDateString, IsUUID } from 'class-validator';
 import { TipoAnestesia } from '@prisma/client';
 
 export class CreateCirugiaTurnoDto {
@@ -43,4 +43,8 @@ export class CreateCirugiaTurnoDto {
 
   @IsOptional()
   duracionMinutos?: number;
+
+  @IsOptional()
+  @IsUUID()
+  cirugiaCatalogoId?: string;
 }

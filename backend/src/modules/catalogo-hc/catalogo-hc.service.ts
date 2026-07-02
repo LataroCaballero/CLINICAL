@@ -4,9 +4,16 @@ import {
   ForbiddenException,
   NotFoundException,
   ConflictException,
+  BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { SEED_ZONAS, normalizarNombre } from './catalogo-hc.seed-data';
+import {
+  SEED_ANTECEDENTES,
+  SEED_ZONAS,
+  normalizarNombre,
+} from './catalogo-hc.seed-data';
+import { SEED_ALERGIAS } from '../catalogo-preop/alergia-catalogo.seed-data';
+import { SEED_MEDICAMENTOS } from '../catalogo-preop/medicamento-catalogo.seed-data';
 import {
   ZonaAprendizajeInput,
   detectarAprendizaje,
@@ -218,6 +225,287 @@ export class CatalogoHCService {
         precio: t.tratamiento ? Number(t.tratamiento.precio) : null,
       })),
     }));
+  }
+
+  // ---------------------------------------------------------------------------
+  // Flat per-professional catalog — antecedentes / alergias / medicamentos
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Idempotently seeds AntecedenteCatalogoPro for a professional.
+   * Count guard: if any rows exist (including inactive), skips to avoid duplicates.
+   */
+  async seedAntecedentesInicial(profesionalId: string): Promise<void> {
+    const count = await this.prisma.antecedenteCatalogoPro.count({
+      where: { profesionalId },
+    });
+    if (count > 0) return;
+    await this.prisma.antecedenteCatalogoPro.createMany({
+      data: SEED_ANTECEDENTES.map((nombre) => ({
+        nombre,
+        profesionalId,
+        esSistema: true,
+      })),
+      skipDuplicates: true,
+    });
+  }
+
+  /**
+   * Idempotently seeds AlergiaCatalogoPro for a professional.
+   */
+  async seedAlergiasInicial(profesionalId: string): Promise<void> {
+    const count = await this.prisma.alergiaCatalogoPro.count({
+      where: { profesionalId },
+    });
+    if (count > 0) return;
+    await this.prisma.alergiaCatalogoPro.createMany({
+      data: SEED_ALERGIAS.map((nombre) => ({
+        nombre,
+        profesionalId,
+        esSistema: true,
+      })),
+      skipDuplicates: true,
+    });
+  }
+
+  /**
+   * Idempotently seeds MedicamentoCatalogoPro for a professional.
+   */
+  async seedMedicamentosInicial(profesionalId: string): Promise<void> {
+    const count = await this.prisma.medicamentoCatalogoPro.count({
+      where: { profesionalId },
+    });
+    if (count > 0) return;
+    await this.prisma.medicamentoCatalogoPro.createMany({
+      data: SEED_MEDICAMENTOS.map((nombre) => ({
+        nombre,
+        profesionalId,
+        esSistema: true,
+      })),
+      skipDuplicates: true,
+    });
+  }
+
+  /**
+   * Lazy-seed list getter for antecedentes.
+   * Returns active rows ordered by esSistema desc then nombre asc.
+   * On first access (empty catalog), seeds from SEED_ANTECEDENTES.
+   */
+  async getAntecedentesConSeed(profesionalId: string): Promise<
+    {
+      id: string;
+      nombre: string;
+      esSistema: boolean;
+      activo: boolean;
+      profesionalId: string;
+    }[]
+  > {
+    const order = [{ esSistema: 'desc' as const }, { nombre: 'asc' as const }];
+    let items = await this.prisma.antecedenteCatalogoPro.findMany({
+      where: { profesionalId, activo: true },
+      orderBy: order,
+    });
+    if (items.length === 0) {
+      await this.seedAntecedentesInicial(profesionalId);
+      items = await this.prisma.antecedenteCatalogoPro.findMany({
+        where: { profesionalId, activo: true },
+        orderBy: order,
+      });
+    }
+    return items;
+  }
+
+  /**
+   * Lazy-seed list getter for alergias.
+   */
+  async getAlergiasConSeed(profesionalId: string): Promise<
+    {
+      id: string;
+      nombre: string;
+      esSistema: boolean;
+      activo: boolean;
+      profesionalId: string;
+    }[]
+  > {
+    const order = [{ esSistema: 'desc' as const }, { nombre: 'asc' as const }];
+    let items = await this.prisma.alergiaCatalogoPro.findMany({
+      where: { profesionalId, activo: true },
+      orderBy: order,
+    });
+    if (items.length === 0) {
+      await this.seedAlergiasInicial(profesionalId);
+      items = await this.prisma.alergiaCatalogoPro.findMany({
+        where: { profesionalId, activo: true },
+        orderBy: order,
+      });
+    }
+    return items;
+  }
+
+  /**
+   * Lazy-seed list getter for medicamentos.
+   */
+  async getMedicamentosConSeed(profesionalId: string): Promise<
+    {
+      id: string;
+      nombre: string;
+      esSistema: boolean;
+      activo: boolean;
+      profesionalId: string;
+    }[]
+  > {
+    const order = [{ esSistema: 'desc' as const }, { nombre: 'asc' as const }];
+    let items = await this.prisma.medicamentoCatalogoPro.findMany({
+      where: { profesionalId, activo: true },
+      orderBy: order,
+    });
+    if (items.length === 0) {
+      await this.seedMedicamentosInicial(profesionalId);
+      items = await this.prisma.medicamentoCatalogoPro.findMany({
+        where: { profesionalId, activo: true },
+        orderBy: order,
+      });
+    }
+    return items;
+  }
+
+  /**
+   * Generic private learning helper for flat (non-nested) catalog models.
+   *
+   * Loads a full snapshot (including inactive rows) for the professional,
+   * builds a normalizarNombre→{id, activo} map, then for each incoming name:
+   *   - absent → create (esSistema:false)
+   *   - inactive → reactivate (activo:true)
+   *   - already active → no-op
+   *
+   * Does NOT throw — caller catches per-section.
+   */
+  private async aprenderDesdeFlat(
+    profesionalId: string,
+    nombres: string[],
+    modelo:
+      | 'antecedenteCatalogoPro'
+      | 'alergiaCatalogoPro'
+      | 'medicamentoCatalogoPro',
+  ): Promise<void> {
+    if (nombres.length === 0) return;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const delegate = (this.prisma as any)[modelo] as {
+      findMany: (
+        args: any,
+      ) => Promise<{ id: string; nombre: string; activo: boolean }[]>;
+      create: (args: any) => Promise<unknown>;
+      updateMany: (args: any) => Promise<{ count: number }>;
+    };
+
+    const snapshot = await delegate.findMany({
+      where: { profesionalId },
+      select: { id: true, nombre: true, activo: true },
+    });
+
+    const normMap = new Map<string, { id: string; activo: boolean }>();
+    for (const row of snapshot) {
+      normMap.set(normalizarNombre(row.nombre), {
+        id: row.id,
+        activo: row.activo,
+      });
+    }
+
+    const toReactivate: string[] = [];
+    const toCreate: string[] = [];
+
+    for (const nombre of nombres) {
+      const norm = normalizarNombre(nombre);
+      const existing = normMap.get(norm);
+      if (!existing) {
+        toCreate.push(nombre);
+      } else if (!existing.activo) {
+        toReactivate.push(existing.id);
+      }
+      // existing + activo → no-op
+    }
+
+    if (toReactivate.length > 0) {
+      await delegate.updateMany({
+        where: { id: { in: toReactivate } },
+        data: { activo: true },
+      });
+    }
+
+    for (const nombre of toCreate) {
+      await delegate.create({
+        data: { nombre, profesionalId, esSistema: false },
+      });
+    }
+  }
+
+  /**
+   * Best-effort learning upsert for the three flat catalog sections.
+   *
+   * Called after a prequirúrgico HC entry is saved (Plan 03).
+   * Each section is wrapped individually — a failure in one does not
+   * prevent learning from the others. Never throws.
+   *
+   * SECURITY: profesionalId comes from the JWT-resolved scope, never from
+   * the request body (T-52-03 / T-52-05).
+   */
+  async aprenderDesdePreoperatorio(
+    profesionalId: string,
+    {
+      antecedentes = [],
+      alergias = [],
+      medicacion = [],
+    }: {
+      antecedentes?: string[];
+      alergias?: string[];
+      medicacion?: string[];
+    },
+  ): Promise<void> {
+    if (antecedentes.length > 0) {
+      try {
+        await this.aprenderDesdeFlat(
+          profesionalId,
+          antecedentes,
+          'antecedenteCatalogoPro',
+        );
+      } catch (err) {
+        this.logger.warn(
+          'aprenderDesdePreoperatorio: error aprendiendo antecedentes',
+          err,
+        );
+      }
+    }
+
+    if (alergias.length > 0) {
+      try {
+        await this.aprenderDesdeFlat(
+          profesionalId,
+          alergias,
+          'alergiaCatalogoPro',
+        );
+      } catch (err) {
+        this.logger.warn(
+          'aprenderDesdePreoperatorio: error aprendiendo alergias',
+          err,
+        );
+      }
+    }
+
+    if (medicacion.length > 0) {
+      try {
+        await this.aprenderDesdeFlat(
+          profesionalId,
+          medicacion,
+          'medicamentoCatalogoPro',
+        );
+      } catch (err) {
+        this.logger.warn(
+          'aprenderDesdePreoperatorio: error aprendiendo medicacion',
+          err,
+        );
+      }
+    }
   }
 
   /**
@@ -462,6 +750,41 @@ export class CatalogoHCService {
       }
       throw err;
     }
+  }
+
+  /**
+   * Saves or clears the indicacionesUrl for a ZonaHC (CONS-02).
+   * Ownership guard mirrors renombrarZona: NotFoundException for non-owned or missing zona.
+   * profesionalId comes from JWT scope — never from request body (T-53-08).
+   * Allows null to clear the URL (D-02 / T-53-11 @IsUrl validated in DTO).
+   */
+  async actualizarIndicacionesUrl(
+    profesionalId: string,
+    zonaId: string,
+    indicacionesUrl: string | null,
+  ) {
+    if (indicacionesUrl !== null) {
+      if (indicacionesUrl.length > 2048) {
+        throw new BadRequestException('URL de indicaciones demasiado larga (máx 2048 caracteres)');
+      }
+      let parsed: URL;
+      try {
+        parsed = new URL(indicacionesUrl);
+      } catch {
+        throw new BadRequestException('URL de indicaciones inválida');
+      }
+      if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+        throw new BadRequestException('URL de indicaciones debe usar protocolo http o https');
+      }
+    }
+    const zona = await this.prisma.zonaHC.findUnique({ where: { id: zonaId } });
+    if (!zona || zona.profesionalId !== profesionalId) {
+      throw new NotFoundException('Zona no encontrada');
+    }
+    return this.prisma.zonaHC.update({
+      where: { id: zonaId },
+      data: { indicacionesUrl },
+    });
   }
 
   /**

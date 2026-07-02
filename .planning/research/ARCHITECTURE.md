@@ -1,328 +1,514 @@
-# Architecture Patterns: v1.7 CRM Flexible
+# Architecture Research — v1.12 Integration
 
-**Domain:** Flexible CRM stage transitions + redesigned kanban sheet
-**Researched:** 2026-05-23
-**Confidence:** HIGH — based on direct code inspection of all relevant files
-
----
-
-## Existing Architecture — What Was Found
-
-### Endpoint
-
-```
-PATCH /pacientes/:id/etapa-crm
-Body: { etapaCRM: EtapaCRM; motivoPerdida?: MotivoPerdidaCRM }
-```
-
-Single endpoint in `PacientesController` → `PacientesService.updateEtapaCRM()`.
-Both drag-and-drop and the sheet stepper must call this same endpoint.
-
-### Current Backend Guards — Exact Code
-
-Two guards exist in `pacientes.service.ts:updateEtapaCRM()`:
-
-**Guard 1 — PERDIDO requires motivoPerdida (line 513–517):**
-```typescript
-if (dto.etapaCRM === EtapaCRM.PERDIDO && !dto.motivoPerdida) {
-  throw new BadRequestException('Se requiere motivoPerdida al mover a etapa PERDIDO');
-}
-```
-This guard MUST stay. It enforces a data-completeness invariant (the loss reason modal already handles it on the frontend). This is a data integrity rule, not a workflow restriction.
-
-**Guard 2 — CONFIRMADO requires accepted presupuesto (line 519–528):**
-```typescript
-if (dto.etapaCRM === EtapaCRM.CONFIRMADO) {
-  const tienePresupuestoAceptado = paciente.presupuestos.some(
-    (p) => p.estado === EstadoPresupuesto.ACEPTADO,
-  );
-  if (!tienePresupuestoAceptado) {
-    throw new BadRequestException(
-      'El paciente debe tener al menos un presupuesto ACEPTADO para pasar a CONFIRMADO',
-    );
-  }
-}
-```
-This guard MUST BE REMOVED for v1.7. It is the only backend blocker to free transitions. Currently it causes the `onError` toast in `KanbanBoard` ("No se pudo mover el paciente. Verificá los requisitos.") to fire when a user legitimately tries to manually confirm a patient.
-
-### Side Effects in updateEtapaCRM (must be preserved)
-
-After the DB write, the service does two things:
-1. Auto-creates a `ContactoLog` of type SISTEMA for stages NUEVO_LEAD, CONSULTADO, and PRESUPUESTO_ENVIADO.
-2. Creates 3 `TareaSeguimiento` records (day 3, 7, 14) when moving to PRESUPUESTO_ENVIADO.
-
-These side effects are correct and must not be touched.
-
-### Automatic Transitions (separate code path — DO NOT TOUCH)
-
-In `presupuestos.service.ts`, three automatic transitions write directly to `Paciente.etapaCRM` via `$transaction`:
-- `marcarEnviado()` sets `PRESUPUESTO_ENVIADO`
-- `aceptarPresupuesto()` sets `CONFIRMADO`
-- `rechazar()` sets `PERDIDO`
-
-These bypass `updateEtapaCRM()` entirely — they write straight to Prisma. They have their own guards (presupuesto state machine checks). They are unaffected by v1.7 changes and must remain untouched.
-
-### Frontend Data Available in KanbanPatient
-
-The `KanbanPatient` object (already in the kanban query response) contains:
-```typescript
-presupuesto: {
-  total: number;
-  estado: string;       // 'ACEPTADO' | 'ENVIADO' | 'BORRADOR' | 'RECHAZADO' | 'VENCIDO'
-  fechaEnviado: string | null;
-} | null
-```
-
-This is critical: **the frontend already has enough data to evaluate both warning conditions without a new API call.**
-
-- Warning for PRESUPUESTO_ENVIADO: `patient.presupuesto === null`
-- Warning for CONFIRMADO: `patient.presupuesto?.estado !== 'ACEPTADO'`
-
-The frontend performs these checks and emits toasts before calling the mutation. The mutation proceeds regardless.
+**Domain:** Medical SaaS — pre-surgical HC template + patient self-service portal
+**Researched:** 2026-06-25
+**Confidence:** HIGH — based on direct codebase review (schema.prisma, controller files, services, frontend pages)
 
 ---
 
-## Recommended Architecture for v1.7
+## Context: What Already Exists
 
-### Q1: What to do with backend guards?
+Before describing changes, the stable integration points confirmed in code:
 
-**Remove the CONFIRMADO guard. Keep the PERDIDO guard.**
+| Existing piece | Location | Relevant for v1.12 |
+|---|---|---|
+| `Paciente.alergias String[]` | schema.prisma:161 | Extend, do not duplicate |
+| `Paciente.condiciones String[]` | schema.prisma:162 | Maps to "antecedentes médicos" |
+| `Paciente.consentimientoFirmado Boolean` | schema.prisma:169 | Add audit fields alongside |
+| `Paciente.consentimientosDocumentos Archivo[]` | schema.prisma:179 | Archive path for signed PDFs already exists |
+| `Archivo.consentimientoPacienteId String?` | schema.prisma:346 | FK already modeled |
+| `TipoEntradaHC.PREOPERATORIO` | schema.prisma:1178 | HC entry type already in enum |
+| `EstudioPaciente` model | schema.prisma:257 | Complementary studies model exists |
+| `PresupuestoPublicController` | presupuesto-public.controller.ts | Pattern for auth-less token controllers |
+| `HistoriaClinica.crearEntrada()` | historia-clinica.service.ts:79 | Entry creation with JSONB `contenido` |
+| `ZonaHC / DiagnosticoHC / TratamientoHC` | schema.prisma:1361+ | Catalog pattern: esSistema, activo, profesionalId, soft-delete, auto-learn |
+| `MensajeInterno.esSistema Boolean` | schema.prisma:225 | System-origin flag exists; need patient-origin |
+| `signature_pad` v5.1.1 | frontend/package.json | Signature canvas already in frontend deps |
+| `pdfkit` v0.17 | backend/package.json | PDF generation already available |
+| `ConfigClinica` model | schema.prisma:431 | Extend for consent template text |
 
-The CONFIRMADO guard (lines 519–528 of `pacientes.service.ts`) must be deleted. This is the only backend change needed. The check logic moves entirely to the frontend as a warning — the mutation succeeds regardless of presupuesto state.
+---
 
-The PERDIDO guard stays because it enforces data integrity (motivoPerdida is a required field for loss reason analytics), not a business workflow restriction. The frontend already enforces this via `LossReasonModal`.
+## 1. Data Model Changes
 
-No "opt-in" flag, no bypass parameter, no dual-mode. Delete the guard block cleanly.
+### 1.1 Paciente — New Fields
 
-### Q2: Should drag-and-drop and the stepper use the same mutation?
+```prisma
+// Add to existing Paciente model
+medicacion              String[]              // New: habitual medications (mirrors alergias pattern)
+adicciones              String[]              // New: smoking, alcohol, drugs (self-reported)
 
-Yes. One hook, one endpoint.
+// Consent audit
+consentimientoFirmadoAt DateTime?             // New: timestamp of digital signature
 
-`useUpdateEtapaCRM` already does optimistic UI via `pendingMoves` in `KanbanBoard`. The sheet stepper will call the same hook. No new endpoint is needed.
+// Patient portal
+portalToken             String?   @unique     // New: persistent reusable token (UUID)
+portalTokenGeneradoAt   DateTime?             // New: when token was generated
+```
 
-The warning logic is the same for both entry points. Extract it to a shared helper function `checkCRMTransitionWarnings(patient, targetEtapa): string | null` that returns a warning message or null. Both drag-and-drop and stepper click call this function, emit the toast if a warning exists, then proceed with the mutation unconditionally.
+What NOT to add: do not add a `tratamientosPrevios` structured field. Previous treatments are captured in HC entries (the existing JSONB `contenido` covers this). Free text in the PREOPERATORIO entry `contenido` is sufficient.
 
-### Q3: Where does warning context come from?
+What NOT to change: `condiciones String[]` already serves as "antecedentes médicos". Do not rename or duplicate it. The PREOPERATORIO form reads from `condiciones` and writes back.
 
-Frontend only. No new backend endpoint needed.
+### 1.2 New Catalog Models — AlergiaCatalogoPro and MedicamentoCatalogoPro
 
-The `KanbanPatient` already carries `presupuesto.estado`. The sheet receives the `KanbanPatient` object via the existing `patient` prop. Warning evaluation is synchronous and pure:
+These mirror the `ZonaHC/DiagnosticoHC/TratamientoHC` pattern exactly: flat (no parent-child), per-professional, `esSistema` guard, soft-delete via `activo`, auto-learn from free text entry.
 
-```typescript
-// frontend/src/lib/crmTransitions.ts
-export function checkCRMTransitionWarnings(
-  patient: KanbanPatient,
-  targetEtapa: EtapaCRM
-): string | null {
-  if (targetEtapa === 'PRESUPUESTO_ENVIADO' && !patient.presupuesto) {
-    return 'Este paciente no tiene presupuesto. Podés crearlo desde "Ver presupuesto".';
-  }
-  if (targetEtapa === 'CONFIRMADO' && patient.presupuesto?.estado !== 'ACEPTADO') {
-    return 'El paciente no tiene presupuesto aceptado. La etapa se actualizará igual.';
-  }
-  return null;
+```prisma
+model AlergiaCatalogoPro {
+  id            String      @id @default(uuid())
+  nombre        String
+  orden         Int         @default(0)
+  activo        Boolean     @default(true)
+  esSistema     Boolean     @default(false)
+  profesionalId String
+  profesional   Profesional @relation(fields: [profesionalId], references: [id])
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@unique([nombre, profesionalId])
+  @@index([profesionalId, activo])
+}
+
+model MedicamentoCatalogoPro {
+  id            String      @id @default(uuid())
+  nombre        String
+  orden         Int         @default(0)
+  activo        Boolean     @default(true)
+  esSistema     Boolean     @default(false)
+  profesionalId String
+  profesional   Profesional @relation(fields: [profesionalId], references: [id])
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@unique([nombre, profesionalId])
+  @@index([profesionalId, activo])
 }
 ```
 
-Place this in `frontend/src/lib/crmTransitions.ts`. Both `KanbanBoard` and the new stepper import it.
+No separate `AntecedenteCatalogoPro` is needed. `condiciones String[]` on Paciente already stores antecedentes as free text, and the PREOPERATORIO form can offer pre-filled chips from the patient's existing `condiciones` values. If per-professional antecedente catalogs become necessary (user feedback), add them in a future milestone.
 
-### Q4: What components are new vs modified?
+Seed strategy: idempotent seed at deploy time with `esSistema=true` entries (common allergies: Penicilina, Látex, AINEs, Yodo, Contraste; common medications: Anticoagulantes, Antiagregantes, Corticoides, Metformina). Same pattern as ZonaHC seed in v1.9.
 
-#### Backend: 1 file modified
+### 1.3 ConfigClinica — Consent Template Extension
 
-| File | Change | Type |
-|------|--------|------|
-| `backend/src/modules/pacientes/pacientes.service.ts` | Delete the CONFIRMADO guard block (lines 519–528) | Modify — 10 lines deleted |
+```prisma
+// Add to existing ConfigClinica model
+consentimientoTexto     String?   @db.Text   // Rich text body of the consent document
+consentimientoVersion   String?              // Version label (e.g. "v2 — junio 2026")
+```
 
-#### Frontend: New files
+Decision: store consent as TEXT in ConfigClinica (not as an uploaded PDF file). The clinic pastes or types their consent text into a textarea in Configuracion. At signing time, the backend generates a fresh PDF with pdfkit (already available) containing: clinic header, consent text, patient identification block, drawn signature image, timestamp. This avoids adding pdf-lib as a new dependency and avoids a multer file-upload infrastructure for templates. The signed PDF IS stored on disk (see Section 3).
 
-| File | Purpose |
-|------|---------|
-| `frontend/src/lib/crmTransitions.ts` | `checkCRMTransitionWarnings()` pure helper |
-| `frontend/src/components/crm/EtapaStepper.tsx` | Clickable horizontal stepper showing 6 CRM stages |
-| `frontend/src/components/crm/ContactoRapidoModal.tsx` | Small Dialog wrapping the contacto form extracted from CardActionsSheet |
+### 1.4 TareaSeguimiento — Dedupe Guard
 
-#### Frontend: Modified files
+```prisma
+// Add to existing TareaSeguimiento model
+notificada Boolean @default(false)   // Set true after first MensajeInterno is created
+```
 
-| File | Change |
-|------|--------|
-| `frontend/src/components/crm/CardActionsSheet.tsx` | Full layout redesign: compact header with FlujoBadge, compact action buttons, remove inline contacto form (→ ContactoRapidoModal), add EtapaStepper, remove quick actions panel |
-| `frontend/src/components/crm/KanbanBoard.tsx` | Import `checkCRMTransitionWarnings`, call it in `handleDragEnd` before mutation, show warning toast |
-| `backend/src/modules/pacientes/pacientes.service.ts` | (listed above) |
+The scheduler WHERE clause changes from `{ completada: false, fechaProgramada: { lte: now } }` to `{ completada: false, notificada: false, fechaProgramada: { lte: now } }`, and the loop sets `notificada: true` immediately after creating the message. Existing spam messages are left in place (no backfill needed; staff can mark them read).
 
-#### Frontend: Requires a small data addition
+### 1.5 MensajeInterno — Patient-Origin Flag and Nullable autorId
 
-`getKanban()` in `pacientes.service.ts` and the `KanbanPatient` type do not currently include `flujo`. The sheet header needs it to render `FlujoBadge`. One field addition to the Prisma select and the TypeScript type.
+```prisma
+// Add to existing MensajeInterno model
+origenPaciente Boolean @default(false)   // true when message comes from patient portal
 
-| File | Change |
-|------|--------|
-| `backend/src/modules/pacientes/pacientes.service.ts` | Add `flujo: true` to `getKanban()` select |
-| `frontend/src/hooks/useCRMKanban.ts` | Add `flujo: FlujoPaciente \| null` to `KanbanPatient` interface |
+// Change autorId from required to optional
+autorId String?   // was String NOT NULL
+```
+
+Making `autorId` nullable is the correct schema-level decision: patient portal messages have no staff `autorId`. In the service layer, when `origenPaciente=true`, `autorId` is set to `null` and `pacienteId` is the identity. The existing `findChats` and `findByPaciente` queries handle nullable authors (check for null before rendering the author name chip). SQL: `ALTER TABLE "MensajeInterno" ALTER COLUMN "autorId" DROP NOT NULL;` (safe, no table rewrite).
 
 ---
 
-## Component Boundaries
+## 2. Module and Endpoint Structure
 
-### CardActionsSheet — Redesigned Layout
+### 2.1 New Module: paciente-portal
+
+Create `backend/src/modules/paciente-portal/` as a dedicated module. Do NOT extend `PacientesController` (it is JWT-guarded at class level) and do NOT create a public controller inside the pacientes module. The pattern is exactly the presupuesto public controller: a separate `@Controller` class with no `@Auth()` decorator, registered in its own module.
 
 ```
-SheetHeader
-  ├── Patient name (text-base font-semibold)          [existing]
-  ├── FlujoBadge (uses new flujo field)               [new]
-  └── Compact action row (horizontal flex):
-       ├── [Registrar contacto] button → opens ContactoRapidoModal  [new]
-       └── Lista de espera Switch (instant toggle, no save button)   [redesigned]
-
-EtapaStepper                                          [new component]
-  ├── Steps: NUEVO_LEAD → TURNO_AGENDADO → CONSULTADO → PRESUPUESTO_ENVIADO → CONFIRMADO → PERDIDO
-  ├── Current stage highlighted
-  ├── On click → checkCRMTransitionWarnings → toast if warning → mutate
-  └── Per-step contextual action shown below active step:
-       PRESUPUESTO_ENVIADO → "Ver/Crear presupuesto" (calls onOpenPresupuestos)
-       CONSULTADO          → "Registrar HC" (opens HCCreatorDialog)
-       PROCEDIMIENTO_REALIZADO → "Marcar como realizado" (mutate to that stage)
-
-[Ver perfil completo] button                          [existing, keep]
+paciente-portal/
+  paciente-portal.controller.ts    <- @Controller('pacientes/portal'), no @Auth()
+  paciente-portal.service.ts
+  paciente-portal.module.ts        <- imports PrismaModule, MensajesInternosModule
+  dto/
+    verificar-portal.dto.ts
+    firmar-consentimiento.dto.ts
+    enviar-consulta.dto.ts
 ```
 
-### ContactoRapidoModal
+Endpoint list:
 
-Wraps the contacto form currently inline in `CardActionsSheet`. Uses a `Dialog` (not Sheet) to stay compact. Props: `pacienteId`, `open`, `onOpenChange`. On success: closes modal, sheet stays open.
+```
+GET  /pacientes/portal/:token              -> validate token exists, return { ok, nombreClinica }
+POST /pacientes/portal/:token/verificar    -> DNI gate, returns patient data + short portalJwt
+GET  /pacientes/portal/:token/data         -> full patient portal payload (requires portalJwt header)
+GET  /pacientes/portal/:token/consent      -> returns consent text for display (no auth)
+POST /pacientes/portal/:token/firmar       -> sign consent (requires portalJwt + signatureBase64)
+POST /pacientes/portal/:token/consulta     -> patient question -> MensajeInterno (requires portalJwt)
+```
 
-### EtapaStepper
+portalJwt design: `POST /verificar` returns `{ patientJwt: string, ...patientData }`. The JWT is signed with `JWT_SECRET`, payload `{ sub: pacienteId, scope: "patient-portal", iat, exp: now+4h }`. A `PortalJwtGuard` (not the main `JwtAuthGuard`) verifies `scope === "patient-portal"`. This avoids repeated DNI entry while keeping sensitive writes protected. The guard is applied via `@UseGuards(PortalJwtGuard)` on write endpoints; read endpoints remain open.
+
+Token generation: add `POST /pacientes/:id/generar-portal-token` to the existing (JWT-guarded) `PacientesController`. Returns `{ portalUrl: string }`. Sets `Paciente.portalToken = crypto.randomUUID()` and `portalTokenGeneradoAt = now()`. The token persists forever (reusable). Regenerating invalidates the old token because the old URL fails the `findUnique({ where: { portalToken } })` lookup.
+
+### 2.2 Extend catalogo-hc module for new catalogs
+
+Add `AlergiaCatalogoPro` and `MedicamentoCatalogoPro` endpoints to the existing `catalogo-hc` module (it already houses ZonaHC/DiagnosticoHC/TratamientoHC). This keeps all per-professional HC catalogs co-located. New endpoints follow the same GET/POST/PATCH/DELETE pattern with esSistema guard on mutations.
+
+### 2.3 Extend historia-clinica module for PREOPERATORIO entries
+
+No new module needed. The existing `crearEntrada` endpoint already accepts `tipoEntrada: PREOPERATORIO`. What changes:
+
+1. Add a new `dto.tipo === 'preoperatorio'` branch in `crearEntrada` that builds the PREOPERATORIO `contenido` JSONB shape (see Section 4)
+2. After creating the entry, run `aprenderDesdePreoperatorio` best-effort (same pattern as `aprenderDesdeZonas` in v1.9) to upsert new alergias to `AlergiaCatalogoPro`, upsert new medicamentos to `MedicamentoCatalogoPro`, and sync `Paciente.alergias` and `Paciente.medicacion` arrays
+3. If consent is captured in the form, update `Paciente.consentimientoFirmado = true` and `consentimientoFirmadoAt = now()` in the same transaction
+
+### 2.4 File serving for signed consent PDFs
+
+No multer exists today. Add `StreamableFile` (built into NestJS, no new dep) for serving files from `uploads/`. The backend reads the file with `fs.createReadStream()` and returns `StreamableFile`. The signed PDF is served via a portal endpoint `GET /pacientes/portal/:token/consent-pdf/:archivoId` which verifies the portalJwt before serving.
+
+Signed PDFs path: `{UPLOAD_DIR}/signed-consents/{pacienteId}-{timestamp}.pdf`. `UPLOAD_DIR` defaults to `./uploads/` and is configurable via env var for production.
+
+---
+
+## 3. Signed Consent Flow — End to End
+
+```
+[CONFIGURACION - Doctor]
+  Staff opens Configuracion -> Consentimiento tab
+  Pastes/edits consent text in textarea
+  Saves -> PATCH /configuracion/:profesionalId/consentimiento
+    -> ConfigClinica.consentimientoTexto = text
+    -> ConfigClinica.consentimientoVersion = label
+
+[TRIGGER - Staff sends portal link]
+  Staff clicks "Enviar portal al paciente" in PatientDrawer
+  -> POST /pacientes/:id/generar-portal-token (if no portalToken exists)
+  -> Builds URL: {FRONTEND_URL}/portal/{portalToken}
+  -> Sends via WhatsApp (existing BullMQ) or email (existing nodemailer)
+
+[PATIENT ACCESSES PORTAL]
+  GET /pacientes/portal/:token
+    -> finds Paciente by portalToken, returns { ok: true, nombreClinica }
+    -> if no Paciente found: 404
+
+  Patient enters DNI
+  POST /pacientes/portal/:token/verificar { dni }
+    -> loads Paciente, compares DNI (same normalization as presupuesto verificarYCargar)
+    -> on match: signs and returns portalJwt (4h) + patient payload
+    -> payload: { nombreCompleto, consentimientoFirmado, instruccionesPre,
+                  instruccionesPost, turnoProximo, consentimientoTexto }
+
+[PATIENT READS CONSENT]
+  GET /pacientes/portal/:token/consent
+    -> returns { texto: string, version: string }
+    -> no auth required (text is not PII)
+
+[PATIENT SIGNS]
+  Patient draws signature on Canvas (signature_pad already in frontend deps)
+  Clicks "Firmar consentimiento"
+  POST /pacientes/portal/:token/firmar { signatureBase64: string }
+    Authorization: Bearer {portalJwt}
+
+  Backend (PacientePortalService.firmarConsentimiento):
+  1. Validate PortalJwt -> extract pacienteId
+  2. Load Paciente + profesional.configClinica (consentimientoTexto, nombreClinica, logoUrl)
+  3. Decode signatureBase64 -> PNG buffer
+  4. Generate signed PDF with pdfkit:
+       - Header: clinic name, consent version
+       - Body: consentimientoTexto rendered as paragraphs
+       - Footer block: "Paciente: {nombreCompleto} - DNI: {dni}"
+                       "Fecha de firma: {now ISO8601}"
+       - Signature image: embed via pdfkit .image() from PNG buffer
+  5. Write PDF to {UPLOAD_DIR}/signed-consents/{pacienteId}-{Date.now()}.pdf
+  6. In $transaction:
+       a. Create Archivo { url: filePath, tipo: 'consentimiento-firmado',
+                          descripcion: 'Consentimiento firmado digitalmente via portal',
+                          consentimientoPacienteId: pacienteId }
+       b. Update Paciente { consentimientoFirmado: true, consentimientoFirmadoAt: now() }
+  7. Post-transaction (best-effort): create MensajeInterno {
+       esSistema: true,
+       origenPaciente: false,
+       autorId: null,           <- requires nullable autorId migration from Phase 1
+       pacienteId,
+       mensaje: "El paciente {nombreCompleto} firmo el consentimiento informado digitalmente.",
+       prioridad: 'ALTA'
+     }
+  8. Return { ok: true, archivoId }
+
+[STAFF VIEWS IN PATIENT DRAWER]
+  PatientDrawer -> shows consentimientoFirmado badge + consentimientoFirmadoAt date
+  -> link to download signed PDF (via portal endpoint or admin endpoint serving the Archivo)
+```
+
+---
+
+## 4. PREOPERATORIO HC Entry — JSONB contenido Shape
+
+The PREOPERATORIO entry integrates into `crearEntrada` as a new `dto.tipo === 'preoperatorio'` branch. The `contenido` JSONB shape:
 
 ```typescript
-interface EtapaStepperProps {
-  currentEtapa: EtapaCRM | null;
-  patient: KanbanPatient;
-  profesionalId: string;            // for HCCreatorDialog
-  onEtapaChange: (etapa: EtapaCRM) => void;
-  onOpenPresupuestos: () => void;
+interface ContenidoPreoperatorio {
+  tipo: 'preoperatorio';  // discriminator for HCEntryContent renderer
+
+  // Patient health status (chips from catalogs + free text)
+  alergias: string[];
+  medicacion: string[];
+  antecedentes: string[];   // maps to Paciente.condiciones
+  adicciones: string[];
+
+  // Pre-surgical notes
+  estadoActual: string;     // free text: "Buen estado general, sin intercurrencias"
+  aptoQuirurgico: boolean;  // clinical clearance flag
+  observaciones: string;
+
+  // Complementary studies (snapshot; live list comes from EstudioPaciente table)
+  estudiosResumen: Array<{
+    nombre: string;
+    entregado: boolean;
+  }>;
+
+  // Consent captured in this session
+  consentimientoRegistrado: boolean;
 }
 ```
 
-`onEtapaChange` goes to `CardActionsSheet`, which calls `checkCRMTransitionWarnings` then `useUpdateEtapaCRM`. The mutation is owned by `CardActionsSheet`, not by the stepper component itself. This keeps the stepper purely presentational.
+EstudioPaciente sync: if the PREOPERATORIO DTO includes new studies, the service creates `EstudioPaciente` records post-transaction (best-effort, same pattern as aprenderDesdeZonas). The `estudiosResumen` array in `contenido` is a snapshot for the HC record. The live checklist comes from querying `EstudioPaciente` directly.
+
+Renderer: `HCEntryContent.tsx` needs a new branch for `tipo === 'preoperatorio'`. Display chips for alergias/medicacion/antecedentes similar to the zona chips in v1.9 shape, plus an "Apto quirurgico" badge and consent status indicator.
+
+Backward compatibility: the new `tipo` discriminator means existing `HCEntryContent` renders fall through to the text branch for legacy entries. No backfill needed.
 
 ---
 
-## Data Flow
+## 5. Chat Integration and Seguimiento Spam Fix
+
+### 5.1 Patient questions in MensajeInterno
+
+The portal endpoint `POST /pacientes/portal/:token/consulta` creates a `MensajeInterno` with `origenPaciente: true` and `autorId: null`. Staff see this in the existing Mensajes Internos UI with a "Paciente" badge instead of a staff name avatar.
+
+UI change required: in the chat message renderer, check `origenPaciente`. If true, render sender as "Paciente" with a patient icon instead of the staff avatar. No new data model needed.
+
+Staff replies continue via the existing MensajeInterno creation flow (autorId = staff userId, origenPaciente = false). The patient does not see replies via the portal in v1.12 scope (replies go to WhatsApp/email per existing channels). The portal shows "Tu consulta fue recibida" confirmation.
+
+### 5.2 Seguimiento scheduler — dedupe fix (HIGH PRIORITY, isolated change)
+
+Current bug confirmed in code: `processSeguimientos()` runs daily and creates a new `MensajeInterno` for every `TareaSeguimiento` where `completada=false AND fechaProgramada <= now`. Since tasks are never auto-completed, each task generates a new notification every day indefinitely.
+
+Fix: one migration field + three-line change in the service:
+
+```typescript
+// SeguimientoSchedulerService.processSeguimientos() - changed query
+const tareasPendientes = await this.prisma.tareaSeguimiento.findMany({
+  where: {
+    completada: false,
+    notificada: false,              // <- NEW guard (requires Phase 1 migration)
+    fechaProgramada: { lte: ahora },
+  },
+  // ... rest unchanged
+});
+
+// Inside the for loop, after creating the MensajeInterno:
+await this.prisma.tareaSeguimiento.update({
+  where: { id: tarea.id },
+  data: { notificada: true },       // <- NEW: mark notified
+});
+```
+
+Semantics: scheduler notifies once. Staff must manually complete the task. If re-notification is needed, a staff member creates a new TareaSeguimiento. This is intentional.
+
+Existing spam messages: no cleanup migration. Staff mark them read. If the client reports noise after deploy, add a one-time admin endpoint that archives system messages older than the deploy date.
+
+### 5.3 Disambiguating MensajeInterno origins in the UI
+
+After `origenPaciente` and nullable `autorId` migration, the rendering logic:
+
+| esSistema | origenPaciente | autorId | Display as |
+|---|---|---|---|
+| true | false | non-null | System notification (yellow/orange, automated) |
+| false | false | non-null | Staff message (staff avatar + name) |
+| false | true | null | Patient question (patient icon + "Paciente" badge, teal) |
+
+No new enum needed. Two boolean flags cover all cases.
+
+---
+
+## 6. Component Boundaries
 
 ```
-[Drag-and-drop in KanbanBoard]          [Stepper click in CardActionsSheet]
-         │                                          │
-         ▼                                          ▼
-checkCRMTransitionWarnings(patient, targetEtapa)    (same function)
-         │                                          │
-    warning?──yes──► toast.warning(msg)        warning?──yes──► toast.warning(msg)
-         │                                          │
-         ▼ (always proceeds)                        ▼ (always proceeds)
-useUpdateEtapaCRM.mutate(...)              useUpdateEtapaCRM.mutate(...)
-         │                                          │
-         └──────────────────┬─────────────────────-┘
-                            ▼
-            PATCH /pacientes/:id/etapa-crm
-                            │
-                            ▼
-            PacientesService.updateEtapaCRM()
-              ├── PERDIDO guard (kept — requires motivoPerdida)
-              ├── [CONFIRMADO guard REMOVED]
-              ├── prisma.paciente.update(etapaCRM)
-              ├── ContactoLog auto-create (NUEVO_LEAD / CONSULTADO / PRESUPUESTO_ENVIADO)
-              └── TareaSeguimiento create (if PRESUPUESTO_ENVIADO)
-                            │
-                            ▼
-            onSuccess → invalidate ["crm-kanban"] + ["pacientes"]
-            onError   → toast.error (network/DB errors only)
+PATIENT PORTAL (public, no JWT)
+  frontend/src/app/portal/[token]/page.tsx
+  frontend/src/app/portal/[token]/layout.tsx
+  frontend/src/components/portal/
+    SignatureCanvas.tsx     <- wraps signature_pad (already in deps)
+    ConsentDisplay.tsx
+    PortalInstrucciones.tsx
+    PortalConsultaForm.tsx
+  backend/src/modules/paciente-portal/
+    paciente-portal.controller.ts   <- no @Auth()
+    paciente-portal.service.ts
+    -> imports: PrismaModule, MensajesInternosModule
+    -> uses: PortalJwtGuard (new, lightweight)
+
+PREOPERATORIO HC ENTRY (staff, JWT-guarded)
+  frontend/src/components/hc/PreoperatorioForm.tsx
+    <- chip inputs: alergias/medicacion/antecedentes from new catalogs
+    <- estudios checklist from EstudioPaciente
+  frontend/src/components/patient/.../HCEntryContent.tsx
+    <- new 'preoperatorio' renderer branch
+  backend/src/modules/historia-clinica/historia-clinica.service.ts
+    <- crearEntrada() new preoperatorio branch
+    <- aprenderDesdePreoperatorio() best-effort post-tx
+  backend/src/modules/catalogo-hc/
+    <- +AlergiaCatalogoPro endpoints
+    <- +MedicamentoCatalogoPro endpoints
+
+CONSENT TEMPLATE MANAGEMENT (staff, Configuracion)
+  frontend/src/app/dashboard/configuracion/
+    <- new ConsentimientoEditor tab component
+  backend config module
+    <- PATCH /configuracion/:id/consentimiento
+    <- -> ConfigClinica.consentimientoTexto + consentimientoVersion
 ```
 
 ---
 
-## Patterns to Follow
+## 7. Portal Token Security
 
-### Pattern: Warning helper is a pure function, not a hook
+| Property | Presupuesto token | Patient portal token |
+|---|---|---|
+| Generation | crypto.randomUUID() at send time | crypto.randomUUID() on demand |
+| Storage | Presupuesto.tokenAceptacion String? @unique | Paciente.portalToken String? @unique |
+| Lifetime | One-time (invalidated after accept/reject) | Persistent until regenerated |
+| PII gate | DNI verification per action | DNI once -> short portalJwt (4h) |
+| Write protection | Token alone is sufficient (it is the nonce) | portalJwt required for writes |
+| Revocation | Implicit (state change makes old state invalid) | Regenerate replaces the UUID; old URL returns 404 |
 
-Warning evaluation is synchronous and takes only the patient object and target stage. No React hooks, no async. A plain exported function in `lib/crmTransitions.ts` is trivially testable and avoids hook overhead.
+Brute-force protection: the 128-bit UUID token space makes enumeration infeasible. Rate-limiting on `POST /portal/:token/verificar` via NestJS Throttler (add `@nestjs/throttler` if not yet configured). Limit: 5 DNI attempts per token per 15 minutes.
 
-### Pattern: Mutation stays at the container level
-
-`EtapaStepper` calls `onEtapaChange(etapa)`. `CardActionsSheet` applies warnings and calls the mutation. This prevents two mutation instances fighting over the same patient and keeps the `pendingMoves` optimistic state concentrated in `KanbanBoard` (for drag-and-drop) and sheet-level state (for stepper clicks).
-
-### Pattern: FlujoBadge reuse across contexts
-
-`FlujoBadge` currently lives in `frontend/src/app/dashboard/pacientes/components/FlujoBadge.tsx`. For reuse in the CRM sheet, either move it to `frontend/src/components/ui/FlujoBadge.tsx` or import it from its current location. The latter avoids a migration step — prefer importing from the existing path.
-
----
-
-## Anti-Patterns to Avoid
-
-### Do not add a prerequisite status endpoint
-
-No `GET /pacientes/:id/crm-prerequisites`. The frontend already has all needed data from the kanban query payload. A roundtrip adds latency for advisory information.
-
-### Do not add a bypass parameter to the PATCH endpoint
-
-No `{ force: true }` or `{ bypassGuards: true }`. Just delete the CONFIRMADO guard. Keeping it in any "soft" form adds dead code paths and misleads future developers about the intended workflow.
-
-### Do not move the PERDIDO guard to frontend-only
-
-The `motivoPerdida` required rule stays on the backend as a data integrity safety net. The frontend modal already enforces it — the backend guard will never trigger in normal usage, but it prevents data corruption from direct API calls or future bugs.
-
-### Do not merge CardActionsSheet and PatientDrawer
-
-The sheet is the kanban quick-action surface. The drawer is the full patient profile. Keep them separate. The sheet triggers the drawer via `onOpenDrawer` for anything that needs full context.
+HTTPS requirement: the portal token in the URL must only be shared over HTTPS in production. Document as a deploy requirement, not an in-app concern.
 
 ---
 
-## Build Order (accounts for dependencies)
+## 8. Dependency-Aware Build Order
 
-**Step 1 — Backend guard removal** (unblocks everything, 5 minutes)
-- Delete the CONFIRMADO guard block from `pacientes.service.ts`
-- Add `flujo: true` to `getKanban()` select
+The ordering respects: (a) schema migrations before code that uses them, (b) backend before frontend consuming it, (c) lower-risk standalone pieces before integrated flows.
 
-**Step 2 — Frontend type + warning infrastructure** (depends on Step 1)
-- Add `flujo` field to `KanbanPatient` in `useCRMKanban.ts`
-- Create `lib/crmTransitions.ts` with `checkCRMTransitionWarnings()`
-- Modify `KanbanBoard.handleDragEnd` to call it and emit toast before mutation
+### Phase 1 — Schema Foundation (migration only, no functional change)
 
-At this point drag-and-drop is fully functional with warnings. Steps 3–4 can be done together.
+- Paciente: `medicacion String[]`, `adicciones String[]`, `consentimientoFirmadoAt DateTime?`, `portalToken String? @unique`, `portalTokenGeneradoAt DateTime?`
+- TareaSeguimiento: `notificada Boolean @default(false)`
+- MensajeInterno: `origenPaciente Boolean @default(false)`, `autorId String?` (drop NOT NULL)
+- ConfigClinica: `consentimientoTexto String? @db.Text`, `consentimientoVersion String?`
+- New models: `AlergiaCatalogoPro`, `MedicamentoCatalogoPro` (with Profesional FK + relations)
+- Idempotent seed for new catalog models
 
-**Step 3 — Sheet redesign**
-- Build `ContactoRapidoModal` (extract existing form)
-- Build `EtapaStepper` (pure UI component, no data dependencies beyond props)
-- Rewrite `CardActionsSheet` layout: compact header, compact action row, EtapaStepper, remove quick actions panel
+pgBouncer note: all new columns have defaults. The NOT NULL drop for `autorId` is safe: `ALTER TABLE "MensajeInterno" ALTER COLUMN "autorId" DROP NOT NULL;`. Write migration SQL manually as done in v1.6/v1.8/v1.9.
 
-**Step 4 — Per-step contextual actions**
-- Wire PRESUPUESTO_ENVIADO step action → `onOpenPresupuestos` (prop already exists on CardActionsSheet)
-- Wire CONSULTADO step action → `HCCreatorDialog` (already exists; needs `profesionalId` added to `KanbanPatient` or passed from the page level via `CardActionsSheet` props)
-- Wire PROCEDIMIENTO_REALIZADO step action → mutate to that stage directly
+### Phase 2 — Seguimiento Scheduler Fix (isolated, high value)
 
-**Dependency note on profesionalId for HCCreatorDialog:**
-`HCCreatorDialog` requires `profesionalId`. The `KanbanBoard` is rendered inside the pacientes page which has access to the effective professional context via `useEffectiveProfessionalId`. Thread `profesionalId` as a prop through `KanbanBoard → CardActionsSheet → HCCreatorDialog`. This is a 2-line prop addition to `KanbanBoard` and `CardActionsSheet`.
+Unblocks clean inbox for all future work. Self-contained: 1 migration field (from Phase 1) + 3-line service change.
+
+### Phase 3 — Catalogs API + Preoperatorio Form (staff-facing)
+
+Depends on Phase 1 (new catalog models and Paciente fields).
+
+- Backend: AlergiaCatalogoPro + MedicamentoCatalogoPro CRUD in catalogo-hc module (seed + 4 endpoints each)
+- Backend: crearEntrada new preoperatorio branch with aprenderDesdePreoperatorio best-effort
+- Frontend: PreoperatorioForm component
+- Frontend: HCEntryContent.tsx new preoperatorio renderer branch
+- Frontend: HCCreatorForm swap to PreoperatorioForm when tipoEntrada = PREOPERATORIO
+
+### Phase 4 — Consent Template Management (staff-facing config)
+
+Depends on Phase 1 (ConfigClinica fields).
+
+- Backend: PATCH endpoint for consentimientoTexto + consentimientoVersion in config module
+- Frontend: ConsentimientoEditor component in Configuracion (new tab or section)
+
+### Phase 5 — Patient Portal Backend (new module)
+
+Depends on Phases 1 and 4.
+
+- Backend: paciente-portal.module.ts, controller, service
+- Endpoints: GET /:token, POST /:token/verificar, GET /:token/consent, POST /:token/consulta
+- PortalJwtGuard (lightweight, checks scope claim)
+- Backend: POST /pacientes/:id/generar-portal-token in PacientesController
+- MensajeInterno service: handle origenPaciente=true, autorId=null create path
+
+### Phase 6 — Patient Portal Frontend
+
+Depends on Phase 5.
+
+- frontend/src/app/portal/[token]/page.tsx + layout.tsx
+- Components: PortalPage, PortalInstrucciones, PortalConsultaForm
+- DNI gate -> store portalJwt in sessionStorage (not localStorage — expires on tab close)
+- Shows: next appointment, pre/post instructions, question form
+- Does NOT include consent signing UI (Phase 7 adds it)
+
+### Phase 7 — Signed Consent Flow (PDF generation)
+
+Depends on Phases 4, 5, and 6.
+
+- Backend: firmarConsentimiento() in PacientePortalService
+  - pdfkit PDF generation (header + consent text + patient block + signature image)
+  - Write to uploads/signed-consents/
+  - Create Archivo record (consentimientoPacienteId)
+  - Update Paciente.consentimientoFirmado + consentimientoFirmadoAt
+  - Post-transaction: MensajeInterno notification to staff
+- Backend: StreamableFile endpoint to serve signed PDF
+- Frontend: portal ConsentTab (consent text display + SignatureCanvas + confirm button)
+- Frontend: PatientDrawer consent status badge + download link
+
+### Phase 8 — Chat Inbox Patient Badge
+
+Depends on Phase 1 (origenPaciente field) and Phase 5 (portal consulta endpoint).
+
+- Frontend: update MensajeInterno chat message renderer for origenPaciente=true messages
+- Optional: cleanup endpoint for pre-fix system message spam (admin-only, defer to user request)
 
 ---
 
-## Open Questions
+## 9. What Each Component Touches
 
-1. **SIN_CLASIFICAR in stepper:** Should the stepper include SIN_CLASIFICAR as step 0? Recommend hiding it — it is a system-assigned entry state, not a meaningful manual target for the secretaria.
-
-2. **Lista de espera comment on instant toggle:** If the toggle fires immediately (no save button), what happens to the comment text? Recommend: keep the comment textarea, fire the mutation with the current comment text on toggle. Add a separate "Guardar comentario" link below for text-only changes.
-
-3. **PROCEDIMIENTO_REALIZADO excluded from kanban board columns:** Patients in this stage appear as SIN_CLASIFICAR on the board (the kanban server groups them there). The stepper in the sheet should still allow moving TO this stage ("Marcar como realizado"). When the mutation fires, the patient card will disappear from its current column and re-appear in SIN_CLASIFICAR — this is existing behavior and acceptable.
+| Component | Status | Phase |
+|---|---|---|
+| schema.prisma | MODIFIED (5 new Paciente fields + 2 new models + 3 field additions) | 1 |
+| seguimiento-scheduler.service.ts | MODIFIED (3 lines: WHERE guard + update notificada) | 2 |
+| catalogo-hc module | EXTENDED (2 new catalog types + endpoints + seed) | 3 |
+| historia-clinica.service.ts | EXTENDED (preoperatorio branch in crearEntrada) | 3 |
+| historia-clinica.contenido.helpers.ts | EXTENDED (construirContenidoPreoperatorio) | 3 |
+| HCCreatorForm.tsx | MODIFIED (swap form on PREOPERATORIO tipoEntrada) | 3 |
+| HCEntryContent.tsx | EXTENDED (preoperatorio renderer branch) | 3 |
+| PreoperatorioForm.tsx | NEW | 3 |
+| Config module | EXTENDED (consent text endpoints) | 4 |
+| ConsentimientoEditor.tsx | NEW | 4 |
+| paciente-portal module | NEW (controller + service + guard) | 5 |
+| pacientes.controller.ts | EXTENDED (generar-portal-token endpoint) | 5 |
+| mensajes-internos.service.ts | MODIFIED (origenPaciente support, nullable autorId) | 5 |
+| frontend/src/app/portal/[token]/ | NEW | 6 |
+| PacientePortalService.firmarConsentimiento() | NEW | 7 |
+| PatientDrawer consent status display | MODIFIED | 7 |
+| MensajeInterno chat renderer | MODIFIED (origenPaciente badge) | 8 |
 
 ---
 
 ## Sources
 
-All findings based on direct inspection of:
-- `backend/src/modules/pacientes/pacientes.service.ts` (lines 503–588, 603–697)
-- `backend/src/modules/presupuestos/presupuestos.service.ts` (lines 155–292)
-- `frontend/src/components/crm/KanbanBoard.tsx`
-- `frontend/src/components/crm/CardActionsSheet.tsx`
-- `frontend/src/components/crm/KanbanColumn.tsx`
-- `frontend/src/components/crm/PatientCard.tsx`
-- `frontend/src/hooks/useUpdateEtapaCRM.ts`
-- `frontend/src/hooks/useCRMKanban.ts`
-- `frontend/src/components/patient/PatientDrawer/views/HCCreatorDialog.tsx`
-- `.planning/PROJECT.md` (v1.7 requirements)
+- Codebase direct review: `backend/src/prisma/schema.prisma` (full, 1413 lines)
+- `backend/src/modules/presupuestos/presupuesto-public.controller.ts` (public controller pattern confirmed)
+- `backend/src/modules/presupuestos/presupuestos.service.ts` lines 482-574 (verificarYCargar + findByToken pattern)
+- `backend/src/modules/pacientes/seguimiento-scheduler.service.ts` (spam bug confirmed in code)
+- `backend/src/modules/mensajes-internos/mensajes-internos.service.ts` (full read)
+- `frontend/src/app/presupuesto/[token]/page.tsx` (DNI gate + accordion pattern)
+- `backend/package.json`: pdfkit v0.17 confirmed, no multer, no pdf-lib
+- `frontend/package.json`: signature_pad v5.1.1 confirmed
 
-Confidence: HIGH — no external sources needed; all findings grounded in the actual codebase.
+---
+
+*Architecture research for: CLINICAL v1.12 pre-surgical HC + patient portal*
+*Researched: 2026-06-25*

@@ -14,6 +14,7 @@ import { Auth } from '../auth/decorators/auth.decorator';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { RolUsuario } from '@prisma/client';
 import { RenameItemDto } from './dto/rename-item.dto';
+import { UpdateIndicacionesDto } from '../consentimientos/dto/update-indicaciones.dto';
 
 @Controller('catalogo-hc')
 @Auth('ADMIN', 'PROFESIONAL', 'SECRETARIA')
@@ -64,6 +65,39 @@ export class CatalogoHCController {
   }
 
   // ---------------------------------------------------------------------------
+  // Flat per-professional catalog endpoints (antecedentes / alergias / medicamentos)
+  // All scoped to the JWT-resolved profesionalId via getProfesionalId (PITFALL 12).
+  // profesionalId is NEVER read from the request body.
+  // ---------------------------------------------------------------------------
+
+  @Get('antecedentes')
+  async getAntecedentes(
+    @Req() req: any,
+    @Query('profesionalId') profesionalId?: string,
+  ) {
+    const pid = await this.getProfesionalId(req.user, profesionalId);
+    return this.service.getAntecedentesConSeed(pid);
+  }
+
+  @Get('alergias')
+  async getAlergias(
+    @Req() req: any,
+    @Query('profesionalId') profesionalId?: string,
+  ) {
+    const pid = await this.getProfesionalId(req.user, profesionalId);
+    return this.service.getAlergiasConSeed(pid);
+  }
+
+  @Get('medicamentos')
+  async getMedicamentos(
+    @Req() req: any,
+    @Query('profesionalId') profesionalId?: string,
+  ) {
+    const pid = await this.getProfesionalId(req.user, profesionalId);
+    return this.service.getMedicamentosConSeed(pid);
+  }
+
+  // ---------------------------------------------------------------------------
   // Rename endpoints
   // ---------------------------------------------------------------------------
 
@@ -76,6 +110,24 @@ export class CatalogoHCController {
   ) {
     const pid = await this.getProfesionalId(req.user, profesionalId);
     return this.service.renombrarZona(pid, id, dto.nombre);
+  }
+
+  /**
+   * PATCH /catalogo-hc/zonas/:id/indicaciones
+   *
+   * Saves or clears the indicacionesUrl for a zona (CONS-02).
+   * profesionalId is resolved from JWT scope — never from body (T-53-08).
+   * Ownership guard in service throws NotFoundException for non-owned zona.
+   */
+  @Patch('zonas/:id/indicaciones')
+  async actualizarIndicaciones(
+    @Param('id') id: string,
+    @Body() dto: UpdateIndicacionesDto,
+    @Req() req: any,
+    @Query('profesionalId') profesionalId?: string,
+  ) {
+    const pid = await this.getProfesionalId(req.user, profesionalId);
+    return this.service.actualizarIndicacionesUrl(pid, id, dto.indicacionesUrl);
   }
 
   @Patch('diagnosticos/:id')

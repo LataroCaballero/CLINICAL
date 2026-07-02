@@ -1,20 +1,20 @@
 # Feature Research
 
-**Domain:** Medical clinic CRM — flexible pipeline stage transitions and redesigned kanban sheet (v1.7)
-**Researched:** 2026-05-23
-**Confidence:** HIGH (existing codebase reviewed end-to-end; UX patterns verified against NN/g, UX Patterns Dev, LogRocket, Foundey)
+**Domain:** Aesthetic surgery SaaS — structured pre-surgical HC template + patient self-management portal (v1.12)
+**Researched:** 2026-06-25
+**Confidence:** HIGH (existing codebase reviewed; domain verified against competitor products, clinical literature, and Argentine legal context)
 
 ---
 
 ## Context
 
-This is a milestone research file, not a greenfield project. The kanban board, stage system, sheet, and auto-transitions are already built. v1.7 adds: (1) unrestricted drag-and-drop, (2) non-blocking toast warnings for unmet prerequisites, (3) a redesigned sheet with a clickable stage stepper and compact actions. Research answers "what does this ecosystem expect?" for those three domains.
+This is a milestone research file for an established product, not greenfield. The features described here extend an existing clinical history system (v1.8–v1.11), an existing token-based public portal (presupuesto acceptance, v1.0), an existing WhatsApp/email delivery stack (v1.0), and an existing in-app staff chat (MensajeInterno). Research answers "what does this domain expect?" for two areas:
 
-Existing code baseline:
-- `KanbanBoard.tsx` — dnd-kit with optimistic moves, already open to any stage except PERDIDO (which triggers LossReasonModal)
-- `CardActionsSheet.tsx` — full-width sheet with always-visible "Registrar contacto" form, quick action buttons, lista de espera section
-- `ContactoSheet.tsx` — separate fuller sheet with CRM stage selector and follow-up scheduling (used from PatientDrawer)
-- `useUpdateEtapaCRM` — PATCH `/pacientes/:id/etapa-crm`; backend may currently reject moves that skip prerequisites
+**Area A:** Structured PREOPERATORIO entry in the clinical history — replacing free-text with a step-by-step form capturing antecedentes, alergias, medicación, estudios complementarios, and consent checkbox.
+
+**Area B:** Public token-based patient portal — patient corrects/completes personal data, self-reports health info, signs consent PDF with a drawn signature, and sends messages to the doctor's inbox.
+
+Existing capabilities not to re-research: JWT auth + roles, patient CRUD, HC with templates and TipoEntradaHC (PREOPERATORIO already exists), ZonaHC/DiagnosticoHC/TratamientoHC catalog with learning (v1.9), token-based presupuesto portal (v1.0), WhatsApp Cloud API + BullMQ (v1.0), email/PDF (v1.0), QR code generation via qrcode library (v1.2), MensajeInterno in-app chat.
 
 ---
 
@@ -22,125 +22,230 @@ Existing code baseline:
 
 ### Table Stakes (Users Expect These)
 
-Features the secretaria assumes exist once the "flexible CRM" framing is presented. Missing any of these = the redesign feels incomplete or untrustworthy.
+Features that any pre-op or patient portal product is assumed to have. Missing these = the product feels incomplete or unsafe.
+
+#### Sub-area A: Structured Pre-Surgical HC Template
 
 | Feature | Why Expected | Complexity | Notes |
 |---------|--------------|------------|-------|
-| Drag any card to any column without hard block | Core premise of v1.7; users already test boundaries with current kanban | LOW | Backend guard removal is the critical path; optimistic move already works client-side |
-| Toast warning when moving without prerequisites met | Industry standard: CRM platforms (HubSpot, Pipedrive) show inline nudges, not hard stops | LOW | `sonner` already imported and used in KanbanBoard.tsx; logic is a client-side check before or after PATCH |
-| Stage stepper in sheet showing all 6 stages | Users need orientation: "where is this patient in the funnel?" is the primary question on open | MEDIUM | shadcn/ui has no built-in stepper; implement with flex + conditional styling using ETAPA_ORDER from useCRMKanban |
-| Clicking a stepper step moves patient to that stage | If the stepper is read-only it confuses users who expect it to be interactive | MEDIUM | Reuses useUpdateEtapaCRM; PERDIDO step must still trigger LossReasonModal |
-| Compact "Registrar contacto" button opening a small modal | Current always-visible form occupies ~40% of sheet height; users expect quick-action CTA, not inline form | MEDIUM | Pattern: use Dialog (not Sheet-within-Sheet); form stays simple (tipo + nota) |
-| Lista de espera as a single toggle button (not a section) | Full section with textarea for optional comment is overbuilt for a binary opt-in | LOW | Compact button with inline state indicator; comment field removed or collapsed behind expansion |
-| Stage-specific contextual action per stepper step | Users expect the sheet to surface "what do I do here?" — this is the core value of the stage stepper UX | MEDIUM | Conditional rendering based on current etapaCRM; reuses HCCreatorForm, existing presupuesto navigation |
-| Flujo badge in sheet header | v1.4 introduced flujo (CIRUGIA/TRATAMIENTO); the CRM kanban only shows CIRUGIA patients; the badge is orientation context | LOW | KanbanPatient already has `procedimiento`; need to add `flujo` field to the kanban API response |
-| Automatic transitions continue working unchanged | Sending a presupuesto still auto-advances to PRESUPUESTO_ENVIADO; accepting still auto-advances to CONFIRMADO | LOW | No changes needed to existing auto-transition logic; only the manual drag guard is relaxed |
+| Antecedentes patológicos as selectable chips | Every pre-op form worldwide captures pathological history (HTA, DBT, cardiopatías, EPOC, etc.) as a checklist, not free text. Chips prevent misspelling and enable downstream reporting. | MEDIUM | Chips + "Otro" pattern mirrors v1.9 catalog learning. Persist selected items to `Paciente.condiciones[]`. Seed common conditions (HTA, Diabetes tipo 1, Diabetes tipo 2, Cardiopatía, EPOC, Hipotiroidismo, Obesidad, Insuficiencia renal, etc.). |
+| Alergias as selectable chips | Allergies are a patient safety field; anesthesiologists, nurses, and surgeons all check them before any procedure. Latex and AINES are especially critical in aesthetic surgery. | MEDIUM | Same chip + learning pattern. Persist to `Paciente.alergias[]`. Seed: Penicilina, AINES (aspirina/ibuprofeno), Látex, Yodo, Anestesia local, Sulfas. Allergy type/reaction free-text is a nice-to-have, NOT required for v1.12. |
+| Medicación preexistente as selectable chips | Anticoagulants, antihypertensives, SSRIs, and corticosteroids all directly affect surgical risk. Every anesthesiologist checklist includes current medications. | MEDIUM | New `Paciente.medicacion[]` field. Seed common: Aspirina, Metformina, Enalapril, Atorvastatina, Levotiroxina, Sertralina, Corticoides, Anticoagulantes orales. Chip + learning: same pattern as alergias. |
+| Complementary studies checklist | Laboratorio, Electrocardiograma, and Imágenes are universally ordered before aesthetic surgery under general or regional anesthesia. A checklist confirms they have been ordered, not just that they exist. | LOW | Structured checkboxes: Laboratorio (checkbox), ECG (checkbox), Imágenes > Ecografía / Tomografía / Mamografía / Otro (sub-options). Store as JSONB on the HC entry. Each item has a boolean "solicitado" state. "Pending studies" reporting is a differentiator (see below). |
+| Informed consent checkbox (audit field) | Any surgical system must capture that the patient was informed and consented. Ley 26529 (Argentina) requires written consent for surgical procedures. A checkbox in the HC creates the staff-side audit record. | LOW | Audit fields: `consentimientoVerbalRegistradoPor` (userId), `consentimientoVerbalRegistradoAt` (server timestamp). This is separate from the patient-signed consent PDF in Area B. Both can and should coexist. |
+| Optional zona/diagnóstico/tratamiento catalog selector | Clinicians adding a PREOPERATORIO HC entry may want to associate the planned surgical zone and diagnosis (e.g., "Mamas / Hipoplasia / Mamoplastia de aumento"). This links the pre-op record to the existing clinical catalog. | LOW | Optional step — can be skipped. Reuse PrimeraConsultaForm's zone selector with multi-zone support (v1.9). No new backend work beyond the existing HC entry creation flow. |
+
+#### Sub-area B: Patient Self-Management Portal
+
+| Feature | Why Expected | Complexity | Notes |
+|---------|--------------|------------|-------|
+| Token-based portal access (no password) | Every modern patient portal for one-off surgical workflows uses a single-use or long-lived token link sent via WhatsApp or email. No app install, no account creation. Reduces friction to near zero. | MEDIUM | Reuse the existing token-based presupuesto acceptance portal architecture. New `PortalToken` type: `PREQUIRURGICO`. Token tied to a specific Paciente + Turno (the pre-quirúrgico appointment). |
+| Basic info review/update (name, phone, email, address) | Every pre-admission workflow lets the patient correct their contact data before the procedure so the clinic has accurate emergency contact info. | LOW | Read the current Paciente fields, let patient edit: nombre, apellido, telefono, email, direccion. Explicitly exclude: obra social, nro afiliado, fecha de nacimiento (clinical/financial), any clinical fields. Backend: `PATCH /portal/:token/datos-personales`. |
+| Health self-report: addictions, diseases, prior treatments | Equivalent of the nurse triage questionnaire. Patient self-reporting before the appointment frees clinical staff time and gives the surgeon a baseline to verify during the pre-op visit. | MEDIUM | Map to: condiciones[] (diseases), alergias[] (allergies), medicacion[] (medications), and a free-text field "tratamientos previos relacionados". Patient answers are staged, not written directly to the HC — the surgeon reviews and confirms in the structured HC template (Area A). |
+| Consent PDF view and download | Patients expect to read what they are signing before signing it. Providing the PDF upfront — rather than a printed copy at the clinic — is standard in modern surgical consent workflows. | MEDIUM | Doctor uploads a PDF per procedure (or per turno). PDF stored as a file reference. Portal serves a signed URL to the PDF. This requires file storage (S3-compatible or Supabase Storage). |
+| Drawn signature on consent (canvas, mobile-optimized) | A drawn signature on a consent document has materially higher legal standing than a checkbox in Argentina and anywhere. Under Ley 25506 it constitutes a "firma electrónica" (not "firma digital" certified, but valid as acknowledgment evidence). | HIGH | Use `szimek/signature_pad` (HTML5 canvas, widely used, MIT license). Capture as Base64 PNG. Generate a signed PDF embedding the signature image using PDFKit (already in the stack). Store the signed PDF immutably. Audit trail fields required — see Consent Audit section. |
+| "Informed of pre-op instructions" checkbox | Standard in pre-admission portals: patient confirms they read the pre-op preparation instructions (what to eat/drink, medications to stop, etc.). The instructions are typically on the clinic's website per procedure. | LOW | Checkbox with link to the pre-op instructions URL. The URL is configurable per procedure type (stored in TipoTurno or per-turno). Audit: timestamp + boolean stored on the portal session. |
+| Patient question inbox (async, not real-time) | Patients consistently have questions after receiving the portal link ("Can I take my blood pressure medication?", "When do I need to stop eating?"). A structured inbox is table-stakes — the alternative (calling the clinic) has worse UX and creates phone burden for the secretary. | MEDIUM | Patient writes a text message in the portal. Message is stored and appears in the in-app staff chat (MensajeInterno) flagged as `origen: PACIENTE_PORTAL`. Staff responds in the existing in-app chat. No real-time response in the portal itself — async only. |
+
+---
 
 ### Differentiators (Competitive Advantage)
 
-Features that make this CRM sheet meaningfully better than the current design and better than generic CRM tools.
+Features that distinguish this product from commodity clinical software in the Argentine aesthetic surgery market.
 
 | Feature | Value Proposition | Complexity | Notes |
 |---------|-------------------|------------|-------|
-| Stepper as navigation + action surface (not just progress indicator) | Generic CRM tools (Pipedrive, HubSpot) show a dropdown to change stage; a visual stepper that doubles as action shortcuts is materially better UX for non-technical operators | MEDIUM | Each step node should show: completed state, current state, future state — plus the contextual action button only when on that step |
-| Contextual action collapses/expands per active step | Reduces cognitive load: "Registrar HC" only appears when patient is in CONSULTADO, "Ver presupuesto" only in PRESUPUESTO_ENVIADO — users do not need to hunt for the right action | MEDIUM | Conditional rendering inside stepper, not a separate panel; removes the existing "Acciones rapidas" section entirely |
-| Warning toast with specific actionable text | Generic CRMs show "stage requires X"; this system can be specific: "Moviste a CONFIRMADO sin presupuesto aceptado" with a link to create one | LOW | `sonner` supports JSX in toast content; action button inside toast can be added in v1.x |
-| PERDIDO always requires loss reason (unblockable) | All major CRM tools enforce this gate because losing without tagging reason destroys analytics | LOW | Already implemented via LossReasonModal; preserve this as the only hard gate |
-| Optimistic move with visual pending state | Card dims with dashed border during in-flight PATCH (already implemented); users feel the system is fast even over slow connections | LOW | Already built; no change needed |
+| Share portal link via WhatsApp + QR code in clinic | WhatsApp link delivery is expected; QR in the pre-op appointment widget lets the secretary show the code on screen or print it. A patient scanning a QR in the waiting room and completing their form before the appointment ends is a meaningful UX win. | LOW | WhatsApp: reuse existing WA Cloud API send infrastructure. QR: `qrcode` library already in stack (v1.2). QR encodes the portal URL for the specific token. Both triggered from the pre-quirúrgico appointment card in the agenda. |
+| "Pending studies" tracking dashboard | When the complementary studies checklist marks Laboratorio or ECG as "solicitado", the system can surface all patients with pending studies as a filterable list for the coordinator. Today, coordinators track this in paper or memory. No competitor in this market segment surfaces this automatically. | MEDIUM | New view or filter: "Pacientes con estudios pendientes". Filter: HC entries with TipoEntradaHC=PREOPERATORIO and at least one estudio marked solicitado but no confirmed result. Confirmation: a simple "recibido" checkbox the secretary checks when lab results arrive. This needs a new `resultadosConfirmados` boolean per study type. |
+| Patient health self-report pre-fills doctor's HC form | When a patient completes the portal health questionnaire, their responses appear in the structured HC Preoperatoria template as a suggested draft. The doctor reviews, corrects, and confirms — not entering from scratch. This is the "pre-fill from patient" pattern used by Buddy Healthcare and Synopsis in the NHS. Saves 5-10 minutes per pre-op visit. | MEDIUM | Requires the portal responses to be staged in a `PortalRespuesta` model linked to Paciente. When the doctor opens the PREOPERATORIO HC creator, the system loads the portal responses as defaults. Doctor can override any field. |
+| Chat cleanup: filter system messages from in-app chat | The in-app MensajeInterno chat is currently saturated with automatic "Seguimiento CRM" messages, making real messages hard to find. Filtering or visually segregating system messages from human messages is a direct usability improvement. | LOW | Add a `tipo` field (or `esAutomatico` boolean) to MensajeInterno. Existing CRM automation messages get `esAutomatico: true`. UI renders them in a collapsed/dimmed style or behind a "show system messages" toggle. No new endpoint needed — same data model, different render. |
+| Step-by-step wizard UX for portal (one section per screen) | For a non-technical patient completing the portal on their phone (likely 5+ years of smartphone experience, not tech-savvy), a single-page form with 30 fields is abandonment-inducing. A step-by-step flow (4 steps, progress bar) matches the UX pattern of successful patient intake products (Klara, ModMed, Symplast). | MEDIUM | 4 wizard steps: (1) Datos personales, (2) Salud: condiciones + alergias + medicación, (3) Consentimiento: view PDF + sign + instructions checkbox, (4) Preguntas: optional message to doctor. Progress bar at top. Each step saves independently. If patient closes and reopens the link, they resume at the step they left off. |
+
+---
 
 ### Anti-Features (Commonly Requested, Often Problematic)
 
 | Feature | Why Requested | Why Problematic | Alternative |
 |---------|---------------|-----------------|-------------|
-| Hard blocking all stage skips | "Data integrity" — managers want to enforce process | Creates warning fatigue avoidance: users route around blocks by doing prerequisite actions meaninglessly just to advance the stage. NN/g: hard blocks on workflow steps increase error rates when users are experienced operators who legitimately need to override. | Non-blocking toast warnings that inform without blocking; PERDIDO remains the only hard gate because loss-reason capture has direct analytics value |
-| Modal confirmation for every stage change | Feels "safe" — confirms the user meant to do it | Every kanban drag requiring a confirmation destroys the speed advantage of the kanban view. Users abandon drag-and-drop for a slower list view if each drag produces a popup. | Toast warnings only when prerequisites are actually unmet; silent success when transition is clean |
-| CRM stage selector inside "Registrar contacto" modal | ContactoSheet.tsx already has this; users can update stage when logging contact | Conflates two concerns: "I talked to them" and "I'm advancing the stage". Users get confused about which action triggers the stage change. | Separate the stage change (stepper click) from the contact log (compact modal). Stage change in ContactoSheet becomes optional/advanced; stepper is the primary UX for stage movement |
-| Sheet-within-Sheet for "Registrar contacto" | Seems natural to open another sheet from within the sheet | Radix Sheet nesting has known portal/focus-trap conflicts. ContactoSheet already has `modal={false}` to paper over this. | Use `Dialog` (not `Sheet`) for the compact contact log modal inside the actions sheet |
-| Inline contact form always visible in sheet | Reduces clicks | 40% of vertical space wasted on a form the user may not use on every open. Sheet height is limited, and the stepper needs that space. | Button-triggered compact Dialog; form only appears when user explicitly needs it |
-| Lista de espera comment textarea always visible | Completeness | Optional comment competes with the stepper for vertical space | Toggle/expand: show comment field only after enabling the switch, or move to a secondary edit flow |
-| Adding NUEVO_LEAD or SIN_CLASIFICAR to the stepper | Completeness | These are not actionable conversion stages for a patient who already has a turno. Showing SIN_CLASIFICAR in the stepper creates confusion about what "going back" means. | Stepper shows: TURNO_AGENDADO -> CONSULTADO -> PRESUPUESTO_ENVIADO -> CONFIRMADO -> PROCEDIMIENTO_REALIZADO -> PERDIDO (same 6 stages as the funnel dashboard) |
+| Real-time chat channel in patient portal | "Patients want to message us instantly" | Creates a third communication channel (alongside WhatsApp and phone). Staff must monitor three inboxes. WhatsApp already provides near-real-time messaging. Adding another channel splits attention without adding value. | Async question inbox in the portal routes to MensajeInterno. WhatsApp remains the real-time channel. |
+| Obra social / plan editing in patient portal | "Let patients correct their insurance info" | Obra social data is financial and affects billing. Patient entry without staff verification creates data integrity problems. Insurance changes require staff confirmation. | Staff edits obra social in the admin panel. Portal is limited to contact data (name, phone, email, address). |
+| Appointment booking from portal | "Self-scheduling reduces phone calls" | Entire product scope change. Requires slot availability logic, booking rules, cancellation policy, calendar sync — a separate product feature. Argentine aesthetic surgery practices use phone/WhatsApp for scheduling culturally. | The pre-op portal is triggered by an existing appointment. The portal completes the pre-admission workflow for a turno the clinic already created. |
+| Patient uploads their own lab results to the portal | "Digital convenience" | Patients would upload photos of paper results, wrong documents, or corrupted files. Staff can't validate format or completeness. Creates a file management burden. Storage costs grow unpredictably. | Secretary receives paper/digital results and confirms them in the studies checklist. The "recibido" boolean captures completion without patient file upload. |
+| Automated drug interaction checking | "Patient safety" | Requires a licensed drug interaction database (e.g., Multum, Lexi-Comp). These are expensive, require maintenance, and create regulatory/liability exposure if the check is wrong or incomplete. This is the anesthesiologist's job, not the software's. | Surface the medication list clearly in the pre-op template so the anesthesiologist can review. Warn staff if the medication list is empty. Do not auto-check interactions. |
+| Video-recorded consent | "More defensible" | Complex infrastructure (video storage, streaming, consent-to-record). Argentine courts do not specifically require video consent. Massive scope creep. | Drawn signature + PDF with audit trail is legally sufficient and simpler. |
+| Biometric identity verification in patient portal | "Verify the right patient signed" | No Argentine patient has a biometric-verified account in this system. Any verification method would require the patient to onboard a separate identity system. Over-engineered for the use case. | Token is sent to the patient's registered phone/WhatsApp. Possession of the token is the identity verification method, same as the presupuesto acceptance portal. Document in audit trail as `authMethod: "portal_token"`. |
+| Full patient-visible clinical record | "Patient right to access their record" | Exposing the full HC (with professional notes, treatment costs, diagnostic codes) to patients creates privacy complexity, requires careful data sanitization, and is out of scope for a pre-op intake portal. | Portal shows only the consent PDF the doctor explicitly uploaded. No other HC data is exposed. |
+| PDF editing or consent form builder | "Custom consent templates" | A consent form builder is a product in itself. Clinicians in Argentina already have Word/PDF templates they use. | Doctor uploads an existing PDF per procedure. The platform is not a form builder — it is a signing and delivery mechanism. |
+
+---
+
+## Consent Audit Trail: Required Fields
+
+This is a legally and medically sensitive area. The drawn signature on the consent PDF creates a document that may be used in a malpractice dispute. The audit trail must be immutable and complete.
+
+### Minimum Required Fields (store on `ConsentimientoFirmado` model)
+
+| Field | Type | Why Required |
+|-------|------|--------------|
+| `firmadoAt` | DateTime (server UTC) | Timestamping must be server-side, never from the patient's device clock. Prevents backdating. |
+| `ipFirmante` | String | IP address of the device that completed the signature. Geographic and identity evidence. |
+| `userAgent` | String | Browser/device fingerprint. Confirms signature was done from a real device. |
+| `documentoVersion` | String | SHA-256 hash or version identifier of the PDF that was shown to the patient. Proves the patient signed the current version, not an older one. |
+| `firmaImagenBase64` | Text | The drawn signature as a Base64 PNG. Stored separately from the PDF in case the PDF needs to be regenerated. |
+| `pdfFirmadoUrl` | String | URL to the generated signed PDF (consent PDF + signature embedded). Must be immutable — this URL should never be overwritten. |
+| `portalToken` | String | The token used to authenticate the portal session. Links the signature to the patient's portal access event. |
+| `authMethod` | String | Always `"portal_token"` for portal-based signatures. Future-proofs against other auth methods. |
+| `pacienteId` | Int | Foreign key to Paciente. |
+| `turnoId` | Int | Foreign key to Turno (the pre-quirúrgico appointment this consent belongs to). |
+| `profesionalId` | Int | Foreign key to Profesional (tenant isolation). |
+
+### Retention requirement
+The signed PDF must never be deletable by normal application flows. Ley 26529 (Argentina) requires medical records to be retained for a minimum of 15 years for adults. The signed consent is part of the medical record. Implement soft-delete only; physical deletion should require an admin override with explicit reason.
+
+---
+
+## UX Design: Non-Technical Patient on Mobile
+
+### Context
+The typical patient completing this portal is: 35–65 years old, using a WhatsApp link on an Android phone, comfortable with social media but not with multi-page web forms. They are likely doing this at home, possibly anxious about the upcoming surgery.
+
+### Non-negotiable UX rules
+
+| Rule | Rationale |
+|------|-----------|
+| One section per screen (wizard, not multi-column form) | Research on patient portal completion rates consistently shows that single-question or single-section flows outperform long-form pages by 40-60%. Source: Pabau, Klara, ModMed design documentation. |
+| Show a progress indicator ("Paso 2 de 4") | Patients abandon forms when they don't know how long they'll take. A progress bar is table-stakes for wizard flows. |
+| Chips > radio buttons > text inputs for health questions | Touch targets on chips are larger and more forgiving than radio inputs. Chips can be pre-seeded with common answers. Free text ("Otro") appears only when the chip list doesn't cover the answer. This mirrors v1.9 catalog UX. |
+| Auto-save on each step completion | If the patient closes the link and reopens it, they must resume at the step they left off. Losing progress causes immediate abandonment and angry phone calls to the clinic. |
+| Confirm screen when done | Explicit "Listo, tu información fue enviada" screen. No ambiguity about whether the form was submitted. |
+| Large font, high contrast | Patients 50+ are primary users. Tailwind `text-base` minimum (16px). |
+| Spanish, informal register | "tu" not "usted". "¿Cuáles de estas condiciones tenés?" not "Seleccione sus antecedentes patológicos". |
+| No login, no password creation | Token link is the only authentication. Every additional step (create account, verify email) reduces completion by 15-30% based on healthcare form research. |
+
+### Wizard step structure
+
+```
+Step 1: Tus datos
+  - Revisá y corregí tu nombre, teléfono, email y dirección
+  - Read-only display of current data; editable fields
+
+Step 2: Tu salud
+  - Condiciones: chips (HTA, Diabetes, etc.) + "Otra"
+  - Alergias: chips (Penicilina, AINES, Látex, etc.) + "Otra"
+  - Medicamentos: chips + "Otro"
+  - Tratamientos previos relacionados: one free-text field
+
+Step 3: Consentimiento
+  - View/download consent PDF button
+  - Signature pad: "Firmá con tu dedo" (large canvas area)
+  - Checkbox: "Leí las instrucciones preoperatorias" (with link)
+
+Step 4: ¿Tenés preguntas?
+  - Optional: text area for a message to the doctor
+  - "Enviar mensaje" or "No tengo preguntas, terminar"
+```
 
 ---
 
 ## Feature Dependencies
 
 ```
-[Unrestricted drag-and-drop (CRM-01)]
-    └──requires──> [Backend guard removal on etapa-crm PATCH]
-                       └──requires──> [Verify no business logic in turnos service depends on CRM gate]
+[HC Preoperatoria: antecedentes/alergias/medicacion chips (HCP-02, HCP-03, HCP-04)]
+    └──requires──> [New DB fields: Paciente.condiciones[], Paciente.alergias[], Paciente.medicacion[]]
+    └──requires──> [Seed chips catalog (common conditions, allergies, medications)]
+    └──reuses──> [chip + learning pattern from v1.9 ZonaHC/DiagnosticoHC/TratamientoHC]
+    └──must precede──> [Patient portal health self-report (PP-02)] — same fields
 
-[Toast warnings (CRM-02, CRM-03)]
-    └──requires──> [Client-side prerequisite check in handleDragEnd]
-    └──enhances──> [Unrestricted drag-and-drop (CRM-01)]
+[HC Preoperatoria: estudios complementarios checklist (HCP-05)]
+    └──requires──> [New JSONB sub-structure in HC entry: estudiosComplementarios{}]
+    └──enables──> [Pending studies reporting view] (differentiator)
 
-[Stage stepper in sheet (SHEET-04)]
-    └──requires──> [ETAPA_ORDER definition] (exists in useCRMKanban.ts)
-    └──requires──> [Flujo field added to KanbanPatient type + API response]
+[HC Preoperatoria: consent checkbox (HCP-06)]
+    └──standalone──> [No dependencies; simple audit fields on HC entry]
+    └──distinct from──> [Patient-signed consent PDF (PP-03)] — both can coexist
 
-[Stepper click moves to stage (SHEET-05)]
-    └──requires──> [Stage stepper in sheet (SHEET-04)]
-    └──requires──> [useUpdateEtapaCRM hook] (exists)
-    └──special-case──> [PERDIDO step triggers LossReasonModal instead of direct PATCH]
+[Portal link sharing (SHARE-01: WA, SHARE-02: QR, SHARE-03: email)]
+    └──requires──> [Patient portal token exists for the turno (PP-00)]
+    └──reuses──> [WhatsApp Cloud API send (v1.0)]
+    └──reuses──> [qrcode library in stack (v1.2)]
+    └──triggered from──> [Pre-quirúrgico turno card in agenda or PatientDrawer]
 
-[Stage-specific contextual actions (SHEET-06, SHEET-07, SHEET-08)]
-    └──requires──> [Stage stepper in sheet (SHEET-04)]
-    └──requires──> [HCCreatorForm component] (exists, v1.5)
-    └──requires──> [onOpenPresupuestos callback] (already threaded through KanbanBoard -> CardActionsSheet)
+[Patient portal: token auth (PP-00)]
+    └──requires──> [New PortalToken type PREQUIRURGICO in DB]
+    └──reuses──> [Token-based portal pattern from presupuesto acceptance (v1.0)]
+    └──must precede──> ALL other portal steps (PP-01 through PP-04)
 
-[Compact "Registrar contacto" modal (SHEET-02)]
-    └──requires──> [useCreateContacto hook] (exists)
-    └──conflicts-with──> [Sheet-within-Sheet pattern] -- use Dialog instead
+[Patient portal: datos personales (PP-01)]
+    └──requires──> [PP-00]
+    └──new endpoint──> [PATCH /portal/:token/datos-personales]
 
-[Lista de espera compact button (SHEET-03)]
-    └──requires──> [useUpdateListaEspera hook] (exists in CardActionsSheet.tsx)
+[Patient portal: health self-report (PP-02)]
+    └──requires──> [PP-01]
+    └──requires──> [Paciente.condiciones[], alergias[], medicacion[] fields]
+    └──stages──> responses as PortalRespuesta (not written directly to HC)
+    └──enhances──> [HC Preoperatoria form — pre-fills doctor's view]
 
-[Remove quick actions panel (SHEET-09)]
-    └──enables──> [Stage-specific contextual actions (SHEET-06, SHEET-07, SHEET-08)]
-    └──note──> ["Dar un turno" button removed; access via PatientDrawer if needed]
+[Patient portal: consent signing (PP-03)]
+    └──requires──> [PP-02]
+    └──requires──> [File upload: doctor uploads consent PDF per procedure/turno]
+    └──requires──> [File storage (Supabase Storage or S3)]
+    └──requires──> [szimek/signature_pad (new dependency)]
+    └──requires──> [PDFKit (already in stack) to embed signature into PDF]
+    └──requires──> [ConsentimientoFirmado model with full audit fields]
+    └──CRITICAL──> Signed PDF must be immutable (no delete)
+
+[Patient portal: inbox (PP-04)]
+    └──requires──> [PP-00]
+    └──reuses──> [MensajeInterno model]
+    └──requires──> [New field MensajeInterno.origen: "PACIENTE_PORTAL" | "STAFF"]
+
+[Chat cleanup (CHAT-01)]
+    └──standalone──> [No dependency on portal; can ship independently]
+    └──requires──> [New MensajeInterno.esAutomatico boolean]
+    └──requires──> [Backfill or forward-only: only new auto messages get the flag]
+
+[Pre-fill HC from portal responses]
+    └──requires──> [PP-02 complete]
+    └──requires──> [PortalRespuesta model]
+    └──enhances──> [HC Preoperatoria form UX — low priority if time-constrained]
 ```
-
-### Dependency Notes
-
-- **Unrestricted drag-and-drop requires backend guard removal:** Client-side optimistic move already works. The backend `PATCH /pacientes/:id/etapa-crm` may enforce business rules (e.g., reject CONFIRMADO without accepted presupuesto). This must be verified; the guard should be softened to a warning-only response or removed entirely.
-- **Toast warnings check prerequisites client-side:** The check needs the patient's presupuesto state, available on `KanbanPatient.presupuesto`. No extra API call needed for the two specified warnings (CRM-02: no presupuesto at all when moving to PRESUPUESTO_ENVIADO; CRM-03: presupuesto.estado !== 'ACEPTADO' when moving to CONFIRMADO).
-- **Stepper conflicts with current ETAPA_ORDER:** `ETAPA_ORDER` in `useCRMKanban.ts` currently excludes PROCEDIMIENTO_REALIZADO (hidden from kanban per v1.0 decision). The stepper should include it (it's a valid CRM milestone), but it should not become a droppable kanban column. These are separate concerns.
-- **Compact contact modal must use Dialog, not Sheet:** Radix Sheet nested inside Sheet has portal conflicts already documented in ContactoSheet.tsx (`modal={false}` workaround). Use `Dialog` for the inner component.
-- **"Dar un turno" quick action is removed (SHEET-09):** Currently in the quick actions panel. Once the panel is removed, turno creation is accessible via PatientDrawer. Verify with product owner before removing.
 
 ---
 
 ## MVP Definition
 
-### Launch With (v1.7 — all items)
+### Core for v1.12 (must ship)
 
-All items are explicitly in scope per PROJECT.md CRM-01 through SHEET-09.
+#### Area A: Structured HC Preoperatoria
+- [ ] HCP-01: Optional zona/diagnóstico/tratamiento selector in PREOPERATORIO HC entry (reuse existing catalog)
+- [ ] HCP-02: Antecedentes patológicos chips + "Otro" with learning → persists to `Paciente.condiciones[]`
+- [ ] HCP-03: Alergias chips + "Otro" with learning → persists to `Paciente.alergias[]`
+- [ ] HCP-04: Medicación preexistente chips + "Otro" with learning → persists to new `Paciente.medicacion[]`
+- [ ] HCP-05: Complementary studies checklist (Laboratorio, ECG, Imágenes sub-options) stored on HC entry
+- [ ] HCP-06: "Paciente informado del consentimiento" checkbox with audit timestamp + userId
+- [ ] SHARE-01: Share portal link via WhatsApp from the pre-quirúrgico appointment card
+- [ ] SHARE-02: Display portal link as QR code from the appointment card
 
-- [ ] CRM-01: Unrestricted drag-and-drop (any stage -> any stage) — requires backend guard removal
-- [ ] CRM-02: Toast warning when moving to PRESUPUESTO_ENVIADO without existing presupuesto
-- [ ] CRM-03: Toast warning when moving to CONFIRMADO without accepted presupuesto
-- [ ] CRM-04: Auto-transitions continue working (no regression)
-- [ ] CRM-05: Stepper click moves patient to stage (same path as drag-and-drop)
-- [ ] SHEET-01: Sheet header with patient name + flujo badge
-- [ ] SHEET-02: "Registrar contacto" as compact button opening Dialog (not Sheet)
-- [ ] SHEET-03: Lista de espera as compact toggle button
-- [ ] SHEET-04: Stage stepper showing all 6 funnel stages with current stage highlighted
-- [ ] SHEET-05: Clicking stepper step triggers stage transition
-- [ ] SHEET-06: "Ver/Crear presupuesto" action in PRESUPUESTO_ENVIADO step
-- [ ] SHEET-07: "Registrar HC" action in CONSULTADO step (opens HCCreatorForm)
-- [ ] SHEET-08: "Marcar como realizado" action in PROCEDIMIENTO_REALIZADO step
-- [ ] SHEET-09: Remove existing quick actions panel from sheet
+#### Area B: Patient Portal
+- [ ] PP-00: New PREQUIRURGICO portal token type; endpoint to generate and serve
+- [ ] PP-01: Step 1 — patient reviews and corrects personal contact data
+- [ ] PP-02: Step 2 — patient reports condiciones, alergias, medicacion, tratamientos previos
+- [ ] PP-03: Step 3 — patient views consent PDF, draws signature, PDF with embedded signature generated and stored with full audit trail; "read pre-op instructions" checkbox
+- [ ] PP-04: Step 4 — patient sends optional question to in-app staff chat
+- [ ] CHAT-01: Chat cleanup — `esAutomatico` flag on MensajeInterno; UI hides/collapses system messages by default
 
-### Add After Validation (v1.x)
+### Add after validation (v1.12.x)
 
-- [ ] Action-button toast: "Moviste a CONFIRMADO sin presupuesto. Crear uno ->" with JSX button inside sonner toast
-- [ ] Flujo badge in stepper step for TRATAMIENTO patients if kanban ever shows them
-- [ ] Animated stepper transitions (smooth highlight movement between steps)
+- [ ] SHARE-03: Portal link via email (delivery infrastructure exists; lower priority than WA)
+- [ ] PRE-FILL: HC Preoperatoria form pre-fills from PortalRespuesta when doctor opens the form
+- [ ] PENDING-STUDIES: "Pacientes con estudios pendientes" filter view for the coordinator
 
-### Future Consideration (v2+)
+### Future consideration (v2+)
 
-- [ ] Time-in-stage indicator per stepper step (how many days patient has been in this stage)
-- [ ] Automated follow-up triggers based on stage + days elapsed (deferred in PROJECT.md)
-- [ ] Stage-change audit log visible in sheet (who moved them, when)
+- [ ] Studies result upload integration (external lab APIs — huge scope)
+- [ ] Consent form per-procedure template builder (current: single PDF upload per turno)
+- [ ] Automated pre-op instructions email N days before appointment
+- [ ] Patient-accessible signed PDF download after signing (re-send from staff)
 
 ---
 
@@ -148,82 +253,69 @@ All items are explicitly in scope per PROJECT.md CRM-01 through SHEET-09.
 
 | Feature | User Value | Implementation Cost | Priority |
 |---------|------------|---------------------|----------|
-| Unrestricted drag-and-drop (CRM-01) | HIGH | LOW (client done; backend guard removal) | P1 |
-| Toast warnings (CRM-02, CRM-03) | HIGH | LOW (client-side check + sonner) | P1 |
-| Stage stepper UI (SHEET-04) | HIGH | MEDIUM (custom component; no shadcn stepper) | P1 |
-| Compact "Registrar contacto" modal (SHEET-02) | HIGH | MEDIUM (refactor CardActionsSheet; new Dialog) | P1 |
-| Stepper click -> stage change (SHEET-05) | HIGH | LOW (reuses useUpdateEtapaCRM) | P1 |
-| Contextual step actions (SHEET-06/07/08) | HIGH | LOW (conditional rendering inside stepper) | P1 |
-| Sheet header with name + flujo badge (SHEET-01) | MEDIUM | LOW (minor CardActionsSheet header refactor) | P1 |
-| Lista de espera compact button (SHEET-03) | MEDIUM | LOW (simplify existing section) | P1 |
-| Remove quick actions panel (SHEET-09) | MEDIUM | LOW (delete JSX block) | P1 |
-| Auto-transitions unchanged (CRM-04) | HIGH | LOW (verify, no code change expected) | P1 |
+| HCP-02/03/04: antecedentes/alergias/medicacion chips | HIGH (clinical safety, saves 10 min/visit) | MEDIUM (new DB fields + chip UI) | P1 |
+| HCP-05: estudios complementarios checklist | HIGH (patient safety, avoids missing ECG/lab) | LOW (JSONB sub-structure + checkboxes) | P1 |
+| HCP-06: consent checkbox audit field | HIGH (Ley 26529 compliance evidence) | LOW (2 audit fields on HC entry) | P1 |
+| PP-00: portal token (PREQUIRURGICO type) | HIGH (enables all portal features) | LOW (pattern already exists) | P1 |
+| PP-01: datos personales update | MEDIUM (operational convenience) | LOW (simple PATCH endpoint) | P1 |
+| PP-02: health self-report | HIGH (reduces pre-op data entry by staff) | MEDIUM (wizard UI + staging model) | P1 |
+| PP-03: consent PDF sign with audit trail | HIGH (legal, patient safety, surgeon confidence) | HIGH (file storage + sig_pad + PDF embed + audit model) | P1 |
+| PP-04: patient inbox | MEDIUM (reduces phone burden on secretary) | MEDIUM (new MensajeInterno.origen field + portal UI) | P1 |
+| SHARE-01/02: WA + QR portal link sharing | HIGH (frictionless patient access) | LOW (existing WA + qrcode infra) | P1 |
+| CHAT-01: chat cleanup (hide system messages) | HIGH (direct UX fix for existing pain) | LOW (boolean field + conditional render) | P1 |
+| HCP-01: zona/diagnóstico/tratamiento selector | MEDIUM (optional; existing catalog works) | LOW (reuse v1.9 component) | P2 |
+| PRE-FILL: HC from portal responses | HIGH (saves time in pre-op visit) | MEDIUM (PortalRespuesta model + form default injection) | P2 |
+| PENDING-STUDIES: coordinator view | MEDIUM (operational safety net) | MEDIUM (new query + filter view) | P2 |
+| SHARE-03: email portal link | LOW (WA covers primary use case) | LOW (existing email infra) | P3 |
 
 ---
 
 ## Competitor Feature Analysis
 
-| Feature | HubSpot Deals | Pipedrive | Our Approach |
-|---------|--------------|-----------|--------------|
-| Stage restriction | Optional hard blocks (admin-configurable per stage) | No hard blocks; any stage -> any stage via drag | Non-blocking toasts only; PERDIDO remains only hard gate (loss reason required) |
-| Stage change UX | Dropdown picker in deal detail sidebar | Drag-and-drop + clickable stage bar at top of deal | Drag-and-drop (existing) + stepper in sheet (new) |
-| Contextual actions per stage | "Required fields" modal per stage | No per-stage actions built-in | Contextual action button rendered inside each stepper step |
-| Log contact / note | Persistent "Activity" section always visible | Activity panel always in deal sidebar | Compact button -> Dialog (removes always-visible form to free vertical space) |
-| Pipeline flexibility | Any deal can skip stages freely | Any deal can skip stages freely | Same: flexible with informational warnings |
+| Feature | Aesthetic Record | Pabau | PatientNow / Symplast | Our Approach |
+|---------|-----------------|-------|----------------------|--------------|
+| Patient intake portal | Web portal; patients fill forms + sign consents before appointment | Web portal with pre-care automation triggered by appointment type | Mobile-first (Symplast is app-based; PatientNow web) | Token link via WA/QR; no app install; wizard UX |
+| Pre-op health questionnaire | Custom forms builder; captures medical history, allergies, medications | Custom forms sent automatically before appointment | Patient fills medical history in portal before visit | Structured chips with learning; maps to Paciente profile fields |
+| Digital consent | In-portal consent signing; drawn or typed signature | In-portal consent signing | Digital consent signing in portal | PDF upload by doctor + drawn canvas signature + audit trail PDF |
+| Studies checklist | Not a primary feature; usually in the doctor's template | Not specifically mentioned | Not specifically mentioned | Structured checkboxes with "pending" status; coordinator view |
+| Patient messaging | Secure portal messaging | Two-way messaging within portal | In-app messaging between patient and staff | Async portal → MensajeInterno in staff chat; WhatsApp for real-time |
+| Portal access method | Login-based (patient creates account) | Appointment-triggered link via SMS/email | App install (Symplast) or portal login | Token link (no login, no install); pattern from existing presupuesto portal |
+| Mobile UX | Responsive web | Responsive web | Symplast: native app | Responsive wizard; chip-based inputs; mobile-first from design |
+
+**Key differentiation:** competitors (Aesthetic Record, Pabau) require patient account creation, which creates friction. Our token-based approach (already proven in the presupuesto portal) avoids this entirely. The chip + learning pattern for health questionnaires (with data persisting to the patient profile) is more sophisticated than form-builder approaches that generate orphaned form responses.
 
 ---
 
-## Warning Pattern Specification
+## Legal and Medical Sensitivity Flags
 
-The non-blocking warning behavior is the highest-risk UX decision in v1.7 because it replaces a safety mechanism. This section is opinionated to prevent scope creep and warning fatigue.
-
-### When to warn
-
-| Trigger | Warning text | Blocking? |
-|---------|-------------|-----------|
-| Move to PRESUPUESTO_ENVIADO, `patient.presupuesto === null` | "Este paciente no tiene presupuesto creado. Podes crear uno desde el perfil." | No |
-| Move to CONFIRMADO, `patient.presupuesto?.estado !== 'ACEPTADO'` | "Este paciente no tiene presupuesto aceptado. El sistema lo movio de todas formas." | No |
-| Move to PERDIDO (any origin) | LossReasonModal — reason required | Yes (modal gate) |
-| Move to any other stage with any state | No warning | — |
-
-### Why exactly two warnings
-
-More warnings = warning fatigue. NN/g research confirms users trained to dismiss warnings stop reading them after 3-5 occurrences. Two warnings cover the analytically meaningful cases: PRESUPUESTO_ENVIADO without a budget is a data quality issue; CONFIRMADO without accepted budget is a revenue integrity issue. All other stage combinations are routine operations that should be silent.
-
-### Implementation location
-
-Check prerequisites in `handleDragEnd` (KanbanBoard.tsx) after optimistic move is applied. The prerequisite data is on `KanbanPatient` which is already in scope at drag-end. No additional API calls needed. Use `toast.warning()` variant, not `toast.error()` — the move succeeded; this is informational, not a failure. Duration: 6 seconds (default 4s is too short for actionable messages in Spanish).
-
----
-
-## Stepper Design Specification
-
-Opinionated implementation guidance to reduce ambiguity in planning.
-
-1. **Stages to show (6):** TURNO_AGENDADO -> CONSULTADO -> PRESUPUESTO_ENVIADO -> CONFIRMADO -> PROCEDIMIENTO_REALIZADO -> PERDIDO (mirrors the dashboard funnel; excludes SIN_CLASIFICAR and NUEVO_LEAD)
-2. **Current stage:** filled/highlighted circle node; steps before shown as completed (checkmark or filled); steps after shown as future (empty circle)
-3. **Clickability:** all steps clickable; PERDIDO click triggers LossReasonModal; all others trigger useUpdateEtapaCRM directly
-4. **Contextual action:** renders immediately below the current (active) step node only:
-   - CONSULTADO -> "Registrar HC" (opens HCCreatorForm in a Dialog)
-   - PRESUPUESTO_ENVIADO -> "Ver/Crear presupuesto" (calls `onOpenPresupuestos`)
-   - PROCEDIMIENTO_REALIZADO -> "Marcar como realizado" (calls updateEtapa to PROCEDIMIENTO_REALIZADO if not already there)
-5. **Layout:** horizontal stepper with abbreviated labels fitting `max-w-sm` sheet width; overflow handled with small text or wrapped labels; connector line between nodes
-6. **No shadcn built-in stepper exists** — implement with flex row, conditional classNames per step state (completed/current/future), and a thin connector line between nodes. Estimated 60-80 lines of TSX.
+| Area | Sensitivity | Implication |
+|------|-------------|-------------|
+| Signed consent PDF | HIGH — legal document, Ley 26529 | Signed PDF must be immutable. No delete endpoint. Requires `firmadoAt` server timestamp, IP, userAgent, document hash. Store separately from the consent PDF template. |
+| Patient signature | HIGH — legal evidence | Drawn signature has higher legal standing than checkbox in Argentina. Under Ley 25506, a drawn signature is "firma electrónica" (valid as evidence, not as "firma digital certificada"). Store signature image separately from the PDF. |
+| Medications and allergies | HIGH — patient safety | If a patient adds an allergy in the portal and it is later overwritten by a staff edit, the original must still be recoverable. Use append-only behavior or versioning for `alergias[]` and `medicacion[]`. |
+| Studies checklist | MEDIUM — patient safety | Missing an ECG before a surgery with a cardiac patient is a serious adverse event risk. The pending studies view (differentiator) directly mitigates this. |
+| Portal health self-report | MEDIUM — clinical validity | Patient-reported data is not validated by a clinician. The data MUST be clearly marked as "declarado por el paciente" in the HC and the doctor must explicitly confirm or override it. Do not auto-populate the HC without doctor review. |
+| Medical record retention | HIGH — regulatory | Ley 26529 Art. 18: records must be retained for a minimum of 15 years for adults. Signed consent PDFs are part of the medical record. Physical deletion must require admin-level override with an explicit reason log. |
+| WhatsApp portal link | LOW — privacy | The portal link contains a token. If the patient's WhatsApp is accessed by a third party, they can access the patient's data. Token should expire after use (or 30 days). This is the same risk accepted in the presupuesto portal — document and accept. |
 
 ---
 
 ## Sources
 
-- [Stepper UI Best Practices — Foundey](https://foundey.com/blog/stepper-ui-best-practices) — sidebar stepper UX, linear vs. non-linear navigation, clickable steps
-- [Indicators, Validations, and Notifications — NN/g](https://www.nngroup.com/articles/indicators-validations-notifications/) — when to use toast vs. modal vs. inline; urgency and required-action framework
-- [Toast Notification UX — LogRocket](https://blog.logrocket.com/ux-design/toast-notifications/) — toast for non-critical messages; warning vs. error tone
-- [Modal vs. Popover vs. Tooltip — UX Patterns Dev](https://uxpatterns.dev/pattern-guide/modal-vs-popover-guide) — use Dialog (not Sheet) for compact contact log inside an open sheet
-- [CRM UX Design 2025 — Yellow Slice](https://yellowslice.in/bed/crm-ux-design-in-2025-what-works-what-fails-and-whats-next/) — proliferation-of-screens failure mode; inline action patterns
-- [SaaS CRM Design Trends 2025 — EseOSpace](https://eseospace.com/blog/saas-crm-design-trends-for-2025/) — kanban + detail drawer pattern dominance
-- Codebase: `KanbanBoard.tsx`, `CardActionsSheet.tsx`, `ContactoSheet.tsx`, `useCRMKanban.ts`, `useUpdateEtapaCRM.ts`
-- `PROJECT.md` — v1.7 milestone definition, ticket list CRM-01 through SHEET-09
+- [Electronic Pre-Operative Assessment — Buddy Healthcare](https://www.buddyhealthcare.com/en/electronic-pre-operative-assessment) — pre-op digital workflow, patient acceptability scores
+- [Digital Consent in Gynecology — PMC](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC10808288/) — effectiveness of digital consent vs. paper
+- [Patient Portal for Aesthetic Practices — Aesthetic Record](https://www.aestheticrecord.com/patient-portal/) — competitor feature reference
+- [5 Best Plastic Surgery Software — Pabau](https://pabau.com/blog/best-plastic-surgery-software/) — competitor feature analysis
+- [Audit Trail for E-Signatures — Formfy](https://formfy.ai/compliance/audit-trail-e-signature) — required audit fields
+- [Audit Trail E-Signature — Blueink](https://www.blueink.com/blog/audit-trail-esignature) — IP, userAgent, timestamp, doc hash requirements
+- [eConsent Software — Personify Care](https://personifycare.com/how-we-help/digital-consent-software/) — consent flow best practices
+- [Evaluación Prequirúrgica — MSD Manual ES](https://www.msdmanuals.com/es/professional/temas-especiales/atenci%C3%B3n-del-paciente-quir%C3%BArgico/evaluaci%C3%B3n-prequir%C3%BArgica) — standard pre-op assessment content
+- [Consentimiento Informado — Argentina.gob.ar](https://www.argentina.gob.ar/justicia/derechofacil/leysimple/derechos-del-paciente) — Ley 26529 requirements
+- [Consentimiento Informado Cirugía Estética — cirugiacosmedica.com](https://cirugiacosmedica.com/consentimiento-informado-en-cirugia-estetica/) — Argentine aesthetic surgery specific
+- [JavaScript Signature Pad — szimek/signature_pad GitHub](https://github.com/szimek/signature_pad) — implementation reference
+- Codebase: `backend/src/prisma/schema.prisma`, `frontend/src/components/patient/`, HC entry creation flow (v1.9), token-based portal (v1.0), WhatsApp send (v1.0), PDFKit usage (v1.2)
 
 ---
 
-*Feature research for: CRM Flexible stage transitions and kanban sheet redesign (v1.7)*
-*Researched: 2026-05-23*
+*Feature research for: structured pre-surgical HC template + patient self-management portal (v1.12)*
+*Researched: 2026-06-25*

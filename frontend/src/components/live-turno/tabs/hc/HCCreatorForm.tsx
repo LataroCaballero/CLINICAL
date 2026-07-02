@@ -15,6 +15,7 @@ import { useCreateHistoriaClinicaEntry, type TipoEntrada, type TipoEntradaHCValu
 import { useTratamientosProfesional } from '@/hooks/useTratamientosProfesional';
 import type { TratamientoConInsumos } from '@/types/tratamiento';
 import { PrimeraConsultaForm, type PrimeraConsultaFormState } from './PrimeraConsultaForm';
+import { PreoperatorioForm, type PreoperatorioFormState } from './PreoperatorioForm';
 import { GenerarPresupuestoModal } from './GenerarPresupuestoModal';
 import type { PresupuestoItemInput } from '@/hooks/useCreatePresupuesto';
 import type { Presupuesto } from '@/hooks/usePresupuestos';
@@ -61,6 +62,9 @@ export function HCCreatorForm({
 
   // Estado para primera_vez
   const [pvState, setPvState] = useState<PrimeraConsultaFormState | null>(null);
+
+  // Estado para pre_quirurgico
+  const [preopState, setPreopState] = useState<PreoperatorioFormState | null>(null);
   const [pvPresupuestoId, setPvPresupuestoId] = useState<string | undefined>();
   const [pvPresupuestoTotal, setPvPresupuestoTotal] = useState<number | undefined>();
   const [presupuestoModalItems, setPresupuestoModalItems] = useState<PresupuestoItemInput[] | null>(null);
@@ -99,6 +103,8 @@ export function HCCreatorForm({
     tipoSeleccionado !== null &&
     (tipoSeleccionado === 'primera_vez'
       ? pvState !== null && pvState.zonas.length > 0
+      : tipoSeleccionado === 'pre_quirurgico'
+      ? true  // PREOP form is always saveable; even an empty PREOP is a valid clinical record
       : tipoSeleccionado === 'tratamiento_en_consultorio'
       ? tratamientosSeleccionados.length > 0 || textoLibre.trim().length > 0
       : textoLibre.trim().length > 0);
@@ -142,6 +148,23 @@ export function HCCreatorForm({
       } else {
         toast.success('HC guardada.');
       }
+    } else if (tipoSeleccionado === 'pre_quirurgico') {
+      await createEntry.mutateAsync({
+        pacienteId,
+        dto: {
+          tipo: 'pre_quirurgico',
+          tipoEntrada: PLANTILLA_TO_TIPO_ENTRADA['pre_quirurgico'] ?? 'PREOPERATORIO',
+          antecedentes: preopState?.antecedentes ?? [],
+          alergias: preopState?.alergias ?? [],
+          medicacion: preopState?.medicacion ?? [],
+          estudiosComplementarios: preopState?.estudiosComplementarios,
+          consentimientoInformado: preopState?.consentimientoInformado ?? false,
+          zonas: preopState?.zonas ?? [],
+          comentario: preopState?.comentario,
+          ...(selectedFecha ? { fecha: selectedFecha } : {}),
+        },
+      });
+      toast.success('HC guardada.');
     } else {
       await createEntry.mutateAsync({
         pacienteId,
@@ -161,6 +184,7 @@ export function HCCreatorForm({
       setSaved(false);
       setTipoSeleccionado(null);
       setPvState(null);
+      setPreopState(null);
       setTextoLibre('');
       setNotasLibresOpen(false);
       setPvPresupuestoId(undefined);
@@ -232,6 +256,15 @@ export function HCCreatorForm({
           onChange={(state) => setPvState(state)}
           onGenerarPresupuesto={(items) => setPresupuestoModalItems(items)}
           obraSocialId={obraSocialId}
+        />
+      )}
+
+      {tipoSeleccionado === 'pre_quirurgico' && (
+        <PreoperatorioForm
+          pacienteId={pacienteId}
+          profesionalId={profesionalId}
+          obraSocialId={obraSocialId}
+          onChange={setPreopState}
         />
       )}
 
@@ -332,7 +365,7 @@ export function HCCreatorForm({
         </div>
       )}
 
-      {tipoSeleccionado && tipoSeleccionado !== 'primera_vez' && tipoSeleccionado !== 'tratamiento_en_consultorio' && (
+      {tipoSeleccionado && tipoSeleccionado !== 'primera_vez' && tipoSeleccionado !== 'pre_quirurgico' && tipoSeleccionado !== 'tratamiento_en_consultorio' && (
         <Textarea
           value={textoLibre}
           onChange={(e) => setTextoLibre(e.target.value)}

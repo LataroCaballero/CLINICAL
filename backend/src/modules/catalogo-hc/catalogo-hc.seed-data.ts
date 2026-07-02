@@ -26,6 +26,24 @@ export function normalizarNombre(nombre: string): string {
   return nombre.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
 }
 
+/**
+ * Seed values for AntecedenteCatalogoPro.
+ * Source of truth: frontend/src/components/CondicionesChips.tsx PREDEFINED list.
+ * These become esSistema=true rows for every new professional.
+ */
+export const SEED_ANTECEDENTES: string[] = [
+  'Hipertensión',
+  'Diabetes',
+  'Asma',
+  'Enfermedad cardíaca',
+  'Obesidad',
+  'Artritis',
+  'Alergia severa',
+  'Hipotiroidismo',
+  'Cannabis',
+  'Epilepsia',
+];
+
 export const SEED_ZONAS: SeedZona[] = [
   {
     nombre: 'Abdomen',

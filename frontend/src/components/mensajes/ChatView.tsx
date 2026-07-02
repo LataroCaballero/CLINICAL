@@ -123,6 +123,7 @@ export function ChatView({
                 createdAt={mensaje.createdAt}
                 esPropio={mensaje.esPropio}
                 esSistema={mensaje.esSistema}
+                origenPaciente={mensaje.origenPaciente}
                 leido={mensaje.leido}
               />
             ))}

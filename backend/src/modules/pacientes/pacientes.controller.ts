@@ -32,6 +32,8 @@ import { UpdateWhatsappOptInDto } from './dto/update-whatsapp-opt-in.dto';
 import { UpdateCrmArchivoDto } from './dto/update-crm-archivo.dto';
 import { CreateContactoDto } from './dto/create-contacto.dto';
 import { UpdateListaEsperaDto } from './dto/update-lista-espera.dto';
+import { PortalEmailService } from './portal-email.service';
+import { EnviarPortalLinkEmailDto } from './dto/enviar-portal-link-email.dto';
 
 @Auth('ADMIN', 'PROFESIONAL', 'SECRETARIA', 'FACTURADOR')
 @Controller('pacientes')
@@ -39,6 +41,7 @@ export class PacientesController {
   constructor(
     private readonly pacientesService: PacientesService,
     private readonly prisma: PrismaService,
+    private readonly portalEmail: PortalEmailService,
   ) {}
 
   // RF-007 — Alta de pacientes
@@ -230,5 +233,76 @@ export class PacientesController {
   @Patch(':id/flujo')
   updateFlujo(@Param('id') id: string, @Body() dto: UpdateFlujoDto) {
     return this.pacientesService.updateFlujo(id, dto.flujo);
+  }
+
+  // Portal del Paciente — Recuperar url existente sin generar (sólo lectura)
+  // Hereda @Auth('ADMIN','PROFESIONAL','SECRETARIA','FACTURADOR') del controller
+  @Get(':id/portal-link')
+  async obtenerPortalLink(@Param('id') id: string) {
+    const result = await this.pacientesService.obtenerPortalLink(id);
+    return {
+      url: result.url,
+      alreadyGenerated: result.alreadyGenerated,
+      legacy: result.legacy ?? false,
+      smtpConfigured: this.portalEmail.isSmtpConfigured(),
+    };
+  }
+
+  // Portal del Paciente — Generar o recuperar el link (staff only, pacienteId desde path)
+  @Post(':id/portal-link')
+  async generarPortalLink(@Param('id') id: string) {
+    const result = await this.pacientesService.generarPortalLink(id);
+    return {
+      url: result.url,
+      alreadyGenerated: result.alreadyGenerated,
+      smtpConfigured: this.portalEmail.isSmtpConfigured(),
+    };
+  }
+
+  // Portal del Paciente — Enviar link por email; opcionalmente establece email si falta.
+  // Fix (D-12): usa la url ya generada que el cliente tiene en estado, en vez de
+  // re-derivarla con generarPortalLink (que devuelve url:null cuando el token ya existe).
+  @Post(':id/portal-link/email')
+  async enviarPortalLinkEmail(
+    @Param('id') id: string,
+    @Body() dto: EnviarPortalLinkEmailDto,
+  ) {
+    // (1) Validate the client-supplied url server-side (T-52-01). Throws 400 if
+    // invalid. Returns the canonical origin+pathname — we reflect THIS into the
+    // email, never the raw client string (CR-01).
+    const urlSegura = this.pacientesService.validarPortalUrl(dto.url);
+
+    // (2) Capture email if patient has none on file and one was provided.
+    if (dto.email) {
+      await this.pacientesService.setEmailSiFalta(id, dto.email);
+    }
+
+    // (3) Resolve the recipient from the database (not from the request body).
+    const paciente = await this.prisma.paciente.findUnique({
+      where: { id },
+      select: { email: true, nombreCompleto: true },
+    });
+    if (!paciente) throw new NotFoundException('Paciente no encontrado');
+
+    // (4) No recipient → return sin_destinatario without sending.
+    if (!paciente.email) {
+      return { enviado: false, motivo: 'sin_destinatario' };
+    }
+
+    // (5) Send the canonical, validated url — never re-derives it (D-12 intact)
+    //     and never reflects the raw client string (CR-01).
+    const result = await this.portalEmail.enviarLinkPortal(
+      paciente.email,
+      urlSegura,
+      paciente.nombreCompleto,
+    );
+
+    if (result.enviado) {
+      return { enviado: true };
+    }
+    // Incluir codigo SMTP (sólo error.code — sin host/credenciales, T-52-12) cuando está disponible
+    return result.codigo
+      ? { enviado: false, motivo: 'envio_fallido', codigo: result.codigo }
+      : { enviado: false, motivo: 'envio_fallido' };
   }
 }

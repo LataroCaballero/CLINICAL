@@ -110,9 +110,17 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 
 ### Active
 
+**Milestone v1.12** (ver `.planning/REQUIREMENTS.md` — 33 requisitos):
+- [ ] Plantilla HC Prequirúrgico estructurada: secciones paso a paso, chips de antecedentes/alergias/medicación con learning, estudios complementarios, check de consentimiento informado, compartir link (PREOP-01..12)
+- [~] Portal de autogestión del paciente por token persistente: datos básicos + auto-reporte de salud staged (PORTAL-01..06) — backend/token (PORTAL-01/04/06) en Phase 54; frontend mobile-first (PORTAL-02/03/05: DNI-gate, Info básica, Salud staged) validado en Phase 55; consentimiento (PORTAL-06 UI) pendiente (Phase 56)
+- [~] Consentimiento: upload de PDF desde Configuración, firma dibujada estampada en PDF firmado, auditoría forense, indicaciones por link (CONS-01..08) — CONS-01 (upload PDF magic-byte validado) y CONS-02 (indicaciones por link) validados en Phase 53; firma/forense (CONS-03..08) pendientes (Phase 56)
+- [~] Limpieza de chat (fix del spam de seguimiento + dedupe) y caja de consultas del paciente (CHAT-01..04) — CHAT-01 (dedupe guard) y CHAT-02 (cleanup del flood) validados en Phase 51; caja de consultas del paciente (CHAT-04: endpoint + UI one-way → MensajeInterno origenPaciente=true) validada en Phase 55; badge de origen en chat del staff (CHAT-03) pendiente (Phase 56)
+- [x] Schema foundation completo del milestone v1.12 (catálogos preop, columnas portal/staging, estudios complementarios, guard fields) en una migración big-bang — Phase 51
+- [x] Infraestructura: StorageService en disco local (cloud-ready), rate limiting, validación de upload (INFRA-01..03) — validado en Phase 53
+
+**Diferido (no en v1.12):**
 - [ ] Automatizaciones de seguimiento: triggers basados en tiempo/etapa (ej. "30 días sin respuesta → mensaje automático")
 - [ ] Módulos financieros optimizados e interconectados con CRM
-- [ ] Página pública del paciente: historial, presupuestos, documentos
 - [ ] Módulo de estadísticas ejecutivas (reportes exportables, comparativas)
 - [ ] Tipos de turno personalizados por profesional desde Configuración (TIPO-F01) + color por tipo en calendario (TIPO-F02) — diferido de v1.8
 - [ ] CRM: vista de pacientes archivados con desarchivar en lote (CRM-F01) + archivado automático tras N días en PERDIDO (CRM-F02) — diferido de v1.8
@@ -126,9 +134,17 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 - Eliminar el tipo "Cirugía" interno — la agenda quirúrgica lo requiere (v1.8)
 - tipoEntrada retroactivo en entradas HC legacy — backfill innecesario, se tratan como CONSULTA_CIRUGIA por defecto (v1.8)
 
-## Next Milestone: por definir
+## Current Milestone: v1.12 Prequirúrgico Estructurado + Portal del Paciente
 
-Candidatos diferidos para el próximo milestone: automatizaciones de seguimiento por tiempo/etapa, tipos de turno personalizados + color (TIPO-F01/F02), vista de pacientes archivados con desarchivar en lote (CRM-F01/F02), consolidación de `HistorialClinicoPanel`/`TurnoHCModal` al componente compartido `HCEntryContent.tsx`. Usar `/gsd:new-milestone` para definir alcance.
+**Goal:** Estructurar la HC prequirúrgica paso a paso y darle al paciente un portal de autogestión por token para que complete sus datos, firme el consentimiento y consulte al médico — reduciendo carga administrativa y reforzando el respaldo legal.
+
+**Target features:**
+- Plantilla HC Prequirúrgico estructurada (reemplaza el texto libre): check opcional de diagnóstico/tratamiento (reusa selector de catálogo), antecedentes/alergias/medicación como chips con learning (sincronizados al perfil del paciente), checklist de estudios complementarios, check de consentimiento informado, y compartir el link de autogestión (WhatsApp + QR + email).
+- Portal de autogestión del paciente (token público persistente, sin login, mobile-first): información básica editable, auto-reporte de salud staged, consentimiento (ver/descargar PDF + firma dibujada estampada en PDF firmado con auditoría forense) + check de indicaciones, y caja de consultas hacia el chat del médico.
+- Limpieza del chat: fix del spam de "Seguimiento CRM" (dedupe + limpieza de existentes) y distinción de origen de mensajes.
+- Infraestructura de soporte: StorageService en disco local (cloud-ready), rate limiting (ThrottlerModule), validación de upload.
+
+**Key context:** Reusa patrones existentes (catálogo HC v1.9 con learning, portal público por token del presupuesto, SMTP, WhatsApp+QR, PDFKit). Nuevo: upload de archivos a disco (multer + `@types/multer`), estampado de firma en PDF subido (`@cantoo/pdf-lib`), signature pad (`signature_pad` ya instalado). Token de portal **hasheado** (SHA-256). Datos del paciente **staged** (no sobrescriben campos clínicos curados). Activar `@nestjs/throttler` (instalado pero sin cablear). Revisión legal del flujo de consentimiento antes de go-live (Ley 25506 / Ley 26529). Cloud storage diferido. Ver `.planning/research/SUMMARY.md` para detalles.
 
 ## Shipped: v1.11 HC Completa en Ficha de Paciente ✅
 
@@ -281,5 +297,23 @@ Candidatos diferidos para el próximo milestone: automatizaciones de seguimiento
 
 27/27 requisitos completados en 21 días (2026-04-22 → 2026-05-13). 6 fases, 16 planes. Tech debt aceptado: snapshot de tratamientos sin consumirInsumos y rol FACTURADOR en ordenes-consumo. Ver `.planning/milestones/v1.5-ROADMAP.md` para detalles.
 
+## Evolution
+
+This document evolves at phase transitions and milestone boundaries.
+
+**After each phase transition** (via `/gsd-transition`):
+1. Requirements invalidated? → Move to Out of Scope with reason
+2. Requirements validated? → Move to Validated with phase reference
+3. New requirements emerged? → Add to Active
+4. Decisions to log? → Add to Key Decisions
+5. "What This Is" still accurate? → Update if drifted
+
+**After each milestone** (via `/gsd:complete-milestone`):
+1. Full review of all sections
+2. Core Value check — still the right priority?
+3. Audit Out of Scope — reasons still valid?
+4. Update Context with current state
+
 ---
-*Last updated: 2026-06-24 — after v1.11 HC Completa en Ficha de Paciente milestone*
+*Last updated: 2026-07-01 — Phase 55 (Portal Frontend) complete: portal mobile-first `portal/[token]` con DNI-gate (state machine loading/dni-gate/blocked/ready/error), JWT de portal aislado del staff (sessionStorage), layout navegable de 4 secciones con "Paso X de 4", Info básica editable (RHF+Zod → PATCH /datos-personales), Salud staged con chips escribiendo SOLO a campos `*AutoReportad*` (PATCH /salud), y caja de Consultas one-way (POST /consulta → MensajeInterno origenPaciente=true). PORTAL-02/03/05 + CHAT-04 validados 4/4; 2 ítems de UAT humana pendientes (viewport móvil, server vivo). Code review: 0 críticos / 6 warnings (top: spinner infinito al expirar JWT, fetch DNI sin catch, sin límite de tamaño en writes staged). Previo — Phase 54 (Portal Backend + Token Security): módulo paciente-portal con token SHA-256 hasheado, lock anti-fuerza-bruta por DNI (3 intentos/15 min) + JWT portal-scoped, lectura clínica-segura y escrituras confinadas (contacto + salud staged) con ValidationPipe por-ruta y respuestas scoped vía select (PORTAL-01/04/06). Verificación 5/5; 3 ítems de UAT humana pendientes (server vivo). **Sigue abierto el blocker crítico CR-01 (stored-XSS: validación server-side de indicacionesUrl en catalogo-hc) — NO resuelto por Phase 54, ver .planning/todos/pending/**. Phase 53 previa: Storage + Upload + Consent Config (INFRA-01..03, CONS-01/02).*
+*

@@ -5,6 +5,8 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
+import * as crypto from 'crypto';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreatePacienteDto } from './dto/create-paciente.dto';
 import { UpdatePacienteDto } from './dto/update-paciente.dto';
@@ -28,10 +30,23 @@ import { BadRequestException } from '@nestjs/common';
 import { UpdatePacienteSectionDto } from './dto/update-paciente-section.dto';
 import { CreateContactoDto } from './dto/create-contacto.dto';
 import { UpdateListaEsperaDto } from './dto/update-lista-espera.dto';
+import { esPortalUrlValida, normalizarPortalUrl } from './portal-url.helper';
+import { EncryptionService } from '../whatsapp/crypto/encryption.service';
+
+/**
+ * Conservative email shape check (WR-01). No global ValidationPipe is active, so
+ * the `@IsEmail()` decorator on the DTO is inert — we MUST re-check at runtime
+ * before persisting an address or using it as an SMTP `to:`.
+ */
+const EMAIL_SHAPE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 @Injectable()
 export class PacientesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private readonly configService: ConfigService,
+    private readonly encryption: EncryptionService,
+  ) {}
 
   // Crear
   async create(dto: CreatePacienteDto) {
@@ -999,5 +1014,172 @@ export class PacientesService {
           ]
         : []),
     ]);
+  }
+
+  // ── Portal del Paciente ─────────────────────────────────────────────────────
+
+  /**
+   * Validates that the client-supplied portal URL is same-origin and has a
+   * valid UUID-path shape before any email is sent (T-52-01).
+   * Throws BadRequestException if invalid so the controller returns HTTP 400.
+   */
+  validarPortalUrl(url: string): string {
+    const frontendUrl = this.configService.get<string>(
+      'FRONTEND_URL',
+      'http://localhost:3000',
+    );
+    const normalizada = normalizarPortalUrl(url, frontendUrl);
+    if (!normalizada) {
+      throw new BadRequestException('URL de portal inválida');
+    }
+    // Return the canonical origin+pathname so callers reflect only
+    // validator-approved bytes into the email body (CR-01 defense-in-depth).
+    return normalizada;
+  }
+
+  /**
+   * Genera un token de portal para el paciente de forma idempotente (amplía D-12).
+   *
+   * - Caso A (token + cifrado): descifra portalTokenCifrado para recuperar el rawUuid y devuelve
+   *   la misma url estable { url, alreadyGenerated: true }. NO escribe BD.
+   * - Caso B (token sin cifrado — legacy): genera rawUuid nuevo, rota portalToken (nuevo hash SHA-256)
+   *   y persiste portalTokenCifrado = encrypt(rawUuid). Devuelve { url, alreadyGenerated: false }.
+   * - Caso C (sin token): genera rawUuid, hash y cifrado; persiste los tres campos.
+   *   Devuelve { url, alreadyGenerated: false }.
+   *
+   * Invariantes D-12: el raw UUID nunca se persiste en claro; el lookup en BD sigue siendo
+   * portalToken (SHA-256 64-char hex); portalTokenCifrado es AES-256-GCM at-rest.
+   */
+  async generarPortalLink(
+    pacienteId: string,
+  ): Promise<{ url: string | null; alreadyGenerated: boolean }> {
+    const paciente = await this.prisma.paciente.findUnique({
+      where: { id: pacienteId },
+      select: { portalToken: true, portalTokenCifrado: true, email: true },
+    });
+    if (!paciente) throw new NotFoundException('Paciente no encontrado');
+
+    const frontendUrl = this.configService.get<string>(
+      'FRONTEND_URL',
+      'http://localhost:3000',
+    );
+
+    // Caso A — ya generado con token + cifrado: recuperar url sin rotar
+    if (paciente.portalToken && paciente.portalTokenCifrado) {
+      const rawUuid = this.encryption.decrypt(paciente.portalTokenCifrado);
+      return {
+        url: `${frontendUrl}/portal/${rawUuid}`,
+        alreadyGenerated: true,
+      };
+    }
+
+    // Caso B — legacy (hash presente pero sin blob cifrado): rotar para backfillear
+    if (paciente.portalToken && !paciente.portalTokenCifrado) {
+      const rawUuid = crypto.randomUUID();
+      const hash = crypto.createHash('sha256').update(rawUuid).digest('hex');
+      const cifrado = this.encryption.encrypt(rawUuid);
+
+      await this.prisma.paciente.update({
+        where: { id: pacienteId },
+        data: {
+          portalToken: hash,
+          portalTokenCifrado: cifrado,
+          portalTokenGeneradoAt: new Date(),
+        },
+      });
+
+      // Log neutro — NO loguear rawUuid ni el blob cifrado
+      console.info(
+        `[portal] portal token legacy rotado para backfill en paciente ${pacienteId}`,
+      );
+      return { url: `${frontendUrl}/portal/${rawUuid}`, alreadyGenerated: false };
+    }
+
+    // Caso C — primera generación
+    const rawUuid = crypto.randomUUID();
+    const hash = crypto
+      .createHash('sha256')
+      .update(rawUuid)
+      .digest('hex'); // 64-char hex; raw UUID is NEVER persisted
+    const cifrado = this.encryption.encrypt(rawUuid);
+
+    await this.prisma.paciente.update({
+      where: { id: pacienteId },
+      data: {
+        portalToken: hash,
+        portalTokenCifrado: cifrado,
+        portalTokenGeneradoAt: new Date(),
+      },
+    });
+
+    return { url: `${frontendUrl}/portal/${rawUuid}`, alreadyGenerated: false };
+  }
+
+  /**
+   * Recupera la url del portal del paciente SIN generar ni rotar el token (sólo lectura).
+   *
+   * - token + cifrado: descifra y devuelve { url, alreadyGenerated: true }.
+   *   Si decrypt falla (tamper/clave distinta) → { url: null, alreadyGenerated: true, legacy: true }.
+   * - token sin cifrado (legacy): { url: null, alreadyGenerated: true, legacy: true }.
+   * - sin token: { url: null, alreadyGenerated: false }.
+   *
+   * NO escribe BD en ningún caso. Para backfillear un token legacy usar generarPortalLink.
+   */
+  async obtenerPortalLink(pacienteId: string): Promise<{
+    url: string | null;
+    alreadyGenerated: boolean;
+    legacy?: boolean;
+  }> {
+    const paciente = await this.prisma.paciente.findUnique({
+      where: { id: pacienteId },
+      select: { portalToken: true, portalTokenCifrado: true },
+    });
+    if (!paciente) throw new NotFoundException('Paciente no encontrado');
+
+    if (!paciente.portalToken) {
+      return { url: null, alreadyGenerated: false };
+    }
+
+    if (!paciente.portalTokenCifrado) {
+      // Legacy: token presente pero sin columna cifrada — no podemos recuperar la url
+      return { url: null, alreadyGenerated: true, legacy: true };
+    }
+
+    // Intentar descifrar; capturar tamper/clave distinta sin propagar 500 ni loguear el blob
+    try {
+      const frontendUrl = this.configService.get<string>(
+        'FRONTEND_URL',
+        'http://localhost:3000',
+      );
+      const rawUuid = this.encryption.decrypt(paciente.portalTokenCifrado);
+      return { url: `${frontendUrl}/portal/${rawUuid}`, alreadyGenerated: true };
+    } catch {
+      // authTag GCM inválido o blob corrupto → tratar como legacy
+      return { url: null, alreadyGenerated: true, legacy: true };
+    }
+  }
+
+  /**
+   * Establece el email del paciente sólo si actualmente no tiene uno registrado.
+   * Usado en el flujo de share-link para pacientes sin email en ficha.
+   */
+  async setEmailSiFalta(pacienteId: string, email: string): Promise<void> {
+    // WR-01: reject malformed addresses at runtime before persisting.
+    if (!EMAIL_SHAPE.test(email)) {
+      throw new BadRequestException('Email inválido');
+    }
+
+    const paciente = await this.prisma.paciente.findUnique({
+      where: { id: pacienteId },
+      select: { email: true },
+    });
+    if (!paciente) throw new NotFoundException('Paciente no encontrado');
+
+    if (!paciente.email) {
+      await this.prisma.paciente.update({
+        where: { id: pacienteId },
+        data: { email },
+      });
+    }
   }
 }

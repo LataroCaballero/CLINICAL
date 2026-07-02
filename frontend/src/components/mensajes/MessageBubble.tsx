@@ -5,7 +5,7 @@ import { PriorityBadge } from './PriorityBadge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Bot } from 'lucide-react';
+import { Bot, UserRound } from 'lucide-react';
 
 interface MessageBubbleProps {
   mensaje: string;
@@ -19,6 +19,7 @@ interface MessageBubbleProps {
   createdAt: string;
   esPropio: boolean;
   esSistema: boolean;
+  origenPaciente: boolean;
   leido: boolean;
 }
 
@@ -29,6 +30,7 @@ export function MessageBubble({
   createdAt,
   esPropio,
   esSistema,
+  origenPaciente,
   leido,
 }: MessageBubbleProps) {
   const fecha = new Date(createdAt);
@@ -55,6 +57,35 @@ export function MessageBubble({
         <span className="text-[10px] text-muted-foreground">
           Sistema · {fechaFormateada} {horaFormateada}
         </span>
+      </div>
+    );
+  }
+
+  // Mensaje del paciente (desde el portal): izquierda, teal, sin avatar de iniciales
+  if (origenPaciente && !esSistema) {
+    return (
+      <div className="flex gap-2 max-w-[85%] mr-auto">
+        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-teal-100 flex items-center justify-center">
+          <UserRound className="h-4 w-4 text-teal-600" />
+        </div>
+        <div className="flex flex-col items-start">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-xs font-semibold text-teal-700">Paciente</span>
+            <PriorityBadge prioridad={prioridad} size="sm" showLabel={false} />
+          </div>
+          <div
+            className={cn(
+              'rounded-2xl rounded-tl-sm px-3 py-2 text-base',
+              'bg-teal-50 border border-teal-200 text-teal-900',
+              prioridad === 'ALTA' && 'border-l-2 border-red-500'
+            )}
+          >
+            <p className="whitespace-pre-wrap break-words">{mensaje}</p>
+          </div>
+          <span className="text-xs text-muted-foreground mt-1">
+            {fechaFormateada} {horaFormateada}
+          </span>
+        </div>
       </div>
     );
   }

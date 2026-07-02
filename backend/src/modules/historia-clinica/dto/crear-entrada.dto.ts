@@ -5,6 +5,7 @@ import {
   IsBoolean,
   IsString,
   IsEnum,
+  IsObject,
 } from 'class-validator';
 
 export class DiagnosticoDto {
@@ -37,6 +38,12 @@ export class CodigoPracticaEntradaDto {
 export class AutorizacionEntradaDto {
   obraSocialId: string;
   codigos: CodigoPracticaEntradaDto[];
+}
+
+export class EstudiosComplementariosDto {
+  laboratorio: boolean;
+  ecg: boolean;
+  imagenes: string[]; // subset of: Ecografía, Tomografía, Mamografía, Otro
 }
 
 export class CreateEntradaDto {
@@ -95,4 +102,28 @@ export class CreateEntradaDto {
     | 'CONTROL'
     | 'SEGUIMIENTO'
     | 'PREOPERATORIO';
+
+  // Para pre_quirurgico (PREOP-04/05/06)
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  antecedentes?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  alergias?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  medicacion?: string[];
+
+  @IsOptional()
+  @IsObject()
+  estudiosComplementarios?: EstudiosComplementariosDto; // {laboratorio, ecg, imagenes[]} (D-10)
+
+  @IsOptional()
+  @IsBoolean()
+  consentimientoInformado?: boolean; // writes timestamp into contenido JSONB (D-11)
 }

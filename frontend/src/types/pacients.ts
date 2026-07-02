@@ -18,6 +18,7 @@ export interface PacienteListItem {
   | "PRIMERA"
   | "PRACTICA_CONSULTORIO";
   consentimientoFirmado: boolean;
+  consentimientoFirmadoAt?: string | null;
   indicacionesEnviadas?: boolean;
   estudiosPendientes: number;
   presupuestoEstado?: string | null;
@@ -45,6 +46,7 @@ export interface PacienteDetalle {
   plan?: string | null;
 
   consentimientoFirmado: boolean;
+  consentimientoFirmadoAt?: string | null;
   indicacionesEnviadas?: boolean;
   fechaIndicaciones?: string | null;
 
@@ -56,4 +58,9 @@ export interface PacienteDetalle {
   | "PRIMERA"
   | "PRACTICA_CONSULTORIO";
   flujo?: 'CIRUGIA' | 'TRATAMIENTO' | 'PENDIENTE' | null;
+
+  // Profile health arrays — used by PreoperatorioForm for chip pre-load (D-09)
+  condiciones?: string[];
+  alergias?: string[];
+  medicacion?: string[];
 }

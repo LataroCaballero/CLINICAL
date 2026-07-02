@@ -35,18 +35,18 @@ Requisitos del milestone v1.12. Cada uno mapea a una fase del roadmap.
 
 - [x] **CONS-01**: El médico puede subir un PDF de consentimiento desde Configuración (upload a disco local, servido vía `BACKEND_URL`)
 - [x] **CONS-02**: El médico puede cargar links de indicaciones por procedimiento desde Configuración
-- [ ] **CONS-03**: En el portal, el paciente puede ver y descargar el PDF de consentimiento subido por el médico
-- [ ] **CONS-04**: El paciente firma el consentimiento dibujando su firma (signature pad), con fallback si el dispositivo no lo soporta
-- [ ] **CONS-05**: La firma dibujada se estampa en el PDF del consentimiento, generando un PDF firmado que se archiva como artefacto legal (separado del template original)
-- [ ] **CONS-06**: El consentimiento firmado registra metadata forense de auditoría: fecha/hora, IP, userAgent, versión del consentimiento y hash del PDF
-- [ ] **CONS-07**: El paciente marca un check de "informado de indicaciones" (provistas vía link a la web del médico), registrado para auditoría
-- [ ] **CONS-08**: El estado de consentimiento firmado del paciente se refleja en el sistema (flag + fecha) visible para el profesional
+- [x] **CONS-03**: En el portal, el paciente puede ver y descargar el PDF de consentimiento subido por el médico
+- [x] **CONS-04**: El paciente firma el consentimiento dibujando su firma (signature pad), con fallback si el dispositivo no lo soporta
+- [x] **CONS-05**: La firma dibujada se estampa en el PDF del consentimiento, generando un PDF firmado que se archiva como artefacto legal (separado del template original)
+- [x] **CONS-06**: El consentimiento firmado registra metadata forense de auditoría: fecha/hora, IP, userAgent, versión del consentimiento y hash del PDF
+- [x] **CONS-07**: El paciente marca un check de "informado de indicaciones" (provistas vía link a la web del médico), registrado para auditoría
+- [x] **CONS-08**: El estado de consentimiento firmado del paciente se refleja en el sistema (flag + fecha) visible para el profesional
 
 ### Limpieza de Chat y Caja de Consultas (CHAT)
 
 - [x] **CHAT-01**: El scheduler de seguimiento CRM deja de generar mensajes duplicados diarios para la misma tarea (marcado de notificada / dedupe)
 - [x] **CHAT-02**: Los mensajes automáticos de "Seguimiento CRM" existentes se limpian del chat en el mismo release que el fix, sin perder datos legítimos ni romper read-receipts
-- [ ] **CHAT-03**: El chat distingue origen de mensaje (paciente / staff / sistema) para que las consultas reales del paciente no se pierdan en el ruido
+- [x] **CHAT-03**: El chat distingue origen de mensaje (paciente / staff / sistema) para que las consultas reales del paciente no se pierdan en el ruido
 - [x] **CHAT-04**: Desde el portal, el paciente puede escribir consultas que llegan al chat del médico (`MensajeInterno` con origen paciente)
 
 ### Infraestructura (INFRA)
@@ -112,13 +112,13 @@ Qué fases cubren qué requisitos.
 | PORTAL-03 | Phase 55 | Complete |
 | PORTAL-05 | Phase 55 | Complete |
 | CHAT-04 | Phase 55 | Complete |
-| CONS-03 | Phase 56 | Pending |
-| CONS-04 | Phase 56 | Pending |
-| CONS-05 | Phase 56 | Pending |
-| CONS-06 | Phase 56 | Pending |
-| CONS-07 | Phase 56 | Pending |
-| CONS-08 | Phase 56 | Pending |
-| CHAT-03 | Phase 56 | Pending |
+| CONS-03 | Phase 56 | Complete |
+| CONS-04 | Phase 56 | Complete |
+| CONS-05 | Phase 56 | Complete |
+| CONS-06 | Phase 56 | Complete |
+| CONS-07 | Phase 56 | Complete |
+| CONS-08 | Phase 56 | Complete |
+| CHAT-03 | Phase 56 | Complete |
 
 **Coverage:**
 - v1 requirements: 33 total

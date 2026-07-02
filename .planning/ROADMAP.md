@@ -175,7 +175,7 @@ Full details: `.planning/milestones/v1.11-ROADMAP.md`
 - [x] **Phase 53: Storage + Upload + Consent Config** - StorageService (disk local, cloud-ready), upload seguro de PDF de consentimiento, links de indicaciones y rate limiting (completed 2026-06-29)
 - [x] **Phase 54: Portal Backend + Token Security** - Módulo paciente-portal público, token SHA-256 hasheado, endpoints protegidos con DTOs estrictos (completed 2026-06-30)
 - [x] **Phase 55: Portal Frontend** - Wizard mobile-first 4 pasos: datos personales, salud staged, consentimiento placeholder y consultas al médico (completed 2026-07-01)
-- [ ] **Phase 56: Signed Consent + Chat Badge** - Firma dibujada estampada en PDF con metadata forense legal + badge de origen de mensajes en chat
+- [x] **Phase 56: Signed Consent + Chat Badge** - Firma dibujada estampada en PDF con metadata forense legal + badge de origen de mensajes en chat (completed 2026-07-02)
 
 ## Phase Details
 
@@ -295,7 +295,7 @@ Plans:
 - [x] 56-03-PLAN.md — pdf-lib stamping service + forensic hash + version-roll
 - [x] 56-04-PLAN.md — Portal read path: StorageService wiring + consent resolver (D-09/D-10) + GET endpoint
 - [x] 56-05-PLAN.md — Portal write path: firmar + immutable signed PDF + forensic record
-- [ ] 56-06-PLAN.md — Portal Consentimiento frontend: canvas, gate, states, XSS-safe links
+- [x] 56-06-PLAN.md — Portal Consentimiento frontend: canvas, gate, states, XSS-safe links
 - [x] 56-07-PLAN.md — Staff badges: teal Paciente chat bubble + emerald consent date badge
 - [x] 56-08-PLAN.md — Cirugia↔catalog selector: FK populated at surgery create (unblocks D-09 resolver)
 **UI hint**: yes
@@ -361,7 +361,7 @@ Plans:
 | 53. Storage + Upload + Consent Config | v1.12 | 3/3 | Complete    | 2026-06-30 |
 | 54. Portal Backend + Token Security | v1.12 | 3/3 | Complete    | 2026-06-30 |
 | 55. Portal Frontend | v1.12 | 4/4 | Complete    | 2026-07-01 |
-| 56. Signed Consent + Chat Badge | v1.12 | 7/8 | In Progress|  |
+| 56. Signed Consent + Chat Badge | v1.12 | 8/8 | Complete   | 2026-07-02 |
 
 ---
 *Roadmap initialized: 2026-02-23 | v1.0 shipped: 2026-03-03 | v1.1 shipped: 2026-03-16 | v1.2 shipped: 2026-03-31 | v1.3 shipped: 2026-04-09 | v1.4 shipped: 2026-04-20 | v1.5 shipped: 2026-05-13 | v1.6 shipped: 2026-05-23 | v1.7 shipped: 2026-05-28 | v1.8 shipped: 2026-06-09 | v1.9 shipped: 2026-06-13 | v1.10 shipped: 2026-06-22 | v1.11 shipped: 2026-06-24 | v1.12 started: 2026-06-25*

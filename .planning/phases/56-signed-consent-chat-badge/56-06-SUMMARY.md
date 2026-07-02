@@ -53,7 +53,7 @@ metrics:
 | 1 | Create usePortalConsentimiento hook (query + mutation) | 0fed833 | frontend/src/hooks/usePortalConsentimiento.ts |
 | 2 | Build PortalConsentimiento component (states + canvas + gate) | cdd2f6f | frontend/src/components/portal/PortalConsentimiento.tsx |
 | 3 | Replace portal Consentimiento placeholder with PortalConsentimiento | 80eb59c | frontend/src/app/portal/[token]/page.tsx |
-| 4 | Human-verify portal signing flow end to end | PENDING | — |
+| 4 | Human-verify portal signing flow end to end | APPROVED (2026-07-01) | — |
 
 ## What Was Built
 
@@ -99,9 +99,13 @@ metrics:
 - Replaced `<div className="py-2 text-base text-gray-500">Próximamente…</div>` with `<PortalConsentimiento />`
 - AccordionItem wrapper, `FileSignature` teal trigger icon, `font-semibold text-base` trigger text unchanged
 
-### Task 4: Human Verification (PENDING)
+### Task 4: Human Verification (APPROVED — 2026-07-01)
 
-This task requires a human to verify the end-to-end signing flow on the running app. It cannot be self-approved. The orchestrator will present this checkpoint after merge.
+Human verified the end-to-end signing flow on the running app and approved all six steps. During verification, two defects were found and fixed (see below), then re-verified:
+- **Route-shadowing 404** (`97c434c`): `@Get(':token')` preceded `@Get('consentimiento')`, mis-routing consent reads into `preVerify`. Fixed by reordering the static route above the param route.
+- **Read/write union drift** (`def102c`, `dc12f18`): read path was extended to resolve consents from the patient's HC diagnosis/treatment zonas (union with surgery zonas), but the write path still validated only via the surgery chain — so HC-derived consents failed to sign. Fixed with a shared `resolverZonaIdsFirmables` helper used by both read and write.
+
+The generated signed PDF was inspected: forensic box (fecha UTC / IP / userAgent / versión) renders on the last page, signature stamped, and the SHA-256 hash is NOT printed in the PDF body (D-02). Deploy note: the VPS still runs a pre-Phase-56 build; deploy required before real patients use the flow.
 
 **Verification steps the human must perform:**
 1. Open a patient portal link for a patient with PROGRAMADA cirugia → open "Consentimiento" step → confirm PDF download affordance appears

@@ -202,7 +202,9 @@ Full details: `.planning/milestones/v1.12-ROADMAP.md`
   1. La API devuelve pacientes con etapaCRM "CIRUGIA_REALIZADA" (o "PROCEDIMIENTO_REALIZADO" renombrado) y el endpoint de actualización la acepta como valor válido
   2. `getKanban` incluye por cada paciente: si tiene turno de cirugía (fecha + estado), si tiene entrada de HC relevante, si tiene presupuesto enviado/aceptado, si tiene consentimiento firmado e indicaciones preop
   3. Un paciente puede moverse a una etapa anterior del embudo sin ser rechazado por el guard forward-only (el guard sigue protegiendo solo las auto-transiciones del sistema, no los movimientos manuales o de nuevo turno)
-**Plans**: TBD
+**Plans**: 2 plans
+  - [ ] 57-01-PLAN.md — getKanban enriquecido: helper puro computePasosCrm (5 pasos + todosCompletos) + columna PROCEDIMIENTO_REALIZADO
+  - [ ] 57-02-PLAN.md — Reglas de transición: scheduler diario de auto-move + bypass del guard en creación de turno
 
 ### Phase 58: Kanban Board — Columnas, Tarjetas y Etiquetas
 **Goal**: El board del kanban refleja el nuevo orden de columnas, muestra la columna "Cirugía Realizada" con los indicadores correctos, y las tarjetas en "Confirmado" llevan la etiqueta de contacto apropiada
@@ -299,7 +301,7 @@ Full details: `.planning/milestones/v1.12-ROADMAP.md`
 | 54. Portal Backend + Token Security | v1.12 | 3/3 | Complete | 2026-06-30 |
 | 55. Portal Frontend | v1.12 | 4/4 | Complete | 2026-07-01 |
 | 56. Signed Consent + Chat Badge | v1.12 | 8/8 | Complete | 2026-07-02 |
-| 57. Backend Foundation — Etapa y Payload Enriquecido | v1.13 | 0/TBD | Not started | - |
+| 57. Backend Foundation — Etapa y Payload Enriquecido | v1.13 | 0/2 | Not started | - |
 | 58. Kanban Board — Columnas, Tarjetas y Etiquetas | v1.13 | 0/TBD | Not started | - |
 | 59. Stepper Accionable | v1.13 | 0/TBD | Not started | - |
 | 60. Estadísticas sobre Registros Reales | v1.13 | 0/TBD | Not started | - |

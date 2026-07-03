@@ -2,9 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.13
 milestone_name: Embudo CRM Accionable
-status: ready_to_plan
-last_updated: "2026-07-03T00:00:00.000Z"
-last_activity: 2026-07-03
+status: planning
+stopped_at: Phase 57 context gathered
+last_updated: "2026-07-03T20:46:15.931Z"
+last_activity: 2026-07-03 — Roadmap v1.13 created (4 phases, 15 requirements)
 progress:
   total_phases: 4
   completed_phases: 0
@@ -34,6 +35,7 @@ Progress: [░░░░░░░░░░] 0%
 ## Performance Metrics
 
 **Velocity:**
+
 - Total plans completed this milestone: 0
 - Average duration: ~4 min/plan (carryover from v1.12)
 - Total execution time: 0 min
@@ -78,6 +80,6 @@ Items de v1.12 diferidos al cierre (audit PASSED; son stubs de verificación hum
 
 ## Session Continuity
 
-Last session: 2026-07-03
-Stopped at: Roadmap v1.13 created — 4 phases (57–60), 15 requirements mapped
-Resume file: None — next step is `/gsd:plan-phase 57`
+Last session: 2026-07-03T20:46:15.928Z
+Stopped at: Phase 57 context gathered
+Resume file: .planning/phases/57-backend-foundation-etapa-y-payload-enriquecido/57-CONTEXT.md

@@ -118,9 +118,16 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 
 ### Active
 
-**Milestone v1.12 — SHIPPED 2026-07-02** (33/33 requisitos, todos en Validated arriba). Próximo milestone por definir con `/gsd:new-milestone`.
+**Milestone v1.13 — Embudo CRM Accionable (ACTIVO).** Ver `## Current Milestone` abajo y `.planning/REQUIREMENTS.md` para el detalle scopeado.
 
-**Candidatos para próximo milestone / diferidos:**
+- [ ] Reorden del embudo: `Sin clasificar` al final; nueva etapa `Cirugía Realizada` post-Confirmado
+- [ ] Etiquetas de contacto en Confirmado: "Espera fecha" / "Cirugía programada"
+- [ ] Ocultar operados completos del board (tagueados para stats); operados con pendientes visibles en naranja
+- [ ] Stepper accionable: verde (completo, sin quick-action) / naranja (pendiente → abre el modal que resuelve)
+- [ ] Quick-actions del stepper: wizard HC, presupuesto prellenado, agenda para turno de cirugía
+- [ ] Estadísticas de cirugías/tratamientos sobre registros reales (Cirugia/HC)
+
+**Candidatos para próximos milestones / diferidos:**
 - [ ] Automatizaciones de seguimiento: triggers basados en tiempo/etapa (ej. "30 días sin respuesta → mensaje automático")
 - [ ] Módulos financieros optimizados e interconectados con CRM
 - [ ] Módulo de estadísticas ejecutivas (reportes exportables, comparativas)
@@ -136,17 +143,19 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 - Eliminar el tipo "Cirugía" interno — la agenda quirúrgica lo requiere (v1.8)
 - tipoEntrada retroactivo en entradas HC legacy — backfill innecesario, se tratan como CONSULTA_CIRUGIA por defecto (v1.8)
 
-## Current Milestone: v1.12 Prequirúrgico Estructurado + Portal del Paciente
+## Current Milestone: v1.13 Embudo CRM Accionable
 
-**Goal:** Estructurar la HC prequirúrgica paso a paso y darle al paciente un portal de autogestión por token para que complete sus datos, firme el consentimiento y consulte al médico — reduciendo carga administrativa y reforzando el respaldo legal.
+**Goal:** Volver el embudo CRM accionable y ordenado en su tramo post-consulta — que el stepper del sheet lateral resuelva cada pendiente de un click, que Confirmado/post-cirugía queden bien clasificados, y que las estadísticas se apoyen en cirugías/tratamientos reales.
 
 **Target features:**
-- Plantilla HC Prequirúrgico estructurada (reemplaza el texto libre): check opcional de diagnóstico/tratamiento (reusa selector de catálogo), antecedentes/alergias/medicación como chips con learning (sincronizados al perfil del paciente), checklist de estudios complementarios, check de consentimiento informado, y compartir el link de autogestión (WhatsApp + QR + email).
-- Portal de autogestión del paciente (token público persistente, sin login, mobile-first): información básica editable, auto-reporte de salud staged, consentimiento (ver/descargar PDF + firma dibujada estampada en PDF firmado con auditoría forense) + check de indicaciones, y caja de consultas hacia el chat del médico.
-- Limpieza del chat: fix del spam de "Seguimiento CRM" (dedupe + limpieza de existentes) y distinción de origen de mensajes.
-- Infraestructura de soporte: StorageService en disco local (cloud-ready), rate limiting (ThrottlerModule), validación de upload.
+- Reorden del embudo: `Sin clasificar` pasa al final (solo leads sin etapa real); nueva etapa `Cirugía Realizada` después de Confirmado.
+- Etiquetas de contacto en Confirmado: "Espera fecha" (sin turno de cirugía) / "Cirugía programada" (con turno de cirugía).
+- `Cirugía Realizada`: operados con pasos pendientes → visibles (indicador naranja); operados completos (entrada de HC + turno de cirugía con fecha + presupuesto enviado + consentimiento/indicaciones preop) → ocultos del board pero tagueados para estadísticas.
+- Stepper accionable: círculo verde = paso completo (sin quick-action) / círculo naranja = pendiente → click abre el modal que lo resuelve (wizard de HC con plantillas, modal de presupuesto prellenado con tratamientos-cirugías de la ficha, o agenda para turno de cirugía).
+- Paso "Confirmado" del stepper: sin turno de cirugía → pendiente "fecha" (click → agenda a programar); con turno de cirugía → verde + etiqueta "Cirugía programada".
+- Estadísticas de cirugías/tratamientos basadas en registros efectivamente realizados (Cirugia/HC), robustas a que la etapa CRM cambie.
 
-**Key context:** Reusa patrones existentes (catálogo HC v1.9 con learning, portal público por token del presupuesto, SMTP, WhatsApp+QR, PDFKit). Nuevo: upload de archivos a disco (multer + `@types/multer`), estampado de firma en PDF subido (`@cantoo/pdf-lib`), signature pad (`signature_pad` ya instalado). Token de portal **hasheado** (SHA-256). Datos del paciente **staged** (no sobrescriben campos clínicos curados). Activar `@nestjs/throttler` (instalado pero sin cablear). Revisión legal del flujo de consentimiento antes de go-live (Ley 25506 / Ley 26529). Cloud storage diferido. Ver `.planning/research/SUMMARY.md` para detalles.
+**Key context:** Trabajo mixto backend + frontend sobre módulos existentes. `getKanban` (`pacientes.service.ts`) hoy no expone datos de cirugía (`esCirugia`/`Cirugia.fecha`/`estado`) ni estado de pasos (HC/presupuesto/consentimiento/indicaciones) — hay que ampliarlo para calcular etiquetas de contacto y verde/naranja del stepper. El stepper (`EtapaStepper` en `CardActionsSheet`) ya tiene quick-actions para HC (`HCCreatorDialog`) y presupuesto (drawer view); falta cablear la agenda (`NuevoTurnoModal`) y hacer los pasos verde/naranja. La etapa nueva puede reusar/renombrar el existente `PROCEDIMIENTO_REALIZADO` o agregar `CIRUGIA_REALIZADA` (decisión de implementación durante planning). El guard forward-only (`ETAPA_ORDEN` en `turnos.service.ts` y `presupuestos.service.ts`) debe permitir que un paciente vuelva atrás si pide un nuevo turno. Estadísticas leen de registros reales para robustez ante cambios de etapa. Sin nuevas dependencias.
 
 ## Shipped: v1.12 Prequirúrgico Estructurado + Portal del Paciente ✅
 
@@ -331,4 +340,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-07-02 after v1.12 milestone — Prequirúrgico Estructurado + Portal del Paciente shipped (6 fases 51–56, 30 planes, 33/33 requisitos, audit PASSED). Plantilla HC prequirúrgica estructurada + portal de autogestión del paciente por token (datos, salud staged, consultas, firma de consentimiento con auditoría forense) + StorageService/rate-limiting + fix del spam CRM. CR-01 (stored-XSS de indicacionesUrl) resuelto en Phase 56 (56-02). Pendiente pre-go-live: revisión legal del consentimiento; 17 ítems de verificación/UAT humana diferidos (ver STATE.md → Deferred Items). Próximo: `/gsd:new-milestone`.*
+*Last updated: 2026-07-03 al iniciar milestone v1.13 — Embudo CRM Accionable. Refina el tramo post-consulta del embudo CRM: reorden de columnas (`Sin clasificar` al final, nueva etapa `Cirugía Realizada`), etiquetas de contacto en Confirmado ("Espera fecha"/"Cirugía programada"), ocultar operados completos del board (tagueados para stats), stepper del sheet lateral accionable (verde/naranja con quick-actions que abren wizard HC / presupuesto prellenado / agenda), y estadísticas basadas en cirugías/tratamientos reales. Trabajo mixto backend (getKanban, etapa, guards) + frontend (stepper, columnas, tarjetas), sin nuevas dependencias. Requirements en `.planning/REQUIREMENTS.md`.*

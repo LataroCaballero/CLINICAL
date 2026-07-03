@@ -2,11 +2,11 @@
 gsd_state_version: 1.0
 milestone: v1.13
 milestone_name: Embudo CRM Accionable
-status: planning
-last_updated: "2026-07-03T16:44:53.694Z"
+status: ready_to_plan
+last_updated: "2026-07-03T00:00:00.000Z"
 last_activity: 2026-07-03
 progress:
-  total_phases: 0
+  total_phases: 4
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -17,25 +17,26 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-07-02)
+See: .planning/PROJECT.md (updated 2026-07-03)
 
 **Core value:** Que un cirujano plástico cierre más cirugías — el sistema hace visible qué pacientes seguir, cuándo y cómo, de la manera más automatizada posible
-**Current focus:** Planning next milestone (v1.12 shipped 2026-07-02)
+**Current focus:** Phase 57 — Backend Foundation (Etapa y Payload Enriquecido)
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 57 of 60 (Backend Foundation — Etapa y Payload Enriquecido)
 Plan: —
-Status: Defining requirements
-Last activity: 2026-07-03 — Milestone v1.13 started
+Status: Ready to plan
+Last activity: 2026-07-03 — Roadmap v1.13 created (4 phases, 15 requirements)
+
+Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
 **Velocity:**
-
-- Total plans completed this milestone: 3 (Phase 54: 54-01, 54-02, 54-03)
-- Average duration: ~4 min/plan
-- Total execution time: ~12 min (54-01 4min + 54-02 5min + 54-03 3min)
+- Total plans completed this milestone: 0
+- Average duration: ~4 min/plan (carryover from v1.12)
+- Total execution time: 0 min
 
 *Updated after each plan completion*
 
@@ -43,16 +44,16 @@ Last activity: 2026-07-03 — Milestone v1.13 started
 
 ### Decisions
 
-Full v1.12 decision log capturado en `.planning/PROJECT.md` (Key Decisions) y en `.planning/milestones/v1.12-ROADMAP.md`. Resueltas — no requieren acción.
+Full v1.12 decision log en `.planning/PROJECT.md` (Key Decisions) y `.planning/milestones/v1.12-ROADMAP.md`.
 
-### Carry-forward from v1.11
+Key pending decision for Phase 57: Reuse/rename `PROCEDIMIENTO_REALIZADO` enum value vs. add `CIRUGIA_REALIZADA` — impacts Prisma schema migration and all consumers of the enum (dashboard funnel, frontend constants, STEPPER_CHAIN).
 
-- `HCEntryContent.tsx` (`HCEntryChips` + `HCEntryFullContent`): render HC compartido, 2 shapes (v1.9 zonas[] + legacy plano) + texto libre. Disponible para consolidar HistorialClinicoPanel/TurnoHCModal (diferido).
-- Convención de chips HC: zona → `Badge secondary capitalize font-semibold`; diagnósticos → `Badge outline`; tratamientos → `Badge bg-blue-50 text-blue-700 border-blue-200`.
+### Carry-forward from v1.12
 
-### Carry-forward from v1.9
-
-- ZonaHC/DiagnosticoHC/TratamientoHC patrón: esSistema, activo, profesionalId FK, soft-delete, @@unique([nombre, profesionalId]), aprenderDesdeZonas best-effort post-tx. AlergiaCatalogoPro/MedicamentoCatalogoPro siguen este patrón exacto en Phase 51.
+- `getKanban` (`pacientes.service.ts:619`) hoy NO expone: `esCirugia`, `Cirugia.fecha/estado`, ni estado de pasos (HC/presupuesto/consentimiento/indicaciones). Phase 57 lo amplía.
+- Forward-only guard duplicado en `turnos.service.ts:30` y `presupuestos.service.ts:26` — EMBUDO-05 relaja para movimientos de nuevo turno (no para auto-transiciones del sistema).
+- `STEPPER_CHAIN` hardcoded en `EtapaStepper.tsx` incluye `PROCEDIMIENTO_REALIZADO` — actualizar si se renombra la etapa.
+- `HCCreatorDialog` (wizard HC), `GenerarPresupuestoModal` (presupuesto), `NuevoTurnoModal` (agenda) son los 3 targets de quick-actions del stepper (Phase 59).
 
 ### Known Tech Debt (carry-forward)
 
@@ -64,34 +65,19 @@ Full v1.12 decision log capturado en `.planning/PROJECT.md` (Key Decisions) y en
 
 ## Deferred Items
 
-Items acknowledged and deferred at milestone close on 2026-07-02 (audit PASSED; these are human-verify stubs and stale carryovers, not blockers):
+Items de v1.12 diferidos al cierre (audit PASSED; son stubs de verificación humana, no bloqueantes):
 
 | Category | Item | Status |
 |----------|------|--------|
 | uat_gap | 51-HUMAN-UAT | partial |
 | uat_gap | 52-HUMAN-UAT | partial |
 | uat_gap | 55-HUMAN-UAT | partial |
-| verification_gap | 52-VERIFICATION | human_needed |
-| verification_gap | 53-VERIFICATION | human_needed |
-| verification_gap | 54-VERIFICATION | human_needed |
-| verification_gap | 55-VERIFICATION | human_needed |
-| verification_gap | 10-VERIFICATION (v1.1 carryover) | gaps_found |
-| verification_gap | 27-VERIFICATION (v1.5 carryover) | human_needed |
-| verification_gap | 28-VERIFICATION (v1.5 carryover) | human_needed |
-| verification_gap | 29-VERIFICATION (v1.5 carryover) | human_needed |
-| verification_gap | 30-VERIFICATION (v1.5 carryover) | human_needed |
-| verification_gap | 49-VERIFICATION (v1.10 carryover) | human_needed |
+| verification_gap | 52/53/54/55-VERIFICATION | human_needed |
+| verification_gap | 10/27/28/29/30/49-VERIFICATION (carryovers) | human_needed |
 | quick_task | 1-eliminar-dropdown-tipo-de-consulta-de-hc | missing |
-| todo | cr-01-indicaciones-url-validation (fixed in 56-02) | resolved |
-
-Total: 17 items (2 already resolved in-code: CHAT/UAT partials pending live-server human confirmation).
 
 ## Session Continuity
 
-Last session: 2026-07-01T21:25:55.628Z
-Stopped at: Phase 56 UI-SPEC approved
-Resume file: .planning/phases/56-signed-consent-chat-badge/56-UI-SPEC.md
-
-## Operator Next Steps
-
-- Start the next milestone with /gsd-new-milestone
+Last session: 2026-07-03
+Stopped at: Roadmap v1.13 created — 4 phases (57–60), 15 requirements mapped
+Resume file: None — next step is `/gsd:plan-phase 57`

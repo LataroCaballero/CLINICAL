@@ -57,31 +57,31 @@ Excluido explícitamente para prevenir scope creep.
 
 ## Traceability
 
-Qué fases cubren qué requisitos. Se completa durante la creación del roadmap.
+Qué fases cubren qué requisitos.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| EMBUDO-01 | TBD | Pending |
-| EMBUDO-02 | TBD | Pending |
-| EMBUDO-03 | TBD | Pending |
-| EMBUDO-04 | TBD | Pending |
-| EMBUDO-05 | TBD | Pending |
-| CONTACTO-01 | TBD | Pending |
-| CONTACTO-02 | TBD | Pending |
-| STEPPER-01 | TBD | Pending |
-| STEPPER-02 | TBD | Pending |
-| STEPPER-03 | TBD | Pending |
-| STEPPER-04 | TBD | Pending |
-| STEPPER-05 | TBD | Pending |
-| STEPPER-06 | TBD | Pending |
-| STATS-01 | TBD | Pending |
-| STATS-02 | TBD | Pending |
+| EMBUDO-01 | Phase 58 | Pending |
+| EMBUDO-02 | Phase 57 | Pending |
+| EMBUDO-03 | Phase 58 | Pending |
+| EMBUDO-04 | Phase 58 | Pending |
+| EMBUDO-05 | Phase 57 | Pending |
+| CONTACTO-01 | Phase 58 | Pending |
+| CONTACTO-02 | Phase 58 | Pending |
+| STEPPER-01 | Phase 59 | Pending |
+| STEPPER-02 | Phase 59 | Pending |
+| STEPPER-03 | Phase 59 | Pending |
+| STEPPER-04 | Phase 59 | Pending |
+| STEPPER-05 | Phase 59 | Pending |
+| STEPPER-06 | Phase 59 | Pending |
+| STATS-01 | Phase 60 | Pending |
+| STATS-02 | Phase 60 | Pending |
 
 **Coverage:**
 - v1 requirements: 15 total
-- Mapped to phases: 0 (roadmap pending)
-- Unmapped: 15 ⚠️
+- Mapped to phases: 15 (roadmap complete)
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-07-03*
-*Last updated: 2026-07-03 after initial definition*
+*Last updated: 2026-07-03 — Roadmap created, traceability complete*

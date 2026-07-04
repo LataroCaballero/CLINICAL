@@ -303,7 +303,7 @@ Full details: `.planning/milestones/v1.12-ROADMAP.md`
 | 55. Portal Frontend | v1.12 | 4/4 | Complete | 2026-07-01 |
 | 56. Signed Consent + Chat Badge | v1.12 | 8/8 | Complete | 2026-07-02 |
 | 57. Backend Foundation — Etapa y Payload Enriquecido | v1.13 | 2/2 | Complete    | 2026-07-04 |
-| 58. Kanban Board — Columnas, Tarjetas y Etiquetas | v1.13 | 1/1 | Complete   | 2026-07-04 |
+| 58. Kanban Board — Columnas, Tarjetas y Etiquetas | v1.13 | 1/1 | Complete    | 2026-07-04 |
 | 59. Stepper Accionable | v1.13 | 0/TBD | Not started | - |
 | 60. Estadísticas sobre Registros Reales | v1.13 | 0/TBD | Not started | - |
 

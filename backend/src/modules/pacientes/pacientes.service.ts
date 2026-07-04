@@ -31,6 +31,7 @@ import { UpdatePacienteSectionDto } from './dto/update-paciente-section.dto';
 import { CreateContactoDto } from './dto/create-contacto.dto';
 import { UpdateListaEsperaDto } from './dto/update-lista-espera.dto';
 import { esPortalUrlValida, normalizarPortalUrl } from './portal-url.helper';
+import { computePasosCrm } from './crm-steps.helper';
 import { EncryptionService } from '../whatsapp/crypto/encryption.service';
 
 /**
@@ -655,11 +656,30 @@ export class PacientesService {
           where: { estado: 'PENDIENTE' },
           select: { id: true },
         },
+        // Payload enriquecido para pasos del stepper (D-04/D-05)
+        consentimientoFirmado: true,
+        indicacionesEnviadas: true,
+        cirugias: {
+          select: { fecha: true, estado: true },
+          orderBy: { fecha: 'desc' },
+        },
+        historiasClinicas: {
+          select: {
+            entradas: {
+              select: { status: true, tipoEntrada: true },
+            },
+          },
+        },
+        consentimientosFirmados: {
+          select: { firmadoAt: true, indicacionesLeidasAt: true },
+          take: 1,
+          orderBy: { firmadoAt: 'desc' },
+        },
       },
       orderBy: { updatedAt: 'desc' },
     });
 
-    // Agrupar por etapaCRM — PROCEDIMIENTO_REALIZADO excluido de columnas kanban (cae a SIN_CLASIFICAR)
+    // Agrupar por etapaCRM — PROCEDIMIENTO_REALIZADO incluido como columna propia (EMBUDO-02)
     const columnas: Record<string, typeof pacientes> = {
       SIN_CLASIFICAR: [],
       NUEVO_LEAD: [],
@@ -667,6 +687,7 @@ export class PacientesService {
       CONSULTADO: [],
       PRESUPUESTO_ENVIADO: [],
       CONFIRMADO: [],
+      PROCEDIMIENTO_REALIZADO: [], // EMBUDO-02: columna propia, ya no cae a SIN_CLASIFICAR
       PERDIDO: [],
     };
 
@@ -716,6 +737,15 @@ export class PacientesService {
           comentarioListaEspera: p.comentarioListaEspera,
           pendingAutorizaciones: p.autorizaciones.length,
           flujo: p.flujo ?? null,
+          // Computed step-state payload (D-04/D-05). Values: 'completo' | 'pendiente'.
+          ...computePasosCrm({
+            presupuestos: p.presupuestos,
+            cirugias: p.cirugias,
+            historiasClinicas: p.historiasClinicas,
+            consentimientosFirmados: p.consentimientosFirmados,
+            consentimientoFirmado: p.consentimientoFirmado,
+            indicacionesEnviadas: p.indicacionesEnviadas,
+          }),
         };
       }),
     }));

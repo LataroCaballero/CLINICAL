@@ -10,10 +10,10 @@ Requisitos scopeados para el milestone v1.13. Cada uno mapea a una fase del road
 ### Embudo — estructura y clasificación
 
 - [ ] **EMBUDO-01**: La columna "Sin clasificar" aparece al final del embudo (no al inicio) y contiene solo leads sin etapa CRM real (no pacientes operados)
-- [ ] **EMBUDO-02**: El embudo muestra una nueva etapa "Cirugía Realizada" ubicada después de "Confirmado"
+- [x] **EMBUDO-02**: El embudo muestra una nueva etapa "Cirugía Realizada" ubicada después de "Confirmado"
 - [ ] **EMBUDO-03**: Un paciente operado (fecha de cirugía pasada, o con turno de cirugía) que tiene al menos un paso pendiente aparece en "Cirugía Realizada" con indicador visual naranja
 - [ ] **EMBUDO-04**: Un paciente operado con todos los pasos completos (entrada de HC + turno de cirugía con fecha + presupuesto enviado + consentimiento/indicaciones preop) se oculta del board del embudo
-- [ ] **EMBUDO-05**: Un paciente que vuelve a solicitar un turno (u otra acción posterior) puede volver a una etapa anterior del embudo sin ser bloqueado por el guard forward-only
+- [x] **EMBUDO-05**: Un paciente que vuelve a solicitar un turno (u otra acción posterior) puede volver a una etapa anterior del embudo sin ser bloqueado por el guard forward-only
 
 ### Etiquetas de contacto en Confirmado
 
@@ -62,10 +62,10 @@ Qué fases cubren qué requisitos.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | EMBUDO-01 | Phase 58 | Pending |
-| EMBUDO-02 | Phase 57 | Pending |
+| EMBUDO-02 | Phase 57 | Complete |
 | EMBUDO-03 | Phase 58 | Pending |
 | EMBUDO-04 | Phase 58 | Pending |
-| EMBUDO-05 | Phase 57 | Pending |
+| EMBUDO-05 | Phase 57 | Complete |
 | CONTACTO-01 | Phase 58 | Pending |
 | CONTACTO-02 | Phase 58 | Pending |
 | STEPPER-01 | Phase 59 | Pending |

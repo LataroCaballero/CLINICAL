@@ -97,7 +97,7 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 - ✓ Archivar del embudo CRM: campo `crmArchivado`, endpoint `PATCH /pacientes/:id/crm-archivo` toggle, exclusión automática en getKanban/getListaAccion, botón "Archivar del embudo" con confirmación — v1.8
 - ✓ Catálogo de zonas/diagnósticos/tratamientos de HC en BD por profesional (ZonaHC/DiagnosticoHC/TratamientoHC, FK + esSistema + soft-delete), seed idempotente de 6 zonas desde el JSON anterior; reemplaza `zonas-diagnostico.json` — v1.9
 - ✓ Plantilla Primera Consulta con la zona como eje único: seleccionar zona despliega sus diagnósticos y tratamientos; multi-zona agrupada visualmente; HC persiste JSONB agrupado por zona (dual-shape); lookup de precio catálogo→fallback preservado — v1.9
-- ✓ Auto-aprendizaje vía "Otros": zonas/diagnósticos/tratamientos nuevos escritos se persisten en BD best-effort al crear la entrada y aparecen en la próxima consulta — v1.9
+- ✓ Board Kanban CRM: reorden de columnas (`SIN_CLASIFICAR` al final, `Cirugía Realizada` tras `Confirmado`), badge naranja "Pasos pendientes" en operados con pasos pendientes, filtro `todosCompletos` que oculta operados completos, y etiqueta de contacto ("Espera fecha"/"Cirugía programada") en tarjetas de Confirmado — Fase 58, v1.13 (EMBUDO-01/03/04, CONTACTO-01/02; frontend puro; pendiente UAT visual)
 - ✓ Tratamiento aprendido se crea también en el catálogo del profesional con precio 0 y FK opcional, listo para completar en Configuración — v1.9
 - ✓ Admin UI "Catálogo HC" en Configuración: ver, renombrar (PATCH) y eliminar (soft-delete con cascada lógica, guard esSistema) zonas/diagnósticos/tratamientos; HC históricas intactas — v1.9
 - ✓ Columna "Último tratamiento" resuelta por turno: extractor puro `resumirTratamientosDeContenido` normaliza los 3 shapes de HC (v1.9 zona-agrupado, legacy plano, texto libre/consultorio) en `obtenerTurnosPorRango`, eliminando el query N+1 — v1.10 (TRAT-01/02)
@@ -120,9 +120,9 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 
 **Milestone v1.13 — Embudo CRM Accionable (ACTIVO).** Ver `## Current Milestone` abajo y `.planning/REQUIREMENTS.md` para el detalle scopeado.
 
-- [ ] Reorden del embudo: `Sin clasificar` al final; nueva etapa `Cirugía Realizada` post-Confirmado
-- [ ] Etiquetas de contacto en Confirmado: "Espera fecha" / "Cirugía programada"
-- [ ] Ocultar operados completos del board (tagueados para stats); operados con pendientes visibles en naranja
+- [x] Reorden del embudo: `Sin clasificar` al final; nueva etapa `Cirugía Realizada` post-Confirmado — Fase 58 (board)
+- [x] Etiquetas de contacto en Confirmado: "Espera fecha" / "Cirugía programada" — Fase 58 (board)
+- [x] Ocultar operados completos del board (tagueados para stats); operados con pendientes visibles en naranja — Fase 58 (board)
 - [ ] Stepper accionable: verde (completo, sin quick-action) / naranja (pendiente → abre el modal que resuelve)
 - [ ] Quick-actions del stepper: wizard HC, presupuesto prellenado, agenda para turno de cirugía
 - [ ] Estadísticas de cirugías/tratamientos sobre registros reales (Cirugia/HC)
@@ -340,4 +340,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-07-03 al iniciar milestone v1.13 — Embudo CRM Accionable. Refina el tramo post-consulta del embudo CRM: reorden de columnas (`Sin clasificar` al final, nueva etapa `Cirugía Realizada`), etiquetas de contacto en Confirmado ("Espera fecha"/"Cirugía programada"), ocultar operados completos del board (tagueados para stats), stepper del sheet lateral accionable (verde/naranja con quick-actions que abren wizard HC / presupuesto prellenado / agenda), y estadísticas basadas en cirugías/tratamientos reales. Trabajo mixto backend (getKanban, etapa, guards) + frontend (stepper, columnas, tarjetas), sin nuevas dependencias. Requirements en `.planning/REQUIREMENTS.md`.*
+*Last updated: 2026-07-04 — Fase 58 (Kanban Board: columnas, tarjetas y etiquetas) completada: reorden de columnas, columna "Cirugía Realizada" con badge naranja, filtro de operados completos y etiquetas de contacto en Confirmado; build de producción limpio, verificación 6/6, UAT visual pendiente. Milestone v1.13 — Embudo CRM Accionable. Refina el tramo post-consulta del embudo CRM: reorden de columnas (`Sin clasificar` al final, nueva etapa `Cirugía Realizada`), etiquetas de contacto en Confirmado ("Espera fecha"/"Cirugía programada"), ocultar operados completos del board (tagueados para stats), stepper del sheet lateral accionable (verde/naranja con quick-actions que abren wizard HC / presupuesto prellenado / agenda), y estadísticas basadas en cirugías/tratamientos reales. Trabajo mixto backend (getKanban, etapa, guards) + frontend (stepper, columnas, tarjetas), sin nuevas dependencias. Requirements en `.planning/REQUIREMENTS.md`.*

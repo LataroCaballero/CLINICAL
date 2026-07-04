@@ -215,7 +215,8 @@ Full details: `.planning/milestones/v1.12-ROADMAP.md`
   2. La columna "Cirugía Realizada" aparece después de "Confirmado" y muestra los pacientes con esa etapa
   3. Un paciente en "Cirugía Realizada" con al menos un paso pendiente muestra un indicador naranja en su tarjeta; un paciente con todos los pasos completos no aparece en el board
   4. Una tarjeta en "Confirmado" sin turno de cirugía muestra "Espera fecha" como etiqueta de contacto; con turno de cirugía muestra "Cirugía programada"
-**Plans**: TBD
+**Plans**: 1 plan
+  - [ ] 58-01-PLAN.md — Board frontend: reorden de columnas (Sin clasificar al final, Cirugía Realizada tras Confirmado), ocultar todosCompletos, indicador naranja + etiquetas de contacto (Espera fecha / Cirugía programada)
 **UI hint**: yes
 
 ### Phase 59: Stepper Accionable

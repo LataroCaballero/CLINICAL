@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   Sheet,
   SheetContent,
@@ -29,6 +30,7 @@ import { ContactoRapidoModal } from "./ContactoRapidoModal";
 import { ListaEsperaDialog } from "./ListaEsperaDialog";
 import { LossReasonModal } from "./LossReasonModal";
 import { HCCreatorDialog } from "@/components/patient/PatientDrawer/views/HCCreatorDialog";
+import SurgeryAppointmentModal from "@/app/dashboard/turnos/SurgeryAppointmentModal";
 
 interface Props {
   open: boolean;
@@ -50,8 +52,10 @@ export function CardActionsSheet({
   const [optimisticEtapa, setOptimisticEtapa] = useState<EtapaCRM | null>(null);
   const [lossReasonOpen, setLossReasonOpen] = useState(false);
   const [hcOpen, setHcOpen] = useState(false);
+  const [turnoOpen, setTurnoOpen] = useState(false);
   const [archivarOpen, setArchivarOpen] = useState(false);
 
+  const qc = useQueryClient();
   const { mutate: updateEtapa } = useUpdateEtapaCRM();
   const { mutate: archivar, isPending: archivando } = useUpdateCrmArchivo();
   const profesionalId = useEffectiveProfessionalId();
@@ -123,6 +127,9 @@ export function CardActionsSheet({
             onClickEtapa={handleStepClick}
             onPresupuestoClick={handlePresupuestoClick}
             onHCClick={profesionalId ? () => setHcOpen(true) : undefined}
+            pasos={patient.pasos}
+            flujo={patient.flujo}
+            onCirugiaClick={profesionalId ? () => setTurnoOpen(true) : undefined}
           />
         </div>
 
@@ -190,6 +197,13 @@ export function CardActionsSheet({
           onOpenChange={setHcOpen}
           pacienteId={patient.id}
           profesionalId={profesionalId ?? ""}
+          onSaved={() => qc.invalidateQueries({ queryKey: ["crm-kanban"] })}
+        />
+        <SurgeryAppointmentModal
+          open={turnoOpen}
+          onOpenChange={setTurnoOpen}
+          pacienteId={patient.id}
+          pacienteNombre={patient.nombreCompleto}
         />
 
         {/* Dialog de confirmación para archivar del embudo */}

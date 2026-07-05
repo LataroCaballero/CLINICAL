@@ -2,7 +2,7 @@
 
 import { CheckCircle, ExternalLink, FilePlus } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ETAPA_LABELS, EtapaCRM } from "@/hooks/useCRMKanban";
+import { ETAPA_LABELS, EtapaCRM, PasosCrm, KanbanPatient } from "@/hooks/useCRMKanban";
 
 // Stepper shows 7 steps including PROCEDIMIENTO_REALIZADO (not in ETAPA_ORDER — that's for kanban only)
 const STEPPER_CHAIN: EtapaCRM[] = [
@@ -15,12 +15,22 @@ const STEPPER_CHAIN: EtapaCRM[] = [
   "PROCEDIMIENTO_REALIZADO",  // index 6 — matches ETAPA_ORDEN backend
 ];
 
+// D-02: Mapeo paso→etapa para los 3 nodos mapeados (estado de paso gobierna coloreo)
+const PASO_POR_ETAPA: Partial<Record<EtapaCRM, keyof PasosCrm>> = {
+  CONSULTADO: "hc",
+  PRESUPUESTO_ENVIADO: "presupuesto",
+  CONFIRMADO: "cirugia",
+};
+
 interface EtapaStepperProps {
   etapaActual: EtapaCRM | null;
   optimisticEtapa?: EtapaCRM | null; // for visual display only
   onClickEtapa?: (etapa: EtapaCRM) => void;
   onPresupuestoClick?: () => void;
   onHCClick?: () => void;
+  pasos?: PasosCrm;
+  flujo?: KanbanPatient["flujo"];
+  onCirugiaClick?: () => void;
 }
 
 export function EtapaStepper({
@@ -29,6 +39,9 @@ export function EtapaStepper({
   onClickEtapa,
   onPresupuestoClick,
   onHCClick,
+  pasos,
+  flujo,
+  onCirugiaClick,
 }: EtapaStepperProps) {
   const displayEtapa = optimisticEtapa ?? etapaActual;
 
@@ -50,6 +63,11 @@ export function EtapaStepper({
         // Non-clickable: the REAL current etapa (not the optimistic one)
         const isActualCurrent = etapa === etapaActual;
         const isClickable = !!onClickEtapa && !isActualCurrent;
+
+        // D-02: derive step state for mapped nodes
+        const pasoKey = PASO_POR_ETAPA[etapa];
+        const pasoEstado = pasoKey && pasos ? pasos[pasoKey] : undefined;
+        const esNodoMapeado = !!pasoEstado;
 
         const hasContextualButton =
           (etapa === "PRESUPUESTO_ENVIADO" && !!onPresupuestoClick) ||
@@ -74,6 +92,9 @@ export function EtapaStepper({
             ? "text-sm font-semibold text-foreground"
             : "text-sm text-muted-foreground"
         );
+
+        // Suppress unused variable warning during Task 1 — used in Task 2/3
+        void esNodoMapeado;
 
         return (
           <div

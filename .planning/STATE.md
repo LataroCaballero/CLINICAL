@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.13
 milestone_name: Embudo CRM Accionable
-status: ready_to_plan
-stopped_at: Phase 58 complete (1/1) — ready to discuss Phase 59
-last_updated: 2026-07-04T23:02:42.386Z
-last_activity: 2026-07-04 -- Phase 58 execution started
+status: planning
+stopped_at: Phase 59 context gathered
+last_updated: "2026-07-05T01:26:23.983Z"
+last_activity: 2026-07-04
 progress:
   total_phases: 4
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 3
   completed_plans: 3
-  percent: 25
+  percent: 50
 ---
 
 # Project State
@@ -80,6 +80,6 @@ Items de v1.12 diferidos al cierre (audit PASSED; son stubs de verificación hum
 
 ## Session Continuity
 
-Last session: 2026-07-03T20:46:15.928Z
-Stopped at: Phase 57 context gathered
-Resume file: .planning/phases/57-backend-foundation-etapa-y-payload-enriquecido/57-CONTEXT.md
+Last session: 2026-07-05T01:26:23.979Z
+Stopped at: Phase 59 context gathered
+Resume file: .planning/phases/59-stepper-accionable/59-CONTEXT.md

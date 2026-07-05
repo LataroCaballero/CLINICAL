@@ -8,6 +8,8 @@ export interface CRMKpisData {
   confirmados: number;
   totalActivos: number;
   tasaConversion: number;
+  cirugiasRealizadas: number;
+  tratamientosRealizados: number;
 }
 
 export function useCRMKpis(profesionalId: string | null, periodo: Periodo = 'mes') {

@@ -100,6 +100,19 @@ elimina la estructura actual. La cadena de 7 etapas, la navegación manual de et
   seguridad de **Phase 54** (XSS en `indicacionesUrl`), match débil por keyword "pre"/"phase".
   Sin relación con el wiring del stepper. Queda fuera de Phase 59.
 
+### Plan-time confirmations (2026-07-04, aprobadas por el usuario en /gsd:plan-phase)
+- **D-08 (revisado):** el prellenado del presupuesto usa **`GenerarPresupuestoModal`**
+  (acepta `initialItems` + catalog picker) en lugar del diálogo interno de `PresupuestosView`
+  (sin prop de prellenado). Cláusula de escape de D-08 activada. **Usuario aprobó.**
+- **D-09 (revisado):** agendar cirugía usa **`SurgeryAppointmentModal`** (postea a
+  `POST /turnos/cirugia` → crea `Cirugia` → `pasos.cirugia` verde) en lugar de
+  `NuevoTurnoModal`, cuyo select excluye `esCirugia` y por diseño **no puede** crear un
+  `Cirugia` (rompería STEPPER-06). D-11 ya anticipaba "adaptar el modal". **Usuario aprobó.**
+- **D-07 (confirmado):** no existe hoy una fuente de procedimientos estructurados por-paciente
+  en el frontend (`KanbanPatient` solo trae el string `procedimiento`). El prellenado matchea
+  ese string contra el catálogo del profesional para adjuntar ítems con precio (fallback texto
+  libre). **Usuario confirmó** que esta es la resolución de D-07 para Phase 59.
+
 </decisions>
 
 <canonical_refs>

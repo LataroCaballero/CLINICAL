@@ -189,7 +189,7 @@ Full details: `.planning/milestones/v1.12-ROADMAP.md`
 
 - [x] **Phase 57: Backend Foundation — Etapa y Payload Enriquecido** - Nueva etapa "Cirugía Realizada", getKanban enriquecido con datos de cirugía y estado de cada paso, guard backward relaxado (completed 2026-07-04)
 - [x] **Phase 58: Kanban Board — Columnas, Tarjetas y Etiquetas** - Reorden de columnas (Sin clasificar al final), columna Cirugía Realizada, indicadores naranja/oculto, etiquetas de contacto en Confirmado (completed 2026-07-04)
-- [ ] **Phase 59: Stepper Accionable** - Círculos verde/naranja por estado de paso, quick-actions cableadas (HC wizard, presupuesto prellenado, agenda de cirugía)
+- [x] **Phase 59: Stepper Accionable** - Círculos verde/naranja por estado de paso, quick-actions cableadas (HC wizard, presupuesto prellenado, agenda de cirugía) (completed 2026-07-05)
 - [ ] **Phase 60: Estadísticas sobre Registros Reales** - Conteos de cirugías y tratamientos basados en registros HC/Cirugia efectivos, no en etapa CRM
 
 ## Phase Details
@@ -231,7 +231,7 @@ Full details: `.planning/milestones/v1.12-ROADMAP.md`
 **Plans**: 3 plans
   - [x] 59-01-PLAN.md — EtapaStepper: coloreo verde/naranja por estado de paso, botones gateados, sub-indicadores + filtrado por flujo
   - [x] 59-02-PLAN.md — CardActionsSheet wiring: HC re-color, presupuesto prellenado desde catálogo, agenda de cirugía (POST /turnos/cirugia) + invalidación crm-kanban
-  - [ ] 59-03-PLAN.md — Verificación humana end-to-end del stepper accionable
+  - [x] 59-03-PLAN.md — Verificación humana end-to-end del stepper accionable
 **UI hint**: yes
 
 ### Phase 60: Estadísticas sobre Registros Reales
@@ -307,7 +307,7 @@ Full details: `.planning/milestones/v1.12-ROADMAP.md`
 | 56. Signed Consent + Chat Badge | v1.12 | 8/8 | Complete | 2026-07-02 |
 | 57. Backend Foundation — Etapa y Payload Enriquecido | v1.13 | 2/2 | Complete    | 2026-07-04 |
 | 58. Kanban Board — Columnas, Tarjetas y Etiquetas | v1.13 | 1/1 | Complete    | 2026-07-04 |
-| 59. Stepper Accionable | v1.13 | 2/3 | In Progress|  |
+| 59. Stepper Accionable | v1.13 | 3/3 | Complete   | 2026-07-05 |
 | 60. Estadísticas sobre Registros Reales | v1.13 | 0/TBD | Not started | - |
 
 ---

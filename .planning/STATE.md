@@ -4,13 +4,13 @@ milestone: v1.13
 milestone_name: Embudo CRM Accionable
 status: executing
 stopped_at: Phase 59 context gathered
-last_updated: "2026-07-05T03:13:13.913Z"
-last_activity: 2026-07-05 -- Phase 60 planning complete
+last_updated: "2026-07-05T03:21:41.321Z"
+last_activity: 2026-07-05
 progress:
   total_phases: 4
   completed_phases: 3
   total_plans: 8
-  completed_plans: 6
+  completed_plans: 7
   percent: 75
 ---
 
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-03)
 
 **Core value:** Que un cirujano plástico cierre más cirugías — el sistema hace visible qué pacientes seguir, cuándo y cómo, de la manera más automatizada posible
-**Current focus:** Phase 59 — stepper-accionable
+**Current focus:** Phase 60 — estad-sticas-sobre-registros-reales
 
 ## Current Position
 
-Phase: 59 — COMPLETE
-Plan: 3 of 3
+Phase: 60 (estad-sticas-sobre-registros-reales) — EXECUTING
+Plan: 2 of 2
 Status: Ready to execute
-Last activity: 2026-07-05 -- Phase 60 planning complete
+Last activity: 2026-07-05
 
-Progress: [████████░░] 83%
+Progress: [█████████░] 88%
 
 ## Performance Metrics
 
@@ -84,6 +84,6 @@ Items de v1.12 diferidos al cierre (audit PASSED; son stubs de verificación hum
 
 ## Session Continuity
 
-Last session: 2026-07-05T02:14:17.649Z
+Last session: 2026-07-05T03:21:41.304Z
 Stopped at: Phase 59 context gathered
 Resume file: None

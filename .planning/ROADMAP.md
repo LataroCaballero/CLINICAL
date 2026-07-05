@@ -242,7 +242,7 @@ Full details: `.planning/milestones/v1.12-ROADMAP.md`
   1. Si un paciente pasa a PERDIDO después de haber realizado la cirugía, el conteo de cirugías realizadas no disminuye — refleja el registro real de Cirugia/HC, no la etapa CRM
   2. Si un paciente es reubicado de etapa después de recibir un tratamiento, el conteo de tratamientos realizados permanece estable basado en las entradas HC con tipoEntrada de tratamiento
 **Plans**: 2 plans
-  - [ ] 60-01-PLAN.md — Backend: getKpis calcula cirugiasRealizadas (Cirugia) y tratamientosRealizados (HC TRATAMIENTO) sobre registros reales + spec del invariante etapa-no-afecta-conteo
+  - [x] 60-01-PLAN.md — Backend: getKpis calcula cirugiasRealizadas (Cirugia) y tratamientosRealizados (HC TRATAMIENTO) sobre registros reales + spec del invariante etapa-no-afecta-conteo
   - [ ] 60-02-PLAN.md — Frontend: exponer ambos conteos como KpiCards en el dashboard vía useCRMKpis
 
 ## Progress
@@ -310,7 +310,7 @@ Full details: `.planning/milestones/v1.12-ROADMAP.md`
 | 57. Backend Foundation — Etapa y Payload Enriquecido | v1.13 | 2/2 | Complete    | 2026-07-04 |
 | 58. Kanban Board — Columnas, Tarjetas y Etiquetas | v1.13 | 1/1 | Complete    | 2026-07-04 |
 | 59. Stepper Accionable | v1.13 | 3/3 | Complete   | 2026-07-05 |
-| 60. Estadísticas sobre Registros Reales | v1.13 | 0/TBD | Not started | - |
+| 60. Estadísticas sobre Registros Reales | v1.13 | 1/2 | In Progress|  |
 
 ---
 *Roadmap initialized: 2026-02-23 | v1.0 shipped: 2026-03-03 | v1.1 shipped: 2026-03-16 | v1.2 shipped: 2026-03-31 | v1.3 shipped: 2026-04-09 | v1.4 shipped: 2026-04-20 | v1.5 shipped: 2026-05-13 | v1.6 shipped: 2026-05-23 | v1.7 shipped: 2026-05-28 | v1.8 shipped: 2026-06-09 | v1.9 shipped: 2026-06-13 | v1.10 shipped: 2026-06-22 | v1.11 shipped: 2026-06-24 | v1.12 shipped: 2026-07-02 | v1.13 started: 2026-07-03*

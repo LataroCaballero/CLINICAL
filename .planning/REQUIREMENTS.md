@@ -31,8 +31,8 @@ Requisitos scopeados para el milestone v1.13. Cada uno mapea a una fase del road
 
 ### Estadísticas sobre registros reales
 
-- [ ] **STATS-01**: El conteo de cirugías realizadas se calcula sobre registros efectivamente realizados (Cirugia/HC), robusto a que la etapa CRM del paciente cambie después
-- [ ] **STATS-02**: El conteo de tratamientos realizados se calcula sobre registros efectivamente realizados (HC de tratamiento), robusto a que la etapa CRM del paciente cambie después
+- [x] **STATS-01**: El conteo de cirugías realizadas se calcula sobre registros efectivamente realizados (Cirugia/HC), robusto a que la etapa CRM del paciente cambie después
+- [x] **STATS-02**: El conteo de tratamientos realizados se calcula sobre registros efectivamente realizados (HC de tratamiento), robusto a que la etapa CRM del paciente cambie después
 
 ## Future Requirements
 
@@ -74,8 +74,8 @@ Qué fases cubren qué requisitos.
 | STEPPER-04 | Phase 59 | Complete |
 | STEPPER-05 | Phase 59 | Complete |
 | STEPPER-06 | Phase 59 | Complete |
-| STATS-01 | Phase 60 | Pending |
-| STATS-02 | Phase 60 | Pending |
+| STATS-01 | Phase 60 | Complete |
+| STATS-02 | Phase 60 | Complete |
 
 **Coverage:**
 - v1 requirements: 15 total

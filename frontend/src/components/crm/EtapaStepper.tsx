@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle, ExternalLink, FilePlus } from "lucide-react";
+import { CalendarPlus, CheckCircle, ExternalLink, FilePlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ETAPA_LABELS, EtapaCRM, PasosCrm, KanbanPatient } from "@/hooks/useCRMKanban";
 
@@ -53,6 +53,9 @@ export function EtapaStepper({
 
   const esPerdido = displayEtapa === "PERDIDO";
 
+  // flujo used in Task 3 (sub-indicators + TRATAMIENTO filtering)
+  void flujo;
+
   return (
     <div className="flex flex-col">
       {STEPPER_CHAIN.map((etapa, index) => {
@@ -69,16 +72,38 @@ export function EtapaStepper({
         const pasoEstado = pasoKey && pasos ? pasos[pasoKey] : undefined;
         const esNodoMapeado = !!pasoEstado;
 
+        // D-03: for mapped nodes, step state gates button visibility
+        // button only renders when pasoEstado === 'pendiente'
+        const showHCButton =
+          etapa === "CONSULTADO" &&
+          !!onHCClick &&
+          pasos?.hc === "pendiente";
+        const showPresupuestoButton =
+          etapa === "PRESUPUESTO_ENVIADO" &&
+          !!onPresupuestoClick &&
+          pasos?.presupuesto === "pendiente";
+        const showCirugiaButton =
+          etapa === "CONFIRMADO" &&
+          !!onCirugiaClick &&
+          pasos?.cirugia === "pendiente";
+
         const hasContextualButton =
-          (etapa === "PRESUPUESTO_ENVIADO" && !!onPresupuestoClick) ||
-          (etapa === "CONSULTADO" && !!onHCClick) ||
+          showHCButton ||
+          showPresupuestoButton ||
+          showCirugiaButton ||
           (etapa === "PROCEDIMIENTO_REALIZADO" &&
             !!onClickEtapa &&
             displayEtapa !== "PROCEDIMIENTO_REALIZADO");
 
+        // D-03: for mapped nodes, circle color is driven by step state (not funnel position)
+        // For unmapped nodes, preserve the original funnel-based coloring
         const circleClass = cn(
           "h-5 w-5 rounded-full border-2 flex-shrink-0",
-          isCurrent
+          esNodoMapeado
+            ? pasoEstado === "completo"
+              ? "border-green-500 bg-green-500"
+              : "border-orange-500 bg-orange-500"
+            : isCurrent
             ? "border-primary bg-primary"
             : isDone
             ? "border-primary/40 bg-primary/10"
@@ -92,9 +117,6 @@ export function EtapaStepper({
             ? "text-sm font-semibold text-foreground"
             : "text-sm text-muted-foreground"
         );
-
-        // Suppress unused variable warning during Task 1 — used in Task 2/3
-        void esNodoMapeado;
 
         return (
           <div
@@ -118,12 +140,13 @@ export function EtapaStepper({
             <div className="flex flex-col">
               <span className={labelClass}>{ETAPA_LABELS[etapa]}</span>
 
-              {etapa === "PRESUPUESTO_ENVIADO" && onPresupuestoClick && (
+              {/* PRESUPUESTO_ENVIADO — only shown when paso === 'pendiente' (D-03) */}
+              {showPresupuestoButton && (
                 <button
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    onPresupuestoClick();
+                    onPresupuestoClick!();
                   }}
                   className="mb-3 flex items-center gap-1.5 text-xs text-muted-foreground border border-border rounded px-2 py-1 hover:bg-muted/50 w-fit"
                 >
@@ -132,17 +155,33 @@ export function EtapaStepper({
                 </button>
               )}
 
-              {etapa === "CONSULTADO" && onHCClick && (
+              {/* CONSULTADO — only shown when paso === 'pendiente' (D-03) */}
+              {showHCButton && (
                 <button
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    onHCClick();
+                    onHCClick!();
                   }}
                   className="mb-3 flex items-center gap-1.5 text-xs text-muted-foreground border border-border rounded px-2 py-1 hover:bg-muted/50 w-fit"
                 >
                   <FilePlus className="h-3 w-3" />
                   Registrar HC
+                </button>
+              )}
+
+              {/* CONFIRMADO — "Agendar cirugía" only when paso === 'pendiente' (STEPPER-05/06, D-10) */}
+              {showCirugiaButton && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onCirugiaClick!();
+                  }}
+                  className="mb-3 flex items-center gap-1.5 text-xs text-muted-foreground border border-border rounded px-2 py-1 hover:bg-muted/50 w-fit"
+                >
+                  <CalendarPlus className="h-3 w-3" />
+                  Agendar cirugía
                 </button>
               )}
 

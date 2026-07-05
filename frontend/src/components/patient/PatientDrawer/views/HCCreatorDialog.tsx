@@ -9,6 +9,8 @@ export interface HCCreatorDialogProps {
   pacienteId: string;
   profesionalId: string;
   obraSocialId?: string;
+  /** Called after the HC entry is saved (in addition to closing the dialog). */
+  onSaved?: () => void;
 }
 
 export function HCCreatorDialog({
@@ -17,6 +19,7 @@ export function HCCreatorDialog({
   pacienteId,
   profesionalId,
   obraSocialId,
+  onSaved,
 }: HCCreatorDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -29,7 +32,10 @@ export function HCCreatorDialog({
           profesionalId={profesionalId}
           obraSocialId={obraSocialId}
           showDatePicker={true}
-          onSaved={() => onOpenChange(false)}
+          onSaved={() => {
+            onOpenChange(false);
+            onSaved?.();
+          }}
         />
       </DialogContent>
     </Dialog>

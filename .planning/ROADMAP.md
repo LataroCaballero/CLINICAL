@@ -241,7 +241,9 @@ Full details: `.planning/milestones/v1.12-ROADMAP.md`
 **Success Criteria** (what must be TRUE):
   1. Si un paciente pasa a PERDIDO después de haber realizado la cirugía, el conteo de cirugías realizadas no disminuye — refleja el registro real de Cirugia/HC, no la etapa CRM
   2. Si un paciente es reubicado de etapa después de recibir un tratamiento, el conteo de tratamientos realizados permanece estable basado en las entradas HC con tipoEntrada de tratamiento
-**Plans**: TBD
+**Plans**: 2 plans
+  - [ ] 60-01-PLAN.md — Backend: getKpis calcula cirugiasRealizadas (Cirugia) y tratamientosRealizados (HC TRATAMIENTO) sobre registros reales + spec del invariante etapa-no-afecta-conteo
+  - [ ] 60-02-PLAN.md — Frontend: exponer ambos conteos como KpiCards en el dashboard vía useCRMKpis
 
 ## Progress
 

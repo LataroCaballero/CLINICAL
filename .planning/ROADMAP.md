@@ -228,7 +228,10 @@ Full details: `.planning/milestones/v1.12-ROADMAP.md`
   2. Al hacer click en un paso naranja de entrada de HC, se abre el wizard de HC con la plantilla correspondiente para registrar la entrada
   3. Al hacer click en un paso naranja de presupuesto, se abre el modal de presupuesto con los tratamientos/cirugías del catálogo del paciente pre-cargados
   4. En el paso "Confirmado", si el paciente no tiene turno de cirugía, el click abre la agenda para programar el turno de cirugía; si tiene turno de cirugía, el paso se muestra verde
-**Plans**: TBD
+**Plans**: 3 plans
+  - [ ] 59-01-PLAN.md — EtapaStepper: coloreo verde/naranja por estado de paso, botones gateados, sub-indicadores + filtrado por flujo
+  - [ ] 59-02-PLAN.md — CardActionsSheet wiring: HC re-color, presupuesto prellenado desde catálogo, agenda de cirugía (POST /turnos/cirugia) + invalidación crm-kanban
+  - [ ] 59-03-PLAN.md — Verificación humana end-to-end del stepper accionable
 **UI hint**: yes
 
 ### Phase 60: Estadísticas sobre Registros Reales
@@ -304,7 +307,7 @@ Full details: `.planning/milestones/v1.12-ROADMAP.md`
 | 56. Signed Consent + Chat Badge | v1.12 | 8/8 | Complete | 2026-07-02 |
 | 57. Backend Foundation — Etapa y Payload Enriquecido | v1.13 | 2/2 | Complete    | 2026-07-04 |
 | 58. Kanban Board — Columnas, Tarjetas y Etiquetas | v1.13 | 1/1 | Complete    | 2026-07-04 |
-| 59. Stepper Accionable | v1.13 | 0/TBD | Not started | - |
+| 59. Stepper Accionable | v1.13 | 0/3 | Planned | - |
 | 60. Estadísticas sobre Registros Reales | v1.13 | 0/TBD | Not started | - |
 
 ---

@@ -24,8 +24,8 @@ Requisitos scopeados para el milestone v1.13. Cada uno mapea a una fase del road
 
 - [x] **STEPPER-01**: Cada paso del stepper que no tiene pendientes se muestra con círculo verde y sin botón de quick-action
 - [x] **STEPPER-02**: Cada paso del stepper que tiene algo pendiente se muestra con círculo naranja
-- [ ] **STEPPER-03**: Al hacer click en un paso naranja de entrada de HC, se abre el wizard de HC para seleccionar la plantilla pertinente y cargar la entrada
-- [ ] **STEPPER-04**: Al hacer click en un paso naranja de presupuesto, se abre el modal de presupuesto prellenado con los tratamientos/cirugías cargados en la ficha del paciente
+- [x] **STEPPER-03**: Al hacer click en un paso naranja de entrada de HC, se abre el wizard de HC para seleccionar la plantilla pertinente y cargar la entrada
+- [x] **STEPPER-04**: Al hacer click en un paso naranja de presupuesto, se abre el modal de presupuesto prellenado con los tratamientos/cirugías cargados en la ficha del paciente
 - [x] **STEPPER-05**: En el paso "Confirmado", si el paciente no tiene turno de cirugía, el paso se muestra pendiente ("fecha") y al hacer click se abre la agenda para programar el turno de cirugía
 - [x] **STEPPER-06**: En el paso "Confirmado", si el paciente tiene turno de cirugía, el paso se muestra verde
 
@@ -70,8 +70,8 @@ Qué fases cubren qué requisitos.
 | CONTACTO-02 | Phase 58 | Complete |
 | STEPPER-01 | Phase 59 | Complete |
 | STEPPER-02 | Phase 59 | Complete |
-| STEPPER-03 | Phase 59 | Pending |
-| STEPPER-04 | Phase 59 | Pending |
+| STEPPER-03 | Phase 59 | Complete |
+| STEPPER-04 | Phase 59 | Complete |
 | STEPPER-05 | Phase 59 | Complete |
 | STEPPER-06 | Phase 59 | Complete |
 | STATS-01 | Phase 60 | Pending |

@@ -53,8 +53,9 @@ export function EtapaStepper({
 
   const esPerdido = displayEtapa === "PERDIDO";
 
-  // flujo used in Task 3 (sub-indicators + TRATAMIENTO filtering)
-  void flujo;
+  // D-05: client-side filtering — hide cirugia action and sub-indicators for TRATAMIENTO flow
+  // Edge case PENDIENTE/null → behave like CIRUGIA (show everything)
+  const esTratamiento = flujo === "TRATAMIENTO";
 
   return (
     <div className="flex flex-col">
@@ -82,15 +83,23 @@ export function EtapaStepper({
           etapa === "PRESUPUESTO_ENVIADO" &&
           !!onPresupuestoClick &&
           pasos?.presupuesto === "pendiente";
+        // D-05: cirugia button hidden when flujo === 'TRATAMIENTO'
         const showCirugiaButton =
           etapa === "CONFIRMADO" &&
           !!onCirugiaClick &&
-          pasos?.cirugia === "pendiente";
+          pasos?.cirugia === "pendiente" &&
+          !esTratamiento;
+
+        // D-04: sub-indicators for consentimiento/indicaciones under CONFIRMADO
+        // D-05: hidden when flujo === 'TRATAMIENTO'
+        const showSubIndicadores =
+          etapa === "CONFIRMADO" && !!pasos && !esTratamiento;
 
         const hasContextualButton =
           showHCButton ||
           showPresupuestoButton ||
           showCirugiaButton ||
+          showSubIndicadores ||
           (etapa === "PROCEDIMIENTO_REALIZADO" &&
             !!onClickEtapa &&
             displayEtapa !== "PROCEDIMIENTO_REALIZADO");
@@ -170,7 +179,7 @@ export function EtapaStepper({
                 </button>
               )}
 
-              {/* CONFIRMADO — "Agendar cirugía" only when paso === 'pendiente' (STEPPER-05/06, D-10) */}
+              {/* CONFIRMADO — "Agendar cirugía" only when paso === 'pendiente' and not TRATAMIENTO (STEPPER-05/06, D-10) */}
               {showCirugiaButton && (
                 <button
                   type="button"
@@ -183,6 +192,38 @@ export function EtapaStepper({
                   <CalendarPlus className="h-3 w-3" />
                   Agendar cirugía
                 </button>
+              )}
+
+              {/* CONFIRMADO — sub-indicadores consentimiento/indicaciones (D-04, visual-only, no button) */}
+              {showSubIndicadores && (
+                <div className="mb-3 flex flex-col gap-1">
+                  <div className="flex items-center gap-1.5">
+                    <div
+                      className={cn(
+                        "h-2 w-2 rounded-full flex-shrink-0",
+                        pasos!.consentimiento === "completo"
+                          ? "bg-green-500"
+                          : "bg-orange-500"
+                      )}
+                    />
+                    <span className="text-xs text-muted-foreground">
+                      Consentimiento
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div
+                      className={cn(
+                        "h-2 w-2 rounded-full flex-shrink-0",
+                        pasos!.indicacionesPreop === "completo"
+                          ? "bg-green-500"
+                          : "bg-orange-500"
+                      )}
+                    />
+                    <span className="text-xs text-muted-foreground">
+                      Indicaciones preop
+                    </span>
+                  </div>
+                </div>
               )}
 
               {etapa === "PROCEDIMIENTO_REALIZADO" &&

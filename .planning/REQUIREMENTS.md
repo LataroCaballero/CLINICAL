@@ -22,12 +22,12 @@ Requisitos scopeados para el milestone v1.13. Cada uno mapea a una fase del road
 
 ### Stepper accionable (sheet lateral CRM)
 
-- [ ] **STEPPER-01**: Cada paso del stepper que no tiene pendientes se muestra con círculo verde y sin botón de quick-action
-- [ ] **STEPPER-02**: Cada paso del stepper que tiene algo pendiente se muestra con círculo naranja
+- [x] **STEPPER-01**: Cada paso del stepper que no tiene pendientes se muestra con círculo verde y sin botón de quick-action
+- [x] **STEPPER-02**: Cada paso del stepper que tiene algo pendiente se muestra con círculo naranja
 - [ ] **STEPPER-03**: Al hacer click en un paso naranja de entrada de HC, se abre el wizard de HC para seleccionar la plantilla pertinente y cargar la entrada
 - [ ] **STEPPER-04**: Al hacer click en un paso naranja de presupuesto, se abre el modal de presupuesto prellenado con los tratamientos/cirugías cargados en la ficha del paciente
-- [ ] **STEPPER-05**: En el paso "Confirmado", si el paciente no tiene turno de cirugía, el paso se muestra pendiente ("fecha") y al hacer click se abre la agenda para programar el turno de cirugía
-- [ ] **STEPPER-06**: En el paso "Confirmado", si el paciente tiene turno de cirugía, el paso se muestra verde
+- [x] **STEPPER-05**: En el paso "Confirmado", si el paciente no tiene turno de cirugía, el paso se muestra pendiente ("fecha") y al hacer click se abre la agenda para programar el turno de cirugía
+- [x] **STEPPER-06**: En el paso "Confirmado", si el paciente tiene turno de cirugía, el paso se muestra verde
 
 ### Estadísticas sobre registros reales
 
@@ -68,12 +68,12 @@ Qué fases cubren qué requisitos.
 | EMBUDO-05 | Phase 57 | Complete |
 | CONTACTO-01 | Phase 58 | Complete |
 | CONTACTO-02 | Phase 58 | Complete |
-| STEPPER-01 | Phase 59 | Pending |
-| STEPPER-02 | Phase 59 | Pending |
+| STEPPER-01 | Phase 59 | Complete |
+| STEPPER-02 | Phase 59 | Complete |
 | STEPPER-03 | Phase 59 | Pending |
 | STEPPER-04 | Phase 59 | Pending |
-| STEPPER-05 | Phase 59 | Pending |
-| STEPPER-06 | Phase 59 | Pending |
+| STEPPER-05 | Phase 59 | Complete |
+| STEPPER-06 | Phase 59 | Complete |
 | STATS-01 | Phase 60 | Pending |
 | STATS-02 | Phase 60 | Pending |
 

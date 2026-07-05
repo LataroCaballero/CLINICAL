@@ -4,13 +4,13 @@ milestone: v1.13
 milestone_name: Embudo CRM Accionable
 status: executing
 stopped_at: Phase 59 context gathered
-last_updated: "2026-07-05T01:55:52.361Z"
-last_activity: 2026-07-05 -- Phase 59 planning complete
+last_updated: "2026-07-05T02:05:03.249Z"
+last_activity: 2026-07-05
 progress:
   total_phases: 4
   completed_phases: 2
   total_plans: 6
-  completed_plans: 3
+  completed_plans: 4
   percent: 50
 ---
 
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-03)
 
 **Core value:** Que un cirujano plástico cierre más cirugías — el sistema hace visible qué pacientes seguir, cuándo y cómo, de la manera más automatizada posible
-**Current focus:** Phase 59 — stepper accionable
+**Current focus:** Phase 59 — stepper-accionable
 
 ## Current Position
 
-Phase: 59
-Plan: Not started
+Phase: 59 (stepper-accionable) — EXECUTING
+Plan: 2 of 3
 Status: Ready to execute
-Last activity: 2026-07-05 -- Phase 59 planning complete
+Last activity: 2026-07-05
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [███████░░░] 67%
 
 ## Performance Metrics
 
@@ -49,6 +49,9 @@ Progress: [░░░░░░░░░░] 0%
 Full v1.12 decision log en `.planning/PROJECT.md` (Key Decisions) y `.planning/milestones/v1.12-ROADMAP.md`.
 
 Key pending decision for Phase 57: Reuse/rename `PROCEDIMIENTO_REALIZADO` enum value vs. add `CIRUGIA_REALIZADA` — impacts Prisma schema migration and all consumers of the enum (dashboard funnel, frontend constants, STEPPER_CHAIN).
+
+- [Phase ?]: mapeo paso→etapa en EtapaStepper Phase 59-01
+- [Phase ?]: filtrado client-side D-05 en EtapaStepper Phase 59-01
 
 ### Carry-forward from v1.12
 
@@ -77,9 +80,10 @@ Items de v1.12 diferidos al cierre (audit PASSED; son stubs de verificación hum
 | verification_gap | 52/53/54/55-VERIFICATION | human_needed |
 | verification_gap | 10/27/28/29/30/49-VERIFICATION (carryovers) | human_needed |
 | quick_task | 1-eliminar-dropdown-tipo-de-consulta-de-hc | missing |
+| Phase 59-stepper-accionable P01 | 18 | 3 tasks | 1 files |
 
 ## Session Continuity
 
-Last session: 2026-07-05T01:26:23.979Z
+Last session: 2026-07-05T02:04:58.909Z
 Stopped at: Phase 59 context gathered
-Resume file: .planning/phases/59-stepper-accionable/59-CONTEXT.md
+Resume file: None

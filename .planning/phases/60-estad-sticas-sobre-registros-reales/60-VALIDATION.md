@@ -80,3 +80,16 @@ Existing backend jest infrastructure covers all automatable phase requirements. 
 - [ ] `nyquist_compliant: true` — NOT set: frontend display verified manually (no frontend test infra)
 
 **Approval:** approved 2026-07-05 (partial — backend automated, frontend manual-only)
+
+---
+
+## Validation Audit 2026-07-05
+
+Re-audit (State A). Backend spec re-run: 8/8 green. No new gaps — the two frontend display tasks remain manual-only (no frontend test infrastructure; v1.13 no-new-deps). No escalations.
+
+| Metric | Count |
+|--------|-------|
+| Gaps found | 0 |
+| Resolved | 0 |
+| Escalated | 0 |
+| Manual-only (unchanged) | 2 tasks / 5 UAT behaviors |

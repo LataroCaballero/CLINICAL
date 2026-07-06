@@ -22,6 +22,17 @@ export type MotivoPerdidaCRM =
   | "NO_RESPONDIO"
   | "OTRO";
 
+// Phase 58 — mirrors crm-steps.helper.ts PasoEstado / PasosCrm
+export type PasoEstado = 'completo' | 'pendiente';
+
+export interface PasosCrm {
+  hc: PasoEstado;
+  presupuesto: PasoEstado;
+  cirugia: PasoEstado;
+  consentimiento: PasoEstado;
+  indicacionesPreop: PasoEstado;
+}
+
 export interface KanbanPatient {
   id: string;
   nombreCompleto: string;
@@ -44,6 +55,9 @@ export interface KanbanPatient {
   pendingAutorizaciones?: number;
   // Phase 36 — expuesto por backend desde Phase 35
   flujo: 'CIRUGIA' | 'TRATAMIENTO' | 'PENDIENTE' | null;
+  // Phase 58 — expuesto por backend desde Phase 57 (computePasosCrm spread)
+  pasos: PasosCrm;
+  todosCompletos: boolean;
 }
 
 export interface KanbanColumn {
@@ -58,20 +72,22 @@ export const ETAPA_LABELS: Record<EtapaCRM, string> = {
   TURNO_AGENDADO: "Consulta Agendada",
   CONSULTADO: "Consulta Realizada",
   PRESUPUESTO_ENVIADO: "Presupuesto Enviado",
-  PROCEDIMIENTO_REALIZADO: "Procedimiento Realizado",
+  PROCEDIMIENTO_REALIZADO: "Cirugía Realizada",
   CONFIRMADO: "Confirmado",
   PERDIDO: "Perdido",
 };
 
-// PROCEDIMIENTO_REALIZADO intentionally excluded — hidden from kanban per user decision
+// Phase 58: PROCEDIMIENTO_REALIZADO now visible in kanban (after CONFIRMADO);
+// SIN_CLASIFICAR moved to last position (EMBUDO-01).
 export const ETAPA_ORDER: EtapaCRM[] = [
-  "SIN_CLASIFICAR",
   "NUEVO_LEAD",
   "TURNO_AGENDADO",
   "CONSULTADO",
   "PRESUPUESTO_ENVIADO",
   "CONFIRMADO",
+  "PROCEDIMIENTO_REALIZADO",
   "PERDIDO",
+  "SIN_CLASIFICAR",
 ];
 
 export function useCRMKanban(profesionalId: string | null) {

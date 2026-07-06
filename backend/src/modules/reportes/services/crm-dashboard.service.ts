@@ -5,6 +5,9 @@ import {
   TemperaturaPaciente,
   EstadoPresupuesto,
   FlujoPaciente,
+  EstadoCirugia,
+  TipoEntradaHC,
+  EstadoEntradaHC,
 } from '@prisma/client';
 
 const ETAPAS_FUNNEL: EtapaCRM[] = [
@@ -118,8 +121,15 @@ export class CrmDashboardService {
 
   async getKpis(profesionalId: string, periodo: string) {
     const { inicio, fin } = this.calcularRango(periodo);
+    const ahora = new Date();
 
-    const [nuevos, confirmados, totalActivos] = await Promise.all([
+    const [
+      nuevos,
+      confirmados,
+      totalActivos,
+      cirugiasRealizadas,
+      tratamientosRealizados,
+    ] = await Promise.all([
       this.prisma.paciente.count({
         where: {
           profesionalId,
@@ -142,6 +152,22 @@ export class CrmDashboardService {
           OR: [{ flujo: FlujoPaciente.CIRUGIA }, { flujo: null }],
         },
       }),
+      this.prisma.cirugia.count({
+        where: {
+          profesionalId,
+          fecha: { lt: ahora },
+          estado: {
+            notIn: [EstadoCirugia.CANCELADA, EstadoCirugia.SUSPENDIDA],
+          },
+        },
+      }),
+      this.prisma.historiaClinicaEntrada.count({
+        where: {
+          tipoEntrada: TipoEntradaHC.TRATAMIENTO,
+          status: EstadoEntradaHC.FINALIZED,
+          historiaClinica: { profesionalId },
+        },
+      }),
     ]);
 
     const tasaConversion =
@@ -155,6 +181,8 @@ export class CrmDashboardService {
       confirmados,
       totalActivos,
       tasaConversion,
+      cirugiasRealizadas,
+      tratamientosRealizados,
     };
   }
 

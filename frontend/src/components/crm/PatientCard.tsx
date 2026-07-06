@@ -131,6 +131,21 @@ export function PatientCard({ patient, columnId, unreadWA = 0, isPending = false
         </span>
       )}
 
+      {/* EMBUDO-03 / SC3: orange indicator for Cirugía Realizada patients with pending steps */}
+      {columnId === "PROCEDIMIENTO_REALIZADO" && !patient.todosCompletos && (
+        <span className="inline-flex items-center gap-1.5 mt-1.5 text-xs px-1.5 py-0.5 rounded border border-orange-400 text-orange-600 font-medium bg-orange-50">
+          <span className="w-2 h-2 rounded-full bg-orange-500 flex-shrink-0" />
+          Pasos pendientes
+        </span>
+      )}
+
+      {/* CONTACTO-01 / CONTACTO-02 / SC4: contact label for Confirmado patients */}
+      {columnId === "CONFIRMADO" && (
+        <span className="inline-flex items-center gap-1 mt-1.5 text-xs px-1.5 py-0.5 rounded border border-blue-400 text-blue-600 font-medium bg-blue-50">
+          {patient.pasos?.cirugia === "completo" ? "Cirugía programada" : "Espera fecha"}
+        </span>
+      )}
+
       {/* Última interacción */}
       {patient.ultimoContactoNota && (
         <p className={cn("text-xs mt-1.5 italic", fm ? "text-[var(--fc-text-secondary)]" : "text-gray-400")}>

@@ -134,14 +134,17 @@ export function KanbanBoard({ columns, unreadMap }: Props) {
 
   const displayedColumns = useMemo(() => {
     const cols = applyPendingMoves(sortedColumns, pendingMoves);
-    return cols.map((col) => ({
-      ...col,
-      pacientes: [...col.pacientes].sort(
-        (a, b) =>
-          (TEMP_ORDER[a.temperatura ?? ""] ?? 3) -
-          (TEMP_ORDER[b.temperatura ?? ""] ?? 3)
-      ),
-    }));
+    return cols.map((col) => {
+      // EMBUDO-04: hide patients with all steps complete from the board
+      const pacientes = [...col.pacientes]
+        .filter((p) => !p.todosCompletos)
+        .sort(
+          (a, b) =>
+            (TEMP_ORDER[a.temperatura ?? ""] ?? 3) -
+            (TEMP_ORDER[b.temperatura ?? ""] ?? 3)
+        );
+      return { ...col, pacientes, total: pacientes.length };
+    });
   }, [sortedColumns, pendingMoves]);
 
   const pendingPatientIds = useMemo(

@@ -53,6 +53,18 @@ export default function CRMKpiCards({ isLoading: parentLoading, periodo }: Props
         subtitle="excluye perdidos"
         isLoading={loading}
       />
+      <KpiCard
+        title="Cirugías realizadas"
+        value={data ? String(data.cirugiasRealizadas) : "—"}
+        subtitle="registro efectivo"
+        isLoading={loading}
+      />
+      <KpiCard
+        title="Tratamientos realizados"
+        value={data ? String(data.tratamientosRealizados) : "—"}
+        subtitle="registro efectivo"
+        isLoading={loading}
+      />
     </>
   );
 }

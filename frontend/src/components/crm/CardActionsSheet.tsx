@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   Sheet,
   SheetContent,
@@ -29,6 +30,11 @@ import { ContactoRapidoModal } from "./ContactoRapidoModal";
 import { ListaEsperaDialog } from "./ListaEsperaDialog";
 import { LossReasonModal } from "./LossReasonModal";
 import { HCCreatorDialog } from "@/components/patient/PatientDrawer/views/HCCreatorDialog";
+import SurgeryAppointmentModal from "@/app/dashboard/turnos/SurgeryAppointmentModal";
+import { GenerarPresupuestoModal } from "@/components/live-turno/tabs/hc/GenerarPresupuestoModal";
+import { type PresupuestoItemInput } from "@/hooks/useCreatePresupuesto";
+import { useCirugiasCatalogo } from "@/hooks/useCirugiasCatalogo";
+import { useTratamientosProfesional } from "@/hooks/useTratamientosProfesional";
 
 interface Props {
   open: boolean;
@@ -43,20 +49,51 @@ export function CardActionsSheet({
   onOpenChange,
   patient,
   onOpenDrawer,
-  onOpenDrawerWithView,
+  // onOpenDrawerWithView: not destructured — presupuesto now uses inline modal (D-08/D-09); kept in Props for call-site backward compat
 }: Props) {
   const [contactoOpen, setContactoOpen] = useState(false);
   const [listaEsperaOpen, setListaEsperaOpen] = useState(false);
   const [optimisticEtapa, setOptimisticEtapa] = useState<EtapaCRM | null>(null);
   const [lossReasonOpen, setLossReasonOpen] = useState(false);
   const [hcOpen, setHcOpen] = useState(false);
+  const [turnoOpen, setTurnoOpen] = useState(false);
+  const [presupuestoOpen, setPresupuestoOpen] = useState(false);
   const [archivarOpen, setArchivarOpen] = useState(false);
 
+  const qc = useQueryClient();
   const { mutate: updateEtapa } = useUpdateEtapaCRM();
   const { mutate: archivar, isPending: archivando } = useUpdateCrmArchivo();
   const profesionalId = useEffectiveProfessionalId();
 
+  // Load professional catalog for presupuesto prefill (D-07/STEPPER-04).
+  // Hooks must be called before the early return.
+  const { data: catalogoCirugias = [] } = useCirugiasCatalogo(profesionalId ?? undefined);
+  const { data: catalogoTratamientos = [] } = useTratamientosProfesional(false, profesionalId ?? undefined);
+
   if (!patient) return null;
+
+  // Build initialItems by matching patient.procedimiento against the professional's catalog (D-07).
+  // Match is case-insensitive and uses substring matching to handle partial procedure names.
+  const initialItems: PresupuestoItemInput[] = (() => {
+    const proc = patient.procedimiento?.toLowerCase().trim() ?? "";
+    const matches: PresupuestoItemInput[] = [];
+
+    for (const c of catalogoCirugias) {
+      if (proc && c.nombre.toLowerCase().includes(proc) || proc && proc.includes(c.nombre.toLowerCase())) {
+        matches.push({ descripcion: c.nombre, precioTotal: c.precioARS ?? 0 });
+      }
+    }
+    for (const t of catalogoTratamientos) {
+      if (proc && t.nombre.toLowerCase().includes(proc) || proc && proc.includes(t.nombre.toLowerCase())) {
+        matches.push({ descripcion: t.nombre, precioTotal: t.precio ?? 0 });
+      }
+    }
+
+    if (matches.length > 0) return matches;
+    // Fallback: no catalog match — use the raw procedimiento string as a free-text item
+    if (patient.procedimiento) return [{ descripcion: patient.procedimiento, precioTotal: 0 }];
+    return [{ descripcion: "", precioTotal: 0 }];
+  })();
 
   function handleStepClick(targetEtapa: EtapaCRM) {
     if (targetEtapa === patient!.etapaCRM || targetEtapa === optimisticEtapa) return;
@@ -92,8 +129,9 @@ export function CardActionsSheet({
   }
 
   function handlePresupuestoClick() {
-    onOpenChange(false);
-    onOpenDrawerWithView(patient!.id, "presupuestos");
+    // D-08/D-09: open inline modal instead of navigating out of the CRM.
+    // GenerarPresupuestoModal reuses the existing modal with prefilled initialItems from catalog.
+    setPresupuestoOpen(true);
   }
 
   return (
@@ -123,6 +161,9 @@ export function CardActionsSheet({
             onClickEtapa={handleStepClick}
             onPresupuestoClick={handlePresupuestoClick}
             onHCClick={profesionalId ? () => setHcOpen(true) : undefined}
+            pasos={patient.pasos}
+            flujo={patient.flujo}
+            onCirugiaClick={profesionalId ? () => setTurnoOpen(true) : undefined}
           />
         </div>
 
@@ -190,6 +231,26 @@ export function CardActionsSheet({
           onOpenChange={setHcOpen}
           pacienteId={patient.id}
           profesionalId={profesionalId ?? ""}
+          onSaved={() => qc.invalidateQueries({ queryKey: ["crm-kanban"] })}
+        />
+        <SurgeryAppointmentModal
+          open={turnoOpen}
+          onOpenChange={setTurnoOpen}
+          pacienteId={patient.id}
+          pacienteNombre={patient.nombreCompleto}
+        />
+        {/* Presupuesto prellenado con ítems del catálogo (D-07/D-08/STEPPER-04).
+            onClose e onCreated invalidan crm-kanban para que pasos.presupuesto se re-coloree. */}
+        <GenerarPresupuestoModal
+          open={presupuestoOpen}
+          onClose={() => {
+            setPresupuestoOpen(false);
+            qc.invalidateQueries({ queryKey: ["crm-kanban"] });
+          }}
+          pacienteId={patient.id}
+          profesionalId={profesionalId ?? ""}
+          initialItems={initialItems}
+          onCreated={() => qc.invalidateQueries({ queryKey: ["crm-kanban"] })}
         />
 
         {/* Dialog de confirmación para archivar del embudo */}

@@ -61,6 +61,10 @@ type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   defaultDate?: Date;
+  /** When provided, the patient is pre-selected and the autocomplete is hidden (CRM flow). */
+  pacienteId?: string;
+  /** Display name for the pre-selected patient. */
+  pacienteNombre?: string;
 };
 
 const TIPOS_ANESTESIA: { value: TipoAnestesia; label: string }[] = [
@@ -75,6 +79,8 @@ export default function SurgeryAppointmentModal({
   open,
   onOpenChange,
   defaultDate,
+  pacienteId: pacienteIdProp,
+  pacienteNombre: pacienteNombreProp,
 }: Props) {
   const qc = useQueryClient();
   const effectiveProfessionalId = useEffectiveProfessionalId();
@@ -113,6 +119,14 @@ export default function SurgeryAppointmentModal({
     }
   }, [open, defaultDate, setValue]);
 
+  // Seed pre-selected patient when opened from CRM (D-09).
+  useEffect(() => {
+    if (open && pacienteIdProp) {
+      setValue("pacienteId", pacienteIdProp);
+      setValue("pacienteNombre", pacienteNombreProp ?? "");
+    }
+  }, [open, pacienteIdProp, pacienteNombreProp, setValue]);
+
   useEffect(() => {
     if (!open) {
       reset();
@@ -149,6 +163,8 @@ export default function SurgeryAppointmentModal({
     onSuccess: () => {
       toast.success("Cirugía programada correctamente");
       qc.invalidateQueries({ queryKey: ["turnos"] });
+      // Invalidate CRM kanban so pasos.cirugia flips to 'completo' and the stepper re-colors.
+      qc.invalidateQueries({ queryKey: ["crm-kanban"] });
       onOpenChange(false);
       reset();
     },
@@ -196,23 +212,29 @@ export default function SurgeryAppointmentModal({
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-2">
-          {/* Paciente */}
+          {/* Paciente — read-only when pre-selected from CRM (D-09) */}
           <div className="space-y-1">
             <Label>Paciente *</Label>
-            <AutocompletePaciente
-              value={pacienteNombre}
-              avatarUrl={pacienteFotoUrl}
-              onClear={() => {
-                setValue("pacienteId", "");
-                setValue("pacienteNombre", "");
-                setPacienteFotoUrl(null);
-              }}
-              onSelect={(pac) => {
-                setValue("pacienteId", pac.id);
-                setValue("pacienteNombre", pac.nombreCompleto);
-                setPacienteFotoUrl(pac.fotoUrl || null);
-              }}
-            />
+            {pacienteIdProp ? (
+              <div className="h-10 px-3 py-2 rounded-md border border-input bg-muted text-sm flex items-center">
+                {pacienteNombreProp || pacienteIdProp}
+              </div>
+            ) : (
+              <AutocompletePaciente
+                value={pacienteNombre}
+                avatarUrl={pacienteFotoUrl}
+                onClear={() => {
+                  setValue("pacienteId", "");
+                  setValue("pacienteNombre", "");
+                  setPacienteFotoUrl(null);
+                }}
+                onSelect={(pac) => {
+                  setValue("pacienteId", pac.id);
+                  setValue("pacienteNombre", pac.nombreCompleto);
+                  setPacienteFotoUrl(pac.fotoUrl || null);
+                }}
+              />
+            )}
           </div>
 
           {/* Procedimiento */}

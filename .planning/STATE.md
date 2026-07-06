@@ -1,17 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.13
-milestone_name: Embudo CRM Accionable
-status: shipped
-stopped_at: v1.13 milestone archived
-last_updated: "2026-07-06T00:00:00.000Z"
-last_activity: 2026-07-05 -- v1.13 shipped and archived
+milestone: v1.14
+milestone_name: Portal — Firma Gated e Indicaciones Separadas
+status: planning
+last_updated: "2026-07-06T20:14:29.405Z"
+last_activity: 2026-07-06
 progress:
-  total_phases: 4
-  completed_phases: 4
-  total_plans: 8
-  completed_plans: 8
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -25,12 +24,10 @@ See: .planning/PROJECT.md (updated 2026-07-05 after v1.13 milestone)
 
 ## Current Position
 
-Milestone: v1.13 Embudo CRM Accionable — ✅ SHIPPED 2026-07-05
-Phases: 4/4 complete (57–60), 8/8 plans
-Status: Milestone archived; requirements fresh para el próximo milestone
-Last activity: 2026-07-05 -- v1.13 shipped and archived
-
-Progress: [██████████] 100%
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-07-06 — Milestone v1.14 started
 
 ## Accumulated Context
 

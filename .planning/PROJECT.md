@@ -10,6 +10,15 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 
 **Que un cirujano plástico cierre más cirugías** — el sistema debe hacer visible qué pacientes seguir, cuándo contactarlos y cómo, de la manera más automatizada y simple posible para profesionales sin background en marketing o sistemas.
 
+## Current Milestone: v1.14 Portal — Firma Gated e Indicaciones Separadas
+
+**Goal:** Endurecer el flujo legal del portal del paciente (firmar el consentimiento requiere abrir el PDF y tildar leído), separar las indicaciones en su propia sección con acuse de lectura registrado en el perfil, y cerrar la deuda W-1 (el board CRM refleja consentimiento/indicaciones completos vía invalidación inmediata).
+
+**Target features:**
+- **Gate de firma del consentimiento:** el paciente debe abrir/ver el PDF del consentimiento **y** tildar "Leí el consentimiento" para habilitar la firma. Se desacopla del checkbox de indicaciones (hoy la firma depende de `indicacionesLeidas`).
+- **Indicaciones como sección aparte:** separada del consentimiento; se marcan como leídas al abrir el link (sin firma dibujada); el acuse se registra en el perfil del paciente.
+- **Cierre W-1:** el board del staff refleja consentimiento/indicaciones completos vía invalidación `['crm-kanban']` + refetch on focus (sin infra nueva).
+
 ## Requirements
 
 ### Validated
@@ -121,12 +130,11 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 
 ### Active
 
-**Sin milestone activo.** v1.13 shipped 2026-07-05. Próximo paso: `/gsd:new-milestone` para definir requisitos frescos.
+**Milestone activo: v1.14 Portal — Firma Gated e Indicaciones Separadas** (ver `## Current Milestone` arriba). Requisitos frescos en `.planning/REQUIREMENTS.md`.
 
 **Candidatos para próximos milestones / diferidos:**
 - [ ] Dashboard de estadísticas ejecutivas con reportes exportables y comparativas por período (REPORT-F01, diferido de v1.13)
 - [ ] Automatizaciones de seguimiento: triggers basados en tiempo/etapa (ej. "30 días sin respuesta → mensaje automático") (REPORT-F02, diferido de v1.13)
-- [ ] Hook de invalidación `crm-kanban` en completar consentimiento/indicaciones para board-hide inmediato (EMBUDO-04) — hoy depende del portal v1.12 + refetch pasivo (W-1 v1.13)
 - [ ] Módulos financieros optimizados e interconectados con CRM
 - [ ] Tipos de turno personalizados por profesional desde Configuración (TIPO-F01) + color por tipo en calendario (TIPO-F02) — diferido de v1.8
 - [ ] CRM: vista de pacientes archivados con desarchivar en lote (CRM-F01) + archivado automático tras N días en PERDIDO (CRM-F02) — diferido de v1.8
@@ -335,4 +343,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-07-05 after v1.13 milestone — Embudo CRM Accionable shipped (4 fases 57–60, 8 planes, 19 tareas, 15/15 reqs, audit `tech_debt` 0 blockers). Backend enriquecido (`computePasosCrm`, etapa "Cirugía Realizada", `@Cron` auto-move, guard relajado), board reordenado con indicadores/etiquetas, stepper accionable con 3 quick-actions e invalidación `crm-kanban`, y estadísticas sobre registros reales independientes de `etapaCRM`. Diferido: browser UAT Phase 58 + display KPI cards Phase 60. Próximo: `/gsd:new-milestone`.*
+*Last updated: 2026-07-06 after starting milestone v1.14 — Portal: Firma Gated e Indicaciones Separadas (gate de firma abrir-PDF+tildar, indicaciones como sección aparte con acuse en perfil, cierre W-1 invalidación crm-kanban). Milestone previo: 2026-07-05 after v1.13 milestone — Embudo CRM Accionable shipped (4 fases 57–60, 8 planes, 19 tareas, 15/15 reqs, audit `tech_debt` 0 blockers). Backend enriquecido (`computePasosCrm`, etapa "Cirugía Realizada", `@Cron` auto-move, guard relajado), board reordenado con indicadores/etiquetas, stepper accionable con 3 quick-actions e invalidación `crm-kanban`, y estadísticas sobre registros reales independientes de `etapaCRM`. Diferido: browser UAT Phase 58 + display KPI cards Phase 60. Próximo: `/gsd:new-milestone`.*

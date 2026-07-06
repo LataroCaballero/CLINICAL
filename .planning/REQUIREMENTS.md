@@ -52,26 +52,24 @@ Diferidos (ver PROJECT.md → Candidatos):
 
 ## Traceability
 
-Se completa durante la creación del roadmap.
-
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CONS-09 | — | Pending |
-| CONS-10 | — | Pending |
-| CONS-11 | — | Pending |
-| CONS-12 | — | Pending |
-| INDIC-01 | — | Pending |
-| INDIC-02 | — | Pending |
-| INDIC-03 | — | Pending |
-| INDIC-04 | — | Pending |
-| INDIC-05 | — | Pending |
-| EMBUDO-06 | — | Pending |
+| CONS-09 | Phase 62 | Pending |
+| CONS-10 | Phase 62 | Pending |
+| CONS-11 | Phase 61 | Pending |
+| CONS-12 | Phase 62 | Pending |
+| INDIC-01 | Phase 62 | Pending |
+| INDIC-02 | Phase 62 | Pending |
+| INDIC-03 | Phase 61 | Pending |
+| INDIC-04 | Phase 61 | Pending |
+| INDIC-05 | Phase 62 | Pending |
+| EMBUDO-06 | Phase 62 | Pending |
 
 **Coverage:**
 - v1.14 requirements: 10 total
-- Mapped to phases: 0 (pending roadmap)
-- Unmapped: 10 ⚠️
+- Mapped to phases: 10/10 ✓
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-07-06*
-*Last updated: 2026-07-06 after initial definition*
+*Last updated: 2026-07-06 — traceability filled after roadmap creation*

@@ -16,6 +16,7 @@
 - ✅ **v1.11 HC Completa en Ficha de Paciente** — Fase 50 (shipped 2026-06-24)
 - ✅ **v1.12 Prequirúrgico Estructurado + Portal del Paciente** — Fases 51–56 (shipped 2026-07-02)
 - ✅ **v1.13 Embudo CRM Accionable** — Fases 57–60 (shipped 2026-07-05)
+- 🚧 **v1.14 Portal — Firma Gated e Indicaciones Separadas** — Fases 61–62 (en progreso)
 
 ## Phases
 
@@ -197,6 +198,40 @@ Full details: `.planning/milestones/v1.13-ROADMAP.md`
 
 </details>
 
+### 🚧 v1.14 Portal — Firma Gated e Indicaciones Separadas (En Progreso)
+
+**Milestone Goal:** Endurecer el flujo legal del portal del paciente — firmar el consentimiento requiere abrir el PDF y tildar leído; las indicaciones se separan en su propia sección con acuse de lectura registrado en el perfil; y el board CRM refleja ambos estados sin recarga manual (cierre deuda W-1).
+
+- [ ] **Phase 61: Backend — Schema, Decoupling e Indicaciones** - Migración de campo, desacoplamiento de `firmarConsentimiento` de `indicacionesLeidas`, endpoint de acuse, y ajuste de `computePasosCrm`
+- [ ] **Phase 62: Portal + Staff Frontend — Gate de Firma, Secciones Separadas y Sincronización** - Gate open-PDF + checkbox en consentimiento, sección de indicaciones separada con acuse automático al abrir, indicador staff con fecha, board sync vía refetch on focus
+
+## Phase Details
+
+### Phase 61: Backend — Schema, Decoupling e Indicaciones
+**Goal**: El backend almacena correctamente el timestamp de lectura de indicaciones en el perfil del paciente, desacopla `firmarConsentimiento` de cualquier estado de indicaciones, y ajusta `computePasosCrm` para derivar el paso `indicacionesPreop` del campo del perfil.
+**Depends on**: Phase 60 (v1.13 backend entregado)
+**Requirements**: CONS-11, INDIC-03, INDIC-04
+**Success Criteria** (what must be TRUE):
+  1. `firmarConsentimiento` acepta y procesa la firma sin requerir `indicacionesLeidas=true` ni leer ni escribir `ConsentimientoFirmado.indicacionesLeidasAt`
+  2. Existe un endpoint portal-scoped que registra el acuse de lectura de indicaciones con timestamp en `Paciente.indicacionesLeidasAt` (campo nuevo en BD)
+  3. `computePasosCrm` marca el paso `indicacionesPreop` como completo a partir de `Paciente.indicacionesLeidasAt != null`, no del acto de firma del consentimiento
+  4. La migración de schema sigue el patrón pgBouncer (`prisma diff + db execute + migrate resolve`) y no rompe registros de consentimiento existentes
+**Plans**: TBD
+
+### Phase 62: Portal + Staff Frontend — Gate de Firma, Secciones Separadas y Sincronización
+**Goal**: El portal del paciente presenta consentimiento e indicaciones como secciones independientes con los gates correctos; el staff ve el estado de indicaciones en el stepper del sheet; y el board CRM refleja los cambios completados desde el portal sin recarga manual.
+**Depends on**: Phase 61
+**Requirements**: CONS-09, CONS-10, CONS-12, INDIC-01, INDIC-02, INDIC-05, EMBUDO-06
+**Success Criteria** (what must be TRUE):
+  1. El paciente no puede firmar un consentimiento de zona sin haber abierto su PDF — el botón de firma permanece deshabilitado hasta que el PDF sea abierto
+  2. Además de abrir el PDF, el paciente debe marcar "Leí el consentimiento" para habilitar el botón de firma (ambas condiciones requeridas, sin dependencia de indicaciones)
+  3. La sección de consentimiento del portal muestra únicamente los PDFs de consentimiento por zona, sin links ni contenido de indicaciones
+  4. Las indicaciones preoperatorias aparecen en una sección propia y separada del portal; al abrirlas, el portal dispara automáticamente el endpoint de acuse sin paso adicional del paciente
+  5. El stepper/sheet del paciente en el board del staff muestra si el paciente leyó las indicaciones, con la fecha de lectura cuando corresponde
+  6. El board CRM refleja consentimiento firmado e indicaciones leídas actualizados sin que el staff recargue la página (refetch on window focus activo en el query `['crm-kanban']`)
+**Plans**: TBD
+**UI hint**: yes
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -263,6 +298,8 @@ Full details: `.planning/milestones/v1.13-ROADMAP.md`
 | 58. Kanban Board — Columnas, Tarjetas y Etiquetas | v1.13 | 1/1 | Complete | 2026-07-04 |
 | 59. Stepper Accionable | v1.13 | 3/3 | Complete | 2026-07-05 |
 | 60. Estadísticas sobre Registros Reales | v1.13 | 2/2 | Complete | 2026-07-05 |
+| 61. Backend — Schema, Decoupling e Indicaciones | v1.14 | 0/TBD | Not started | - |
+| 62. Portal + Staff Frontend — Gate, Secciones y Sincronización | v1.14 | 0/TBD | Not started | - |
 
 ---
-*Roadmap initialized: 2026-02-23 | v1.0 shipped: 2026-03-03 | v1.1 shipped: 2026-03-16 | v1.2 shipped: 2026-03-31 | v1.3 shipped: 2026-04-09 | v1.4 shipped: 2026-04-20 | v1.5 shipped: 2026-05-13 | v1.6 shipped: 2026-05-23 | v1.7 shipped: 2026-05-28 | v1.8 shipped: 2026-06-09 | v1.9 shipped: 2026-06-13 | v1.10 shipped: 2026-06-22 | v1.11 shipped: 2026-06-24 | v1.12 shipped: 2026-07-02 | v1.13 shipped: 2026-07-05*
+*Roadmap initialized: 2026-02-23 | v1.0 shipped: 2026-03-03 | v1.1 shipped: 2026-03-16 | v1.2 shipped: 2026-03-31 | v1.3 shipped: 2026-04-09 | v1.4 shipped: 2026-04-20 | v1.5 shipped: 2026-05-13 | v1.6 shipped: 2026-05-23 | v1.7 shipped: 2026-05-28 | v1.8 shipped: 2026-06-09 | v1.9 shipped: 2026-06-13 | v1.10 shipped: 2026-06-22 | v1.11 shipped: 2026-06-24 | v1.12 shipped: 2026-07-02 | v1.13 shipped: 2026-07-05 | v1.14 started: 2026-07-06*

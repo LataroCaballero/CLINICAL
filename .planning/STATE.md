@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.13
 milestone_name: Embudo CRM Accionable
-status: completed
-stopped_at: Phase 59 context gathered
-last_updated: "2026-07-05T22:07:33.776Z"
-last_activity: 2026-07-05 -- Phase 60 marked complete
+status: shipped
+stopped_at: v1.13 milestone archived
+last_updated: "2026-07-06T00:00:00.000Z"
+last_activity: 2026-07-05 -- v1.13 shipped and archived
 progress:
   total_phases: 4
   completed_phases: 4
@@ -18,72 +18,51 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-07-03)
+See: .planning/PROJECT.md (updated 2026-07-05 after v1.13 milestone)
 
 **Core value:** Que un cirujano plástico cierre más cirugías — el sistema hace visible qué pacientes seguir, cuándo y cómo, de la manera más automatizada posible
-**Current focus:** Phase 60 — estad-sticas-sobre-registros-reales
+**Current focus:** Planificar el próximo milestone (`/gsd:new-milestone`)
 
 ## Current Position
 
-Phase: 60 — COMPLETE
-Plan: 2 of 2
-Status: Phase 60 complete
-Last activity: 2026-07-05 -- Phase 60 marked complete
+Milestone: v1.13 Embudo CRM Accionable — ✅ SHIPPED 2026-07-05
+Phases: 4/4 complete (57–60), 8/8 plans
+Status: Milestone archived; requirements fresh para el próximo milestone
+Last activity: 2026-07-05 -- v1.13 shipped and archived
 
-Progress: [█████████░] 88%
-
-## Performance Metrics
-
-**Velocity:**
-
-- Total plans completed this milestone: 0
-- Average duration: ~4 min/plan (carryover from v1.12)
-- Total execution time: 0 min
-
-*Updated after each plan completion*
+Progress: [██████████] 100%
 
 ## Accumulated Context
 
 ### Decisions
 
-Full v1.12 decision log en `.planning/PROJECT.md` (Key Decisions) y `.planning/milestones/v1.12-ROADMAP.md`.
-
-Key pending decision for Phase 57: Reuse/rename `PROCEDIMIENTO_REALIZADO` enum value vs. add `CIRUGIA_REALIZADA` — impacts Prisma schema migration and all consumers of the enum (dashboard funnel, frontend constants, STEPPER_CHAIN).
-
-- [Phase ?]: mapeo paso→etapa en EtapaStepper Phase 59-01
-- [Phase ?]: filtrado client-side D-05 en EtapaStepper Phase 59-01
-
-### Carry-forward from v1.12
-
-- `getKanban` (`pacientes.service.ts:619`) hoy NO expone: `esCirugia`, `Cirugia.fecha/estado`, ni estado de pasos (HC/presupuesto/consentimiento/indicaciones). Phase 57 lo amplía.
-- Forward-only guard duplicado en `turnos.service.ts:30` y `presupuestos.service.ts:26` — EMBUDO-05 relaja para movimientos de nuevo turno (no para auto-transiciones del sistema).
-- `STEPPER_CHAIN` hardcoded en `EtapaStepper.tsx` incluye `PROCEDIMIENTO_REALIZADO` — actualizar si se renombra la etapa.
-- `HCCreatorDialog` (wizard HC), `GenerarPresupuestoModal` (presupuesto), `NuevoTurnoModal` (agenda) son los 3 targets de quick-actions del stepper (Phase 59).
+Full decision log en `.planning/PROJECT.md` (Key Decisions). Decisiones de v1.13 archivadas en `.planning/milestones/v1.13-ROADMAP.md` (Milestone Summary → Key Decisions).
 
 ### Known Tech Debt (carry-forward)
 
+- **Introducido en v1.13 (advisory):** `crearTurno` degrada etapas avanzadas a `TURNO_AGENDADO` en cualquier turno (intencional D-09/EMBUDO-05); paso 'cirugia' cuenta cirugías CANCELADA/SUSPENDIDA como completas (divergencia con scheduler); consentimiento/indicaciones sin hook de invalidación `crm-kanban` (board-hide EMBUDO-04 depende del portal v1.12 + refetch pasivo, by design D-04).
+- **Pre-existente / carried:** `todo cr-01-indicaciones-url-validation.md` (`indicacionesUrl` sin validación server-side, stored-XSS pre-Phase-54); `quick-task 1-eliminar-dropdown-tipo-de-consulta-de-hc` incompleto.
 - HistorialClinicoPanel y TurnoHCModal no migrados a HCEntryContent.tsx (diferido).
 - AppointmentDetailModal y CalendarGrid no migrados a getEstadoTurnoChip (diferido).
 - STOCK-03: FACTURADOR excluido del backend de ordenes-consumo pero accede desde frontend.
 - EncryptionService dev fallback key — configurar ENCRYPTION_KEY en .env prod.
 - console.log('DTO RECIBIDO') en pacientes.service.ts — expone PII en logs.
+- **Gate legal pre-go-live (v1.12):** revisión del flujo de consentimiento (Ley 25506 / Ley 26529) antes del primer paciente quirúrgico real.
 
 ## Deferred Items
 
-Items de v1.12 diferidos al cierre (audit PASSED; son stubs de verificación humana, no bloqueantes):
+Items diferidos al cierre de v1.13 (audit `tech_debt`; son stubs de verificación humana/browser + deuda carried, no bloqueantes):
 
 | Category | Item | Status |
 |----------|------|--------|
-| uat_gap | 51-HUMAN-UAT | partial |
-| uat_gap | 52-HUMAN-UAT | partial |
-| uat_gap | 55-HUMAN-UAT | partial |
-| verification_gap | 52/53/54/55-VERIFICATION | human_needed |
-| verification_gap | 10/27/28/29/30/49-VERIFICATION (carryovers) | human_needed |
+| uat_gap | 58-HUMAN-UAT (5 escenarios: orden columnas, indicador naranja, etiquetas contacto, hide todosCompletos) | partial |
+| verification_gap | 58-VERIFICATION | human_needed |
+| verification_gap | 60 frontend KPI cards display (backend 8/8 + SECURED) | manual pending |
 | quick_task | 1-eliminar-dropdown-tipo-de-consulta-de-hc | missing |
-| Phase 59-stepper-accionable P01 | 18 | 3 tasks | 1 files |
+| todo | cr-01-indicaciones-url-validation (stored-XSS pre-Phase-54, carried) | pending |
 
 ## Session Continuity
 
-Last session: 2026-07-05T03:21:41.304Z
-Stopped at: Phase 59 context gathered
+Last session: 2026-07-05T22:07:33.776Z
+Stopped at: v1.13 milestone archived
 Resume file: None

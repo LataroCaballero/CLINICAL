@@ -4,6 +4,48 @@
 
 ---
 
+## Milestone: v1.13 — Embudo CRM Accionable
+
+**Shipped:** 2026-07-05
+**Phases:** 4 (57–60) | **Plans:** 8 | **Timeline:** 3 días (2026-07-03 → 2026-07-05)
+**Stats:** 19 archivos de código | +1,152 / −77 líneas (backend/frontend src) | 19 tareas | 15/15 requisitos | audit `tech_debt` (11/11 wired, 2/2 flujos E2E, 0 blockers)
+
+### What Was Built
+- **Backend enriquecido — etapa, pasos y guards (Phase 57)**: helper puro `computePasosCrm` (TDD) que expone el estado de 5 pasos + `todosCompletos` por paciente en `getKanban`; etapa "Cirugía Realizada" reutilizando el enum `PROCEDIMIENTO_REALIZADO` como columna; `@Cron` diario de auto-move sobre fecha de cirugía pasada (forward-only); guard forward-only relajado para reactivar a `TURNO_AGENDADO` al crear turno desde cualquier etapa
+- **Board reordenado con indicadores y etiquetas (Phase 58)**: `Sin clasificar` al final, `Cirugía Realizada` tras Confirmado, operados completos ocultos (tagueados para stats), indicador naranja en operados con pendientes, etiquetas "Espera fecha"/"Cirugía programada" en Confirmado — frontend puro consumiendo el payload de Phase 57 1:1
+- **Stepper accionable (Phase 59)**: coloreo verde/naranja por estado de paso, 3 quick-actions cableadas (`HCCreatorDialog`, `GenerarPresupuestoModal` prellenado desde catálogo, `SurgeryAppointmentModal` → `POST /turnos/cirugia`) con invalidación `['crm-kanban']` por acción; consentimiento/indicaciones como sub-indicadores read-only; verificación humana E2E aprobada en 59-03
+- **Estadísticas sobre registros reales (Phase 60)**: `getKpis` calcula `cirugiasRealizadas`/`tratamientosRealizados` sobre `Cirugia`/`HistoriaClinicaEntrada` scopeados por `profesionalId` e independientes de `etapaCRM`; dos `KpiCard`s nuevos + grilla reflowada a 6; spec del invariante (8/8) + SECURED (5/5)
+
+### What Worked
+- **Contrato backend primero, frontend consume 1:1**: Phase 57 fijó la forma del payload (`pasos`/`todosCompletos`) vía un helper puro testeable; Phases 58 y 59 se construyeron contra ese contrato sin re-derivar lógica de pasos. El integration checker confirmó 11/11 wired sin sorpresas
+- **Reutilizar el enum en vez de migrar**: elegir `PROCEDIMIENTO_REALIZADO` como etapa "Cirugía Realizada" (relabel UI) evitó una migración de enum y tocar todos los consumidores (funnel, STEPPER_CHAIN, constantes). Decisión de bajo riesgo que aceleró Phase 57
+- **Stats como invariante asertado, no como conteo ad-hoc**: el spec backend Test A ("la etapa no afecta el conteo") capturó el requisito real (STATS-01/02) como propiedad, no como caso puntual — más robusto y auto-documentado
+- **Phase 59 forzó su propia UAT humana (59-03)**: a diferencia de Phase 58/60, la fase del stepper agendó la verificación humana como plan explícito y la cerró aprobada — el modelo correcto de "verificar por fase, no acumular al cierre"
+- **Archivado del milestone a mano**: sabiendo del bug recurrente de `milestone.complete` (one-liners basura, 7 milestones seguidos), esta vez escribí MILESTONES.md/archivos directo desde los one-liners de los SUMMARY — que esta vez SÍ estaban bien poblados. Cierre limpio sin pelear con el CLI
+
+### What Was Inefficient
+- **Dos de cuatro fases cerraron sin UAT humana (58, 60)**: mismo patrón que v1.12 — la verificación de display en browser se difirió al cierre (5 escenarios de Phase 58 + KPI cards de Phase 60). El código está verificado y wired, pero la confirmación visual se volvió a acumular en vez de cerrarse fase a fase. Phase 59 lo hizo bien; 58 y 60 no
+- **Seam de consentimiento/indicaciones sin resolver (W-1)**: EMBUDO-04 (ocultar operados completos) depende, para pacientes cuyo único pendiente es consent/indicaciones, del portal v1.12 externo + refetch pasivo en vez de invalidación inmediata. Quedó como decisión de scope (D-04) pero es un borde que un usuario podría notar
+- **Deuda carried que reaparece en cada audit de apertura**: el `quick-task 1-eliminar-dropdown` y el TODO `cr-01-indicaciones-url-validation` (pre-Phase-54) siguen ensuciando el audit de artefactos abiertos milestone tras milestone — el mismo ruido señalado en la retro de v1.12, aún sin `/gsd:cleanup`
+
+### Patterns Established
+- **Helper puro de estado de dominio como contrato entre capas**: `computePasosCrm` (sin deps NestJS/Prisma, TDD) computa el estado de pasos una vez en backend; board y stepper lo consumen idéntico. Extiende el patrón `*.helpers.ts` (v1.8 `resolverNuevoFlujo`, v1.9 `construirContenidoPrimeraVez`, v1.10 `resumirTratamientosDeContenido`) a lógica compartida frontend/backend vía el payload
+- **Invariante-como-spec para métricas**: cuando un requisito es "X no debe cambiar cuando Y cambia", asertarlo como test de propiedad (etapa-no-afecta-conteo) en vez de un conteo puntual
+- **Relabel de enum > migración de enum**: para agregar una "etapa"/estado que ya existe semánticamente, reutilizar el valor del enum y cambiar solo el label de UI evita migración + actualización de consumidores
+
+### Key Lessons
+- **La UAT humana se cierra por fase o no se cierra**: v1.12 lo dijo y v1.13 lo repitió — 2/4 fases volvieron a diferir la verificación visual. Phase 59 demostró el contraataque: un plan de UAT explícito dentro de la fase. Para fases con superficie visual (board, KPI cards), agendar la verificación como gate de fase, no de milestone
+- **Los bordes "by design" merecen un ticket visible, no solo una nota de audit**: el seam W-1 (consent/indicaciones sin invalidación) quedó registrado en el audit pero es fácil de perder; promoverlo a candidato explícito de próximo milestone (ya hecho en PROJECT.md Active) evita que se entierre
+- **Evitar el CLI roto es más barato que pelearlo**: tras 7 milestones sabiendo que `milestone.complete` extrae one-liners basura, archivar a mano desde SUMMARY bien poblados fue el camino rápido. Vale la pena, en paralelo, arreglar la plantilla de SUMMARY/extractor de una vez
+- **Un milestone chico y acotado (3 días, 8 planes) se ejecuta casi sin fricción**: scope estrecho + contrato backend claro + reuso de componentes existentes = 15/15 reqs sin replanning. El tamaño ayuda a la previsibilidad
+
+### Cost Observations
+- Milestone chico (4 fases, 8 planes, 19 tareas, +1.15k LOC) en 3 días — de los más compactos, comparable a v1.10 (2 fases, 3 planes, 1 día)
+- Mix de TDD (computePasosCrm, spec del invariante de stats 8/8) + ensamblaje de componentes existentes (HCCreatorDialog, GenerarPresupuestoModal, SurgeryAppointmentModal ya existían)
+- Cierre con 4 ítems diferidos (2 verificación humana/browser + 2 deuda carried) — aceptado con audit `tech_debt` de respaldo, 0 blockers
+
+---
+
 ## Milestone: v1.12 — Prequirúrgico Estructurado + Portal del Paciente
 
 **Shipped:** 2026-07-02
@@ -469,6 +511,7 @@
 | v1.10 Refinamiento Planilla Tratamientos | 2 | 3 | 1 día | ~variable | Read-path/write-path/frontend en fases secuenciales; extractor puro + TDD; audit PASSED |
 | v1.11 HC Completa en Ficha de Paciente | 1 | 1 | 1 día | ~variable | Milestone mínimo solo-frontend — port de render con componente compartido; sin audit (verificado vía VERIFICATION + visual) |
 | v1.12 Prequirúrgico + Portal del Paciente | 6 | 30 | 8 días | ~variable | Milestone más grande desde v1.5; schema big-bang up-front + portal público seguro por capas; audit PASSED; 17 ítems de verificación humana diferidos |
+| v1.13 Embudo CRM Accionable | 4 | 8 | 3 días | ~variable | Milestone chico y acotado; contrato backend (`computePasosCrm`) consumido 1:1 por board/stepper; reuso de enum en vez de migración; audit `tech_debt` 0 blockers; 4 ítems diferidos (2 UAT humana + 2 deuda carried) |
 
 ### Cumulative Quality
 
@@ -487,15 +530,17 @@
 | v1.10 | 14 TDD tests (resumirTratamientosDeContenido — 25/25 pass) | <10% | ninguna |
 | v1.11 | ninguno (cambio puramente de presentación) | <10% | ninguna |
 | v1.12 | TDD tests (brute-force lock 11 casos, catalogo-hc 101 total) | <10% | pdf-lib 1.17.1, @nestjs/throttler (cableado), multer + @types/multer |
+| v1.13 | TDD tests (computePasosCrm; spec del invariante etapa-no-afecta-conteo 8/8 + SECURED 5/5) | <10% | ninguna |
 
 ### Recurring Process Debt
 
-| Issue | v1.1 | v1.2 | v1.4 | v1.5 | v1.6 | v1.7 | v1.8 | v1.9 | v1.10 | v1.11 | v1.12 | Fix |
-|-------|------|------|------|------|------|------|------|------|-------|-------|-----------|------|
-| MILESTONES.md accomplishments vacíos | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | Actualizar formato SUMMARY.md con `one_liner:` field |
-| STATE.md progress desactualizado durante ejecución | ✗ | parcial | parcial | parcial | parcial | parcial | parcial | parcial | parcial | parcial | parcial | GSD executor actualiza STATE al final de cada plan |
-| Integration bugs detectados tarde (audit, no verify) | — | ✗ | ✓ | ✓ | sin audit | ✓ | sin audit | ✓ | ✓ | sin audit | ✓ | Audit antes de complete-milestone elimina retrabajo |
-| Audit saltado antes de archivar | — | — | — | — | ✗ | ✓ | ✗ | ✓ | ✓ | ✗ | ✓ | Correr /gsd:audit-milestone antes de /gsd:complete-milestone |
-| Progress table ROADMAP desalineada durante ejecución | — | — | — | — | — | — | ✗ | ✗ | ✗ | ✗ | ✗ | Executor debe respetar header de columnas al agregar filas |
-| CLI sobrescribe archivo milestone-scoped con snapshot completo | — | — | — | — | — | — | — | ✗ | ✗ | n/a | ✓ | `milestone complete` debería preservar el ROADMAP scoped del roadmapper |
-| CLI omite línea de Stats en MILESTONES.md | — | — | — | — | — | — | — | — | ✗ | ✗ | ✗ | `milestone complete` debería poblar Stats desde git/summaries |
+| Issue | v1.1 | v1.2 | v1.4 | v1.5 | v1.6 | v1.7 | v1.8 | v1.9 | v1.10 | v1.11 | v1.12 | v1.13 | Fix |
+|-------|------|------|------|------|------|------|------|------|-------|-------|-----------|-------|------|
+| MILESTONES.md accomplishments vacíos | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | evitado (archivado a mano) | Actualizar formato SUMMARY.md con `one_liner:` field |
+| STATE.md progress desactualizado durante ejecución | ✗ | parcial | parcial | parcial | parcial | parcial | parcial | parcial | parcial | parcial | parcial | parcial | GSD executor actualiza STATE al final de cada plan |
+| Integration bugs detectados tarde (audit, no verify) | — | ✗ | ✓ | ✓ | sin audit | ✓ | sin audit | ✓ | ✓ | sin audit | ✓ | ✓ | Audit antes de complete-milestone elimina retrabajo |
+| Audit saltado antes de archivar | — | — | — | — | ✗ | ✓ | ✗ | ✓ | ✓ | ✗ | ✓ | ✓ | Correr /gsd:audit-milestone antes de /gsd:complete-milestone |
+| Progress table ROADMAP desalineada durante ejecución | — | — | — | — | — | — | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ (normalizada a mano) | Executor debe respetar header de columnas al agregar filas |
+| CLI sobrescribe archivo milestone-scoped con snapshot completo | — | — | — | — | — | — | — | ✗ | ✗ | n/a | ✓ | evitado (archivado a mano) | `milestone complete` debería preservar el ROADMAP scoped del roadmapper |
+| CLI omite línea de Stats en MILESTONES.md | — | — | — | — | — | — | — | — | ✗ | ✗ | ✗ | evitado (archivado a mano) | `milestone complete` debería poblar Stats desde git/summaries |
+| UAT/verificación humana diferida al cierre en vez de por fase | — | — | — | — | — | ✗ | — | — | — | — | ✗ | ✗ (2/4 fases) | Agendar verificación visual como gate de fase (Phase 59 lo hizo bien) |

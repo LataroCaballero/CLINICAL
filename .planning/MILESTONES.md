@@ -1,5 +1,22 @@
 # Milestones
 
+## v1.13 Embudo CRM Accionable (Shipped: 2026-07-05)
+
+**Phases completed:** 4 phases (57–60), 8 plans, 19 tasks
+**Stats:** 3 días (2026-07-03 → 2026-07-05) | 19 archivos de código | +1,152 / −77 líneas (backend/frontend src)
+**Requirements:** 15/15 v1 completos ✓ | **Audit:** `tech_debt` (15/15 reqs code-verified, 11/11 wired, 2/2 flujos E2E, 0 blockers)
+
+**Key accomplishments:**
+
+1. **Backend enriquecido — etapa, pasos y guards (Phase 57):** helper puro `computePasosCrm` (TDD) que expone por paciente el estado de los 5 pasos (turno de cirugía con fecha/estado, entrada de HC relevante, presupuesto enviado/aceptado, consentimiento firmado, indicaciones preop) + flag `todosCompletos` en `getKanban`; la etapa "Cirugía Realizada" reutiliza el enum `PROCEDIMIENTO_REALIZADO` como columna propia; un `@Cron` diario mueve pacientes a esa etapa cuando la fecha de cirugía pasó (forward-only); y el guard forward-only se relaja para reactivar a `TURNO_AGENDADO` desde cualquier etapa al crear un turno, sin bloquear (EMBUDO-02/05).
+2. **Board reordenado con indicadores y etiquetas (Phase 58):** `Sin clasificar` pasa al final del board (solo leads sin etapa real), `Cirugía Realizada` aparece tras `Confirmado`, los operados con pasos pendientes muestran indicador naranja, los operados completos (`todosCompletos`) se ocultan del board (tagueados para stats), y las tarjetas de `Confirmado` llevan etiqueta de contacto "Espera fecha" (sin turno de cirugía) / "Cirugía programada" (con turno) — frontend puro consumiendo el payload de Phase 57 1:1 (EMBUDO-01/03/04, CONTACTO-01/02).
+3. **Stepper accionable (Phase 59):** cada paso del stepper muestra círculo verde (completo, sin acción) o naranja (pendiente); click en un paso naranja abre el modal que lo resuelve — wizard de HC (`HCCreatorDialog`), presupuesto prellenado desde el catálogo del paciente (`GenerarPresupuestoModal`) o agenda de cirugía (`SurgeryAppointmentModal`, `POST /turnos/cirugia`) — con invalidación de `['crm-kanban']` en cada acción para re-colorear; consentimiento/indicaciones como sub-indicadores de solo lectura; verificación humana E2E aprobada (STEPPER-01..06).
+4. **Estadísticas sobre registros reales (Phase 60):** `getKpis` calcula `cirugiasRealizadas` (conteo de `Cirugia`, fecha < now, notIn CANCELADA/SUSPENDIDA) y `tratamientosRealizados` (`HistoriaClinicaEntrada` TRATAMIENTO/finalizada), ambos scopeados por `profesionalId` e independientes de `etapaCRM` — el conteo no cambia si el paciente pasa a PERDIDO o es reubicado tras operarse/tratarse; dos `KpiCard`s nuevos en el dashboard con la grilla reflowada a 6 cards; backend con spec del invariante (8/8) + SECURED (5/5) (STATS-01/02).
+
+**Known deferred items at close:** 4 (see STATE.md → Deferred Items). Resumen: 2 gaps de verificación humana/browser (Phase 58 UAT 5 escenarios + Phase 58 VERIFICATION `human_needed`; código verificado y wired) + 2 ítems de deuda pre-existente carried (quick-task `1-eliminar-dropdown-tipo-de-consulta-de-hc` incompleto + TODO `cr-01-indicaciones-url-validation` stored-XSS pre-Phase-54). El audit del milestone dio `tech_debt` con 0 blockers; ninguno es defecto de código ni requisito insatisfecho.
+
+---
+
 ## v1.12 Prequirúrgico Estructurado + Portal del Paciente (Shipped: 2026-07-02)
 
 **Phases completed:** 6 phases (51–56), 30 plans, 58 tasks

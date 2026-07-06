@@ -4,7 +4,7 @@ status: pending
 created: 2026-06-30
 source: 53-REVIEW.md (CR-01) + 53-VERIFICATION.md
 severity: critical
-resolves_phase: 54
+resolves_phase: 61
 tags: [security, xss, validation, pre-phase-54-blocker]
 ---
 

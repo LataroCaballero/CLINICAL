@@ -3,8 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.14
 milestone_name: Portal — Firma Gated e Indicaciones Separadas
 status: planning
-last_updated: "2026-07-06T20:30:00.000Z"
-last_activity: 2026-07-06
+stopped_at: Phase 61 context gathered
+last_updated: "2026-07-08T22:06:15.892Z"
+last_activity: 2026-07-06 — Roadmap v1.14 creado (2 fases, Phases 61–62)
 progress:
   total_phases: 2
   completed_phases: 0
@@ -38,6 +39,7 @@ Progress: [░░░░░░░░░░] 0%
 Full decision log en `.planning/PROJECT.md` (Key Decisions). Decisiones de v1.13 archivadas en `.planning/milestones/v1.13-ROADMAP.md`.
 
 **Decisions relevantes para v1.14:**
+
 - D-04 (v1.13): consentimiento/indicaciones sin invalidación inmediata de crm-kanban — W-1 cierra en Phase 62 de v1.14 vía refetch on focus
 - Indicaciones sólo requieren acuse de lectura (no firma dibujada): campo `indicacionesLeidasAt` en `Paciente`, endpoint portal-scoped
 - Gate open-PDF es client-side (no server-side): la prueba legal es firma + checkbox CONS-10
@@ -68,6 +70,6 @@ Items diferidos al cierre de v1.13:
 
 ## Session Continuity
 
-Last session: 2026-07-06T20:30:00.000Z
-Stopped at: Roadmap v1.14 creado — 2 fases (61–62), 10/10 requisitos mapeados
-Resume file: None
+Last session: 2026-07-08T22:06:15.889Z
+Stopped at: Phase 61 context gathered
+Resume file: .planning/phases/61-backend-schema-decoupling-e-indicaciones/61-CONTEXT.md

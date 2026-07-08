@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.14
 milestone_name: Portal — Firma Gated e Indicaciones Separadas
 status: executing
-stopped_at: Phase 61 context gathered
-last_updated: "2026-07-08T22:27:46.621Z"
-last_activity: 2026-07-08 -- Phase 61 planning complete
+stopped_at: Completed 61-01-PLAN.md
+last_updated: "2026-07-08T23:37:59.067Z"
+last_activity: 2026-07-08
 progress:
   total_phases: 2
   completed_phases: 0
   total_plans: 3
-  completed_plans: 0
+  completed_plans: 1
   percent: 0
 ---
 
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-07-06 after v1.14 roadmap)
 ## Current Position
 
 Phase: 61 of 62 (Backend — Schema, Decoupling e Indicaciones)
-Plan: — (not yet planned)
+Plan: 2 of 3
 Status: Ready to execute
-Last activity: 2026-07-08 -- Phase 61 planning complete
+Last activity: 2026-07-08
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [███░░░░░░░] 33%
 
 ## Accumulated Context
 
@@ -44,6 +44,8 @@ Full decision log en `.planning/PROJECT.md` (Key Decisions). Decisiones de v1.13
 - Indicaciones sólo requieren acuse de lectura (no firma dibujada): campo `indicacionesLeidasAt` en `Paciente`, endpoint portal-scoped
 - Gate open-PDF es client-side (no server-side): la prueba legal es firma + checkbox CONS-10
 - Migración de schema: patrón pgBouncer (`prisma diff + db execute + migrate resolve`), nunca `migrate dev`
+- [Phase 61]: D-01 aplicado via DROP NOT NULL (no DROP COLUMN) — preserva timestamps forenses v1.12 de ConsentimientoFirmado
+- [Phase 61]: cr-01 cerrado sin validacion net-new — actualizarIndicacionesUrl ya tenia la validacion server-side completa; solo se corrigio el docstring enganoso
 
 ### Known Tech Debt (carry-forward)
 
@@ -70,6 +72,6 @@ Items diferidos al cierre de v1.13:
 
 ## Session Continuity
 
-Last session: 2026-07-08T22:06:15.889Z
-Stopped at: Phase 61 context gathered
-Resume file: .planning/phases/61-backend-schema-decoupling-e-indicaciones/61-CONTEXT.md
+Last session: 2026-07-08T23:37:59.062Z
+Stopped at: Completed 61-01-PLAN.md
+Resume file: .planning/phases/61-backend-schema-decoupling-e-indicaciones/61-02-PLAN.md

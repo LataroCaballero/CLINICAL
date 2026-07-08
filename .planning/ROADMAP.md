@@ -216,7 +216,10 @@ Full details: `.planning/milestones/v1.13-ROADMAP.md`
   2. Existe un endpoint portal-scoped que registra el acuse de lectura de indicaciones con timestamp en `Paciente.indicacionesLeidasAt` (campo nuevo en BD)
   3. `computePasosCrm` marca el paso `indicacionesPreop` como completo a partir de `Paciente.indicacionesLeidasAt != null`, no del acto de firma del consentimiento
   4. La migración de schema sigue el patrón pgBouncer (`prisma diff + db execute + migrate resolve`) y no rompe registros de consentimiento existentes
-**Plans**: TBD
+**Plans**: 3 plans
+- [ ] 61-01-PLAN.md — Schema + migración pgBouncer (Paciente.indicacionesLeidasAt, relax ConsentimientoFirmado) + cierre cr-01 (Wave 1)
+- [ ] 61-02-PLAN.md — Desacople firmarConsentimiento + endpoint portal-scoped de acuse set-once (Wave 2)
+- [ ] 61-03-PLAN.md — computePasosCrm deriva indicacionesPreop del acuse del perfil + getKanban select (Wave 2)
 
 ### Phase 62: Portal + Staff Frontend — Gate de Firma, Secciones Separadas y Sincronización
 **Goal**: El portal del paciente presenta consentimiento e indicaciones como secciones independientes con los gates correctos; el staff ve el estado de indicaciones en el stepper del sheet; y el board CRM refleja los cambios completados desde el portal sin recarga manual.
@@ -298,7 +301,7 @@ Full details: `.planning/milestones/v1.13-ROADMAP.md`
 | 58. Kanban Board — Columnas, Tarjetas y Etiquetas | v1.13 | 1/1 | Complete | 2026-07-04 |
 | 59. Stepper Accionable | v1.13 | 3/3 | Complete | 2026-07-05 |
 | 60. Estadísticas sobre Registros Reales | v1.13 | 2/2 | Complete | 2026-07-05 |
-| 61. Backend — Schema, Decoupling e Indicaciones | v1.14 | 0/TBD | Not started | - |
+| 61. Backend — Schema, Decoupling e Indicaciones | v1.14 | 0/3 | Planned | - |
 | 62. Portal + Staff Frontend — Gate, Secciones y Sincronización | v1.14 | 0/TBD | Not started | - |
 
 ---

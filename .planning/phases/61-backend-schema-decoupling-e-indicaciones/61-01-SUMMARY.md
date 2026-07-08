@@ -94,3 +94,14 @@ None - no external service configuration required.
 - Wave 2 (61-02, 61-03) is unblocked: `Paciente.indicacionesLeidasAt` exists in schema, live DB, and the regenerated Prisma client — the endpoint-of-acuse and `computePasosCrm` derivation work planned for Wave 2 can now compile and run against the real database.
 - cr-01 is closed; Phase 62's rendering of `indicacionesUrl` as a patient-facing link is no longer blocked by the stored-XSS todo.
 - **Concern carried forward:** `cd backend && npm run build` could not be verified to exit 0 in this session due to the tooling hang described above. The change is comment-only and low-risk, but a build-verification pass is recommended before/alongside Wave 2 work if the environment issue recurs.
+
+## Self-Check: PASSED
+
+- FOUND: `backend/src/prisma/migrations/20260708000000_add_indicaciones_leidas/migration.sql`
+- FOUND: `.planning/phases/61-backend-schema-decoupling-e-indicaciones/61-01-SUMMARY.md`
+- FOUND: `Paciente.indicacionesLeidasAt` in `backend/src/prisma/schema.prisma`
+- FOUND: `cr-01` reference in `backend/src/modules/catalogo-hc/catalogo-hc.service.ts`
+- FOUND: commit `b217129` (Task 1)
+- FOUND: commit `4b2a9a9` (Task 2)
+- FOUND: commit `d6d866f` (Task 3)
+- FOUND: commit `f2a84a6` (SUMMARY)

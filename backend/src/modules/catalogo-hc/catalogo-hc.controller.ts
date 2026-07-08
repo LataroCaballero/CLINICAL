@@ -118,6 +118,8 @@ export class CatalogoHCController {
    * Saves or clears the indicacionesUrl for a zona (CONS-02).
    * profesionalId is resolved from JWT scope — never from body (T-53-08).
    * Ownership guard in service throws NotFoundException for non-owned zona.
+   * URL validation happens server-side in the service (cr-01) — the DTO's
+   * class-validator decorators do not run (no global ValidationPipe).
    */
   @Patch('zonas/:id/indicaciones')
   async actualizarIndicaciones(

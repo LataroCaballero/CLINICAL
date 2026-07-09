@@ -218,7 +218,7 @@ Full details: `.planning/milestones/v1.13-ROADMAP.md`
   4. La migración de schema sigue el patrón pgBouncer (`prisma diff + db execute + migrate resolve`) y no rompe registros de consentimiento existentes
 **Plans**: 3 plans
 - [x] 61-01-PLAN.md — Schema + migración pgBouncer (Paciente.indicacionesLeidasAt, relax ConsentimientoFirmado) + cierre cr-01 (Wave 1)
-- [ ] 61-02-PLAN.md — Desacople firmarConsentimiento + endpoint portal-scoped de acuse set-once (Wave 2)
+- [x] 61-02-PLAN.md — Desacople firmarConsentimiento + endpoint portal-scoped de acuse set-once (Wave 2)
 - [ ] 61-03-PLAN.md — computePasosCrm deriva indicacionesPreop del acuse del perfil + getKanban select (Wave 2)
 
 ### Phase 62: Portal + Staff Frontend — Gate de Firma, Secciones Separadas y Sincronización
@@ -301,7 +301,7 @@ Full details: `.planning/milestones/v1.13-ROADMAP.md`
 | 58. Kanban Board — Columnas, Tarjetas y Etiquetas | v1.13 | 1/1 | Complete | 2026-07-04 |
 | 59. Stepper Accionable | v1.13 | 3/3 | Complete | 2026-07-05 |
 | 60. Estadísticas sobre Registros Reales | v1.13 | 2/2 | Complete | 2026-07-05 |
-| 61. Backend — Schema, Decoupling e Indicaciones | v1.14 | 1/3 | In Progress|  |
+| 61. Backend — Schema, Decoupling e Indicaciones | v1.14 | 2/3 | In Progress|  |
 | 62. Portal + Staff Frontend — Gate, Secciones y Sincronización | v1.14 | 0/TBD | Not started | - |
 
 ---

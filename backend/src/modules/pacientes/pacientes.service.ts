@@ -659,6 +659,7 @@ export class PacientesService {
         // Payload enriquecido para pasos del stepper (D-04/D-05)
         consentimientoFirmado: true,
         indicacionesEnviadas: true,
+        indicacionesLeidasAt: true, // v1.14 primary source, INDIC-04
         cirugias: {
           select: { fecha: true, estado: true },
           orderBy: { fecha: 'desc' },
@@ -745,6 +746,7 @@ export class PacientesService {
             consentimientosFirmados: p.consentimientosFirmados,
             consentimientoFirmado: p.consentimientoFirmado,
             indicacionesEnviadas: p.indicacionesEnviadas,
+            indicacionesLeidasAt: p.indicacionesLeidasAt,
           }),
         };
       }),

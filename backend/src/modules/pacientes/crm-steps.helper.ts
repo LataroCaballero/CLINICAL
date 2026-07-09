@@ -5,9 +5,14 @@
  * Computes the 5 canonical CRM stepper steps (D-04/D-05) and a derived
  * todosCompletos flag for a patient's kanban payload.
  *
- * Precedence for consentimiento/indicaciones (D-05):
+ * Precedence for consentimiento (D-05):
  *   Primary source: ConsentimientoFirmado model (v1.12 portal/consent)
- *   Fallback (OR): legacy Paciente boolean flags (pre-v1.12 patients)
+ *   Fallback (OR): legacy Paciente boolean flag (pre-v1.12 patients)
+ *
+ * Precedence for indicacionesPreop (v1.14, D-04):
+ *   Primary source: Paciente.indicacionesLeidasAt (acuse en el perfil del paciente)
+ *   Fallback 1 (OR): ConsentimientoFirmado.indicacionesLeidasAt (legacy v1.12)
+ *   Fallback 2 (OR): legacy Paciente.indicacionesEnviadas boolean (pre-v1.12)
  */
 
 export type PasoEstado = 'completo' | 'pendiente';
@@ -46,6 +51,8 @@ export interface PacientePasosInput {
   consentimientoFirmado?: boolean | null;
   /** Legacy Paciente.indicacionesEnviadas boolean (fallback pre-v1.12) */
   indicacionesEnviadas?: boolean | null;
+  /** Paciente.indicacionesLeidasAt (v1.14) — fuente PRIMARIA nueva del paso indicaciones */
+  indicacionesLeidasAt?: Date | string | null;
 }
 
 /**
@@ -92,9 +99,11 @@ export function computePasosCrm(p: PacientePasosInput): {
     consentimientoFirmadoLegacy === true;
 
   // ── Paso 5: Indicaciones preop ────────────────────────────────────────────
-  // Primary (v1.12): ConsentimientoFirmado.indicacionesLeidasAt presente
-  // Fallback (legacy): Paciente.indicacionesEnviadas === true
+  // Primary (v1.14): Paciente.indicacionesLeidasAt presente (acuse en el perfil)
+  // Fallback 1 (legacy v1.12): ConsentimientoFirmado.indicacionesLeidasAt
+  // Fallback 2 (legacy pre-v1.12): Paciente.indicacionesEnviadas === true
   const indicacionesPreopCompleto =
+    p.indicacionesLeidasAt != null ||
     consentimientosFirmados.some((c) => c.indicacionesLeidasAt != null) ||
     indicacionesEnviadasLegacy === true;
 

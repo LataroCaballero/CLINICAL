@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.14
 milestone_name: Portal — Firma Gated e Indicaciones Separadas
-status: executing
-stopped_at: Completed 61-02-PLAN.md
-last_updated: "2026-07-09T00:26:53.355Z"
+status: verifying
+stopped_at: Completed 61-03-PLAN.md
+last_updated: "2026-07-09T00:38:10.350Z"
 last_activity: 2026-07-09
 progress:
   total_phases: 2
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 3
-  completed_plans: 2
-  percent: 0
+  completed_plans: 3
+  percent: 50
 ---
 
 # Project State
@@ -27,10 +27,10 @@ See: .planning/PROJECT.md (updated 2026-07-06 after v1.14 roadmap)
 
 Phase: 61 of 62 (Backend — Schema, Decoupling e Indicaciones)
 Plan: 3 of 3
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-07-09
 
-Progress: [███████░░░] 67%
+Progress: [██████████] 100%
 
 ## Accumulated Context
 
@@ -47,6 +47,7 @@ Full decision log en `.planning/PROJECT.md` (Key Decisions). Decisiones de v1.13
 - [Phase 61]: D-01 aplicado via DROP NOT NULL (no DROP COLUMN) — preserva timestamps forenses v1.12 de ConsentimientoFirmado
 - [Phase 61]: cr-01 cerrado sin validacion net-new — actualizarIndicacionesUrl ya tenia la validacion server-side completa; solo se corrigio el docstring enganoso
 - [Phase 61]: firmarConsentimiento desacoplado de indicaciones (D-02/D-03) + nuevo endpoint set-once POST indicaciones/acuse (D-06/D-07)
+- [Phase 61]: D-04 aplicado exacto en computePasosCrm Paso 5: OR de 3 fuentes (Paciente.indicacionesLeidasAt primaria v1.14, ConsentimientoFirmado.indicacionesLeidasAt fallback v1.12, Paciente.indicacionesEnviadas fallback pre-v1.12) sin backfill, sin regresion
 
 ### Known Tech Debt (carry-forward)
 
@@ -73,6 +74,6 @@ Items diferidos al cierre de v1.13:
 
 ## Session Continuity
 
-Last session: 2026-07-09T00:26:53.349Z
-Stopped at: Completed 61-02-PLAN.md
+Last session: 2026-07-09T00:38:10.347Z
+Stopped at: Completed 61-03-PLAN.md
 Resume file: None

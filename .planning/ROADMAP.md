@@ -202,7 +202,7 @@ Full details: `.planning/milestones/v1.13-ROADMAP.md`
 
 **Milestone Goal:** Endurecer el flujo legal del portal del paciente — firmar el consentimiento requiere abrir el PDF y tildar leído; las indicaciones se separan en su propia sección con acuse de lectura registrado en el perfil; y el board CRM refleja ambos estados sin recarga manual (cierre deuda W-1).
 
-- [ ] **Phase 61: Backend — Schema, Decoupling e Indicaciones** - Migración de campo, desacoplamiento de `firmarConsentimiento` de `indicacionesLeidas`, endpoint de acuse, y ajuste de `computePasosCrm`
+- [x] **Phase 61: Backend — Schema, Decoupling e Indicaciones** - Migración de campo, desacoplamiento de `firmarConsentimiento` de `indicacionesLeidas`, endpoint de acuse, y ajuste de `computePasosCrm` (completed 2026-07-09)
 - [ ] **Phase 62: Portal + Staff Frontend — Gate de Firma, Secciones Separadas y Sincronización** - Gate open-PDF + checkbox en consentimiento, sección de indicaciones separada con acuse automático al abrir, indicador staff con fecha, board sync vía refetch on focus
 
 ## Phase Details
@@ -219,7 +219,7 @@ Full details: `.planning/milestones/v1.13-ROADMAP.md`
 **Plans**: 3 plans
 - [x] 61-01-PLAN.md — Schema + migración pgBouncer (Paciente.indicacionesLeidasAt, relax ConsentimientoFirmado) + cierre cr-01 (Wave 1)
 - [x] 61-02-PLAN.md — Desacople firmarConsentimiento + endpoint portal-scoped de acuse set-once (Wave 2)
-- [ ] 61-03-PLAN.md — computePasosCrm deriva indicacionesPreop del acuse del perfil + getKanban select (Wave 2)
+- [x] 61-03-PLAN.md — computePasosCrm deriva indicacionesPreop del acuse del perfil + getKanban select (Wave 2)
 
 ### Phase 62: Portal + Staff Frontend — Gate de Firma, Secciones Separadas y Sincronización
 **Goal**: El portal del paciente presenta consentimiento e indicaciones como secciones independientes con los gates correctos; el staff ve el estado de indicaciones en el stepper del sheet; y el board CRM refleja los cambios completados desde el portal sin recarga manual.
@@ -301,7 +301,7 @@ Full details: `.planning/milestones/v1.13-ROADMAP.md`
 | 58. Kanban Board — Columnas, Tarjetas y Etiquetas | v1.13 | 1/1 | Complete | 2026-07-04 |
 | 59. Stepper Accionable | v1.13 | 3/3 | Complete | 2026-07-05 |
 | 60. Estadísticas sobre Registros Reales | v1.13 | 2/2 | Complete | 2026-07-05 |
-| 61. Backend — Schema, Decoupling e Indicaciones | v1.14 | 2/3 | In Progress|  |
+| 61. Backend — Schema, Decoupling e Indicaciones | v1.14 | 3/3 | Complete   | 2026-07-09 |
 | 62. Portal + Staff Frontend — Gate, Secciones y Sincronización | v1.14 | 0/TBD | Not started | - |
 
 ---

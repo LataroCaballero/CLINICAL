@@ -106,3 +106,10 @@ None - no external service configuration required.
 ---
 *Phase: 61-backend-schema-decoupling-e-indicaciones*
 *Completed: 2026-07-09*
+
+## Self-Check: PASSED
+
+- FOUND: `.planning/phases/61-backend-schema-decoupling-e-indicaciones/61-03-SUMMARY.md`
+- FOUND: commit `4f88921` (Task 1)
+- FOUND: commit `149dec2` (Task 2)
+- FOUND: commit `d659818` (this SUMMARY)

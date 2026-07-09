@@ -155,7 +155,28 @@ export class PacientePortalController {
   }
 
   /**
-   * Consent signing endpoint (CONS-04/05/06/07, D-06/07/08/11/12, T-56-12/13/14/15).
+   * Indicaciones read-receipt endpoint (INDIC-03, D-06/D-07, T-61-04/05/07).
+   *
+   * Records the acuse de lectura on the patient profile
+   * (`Paciente.indicacionesLeidasAt`), fully decoupled from consent signing
+   * (CONS-11). Set-once idempotent — see `registrarAcuseIndicaciones` for the
+   * write semantics.
+   *
+   * Security invariants:
+   * - `pacienteId` comes ONLY from the portal-scoped JWT (`req.user`) — NEVER
+   *   from @Param or @Body (T-61-04).
+   * - No request body/DTO (D-07) — nothing to validate or whitelist.
+   * - `@UseGuards(PortalJwtGuard)` is per-route so the public preVerify/verificar
+   *   routes remain unrestricted (no class-level guard, T-61-07).
+   */
+  @UseGuards(PortalJwtGuard)
+  @Post('indicaciones/acuse')
+  registrarAcuseIndicaciones(@Req() req: PortalRequest) {
+    return this.service.registrarAcuseIndicaciones(req.user.pacienteId);
+  }
+
+  /**
+   * Consent signing endpoint (CONS-04/05/06/07, D-06/07/08/12, T-56-12/13/14/15).
    *
    * Stamps the patient's drawn signature onto the template PDF, archives it
    * immutably, and records the full forensic audit trail.

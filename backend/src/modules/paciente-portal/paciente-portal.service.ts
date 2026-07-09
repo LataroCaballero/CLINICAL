@@ -538,11 +538,16 @@ export class PacientePortalService {
   }
 
   /**
-   * Consent signing orchestration (CONS-04/05/06/07, D-06/07/08/11).
+   * Consent signing orchestration (CONS-04/05/06/07, D-06/07/08).
    *
-   * Full pipeline: validate zona ownership → block re-signing (D-08) → confirm
-   * indicacionesLeidas (D-11) → strip + validate PNG → stamp PDF (ConsentStampService)
-   * → archive immutably (StorageService) → create forensic record → set aggregate flag.
+   * Full pipeline: validate zona ownership → block re-signing (D-08) → strip +
+   * validate PNG → stamp PDF (ConsentStampService) → archive immutably
+   * (StorageService) → create forensic record → set aggregate flag.
+   *
+   * Signing is fully decoupled from indicaciones state (CONS-11, D-02): this
+   * method no longer requires or persists any indicaciones read-receipt. The
+   * acuse de lectura is its own portal-scoped endpoint (`registrarAcuseIndicaciones`)
+   * that stamps `Paciente.indicacionesLeidasAt` independently.
    *
    * Security invariants:
    * - `pacienteId` is ALWAYS from the portal-scoped JWT (method arg), NEVER from dto
@@ -602,14 +607,7 @@ export class PacientePortalService {
       );
     }
 
-    // (3) D-11: indicacionesLeidas must be true before signing is allowed.
-    if (!dto.indicacionesLeidas) {
-      throw new BadRequestException(
-        'Debe confirmar que ha leído las indicaciones antes de firmar.',
-      );
-    }
-
-    // (4) Strip data URL prefix server-side (T-56-15 — never trust client to strip).
+    // (3) Strip data URL prefix server-side (T-56-15 — never trust client to strip).
     const b64 = dto.signaturePngDataUrl.split(',')[1];
     if (!b64) throw new BadRequestException('Firma inválida');
     const pngBuffer = Buffer.from(b64, 'base64');
@@ -619,7 +617,7 @@ export class PacientePortalService {
       throw new BadRequestException('Imagen de firma demasiado grande');
     }
 
-    // (5) Read template PDF from disk + stamp (PNG magic-byte validation inside ConsentStampService).
+    // (4) Read template PDF from disk + stamp (PNG magic-byte validation inside ConsentStampService).
     const templateBuffer = await this.storage.readFile(archivo.path);
     const { pdfBuffer, hashSha256 } = await this.stamp.stampConsentimiento({
       templateBuffer,
@@ -632,11 +630,13 @@ export class PacientePortalService {
       },
     });
 
-    // (6) Archive signed PDF immutably via StorageService (T-56-14 — no overwrite/delete path).
+    // (5) Archive signed PDF immutably via StorageService (T-56-14 — no overwrite/delete path).
     const signedPath = await this.storage.save(pdfBuffer, archivo.profesionalId);
 
-    // (7) Create forensic record with all 10 required fields (D-06, CONS-07).
+    // (6) Create forensic record with all required fields (D-06, CONS-07).
     // firmadoAt defaults to now() via the Prisma schema @default(now()).
+    // `indicacionesLeidasAt` is NOT written here (CONS-11, D-02) — the column is
+    // nullable and preserved only for legacy v1.12 forensic rows.
     await this.prisma.consentimientoFirmado.create({
       data: {
         pacienteId,
@@ -647,11 +647,10 @@ export class PacientePortalService {
         userAgent,
         versionNumero: archivo.version,
         hashSha256,
-        indicacionesLeidasAt: new Date(),
       },
     });
 
-    // (8) Set Paciente aggregate flag once ≥ 1 ConsentimientoFirmado row exists (D-07, CONS-08).
+    // (7) Set Paciente aggregate flag once ≥ 1 ConsentimientoFirmado row exists (D-07, CONS-08).
     await this.prisma.paciente.update({
       where: { id: pacienteId },
       data: {
@@ -661,6 +660,25 @@ export class PacientePortalService {
     });
 
     // D-10 / UI-SPEC: do NOT return the signed PDF URL — portal shows static confirmation (T-56-10).
+    return { ok: true };
+  }
+
+  /**
+   * Records the indicaciones read-receipt on the patient profile (INDIC-03, D-06).
+   * Set-once + global: the FIRST call stamps `Paciente.indicacionesLeidasAt`; later
+   * calls match 0 rows (`WHERE indicacionesLeidasAt IS NULL`) so the original
+   * legally-significant timestamp is never overwritten (idempotent retries).
+   *
+   * `pacienteId` is ALWAYS derived from the portal-scoped JWT (mirrors
+   * `firmarConsentimiento`) — never from the request body.
+   */
+  async registrarAcuseIndicaciones(pacienteId: string): Promise<{ ok: true }> {
+    await this.prisma.paciente.updateMany({
+      where: { id: pacienteId, indicacionesLeidasAt: null },
+      data: { indicacionesLeidasAt: new Date() },
+    });
+    // Idempotent by design: { ok: true } even when 0 rows were updated
+    // (already-acknowledged retries).
     return { ok: true };
   }
 

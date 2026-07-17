@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.14
 milestone_name: Portal — Firma Gated e Indicaciones Separadas
-status: verifying
+status: executing
 stopped_at: Completed 61-03-PLAN.md
-last_updated: "2026-07-09T00:38:10.350Z"
-last_activity: 2026-07-09
+last_updated: "2026-07-17T13:44:30.964Z"
+last_activity: 2026-07-17 -- Phase 61 execution started
 progress:
   total_phases: 2
-  completed_phases: 1
-  total_plans: 3
+  completed_phases: 0
+  total_plans: 4
   completed_plans: 3
-  percent: 50
+  percent: 0
 ---
 
 # Project State
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-06 after v1.14 roadmap)
 
 **Core value:** Que un cirujano plástico cierre más cirugías — el sistema hace visible qué pacientes seguir, cuándo y cómo, de la manera más automatizada posible
-**Current focus:** Phase 61 — Backend Schema, Decoupling e Indicaciones (ready to plan)
+**Current focus:** Phase 61 — backend-schema-decoupling-e-indicaciones
 
 ## Current Position
 
-Phase: 61 of 62 (Backend — Schema, Decoupling e Indicaciones)
-Plan: 3 of 3
-Status: Phase complete — ready for verification
-Last activity: 2026-07-09
+Phase: 61 (backend-schema-decoupling-e-indicaciones) — EXECUTING
+Plan: 1 of 4
+Status: Executing Phase 61
+Last activity: 2026-07-17 -- Phase 61 execution started
 
 Progress: [██████████] 100%
 

@@ -11,6 +11,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { readFileSync } from 'fs';
+import { join } from 'path';
 import { PacientesService } from './pacientes.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EncryptionService } from '../whatsapp/crypto/encryption.service';
@@ -378,5 +380,53 @@ describe('PacientesService — portal link encrypt/recover (52-09)', () => {
 
       expect(paciente.pasos.indicacionesPreop).toBe('pendiente');
     });
+  });
+});
+
+// ── getKanban consentimientosFirmados select — source-shape guard (INDIC-04) ─
+// Guard estatico (no mockea Prisma, no instancia el service): lee la fuente
+// real de pacientes.service.ts y aisla el bloque `consentimientosFirmados: { ... }`
+// por balance de llaves desde su llave de apertura, para que el comentario
+// documental "Sin take:1" (que precede la llave) no genere falso positivo.
+// Cierra el gap de 61-VERIFICATION.md: el test de frontera de 61-04 mockea
+// findMany con datos hechos a mano, por lo que reintroducir take:1 en el select
+// real dejaria esa suite en verde sin este guard.
+describe('getKanban consentimientosFirmados select — source-shape guard (take regression, INDIC-04)', () => {
+  it('el bloque consentimientosFirmados no tiene take/orderBy y conserva firmadoAt + indicacionesLeidasAt', () => {
+    const sourcePath = join(__dirname, 'pacientes.service.ts');
+    const source: string = readFileSync(sourcePath, 'utf8');
+
+    const keyIndex = source.indexOf('consentimientosFirmados:');
+    expect(keyIndex).not.toBe(-1);
+
+    const openBraceIndex = source.indexOf('{', keyIndex);
+    expect(openBraceIndex).not.toBe(-1);
+
+    let depth = 0;
+    let endIndex = -1;
+    for (let i = openBraceIndex; i < source.length; i++) {
+      const ch = source[i];
+      if (ch === '{') depth++;
+      else if (ch === '}') {
+        depth--;
+        if (depth === 0) {
+          endIndex = i;
+          break;
+        }
+      }
+    }
+    expect(endIndex).not.toBe(-1);
+
+    const block = source.slice(openBraceIndex, endIndex + 1);
+
+    // Falsificacion: reintroducir take/orderBy en el select real de
+    // consentimientosFirmados (pacientes.service.ts) rompe estos asserts.
+    expect(block).not.toMatch(/\btake\b/);
+    expect(block).not.toMatch(/\borderBy\b/);
+
+    // No-degradacion del select (T-61-10): solo estos 2 campos, sin ampliar
+    // a datos forenses (hash/ip/userAgent/PDF).
+    expect(block).toMatch(/firmadoAt/);
+    expect(block).toMatch(/indicacionesLeidasAt/);
   });
 });

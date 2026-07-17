@@ -19,6 +19,8 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 - **Indicaciones como sección aparte:** separada del consentimiento; se marcan como leídas al abrir el link (sin firma dibujada); el acuse se registra en el perfil del paciente.
 - **Cierre W-1:** el board del staff refleja consentimiento/indicaciones completos vía invalidación `['crm-kanban']` + refetch on focus (sin infra nueva).
 
+**Estado:** Phase 61 completa y verificada (2026-07-17, 5/5 planes, verificación 5/5) — backend listo: `Paciente.indicacionesLeidasAt` migrado (patrón pgBouncer), `firmarConsentimiento` desacoplado de indicaciones (CONS-11), endpoint portal-scoped de acuse set-once (INDIC-03), `computePasosCrm` deriva `indicacionesPreop` del perfil sin truncación `take:1` + guard de regresión durable (INDIC-04). Próximo: Phase 62 (frontend portal + staff).
+
 ## Requirements
 
 ### Validated
@@ -343,4 +345,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-07-06 after starting milestone v1.14 — Portal: Firma Gated e Indicaciones Separadas (gate de firma abrir-PDF+tildar, indicaciones como sección aparte con acuse en perfil, cierre W-1 invalidación crm-kanban). Milestone previo: 2026-07-05 after v1.13 milestone — Embudo CRM Accionable shipped (4 fases 57–60, 8 planes, 19 tareas, 15/15 reqs, audit `tech_debt` 0 blockers). Backend enriquecido (`computePasosCrm`, etapa "Cirugía Realizada", `@Cron` auto-move, guard relajado), board reordenado con indicadores/etiquetas, stepper accionable con 3 quick-actions e invalidación `crm-kanban`, y estadísticas sobre registros reales independientes de `etapaCRM`. Diferido: browser UAT Phase 58 + display KPI cards Phase 60. Próximo: `/gsd:new-milestone`.*
+*Last updated: 2026-07-17 after Phase 61 complete (backend v1.14 verificado). Milestone iniciado 2026-07-06 — Portal: Firma Gated e Indicaciones Separadas (gate de firma abrir-PDF+tildar, indicaciones como sección aparte con acuse en perfil, cierre W-1 invalidación crm-kanban). Milestone previo: 2026-07-05 after v1.13 milestone — Embudo CRM Accionable shipped (4 fases 57–60, 8 planes, 19 tareas, 15/15 reqs, audit `tech_debt` 0 blockers). Backend enriquecido (`computePasosCrm`, etapa "Cirugía Realizada", `@Cron` auto-move, guard relajado), board reordenado con indicadores/etiquetas, stepper accionable con 3 quick-actions e invalidación `crm-kanban`, y estadísticas sobre registros reales independientes de `etapaCRM`. Diferido: browser UAT Phase 58 + display KPI cards Phase 60. Próximo: `/gsd:new-milestone`.*

@@ -671,10 +671,13 @@ export class PacientesService {
             },
           },
         },
+        // Sin take:1: computePasosCrm recorre TODAS las filas con .some (Paso 4
+        // firmadoAt, Paso 5 Fallback 1 indicacionesLeidasAt). Truncar a la mas
+        // reciente rompia el Fallback 1 legacy v1.12 en pacientes multi-zona
+        // (WR-01/SC#3, 61-REVIEW.md). Solo 2 campos seleccionados — sin over-fetch
+        // de datos forenses append-only (T-61-10).
         consentimientosFirmados: {
           select: { firmadoAt: true, indicacionesLeidasAt: true },
-          take: 1,
-          orderBy: { firmadoAt: 'desc' },
         },
       },
       orderBy: { updatedAt: 'desc' },

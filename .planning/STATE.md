@@ -4,8 +4,8 @@ milestone: v1.14
 milestone_name: Portal — Firma Gated e Indicaciones Separadas
 status: executing
 stopped_at: Completed 61-03-PLAN.md
-last_updated: "2026-07-17T20:04:06.748Z"
-last_activity: 2026-07-17 -- Phase 61 planning complete
+last_updated: "2026-07-17T20:07:55.565Z"
+last_activity: 2026-07-17 -- Phase 61 execution started
 progress:
   total_phases: 2
   completed_phases: 0
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-07-06 after v1.14 roadmap)
 ## Current Position
 
 Phase: 61 (backend-schema-decoupling-e-indicaciones) — EXECUTING
-Plan: 1 of 4
-Status: Ready to execute
-Last activity: 2026-07-17 -- Phase 61 planning complete
+Plan: 1 of 5
+Status: Executing Phase 61
+Last activity: 2026-07-17 -- Phase 61 execution started
 
 Progress: [██████████] 100%
 

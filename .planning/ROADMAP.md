@@ -303,7 +303,7 @@ Full details: `.planning/milestones/v1.13-ROADMAP.md`
 | 58. Kanban Board — Columnas, Tarjetas y Etiquetas | v1.13 | 1/1 | Complete | 2026-07-04 |
 | 59. Stepper Accionable | v1.13 | 3/3 | Complete | 2026-07-05 |
 | 60. Estadísticas sobre Registros Reales | v1.13 | 2/2 | Complete | 2026-07-05 |
-| 61. Backend — Schema, Decoupling e Indicaciones | v1.14 | 5/5 | Complete   | 2026-07-17 |
+| 61. Backend — Schema, Decoupling e Indicaciones | v1.14 | 5/5 | Complete    | 2026-07-17 |
 | 62. Portal + Staff Frontend — Gate, Secciones y Sincronización | v1.14 | 0/TBD | Not started | - |
 
 ---

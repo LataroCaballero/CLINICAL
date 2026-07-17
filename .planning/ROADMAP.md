@@ -220,7 +220,7 @@ Full details: `.planning/milestones/v1.13-ROADMAP.md`
 - [x] 61-01-PLAN.md — Schema + migración pgBouncer (Paciente.indicacionesLeidasAt, relax ConsentimientoFirmado) + cierre cr-01 (Wave 1)
 - [x] 61-02-PLAN.md — Desacople firmarConsentimiento + endpoint portal-scoped de acuse set-once (Wave 2)
 - [x] 61-03-PLAN.md — computePasosCrm deriva indicacionesPreop del acuse del perfil + getKanban select (Wave 2)
-- [ ] 61-04-PLAN.md — Gap-closure WR-01/SC#3: remover take:1 de consentimientosFirmados en getKanban + test de frontera getKanban->computePasosCrm (Wave 1)
+- [x] 61-04-PLAN.md — Gap-closure WR-01/SC#3: remover take:1 de consentimientosFirmados en getKanban + test de frontera getKanban->computePasosCrm (Wave 1)
 
 ### Phase 62: Portal + Staff Frontend — Gate de Firma, Secciones Separadas y Sincronización
 **Goal**: El portal del paciente presenta consentimiento e indicaciones como secciones independientes con los gates correctos; el staff ve el estado de indicaciones en el stepper del sheet; y el board CRM refleja los cambios completados desde el portal sin recarga manual.
@@ -302,7 +302,7 @@ Full details: `.planning/milestones/v1.13-ROADMAP.md`
 | 58. Kanban Board — Columnas, Tarjetas y Etiquetas | v1.13 | 1/1 | Complete | 2026-07-04 |
 | 59. Stepper Accionable | v1.13 | 3/3 | Complete | 2026-07-05 |
 | 60. Estadísticas sobre Registros Reales | v1.13 | 2/2 | Complete | 2026-07-05 |
-| 61. Backend — Schema, Decoupling e Indicaciones | v1.14 | 3/3 | Complete   | 2026-07-09 |
+| 61. Backend — Schema, Decoupling e Indicaciones | v1.14 | 4/4 | Complete   | 2026-07-17 |
 | 62. Portal + Staff Frontend — Gate, Secciones y Sincronización | v1.14 | 0/TBD | Not started | - |
 
 ---

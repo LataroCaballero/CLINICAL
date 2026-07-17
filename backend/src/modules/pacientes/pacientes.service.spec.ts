@@ -49,6 +49,7 @@ describe('PacientesService — portal link encrypt/recover (52-09)', () => {
       paciente: {
         findUnique: jest.fn(),
         update: jest.fn(),
+        findMany: jest.fn(),
       },
     };
     const mockConfigService = {
@@ -256,6 +257,126 @@ describe('PacientesService — portal link encrypt/recover (52-09)', () => {
 
       logSpy.mockRestore();
       errSpy.mockRestore();
+    });
+  });
+
+  // ── getKanban -> computePasosCrm boundary (WR-01/SC#3, INDIC-04) ──────────
+  // Ejercita la forma real del select de getKanban (sin take:1) contra
+  // computePasosCrm. Atrapa la regresion si se reintroduce take:1 en el
+  // select de consentimientosFirmados (61-REVIEW.md WR-01).
+
+  describe('getKanban -> computePasosCrm boundary (WR-01/SC#3)', () => {
+    const KANBAN_PACIENTE_ID = 'paciente-kanban-uuid-1';
+
+    function buildKanbanPaciente(overrides: {
+      indicacionesLeidasAt: Date | null;
+      indicacionesEnviadas: boolean;
+      consentimientosFirmados: Array<{
+        firmadoAt: Date;
+        indicacionesLeidasAt: Date | null;
+      }>;
+    }) {
+      return {
+        id: KANBAN_PACIENTE_ID,
+        nombreCompleto: 'Paciente Kanban Test',
+        fotoUrl: null,
+        etapaCRM: 'CONFIRMADO',
+        temperatura: null,
+        scoreConversion: null,
+        tratamiento: null,
+        lugarIntervencion: null,
+        updatedAt: new Date('2026-06-01'),
+        enListaEspera: false,
+        comentarioListaEspera: null,
+        flujo: null,
+        presupuestos: [],
+        turnos: [],
+        contactos: [],
+        autorizaciones: [],
+        consentimientoFirmado: false,
+        indicacionesEnviadas: overrides.indicacionesEnviadas,
+        indicacionesLeidasAt: overrides.indicacionesLeidasAt,
+        cirugias: [],
+        historiasClinicas: [],
+        consentimientosFirmados: overrides.consentimientosFirmados,
+      };
+    }
+
+    async function getPacienteFromKanban(profesionalId: string, id: string) {
+      const result = await service.getKanban(profesionalId);
+      const flat = result.flatMap((c) => c.pacientes);
+      const found = flat.find((p) => p.id === id);
+      if (!found) throw new Error('Paciente no encontrado en resultado de getKanban');
+      return found;
+    }
+
+    it('Test A (regresion): fila mas reciente indicacionesLeidasAt=null + fila antigua con receipt legacy -> indicacionesPreop completo', async () => {
+      (prisma.paciente.findMany as jest.Mock).mockResolvedValue([
+        buildKanbanPaciente({
+          indicacionesLeidasAt: null,
+          indicacionesEnviadas: false,
+          consentimientosFirmados: [
+            {
+              firmadoAt: new Date('2025-01-01'),
+              indicacionesLeidasAt: new Date('2025-01-01'),
+            },
+            {
+              firmadoAt: new Date('2026-06-01'),
+              indicacionesLeidasAt: null,
+            },
+          ],
+        }),
+      ]);
+
+      const paciente = await getPacienteFromKanban('prof-1', KANBAN_PACIENTE_ID);
+
+      expect(paciente.pasos.indicacionesPreop).toBe('completo');
+    });
+
+    it('Test B (no-regresion Paso 4): mismo mock multi-zona mantiene consentimiento completo', async () => {
+      (prisma.paciente.findMany as jest.Mock).mockResolvedValue([
+        buildKanbanPaciente({
+          indicacionesLeidasAt: null,
+          indicacionesEnviadas: false,
+          consentimientosFirmados: [
+            {
+              firmadoAt: new Date('2025-01-01'),
+              indicacionesLeidasAt: new Date('2025-01-01'),
+            },
+            {
+              firmadoAt: new Date('2026-06-01'),
+              indicacionesLeidasAt: null,
+            },
+          ],
+        }),
+      ]);
+
+      const paciente = await getPacienteFromKanban('prof-1', KANBAN_PACIENTE_ID);
+
+      expect(paciente.pasos.consentimiento).toBe('completo');
+    });
+
+    it('Test C (pendiente real): sin receipts en ninguna fuente -> indicacionesPreop pendiente', async () => {
+      (prisma.paciente.findMany as jest.Mock).mockResolvedValue([
+        buildKanbanPaciente({
+          indicacionesLeidasAt: null,
+          indicacionesEnviadas: false,
+          consentimientosFirmados: [
+            {
+              firmadoAt: new Date('2025-01-01'),
+              indicacionesLeidasAt: null,
+            },
+            {
+              firmadoAt: new Date('2026-06-01'),
+              indicacionesLeidasAt: null,
+            },
+          ],
+        }),
+      ]);
+
+      const paciente = await getPacienteFromKanban('prof-1', KANBAN_PACIENTE_ID);
+
+      expect(paciente.pasos.indicacionesPreop).toBe('pendiente');
     });
   });
 });

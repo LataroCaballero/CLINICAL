@@ -234,7 +234,10 @@ Full details: `.planning/milestones/v1.13-ROADMAP.md`
   4. Las indicaciones preoperatorias aparecen en una sección propia y separada del portal; al abrirlas, el portal dispara automáticamente el endpoint de acuse sin paso adicional del paciente
   5. El stepper/sheet del paciente en el board del staff muestra si el paciente leyó las indicaciones, con la fecha de lectura cuando corresponde
   6. El board CRM refleja consentimiento firmado e indicaciones leídas actualizados sin que el staff recargue la página (refetch on window focus activo en el query `['crm-kanban']`)
-**Plans**: TBD
+**Plans**: 3 plans
+- [ ] 62-01-PLAN.md — Gate de firma (open-PDF + checkbox 'Leí el consentimiento') + limpieza de indicaciones del consentimiento + hook useAcusarIndicaciones (Wave 1)
+- [ ] 62-02-PLAN.md — Sección Indicaciones separada con acuse automático al abrir el link (Wave 2)
+- [ ] 62-03-PLAN.md — Indicador staff con fecha en el stepper + board sync refetch on focus (Wave 1)
 **UI hint**: yes
 
 ## Progress
@@ -304,7 +307,7 @@ Full details: `.planning/milestones/v1.13-ROADMAP.md`
 | 59. Stepper Accionable | v1.13 | 3/3 | Complete | 2026-07-05 |
 | 60. Estadísticas sobre Registros Reales | v1.13 | 2/2 | Complete | 2026-07-05 |
 | 61. Backend — Schema, Decoupling e Indicaciones | v1.14 | 5/5 | Complete    | 2026-07-17 |
-| 62. Portal + Staff Frontend — Gate, Secciones y Sincronización | v1.14 | 0/TBD | Not started | - |
+| 62. Portal + Staff Frontend — Gate, Secciones y Sincronización | v1.14 | 0/3 | Planned | - |
 
 ---
 *Roadmap initialized: 2026-02-23 | v1.0 shipped: 2026-03-03 | v1.1 shipped: 2026-03-16 | v1.2 shipped: 2026-03-31 | v1.3 shipped: 2026-04-09 | v1.4 shipped: 2026-04-20 | v1.5 shipped: 2026-05-13 | v1.6 shipped: 2026-05-23 | v1.7 shipped: 2026-05-28 | v1.8 shipped: 2026-06-09 | v1.9 shipped: 2026-06-13 | v1.10 shipped: 2026-06-22 | v1.11 shipped: 2026-06-24 | v1.12 shipped: 2026-07-02 | v1.13 shipped: 2026-07-05 | v1.14 started: 2026-07-06*

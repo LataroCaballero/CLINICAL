@@ -98,3 +98,7 @@ INDIC-05 y EMBUDO-06 completados. El milestone v1.14 (Portal — Firma Gated e I
 ---
 *Phase: 62-portal-staff-frontend-gate-de-firma-secciones-separadas-y-si*
 *Completed: 2026-07-21*
+
+## Self-Check: PASSED
+
+All modified files confirmed on disk; all task/summary commits confirmed in `git log`.

@@ -20,8 +20,8 @@ Continúa numeración desde CONS-08 (v1.12).
 
 Nueva categoría.
 
-- [ ] **INDIC-01**: El portal muestra las indicaciones preoperatorias en una sección propia, separada de la sección de consentimiento.
-- [ ] **INDIC-02**: El paciente marca las indicaciones como leídas al abrir su link/archivo, sin firma dibujada.
+- [x] **INDIC-01**: El portal muestra las indicaciones preoperatorias en una sección propia, separada de la sección de consentimiento.
+- [x] **INDIC-02**: El paciente marca las indicaciones como leídas al abrir su link/archivo, sin firma dibujada.
 - [x] **INDIC-03**: El acuse de lectura de indicaciones se persiste en el perfil del paciente con fecha/hora (campo de indicaciones leídas en `Paciente`).
 - [x] **INDIC-04**: El paso `indicacionesPreop` del board CRM se computa a partir del acuse del perfil del paciente (no del acto de firma del consentimiento).
 - [x] **INDIC-05**: El staff ve en la ficha/stepper del paciente si leyó las indicaciones (indicador con fecha).
@@ -58,8 +58,8 @@ Diferidos (ver PROJECT.md → Candidatos):
 | CONS-10 | Phase 62 | Complete |
 | CONS-11 | Phase 61 | Complete |
 | CONS-12 | Phase 62 | Complete |
-| INDIC-01 | Phase 62 | Pending |
-| INDIC-02 | Phase 62 | Pending |
+| INDIC-01 | Phase 62 | Complete |
+| INDIC-02 | Phase 62 | Complete |
 | INDIC-03 | Phase 61 | Complete |
 | INDIC-04 | Phase 61 | Complete |
 | INDIC-05 | Phase 62 | Complete |

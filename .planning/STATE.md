@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.14
 milestone_name: Portal — Firma Gated e Indicaciones Separadas
-status: executing
-stopped_at: Completed 62-03-PLAN.md
-last_updated: "2026-07-21T15:37:08.819Z"
+status: verifying
+stopped_at: Completed 62-02-PLAN.md
+last_updated: "2026-07-21T15:43:29.825Z"
 last_activity: 2026-07-21
 progress:
   total_phases: 2
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 8
-  completed_plans: 7
-  percent: 50
+  completed_plans: 8
+  percent: 100
 ---
 
 # Project State
@@ -27,10 +27,10 @@ See: .planning/PROJECT.md (updated 2026-07-06 after v1.14 roadmap)
 
 Phase: 62 (portal-staff-frontend-gate-de-firma-secciones-separadas-y-si) — EXECUTING
 Plan: 3 of 3
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-07-21
 
-Progress: [█████████░] 88%
+Progress: [██████████] 100%
 
 ## Accumulated Context
 
@@ -51,6 +51,7 @@ Full decision log en `.planning/PROJECT.md` (Key Decisions). Decisiones de v1.13
 - [Phase 62]: Gate open-PDF + checkbox 100% client-side por diseño legal (D-00): sin tracking server-side de apertura del PDF
 - [Phase 62]: safeIndicacionesUrl y bloque de indicaciones removidos de PortalConsentimiento.tsx sin reemplazo local; Plan 02 recrea el guard XSS-safe en PortalIndicaciones.tsx
 - [Phase 62]: 62-03: staleTime bajado a 0 (extremo D-10) para board CRM; indicacionesLeidasAt display-only threaded end-to-end sin tocar computePasosCrm
+- [Phase 62]: 62-02: acuse de indicaciones disparado en cada click del link (backend idempotente/set-once); guard XSS ^https?:// recreado localmente en PortalIndicaciones.tsx
 
 ### Known Tech Debt (carry-forward)
 
@@ -77,6 +78,6 @@ Items diferidos al cierre de v1.13:
 
 ## Session Continuity
 
-Last session: 2026-07-21T15:37:08.816Z
-Stopped at: Completed 62-03-PLAN.md
+Last session: 2026-07-21T15:43:29.823Z
+Stopped at: Completed 62-02-PLAN.md
 Resume file: None

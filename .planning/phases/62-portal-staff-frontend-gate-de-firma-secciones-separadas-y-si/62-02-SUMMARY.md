@@ -112,3 +112,10 @@ Ninguno nuevo. El `threat_model` del plan (T-62-04/05/06) ya cubre toda la super
 ---
 *Phase: 62-portal-staff-frontend-gate-de-firma-secciones-separadas-y-si*
 *Completed: 2026-07-21*
+
+## Self-Check: PASSED
+
+- FOUND: frontend/src/components/portal/PortalIndicaciones.tsx
+- FOUND: frontend/src/app/portal/[token]/page.tsx
+- FOUND commit: c2215fd
+- FOUND commit: d90c474

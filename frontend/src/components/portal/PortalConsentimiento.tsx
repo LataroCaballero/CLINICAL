@@ -16,7 +16,8 @@ interface ZoneCardProps {
 }
 
 function ZoneCard({ zone }: ZoneCardProps) {
-  const [indicacionesLeidas, setIndicacionesLeidas] = useState(false);
+  const [pdfAbierto, setPdfAbierto] = useState(false);
+  const [leiConsentimiento, setLeiConsentimiento] = useState(false);
   const [canvasEmpty, setCanvasEmpty] = useState(true);
   const [canvasSupported, setCanvasSupported] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -28,12 +29,6 @@ function ZoneCard({ zone }: ZoneCardProps) {
   const padRef = useRef<SignaturePad | null>(null);
 
   const firmarConsentimiento = useFirmarConsentimiento();
-
-  // XSS-safe URL guard (T-56-17 / Security Contract 1)
-  const safeIndicacionesUrl =
-    zone.indicacionesUrl && /^https?:\/\//i.test(zone.indicacionesUrl)
-      ? zone.indicacionesUrl
-      : null;
 
   // Canvas support detection
   useEffect(() => {
@@ -108,7 +103,6 @@ function ZoneCard({ zone }: ZoneCardProps) {
       await firmarConsentimiento.mutateAsync({
         zonaId: zone.zonaId, // from server GET response — never from user input (T-56-18)
         signaturePngDataUrl,
-        indicacionesLeidas: true,
       });
 
       setSigned(true);
@@ -157,52 +151,30 @@ function ZoneCard({ zone }: ZoneCardProps) {
       {/* Zone title */}
       <h3 className="text-base font-semibold text-gray-800">{zone.zonaNombre}</h3>
 
-      {/* 1. PDF download affordance (CONS-03) */}
+      {/* 1. PDF download affordance (CONS-03 / CONS-09 open-PDF gate) */}
       <a
         href={zone.pdfUrl}
         target="_blank"
         rel="noopener noreferrer"
+        onClick={() => setPdfAbierto(true)}
         className="inline-flex items-center gap-2 border border-gray-300 rounded-lg px-4 py-3 text-base font-semibold text-gray-700 hover:bg-gray-50 w-full justify-center"
       >
         <FileDown className="w-5 h-5 text-gray-500" />
         Descargar / ver el consentimiento
       </a>
 
-      {/* 2. Indicaciones check (CONS-07 / D-11) */}
-      {safeIndicacionesUrl ? (
-        <label className="flex items-start gap-3 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={indicacionesLeidas}
-            onChange={(e) => setIndicacionesLeidas(e.target.checked)}
-            className="mt-1 w-5 h-5 accent-teal-600 flex-shrink-0"
-          />
-          <span className="text-base text-gray-700">
-            Leí las{" "}
-            <a
-              href={safeIndicacionesUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-teal-600 underline font-semibold"
-            >
-              indicaciones del médico
-            </a>
-            {" "}y confirmo que fui informado/a.
-          </span>
-        </label>
-      ) : (
-        <label className="flex items-start gap-3 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={indicacionesLeidas}
-            onChange={(e) => setIndicacionesLeidas(e.target.checked)}
-            className="mt-1 w-5 h-5 accent-teal-600 flex-shrink-0"
-          />
-          <span className="text-base text-gray-700">
-            Confirmo que fui informado/a de las indicaciones del procedimiento.
-          </span>
-        </label>
-      )}
+      {/* 2. "Leí el consentimiento" check (CONS-10) */}
+      <label className="flex items-start gap-3 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={leiConsentimiento}
+          onChange={(e) => setLeiConsentimiento(e.target.checked)}
+          className="mt-1 w-5 h-5 accent-teal-600 flex-shrink-0"
+        />
+        <span className="text-base text-gray-700">
+          Leí el consentimiento.
+        </span>
+      </label>
 
       {/* 3. Signature canvas (CONS-04) */}
       {!canvasSupported ? (
@@ -234,7 +206,8 @@ function ZoneCard({ zone }: ZoneCardProps) {
               type="button"
               onClick={handleFirmar}
               disabled={
-                !indicacionesLeidas ||
+                !pdfAbierto ||
+                !leiConsentimiento ||
                 canvasEmpty ||
                 isSubmitting ||
                 !canvasSupported

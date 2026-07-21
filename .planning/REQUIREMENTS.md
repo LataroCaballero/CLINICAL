@@ -24,13 +24,13 @@ Nueva categoría.
 - [ ] **INDIC-02**: El paciente marca las indicaciones como leídas al abrir su link/archivo, sin firma dibujada.
 - [x] **INDIC-03**: El acuse de lectura de indicaciones se persiste en el perfil del paciente con fecha/hora (campo de indicaciones leídas en `Paciente`).
 - [x] **INDIC-04**: El paso `indicacionesPreop` del board CRM se computa a partir del acuse del perfil del paciente (no del acto de firma del consentimiento).
-- [ ] **INDIC-05**: El staff ve en la ficha/stepper del paciente si leyó las indicaciones (indicador con fecha).
+- [x] **INDIC-05**: El staff ve en la ficha/stepper del paciente si leyó las indicaciones (indicador con fecha).
 
 ### Board CRM — Cierre W-1 (EMBUDO)
 
 Continúa numeración desde EMBUDO-05 (v1.13).
 
-- [ ] **EMBUDO-06**: El board del staff refleja consentimiento firmado / indicaciones leídas completados desde el portal, vía invalidación `['crm-kanban']` + refetch on focus, sin recarga manual (cierre deuda W-1 v1.13).
+- [x] **EMBUDO-06**: El board del staff refleja consentimiento firmado / indicaciones leídas completados desde el portal, vía invalidación `['crm-kanban']` + refetch on focus, sin recarga manual (cierre deuda W-1 v1.13).
 
 ## Future Requirements
 
@@ -62,8 +62,8 @@ Diferidos (ver PROJECT.md → Candidatos):
 | INDIC-02 | Phase 62 | Pending |
 | INDIC-03 | Phase 61 | Complete |
 | INDIC-04 | Phase 61 | Complete |
-| INDIC-05 | Phase 62 | Pending |
-| EMBUDO-06 | Phase 62 | Pending |
+| INDIC-05 | Phase 62 | Complete |
+| EMBUDO-06 | Phase 62 | Complete |
 
 **Coverage:**
 - v1.14 requirements: 10 total

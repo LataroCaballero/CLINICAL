@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.14
 milestone_name: Portal — Firma Gated e Indicaciones Separadas
 status: executing
-stopped_at: Completed 62-01-PLAN.md
-last_updated: "2026-07-21T15:32:25.627Z"
+stopped_at: Completed 62-03-PLAN.md
+last_updated: "2026-07-21T15:37:08.819Z"
 last_activity: 2026-07-21
 progress:
   total_phases: 2
   completed_phases: 1
   total_plans: 8
-  completed_plans: 6
+  completed_plans: 7
   percent: 50
 ---
 
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-07-06 after v1.14 roadmap)
 ## Current Position
 
 Phase: 62 (portal-staff-frontend-gate-de-firma-secciones-separadas-y-si) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Status: Ready to execute
 Last activity: 2026-07-21
 
-Progress: [████████░░] 75%
+Progress: [█████████░] 88%
 
 ## Accumulated Context
 
@@ -50,6 +50,7 @@ Full decision log en `.planning/PROJECT.md` (Key Decisions). Decisiones de v1.13
 - [Phase 61]: D-04 aplicado exacto en computePasosCrm Paso 5: OR de 3 fuentes (Paciente.indicacionesLeidasAt primaria v1.14, ConsentimientoFirmado.indicacionesLeidasAt fallback v1.12, Paciente.indicacionesEnviadas fallback pre-v1.12) sin backfill, sin regresion
 - [Phase 62]: Gate open-PDF + checkbox 100% client-side por diseño legal (D-00): sin tracking server-side de apertura del PDF
 - [Phase 62]: safeIndicacionesUrl y bloque de indicaciones removidos de PortalConsentimiento.tsx sin reemplazo local; Plan 02 recrea el guard XSS-safe en PortalIndicaciones.tsx
+- [Phase 62]: 62-03: staleTime bajado a 0 (extremo D-10) para board CRM; indicacionesLeidasAt display-only threaded end-to-end sin tocar computePasosCrm
 
 ### Known Tech Debt (carry-forward)
 
@@ -76,6 +77,6 @@ Items diferidos al cierre de v1.13:
 
 ## Session Continuity
 
-Last session: 2026-07-21T15:32:25.624Z
-Stopped at: Completed 62-01-PLAN.md
+Last session: 2026-07-21T15:37:08.816Z
+Stopped at: Completed 62-03-PLAN.md
 Resume file: None

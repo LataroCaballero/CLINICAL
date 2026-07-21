@@ -1,5 +1,24 @@
 # Milestones
 
+## v1.14 Portal — Firma Gated e Indicaciones Separadas (Shipped: 2026-07-21)
+
+**Phases completed:** 2 phases (61–62), 8 plans, 14 tasks
+**Stats:** ~13 días (2026-07-08 → 2026-07-21) | 46 archivos | +3,979 / −137 líneas | 11 commits `feat(`
+**Requirements:** 10/10 v1.14 completos ✓ (CONS-09..12, INDIC-01..05, EMBUDO-06)
+
+**Key accomplishments:**
+
+1. **Schema + acuse persistido (Phase 61):** nuevo campo global set-once `Paciente.indicacionesLeidasAt` (INDIC-03) y `ConsentimientoFirmado.indicacionesLeidasAt` relajado a nullable preservando los timestamps forenses de v1.12 (D-01), aplicado con el patrón pgBouncer (`prisma diff + db execute + migrate resolve`) sobre la DB Supabase en vivo; cerró cr-01 (la validación stored-XSS ya existía — solo se corrigió el docstring engañoso).
+2. **Desacople del consentimiento (Phase 61):** `firmarConsentimiento` ya no requiere ni depende de `indicacionesLeidas` (CONS-11, D-02/D-03); se removió `indicacionesLeidas` del DTO y se agregó un endpoint portal-scoped set-once de acuse de indicaciones (D-06/D-07).
+3. **`computePasosCrm` deriva del perfil (Phase 61):** el Paso 5 (`indicacionesPreop`) ahora computa completitud desde `Paciente.indicacionesLeidasAt` como fuente primaria, con las dos fuentes legacy preservadas como fallbacks sin regresión; se removió el truncamiento `take:1`/`orderBy` del select `consentimientosFirmados` en `getKanban` (WR-01/SC#3, pacientes multi-zona) más un test de frontera y un guard de source-shape en Jest contra reintroducción.
+4. **Gate de firma en el portal (Phase 62):** el botón de firma exige abrir el PDF **y** tildar "Leí el consentimiento" (dos gates client-side independientes, CONS-09/CONS-10); la sección de consentimiento quedó limpia de todo contenido de indicaciones (CONS-12).
+5. **Sección de indicaciones separada (Phase 62):** componente net-new `PortalIndicaciones.tsx` que lista las indicaciones preop por zona y dispara el acuse de lectura automáticamente al abrir el link, cableado como 5ª sección independiente del acordeón del portal (INDIC-01/INDIC-02).
+6. **Visibilidad staff + cierre W-1 (Phase 62):** el staff ve la fecha de lectura de indicaciones en el stepper del sheet (INDIC-05) y el board CRM se mantiene fresco sin recarga manual vía refetch on window focus, cerrando la deuda W-1 de v1.13 (EMBUDO-06).
+
+**Known deferred items at close:** 3 (see STATE.md → Deferred Items). Resumen: 2 gaps de verificación humana/browser de Phase 62 (`62-HUMAN-UAT` 5 escenarios de portal `partial` + `62-VERIFICATION` `human_needed`; código verificado y wired) + 1 ítem de deuda pre-existente carried (quick-task `1-eliminar-dropdown-tipo-de-consulta-de-hc` incompleto). Requisitos 10/10 completos; ningún blocker de código. No se corrió `/gsd:audit-milestone` (acknowledge & proceed).
+
+---
+
 ## v1.13 Embudo CRM Accionable (Shipped: 2026-07-05)
 
 **Phases completed:** 4 phases (57–60), 8 plans, 19 tasks

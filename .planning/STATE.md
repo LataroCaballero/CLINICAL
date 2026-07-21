@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.14
 milestone_name: Portal — Firma Gated e Indicaciones Separadas
-status: milestone_complete
-stopped_at: Milestone complete (Phase 62 was final phase)
-last_updated: 2026-07-21T16:47:24.752Z
-last_activity: 2026-07-21
+status: Awaiting next milestone
+stopped_at: Completed 62-02-PLAN.md
+last_updated: "2026-07-21T16:51:16.815Z"
+last_activity: 2026-07-21 — Milestone v1.14 completed and archived
 progress:
   total_phases: 2
   completed_phases: 2
@@ -25,12 +25,10 @@ See: .planning/PROJECT.md (updated 2026-07-06 after v1.14 roadmap)
 
 ## Current Position
 
-Phase: 62
-Plan: Not started
-Status: Milestone complete
-Last activity: 2026-07-21
-
-Progress: [██████████] 100%
+Phase: Milestone v1.14 complete
+Plan: —
+Status: Awaiting next milestone
+Last activity: 2026-07-21 — Milestone v1.14 completed and archived
 
 ## Accumulated Context
 
@@ -55,8 +53,8 @@ Full decision log en `.planning/PROJECT.md` (Key Decisions). Decisiones de v1.13
 
 ### Known Tech Debt (carry-forward)
 
-- **Introducido en v1.13 (advisory):** `crearTurno` degrada etapas avanzadas a `TURNO_AGENDADO` en cualquier turno (intencional); paso 'cirugia' cuenta cirugías CANCELADA/SUSPENDIDA como completas; consentimiento/indicaciones sin invalidación inmediata crm-kanban (se cierra en Phase 62).
-- **Pre-existente / carried:** `todo cr-01-indicaciones-url-validation.md` (stored-XSS pre-Phase-54); `quick-task 1-eliminar-dropdown-tipo-de-consulta-de-hc` incompleto.
+- **Introducido en v1.13 (advisory):** `crearTurno` degrada etapas avanzadas a `TURNO_AGENDADO` en cualquier turno (intencional); paso 'cirugia' cuenta cirugías CANCELADA/SUSPENDIDA como completas. (W-1 invalidación crm-kanban CERRADA en Phase 62 vía refetch on focus.)
+- **Pre-existente / carried:** `quick-task 1-eliminar-dropdown-tipo-de-consulta-de-hc` incompleto. (`todo cr-01-indicaciones-url-validation` CERRADO en Phase 61.)
 - HistorialClinicoPanel y TurnoHCModal no migrados a HCEntryContent.tsx (diferido).
 - AppointmentDetailModal y CalendarGrid no migrados a getEstadoTurnoChip (diferido).
 - STOCK-03: FACTURADOR excluido del backend de ordenes-consumo pero accede desde frontend.
@@ -66,18 +64,22 @@ Full decision log en `.planning/PROJECT.md` (Key Decisions). Decisiones de v1.13
 
 ## Deferred Items
 
-Items diferidos al cierre de v1.13:
+Items acknowledged y diferidos al cierre de v1.14 (2026-07-21):
 
 | Category | Item | Status |
 |----------|------|--------|
-| uat_gap | 58-HUMAN-UAT (5 escenarios: orden columnas, indicador naranja, etiquetas contacto, hide todosCompletos) | partial |
-| verification_gap | 58-VERIFICATION | human_needed |
-| verification_gap | 60 frontend KPI cards display (backend 8/8 + SECURED) | manual pending |
+| uat_gap | 62-HUMAN-UAT (5 escenarios de portal: gate de firma open-PDF+checkbox, sección indicaciones separada, acuse automático, indicador staff, board sync on focus) | partial |
+| verification_gap | 62-VERIFICATION | human_needed |
 | quick_task | 1-eliminar-dropdown-tipo-de-consulta-de-hc | missing |
-| todo | cr-01-indicaciones-url-validation (stored-XSS pre-Phase-54, carried) | pending |
+
+> cr-01-indicaciones-url-validation se cerró en Phase 61 (la validación server-side ya existía; se corrigió el docstring). W-1 (invalidación crm-kanban) se cerró en Phase 62 vía refetch on window focus.
 
 ## Session Continuity
 
 Last session: 2026-07-21T15:43:29.823Z
 Stopped at: Completed 62-02-PLAN.md
 Resume file: None
+
+## Operator Next Steps
+
+- Start the next milestone with /gsd-new-milestone

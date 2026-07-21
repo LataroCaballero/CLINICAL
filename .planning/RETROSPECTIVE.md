@@ -4,6 +4,49 @@
 
 ---
 
+## Milestone: v1.14 — Portal — Firma Gated e Indicaciones Separadas
+
+**Shipped:** 2026-07-21
+**Phases:** 2 (61–62) | **Plans:** 8 | **Timeline:** ~13 días (2026-07-08 → 2026-07-21)
+**Stats:** 46 archivos | +3,979 / −137 líneas | 14 tareas | 10/10 requisitos | sin `/gsd:audit-milestone` (acknowledge & proceed, 0 blockers de código)
+
+### What Was Built
+- **Schema + acuse persistido (Phase 61)**: campo global set-once `Paciente.indicacionesLeidasAt` (INDIC-03) y `ConsentimientoFirmado.indicacionesLeidasAt` relajado a nullable vía DROP NOT NULL (preserva timestamps forenses v1.12), aplicado con el patrón pgBouncer sobre Supabase en vivo; cierre de cr-01 confirmando que la validación stored-XSS ya existía (solo docstring engañoso)
+- **Desacople del consentimiento (Phase 61)**: `firmarConsentimiento` sin dependencia de `indicacionesLeidas` (removido del DTO, CONS-11) + endpoint portal-scoped set-once de acuse; `computePasosCrm` deriva `indicacionesPreop` del acuse del perfil con las 2 fuentes legacy como fallbacks sin regresión
+- **Gap-closure de non-regresión (Phase 61, 61-04/61-05)**: removido el truncamiento `take:1`/`orderBy` de `consentimientosFirmados` en `getKanban` (rompía los fallbacks `.some()` en multi-zona, WR-01/SC#3) + test de frontera + guard de source-shape en Jest que lee `pacientes.service.ts` y falla si el `take` se reintroduce
+- **Frontend portal + staff (Phase 62)**: gate de firma con dos condiciones client-side (abrir PDF + tildar "Leí el consentimiento", CONS-09/10), sección de consentimiento limpia de indicaciones (CONS-12), `PortalIndicaciones.tsx` net-new como 5ª sección con acuse automático al abrir el link (INDIC-01/02), fecha de lectura en el stepper del staff (INDIC-05) y board CRM fresco vía refetch on window focus cerrando W-1 (EMBUDO-06)
+
+### What Worked
+- **Contrato backend primero, otra vez**: Phase 61 fijó el campo del perfil + la forma del payload de `computePasosCrm`; Phase 62 (frontend) consumió sin re-derivar lógica de pasos. Mismo modelo que v1.13, misma baja fricción de integración
+- **Guard de source-shape como red de regresión donde el mock no llega**: el test de frontera de 61-04 usaba `findMany` mockeado y no podía detectar la reintroducción de `take:1`; 61-05 agregó un guard que lee el archivo fuente y falla ante el patrón. La verificación de fase (`61-VERIFICATION.md`) detectó exactamente ese gap y forzó el guard durable — el verifier hizo su trabajo
+- **Cerrar deuda verificando, no reimplementando**: cr-01 (stored-XSS) se cerró confirmando que `actualizarIndicacionesUrl` ya tenía la validación server-side completa — solo se corrigió el docstring engañoso. Evitó trabajo net-new sobre algo ya resuelto
+- **W-1 cerrada con la herramienta más barata**: refetch on window focus (+ `staleTime` a 0) resolvió la sincronización del board sin websockets ni polling — la deuda de v1.13 se saldó con ~1 línea de config de query, no con infra nueva
+- **Preservar evidencia legal por diseño**: relajar `ConsentimientoFirmado.indicacionesLeidasAt` con DROP NOT NULL (no DROP COLUMN) mantuvo intactos los timestamps forenses de v1.12 mientras la fuente canónica migraba al perfil
+
+### What Was Inefficient
+- **Tercer milestone consecutivo difiriendo UAT humana al cierre**: v1.12 lo señaló, v1.13 lo repitió, y v1.14 volvió a caer — `62-HUMAN-UAT` quedó `partial` (5 escenarios de portal) y `62-VERIFICATION` en `human_needed`. Phase 62 es 100% superficie visual (gates de portal, acuse on-click, indicador staff) y aun así la confirmación en browser se acumuló. El anti-patrón dejó de ser un desliz puntual y es crónico
+- **CR-03 shipped como deuda de modelado**: el acuse es un campo global/set-once pero el stepper del staff lo muestra por zona — impreciso en pacientes multi-zona. Se aceptó tras UAT, pero es una discordancia dato-vs-UI que se decidió después de construir ambos lados, no antes
+- **Sin milestone audit**: se cerró con `acknowledge & proceed` sin correr `/gsd:audit-milestone`. Requisitos 10/10 y código verificado/wired, pero sin el gate de integración cross-phase/E2E que sí se corrió en v1.13
+- **~13 días de wall-clock para 2 fases / +4k LOC**: Phase 61 (backend) tardó del 07-08 al 07-17 — largo para su tamaño, con las dos gap-closure (61-04/61-05) sumando ciclos que un boundary test bien diseñado desde el inicio habría evitado
+
+### Patterns Established
+- **Source-shape guard en Jest**: cuando un test de comportamiento depende de mocks que no pueden observar una regresión estructural (p.ej. un `take:1` reintroducido en un select), un guard que lee el archivo fuente y asserta contra el patrón prohibido es la red durable. Complementa —no reemplaza— al test de comportamiento
+- **Campo de acuse global/set-once en el perfil con fallbacks legacy (sin backfill)**: la fuente canónica pasa a un campo nuevo del perfil; las fuentes previas quedan como fallbacks `.some()` de solo lectura, preservando snapshots históricos sin migrar datos
+- **Relajar nullability (DROP NOT NULL) en vez de DROP COLUMN** para desacoplar una columna sin perder los datos forenses ya registrados en ella
+
+### Key Lessons
+- **La UAT humana diferida es ya un defecto de proceso, no una nota de cierre**: 3 milestones seguidos (v1.12/v1.13/v1.14). El único contraataque que funcionó fue el de Phase 59 (v1.13): un plan de UAT explícito *dentro* de la fase visual. Para v1.15 hay que hacerlo default en fases frontend, o el ítem seguirá migrando de milestone en milestone
+- **Decidir la granularidad del dato antes de la forma de la UI**: CR-03 nació de construir un campo global y una UI por-zona en paralelo y descubrir el desajuste al final. Cuando el dato y su display tienen cardinalidades distintas, la decisión de granularidad va antes del diseño de ambos lados
+- **El verifier gana su costo cuando el test tiene puntos ciegos**: `61-VERIFICATION` encontró que el boundary test mockeado no cubría la regresión real y forzó el guard de source-shape. Sin ese paso, 61-04 habría dado una falsa sensación de cobertura
+- **Cerrar deuda a veces es leer el código, no escribirlo**: cr-01 se saldó verificando que la protección ya existía. Antes de reimplementar una mitigación "faltante", confirmar que no está ya presente bajo otro nombre
+
+### Cost Observations
+- 2 fases, 8 planes, 14 tareas, +3,979 LOC en ~13 días — LOC alto para 2 fases (frontend portal + staff pesa), wall-clock inflado por la fase backend y sus 2 gap-closure
+- Mix: migración de schema + refactor de servicio backend (Phase 61) + ensamblaje frontend reusando el GET de consentimiento existente para indicaciones (Phase 62)
+- Cierre con 3 ítems diferidos (2 verificación humana/browser + 1 deuda carried) y 2 deudas de diseño aceptadas (CR-03, WR-01); sin audit de milestone
+
+---
+
 ## Milestone: v1.13 — Embudo CRM Accionable
 
 **Shipped:** 2026-07-05
@@ -512,6 +555,7 @@
 | v1.11 HC Completa en Ficha de Paciente | 1 | 1 | 1 día | ~variable | Milestone mínimo solo-frontend — port de render con componente compartido; sin audit (verificado vía VERIFICATION + visual) |
 | v1.12 Prequirúrgico + Portal del Paciente | 6 | 30 | 8 días | ~variable | Milestone más grande desde v1.5; schema big-bang up-front + portal público seguro por capas; audit PASSED; 17 ítems de verificación humana diferidos |
 | v1.13 Embudo CRM Accionable | 4 | 8 | 3 días | ~variable | Milestone chico y acotado; contrato backend (`computePasosCrm`) consumido 1:1 por board/stepper; reuso de enum en vez de migración; audit `tech_debt` 0 blockers; 4 ítems diferidos (2 UAT humana + 2 deuda carried) |
+| v1.14 Portal — Firma Gated e Indicaciones Separadas | 2 | 8 | ~13 días | ~variable | Contrato backend-first otra vez (Phase 61 → 62); guard de source-shape como red de regresión donde el mock no llega; W-1 cerrada con refetch on focus; sin audit (acknowledge & proceed); 3 ítems diferidos + 2 deudas de diseño (CR-03, WR-01) |
 
 ### Cumulative Quality
 
@@ -531,16 +575,17 @@
 | v1.11 | ninguno (cambio puramente de presentación) | <10% | ninguna |
 | v1.12 | TDD tests (brute-force lock 11 casos, catalogo-hc 101 total) | <10% | pdf-lib 1.17.1, @nestjs/throttler (cableado), multer + @types/multer |
 | v1.13 | TDD tests (computePasosCrm; spec del invariante etapa-no-afecta-conteo 8/8 + SECURED 5/5) | <10% | ninguna |
+| v1.14 | boundary test getKanban→computePasosCrm + guard de source-shape (falla si `take:1` vuelve al select `consentimientosFirmados`) | <10% | ninguna |
 
 ### Recurring Process Debt
 
-| Issue | v1.1 | v1.2 | v1.4 | v1.5 | v1.6 | v1.7 | v1.8 | v1.9 | v1.10 | v1.11 | v1.12 | v1.13 | Fix |
-|-------|------|------|------|------|------|------|------|------|-------|-------|-----------|-------|------|
-| MILESTONES.md accomplishments vacíos | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | evitado (archivado a mano) | Actualizar formato SUMMARY.md con `one_liner:` field |
-| STATE.md progress desactualizado durante ejecución | ✗ | parcial | parcial | parcial | parcial | parcial | parcial | parcial | parcial | parcial | parcial | parcial | GSD executor actualiza STATE al final de cada plan |
-| Integration bugs detectados tarde (audit, no verify) | — | ✗ | ✓ | ✓ | sin audit | ✓ | sin audit | ✓ | ✓ | sin audit | ✓ | ✓ | Audit antes de complete-milestone elimina retrabajo |
-| Audit saltado antes de archivar | — | — | — | — | ✗ | ✓ | ✗ | ✓ | ✓ | ✗ | ✓ | ✓ | Correr /gsd:audit-milestone antes de /gsd:complete-milestone |
-| Progress table ROADMAP desalineada durante ejecución | — | — | — | — | — | — | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ (normalizada a mano) | Executor debe respetar header de columnas al agregar filas |
-| CLI sobrescribe archivo milestone-scoped con snapshot completo | — | — | — | — | — | — | — | ✗ | ✗ | n/a | ✓ | evitado (archivado a mano) | `milestone complete` debería preservar el ROADMAP scoped del roadmapper |
-| CLI omite línea de Stats en MILESTONES.md | — | — | — | — | — | — | — | — | ✗ | ✗ | ✗ | evitado (archivado a mano) | `milestone complete` debería poblar Stats desde git/summaries |
-| UAT/verificación humana diferida al cierre en vez de por fase | — | — | — | — | — | ✗ | — | — | — | — | ✗ | ✗ (2/4 fases) | Agendar verificación visual como gate de fase (Phase 59 lo hizo bien) |
+| Issue | v1.1 | v1.2 | v1.4 | v1.5 | v1.6 | v1.7 | v1.8 | v1.9 | v1.10 | v1.11 | v1.12 | v1.13 | v1.14 | Fix |
+|-------|------|------|------|------|------|------|------|------|-------|-------|-----------|-------|-------|------|
+| MILESTONES.md accomplishments vacíos | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | evitado (archivado a mano) | parcial (CLI pobló, reescrito a mano) | Actualizar formato SUMMARY.md con `one_liner:` field |
+| STATE.md progress desactualizado durante ejecución | ✗ | parcial | parcial | parcial | parcial | parcial | parcial | parcial | parcial | parcial | parcial | parcial | parcial | GSD executor actualiza STATE al final de cada plan |
+| Integration bugs detectados tarde (audit, no verify) | — | ✗ | ✓ | ✓ | sin audit | ✓ | sin audit | ✓ | ✓ | sin audit | ✓ | ✓ | sin audit | Audit antes de complete-milestone elimina retrabajo |
+| Audit saltado antes de archivar | — | — | — | — | ✗ | ✓ | ✗ | ✓ | ✓ | ✗ | ✓ | ✓ | ✗ | Correr /gsd:audit-milestone antes de /gsd:complete-milestone |
+| Progress table ROADMAP desalineada durante ejecución | — | — | — | — | — | — | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ (normalizada a mano) | ✓ (alineada) | Executor debe respetar header de columnas al agregar filas |
+| CLI sobrescribe archivo milestone-scoped con snapshot completo | — | — | — | — | — | — | — | ✗ | ✗ | n/a | ✓ | evitado (archivado a mano) | parcial (CLI archivó full ROADMAP, incluye v1.14 details) | `milestone complete` debería preservar el ROADMAP scoped del roadmapper |
+| CLI omite línea de Stats en MILESTONES.md | — | — | — | — | — | — | — | — | ✗ | ✗ | ✗ | evitado (archivado a mano) | ✗ (CLI omitió, agregado a mano) | `milestone complete` debería poblar Stats desde git/summaries |
+| UAT/verificación humana diferida al cierre en vez de por fase | — | — | — | — | — | ✗ | — | — | — | — | ✗ | ✗ (2/4 fases) | ✗ (3er milestone consecutivo) | Agendar verificación visual como gate de fase (Phase 59 lo hizo bien) |

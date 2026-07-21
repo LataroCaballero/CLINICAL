@@ -11,10 +11,10 @@
 
 Continúa numeración desde CONS-08 (v1.12).
 
-- [ ] **CONS-09**: El paciente debe abrir/ver el PDF del consentimiento antes de poder firmarlo; el botón de firma permanece deshabilitado hasta que lo abra.
-- [ ] **CONS-10**: El paciente debe tildar "Leí el consentimiento" (además de haber abierto el PDF) para habilitar la firma.
+- [x] **CONS-09**: El paciente debe abrir/ver el PDF del consentimiento antes de poder firmarlo; el botón de firma permanece deshabilitado hasta que lo abra.
+- [x] **CONS-10**: El paciente debe tildar "Leí el consentimiento" (además de haber abierto el PDF) para habilitar la firma.
 - [x] **CONS-11**: Firmar el consentimiento se desacopla de las indicaciones: `firmarConsentimiento` ya no requiere ni depende de `indicacionesLeidas`.
-- [ ] **CONS-12**: La sección de consentimiento del portal muestra únicamente el/los consentimiento(s) por zona, sin el contenido de indicaciones.
+- [x] **CONS-12**: La sección de consentimiento del portal muestra únicamente el/los consentimiento(s) por zona, sin el contenido de indicaciones.
 
 ### Indicaciones — Sección Separada con Acuse (INDIC)
 
@@ -54,10 +54,10 @@ Diferidos (ver PROJECT.md → Candidatos):
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CONS-09 | Phase 62 | Pending |
-| CONS-10 | Phase 62 | Pending |
+| CONS-09 | Phase 62 | Complete |
+| CONS-10 | Phase 62 | Complete |
 | CONS-11 | Phase 61 | Complete |
-| CONS-12 | Phase 62 | Pending |
+| CONS-12 | Phase 62 | Complete |
 | INDIC-01 | Phase 62 | Pending |
 | INDIC-02 | Phase 62 | Pending |
 | INDIC-03 | Phase 61 | Complete |

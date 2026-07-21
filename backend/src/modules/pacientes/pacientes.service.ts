@@ -741,6 +741,8 @@ export class PacientesService {
           comentarioListaEspera: p.comentarioListaEspera,
           pendingAutorizaciones: p.autorizaciones.length,
           flujo: p.flujo ?? null,
+          // Display-only, does not govern pasos.indicacionesPreop (D-08). INDIC-05.
+          indicacionesLeidasAt: p.indicacionesLeidasAt,
           // Computed step-state payload (D-04/D-05). Values: 'completo' | 'pendiente'.
           ...computePasosCrm({
             presupuestos: p.presupuestos,

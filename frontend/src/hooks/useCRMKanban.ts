@@ -58,6 +58,9 @@ export interface KanbanPatient {
   // Phase 58 — expuesto por backend desde Phase 57 (computePasosCrm spread)
   pasos: PasosCrm;
   todosCompletos: boolean;
+  // Phase 62 (INDIC-05) — display-only fecha de lectura de indicaciones;
+  // NO gobierna pasos.indicacionesPreop (eso sigue siendo computePasosCrm).
+  indicacionesLeidasAt: string | null;
 }
 
 export interface KanbanColumn {
@@ -100,6 +103,9 @@ export function useCRMKanban(profesionalId: string | null) {
       return data;
     },
     enabled: !!profesionalId,
-    staleTime: 30_000,
+    // Phase 62 (EMBUDO-06/D-10) — cierre deuda W-1: freshness sobre volumen de
+    // requests, sin infra nueva. staleTime 0 fuerza refetch en cada focus.
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 }

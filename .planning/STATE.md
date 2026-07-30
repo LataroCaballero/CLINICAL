@@ -1,17 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.14
-milestone_name: Portal — Firma Gated e Indicaciones Separadas
-status: Awaiting next milestone
-stopped_at: Completed 62-02-PLAN.md
-last_updated: "2026-07-21T16:51:16.815Z"
-last_activity: 2026-07-21 — Milestone v1.14 completed and archived
+milestone: v1.15
+milestone_name: Flujo CRM Automático + Correcciones HC
+status: planning
+last_updated: "2026-07-30T15:03:13.942Z"
+last_activity: 2026-07-30
 progress:
-  total_phases: 2
-  completed_phases: 2
-  total_plans: 8
-  completed_plans: 8
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -25,10 +24,10 @@ See: .planning/PROJECT.md (updated 2026-07-06 after v1.14 roadmap)
 
 ## Current Position
 
-Phase: Milestone v1.14 complete
+Phase: Not started (defining requirements)
 Plan: —
-Status: Awaiting next milestone
-Last activity: 2026-07-21 — Milestone v1.14 completed and archived
+Status: Defining requirements
+Last activity: 2026-07-30 — Milestone v1.15 started
 
 ## Accumulated Context
 

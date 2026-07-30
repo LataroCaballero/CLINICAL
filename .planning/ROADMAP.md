@@ -17,6 +17,7 @@
 - ✅ **v1.12 Prequirúrgico Estructurado + Portal del Paciente** — Fases 51–56 (shipped 2026-07-02)
 - ✅ **v1.13 Embudo CRM Accionable** — Fases 57–60 (shipped 2026-07-05)
 - ✅ **v1.14 Portal — Firma Gated e Indicaciones Separadas** — Fases 61–62 (shipped 2026-07-21)
+- 🚧 **v1.15 Flujo CRM Automático + Correcciones HC** — Fases 63–66 (en progreso)
 
 ## Phases
 
@@ -210,6 +211,60 @@ Full details: `.planning/milestones/v1.14-ROADMAP.md`
 
 </details>
 
+### 🚧 v1.15 Flujo CRM Automático + Correcciones HC (En Progreso)
+
+**Milestone Goal:** Que el embudo del kanban refleje automáticamente el estado real de cada paciente (entrada → agenda → atención → tratamiento/confirmación) y corregir las fricciones de carga y visualización de Historia Clínica.
+
+- [ ] **Phase 63: Flujo CRM Automático (Backend)** - Transiciones automáticas de etapa CRM al crear paciente, agendar cirugía y cargar tratamiento en consultorio
+- [ ] **Phase 64: Indicadores de Pendientes y Planilla Legible (Frontend)** - Badge de pendiente por etapa en la card + columna "Último tratamiento" sin truncar información
+- [ ] **Phase 65: Sync Tipo de Turno ↔ Plantilla HC (Backend)** - El tipo de turno se ajusta automáticamente según la plantilla de HC cargada
+- [ ] **Phase 66: Correcciones de UI de Historia Clínica (Frontend)** - Wizard nuevo en PatientDrawer + fix de render del detalle Pre-quirúrgico
+
+## Phase Details
+
+### Phase 63: Flujo CRM Automático (Backend)
+**Goal**: El estado del embudo CRM refleja automáticamente el estado real del paciente en tres puntos del flujo, sin que la secretaria tenga que clasificar manualmente.
+**Depends on**: Nothing (primera fase del milestone; usa el enum `EtapaCRM` existente)
+**Requirements**: EMBUDO-07, EMBUDO-08, EMBUDO-09
+**Success Criteria** (what must be TRUE):
+  1. Al crear un paciente nuevo, aparece en la columna "Nuevo Lead" del kanban (`etapaCRM = NUEVO_LEAD`), nunca en "Sin clasificar"
+  2. Al agendar la fecha de cirugía (turno de cirugía) el paciente pasa a "Confirmado" en el kanban, incluso sin presupuesto aceptado
+  3. Al cargarse una entrada de HC "Tratamiento en consultorio" (sola o junto a "Primera vez"), el paciente desaparece del kanban (flujo=TRATAMIENTO, oculto vía el mismo patrón que operados completos de v1.13) y queda registrado en la planilla de tratamientos con la fecha en que se hizo el tratamiento
+**Plans**: TBD
+
+### Phase 64: Indicadores de Pendientes y Planilla Legible (Frontend)
+**Goal**: La secretaria ve de un vistazo qué acción falta por paciente en el kanban, y la planilla de tratamientos muestra la información completa sin truncarse silenciosamente.
+**Depends on**: Phase 63 (las etapas NUEVO_LEAD/TURNO_AGENDADO y el flujo TRATAMIENTO quedan poblados automáticamente)
+**Requirements**: CONTACTO-03, CONTACTO-04, TRAT-07
+**Success Criteria** (what must be TRUE):
+  1. La card de un paciente en "Nuevo Lead" muestra el badge de pendiente "Dar turno" en la zona de registro de contacto inferior
+  2. La card de un paciente en "Consulta Agendada" (`TURNO_AGENDADO`) muestra el badge de pendiente "Ser atendido" en la misma zona
+  3. La columna "Último tratamiento" de la planilla muestra todos los tratamientos del turno (no "primero +N-1") truncados en la celda
+  4. Al pasar el mouse sobre la celda truncada, un tooltip revela el texto completo de todos los tratamientos
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 65: Sync Tipo de Turno ↔ Plantilla HC (Backend)
+**Goal**: El tipo de turno se mantiene coherente con la plantilla de HC cargada sobre él, sin que el profesional tenga que corregirlo a mano en la agenda.
+**Depends on**: Nothing (cambio de backend independiente sobre `crearEntrada`; puede ejecutarse en paralelo a Phase 63/64)
+**Requirements**: HCSYNC-01, HCSYNC-02, HCSYNC-03
+**Success Criteria** (what must be TRUE):
+  1. Al guardar una plantilla de HC "Primera vez" sobre un turno, el tipo de turno queda fijado en "Consulta" si estaba en otro valor
+  2. Al guardar una plantilla "Tratamiento en consultorio" sobre un turno de tipo "Consulta", el tipo de turno cambia a "Tratamiento"
+  3. Al guardar una plantilla "Pre-quirúrgico" sobre un turno, el tipo de turno queda fijado en "Pre-Quirúrgico"
+  4. Si la HC se carga sin turno asociado (ej. entrada retroactiva desde PatientDrawer), ningún tipo de turno se modifica
+**Plans**: TBD
+
+### Phase 66: Correcciones de UI de Historia Clínica (Frontend)
+**Goal**: Cargar y revisar entradas de HC desde la ficha del paciente es consistente con LiveTurno y no deja información sin mostrar.
+**Depends on**: Nothing (cambios de frontend independientes de las Phases 63-65)
+**Requirements**: HCUI-01, HCUI-02
+**Success Criteria** (what must be TRUE):
+  1. Al agregar una nueva entrada de HC desde el PatientDrawer, se abre el wizard nuevo (`HCCreatorForm`/`HCCreatorDialog`, el mismo de LiveTurno), no el formulario de texto libre viejo
+  2. Al abrir el detalle de una entrada "Pre-quirúrgico" en el historial de HC, se ven todos los campos guardados (antecedentes, alergias, medicación, estudios complementarios, consentimiento informado, comentario) en vez de una tarjeta vacía
+**Plans**: TBD
+**UI hint**: yes
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -278,6 +333,10 @@ Full details: `.planning/milestones/v1.14-ROADMAP.md`
 | 60. Estadísticas sobre Registros Reales | v1.13 | 2/2 | Complete | 2026-07-05 |
 | 61. Backend — Schema, Decoupling e Indicaciones | v1.14 | 5/5 | Complete    | 2026-07-17 |
 | 62. Portal + Staff Frontend — Gate, Secciones y Sincronización | v1.14 | 3/3 | Complete    | 2026-07-21 |
+| 63. Flujo CRM Automático (Backend) | v1.15 | 0/TBD | Not started | - |
+| 64. Indicadores de Pendientes y Planilla Legible (Frontend) | v1.15 | 0/TBD | Not started | - |
+| 65. Sync Tipo de Turno ↔ Plantilla HC (Backend) | v1.15 | 0/TBD | Not started | - |
+| 66. Correcciones de UI de Historia Clínica (Frontend) | v1.15 | 0/TBD | Not started | - |
 
 ---
-*Roadmap initialized: 2026-02-23 | v1.0 shipped: 2026-03-03 | v1.1 shipped: 2026-03-16 | v1.2 shipped: 2026-03-31 | v1.3 shipped: 2026-04-09 | v1.4 shipped: 2026-04-20 | v1.5 shipped: 2026-05-13 | v1.6 shipped: 2026-05-23 | v1.7 shipped: 2026-05-28 | v1.8 shipped: 2026-06-09 | v1.9 shipped: 2026-06-13 | v1.10 shipped: 2026-06-22 | v1.11 shipped: 2026-06-24 | v1.12 shipped: 2026-07-02 | v1.13 shipped: 2026-07-05 | v1.14 shipped: 2026-07-21*
+*Roadmap initialized: 2026-02-23 | v1.0 shipped: 2026-03-03 | v1.1 shipped: 2026-03-16 | v1.2 shipped: 2026-03-31 | v1.3 shipped: 2026-04-09 | v1.4 shipped: 2026-04-20 | v1.5 shipped: 2026-05-13 | v1.6 shipped: 2026-05-23 | v1.7 shipped: 2026-05-28 | v1.8 shipped: 2026-06-09 | v1.9 shipped: 2026-06-13 | v1.10 shipped: 2026-06-22 | v1.11 shipped: 2026-06-24 | v1.12 shipped: 2026-07-02 | v1.13 shipped: 2026-07-05 | v1.14 shipped: 2026-07-21 | v1.15 started: 2026-07-30*

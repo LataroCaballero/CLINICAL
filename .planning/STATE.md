@@ -3,10 +3,10 @@ gsd_state_version: 1.0
 milestone: v1.15
 milestone_name: Flujo CRM Automático + Correcciones HC
 status: planning
-last_updated: "2026-07-30T15:03:13.942Z"
+last_updated: "2026-07-30T00:00:00.000Z"
 last_activity: 2026-07-30
 progress:
-  total_phases: 0
+  total_phases: 4
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -17,44 +17,38 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-07-06 after v1.14 roadmap)
+See: .planning/PROJECT.md (updated 2026-07-30 after v1.15 roadmap)
 
 **Core value:** Que un cirujano plástico cierre más cirugías — el sistema hace visible qué pacientes seguir, cuándo y cómo, de la manera más automatizada posible
-**Current focus:** Milestone complete
+**Current focus:** Phase 63 — Flujo CRM Automático (Backend)
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-07-30 — Milestone v1.15 started
+Phase: 63 of 66 (Flujo CRM Automático — Backend)
+Plan: — (roadmap created, not yet planned)
+Status: Roadmap created — ready to plan Phase 63
+Last activity: 2026-07-30 — Roadmap v1.15 created (Phases 63-66, 11/11 requirements mapped)
+
+Progress: [░░░░░░░░░░] 0%
 
 ## Accumulated Context
 
 ### Decisions
 
-Full decision log en `.planning/PROJECT.md` (Key Decisions). Decisiones de v1.13 archivadas en `.planning/milestones/v1.13-ROADMAP.md`.
+Full decision log en `.planning/PROJECT.md` (Key Decisions). Decisiones de v1.13/v1.14 archivadas en `.planning/milestones/v1.13-ROADMAP.md` / `v1.14-ROADMAP.md`.
 
-**Decisions relevantes para v1.14:**
+**Decisiones relevantes para v1.15 (roadmap):**
 
-- D-04 (v1.13): consentimiento/indicaciones sin invalidación inmediata de crm-kanban — W-1 cierra en Phase 62 de v1.14 vía refetch on focus
-- Indicaciones sólo requieren acuse de lectura (no firma dibujada): campo `indicacionesLeidasAt` en `Paciente`, endpoint portal-scoped
-- Gate open-PDF es client-side (no server-side): la prueba legal es firma + checkbox CONS-10
-- Migración de schema: patrón pgBouncer (`prisma diff + db execute + migrate resolve`), nunca `migrate dev`
-- [Phase 61]: D-01 aplicado via DROP NOT NULL (no DROP COLUMN) — preserva timestamps forenses v1.12 de ConsentimientoFirmado
-- [Phase 61]: cr-01 cerrado sin validacion net-new — actualizarIndicacionesUrl ya tenia la validacion server-side completa; solo se corrigio el docstring enganoso
-- [Phase 61]: firmarConsentimiento desacoplado de indicaciones (D-02/D-03) + nuevo endpoint set-once POST indicaciones/acuse (D-06/D-07)
-- [Phase 61]: D-04 aplicado exacto en computePasosCrm Paso 5: OR de 3 fuentes (Paciente.indicacionesLeidasAt primaria v1.14, ConsentimientoFirmado.indicacionesLeidasAt fallback v1.12, Paciente.indicacionesEnviadas fallback pre-v1.12) sin backfill, sin regresion
-- [Phase 62]: Gate open-PDF + checkbox 100% client-side por diseño legal (D-00): sin tracking server-side de apertura del PDF
-- [Phase 62]: safeIndicacionesUrl y bloque de indicaciones removidos de PortalConsentimiento.tsx sin reemplazo local; Plan 02 recrea el guard XSS-safe en PortalIndicaciones.tsx
-- [Phase 62]: 62-03: staleTime bajado a 0 (extremo D-10) para board CRM; indicacionesLeidasAt display-only threaded end-to-end sin tocar computePasosCrm
-- [Phase 62]: 62-02: acuse de indicaciones disparado en cada click del link (backend idempotente/set-once); guard XSS ^https?:// recreado localmente en PortalIndicaciones.tsx
+- Fases derivadas por cohesión backend/frontend: Phase 63 (embudo CRM backend) → Phase 64 (indicadores + planilla frontend, depende de 63) → Phase 65 (sync tipo turno↔HC backend, independiente) → Phase 66 (correcciones UI de HC frontend, independiente)
+- EMBUDO-09 reutiliza el patrón v1.13 de "ocultar del board" (flujo=TRATAMIENTO) — no se agrega columna/etapa nueva
+- No se toca el enum `EtapaCRM` ni se hace backfill de pacientes existentes sin etapa (solo aplica hacia adelante)
+- HCSYNC-01/02/03 y HCUI-01/02 son trabajo net-new sin dependencia entre sí ni con el embudo CRM
 
 ### Known Tech Debt (carry-forward)
 
-- **Introducido en v1.13 (advisory):** `crearTurno` degrada etapas avanzadas a `TURNO_AGENDADO` en cualquier turno (intencional); paso 'cirugia' cuenta cirugías CANCELADA/SUSPENDIDA como completas. (W-1 invalidación crm-kanban CERRADA en Phase 62 vía refetch on focus.)
-- **Pre-existente / carried:** `quick-task 1-eliminar-dropdown-tipo-de-consulta-de-hc` incompleto. (`todo cr-01-indicaciones-url-validation` CERRADO en Phase 61.)
-- HistorialClinicoPanel y TurnoHCModal no migrados a HCEntryContent.tsx (diferido).
+- **Introducido en v1.13 (advisory):** `crearTurno` degrada etapas avanzadas a `TURNO_AGENDADO` en cualquier turno (intencional); paso 'cirugia' cuenta cirugías CANCELADA/SUSPENDIDA como completas.
+- **Pre-existente / carried:** `quick-task 1-eliminar-dropdown-tipo-de-consulta-de-hc` incompleto.
+- HistorialClinicoPanel y TurnoHCModal no migrados a HCEntryContent.tsx (diferido; HCUI-02 solo agrega el branch pre_quirúrgico faltante, no migra el componente).
 - AppointmentDetailModal y CalendarGrid no migrados a getEstadoTurnoChip (diferido).
 - STOCK-03: FACTURADOR excluido del backend de ordenes-consumo pero accede desde frontend.
 - EncryptionService dev fallback key — configurar ENCRYPTION_KEY en .env prod.
@@ -71,14 +65,12 @@ Items acknowledged y diferidos al cierre de v1.14 (2026-07-21):
 | verification_gap | 62-VERIFICATION | human_needed |
 | quick_task | 1-eliminar-dropdown-tipo-de-consulta-de-hc | missing |
 
-> cr-01-indicaciones-url-validation se cerró en Phase 61 (la validación server-side ya existía; se corrigió el docstring). W-1 (invalidación crm-kanban) se cerró en Phase 62 vía refetch on window focus.
-
 ## Session Continuity
 
-Last session: 2026-07-21T15:43:29.823Z
-Stopped at: Completed 62-02-PLAN.md
+Last session: 2026-07-30T00:00:00.000Z
+Stopped at: ROADMAP.md created for v1.15 (Phases 63-66), REQUIREMENTS.md traceability filled (11/11 mapped)
 Resume file: None
 
 ## Operator Next Steps
 
-- Start the next milestone with /gsd-new-milestone
+- Run `/gsd:plan-phase 63` to plan the first phase (Flujo CRM Automático — Backend)

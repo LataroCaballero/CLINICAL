@@ -21,7 +21,7 @@ Requisitos de este milestone. Cada uno mapea a una fase del roadmap.
 
 ### Planilla de tratamientos
 
-- [ ] **TRAT-07**: La columna "Último tratamiento" muestra todos los tratamientos del turno (no "primero +N") truncados en la celda, con tooltip que revela el texto completo
+- [ ] **TRAT-07**: La columna "Último tratamiento" muestra todos los tratamientos del turno (no "primero +N-1") truncados en la celda, con tooltip que revela el texto completo
 
 ### Sync tipo de turno ↔ plantilla HC
 
@@ -62,27 +62,27 @@ Excluido explícitamente de v1.15.
 
 ## Traceability
 
-Qué fases cubren qué requisitos. Se completa al crear el roadmap.
+Qué fases cubren qué requisitos.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| EMBUDO-07 | TBD | Pending |
-| EMBUDO-08 | TBD | Pending |
-| EMBUDO-09 | TBD | Pending |
-| CONTACTO-03 | TBD | Pending |
-| CONTACTO-04 | TBD | Pending |
-| TRAT-07 | TBD | Pending |
-| HCSYNC-01 | TBD | Pending |
-| HCSYNC-02 | TBD | Pending |
-| HCSYNC-03 | TBD | Pending |
-| HCUI-01 | TBD | Pending |
-| HCUI-02 | TBD | Pending |
+| EMBUDO-07 | Phase 63 | Pending |
+| EMBUDO-08 | Phase 63 | Pending |
+| EMBUDO-09 | Phase 63 | Pending |
+| CONTACTO-03 | Phase 64 | Pending |
+| CONTACTO-04 | Phase 64 | Pending |
+| TRAT-07 | Phase 64 | Pending |
+| HCSYNC-01 | Phase 65 | Pending |
+| HCSYNC-02 | Phase 65 | Pending |
+| HCSYNC-03 | Phase 65 | Pending |
+| HCUI-01 | Phase 66 | Pending |
+| HCUI-02 | Phase 66 | Pending |
 
 **Coverage:**
 - v1.15 requirements: 11 total
-- Mapped to phases: 0 (roadmap pending)
-- Unmapped: 11 ⚠️ (se resuelve al crear el roadmap)
+- Mapped to phases: 11
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-07-30*
-*Last updated: 2026-07-30 after initial definition*
+*Last updated: 2026-07-30 after roadmap creation (Phases 63-66)*

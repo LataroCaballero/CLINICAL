@@ -16,6 +16,8 @@ import {
   EtapaCRM,
   TipoContacto,
   FlujoPaciente,
+  TemperaturaPaciente,
+  Prisma,
 } from '@prisma/client';
 import { getDayRange } from '@/src/common/utils/date-range';
 import { ReprogramarTurnoDto } from './dto/reprogramar-turno.dto';
@@ -228,7 +230,14 @@ export class TurnosService {
   async cancelarTurno(turnoId: string) {
     const turno = await this.prisma.turno.findUnique({
       where: { id: turnoId },
-      select: { id: true, estado: true },
+      select: {
+        id: true,
+        estado: true,
+        esCirugia: true,
+        cirugiaId: true,
+        pacienteId: true,
+        profesionalId: true,
+      },
     });
 
     if (!turno) {
@@ -242,6 +251,45 @@ export class TurnosService {
       throw new BadRequestException(
         `No se puede cancelar un turno en estado ${turno.estado}.`,
       );
+    }
+
+    // D-07: cancelar un turno de cirugía NO degrada etapaCRM (el paciente
+    // sigue CONFIRMADO — el presupuesto ya fue confirmado). En cambio dispara
+    // señales de recontacto: temperatura CALIENTE + cirugía CANCELADA
+    // (queryable, alimenta getListaAccion) + contactoLog de auditoría.
+    if (turno.esCirugia) {
+      const turnoUpdate = this.prisma.turno.update({
+        where: { id: turnoId },
+        data: { estado: EstadoTurno.CANCELADO },
+      });
+      const operaciones: Prisma.PrismaPromise<unknown>[] = [turnoUpdate];
+
+      if (turno.cirugiaId) {
+        operaciones.push(
+          this.prisma.cirugia.update({
+            where: { id: turno.cirugiaId },
+            data: { estado: EstadoCirugia.CANCELADA },
+          }),
+        );
+      }
+
+      operaciones.push(
+        this.prisma.paciente.update({
+          where: { id: turno.pacienteId },
+          data: { temperatura: TemperaturaPaciente.CALIENTE },
+        }),
+        this.prisma.contactoLog.create({
+          data: {
+            pacienteId: turno.pacienteId,
+            profesionalId: turno.profesionalId,
+            tipo: TipoContacto.SISTEMA,
+            nota: 'Cirugía cancelada — requiere recontacto',
+          },
+        }),
+      );
+
+      const [turnoActualizado] = await this.prisma.$transaction(operaciones);
+      return turnoActualizado;
     }
 
     return this.prisma.turno.update({

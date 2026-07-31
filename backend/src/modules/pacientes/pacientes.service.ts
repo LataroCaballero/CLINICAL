@@ -24,6 +24,7 @@ import {
   TipoTareaSeguimiento,
   TipoContacto,
   Prisma,
+  EstadoCirugia,
 } from '@prisma/client';
 import { EstadoPresupuesto } from '@prisma/client';
 import { BadRequestException } from '@nestjs/common';
@@ -887,21 +888,52 @@ export class PacientesService {
       where: { profesionalId, fecha: { gte: hoyInicio } },
     });
 
-    // Pacientes activos del profesional, excluyendo los contactados hoy, CONFIRMADO y PERDIDO
+    const ahora = new Date();
+
+    // Pacientes activos del profesional, excluyendo los contactados hoy.
+    // Rama normal: etapaCRM no cerrada (excluye CONFIRMADO/PERDIDO), flujo visible.
+    // Rama recontacto (D-07): CONFIRMADO con cirugía CANCELADA/SUSPENDIDA y sin
+    // cirugía PROGRAMADA futura — reaparece porque requiere que la secretaria
+    // decida (nueva fecha, PERDIDO, o sacarlo del embudo). Derivado, schema-free.
     const pacientes = await this.prisma.paciente.findMany({
       where: {
         profesionalId,
         crmArchivado: false,
-        etapaCRM: { notIn: ['CONFIRMADO', 'PERDIDO'] as EtapaCRM[] },
         NOT: {
           contactos: { some: { fecha: { gte: hoyInicio } } },
         },
-        OR: [{ flujo: FlujoPaciente.CIRUGIA }, { flujo: null }],
+        OR: [
+          {
+            etapaCRM: { notIn: ['CONFIRMADO', 'PERDIDO'] as EtapaCRM[] },
+            OR: [{ flujo: FlujoPaciente.CIRUGIA }, { flujo: null }],
+          },
+          {
+            etapaCRM: EtapaCRM.CONFIRMADO,
+            cirugias: {
+              some: {
+                estado: {
+                  in: [EstadoCirugia.CANCELADA, EstadoCirugia.SUSPENDIDA],
+                },
+              },
+            },
+            NOT: {
+              cirugias: {
+                some: {
+                  estado: EstadoCirugia.PROGRAMADA,
+                  fecha: { gte: ahora },
+                },
+              },
+            },
+          },
+        ],
       },
       include: {
         contactos: {
           orderBy: { fecha: 'desc' },
           take: 1,
+        },
+        cirugias: {
+          select: { estado: true, fecha: true },
         },
       },
     });
@@ -918,6 +950,23 @@ export class PacientesService {
         p.temperatura,
         p.etapaCRM,
       );
+      // requiereRecontacto: computado, no persistido (D-07). Solo true cuando
+      // matchea exactamente la rama recontacto del where (CONFIRMADO + cirugía
+      // CANCELADA/SUSPENDIDA sin cirugía PROGRAMADA futura).
+      const estadosRecontacto: EstadoCirugia[] = [
+        EstadoCirugia.CANCELADA,
+        EstadoCirugia.SUSPENDIDA,
+      ];
+      const tieneCirugiaCanceladaOSuspendida = p.cirugias.some((c) =>
+        estadosRecontacto.includes(c.estado),
+      );
+      const tieneCirugiaProgramadaFutura = p.cirugias.some(
+        (c) => c.estado === EstadoCirugia.PROGRAMADA && c.fecha >= ahora,
+      );
+      const requiereRecontacto =
+        p.etapaCRM === EtapaCRM.CONFIRMADO &&
+        tieneCirugiaCanceladaOSuspendida &&
+        !tieneCirugiaProgramadaFutura;
       return {
         id: p.id,
         nombreCompleto: p.nombreCompleto,
@@ -927,6 +976,7 @@ export class PacientesService {
         diasSinContacto,
         score,
         ultimoContactoFecha: ultimoContacto,
+        requiereRecontacto,
       };
     });
 

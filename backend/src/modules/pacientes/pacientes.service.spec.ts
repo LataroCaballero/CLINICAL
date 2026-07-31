@@ -16,7 +16,7 @@ import { join } from 'path';
 import { PacientesService } from './pacientes.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EncryptionService } from '../whatsapp/crypto/encryption.service';
-import { EtapaCRM, EstadoPaciente } from '@prisma/client';
+import { EtapaCRM, EstadoPaciente, EstadoCirugia } from '@prisma/client';
 import { CreatePacienteDto } from './dto/create-paciente.dto';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -55,6 +55,9 @@ describe('PacientesService — portal link encrypt/recover (52-09)', () => {
         update: jest.fn(),
         findMany: jest.fn(),
         create: jest.fn(),
+      },
+      contactoLog: {
+        count: jest.fn().mockResolvedValue(0),
       },
     };
     const mockConfigService = {
@@ -490,6 +493,84 @@ describe('PacientesService — portal link encrypt/recover (52-09)', () => {
         { flujo: 'CIRUGIA' },
         { flujo: null },
       ]);
+    });
+  });
+
+  // ── getListaAccion — recontacto derivado por cirugia cancelada (D-07) ────
+  describe('getListaAccion — requiereRecontacto derivado (D-07)', () => {
+    function buildPaciente(overrides: {
+      id: string;
+      etapaCRM: EtapaCRM;
+      cirugias: Array<{ estado: EstadoCirugia; fecha: Date }>;
+    }) {
+      return {
+        id: overrides.id,
+        nombreCompleto: `Paciente ${overrides.id}`,
+        telefono: '+5491100000000',
+        etapaCRM: overrides.etapaCRM,
+        temperatura: null,
+        createdAt: new Date('2026-01-01'),
+        contactos: [],
+        cirugias: overrides.cirugias,
+      };
+    }
+
+    it('Test C: paciente CONFIRMADO con cirugia CANCELADA y sin PROGRAMADA futura -> requiereRecontacto true', async () => {
+      (prisma.paciente.findMany as jest.Mock).mockResolvedValue([
+        buildPaciente({
+          id: 'paciente-c',
+          etapaCRM: EtapaCRM.CONFIRMADO,
+          cirugias: [
+            { estado: EstadoCirugia.CANCELADA, fecha: new Date('2026-01-10') },
+          ],
+        }),
+      ]);
+
+      const result = await service.getListaAccion('prof-1');
+
+      const item = result.items.find((i) => i.id === 'paciente-c');
+      expect(item).toBeDefined();
+      expect(item?.requiereRecontacto).toBe(true);
+    });
+
+    it('Test D: paciente CONFIRMADO con cirugia CANCELADA pero con PROGRAMADA futura -> NO aparece (reprogramada)', async () => {
+      // El where real excluye este caso via NOT cirugias PROGRAMADA futura;
+      // el mock de findMany simula que Prisma ya filtro este paciente.
+      (prisma.paciente.findMany as jest.Mock).mockResolvedValue([]);
+
+      const result = await service.getListaAccion('prof-1');
+
+      expect(result.items.find((i) => i.id === 'paciente-d')).toBeUndefined();
+    });
+
+    it('Test E: paciente CONFIRMADO "normal" (sin cirugia cancelada) -> sigue excluido (no aparece)', async () => {
+      // El where real excluye CONFIRMADO salvo rama recontacto; el mock
+      // simula que Prisma ya filtro a este paciente por no matchear ninguna rama.
+      (prisma.paciente.findMany as jest.Mock).mockResolvedValue([]);
+
+      const result = await service.getListaAccion('prof-1');
+
+      expect(result.items.find((i) => i.id === 'paciente-e')).toBeUndefined();
+    });
+
+    it('el where de getListaAccion agrega la rama OR de recontacto (CONFIRMADO + cirugia CANCELADA/SUSPENDIDA sin PROGRAMADA futura)', async () => {
+      (prisma.paciente.findMany as jest.Mock).mockResolvedValue([]);
+
+      await service.getListaAccion('prof-1');
+
+      const callArg = (prisma.paciente.findMany as jest.Mock).mock.calls[0][0];
+      const orBranches = callArg.where.OR as Array<Record<string, unknown>>;
+      const recontactoBranch = orBranches.find(
+        (b) => b.etapaCRM === EtapaCRM.CONFIRMADO,
+      );
+      expect(recontactoBranch).toBeDefined();
+      const cirugiasSome = (recontactoBranch as any).cirugias.some;
+      expect(cirugiasSome.estado.in).toEqual(
+        expect.arrayContaining([
+          EstadoCirugia.CANCELADA,
+          EstadoCirugia.SUSPENDIDA,
+        ]),
+      );
     });
   });
 });

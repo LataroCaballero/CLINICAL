@@ -13,14 +13,22 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { TurnosService } from './turnos.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CuentasCorrientesService } from '../cuentas-corrientes/cuentas-corrientes.service';
-import { EtapaCRM, EstadoCirugia, EstadoTurno } from '@prisma/client';
+import {
+  EtapaCRM,
+  EstadoCirugia,
+  EstadoTurno,
+  TemperaturaPaciente,
+} from '@prisma/client';
 import { CreateCirugiaTurnoDto } from './dto/create-cirugia-turno.dto';
 import { CreateTurnoDto } from './dto/create-turno.dto';
 
 function buildTxMocks() {
   return {
     cirugia: {
-      create: jest.fn().mockResolvedValue({ id: 'cirugia-1', estado: EstadoCirugia.PROGRAMADA }),
+      create: jest.fn().mockResolvedValue({
+        id: 'cirugia-1',
+        estado: EstadoCirugia.PROGRAMADA,
+      }),
       update: jest.fn(),
     },
     turno: {
@@ -36,7 +44,9 @@ function buildTxMocks() {
   };
 }
 
-function buildCirugiaDto(overrides: Partial<CreateCirugiaTurnoDto> = {}): CreateCirugiaTurnoDto {
+function buildCirugiaDto(
+  overrides: Partial<CreateCirugiaTurnoDto> = {},
+): CreateCirugiaTurnoDto {
   return {
     pacienteId: 'paciente-1',
     profesionalId: 'profesional-1',
@@ -83,7 +93,14 @@ describe('TurnosService', () => {
       cirugia: {
         update: jest.fn(),
       },
-      $transaction: jest.fn((cb: (tx: unknown) => unknown) => cb(tx)),
+      // Soporta ambas formas de $transaction: callback (crearTurnoCirugia, usa
+      // el `tx` mock) y array (cancelarTurno, D-07 — cada elemento ya es la
+      // promesa devuelta por el mock raiz correspondiente).
+      $transaction: jest.fn((arg: unknown) =>
+        Array.isArray(arg)
+          ? Promise.all(arg)
+          : (arg as (tx: unknown) => unknown)(tx),
+      ),
     };
 
     const mockCuentasCorrientes = {};
@@ -103,8 +120,12 @@ describe('TurnosService', () => {
   // ── crearTurnoCirugia -> CONFIRMADO (D-04) ────────────────────────────────
   describe('crearTurnoCirugia — confirma al paciente dentro de la transaccion (D-04)', () => {
     beforeEach(() => {
-      (prisma.paciente.findUnique as jest.Mock).mockResolvedValue({ id: 'paciente-1' });
-      (prisma.profesional.findUnique as jest.Mock).mockResolvedValue({ id: 'profesional-1' });
+      (prisma.paciente.findUnique as jest.Mock).mockResolvedValue({
+        id: 'paciente-1',
+      });
+      (prisma.profesional.findUnique as jest.Mock).mockResolvedValue({
+        id: 'profesional-1',
+      });
       (prisma.tipoTurno.findFirst as jest.Mock).mockResolvedValue({
         id: 'tipo-cirugia-1',
         esCirugia: true,
@@ -126,7 +147,9 @@ describe('TurnosService', () => {
 
     it('Test B: la confirmacion NO depende de que exista presupuesto aceptado (el dto no lo incluye)', async () => {
       const dto = buildCirugiaDto();
-      expect((dto as unknown as Record<string, unknown>).presupuesto).toBeUndefined();
+      expect(
+        (dto as unknown as Record<string, unknown>).presupuesto,
+      ).toBeUndefined();
 
       await service.crearTurnoCirugia(dto);
 
@@ -145,7 +168,9 @@ describe('TurnosService', () => {
 
   // ── crearTurno — guard selectivo de degradacion (D-05/D-06) ──────────────
   describe('crearTurno — guard selectivo de degradacion de etapas avanzadas (D-05/D-06)', () => {
-    function buildTurnoDto(overrides: Partial<CreateTurnoDto> = {}): CreateTurnoDto {
+    function buildTurnoDto(
+      overrides: Partial<CreateTurnoDto> = {},
+    ): CreateTurnoDto {
       return {
         pacienteId: 'paciente-1',
         profesionalId: 'profesional-1',
@@ -184,10 +209,16 @@ describe('TurnosService', () => {
     }
 
     beforeEach(() => {
-      (prisma.profesional.findUnique as jest.Mock).mockResolvedValue({ id: 'profesional-1' });
+      (prisma.profesional.findUnique as jest.Mock).mockResolvedValue({
+        id: 'profesional-1',
+      });
       (prisma.turno.findFirst as jest.Mock).mockResolvedValue(null);
-      (prisma.turno.create as jest.Mock).mockResolvedValue({ id: 'turno-nuevo-1' });
-      (prisma.contactoLog.create as jest.Mock).mockResolvedValue({ id: 'contacto-1' });
+      (prisma.turno.create as jest.Mock).mockResolvedValue({
+        id: 'turno-nuevo-1',
+      });
+      (prisma.contactoLog.create as jest.Mock).mockResolvedValue({
+        id: 'contacto-1',
+      });
       (
         prisma.tipoTurnoProfesional as unknown as { findUnique: jest.Mock }
       ).findUnique.mockResolvedValue(null);
@@ -199,9 +230,9 @@ describe('TurnosService', () => {
 
       await service.crearTurno(buildTurnoDto());
 
-      const etapaWrites = (prisma.paciente.update as jest.Mock).mock.calls.filter(
-        (call) => call[0]?.data?.etapaCRM !== undefined,
-      );
+      const etapaWrites = (
+        prisma.paciente.update as jest.Mock
+      ).mock.calls.filter((call) => call[0]?.data?.etapaCRM !== undefined);
       expect(etapaWrites).toHaveLength(0);
     });
 
@@ -211,9 +242,9 @@ describe('TurnosService', () => {
 
       await service.crearTurno(buildTurnoDto());
 
-      const etapaWrites = (prisma.paciente.update as jest.Mock).mock.calls.filter(
-        (call) => call[0]?.data?.etapaCRM !== undefined,
-      );
+      const etapaWrites = (
+        prisma.paciente.update as jest.Mock
+      ).mock.calls.filter((call) => call[0]?.data?.etapaCRM !== undefined);
       expect(etapaWrites).toHaveLength(0);
     });
 
@@ -223,9 +254,9 @@ describe('TurnosService', () => {
 
       await service.crearTurno(buildTurnoDto());
 
-      const etapaWrites = (prisma.paciente.update as jest.Mock).mock.calls.filter(
-        (call) => call[0]?.data?.etapaCRM !== undefined,
-      );
+      const etapaWrites = (
+        prisma.paciente.update as jest.Mock
+      ).mock.calls.filter((call) => call[0]?.data?.etapaCRM !== undefined);
       expect(etapaWrites).toHaveLength(1);
       expect(etapaWrites[0][0].data.etapaCRM).toBe(EtapaCRM.TURNO_AGENDADO);
     });
@@ -236,9 +267,9 @@ describe('TurnosService', () => {
 
       await service.crearTurno(buildTurnoDto());
 
-      const etapaWrites = (prisma.paciente.update as jest.Mock).mock.calls.filter(
-        (call) => call[0]?.data?.etapaCRM !== undefined,
-      );
+      const etapaWrites = (
+        prisma.paciente.update as jest.Mock
+      ).mock.calls.filter((call) => call[0]?.data?.etapaCRM !== undefined);
       expect(etapaWrites).toHaveLength(1);
       expect(etapaWrites[0][0].data.etapaCRM).toBe(EtapaCRM.TURNO_AGENDADO);
     });
@@ -249,11 +280,100 @@ describe('TurnosService', () => {
 
       await service.crearTurno(buildTurnoDto());
 
-      const etapaWrites = (prisma.paciente.update as jest.Mock).mock.calls.filter(
-        (call) => call[0]?.data?.etapaCRM !== undefined,
-      );
+      const etapaWrites = (
+        prisma.paciente.update as jest.Mock
+      ).mock.calls.filter((call) => call[0]?.data?.etapaCRM !== undefined);
       expect(etapaWrites).toHaveLength(1);
       expect(etapaWrites[0][0].data.etapaCRM).toBe(EtapaCRM.TURNO_AGENDADO);
+    });
+  });
+
+  // ── cancelarTurno — mantiene CONFIRMADO + recontacto (D-07) ──────────────
+  describe('cancelarTurno — mantiene CONFIRMADO + CALIENTE + recontacto en cirugia (D-07)', () => {
+    it('Test A (cirugia): esCirugia=true -> cancela turno, cancela cirugia, temperatura=CALIENTE, contactoLog con profesionalId del turno, SIN escritura de etapaCRM', async () => {
+      (prisma.turno.findUnique as jest.Mock).mockResolvedValue({
+        id: 'turno-1',
+        estado: EstadoTurno.PENDIENTE,
+        esCirugia: true,
+        cirugiaId: 'cirugia-1',
+        pacienteId: 'paciente-1',
+        profesionalId: 'profesional-1',
+      });
+      (prisma.turno.update as jest.Mock).mockResolvedValue({
+        id: 'turno-1',
+        estado: EstadoTurno.CANCELADO,
+      });
+      (prisma.cirugia.update as jest.Mock).mockResolvedValue({
+        id: 'cirugia-1',
+      });
+      (prisma.paciente.update as jest.Mock).mockResolvedValue({
+        id: 'paciente-1',
+      });
+      (prisma.contactoLog.create as jest.Mock).mockResolvedValue({
+        id: 'contacto-1',
+      });
+
+      await service.cancelarTurno('turno-1');
+
+      expect(prisma.turno.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'turno-1' },
+          data: expect.objectContaining({ estado: EstadoTurno.CANCELADO }),
+        }),
+      );
+      expect(prisma.cirugia.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'cirugia-1' },
+          data: expect.objectContaining({ estado: EstadoCirugia.CANCELADA }),
+        }),
+      );
+      expect(prisma.paciente.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'paciente-1' },
+          data: expect.objectContaining({
+            temperatura: TemperaturaPaciente.CALIENTE,
+          }),
+        }),
+      );
+      const pacienteUpdateArg = (prisma.paciente.update as jest.Mock).mock
+        .calls[0][0];
+      expect(pacienteUpdateArg.data.etapaCRM).toBeUndefined();
+
+      expect(prisma.contactoLog.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            pacienteId: 'paciente-1',
+            profesionalId: 'profesional-1',
+          }),
+        }),
+      );
+    });
+
+    it('Test B (no cirugia): esCirugia=false -> solo cancela el turno, sin tocar cirugia/temperatura/etapaCRM', async () => {
+      (prisma.turno.findUnique as jest.Mock).mockResolvedValue({
+        id: 'turno-2',
+        estado: EstadoTurno.PENDIENTE,
+        esCirugia: false,
+        cirugiaId: null,
+        pacienteId: 'paciente-2',
+        profesionalId: 'profesional-1',
+      });
+      (prisma.turno.update as jest.Mock).mockResolvedValue({
+        id: 'turno-2',
+        estado: EstadoTurno.CANCELADO,
+      });
+
+      await service.cancelarTurno('turno-2');
+
+      expect(prisma.turno.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'turno-2' },
+          data: expect.objectContaining({ estado: EstadoTurno.CANCELADO }),
+        }),
+      );
+      expect(prisma.cirugia.update).not.toHaveBeenCalled();
+      expect(prisma.paciente.update).not.toHaveBeenCalled();
+      expect(prisma.contactoLog.create).not.toHaveBeenCalled();
     });
   });
 });

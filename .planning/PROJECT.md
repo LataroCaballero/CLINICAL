@@ -140,9 +140,9 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 
 **Milestone v1.15 — Flujo CRM Automático + Correcciones HC** (requisitos completos en `.planning/REQUIREMENTS.md`):
 
-- [ ] **EMBUDO-07**: Paciente nuevo entra al kanban en "Nuevo Lead" al crearse (no "Sin clasificar")
-- [ ] **EMBUDO-08**: Agendar fecha de cirugía mueve a "Confirmado" aunque no haya presupuesto aceptado
-- [ ] **EMBUDO-09**: Tratamiento en consultorio saca al paciente del kanban (flujo=TRATAMIENTO, oculto) y lo registra en la planilla con la fecha del tratamiento
+- [x] **EMBUDO-07**: Paciente nuevo entra al kanban en "Nuevo Lead" al crearse (no "Sin clasificar") — *Validated in Phase 63*
+- [x] **EMBUDO-08**: Agendar fecha de cirugía mueve a "Confirmado" aunque no haya presupuesto aceptado — *Validated in Phase 63*
+- [x] **EMBUDO-09**: Tratamiento en consultorio saca al paciente del kanban (flujo=TRATAMIENTO, oculto) y lo registra en la planilla con la fecha del tratamiento — *Validated in Phase 63*
 - [ ] **CONTACTO-03**: Card de "Nuevo Lead" muestra el pendiente "Dar turno"
 - [ ] **CONTACTO-04**: Card de "Consulta Agendada" muestra el pendiente "Ser atendido"
 - [ ] **TRAT-07**: Columna "Último tratamiento" muestra todos los tratamientos truncados con tooltip
@@ -375,6 +375,6 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-07-30 al iniciar milestone v1.15 (Flujo CRM Automático + Correcciones HC). 11 requisitos activos (EMBUDO-07..09, CONTACTO-03/04, TRAT-07, HCSYNC-01..03, HCUI-01/02). Decisiones de scope: salida del kanban vía flujo=TRATAMIENTO+ocultar (patrón v1.13, no etapa nueva); "Último tratamiento" mantiene origen HC-del-turno (solo cambia display); sync HC→tipoTurno cubre los 3 casos con guard "sin turno → no-op".*
+*Last updated: 2026-07-31 — Phase 63 (Flujo CRM Automático Backend) completa: EMBUDO-07/08/09 validados (transiciones automáticas de etapa CRM al crear paciente, agendar cirugía y cargar tratamiento en consultorio). 8 requisitos activos restantes (CONTACTO-03/04, TRAT-07, HCSYNC-01..03, HCUI-01/02). Decisiones de scope: salida del kanban vía flujo=TRATAMIENTO+ocultar (patrón v1.13, no etapa nueva); "Último tratamiento" mantiene origen HC-del-turno (solo cambia display); sync HC→tipoTurno cubre los 3 casos con guard "sin turno → no-op".*
 
 *Prior: 2026-07-17 after Phase 61 complete (backend v1.14 verificado). Milestone iniciado 2026-07-06 — Portal: Firma Gated e Indicaciones Separadas (gate de firma abrir-PDF+tildar, indicaciones como sección aparte con acuse en perfil, cierre W-1 invalidación crm-kanban). Milestone previo: 2026-07-05 after v1.13 milestone — Embudo CRM Accionable shipped (4 fases 57–60, 8 planes, 19 tareas, 15/15 reqs, audit `tech_debt` 0 blockers). Backend enriquecido (`computePasosCrm`, etapa "Cirugía Realizada", `@Cron` auto-move, guard relajado), board reordenado con indicadores/etiquetas, stepper accionable con 3 quick-actions e invalidación `crm-kanban`, y estadísticas sobre registros reales independientes de `etapaCRM`. Diferido: browser UAT Phase 58 + display KPI cards Phase 60. Próximo: `/gsd:new-milestone`.*

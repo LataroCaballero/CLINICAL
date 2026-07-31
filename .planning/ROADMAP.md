@@ -215,7 +215,7 @@ Full details: `.planning/milestones/v1.14-ROADMAP.md`
 
 **Milestone Goal:** Que el embudo del kanban refleje automáticamente el estado real de cada paciente (entrada → agenda → atención → tratamiento/confirmación) y corregir las fricciones de carga y visualización de Historia Clínica.
 
-- [ ] **Phase 63: Flujo CRM Automático (Backend)** - Transiciones automáticas de etapa CRM al crear paciente, agendar cirugía y cargar tratamiento en consultorio
+- [x] **Phase 63: Flujo CRM Automático (Backend)** - Transiciones automáticas de etapa CRM al crear paciente, agendar cirugía y cargar tratamiento en consultorio (completed 2026-07-31)
 - [ ] **Phase 64: Indicadores de Pendientes y Planilla Legible (Frontend)** - Badge de pendiente por etapa en la card + columna "Último tratamiento" sin truncar información
 - [ ] **Phase 65: Sync Tipo de Turno ↔ Plantilla HC (Backend)** - El tipo de turno se ajusta automáticamente según la plantilla de HC cargada
 - [ ] **Phase 66: Correcciones de UI de Historia Clínica (Frontend)** - Wizard nuevo en PatientDrawer + fix de render del detalle Pre-quirúrgico
@@ -242,7 +242,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 63-02-PLAN.md — EMBUDO-08: CONFIRMADO al agendar cirugía, guard selectivo de degradación (Consulta), recontacto de cirugía cancelada
+- [x] 63-02-PLAN.md — EMBUDO-08: CONFIRMADO al agendar cirugía, guard selectivo de degradación (Consulta), recontacto de cirugía cancelada
 
 ### Phase 64: Indicadores de Pendientes y Planilla Legible (Frontend)
 
@@ -354,7 +354,7 @@ Plans:
 | 60. Estadísticas sobre Registros Reales | v1.13 | 2/2 | Complete | 2026-07-05 |
 | 61. Backend — Schema, Decoupling e Indicaciones | v1.14 | 5/5 | Complete    | 2026-07-17 |
 | 62. Portal + Staff Frontend — Gate, Secciones y Sincronización | v1.14 | 3/3 | Complete    | 2026-07-21 |
-| 63. Flujo CRM Automático (Backend) | v1.15 | 2/3 | In Progress|  |
+| 63. Flujo CRM Automático (Backend) | v1.15 | 3/3 | Complete   | 2026-07-31 |
 | 64. Indicadores de Pendientes y Planilla Legible (Frontend) | v1.15 | 0/TBD | Not started | - |
 | 65. Sync Tipo de Turno ↔ Plantilla HC (Backend) | v1.15 | 0/TBD | Not started | - |
 | 66. Correcciones de UI de Historia Clínica (Frontend) | v1.15 | 0/TBD | Not started | - |

@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.15
 milestone_name: Flujo CRM Automático + Correcciones HC
-status: executing
+status: verifying
 stopped_at: Completed 63-03-PLAN.md (63-02 still pending — out-of-order execution)
-last_updated: "2026-07-31T21:42:59.133Z"
+last_updated: "2026-07-31T21:56:28.733Z"
 last_activity: 2026-07-31
 progress:
   total_phases: 4
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 3
-  completed_plans: 2
-  percent: 67
+  completed_plans: 3
+  percent: 25
 ---
 
 # Project State
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-07-30 after v1.15 roadmap)
 
 ## Current Position
 
-Phase: 63 (flujo-crm-autom-tico-backend) — EXECUTING
-Plan: 3 of 3 (63-01 and 63-03 completed; 63-02 — EMBUDO-08, wave 2 — still pending)
-Status: Ready to execute 63-02
+Phase: 63 (flujo-crm-autom-tico-backend) — COMPLETE
+Plan: 3 of 3 (63-01, 63-02, 63-03 all completed)
+Status: Phase complete — ready for verification
 Last activity: 2026-07-31
 
-Progress: [███████░░░] 67%
+Progress: [██████████] 100%
 
 ## Accumulated Context
 
@@ -46,6 +46,7 @@ Full decision log en `.planning/PROJECT.md` (Key Decisions). Decisiones de v1.13
 - HCSYNC-01/02/03 y HCUI-01/02 son trabajo net-new sin dependencia entre sí ni con el embudo CRM
 - [Phase 63-01]: flujo=null en create() en vez de ampliar filtro de getKanban (D-03 opción 1) — evita exponer históricos PENDIENTE en el board
 - [Phase 63-03]: resolverTipoEntrada fuerza tipoEntrada server-side desde dto.tipo (D-08); resolverNuevoFlujo branch TRATAMIENTO cubre flujoActual=null además de PENDIENTE (D-09); crearEntrada limpia etapaCRM=null al mover a TRATAMIENTO (D-10, espejo de updateFlujo)
+- [Phase 63-02]: D-04/D-05/D-06/D-07 aplicados sin desviaciones — crearTurnoCirugia confirma sin presupuesto, crearTurno guarda etapas avanzadas salvo Consulta, cancelarTurno mantiene CONFIRMADO+CALIENTE, getListaAccion expone requiereRecontacto derivado
 
 ### Known Tech Debt (carry-forward)
 
@@ -70,10 +71,10 @@ Items acknowledged y diferidos al cierre de v1.14 (2026-07-21):
 
 ## Session Continuity
 
-Last session: 2026-07-31T21:42:59.128Z
-Stopped at: Completed 63-03-PLAN.md (63-02 still pending — out-of-order execution)
+Last session: 2026-07-31T21:56:28.730Z
+Stopped at: Completed 63-02-PLAN.md — Phase 63 (63-01/63-02/63-03) complete
 Resume file: None
 
 ## Operator Next Steps
 
-- Execute 63-02-PLAN.md (EMBUDO-08, wave 2, depends_on 63-01 which is already complete) to finish Phase 63
+- Phase 63 complete (EMBUDO-07/08/09). Proceed to Phase 64 (portal staff frontend, depends on 63) or run phase verification.

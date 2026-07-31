@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.15
 milestone_name: Flujo CRM Automático + Correcciones HC
 status: executing
-stopped_at: Phase 63 context gathered
-last_updated: "2026-07-31T21:25:49.413Z"
-last_activity: 2026-07-31 -- Phase 63 planning complete
+stopped_at: Completed 63-01-PLAN.md
+last_updated: "2026-07-31T21:34:41.116Z"
+last_activity: 2026-07-31
 progress:
   total_phases: 4
   completed_phases: 0
   total_plans: 3
-  completed_plans: 0
+  completed_plans: 1
   percent: 0
 ---
 
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-30 after v1.15 roadmap)
 
 **Core value:** Que un cirujano plástico cierre más cirugías — el sistema hace visible qué pacientes seguir, cuándo y cómo, de la manera más automatizada posible
-**Current focus:** Phase 63 — Flujo CRM Automático (Backend)
+**Current focus:** Phase 63 — flujo-crm-autom-tico-backend
 
 ## Current Position
 
-Phase: 63 of 66 (Flujo CRM Automático — Backend)
-Plan: — (roadmap created, not yet planned)
+Phase: 63 (flujo-crm-autom-tico-backend) — EXECUTING
+Plan: 2 of 3
 Status: Ready to execute
-Last activity: 2026-07-31 -- Phase 63 planning complete
+Last activity: 2026-07-31
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [███░░░░░░░] 33%
 
 ## Accumulated Context
 
@@ -44,6 +44,7 @@ Full decision log en `.planning/PROJECT.md` (Key Decisions). Decisiones de v1.13
 - EMBUDO-09 reutiliza el patrón v1.13 de "ocultar del board" (flujo=TRATAMIENTO) — no se agrega columna/etapa nueva
 - No se toca el enum `EtapaCRM` ni se hace backfill de pacientes existentes sin etapa (solo aplica hacia adelante)
 - HCSYNC-01/02/03 y HCUI-01/02 son trabajo net-new sin dependencia entre sí ni con el embudo CRM
+- [Phase 63-01]: flujo=null en create() en vez de ampliar filtro de getKanban (D-03 opción 1) — evita exponer históricos PENDIENTE en el board
 
 ### Known Tech Debt (carry-forward)
 
@@ -68,9 +69,9 @@ Items acknowledged y diferidos al cierre de v1.14 (2026-07-21):
 
 ## Session Continuity
 
-Last session: 2026-07-31T20:55:36.544Z
-Stopped at: Phase 63 context gathered
-Resume file: .planning/phases/63-flujo-crm-autom-tico-backend/63-CONTEXT.md
+Last session: 2026-07-31T21:34:41.113Z
+Stopped at: Completed 63-01-PLAN.md
+Resume file: None
 
 ## Operator Next Steps
 

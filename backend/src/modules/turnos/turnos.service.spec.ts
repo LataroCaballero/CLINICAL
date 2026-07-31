@@ -15,6 +15,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { CuentasCorrientesService } from '../cuentas-corrientes/cuentas-corrientes.service';
 import { EtapaCRM, EstadoCirugia, EstadoTurno } from '@prisma/client';
 import { CreateCirugiaTurnoDto } from './dto/create-cirugia-turno.dto';
+import { CreateTurnoDto } from './dto/create-turno.dto';
 
 function buildTxMocks() {
   return {
@@ -70,7 +71,11 @@ describe('TurnosService', () => {
       turno: {
         findFirst: jest.fn(),
         findUnique: jest.fn(),
+        create: jest.fn(),
         update: jest.fn(),
+      },
+      tipoTurnoProfesional: {
+        findUnique: jest.fn(),
       },
       contactoLog: {
         create: jest.fn(),
@@ -135,6 +140,120 @@ describe('TurnosService', () => {
       await service.crearTurnoCirugia(dto);
 
       expect(prisma.paciente.update).not.toHaveBeenCalled();
+    });
+  });
+
+  // ── crearTurno — guard selectivo de degradacion (D-05/D-06) ──────────────
+  describe('crearTurno — guard selectivo de degradacion de etapas avanzadas (D-05/D-06)', () => {
+    function buildTurnoDto(overrides: Partial<CreateTurnoDto> = {}): CreateTurnoDto {
+      return {
+        pacienteId: 'paciente-1',
+        profesionalId: 'profesional-1',
+        tipoTurnoId: 'tipo-turno-1',
+        inicio: '2026-08-15T13:00:00.000Z',
+        ...overrides,
+      } as CreateTurnoDto;
+    }
+
+    function mockPacienteFindUnique(pacienteCRM: {
+      etapaCRM: EtapaCRM | null;
+      profesionalId?: string | null;
+      flujo?: string | null;
+    }) {
+      (prisma.paciente.findUnique as jest.Mock).mockImplementation(
+        (args: { select?: Record<string, boolean> }) => {
+          if (args?.select?.id) {
+            return Promise.resolve({ id: 'paciente-1' });
+          }
+          return Promise.resolve({
+            etapaCRM: pacienteCRM.etapaCRM,
+            profesionalId: pacienteCRM.profesionalId ?? 'profesional-1',
+            flujo: pacienteCRM.flujo ?? null,
+          });
+        },
+      );
+    }
+
+    function mockTipoTurno(nombre: string) {
+      (prisma.tipoTurno.findUnique as jest.Mock).mockResolvedValue({
+        id: 'tipo-turno-1',
+        nombre,
+        duracionDefault: 30,
+        flujoPaciente: null,
+      });
+    }
+
+    beforeEach(() => {
+      (prisma.profesional.findUnique as jest.Mock).mockResolvedValue({ id: 'profesional-1' });
+      (prisma.turno.findFirst as jest.Mock).mockResolvedValue(null);
+      (prisma.turno.create as jest.Mock).mockResolvedValue({ id: 'turno-nuevo-1' });
+      (prisma.contactoLog.create as jest.Mock).mockResolvedValue({ id: 'contacto-1' });
+      (
+        prisma.tipoTurnoProfesional as unknown as { findUnique: jest.Mock }
+      ).findUnique.mockResolvedValue(null);
+    });
+
+    it('Test A: paciente CONFIRMADO + turno NO Consulta -> paciente.update de etapaCRM NO se invoca', async () => {
+      mockPacienteFindUnique({ etapaCRM: EtapaCRM.CONFIRMADO });
+      mockTipoTurno('Control');
+
+      await service.crearTurno(buildTurnoDto());
+
+      const etapaWrites = (prisma.paciente.update as jest.Mock).mock.calls.filter(
+        (call) => call[0]?.data?.etapaCRM !== undefined,
+      );
+      expect(etapaWrites).toHaveLength(0);
+    });
+
+    it('Test B: paciente PROCEDIMIENTO_REALIZADO + turno NO Consulta -> etapaCRM se mantiene (no degrada)', async () => {
+      mockPacienteFindUnique({ etapaCRM: EtapaCRM.PROCEDIMIENTO_REALIZADO });
+      mockTipoTurno('Tratamiento');
+
+      await service.crearTurno(buildTurnoDto());
+
+      const etapaWrites = (prisma.paciente.update as jest.Mock).mock.calls.filter(
+        (call) => call[0]?.data?.etapaCRM !== undefined,
+      );
+      expect(etapaWrites).toHaveLength(0);
+    });
+
+    it("Test C: paciente CONFIRMADO + turno tipoTurno.nombre==='Consulta' -> etapaCRM se setea a TURNO_AGENDADO (D-06)", async () => {
+      mockPacienteFindUnique({ etapaCRM: EtapaCRM.CONFIRMADO });
+      mockTipoTurno('Consulta');
+
+      await service.crearTurno(buildTurnoDto());
+
+      const etapaWrites = (prisma.paciente.update as jest.Mock).mock.calls.filter(
+        (call) => call[0]?.data?.etapaCRM !== undefined,
+      );
+      expect(etapaWrites).toHaveLength(1);
+      expect(etapaWrites[0][0].data.etapaCRM).toBe(EtapaCRM.TURNO_AGENDADO);
+    });
+
+    it('Test D: paciente CONSULTADO (no avanzada) + turno cualquiera -> etapaCRM se setea a TURNO_AGENDADO', async () => {
+      mockPacienteFindUnique({ etapaCRM: EtapaCRM.CONSULTADO });
+      mockTipoTurno('Control');
+
+      await service.crearTurno(buildTurnoDto());
+
+      const etapaWrites = (prisma.paciente.update as jest.Mock).mock.calls.filter(
+        (call) => call[0]?.data?.etapaCRM !== undefined,
+      );
+      expect(etapaWrites).toHaveLength(1);
+      expect(etapaWrites[0][0].data.etapaCRM).toBe(EtapaCRM.TURNO_AGENDADO);
+    });
+
+    it('Test E: paciente PERDIDO + turno NO Consulta -> etapaCRM se setea a TURNO_AGENDADO (PERDIDO sigue reactivando)', async () => {
+      mockPacienteFindUnique({ etapaCRM: EtapaCRM.PERDIDO });
+      mockTipoTurno('Pre-Quirúrgico');
+
+      await service.crearTurno(buildTurnoDto());
+
+      const etapaWrites = (prisma.paciente.update as jest.Mock).mock.calls.filter(
+        (call) => call[0]?.data?.etapaCRM !== undefined,
+      );
+      expect(etapaWrites).toHaveLength(1);
+      expect(etapaWrites[0][0].data.etapaCRM).toBe(EtapaCRM.TURNO_AGENDADO);
     });
   });
 });

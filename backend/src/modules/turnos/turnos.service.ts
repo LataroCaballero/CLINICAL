@@ -51,7 +51,12 @@ export class TurnosService {
       }),
       this.prisma.tipoTurno.findUnique({
         where: { id: dto.tipoTurnoId },
-        select: { id: true, duracionDefault: true, flujoPaciente: true },
+        select: {
+          id: true,
+          nombre: true,
+          duracionDefault: true,
+          flujoPaciente: true,
+        },
       }),
     ]);
 
@@ -128,17 +133,25 @@ export class TurnosService {
       },
     });
 
-    // 5) CRM auto-transition: un nuevo turno SIEMPRE reactiva a TURNO_AGENDADO
-    // desde cualquier etapa incluidas PERDIDO y PROCEDIMIENTO_REALIZADO (D-09, EMBUDO-05).
-    // El guard forward-only fue eliminado en este path — la reactivación es incondicional.
+    // 5) CRM auto-transition: guard selectivo de degradación (D-05/D-06).
+    // Un turno nuevo NO degrada una etapa avanzada (CONFIRMADO/PROCEDIMIENTO_REALIZADO)
+    // a TURNO_AGENDADO — EXCEPTO cuando el turno es de tipo "Consulta", que reinicia
+    // el ciclo (el embudo es cíclico: cada cirugía nueva empieza con una Consulta).
+    // PERDIDO/CONSULTADO/etc. (etapas no avanzadas) siguen reactivando siempre.
     const pacienteCRM = await this.prisma.paciente.findUnique({
       where: { id: dto.pacienteId },
       select: { etapaCRM: true, profesionalId: true, flujo: true },
     });
-    await this.prisma.paciente.update({
-      where: { id: dto.pacienteId },
-      data: { etapaCRM: EtapaCRM.TURNO_AGENDADO },
-    });
+    const esConsulta = tipoTurno.nombre === 'Consulta'; // D-06
+    const etapaAvanzada =
+      pacienteCRM?.etapaCRM === EtapaCRM.CONFIRMADO ||
+      pacienteCRM?.etapaCRM === EtapaCRM.PROCEDIMIENTO_REALIZADO;
+    if (esConsulta || !etapaAvanzada) {
+      await this.prisma.paciente.update({
+        where: { id: dto.pacienteId },
+        data: { etapaCRM: EtapaCRM.TURNO_AGENDADO }, // D-05
+      });
+    }
 
     // 5.5) Flujo auto-update (best-effort — no bloquea creación del turno)
     if (

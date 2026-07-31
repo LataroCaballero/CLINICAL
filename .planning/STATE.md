@@ -3,8 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.15
 milestone_name: Flujo CRM Automático + Correcciones HC
 status: planning
-last_updated: "2026-07-30T00:00:00.000Z"
-last_activity: 2026-07-30
+stopped_at: Phase 63 context gathered
+last_updated: "2026-07-31T20:55:36.547Z"
+last_activity: 2026-07-30 — Roadmap v1.15 created (Phases 63-66, 11/11 requirements mapped)
 progress:
   total_phases: 4
   completed_phases: 0
@@ -67,9 +68,9 @@ Items acknowledged y diferidos al cierre de v1.14 (2026-07-21):
 
 ## Session Continuity
 
-Last session: 2026-07-30T00:00:00.000Z
-Stopped at: ROADMAP.md created for v1.15 (Phases 63-66), REQUIREMENTS.md traceability filled (11/11 mapped)
-Resume file: None
+Last session: 2026-07-31T20:55:36.544Z
+Stopped at: Phase 63 context gathered
+Resume file: .planning/phases/63-flujo-crm-autom-tico-backend/63-CONTEXT.md
 
 ## Operator Next Steps
 

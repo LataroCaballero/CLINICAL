@@ -12,7 +12,7 @@ Requisitos de este milestone. Cada uno mapea a una fase del roadmap.
 
 - [x] **EMBUDO-07**: Al crearse un paciente nuevo entra al kanban en la etapa "Nuevo Lead" (`etapaCRM = NUEVO_LEAD`), en vez de quedar sin etapa ("Sin clasificar")
 - [ ] **EMBUDO-08**: Al agendar la fecha de cirugía (turno de cirugía) el paciente pasa a "Confirmado" aunque no haya aceptado el presupuesto
-- [ ] **EMBUDO-09**: Al cargarse una entrada de HC "Tratamiento en consultorio" (sola o junto a "Primera vez") el paciente sale del kanban (marcado flujo=TRATAMIENTO y oculto del board, patrón v1.13) y queda registrado en la planilla de tratamientos con la fecha en que se hizo el tratamiento
+- [x] **EMBUDO-09**: Al cargarse una entrada de HC "Tratamiento en consultorio" (sola o junto a "Primera vez") el paciente sale del kanban (marcado flujo=TRATAMIENTO y oculto del board, patrón v1.13) y queda registrado en la planilla de tratamientos con la fecha en que se hizo el tratamiento
 
 ### Contacto (pendientes por etapa en la card)
 
@@ -68,7 +68,7 @@ Qué fases cubren qué requisitos.
 |-------------|-------|--------|
 | EMBUDO-07 | Phase 63 | Complete |
 | EMBUDO-08 | Phase 63 | Pending |
-| EMBUDO-09 | Phase 63 | Pending |
+| EMBUDO-09 | Phase 63 | Complete |
 | CONTACTO-03 | Phase 64 | Pending |
 | CONTACTO-04 | Phase 64 | Pending |
 | TRAT-07 | Phase 64 | Pending |

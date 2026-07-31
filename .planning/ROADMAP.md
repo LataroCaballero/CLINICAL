@@ -238,7 +238,7 @@ Plans:
 **Wave 1**
 
 - [x] 63-01-PLAN.md — EMBUDO-07: default etapaCRM=NUEVO_LEAD + flujo=null en create() (lead visible en NUEVO_LEAD)
-- [ ] 63-03-PLAN.md — EMBUDO-09: tratamiento en consultorio → flujo=TRATAMIENTO + etapaCRM=null (sale del board, queda en planilla)
+- [x] 63-03-PLAN.md — EMBUDO-09: tratamiento en consultorio → flujo=TRATAMIENTO + etapaCRM=null (sale del board, queda en planilla)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -354,7 +354,7 @@ Plans:
 | 60. Estadísticas sobre Registros Reales | v1.13 | 2/2 | Complete | 2026-07-05 |
 | 61. Backend — Schema, Decoupling e Indicaciones | v1.14 | 5/5 | Complete    | 2026-07-17 |
 | 62. Portal + Staff Frontend — Gate, Secciones y Sincronización | v1.14 | 3/3 | Complete    | 2026-07-21 |
-| 63. Flujo CRM Automático (Backend) | v1.15 | 1/3 | In Progress|  |
+| 63. Flujo CRM Automático (Backend) | v1.15 | 2/3 | In Progress|  |
 | 64. Indicadores de Pendientes y Planilla Legible (Frontend) | v1.15 | 0/TBD | Not started | - |
 | 65. Sync Tipo de Turno ↔ Plantilla HC (Backend) | v1.15 | 0/TBD | Not started | - |
 | 66. Correcciones de UI de Historia Clínica (Frontend) | v1.15 | 0/TBD | Not started | - |

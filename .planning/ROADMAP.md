@@ -256,8 +256,18 @@ Plans:
   3. La columna "Último tratamiento" de la planilla muestra todos los tratamientos del turno (no "primero +N-1") truncados en la celda
   4. Al pasar el mouse sobre la celda truncada, un tooltip revela el texto completo de todos los tratamientos
 
-**Plans**: TBD
+**Plans**: 3 plans
 **UI hint**: yes
+Plans:
+
+**Wave 1**
+
+- [ ] 64-01-PLAN.md — TRAT-07 (backend): expone `tratamientos: string[]` completo en /turnos/rango (ultimoTratamiento sin cambios)
+- [ ] 64-02-PLAN.md — CONTACTO-03/04: badge de pendiente "Dar turno"/"Ser atendido" por columnId en PatientCard
+
+**Wave 2** *(blocked on 64-01)*
+
+- [ ] 64-03-PLAN.md — TRAT-07 (frontend): celda con lista completa truncada + Radix Tooltip en TratamientosTab
 
 ### Phase 65: Sync Tipo de Turno ↔ Plantilla HC (Backend)
 
@@ -355,7 +365,7 @@ Plans:
 | 61. Backend — Schema, Decoupling e Indicaciones | v1.14 | 5/5 | Complete    | 2026-07-17 |
 | 62. Portal + Staff Frontend — Gate, Secciones y Sincronización | v1.14 | 3/3 | Complete    | 2026-07-21 |
 | 63. Flujo CRM Automático (Backend) | v1.15 | 3/3 | Complete    | 2026-07-31 |
-| 64. Indicadores de Pendientes y Planilla Legible (Frontend) | v1.15 | 0/TBD | Not started | - |
+| 64. Indicadores de Pendientes y Planilla Legible (Frontend) | v1.15 | 0/3 | Planned | - |
 | 65. Sync Tipo de Turno ↔ Plantilla HC (Backend) | v1.15 | 0/TBD | Not started | - |
 | 66. Correcciones de UI de Historia Clínica (Frontend) | v1.15 | 0/TBD | Not started | - |
 

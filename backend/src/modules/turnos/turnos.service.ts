@@ -767,6 +767,23 @@ export class TurnosService {
         },
       });
 
+      // CRM auto-transition: agendar cirugía confirma al paciente sin depender
+      // de presupuesto aceptado (D-04, EMBUDO-08). Escritura dentro de la MISMA
+      // tx — nunca abrir una tx anidada.
+      await tx.paciente.update({
+        where: { id: dto.pacienteId },
+        data: { etapaCRM: EtapaCRM.CONFIRMADO },
+      });
+
+      await tx.contactoLog.create({
+        data: {
+          pacienteId: dto.pacienteId,
+          profesionalId: dto.profesionalId,
+          tipo: TipoContacto.SISTEMA,
+          nota: 'Cirugía agendada — confirmado',
+        },
+      });
+
       return turno;
     });
   }

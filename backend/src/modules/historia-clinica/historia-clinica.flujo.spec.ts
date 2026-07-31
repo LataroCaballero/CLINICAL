@@ -1,4 +1,7 @@
-import { resolverNuevoFlujo } from './historia-clinica.flujo.helpers';
+import {
+  resolverNuevoFlujo,
+  resolverTipoEntrada,
+} from './historia-clinica.flujo.helpers';
 
 describe('resolverNuevoFlujo', () => {
   // Test 1: CONSULTA_CIRUGIA + PENDIENTE → CIRUGIA
@@ -55,5 +58,36 @@ describe('resolverNuevoFlujo', () => {
   // Test 10: tipoEntrada undefined → null (entradas legacy / sin clasificar)
   it('tipoEntrada undefined → null (entradas legacy)', () => {
     expect(resolverNuevoFlujo(undefined, 'PENDIENTE', false)).toBeNull();
+  });
+
+  // Test 11 (EMBUDO-09/D-09): TRATAMIENTO + null → TRATAMIENTO (lead nuevo EMBUDO-07)
+  it('TRATAMIENTO + null → TRATAMIENTO (lead nuevo sin flujo asignado, D-09)', () => {
+    expect(resolverNuevoFlujo('TRATAMIENTO', null, false)).toBe('TRATAMIENTO');
+  });
+});
+
+describe('resolverTipoEntrada', () => {
+  // D-08: tratamiento_en_consultorio fuerza TRATAMIENTO, sin importar dto.tipoEntrada
+  it("tratamiento_en_consultorio + undefined → 'TRATAMIENTO'", () => {
+    expect(resolverTipoEntrada('tratamiento_en_consultorio', undefined)).toBe(
+      'TRATAMIENTO',
+    );
+  });
+
+  // Comportamiento pre-existente: pre_quirurgico fuerza PREOPERATORIO
+  it("pre_quirurgico + cualquier valor → 'PREOPERATORIO'", () => {
+    expect(resolverTipoEntrada('pre_quirurgico', 'CONTROL')).toBe(
+      'PREOPERATORIO',
+    );
+  });
+
+  // Respeta dto.tipoEntrada para otros discriminadores de UI
+  it("primera_vez + 'CONTROL' → 'CONTROL' (respeta dto.tipoEntrada)", () => {
+    expect(resolverTipoEntrada('primera_vez', 'CONTROL')).toBe('CONTROL');
+  });
+
+  // Sin discriminador conocido ni tipoEntrada explícito → undefined
+  it("otro + undefined → undefined", () => {
+    expect(resolverTipoEntrada('otro', undefined)).toBeUndefined();
   });
 });

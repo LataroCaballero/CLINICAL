@@ -230,7 +230,11 @@ Full details: `.planning/milestones/v1.14-ROADMAP.md`
   1. Al crear un paciente nuevo, aparece en la columna "Nuevo Lead" del kanban (`etapaCRM = NUEVO_LEAD`), nunca en "Sin clasificar"
   2. Al agendar la fecha de cirugía (turno de cirugía) el paciente pasa a "Confirmado" en el kanban, incluso sin presupuesto aceptado
   3. Al cargarse una entrada de HC "Tratamiento en consultorio" (sola o junto a "Primera vez"), el paciente desaparece del kanban (flujo=TRATAMIENTO, oculto vía el mismo patrón que operados completos de v1.13) y queda registrado en la planilla de tratamientos con la fecha en que se hizo el tratamiento
-**Plans**: TBD
+**Plans**: 3 plans
+Plans:
+- [ ] 63-01-PLAN.md — EMBUDO-07: default etapaCRM=NUEVO_LEAD + flujo=null en create() (lead visible en NUEVO_LEAD)
+- [ ] 63-02-PLAN.md — EMBUDO-08: CONFIRMADO al agendar cirugía, guard selectivo de degradación (Consulta), recontacto de cirugía cancelada
+- [ ] 63-03-PLAN.md — EMBUDO-09: tratamiento en consultorio → flujo=TRATAMIENTO + etapaCRM=null (sale del board, queda en planilla)
 
 ### Phase 64: Indicadores de Pendientes y Planilla Legible (Frontend)
 **Goal**: La secretaria ve de un vistazo qué acción falta por paciente en el kanban, y la planilla de tratamientos muestra la información completa sin truncarse silenciosamente.
@@ -333,7 +337,7 @@ Full details: `.planning/milestones/v1.14-ROADMAP.md`
 | 60. Estadísticas sobre Registros Reales | v1.13 | 2/2 | Complete | 2026-07-05 |
 | 61. Backend — Schema, Decoupling e Indicaciones | v1.14 | 5/5 | Complete    | 2026-07-17 |
 | 62. Portal + Staff Frontend — Gate, Secciones y Sincronización | v1.14 | 3/3 | Complete    | 2026-07-21 |
-| 63. Flujo CRM Automático (Backend) | v1.15 | 0/TBD | Not started | - |
+| 63. Flujo CRM Automático (Backend) | v1.15 | 0/3 | Not started | - |
 | 64. Indicadores de Pendientes y Planilla Legible (Frontend) | v1.15 | 0/TBD | Not started | - |
 | 65. Sync Tipo de Turno ↔ Plantilla HC (Backend) | v1.15 | 0/TBD | Not started | - |
 | 66. Correcciones de UI de Historia Clínica (Frontend) | v1.15 | 0/TBD | Not started | - |

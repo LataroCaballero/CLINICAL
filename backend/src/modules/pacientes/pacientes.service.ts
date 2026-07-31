@@ -51,7 +51,6 @@ export class PacientesService {
 
   // Crear
   async create(dto: CreatePacienteDto) {
-    console.log('DTO RECIBIDO:', dto);
     try {
       const data = {
         ...dto,
@@ -61,6 +60,13 @@ export class PacientesService {
         fechaIndicaciones: dto.fechaIndicaciones
           ? new Date(dto.fechaIndicaciones)
           : null,
+        // EMBUDO-07 (D-01/D-03): un lead recien creado entra al kanban en
+        // NUEVO_LEAD (no "Sin clasificar"). CreatePacienteDto NO transporta
+        // etapaCRM/flujo, asi que este default es incondicional. flujo=null
+        // (en vez del default de schema PENDIENTE) para pasar el filtro
+        // OR:[{flujo:CIRUGIA},{flujo:null}] de getKanban (D-03 opcion 1).
+        etapaCRM: EtapaCRM.NUEVO_LEAD,
+        flujo: null,
       };
       return this.prisma.paciente.create({
         data,

@@ -16,6 +16,8 @@ import { join } from 'path';
 import { PacientesService } from './pacientes.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EncryptionService } from '../whatsapp/crypto/encryption.service';
+import { EtapaCRM, EstadoPaciente } from '@prisma/client';
+import { CreatePacienteDto } from './dto/create-paciente.dto';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -52,6 +54,7 @@ describe('PacientesService — portal link encrypt/recover (52-09)', () => {
         findUnique: jest.fn(),
         update: jest.fn(),
         findMany: jest.fn(),
+        create: jest.fn(),
       },
     };
     const mockConfigService = {
@@ -379,6 +382,114 @@ describe('PacientesService — portal link encrypt/recover (52-09)', () => {
       const paciente = await getPacienteFromKanban('prof-1', KANBAN_PACIENTE_ID);
 
       expect(paciente.pasos.indicacionesPreop).toBe('pendiente');
+    });
+  });
+
+  // ── create() — default etapaCRM=NUEVO_LEAD + flujo=null (EMBUDO-07) ────────
+  describe('create() — default etapaCRM=NUEVO_LEAD + flujo=null (D-01/D-03)', () => {
+    function buildDto(overrides: Partial<CreatePacienteDto> = {}): CreatePacienteDto {
+      return {
+        nombreCompleto: 'Lead Nuevo',
+        dni: '30111222',
+        telefono: '+5491100000000',
+        ...overrides,
+      } as CreatePacienteDto;
+    }
+
+    it('Test A: create() con DTO tipico -> data.etapaCRM === NUEVO_LEAD', async () => {
+      (prisma.paciente.create as jest.Mock).mockResolvedValue({ id: 'p-1' });
+
+      await service.create(buildDto());
+
+      const callArg = (prisma.paciente.create as jest.Mock).mock.calls[0][0];
+      expect(callArg.data.etapaCRM).toBe(EtapaCRM.NUEVO_LEAD);
+    });
+
+    it('Test B: create() con DTO con otros campos poblados -> data.etapaCRM sigue siendo NUEVO_LEAD', async () => {
+      (prisma.paciente.create as jest.Mock).mockResolvedValue({ id: 'p-2' });
+
+      await service.create(
+        buildDto({ estado: EstadoPaciente.ACTIVO, email: 'lead@example.com' }),
+      );
+
+      const callArg = (prisma.paciente.create as jest.Mock).mock.calls[0][0];
+      expect(callArg.data.etapaCRM).toBe(EtapaCRM.NUEVO_LEAD);
+    });
+
+    it('Test C: create() con DTO tipico -> data.flujo === null', async () => {
+      (prisma.paciente.create as jest.Mock).mockResolvedValue({ id: 'p-3' });
+
+      await service.create(buildDto());
+
+      const callArg = (prisma.paciente.create as jest.Mock).mock.calls[0][0];
+      expect(callArg.data.flujo).toBeNull();
+    });
+
+    it('Test D: prisma.paciente.create se invoca una sola vez con etapaCRM=NUEVO_LEAD y flujo=null simultaneos', async () => {
+      (prisma.paciente.create as jest.Mock).mockResolvedValue({ id: 'p-4' });
+
+      await service.create(buildDto());
+
+      expect(prisma.paciente.create as jest.Mock).toHaveBeenCalledTimes(1);
+      const callArg = (prisma.paciente.create as jest.Mock).mock.calls[0][0];
+      expect(callArg.data.etapaCRM).toBe(EtapaCRM.NUEVO_LEAD);
+      expect(callArg.data.flujo).toBeNull();
+    });
+  });
+
+  // ── getKanban — visibilidad del lead nuevo (EMBUDO-07, Task 2) ──────────────
+  describe('getKanban — lead nuevo (etapaCRM=NUEVO_LEAD, flujo=null) es visible', () => {
+    it('paciente con etapaCRM=NUEVO_LEAD y flujo=null cae en la columna NUEVO_LEAD (no SIN_CLASIFICAR)', async () => {
+      (prisma.paciente.findMany as jest.Mock).mockResolvedValue([
+        {
+          id: 'lead-nuevo-1',
+          nombreCompleto: 'Lead Nuevo Kanban',
+          fotoUrl: null,
+          etapaCRM: EtapaCRM.NUEVO_LEAD,
+          temperatura: null,
+          scoreConversion: null,
+          tratamiento: null,
+          lugarIntervencion: null,
+          updatedAt: new Date('2026-07-31'),
+          enListaEspera: false,
+          comentarioListaEspera: null,
+          flujo: null,
+          presupuestos: [],
+          turnos: [],
+          contactos: [],
+          autorizaciones: [],
+          consentimientoFirmado: false,
+          indicacionesEnviadas: false,
+          indicacionesLeidasAt: null,
+          cirugias: [],
+          historiasClinicas: [],
+          consentimientosFirmados: [],
+        },
+      ]);
+
+      const result = await service.getKanban('prof-1');
+
+      const nuevoLeadCol = result.find((c) => c.etapa === 'NUEVO_LEAD');
+      const sinClasificarCol = result.find((c) => c.etapa === 'SIN_CLASIFICAR');
+
+      expect(nuevoLeadCol?.pacientes.some((p) => p.id === 'lead-nuevo-1')).toBe(
+        true,
+      );
+      expect(
+        sinClasificarCol?.pacientes.some((p) => p.id === 'lead-nuevo-1'),
+      ).toBe(false);
+    });
+
+    it('el where de getKanban conserva el filtro OR:[{flujo:CIRUGIA},{flujo:null}] (invariante v1.13) del que depende la visibilidad flujo=null', async () => {
+      (prisma.paciente.findMany as jest.Mock).mockResolvedValue([]);
+
+      await service.getKanban('prof-1');
+
+      const callArg = (prisma.paciente.findMany as jest.Mock).mock.calls[0][0];
+      expect(callArg.where.OR).toEqual([
+        { flujo: 'CIRUGIA' },
+        { flujo: null },
+      ]);
     });
   });
 });

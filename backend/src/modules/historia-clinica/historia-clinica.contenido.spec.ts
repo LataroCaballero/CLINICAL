@@ -2,6 +2,7 @@ import {
   construirContenidoPrimeraVez,
   derivarPerfilPrimeraVez,
   resumirTratamientosDeContenido,
+  listarTratamientosDeContenido,
   ZonaSeleccionInput,
 } from './historia-clinica.contenido.helpers';
 
@@ -294,5 +295,88 @@ describe('resumirTratamientosDeContenido', () => {
       ],
     };
     expect(resumirTratamientosDeContenido(contenido)).toBeNull();
+  });
+
+  it('regresión: mismo contenido de 3 nombres sigue colapsando a "Lipoaspiración +2"', () => {
+    const contenido = {
+      tipo: 'primera_vez',
+      zonas: [
+        { zona: 'Abdomen', tratamientos: [{ nombre: 'Lipoaspiración' }] },
+        {
+          zona: 'Mamas',
+          tratamientos: [{ nombre: 'Bichectomía' }, { nombre: 'Otro' }],
+        },
+      ],
+    };
+    expect(resumirTratamientosDeContenido(contenido)).toBe('Lipoaspiración +2');
+  });
+});
+
+describe('listarTratamientosDeContenido', () => {
+  it('shape v1.9 agrupado (zonas[]) con múltiples tratamientos → array completo sin colapsar', () => {
+    const contenido = {
+      tipo: 'primera_vez',
+      zonas: [
+        { zona: 'Abdomen', tratamientos: [{ nombre: 'Lipoaspiración' }] },
+        {
+          zona: 'Mamas',
+          tratamientos: [{ nombre: 'Bichectomía' }, { nombre: 'Otro' }],
+        },
+      ],
+    };
+    expect(listarTratamientosDeContenido(contenido)).toEqual([
+      'Lipoaspiración',
+      'Bichectomía',
+      'Otro',
+    ]);
+  });
+
+  it('shape legacy plano con múltiples tratamientos → array completo', () => {
+    const contenido = {
+      tipo: 'primera_vez',
+      tratamientos: [{ nombre: 'A' }, { nombre: 'B' }],
+    };
+    expect(listarTratamientosDeContenido(contenido)).toEqual(['A', 'B']);
+  });
+
+  it('free-text más largo que TEXTO_LIMITE → devuelve [textoCompleto] SIN cortar', () => {
+    const textoLargo = 'a'.repeat(100);
+    const contenido = { tipo: 'seguimiento', texto: textoLargo };
+    expect(listarTratamientosDeContenido(contenido)).toEqual([textoLargo]);
+  });
+
+  it('free-text corto → devuelve [texto]', () => {
+    const textoCorto = 'Control post-operatorio sin cambios';
+    const contenido = { tipo: 'seguimiento', texto: textoCorto };
+    expect(listarTratamientosDeContenido(contenido)).toEqual([textoCorto]);
+  });
+
+  it('contenido null → []', () => {
+    expect(listarTratamientosDeContenido(null)).toEqual([]);
+  });
+
+  it('contenido undefined → []', () => {
+    expect(listarTratamientosDeContenido(undefined)).toEqual([]);
+  });
+
+  it('contenido {} → []', () => {
+    expect(listarTratamientosDeContenido({})).toEqual([]);
+  });
+
+  it('contenido {texto: ""} → []', () => {
+    expect(listarTratamientosDeContenido({ texto: '' })).toEqual([]);
+  });
+
+  it('contenido {tratamientos: []} → []', () => {
+    expect(listarTratamientosDeContenido({ tratamientos: [] })).toEqual([]);
+  });
+
+  it('tratamiento_en_consultorio con catálogo → array de nombres del catálogo', () => {
+    const contenido = {
+      tipo: 'tratamiento_en_consultorio',
+      tratamientos: [{ id: 'tr-1', nombre: 'Toxina' }],
+      texto: 'nota extra',
+    };
+    expect(listarTratamientosDeContenido(contenido)).toEqual(['Toxina']);
   });
 });

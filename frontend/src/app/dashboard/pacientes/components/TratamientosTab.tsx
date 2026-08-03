@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { useUIStore } from "@/lib/stores/useUIStore";
 import { TurnoRango, useTurnosRango } from "@/hooks/useTurnosRangos";
@@ -270,20 +271,24 @@ export function TratamientosTab({ profesionalId }: { profesionalId: string | nul
                     })()}
                   </td>
                   <td className="py-2 px-3">
-                    {turno.ultimoTratamiento ? (
-                      <button
-                        onClick={() => {
-                          setDrawerInitialView("historia");
-                          setSelectedPacienteId(turno.paciente.id);
-                        }}
-                        className={cn(
-                          "text-left hover:underline font-medium truncate max-w-[200px] block",
-                          fm ? "text-[var(--fc-text-primary)]" : "text-gray-800"
-                        )}
-                        title={turno.ultimoTratamiento}
-                      >
-                        {turno.ultimoTratamiento}
-                      </button>
+                    {turno.tratamientos && turno.tratamientos.length > 0 ? (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            onClick={() => {
+                              setDrawerInitialView("historia");
+                              setSelectedPacienteId(turno.paciente.id);
+                            }}
+                            className={cn(
+                              "text-left hover:underline font-medium truncate max-w-[200px] block",
+                              fm ? "text-[var(--fc-text-primary)]" : "text-gray-800"
+                            )}
+                          >
+                            {turno.tratamientos.join(", ")}
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent>{turno.tratamientos.join(", ")}</TooltipContent>
+                      </Tooltip>
                     ) : (
                       <span className={cn(fm ? "text-[var(--fc-text-secondary)]" : "text-gray-400")}>
                         —

@@ -4,8 +4,8 @@ milestone: v1.15
 milestone_name: Flujo CRM Automático + Correcciones HC
 status: executing
 stopped_at: Phase 64 context gathered
-last_updated: "2026-07-31T22:48:56.344Z"
-last_activity: 2026-07-31 -- Phase 64 planning complete
+last_updated: "2026-08-03T16:34:35.342Z"
+last_activity: 2026-08-03 -- Phase 64 execution started
 progress:
   total_phases: 4
   completed_phases: 1
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-30 after v1.15 roadmap)
 
 **Core value:** Que un cirujano plástico cierre más cirugías — el sistema hace visible qué pacientes seguir, cuándo y cómo, de la manera más automatizada posible
-**Current focus:** Phase 64 — indicadores de pendientes y planilla legible (frontend)
+**Current focus:** Phase 64 — indicadores-de-pendientes-y-planilla-legible-frontend
 
 ## Current Position
 
-Phase: 64
-Plan: Not started
-Status: Ready to execute
-Last activity: 2026-07-31 -- Phase 64 planning complete
+Phase: 64 (indicadores-de-pendientes-y-planilla-legible-frontend) — EXECUTING
+Plan: 1 of 3
+Status: Executing Phase 64
+Last activity: 2026-08-03 -- Phase 64 execution started
 
 Progress: [██████████] 100%
 

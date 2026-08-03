@@ -5,6 +5,7 @@ import { KanbanPatient } from "@/hooks/useCRMKanban";
 import { TemperatureSelector } from "./TemperatureSelector";
 import { cn } from "@/lib/utils";
 import { useUIStore } from "@/lib/stores/useUIStore";
+import { Badge } from "@/components/ui/badge";
 
 const TEMP_ICON: Record<string, string> = {
   CALIENTE: "🔥",
@@ -116,6 +117,18 @@ export function PatientCard({ patient, columnId, unreadWA = 0, isPending = false
           </span>
         )}
       </div>
+
+      {/* CONTACTO-03 / CONTACTO-04: pendiente badge por etapa */}
+      {columnId === "NUEVO_LEAD" && (
+        <Badge variant="outline" className="mt-1.5 bg-amber-50 text-amber-700 border-amber-200">
+          Dar turno
+        </Badge>
+      )}
+      {columnId === "TURNO_AGENDADO" && (
+        <Badge variant="outline" className="mt-1.5 bg-amber-50 text-amber-700 border-amber-200">
+          Ser atendido
+        </Badge>
+      )}
 
       {/* Lista de espera badge */}
       {patient.enListaEspera && (

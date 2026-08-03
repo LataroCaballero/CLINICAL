@@ -16,12 +16,12 @@ Requisitos de este milestone. Cada uno mapea a una fase del roadmap.
 
 ### Contacto (pendientes por etapa en la card)
 
-- [ ] **CONTACTO-03**: La card de un paciente en "Nuevo Lead" muestra el pendiente "Dar turno" en la zona de badges/registro de contacto inferior
-- [ ] **CONTACTO-04**: La card de un paciente en "Consulta Agendada" muestra el pendiente "Ser atendido" en la misma zona
+- [x] **CONTACTO-03**: La card de un paciente en "Nuevo Lead" muestra el pendiente "Dar turno" en la zona de badges/registro de contacto inferior
+- [x] **CONTACTO-04**: La card de un paciente en "Consulta Agendada" muestra el pendiente "Ser atendido" en la misma zona
 
 ### Planilla de tratamientos
 
-- [ ] **TRAT-07**: La columna "Último tratamiento" muestra todos los tratamientos del turno (no "primero +N-1") truncados en la celda, con tooltip que revela el texto completo
+- [x] **TRAT-07**: La columna "Último tratamiento" muestra todos los tratamientos del turno (no "primero +N-1") truncados en la celda, con tooltip que revela el texto completo
 
 ### Sync tipo de turno ↔ plantilla HC
 
@@ -69,9 +69,9 @@ Qué fases cubren qué requisitos.
 | EMBUDO-07 | Phase 63 | Complete |
 | EMBUDO-08 | Phase 63 | Complete |
 | EMBUDO-09 | Phase 63 | Complete |
-| CONTACTO-03 | Phase 64 | Pending |
-| CONTACTO-04 | Phase 64 | Pending |
-| TRAT-07 | Phase 64 | Pending |
+| CONTACTO-03 | Phase 64 | Complete |
+| CONTACTO-04 | Phase 64 | Complete |
+| TRAT-07 | Phase 64 | Complete |
 | HCSYNC-01 | Phase 65 | Pending |
 | HCSYNC-02 | Phase 65 | Pending |
 | HCSYNC-03 | Phase 65 | Pending |

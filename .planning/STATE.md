@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.15
 milestone_name: Flujo CRM Automático + Correcciones HC
-status: executing
-stopped_at: Phase 64 context gathered
-last_updated: "2026-08-03T16:34:35.342Z"
+status: ready_to_plan
+stopped_at: Phase 64 complete (3/3) — ready to discuss Phase 65
+last_updated: 2026-08-03T17:11:53.170Z
 last_activity: 2026-08-03 -- Phase 64 execution started
 progress:
   total_phases: 4
   completed_phases: 1
   total_plans: 6
-  completed_plans: 3
+  completed_plans: 6
   percent: 25
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-30 after v1.15 roadmap)
 
 **Core value:** Que un cirujano plástico cierre más cirugías — el sistema hace visible qué pacientes seguir, cuándo y cómo, de la manera más automatizada posible
-**Current focus:** Phase 64 — indicadores-de-pendientes-y-planilla-legible-frontend
+**Current focus:** Phase 65 — sync tipo de turno ↔ plantilla hc (backend)
 
 ## Current Position
 
-Phase: 64 (indicadores-de-pendientes-y-planilla-legible-frontend) — EXECUTING
-Plan: 1 of 3
-Status: Executing Phase 64
-Last activity: 2026-08-03 -- Phase 64 execution started
+Phase: 65
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-08-03
 
 Progress: [██████████] 100%
 

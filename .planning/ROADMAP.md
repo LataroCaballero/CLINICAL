@@ -365,7 +365,7 @@ Plans:
 | 61. Backend — Schema, Decoupling e Indicaciones | v1.14 | 5/5 | Complete    | 2026-07-17 |
 | 62. Portal + Staff Frontend — Gate, Secciones y Sincronización | v1.14 | 3/3 | Complete    | 2026-07-21 |
 | 63. Flujo CRM Automático (Backend) | v1.15 | 3/3 | Complete    | 2026-07-31 |
-| 64. Indicadores de Pendientes y Planilla Legible (Frontend) | v1.15 | 3/3 | Complete   | 2026-08-03 |
+| 64. Indicadores de Pendientes y Planilla Legible (Frontend) | v1.15 | 3/3 | Complete    | 2026-08-03 |
 | 65. Sync Tipo de Turno ↔ Plantilla HC (Backend) | v1.15 | 0/TBD | Not started | - |
 | 66. Correcciones de UI de Historia Clínica (Frontend) | v1.15 | 0/TBD | Not started | - |
 

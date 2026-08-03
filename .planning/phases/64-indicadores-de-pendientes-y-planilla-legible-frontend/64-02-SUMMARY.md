@@ -82,3 +82,10 @@ None - no external service configuration required.
 ---
 *Phase: 64-indicadores-de-pendientes-y-planilla-legible-frontend*
 *Completed: 2026-08-03*
+
+## Self-Check: PASSED
+
+- FOUND: frontend/src/components/crm/PatientCard.tsx
+- FOUND: .planning/phases/64-indicadores-de-pendientes-y-planilla-legible-frontend/64-02-SUMMARY.md
+- FOUND commit: 177969d
+- FOUND commit: bfd40e9

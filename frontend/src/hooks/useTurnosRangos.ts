@@ -10,6 +10,8 @@ export type TurnoRango = {
   paciente: { id: string; nombreCompleto: string };
   tipoTurno: { id: string; nombre: string; flujoPaciente?: string | null };
   ultimoTratamiento?: string | null;
+  // Phase 64 (TRAT-07) — lista completa de nombres sin colapsar; ultimoTratamiento se mantiene para compatibilidad
+  tratamientos?: string[];
   tipoEntradaHC?: string | null;
 };
 

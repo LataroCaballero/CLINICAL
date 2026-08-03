@@ -24,7 +24,10 @@ import { ReprogramarTurnoDto } from './dto/reprogramar-turno.dto';
 import { IniciarSesionDto } from './dto/iniciar-sesion.dto';
 import { CerrarSesionDto } from './dto/cerrar-sesion.dto';
 import { CuentasCorrientesService } from '../cuentas-corrientes/cuentas-corrientes.service';
-import { resumirTratamientosDeContenido } from '../historia-clinica/historia-clinica.contenido.helpers';
+import {
+  resumirTratamientosDeContenido,
+  listarTratamientosDeContenido,
+} from '../historia-clinica/historia-clinica.contenido.helpers';
 
 @Injectable()
 export class TurnosService {
@@ -591,6 +594,9 @@ export class TurnosService {
       return {
         ...rest,
         ultimoTratamiento: resumirTratamientosDeContenido(
+          entradaHC?.contenido ?? null,
+        ),
+        tratamientos: listarTratamientosDeContenido(
           entradaHC?.contenido ?? null,
         ),
         tipoEntradaHC: entradaHC?.tipoEntrada ?? null,

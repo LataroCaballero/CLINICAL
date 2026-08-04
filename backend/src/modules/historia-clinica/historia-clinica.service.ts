@@ -302,8 +302,11 @@ export class HistoriaClinicaService {
       // HCSYNC-01/02/03: sync Turno.tipoTurno with the HC plantilla being saved on it.
       // D-09 guard: without dto.turnoId, no turno query/update runs at all (retroactive
       // entries from PatientDrawer never touch tipoTurno). D-06: independent of the
-      // paciente.flujo/etapaCRM block above — no effects on it.
-      if (dto.turnoId) {
+      // paciente.flujo/etapaCRM block above — no effects on it. Guard also requires
+      // turnoCtx (pre-fetch resolved the turno) so a stale/deleted turnoId short-circuits
+      // the whole block instead of reaching tx.turno.update against a missing row
+      // (Prisma P2025 would otherwise abort the entire HC-save transaction, T-65-03).
+      if (dto.turnoId && turnoCtx) {
         const targetNombre = resolverTipoTurnoSync(
           dto.tipo,
           turnoCtx?.tipoTurno?.nombre,

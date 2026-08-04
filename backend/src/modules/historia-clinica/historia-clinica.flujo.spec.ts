@@ -485,4 +485,28 @@ describe('crearEntrada — sync tipoTurno (HCSYNC-01/02/03, D-09)', () => {
 
     expect(mockPrisma.turno.update).not.toHaveBeenCalled();
   });
+
+  it('(e) turnoId stale / turno inexistente (findUnique→null) → turno.update NO llamado y crearEntrada resuelve sin lanzar', async () => {
+    // Pre-fetch does NOT resolve the turno (id stale / deleted) → turnoCtx=null.
+    mockPrisma.turno.findUnique.mockResolvedValue(null);
+    // Catalog lookup still returns a truthy destino (global lookup, unrelated to the
+    // missing turno row) — mirrors case (a) so the inner `if (destino && ...)` guard
+    // does NOT short-circuit on its own; only the hardened outer guard should.
+    mockPrisma.tipoTurno.findUnique.mockResolvedValue({
+      id: TIPO_TURNO_DESTINO_ID,
+      esCirugia: false,
+    });
+    // Reproduces the original P2025 failure mode if the update were ever reached.
+    mockPrisma.turno.update.mockRejectedValue(new Error('P2025'));
+
+    await expect(
+      service.crearEntrada(
+        PACIENTE_ID,
+        { tipo: 'tratamiento_en_consultorio', turnoId: TURNO_ID } as never,
+        PROFESIONAL_ID,
+      ),
+    ).resolves.toBeDefined();
+
+    expect(mockPrisma.turno.update).not.toHaveBeenCalled();
+  });
 });

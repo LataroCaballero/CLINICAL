@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import {
   resolverNuevoFlujo,
   resolverTipoEntrada,
+  resolverTipoTurnoSync,
 } from './historia-clinica.flujo.helpers';
 import { HistoriaClinicaService } from './historia-clinica.service';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -93,6 +94,131 @@ describe('resolverTipoEntrada', () => {
   // Sin discriminador conocido ni tipoEntrada explícito → undefined
   it('otro + undefined → undefined', () => {
     expect(resolverTipoEntrada('otro', undefined)).toBeUndefined();
+  });
+});
+
+describe('resolverTipoTurnoSync', () => {
+  // HCSYNC-01: primera_vez → 'Consulta' (D-03 rango 0)
+  it("primera_vez + 'Control' → 'Consulta'", () => {
+    expect(resolverTipoTurnoSync('primera_vez', 'Control', false)).toBe(
+      'Consulta',
+    );
+  });
+
+  it('primera_vez + null → \'Consulta\'', () => {
+    expect(resolverTipoTurnoSync('primera_vez', null, false)).toBe(
+      'Consulta',
+    );
+  });
+
+  it("primera_vez + 'Consulta' → null (no-op, ya está)", () => {
+    expect(
+      resolverTipoTurnoSync('primera_vez', 'Consulta', false),
+    ).toBeNull();
+  });
+
+  it("primera_vez + 'Tratamiento' → null (no degrada, D-01)", () => {
+    expect(
+      resolverTipoTurnoSync('primera_vez', 'Tratamiento', false),
+    ).toBeNull();
+  });
+
+  it("primera_vez + 'Pre-Quirúrgico' → null", () => {
+    expect(
+      resolverTipoTurnoSync('primera_vez', 'Pre-Quirúrgico', false),
+    ).toBeNull();
+  });
+
+  // HCSYNC-02: tratamiento_en_consultorio → 'Tratamiento'
+  it("tratamiento_en_consultorio + 'Consulta' → 'Tratamiento'", () => {
+    expect(
+      resolverTipoTurnoSync('tratamiento_en_consultorio', 'Consulta', false),
+    ).toBe('Tratamiento');
+  });
+
+  it("tratamiento_en_consultorio + 'Control' → 'Tratamiento'", () => {
+    expect(
+      resolverTipoTurnoSync('tratamiento_en_consultorio', 'Control', false),
+    ).toBe('Tratamiento');
+  });
+
+  it("tratamiento_en_consultorio + null → 'Tratamiento'", () => {
+    expect(
+      resolverTipoTurnoSync('tratamiento_en_consultorio', null, false),
+    ).toBe('Tratamiento');
+  });
+
+  it("tratamiento_en_consultorio + 'Tratamiento' → null (no-op)", () => {
+    expect(
+      resolverTipoTurnoSync(
+        'tratamiento_en_consultorio',
+        'Tratamiento',
+        false,
+      ),
+    ).toBeNull();
+  });
+
+  it("tratamiento_en_consultorio + 'Pre-Quirúrgico' → null (no degrada)", () => {
+    expect(
+      resolverTipoTurnoSync(
+        'tratamiento_en_consultorio',
+        'Pre-Quirúrgico',
+        false,
+      ),
+    ).toBeNull();
+  });
+
+  // HCSYNC-03: pre_quirurgico → 'Pre-Quirúrgico' (tope)
+  it("pre_quirurgico + 'Consulta' → 'Pre-Quirúrgico'", () => {
+    expect(
+      resolverTipoTurnoSync('pre_quirurgico', 'Consulta', false),
+    ).toBe('Pre-Quirúrgico');
+  });
+
+  it("pre_quirurgico + 'Control' → 'Pre-Quirúrgico'", () => {
+    expect(resolverTipoTurnoSync('pre_quirurgico', 'Control', false)).toBe(
+      'Pre-Quirúrgico',
+    );
+  });
+
+  it("pre_quirurgico + 'Pre-Quirúrgico' → null (no-op tope)", () => {
+    expect(
+      resolverTipoTurnoSync('pre_quirurgico', 'Pre-Quirúrgico', false),
+    ).toBeNull();
+  });
+
+  // D-02: turno de cirugía protegido — nunca se toca, sea cual sea la plantilla
+  it('esCirugia=true (pre_quirurgico) → null (sentinel protegido D-02)', () => {
+    expect(
+      resolverTipoTurnoSync('pre_quirurgico', 'Consulta', true),
+    ).toBeNull();
+  });
+
+  it('esCirugia=true (tratamiento_en_consultorio) → null (sentinel protegido D-02)', () => {
+    expect(
+      resolverTipoTurnoSync('tratamiento_en_consultorio', 'Control', true),
+    ).toBeNull();
+  });
+
+  it('esCirugia=true (primera_vez) → null (sentinel protegido D-02)', () => {
+    expect(resolverTipoTurnoSync('primera_vez', null, true)).toBeNull();
+  });
+
+  // D-07: plantillas sin sync
+  it("plantilla 'control' → null (sin sync, D-07)", () => {
+    expect(resolverTipoTurnoSync('control', 'Consulta', false)).toBeNull();
+  });
+
+  it("plantilla 'practica' → null (sin sync, D-07)", () => {
+    expect(resolverTipoTurnoSync('practica', 'Consulta', false)).toBeNull();
+  });
+
+  it("plantilla 'libre' → null (sin sync, D-07)", () => {
+    expect(resolverTipoTurnoSync('libre', 'Control', false)).toBeNull();
+  });
+
+  it('plantilla undefined → null (sin sync, D-07)', () => {
+    expect(resolverTipoTurnoSync(undefined, 'Consulta', false)).toBeNull();
   });
 });
 

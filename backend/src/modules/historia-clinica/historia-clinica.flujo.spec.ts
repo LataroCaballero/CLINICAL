@@ -346,3 +346,143 @@ describe('HistoriaClinicaService.crearEntrada — wiring D-08/D-09/D-10', () => 
     );
   });
 });
+
+// ─── crearEntrada — sync tipoTurno (Task 3, HCSYNC-01/02/03, D-09) ────────────
+describe('crearEntrada — sync tipoTurno (HCSYNC-01/02/03, D-09)', () => {
+  let service: HistoriaClinicaService;
+  let mockPrisma: {
+    profesional: { findFirst: jest.Mock };
+    historiaClinica: { findFirst: jest.Mock; create: jest.Mock };
+    historiaClinicaEntrada: { create: jest.Mock };
+    paciente: { findUnique: jest.Mock; update: jest.Mock };
+    turno: { findUnique: jest.Mock; update: jest.Mock };
+    tipoTurno: { findUnique: jest.Mock };
+    $transaction: jest.Mock;
+  };
+
+  const PACIENTE_ID = 'paciente-1';
+  const PROFESIONAL_ID = 'profesional-1';
+  const HISTORIA_ID = 'historia-1';
+  const TURNO_ID = 'turno-1';
+  const TIPO_TURNO_ACTUAL_ID = 'tipo-turno-consulta';
+  const TIPO_TURNO_DESTINO_ID = 'tipo-turno-tratamiento';
+
+  beforeEach(async () => {
+    mockPrisma = {
+      profesional: { findFirst: jest.fn() },
+      historiaClinica: {
+        findFirst: jest.fn().mockResolvedValue({ id: HISTORIA_ID }),
+        create: jest.fn(),
+      },
+      historiaClinicaEntrada: {
+        create: jest.fn().mockResolvedValue({ id: 'entrada-1' }),
+      },
+      paciente: {
+        // Includes condiciones/alergias/medicacion defaults so the pre_quirurgico
+        // union-dedup merge block (D-09 profile merge, unrelated to turno sync) doesn't
+        // break when the same mock is reused for that lookup.
+        findUnique: jest.fn().mockResolvedValue({
+          flujo: 'PENDIENTE',
+          condiciones: [],
+          alergias: [],
+          medicacion: [],
+        }),
+        update: jest.fn().mockResolvedValue({}),
+      },
+      turno: {
+        findUnique: jest.fn(),
+        update: jest.fn().mockResolvedValue({}),
+      },
+      tipoTurno: { findUnique: jest.fn() },
+      $transaction: jest.fn(),
+    };
+    mockPrisma.$transaction.mockImplementation((cb: (tx: unknown) => unknown) =>
+      cb(mockPrisma),
+    );
+
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        HistoriaClinicaService,
+        { provide: PrismaService, useValue: mockPrisma },
+        {
+          provide: CatalogoHCService,
+          useValue: {
+            aprenderDesdeZonas: jest.fn(),
+            aprenderDesdePreoperatorio: jest.fn(),
+          },
+        },
+      ],
+    }).compile();
+
+    service = module.get<HistoriaClinicaService>(HistoriaClinicaService);
+  });
+
+  it('(a) turnoId presente + tratamiento_en_consultorio sobre Consulta → turno.update con tipoTurnoId de Tratamiento', async () => {
+    mockPrisma.turno.findUnique.mockResolvedValue({
+      esCirugia: false,
+      tipoTurnoId: TIPO_TURNO_ACTUAL_ID,
+      tipoTurno: { nombre: 'Consulta' },
+    });
+    mockPrisma.tipoTurno.findUnique.mockResolvedValue({
+      id: TIPO_TURNO_DESTINO_ID,
+      esCirugia: false,
+    });
+
+    await service.crearEntrada(
+      PACIENTE_ID,
+      { tipo: 'tratamiento_en_consultorio', turnoId: TURNO_ID } as never,
+      PROFESIONAL_ID,
+    );
+
+    expect(mockPrisma.turno.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: TURNO_ID },
+        data: expect.objectContaining({ tipoTurnoId: TIPO_TURNO_DESTINO_ID }),
+      }),
+    );
+  });
+
+  it('(b) destino ya coincide con el tipo actual (no-op / no degrada) → turno.update NO llamado', async () => {
+    // primera_vez sobre un turno ya 'Tratamiento' (rango mayor) → resolver devuelve null
+    mockPrisma.turno.findUnique.mockResolvedValue({
+      esCirugia: false,
+      tipoTurnoId: TIPO_TURNO_DESTINO_ID,
+      tipoTurno: { nombre: 'Tratamiento' },
+    });
+
+    await service.crearEntrada(
+      PACIENTE_ID,
+      { tipo: 'primera_vez', turnoId: TURNO_ID } as never,
+      PROFESIONAL_ID,
+    );
+
+    expect(mockPrisma.turno.update).not.toHaveBeenCalled();
+  });
+
+  it('(c) guard D-09: dto.turnoId ausente → ni turno.findUnique ni turno.update son llamados', async () => {
+    await service.crearEntrada(
+      PACIENTE_ID,
+      { tipo: 'tratamiento_en_consultorio' } as never,
+      PROFESIONAL_ID,
+    );
+
+    expect(mockPrisma.turno.findUnique).not.toHaveBeenCalled();
+    expect(mockPrisma.turno.update).not.toHaveBeenCalled();
+  });
+
+  it('(d) turno de cirugía protegido: esCirugia=true con cualquier plantilla → turno.update NO llamado', async () => {
+    mockPrisma.turno.findUnique.mockResolvedValue({
+      esCirugia: true,
+      tipoTurnoId: 'tipo-turno-cirugia',
+      tipoTurno: { nombre: 'Cirugía' },
+    });
+
+    await service.crearEntrada(
+      PACIENTE_ID,
+      { tipo: 'pre_quirurgico' } as never,
+      PROFESIONAL_ID,
+    );
+
+    expect(mockPrisma.turno.update).not.toHaveBeenCalled();
+  });
+});

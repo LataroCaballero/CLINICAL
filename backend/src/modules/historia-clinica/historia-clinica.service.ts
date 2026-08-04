@@ -5,6 +5,7 @@ import { CreateEntradaDto } from './dto/crear-entrada.dto';
 import {
   resolverNuevoFlujo,
   resolverTipoEntrada,
+  resolverTipoTurnoSync,
 } from './historia-clinica.flujo.helpers';
 import {
   construirContenidoPrimeraVez,
@@ -224,11 +225,17 @@ export class HistoriaClinicaService {
       }
     }
 
-    // Pre-fetch turno.esCirugia outside tx (pgBouncer pattern — same as other pre-fetches)
+    // Pre-fetch turno.esCirugia + tipoTurno outside tx (pgBouncer pattern — same as
+    // other pre-fetches). tipoTurnoId/tipoTurno.nombre added for HCSYNC-01/02/03 to
+    // avoid a second round-trip inside the transaction.
     const turnoCtx = dto.turnoId
       ? await this.prisma.turno.findUnique({
           where: { id: dto.turnoId },
-          select: { esCirugia: true },
+          select: {
+            esCirugia: true,
+            tipoTurnoId: true,
+            tipoTurno: { select: { nombre: true } },
+          },
         })
       : null;
 
@@ -290,6 +297,35 @@ export class HistoriaClinicaService {
             ...(nuevoFlujo === 'TRATAMIENTO' && { etapaCRM: null }),
           },
         });
+      }
+
+      // HCSYNC-01/02/03: sync Turno.tipoTurno with the HC plantilla being saved on it.
+      // D-09 guard: without dto.turnoId, no turno query/update runs at all (retroactive
+      // entries from PatientDrawer never touch tipoTurno). D-06: independent of the
+      // paciente.flujo/etapaCRM block above — no effects on it.
+      if (dto.turnoId) {
+        const targetNombre = resolverTipoTurnoSync(
+          dto.tipo,
+          turnoCtx?.tipoTurno?.nombre,
+          turnoCtx?.esCirugia ?? false,
+        );
+        if (targetNombre) {
+          const destino = await tx.tipoTurno.findUnique({
+            where: { nombre: targetNombre },
+            select: { id: true, esCirugia: true },
+          });
+          // Defensive skip if destino doesn't exist (never break HC save); idempotent
+          // skip if it already matches the current tipoTurnoId (D-05).
+          if (destino && destino.id !== turnoCtx?.tipoTurnoId) {
+            await tx.turno.update({
+              where: { id: dto.turnoId },
+              data: {
+                tipoTurnoId: destino.id,
+                esCirugia: destino.esCirugia,
+              },
+            });
+          }
+        }
       }
 
       // D-09: Union-dedup profile merge for pre_quirurgico

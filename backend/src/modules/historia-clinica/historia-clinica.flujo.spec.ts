@@ -105,16 +105,12 @@ describe('resolverTipoTurnoSync', () => {
     );
   });
 
-  it('primera_vez + null → \'Consulta\'', () => {
-    expect(resolverTipoTurnoSync('primera_vez', null, false)).toBe(
-      'Consulta',
-    );
+  it("primera_vez + null → 'Consulta'", () => {
+    expect(resolverTipoTurnoSync('primera_vez', null, false)).toBe('Consulta');
   });
 
   it("primera_vez + 'Consulta' → null (no-op, ya está)", () => {
-    expect(
-      resolverTipoTurnoSync('primera_vez', 'Consulta', false),
-    ).toBeNull();
+    expect(resolverTipoTurnoSync('primera_vez', 'Consulta', false)).toBeNull();
   });
 
   it("primera_vez + 'Tratamiento' → null (no degrada, D-01)", () => {
@@ -150,11 +146,7 @@ describe('resolverTipoTurnoSync', () => {
 
   it("tratamiento_en_consultorio + 'Tratamiento' → null (no-op)", () => {
     expect(
-      resolverTipoTurnoSync(
-        'tratamiento_en_consultorio',
-        'Tratamiento',
-        false,
-      ),
+      resolverTipoTurnoSync('tratamiento_en_consultorio', 'Tratamiento', false),
     ).toBeNull();
   });
 
@@ -170,9 +162,9 @@ describe('resolverTipoTurnoSync', () => {
 
   // HCSYNC-03: pre_quirurgico → 'Pre-Quirúrgico' (tope)
   it("pre_quirurgico + 'Consulta' → 'Pre-Quirúrgico'", () => {
-    expect(
-      resolverTipoTurnoSync('pre_quirurgico', 'Consulta', false),
-    ).toBe('Pre-Quirúrgico');
+    expect(resolverTipoTurnoSync('pre_quirurgico', 'Consulta', false)).toBe(
+      'Pre-Quirúrgico',
+    );
   });
 
   it("pre_quirurgico + 'Control' → 'Pre-Quirúrgico'", () => {

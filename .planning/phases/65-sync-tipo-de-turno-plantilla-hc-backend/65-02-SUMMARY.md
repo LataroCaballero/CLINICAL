@@ -91,3 +91,7 @@ None — no external service configuration required.
 ---
 *Phase: 65-sync-tipo-de-turno-plantilla-hc-backend*
 *Completed: 2026-08-04*
+
+## Self-Check: PASSED
+
+Both modified files verified present on disk; all 3 commit hashes (b568706, aa3db48, 13d09af) verified in git log.

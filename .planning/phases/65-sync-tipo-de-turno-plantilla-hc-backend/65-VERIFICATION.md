@@ -1,19 +1,16 @@
 ---
 phase: 65-sync-tipo-de-turno-plantilla-hc-backend
-verified: 2026-08-04T20:19:58Z
-status: gaps_found
-score: 11/12 must-haves verified
+verified: 2026-08-04T21:05:47Z
+status: passed
+score: 12/12 must-haves verified
 overrides_applied: 0
-gaps:
-  - truth: "El sync de tipoTurno nunca debe romper el guardado de la HC — incluso cuando dto.turnoId es stale/apunta a un turno ya eliminado"
-    status: failed
-    reason: "El guard del bloque de sync en crearEntrada es `if (dto.turnoId)`, no `if (dto.turnoId && turnoCtx)`. Cuando el turno no existe (borrado o id obsoleto), el pre-fetch devuelve turnoCtx=null pero el bloque igual corre: resolverTipoTurnoSync(dto.tipo, undefined, false) devuelve un destino real para primera_vez/tratamiento_en_consultorio/pre_quirurgico, el lookup de catálogo tipoTurno.findUnique SÍ encuentra ese destino (es una tabla global, no depende del turno), y como destino.id !== turnoCtx?.tipoTurnoId (undefined) es siempre true, se ejecuta tx.turno.update({ where: { id: dto.turnoId } }) contra una fila inexistente. Prisma lanza P2025, lo que aborta TODA la transacción y falla la creación de la entrada de HC. Esto contradice tanto el comentario inline del propio código ('Defensive skip if destino doesn't exist (never break HC save)') como la mitigación declarada en el threat model del plan (T-65-03: 'se saltea el sync silenciosamente (no throw), preservando el guardado de la HC'). Reproducido independientemente con un test aislado (mock turno.findUnique→null, turno.update→throw P2025): crearEntrada rechaza la promesa en vez de resolver."
-    artifacts:
-      - path: "backend/src/modules/historia-clinica/historia-clinica.service.ts"
-        issue: "Línea ~306: `if (dto.turnoId) { ... }` no verifica `turnoCtx` antes de derivar el sync; línea ~319: `destino.id !== turnoCtx?.tipoTurnoId` usa optional chaining que enmascara turnoCtx=null en vez de cortocircuitar el bloque completo"
-    missing:
-      - "Cambiar el guard a `if (dto.turnoId && turnoCtx) { ... }` (o equivalente) para que un turnoId que no resuelve en el pre-fetch salte el sync completo, igual que ya hace el bloque de flujo del paciente con `turnoCtx?.esCirugia ?? false`"
-      - "Agregar un caso de test de wiring: turnoId presente + turno.findUnique devuelve null → turno.update NO se llama y crearEntrada resuelve sin lanzar"
+re_verification:
+  previous_status: gaps_found
+  previous_score: 11/12
+  gaps_closed:
+    - "El sync de tipoTurno nunca debe romper el guardado de la HC — incluso cuando dto.turnoId es stale/apunta a un turno ya eliminado"
+  gaps_remaining: []
+  regressions: []
 deferred: []
 human_verification: []
 ---
@@ -21,9 +18,9 @@ human_verification: []
 # Phase 65: Sync Tipo de Turno ↔ Plantilla HC (Backend) Verification Report
 
 **Phase Goal:** El tipo de turno se mantiene coherente con la plantilla de HC cargada sobre él, sin que el profesional tenga que corregirlo a mano en la agenda.
-**Verified:** 2026-08-04T20:19:58Z
-**Status:** gaps_found
-**Re-verification:** No — initial verification
+**Verified:** 2026-08-04T21:05:47Z
+**Status:** passed
+**Re-verification:** Yes — after gap closure (65-02-PLAN.md)
 
 ## Goal Achievement
 
@@ -31,103 +28,86 @@ human_verification: []
 
 | # | Truth | Status | Evidence |
 |---|-------|--------|----------|
-| 1 | HCSYNC-01: `primera_vez` sobre turno de rango menor → `tipoTurnoId`='Consulta'; sin degradar tipos superiores | ✓ VERIFIED | `resolverTipoTurnoSync` (helpers.ts:74-100) implements rank ladder correctly; unit tests pass (`primera_vez + 'Control' → 'Consulta'`, `primera_vez + 'Tratamiento' → null`, etc., all 43/43 green) |
-| 2 | HCSYNC-02: `tratamiento_en_consultorio` sobre 'Consulta'/'Control'/null → `tipoTurnoId`='Tratamiento'; no degrada 'Pre-Quirúrgico' | ✓ VERIFIED | Same helper, tests confirm `tratamiento_en_consultorio + 'Consulta' → 'Tratamiento'` and `+ 'Pre-Quirúrgico' → null` |
-| 3 | HCSYNC-03: `pre_quirurgico` sobre turno no-cirugía → `tipoTurnoId`='Pre-Quirúrgico' (tope); no-op si ya lo es | ✓ VERIFIED | Tests confirm `pre_quirurgico + 'Control' → 'Pre-Quirúrgico'` and `+ 'Pre-Quirúrgico' → null` |
-| 4 | D-02: turno de cirugía (`esCirugia===true`) nunca se toca, sea cual sea la plantilla | ✓ VERIFIED (helper level) / ⚠️ weak wiring coverage | `resolverTipoTurnoSync` checks `currentEsCirugia` first and returns null in all 3 unit-test cases. **However**, the wiring-level test claiming to cover this (`it('(d) turno de cirugía protegido...')`, spec.ts:473-487) omits `turnoId` from the dto, so `dto.turnoId` is falsy and the D-09 guard short-circuits the sync block before `esCirugia` is ever evaluated — the test passes for the wrong reason (it re-tests D-09, not D-02). Manual trace of the actual service code (service.ts:306-311, passing `turnoCtx?.esCirugia` through when `turnoId` IS present) confirms the real behavior is still correct, so this does not fail the truth — but the test suite does not prove it at the wiring layer. See Anti-Patterns. |
-| 5 | D-01 no-downgrade: ladder only applies destino if rank mayor que actual; order-independent | ✓ VERIFIED | Explicit `rankDestino > rankActual` comparison (helpers.ts:99); tests cover all no-downgrade pairs |
-| 6 | D-03: tipo actual no mapeado (Control/null/otro) cuenta rango 0, sobrescribible | ✓ VERIFIED | `RANGOS[currentTipoNombre] ?? 0` (helpers.ts:97); tests confirm `'Control'` and `null` both yield destino overwrite |
-| 7 | D-09 guard (SC#4): sin `dto.turnoId` no se ejecuta ningún query ni update de turno | ✓ VERIFIED | Pre-fetch ternary `dto.turnoId ? ... : null` (service.ts:231-240) and sync block `if (dto.turnoId) {...}` (service.ts:306); wiring test (c) confirms neither `turno.findUnique` nor `turno.update` called without `turnoId` |
-| 8 | D-05: update escribe `Turno.tipoTurnoId` (FK por nombre) y sincroniza `Turno.esCirugia` con el destino | ✓ VERIFIED (as literally worded) | `tx.turno.update({ data: { tipoTurnoId: destino.id, esCirugia: destino.esCirugia } })` (service.ts:320-326). Note: REVIEW.md WR-02 flags this write as currently a no-op in practice (all 3 destinos seed `esCirugia:false`, and cirugía turnos are already excluded by D-02) — a latent footgun if catalog seeding ever changes, not a functional failure today. |
-| 9 | D-08: destino resuelto por `nombre` (`@unique`) vía `tx.tipoTurno.findUnique({ where: { nombre } })`; comparación del actual también por `nombre` | ✓ VERIFIED | service.ts:313-316 (`tipoTurno.findUnique({ where: { nombre: targetNombre } })`); turnoCtx pre-fetch selects `tipoTurno: { select: { nombre: true } }` (service.ts:237) |
-| 10 | D-06: sync NO re-dispara efectos sobre `Paciente.flujo`/`etapaCRM`; bloque `resolverNuevoFlujo`/`tx.paciente.update` (:270-293 en plan, ~277-300 real) queda intacto e independiente | ✓ VERIFIED | Sync block (service.ts:302-329) placed after the paciente.flujo block, contains no `paciente.update`/`etapaCRM`/`flujo` references; `grep -c "paciente.update"` inside the sync block range = 0 |
-| 11 | Idempotencia + defensa: se saltea `tx.turno.update` si `tipoTurnoId` destino ya coincide con el actual; si el `TipoTurno` destino no existe **por nombre**, se saltea el sync silenciosamente sin romper el guardado de la HC | ✓ VERIFIED (literal wording) | Idempotence: `if (destino && destino.id !== turnoCtx?.tipoTurnoId)` (service.ts:319); wiring test (b) confirms `turno.update` not called when already matching. Catalog-miss defense: `if (destino && ...)` skips silently when `tipoTurno.findUnique` returns null — this specific literal scenario does not throw. |
-| 12 | (Derived from plan's own inline comment + threat model T-65-03) El sync nunca debe romper el guardado de la HC, incluyendo cuando `dto.turnoId` es stale/apunta a un turno eliminado | ✗ FAILED | See Gaps Summary below — reproduced independently: stale `turnoId` → `turnoCtx=null` → guard `if (dto.turnoId)` alone does not stop the block → `tx.turno.update` runs against a non-existent row → Prisma `P2025` → whole `$transaction` rolls back → **HC entry creation fails**. Untested by the phase's own spec suite. |
+| 1 | HCSYNC-01: `primera_vez` sobre turno de rango menor → `tipoTurnoId`='Consulta'; sin degradar tipos superiores | ✓ VERIFIED (regression-checked) | `resolverTipoTurnoSync` (helpers.ts:74-100) unchanged since 65-01; full spec re-run confirms `primera_vez + 'Control' → 'Consulta'`, `primera_vez + 'Tratamiento' → null`, etc. still pass |
+| 2 | HCSYNC-02: `tratamiento_en_consultorio` sobre 'Consulta'/'Control'/null → `tipoTurnoId`='Tratamiento'; no degrada 'Pre-Quirúrgico' | ✓ VERIFIED (regression-checked) | Same helper, unchanged; tests confirm `tratamiento_en_consultorio + 'Consulta' → 'Tratamiento'` and `+ 'Pre-Quirúrgico' → null` |
+| 3 | HCSYNC-03: `pre_quirurgico` sobre turno no-cirugía → `tipoTurnoId`='Pre-Quirúrgico' (tope); no-op si ya lo es | ✓ VERIFIED (regression-checked) | Tests confirm `pre_quirurgico + 'Control' → 'Pre-Quirúrgico'` and `+ 'Pre-Quirúrgico' → null` |
+| 4 | D-02: turno de cirugía (`esCirugia===true`) nunca se toca, sea cual sea la plantilla | ✓ VERIFIED (helper level, unchanged) / ⚠️ wiring test (d) still weak (WR-04, pre-existing, not in 65-02 scope) | `resolverTipoTurnoSync` checks `currentEsCirugia` first — unaffected by the guard fix. Wiring test `(d)` (spec.ts:473-487) still omits `turnoId` from the dto, so it exercises the D-09 short-circuit rather than the D-02 path — same gap noted in the prior verification, explicitly out-of-scope for 65-02, not a regression |
+| 5 | D-01 no-downgrade: ladder only applies destino if rank mayor que actual; order-independent | ✓ VERIFIED (regression-checked) | `rankDestino > rankActual` (helpers.ts:99) unchanged; full case table green |
+| 6 | D-03: tipo actual no mapeado (Control/null/otro) cuenta rango 0, sobrescribible | ✓ VERIFIED (regression-checked) | `RANGOS[currentTipoNombre] ?? 0` (helpers.ts:97) unchanged |
+| 7 | D-09 guard (SC#4): sin `dto.turnoId` no se ejecuta ningún query ni update de turno | ✓ VERIFIED (regression-checked) | Pre-fetch ternary unchanged (service.ts:231-240); sync guard now `if (dto.turnoId && turnoCtx)` (service.ts:309) — still short-circuits on absent `turnoId` (also short-circuits on falsy `turnoCtx`, a superset of the old behavior); wiring test (c) confirms neither `turno.findUnique` nor `turno.update` called |
+| 8 | D-05: update escribe `Turno.tipoTurnoId` (FK por nombre) y sincroniza `Turno.esCirugia` con el destino | ✓ VERIFIED (as literally worded, unchanged) | `tx.turno.update({ data: { tipoTurnoId: destino.id, esCirugia: destino.esCirugia } })` (service.ts:323-329), untouched by 65-02. WR-03 (dead write today since all 3 destinos seed `esCirugia:false`) remains a documented, non-blocking latent footgun, unchanged from prior review |
+| 9 | D-08: destino resuelto por `nombre` (`@unique`) vía `tx.tipoTurno.findUnique({ where: { nombre } })`; comparación del actual también por `nombre` | ✓ VERIFIED (regression-checked) | service.ts:316-319, unchanged |
+| 10 | D-06: sync NO re-dispara efectos sobre `Paciente.flujo`/`etapaCRM`; bloque `resolverNuevoFlujo`/`tx.paciente.update` (~277-300) queda intacto e independiente | ✓ VERIFIED (regression-checked) | Sync block (service.ts:302-332) still placed after the paciente.flujo block, no `paciente.update`/`etapaCRM`/`flujo` references inside it; `git show b568706`/`aa3db48` diffs confirm zero lines touched outside the guard condition and the new test |
+| 11 | Idempotencia + defensa: se saltea `tx.turno.update` si `tipoTurnoId` destino ya coincide con el actual; si el `TipoTurno` destino no existe **por nombre**, se saltea el sync silenciosamente sin romper el guardado de la HC | ✓ VERIFIED (regression-checked) | `if (destino && destino.id !== turnoCtx?.tipoTurnoId)` (service.ts:322) unchanged; wiring test (b) confirms `turno.update` not called when already matching |
+| 12 | El sync de tipoTurno NUNCA rompe el guardado de la HC — cuando `dto.turnoId` es stale/apunta a un turno ya eliminado (`turnoCtx=null`), el bloque de sync se saltea COMPLETO: no `tx.turno.update`, no P2025, `crearEntrada` resuelve normalmente | ✓ VERIFIED — **gap closed** | Guard hardened to `if (dto.turnoId && turnoCtx)` (service.ts:309); confirmed by reading the code, by the new permanent regression test `(e)` (spec.ts:489-511), AND by an independent falsification check performed during this verification: reverting the guard to `if (dto.turnoId)` locally and re-running `-t "turnoId stale"` reproduces the exact original failure (`Rejected to value: [Error: P2025]`), proving test (e) is a genuine (non-vacuous) regression guard, not a tautology. File restored via `git diff` (0 changes) after the falsification check |
 
-**Score:** 11/12 truths verified (12th derived from the phase's own documented defensive intent, not literally one of the 11 listed must-have sentences, but directly falsifies the plan's threat-model claim and inline code comment)
+**Score:** 12/12 truths verified — the one gap from the prior verification (Truth #12) is closed; all other 11 truths regression-checked against the current code and confirmed unaffected by the 65-02 diff.
 
 ### Required Artifacts
 
 | Artifact | Expected | Status | Details |
 |----------|----------|--------|---------|
-| `backend/src/modules/historia-clinica/historia-clinica.flujo.helpers.ts` | exports `resolverTipoTurnoSync` | ✓ VERIFIED | Pure function, no Prisma/Nest imports, guard-first structure mirroring `resolverNuevoFlujo` |
-| `backend/src/modules/historia-clinica/historia-clinica.service.ts` | `tx.turno.update` inside `crearEntrada`'s `$transaction` | ✓ VERIFIED (exists, substantive) / ⚠️ wiring guard incomplete | Single `tx.turno.update` call, scoped by `dto.turnoId`, but guard is missing the `turnoCtx` null-check (see gap above) |
-| `backend/src/modules/historia-clinica/historia-clinica.flujo.spec.ts` | table of `resolverTipoTurnoSync` cases + wiring tests | ✓ VERIFIED | 20 pure-function cases + 4 wiring cases; all 43/43 tests pass. Wiring case (d) has a coverage-quality issue (does not actually exercise cirugía protection through `turnoId`-present path) — see Anti-Patterns |
+| `backend/src/modules/historia-clinica/historia-clinica.flujo.helpers.ts` | exports `resolverTipoTurnoSync` | ✓ VERIFIED | Unchanged since 65-01; pure function, no Prisma/Nest imports |
+| `backend/src/modules/historia-clinica/historia-clinica.service.ts` | `tx.turno.update` inside `crearEntrada`'s `$transaction`, guard requiring `turnoCtx` | ✓ VERIFIED | `grep -n "if (dto.turnoId && turnoCtx)"` returns exactly one match (line 309); `grep -c "if (dto.turnoId) {"` on the sync block = 0; single `tx.turno.update` call remains, scoped `{ id: dto.turnoId }` |
+| `backend/src/modules/historia-clinica/historia-clinica.flujo.spec.ts` | table of `resolverTipoTurnoSync` cases + wiring tests including stale-turnoId regression test (e) | ✓ VERIFIED | 20 pure-function cases + 5 wiring cases (a-e); all 44/44 tests pass; test (e) verified non-vacuous via falsification |
 
 ### Key Link Verification
 
 | From | To | Via | Status | Details |
 |------|-----|-----|--------|---------|
-| `historia-clinica.service.ts::crearEntrada` | `resolverTipoTurnoSync` | named import from `./historia-clinica.flujo.helpers` | ✓ WIRED | Import at service.ts:8, call at service.ts:307 |
-| `historia-clinica.service.ts::crearEntrada` | `prisma.tipoTurno` (lookup by `nombre` @unique) | `tx.tipoTurno.findUnique({ where: { nombre } })` | ✓ WIRED | service.ts:313-316 |
-| `historia-clinica.service.ts::crearEntrada` | `Turno.tipoTurnoId` / `Turno.esCirugia` | `tx.turno.update` guarded by `dto.turnoId` | ⚠️ WIRED but guard incomplete | Guarded only by `dto.turnoId` truthiness, not by `turnoCtx` existence — see gap above. `gsd-sdk query verify.key-links` returned "Source file not found" (tool path-resolution issue, not a code issue); manually confirmed via `grep`/`Read` instead. |
+| `historia-clinica.service.ts::crearEntrada` (sync block) | `tx.turno.update` | guard `dto.turnoId && turnoCtx` (short-circuit when pre-fetch doesn't resolve the turno) | ✓ WIRED | service.ts:309; verified by direct read, by test (e), and by falsification (reverting the guard reproduces the original P2025 failure) |
+| `historia-clinica.service.ts::crearEntrada` | `resolverTipoTurnoSync` | named import from `./historia-clinica.flujo.helpers` | ✓ WIRED | Import unchanged, call at service.ts:310 |
+| `historia-clinica.service.ts::crearEntrada` | `prisma.tipoTurno` (lookup by `nombre` @unique) | `tx.tipoTurno.findUnique({ where: { nombre } })` | ✓ WIRED | service.ts:316-319, unchanged |
 
-### Behavioral Spot-Checks
+### Behavioral Spot-Checks / Probe Execution
 
 | Behavior | Command | Result | Status |
 |----------|---------|--------|--------|
-| Full spec suite green (43 tests: 20 table cases + 4 wiring + 19 pre-existing Phase 63) | `cd backend && npx jest historia-clinica.flujo.spec.ts` | `Tests: 43 passed, 43 total` | ✓ PASS |
+| Full spec suite green (44 tests: 20 table + 5 wiring incl. (e) + 19 pre-existing Phase 63) | `cd backend && npx jest historia-clinica.flujo.spec.ts` | `Tests: 44 passed, 44 total` | ✓ PASS |
 | Type-check (build config, excludes test/) | `cd backend && npx tsc --noEmit -p tsconfig.build.json` | No errors | ✓ PASS |
-| Lint on the 3 touched files | `cd backend && npx eslint historia-clinica.flujo.helpers.ts historia-clinica.service.ts historia-clinica.flujo.spec.ts` | No errors | ✓ PASS |
-| Stale/deleted `turnoId` reproduction (independent temp spec, not committed) | `service.crearEntrada(pacienteId, { tipo: 'tratamiento_en_consultorio', turnoId: 'stale-id' }, profesionalId)` with `turno.findUnique` mocked to `null` and `turno.update` mocked to throw P2025 | Promise **rejected**: `Error: P2025: Record to update not found` | ✗ FAIL — confirms WR-01 from REVIEW.md independently |
+| Lint on the 3 touched files | `cd backend && npx eslint historia-clinica.service.ts historia-clinica.flujo.spec.ts historia-clinica.flujo.helpers.ts` | No errors | ✓ PASS |
+| **Falsification check (verifier-run, not from SUMMARY):** revert guard to `if (dto.turnoId)`, run test (e) only | `sed -i` guard revert + `npx jest -t "turnoId stale"` | `1 failed`: `Rejected to value: [Error: P2025]` — reproduces original bug exactly | ✓ PASS (confirms test (e) is genuine, non-vacuous) |
+| Full backend test suite (regression scope check) | `cd backend && npx jest` | `18 failed, 487 passed, 505 total` — all 18 failures confined to 4 suites (`diagnosticos.service.spec.ts`, `diagnosticos.controller.spec.ts`, `usuarios.controller.spec.ts`, `reportes.controller.spec.ts`), a pre-existing NestJS DI test-scaffolding issue (`JwtAuthGuard`/`PrismaService` not provided) unrelated to this phase; confirmed via `grep -l "historia-clinica.service"` on those 4 spec files → no matches | ✓ PASS (no phase-65 regression) |
 
 ### Requirements Coverage
 
 | Requirement | Source Plan | Description | Status | Evidence |
 |-------------|------------|-------------|--------|----------|
-| HCSYNC-01 | 65-01-PLAN.md | Plantilla "Primera vez" fija tipo en "Consulta" si estaba en otro valor | ✓ SATISFIED | Truth #1 verified |
-| HCSYNC-02 | 65-01-PLAN.md | Plantilla "Tratamiento en consultorio" sobre "Consulta" cambia a "Tratamiento" | ✓ SATISFIED | Truth #2 verified |
-| HCSYNC-03 | 65-01-PLAN.md | Plantilla "Pre-quirúrgico" fija "Pre-Quirúrgico"; guard común sin turno asociado | ✓ SATISFIED (core), gap on edge case | Truth #3 verified; SC#4 (no turno asociado → sin cambios) verified via D-09; but adjacent "turno asociado pero inexistente" edge case fails (Truth #12) |
+| HCSYNC-01 | 65-01-PLAN.md, 65-02-PLAN.md | Plantilla "Primera vez" fija tipo en "Consulta" si estaba en otro valor | ✓ SATISFIED | Truth #1 verified |
+| HCSYNC-02 | 65-01-PLAN.md, 65-02-PLAN.md | Plantilla "Tratamiento en consultorio" sobre "Consulta" cambia a "Tratamiento" | ✓ SATISFIED | Truth #2 verified |
+| HCSYNC-03 | 65-01-PLAN.md, 65-02-PLAN.md | Plantilla "Pre-quirúrgico" fija "Pre-Quirúrgico"; guard común sin turno asociado | ✓ SATISFIED | Truth #3 verified; SC#4 (no turno asociado → sin cambios) verified via D-09; the adjacent "turno asociado pero inexistente" edge case (Truth #12) is now also closed |
 
-No orphaned requirements: REQUIREMENTS.md maps only HCSYNC-01/02/03 to Phase 65, and all three appear in `65-01-PLAN.md` frontmatter `requirements:` field. `.planning/PROJECT.md` traceability table also lists all three as "Phase 65 / Complete" — consistent with the plan's own claim (this verification narrows that to "core scenarios complete, one defensive edge case incomplete").
+No orphaned requirements: `.planning/REQUIREMENTS.md` maps only HCSYNC-01/02/03 to Phase 65, and all three appear in both `65-01-PLAN.md` and `65-02-PLAN.md` frontmatter `requirements:` fields. `.planning/PROJECT.md` traceability table lists all three as "Phase 65 / Complete", consistent with this verification.
 
 ### Anti-Patterns Found
 
 | File | Line | Pattern | Severity | Impact |
 |------|------|---------|----------|--------|
-| `historia-clinica.service.ts` | ~306-329 | Guard `if (dto.turnoId)` instead of `if (dto.turnoId && turnoCtx)` | 🛑 Blocker | Stale/deleted `turnoId` crashes the whole HC-save transaction (P2025) — see Gaps |
-| `historia-clinica.flujo.spec.ts` | 473-487 | Wiring test `(d)` for cirugía protection omits `turnoId` from the dto, so it exercises the D-09 guard instead of the D-02 cirugía path it claims to test | ⚠️ Warning | Test passes but for the wrong reason; does not provide wiring-level regression protection for D-02 (helper-level unit tests still cover the actual rule, so the underlying behavior is correct — this is a coverage/test-integrity gap, not a functional failure) |
-| `historia-clinica.service.ts` | 320-325 | `esCirugia: destino.esCirugia` write is currently always `false`→`false` (dead in practice today, per REVIEW.md WR-02) | ℹ️ Info | Latent footgun if catalog seeding changes; not a current functional bug |
-| N/A | — | No `TBD`/`FIXME`/`XXX`/`TODO`/`HACK`/`PLACEHOLDER` markers found in the 3 touched files | — | Clean |
+| `historia-clinica.service.ts` | 231-240, 309-332 | WR-01 (from 65-REVIEW.md): `turnoCtx` is pre-fetched outside `$transaction`; the hardened guard closes the "already-stale-before-prefetch" window but not a narrower TOCTOU window if the turno is deleted/mutated between pre-fetch and the `tx.turno.update` call | ⚠️ Warning (not blocker) | Not part of any must-have in 65-01 or 65-02 (both scoped explicitly to the "pre-fetch didn't resolve" case); practical risk is low — no `turno.delete`/`deleteMany` exists in production code paths (`rg` confirms, only in dev seed-reset script), no cascade-delete on `Turno` relations. Reviewer-suggested fix (`tx.turno.updateMany` instead of `update`) would close it unconditionally but is optional hardening, not required for goal achievement |
+| `historia-clinica.flujo.spec.ts` | 473-487 | WR-04 (pre-existing, from prior verification's Anti-Patterns and 65-REVIEW.md): wiring test `(d)` for cirugía protection omits `turnoId` from the dto, so it exercises the D-09 guard rather than the D-02 path it claims to test | ⚠️ Warning | Unchanged from prior verification; helper-level unit tests still correctly cover D-02 (spec.ts:183-198); explicitly out of scope for 65-02's stated objective |
+| `historia-clinica.service.ts` | 326-329 | WR-03 (pre-existing): `esCirugia: destino.esCirugia` write is currently always `false→false` (dead in practice, all 3 sync destinos seed `esCirugia:false`) | ℹ️ Info | Latent footgun if catalog seeding changes; explicitly marked out-of-scope by 65-02-PLAN.md ("Fuera de alcance (no planear): WR-02") |
+| — | — | No `TBD`/`FIXME`/`XXX`/`TODO`/`HACK`/`PLACEHOLDER` markers found in the 3 touched files (re-checked directly, not trusting SUMMARY) | — | Clean |
 
-No CR-01 (IDOR on `dto.turnoId` ownership) finding is counted as a phase gap: the plan's own threat model (T-65-01) explicitly disposed this as "accept" with documented rationale (single-tenant model, consistent with the pre-existing pattern elsewhere in `crearEntrada`/`turnos.service`) *before* implementation — this is a pre-accepted risk, not an unresolved gap against this phase's must-haves. Flagged here only for visibility; a developer may still choose to address CR-01 via a follow-up.
+CR-01 (IDOR on `dto.turnoId` ownership, single-tenant model, pre-accepted via T-65-01 "accept" disposition) remains unaddressed but pre-accepted before implementation — not counted as a phase gap, consistent with the prior verification's treatment.
 
 ### Human Verification Required
 
-None. All observable truths are verifiable via code trace, unit tests, and a targeted reproduction — no UI/visual/real-time behavior in scope for this backend-only phase.
+None. All observable truths — including the gap-closure fix — are verifiable via code trace, unit tests, and an independent falsification check (reverting the guard to reproduce the original failure). No UI/visual/real-time behavior in scope for this backend-only phase.
 
 ### Gaps Summary
 
-**Confirmed gap (independently reproduced, not just trusting REVIEW.md):** the turno-sync block added in this phase guards only on `dto.turnoId` truthiness (`if (dto.turnoId) {...}`), not on whether the pre-fetch actually found the turno (`turnoCtx`). When a client submits an HC entry with a `turnoId` that no longer resolves (turno deleted or stale client cache) — a realistic scenario in a live multi-user scheduling system — `resolverTipoTurnoSync` still receives `(dto.tipo, undefined, false)`, still returns a valid destino for the three tracked templates, the destino catalog lookup still succeeds (it's a global lookup unrelated to the missing turno), and `tx.turno.update({ where: { id: dto.turnoId } })` is called against a row that does not exist. Prisma throws `P2025`, which propagates out of the `$transaction` callback and rolls back the **entire** HC entry creation — diagnóstico, tratamiento, historia clínica, and the flujo/etapaCRM update all get rolled back with it.
+No gaps remain. The single confirmed gap from the initial verification (Truth #12 — stale/deleted `turnoId` could abort the entire HC-save transaction via Prisma P2025) is closed by 65-02's one-line guard hardening (`if (dto.turnoId) {` → `if (dto.turnoId && turnoCtx) {`, service.ts:309), backed by a genuine, non-vacuous regression test (e) that this verification independently confirmed by reverting the guard and reproducing the original failure mode exactly (`Rejected to value: [Error: P2025]`).
 
-This directly contradicts:
-- The code's own inline comment: "Defensive skip if destino doesn't exist (never break HC save)"
-- The plan's threat model (T-65-03): "Null-check defensivo: si findUnique no encuentra el destino, se saltea el sync silenciosamente (no throw), preservando el guardado de la HC" — this claim is true for the *catalog* lookup but false for the *turno row* lookup, which the review and this independent reproduction confirm is unguarded
-- The asymmetry with the pre-existing flujo block immediately above it, which already tolerates `turnoCtx == null` via `turnoCtx?.esCirugia ?? false` — the new sync block does not apply the same tolerance
+None of the 11 previously-verified must-haves regressed: the 65-02 diff (`git show b568706`) touches exactly the guard condition and its adjacent comment — zero lines inside the sync block's body, the paciente.flujo/etapaCRM block, or the pure helper were modified. Full `historia-clinica.flujo.spec.ts` suite is 44/44 green (up from 43/43, +1 for test (e)). The 18 failures in the full backend `jest` run are confined to 4 unrelated suites (`diagnosticos`, `usuarios.controller`, `reportes.controller`) caused by a pre-existing NestJS DI test-scaffolding gap (`JwtAuthGuard`/`PrismaService` not provided in those test modules) — confirmed via `grep` that none of those spec files reference `historia-clinica.service`, so this is not a phase-65 regression.
 
-This is not literally one of the 11 must-have sentences in the PLAN frontmatter (those are worded around the *catalog* TipoTurno-not-found case, which is correctly handled), but it is a direct violation of the phase's own stated defensive intent and a regression risk to the primary "guardar HC" operation that predates this phase. Per the code review's own suggested fix (WR-01), the minimal correction is:
+**Residual, non-blocking observations carried forward for developer awareness (not gaps against this phase's must-haves):**
+- WR-01: a narrower TOCTOU window (pre-fetch-to-transaction race) remains theoretically possible but is currently unreachable in production (no delete path exists); optional `updateMany` hardening available if desired.
+- WR-03: the `esCirugia` write on the sync destino is currently a no-op in practice; explicitly deferred by 65-02.
+- WR-04: wiring test (d) for D-02 cirugía protection doesn't exercise the path through `turnoId`-present code; the underlying rule is correctly covered at the helper-unit-test level. Trivial one-line test fix available if the team wants wiring-level coverage.
 
-```ts
-if (dto.turnoId && turnoCtx) {
-  // ...existing sync block...
-}
-```
-
-**Mitigating factor (for calibration, not exculpation):** no `turno.delete`/`deleteMany` call exists anywhere in production code (only in the dev seed-reset script), and the `Turno → Paciente`/`Profesional` relations have no cascade-delete configured, so a *hard* delete of a turno is not currently reachable through any exposed code path in this codebase today. This lowers the practical likelihood of triggering `P2025` via deletion specifically. It does **not** eliminate the gap: the guard is still incorrect defensive code (contradicts its own inline comment and the plan's threat model), any other cause of a stale/mismatched `turnoId` reaching `crearEntrada` (client bug, race condition, future schema change, admin tooling) would hit the same unguarded path, and the fix is a one-line, low-risk change already specified by the reviewer.
-
-**Not blocking, but worth tracking:** WR-02 (dead `esCirugia` write pending catalog changes) and the wiring test-integrity gap on case (d) (cirugía protection not actually exercised at the wiring layer, though correct at the helper layer and by manual trace). Neither currently produces incorrect behavior.
-
-**This looks intentional only in the narrow "TipoTurno catalog missing" case — the "turno row missing" case looks like an oversight, not a deliberate design choice** (the plan's own acceptance criteria for Task 2 phrase the idempotence check as `destino.id !== turnoCtx.tipoTurnoId` without optional chaining, suggesting the author assumed `turnoCtx` would always be non-null once `dto.turnoId` is present — an assumption that does not hold for stale/deleted turnos). If the team decides the stale-turnoId scenario is acceptable risk (e.g., turnos are never deleted, only soft-cancelled, so `findUnique` would always succeed), the appropriate path is an explicit override with that rationale documented, not silent acceptance:
-
-```yaml
-overrides:
-  - must_have: "El sync de tipoTurno nunca debe romper el guardado de la HC — incluso cuando dto.turnoId es stale/apunta a un turno ya eliminado"
-    reason: "Turnos are never hard-deleted in this system (only cancelled via estado field), so dto.turnoId is guaranteed to resolve if it was valid when the client fetched it — the P2025 path is unreachable in practice"
-    accepted_by: "{name}"
-    accepted_at: "{ISO timestamp}"
-```
+The phase goal — "El tipo de turno se mantiene coherente con la plantilla de HC cargada sobre él, sin que el profesional tenga que corregirlo a mano en la agenda" — is achieved: the four ROADMAP success criteria (primera_vez→Consulta, tratamiento_en_consultorio→Tratamiento, pre_quirurgico→Pre-Quirúrgico, no turno→no changes) are implemented, tested, and the sync mechanism is now confirmed never to break HC saving even under the stale-turnoId edge case that previously blocked completion.
 
 ---
 
-_Verified: 2026-08-04T20:19:58Z_
+_Verified: 2026-08-04T21:05:47Z_
 _Verifier: Claude (gsd-verifier)_

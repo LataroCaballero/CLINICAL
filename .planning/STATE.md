@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.15
 milestone_name: Flujo CRM Automático + Correcciones HC
 status: executing
-stopped_at: Completed 65-01-PLAN.md
-last_updated: "2026-08-04T20:40:38.172Z"
-last_activity: 2026-08-04 -- Phase 65 planning complete
+stopped_at: Completed 65-02-PLAN.md (gap closure)
+last_updated: "2026-08-04T20:54:36.405Z"
+last_activity: 2026-08-04
 progress:
   total_phases: 4
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 8
-  completed_plans: 7
-  percent: 50
+  completed_plans: 8
+  percent: 75
 ---
 
 # Project State
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-07-30 after v1.15 roadmap)
 
 ## Current Position
 
-Phase: 65 (sync-tipo-de-turno-plantilla-hc-backend) — VERIFICATION: gaps_found
-Plan: 1 of 1 (executed)
+Phase: 65 (sync-tipo-de-turno-plantilla-hc-backend) — EXECUTING
+Plan: 2 of 2
 Status: Ready to execute
-Last activity: 2026-08-04 -- Phase 65 planning complete
+Last activity: 2026-08-04
 
-Progress: [██████████] 100% (plan executed) — phase goal blocked by 1 gap
+Progress: [██████████] 100%
 
 ## Accumulated Context
 
@@ -49,6 +49,7 @@ Full decision log en `.planning/PROJECT.md` (Key Decisions). Decisiones de v1.13
 - [Phase 63-02]: D-04/D-05/D-06/D-07 aplicados sin desviaciones — crearTurnoCirugia confirma sin presupuesto, crearTurno guarda etapas avanzadas salvo Consulta, cancelarTurno mantiene CONFIRMADO+CALIENTE, getListaAccion expone requiereRecontacto derivado
 - [Phase 65]: resolverTipoTurnoSync usa un rank map (Record<string,number>) en vez de if/else chain para D-01 no-downgrade + D-03 unmapped=0
 - [Phase 65]: turnoCtx pre-fetch extendido (tipoTurnoId + tipoTurno.nombre) en vez de segundo query dentro de la tx, patrón pgBouncer consistente
+- [Phase 65-02]: Guard endurecido a if (dto.turnoId && turnoCtx) en el bloque de sync de crearEntrada — cierra la gap confirmada de 65-VERIFICATION.md (T-65-03)
 
 ### Known Tech Debt (carry-forward)
 
@@ -73,8 +74,8 @@ Items acknowledged y diferidos al cierre de v1.14 (2026-07-21):
 
 ## Session Continuity
 
-Last session: 2026-08-04T20:07:49.885Z
-Stopped at: Completed 65-01-PLAN.md
+Last session: 2026-08-04T20:54:36.401Z
+Stopped at: Completed 65-02-PLAN.md (gap closure)
 Resume file: None
 
 ## Operator Next Steps

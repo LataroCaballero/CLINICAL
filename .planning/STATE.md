@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.15
 milestone_name: Flujo CRM Automático + Correcciones HC
-status: executing
-stopped_at: Phase 65 context gathered
-last_updated: "2026-08-04T19:43:06.065Z"
-last_activity: 2026-08-04 -- Phase 65 planning complete
+status: verifying
+stopped_at: Completed 65-01-PLAN.md
+last_updated: "2026-08-04T20:07:49.888Z"
+last_activity: 2026-08-04
 progress:
   total_phases: 4
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 7
-  completed_plans: 6
-  percent: 50
+  completed_plans: 7
+  percent: 75
 ---
 
 # Project State
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-30 after v1.15 roadmap)
 
 **Core value:** Que un cirujano plástico cierre más cirugías — el sistema hace visible qué pacientes seguir, cuándo y cómo, de la manera más automatizada posible
-**Current focus:** Phase 65 — sync tipo de turno ↔ plantilla hc (backend)
+**Current focus:** Phase 65 — sync-tipo-de-turno-plantilla-hc-backend
 
 ## Current Position
 
-Phase: 65
-Plan: Not started
-Status: Ready to execute
-Last activity: 2026-08-04 -- Phase 65 planning complete
+Phase: 65 (sync-tipo-de-turno-plantilla-hc-backend) — EXECUTING
+Plan: 1 of 1
+Status: Phase complete — ready for verification
+Last activity: 2026-08-04
 
 Progress: [██████████] 100%
 
@@ -47,6 +47,8 @@ Full decision log en `.planning/PROJECT.md` (Key Decisions). Decisiones de v1.13
 - [Phase 63-01]: flujo=null en create() en vez de ampliar filtro de getKanban (D-03 opción 1) — evita exponer históricos PENDIENTE en el board
 - [Phase 63-03]: resolverTipoEntrada fuerza tipoEntrada server-side desde dto.tipo (D-08); resolverNuevoFlujo branch TRATAMIENTO cubre flujoActual=null además de PENDIENTE (D-09); crearEntrada limpia etapaCRM=null al mover a TRATAMIENTO (D-10, espejo de updateFlujo)
 - [Phase 63-02]: D-04/D-05/D-06/D-07 aplicados sin desviaciones — crearTurnoCirugia confirma sin presupuesto, crearTurno guarda etapas avanzadas salvo Consulta, cancelarTurno mantiene CONFIRMADO+CALIENTE, getListaAccion expone requiereRecontacto derivado
+- [Phase 65]: resolverTipoTurnoSync usa un rank map (Record<string,number>) en vez de if/else chain para D-01 no-downgrade + D-03 unmapped=0
+- [Phase 65]: turnoCtx pre-fetch extendido (tipoTurnoId + tipoTurno.nombre) en vez de segundo query dentro de la tx, patrón pgBouncer consistente
 
 ### Known Tech Debt (carry-forward)
 
@@ -71,9 +73,9 @@ Items acknowledged y diferidos al cierre de v1.14 (2026-07-21):
 
 ## Session Continuity
 
-Last session: 2026-08-04T17:08:24.245Z
-Stopped at: Phase 65 context gathered
-Resume file: .planning/phases/65-sync-tipo-de-turno-plantilla-hc-backend/65-CONTEXT.md
+Last session: 2026-08-04T20:07:49.885Z
+Stopped at: Completed 65-01-PLAN.md
+Resume file: None
 
 ## Operator Next Steps
 

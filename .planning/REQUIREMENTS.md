@@ -25,9 +25,9 @@ Requisitos de este milestone. Cada uno mapea a una fase del roadmap.
 
 ### Sync tipo de turno ↔ plantilla HC
 
-- [ ] **HCSYNC-01**: Al cargar una plantilla de HC "Primera vez" sobre un turno, el tipo de turno se fija en "Consulta" si estaba en otro valor
-- [ ] **HCSYNC-02**: Al cargar una plantilla "Tratamiento en consultorio" sobre un turno tipo "Consulta", el tipo de turno cambia a "Tratamiento"
-- [ ] **HCSYNC-03**: Al cargar una plantilla "Pre-quirúrgico" sobre un turno, el tipo de turno se fija en "Pre-Quirúrgico". (Guard común a HCSYNC-01/02/03: si la HC se carga sin turno asociado, no se modifica ningún tipo de turno)
+- [x] **HCSYNC-01**: Al cargar una plantilla de HC "Primera vez" sobre un turno, el tipo de turno se fija en "Consulta" si estaba en otro valor
+- [x] **HCSYNC-02**: Al cargar una plantilla "Tratamiento en consultorio" sobre un turno tipo "Consulta", el tipo de turno cambia a "Tratamiento"
+- [x] **HCSYNC-03**: Al cargar una plantilla "Pre-quirúrgico" sobre un turno, el tipo de turno se fija en "Pre-Quirúrgico". (Guard común a HCSYNC-01/02/03: si la HC se carga sin turno asociado, no se modifica ningún tipo de turno)
 
 ### Correcciones de UI de Historia Clínica
 
@@ -72,9 +72,9 @@ Qué fases cubren qué requisitos.
 | CONTACTO-03 | Phase 64 | Complete |
 | CONTACTO-04 | Phase 64 | Complete |
 | TRAT-07 | Phase 64 | Complete |
-| HCSYNC-01 | Phase 65 | Pending |
-| HCSYNC-02 | Phase 65 | Pending |
-| HCSYNC-03 | Phase 65 | Pending |
+| HCSYNC-01 | Phase 65 | Complete |
+| HCSYNC-02 | Phase 65 | Complete |
+| HCSYNC-03 | Phase 65 | Complete |
 | HCUI-01 | Phase 66 | Pending |
 | HCUI-02 | Phase 66 | Pending |
 

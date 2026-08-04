@@ -52,3 +52,49 @@ export function resolverTipoEntrada(
   if (tipo === 'tratamiento_en_consultorio') return 'TRATAMIENTO';
   return tipoEntradaDto ?? undefined;
 }
+
+/**
+ * Determines whether a turno's `tipoTurno` should sync to reflect the HC template
+ * (dto.tipo) being saved on it, following a priority ladder that never downgrades
+ * an already-advanced type and protects cirugía turnos.
+ *
+ * Returns the destination `TipoTurno.nombre`, or null if no sync should happen.
+ *
+ * Rules (D-01/D-02/D-03/D-07, HCSYNC-01/02/03):
+ * - currentEsCirugia=true → always null (D-02: sentinel protegido de máxima prioridad,
+ *   checked FIRST — a cirugía turno's type is NEVER touched by any plantilla)
+ * - plantilla → destino/rango: 'primera_vez'→'Consulta'/1, 'tratamiento_en_consultorio'→
+ *   'Tratamiento'/2, 'pre_quirurgico'→'Pre-Quirúrgico'/3; any other plantilla (control,
+ *   practica, libre, undefined) → null (D-07: no sync)
+ * - currentTipoNombre rango: 'Consulta'=1, 'Tratamiento'=2, 'Pre-Quirúrgico'=3;
+ *   any other/null (e.g. 'Control') = 0 (D-03: overwritable by any of the 3 plantillas)
+ * - Returns the destino name only if rankDestino > rankActual (D-01: escalera
+ *   order-independent, never downgrades); otherwise null (covers no-op when ranks are equal)
+ */
+export function resolverTipoTurnoSync(
+  plantilla: string | undefined,
+  currentTipoNombre: string | null | undefined,
+  currentEsCirugia: boolean,
+): string | null {
+  if (currentEsCirugia) return null; // D-02: sentinel protegido, chequeado primero
+
+  const RANGOS: Record<string, number> = {
+    Consulta: 1,
+    Tratamiento: 2,
+    'Pre-Quirúrgico': 3,
+  };
+
+  const DESTINOS: Record<string, string> = {
+    primera_vez: 'Consulta',
+    tratamiento_en_consultorio: 'Tratamiento',
+    pre_quirurgico: 'Pre-Quirúrgico',
+  };
+
+  const destino = plantilla ? DESTINOS[plantilla] : undefined;
+  if (!destino) return null; // D-07: plantilla sin sync (control/practica/libre/undefined)
+
+  const rankDestino = RANGOS[destino];
+  const rankActual = currentTipoNombre ? (RANGOS[currentTipoNombre] ?? 0) : 0; // D-03
+
+  return rankDestino > rankActual ? destino : null; // D-01: no-downgrade
+}

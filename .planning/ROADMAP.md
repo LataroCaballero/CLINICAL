@@ -217,7 +217,7 @@ Full details: `.planning/milestones/v1.14-ROADMAP.md`
 
 - [x] **Phase 63: Flujo CRM Automático (Backend)** - Transiciones automáticas de etapa CRM al crear paciente, agendar cirugía y cargar tratamiento en consultorio (completed 2026-07-31)
 - [x] **Phase 64: Indicadores de Pendientes y Planilla Legible (Frontend)** - Badge de pendiente por etapa en la card + columna "Último tratamiento" sin truncar información (completed 2026-08-03)
-- [x] **Phase 65: Sync Tipo de Turno ↔ Plantilla HC (Backend)** - El tipo de turno se ajusta automáticamente según la plantilla de HC cargada (completed 2026-08-04)
+- [ ] **Phase 65: Sync Tipo de Turno ↔ Plantilla HC (Backend)** - El tipo de turno se ajusta automáticamente según la plantilla de HC cargada (verification: gaps_found 2026-08-04 — 1 gap blocks completion)
 - [ ] **Phase 66: Correcciones de UI de Historia Clínica (Frontend)** - Wizard nuevo en PatientDrawer + fix de render del detalle Pre-quirúrgico
 
 ## Phase Details

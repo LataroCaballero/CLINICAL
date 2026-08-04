@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.15
 milestone_name: Flujo CRM Automático + Correcciones HC
-status: verifying
-stopped_at: Completed 65-01-PLAN.md
+status: gaps_found
+stopped_at: Phase 65 verification found gaps (65-01 executed; 1 gap blocks phase completion)
 last_updated: "2026-08-04T20:07:49.888Z"
 last_activity: 2026-08-04
 progress:
   total_phases: 4
-  completed_phases: 3
+  completed_phases: 2
   total_plans: 7
   completed_plans: 7
-  percent: 75
+  percent: 50
 ---
 
 # Project State
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-07-30 after v1.15 roadmap)
 
 ## Current Position
 
-Phase: 65 (sync-tipo-de-turno-plantilla-hc-backend) — EXECUTING
-Plan: 1 of 1
-Status: Phase complete — ready for verification
+Phase: 65 (sync-tipo-de-turno-plantilla-hc-backend) — VERIFICATION: gaps_found
+Plan: 1 of 1 (executed)
+Status: 65-01 executed & tests green (43/43); phase verification found 1 gap (WR-01: sync guard `if (dto.turnoId)` must be `if (dto.turnoId && turnoCtx)`) — blocks completion until gap-closure
 Last activity: 2026-08-04
 
-Progress: [██████████] 100%
+Progress: [██████████] 100% (plan executed) — phase goal blocked by 1 gap
 
 ## Accumulated Context
 

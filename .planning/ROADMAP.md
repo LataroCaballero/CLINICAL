@@ -281,7 +281,11 @@ Plans:
   3. Al guardar una plantilla "Pre-quirúrgico" sobre un turno, el tipo de turno queda fijado en "Pre-Quirúrgico"
   4. Si la HC se carga sin turno asociado (ej. entrada retroactiva desde PatientDrawer), ningún tipo de turno se modifica
 
-**Plans**: TBD
+**Plans**: 1 plan
+
+**Wave 1**
+
+- [ ] 65-01-PLAN.md — HCSYNC-01/02/03: helper resolverTipoTurnoSync (escalera de prioridad) + sync guardado de Turno.tipoTurnoId/esCirugia en crearEntrada
 
 ### Phase 66: Correcciones de UI de Historia Clínica (Frontend)
 

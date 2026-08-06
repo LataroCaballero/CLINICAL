@@ -297,8 +297,13 @@ Plans:
   1. Al agregar una nueva entrada de HC desde el PatientDrawer, se abre el wizard nuevo (`HCCreatorForm`/`HCCreatorDialog`, el mismo de LiveTurno), no el formulario de texto libre viejo
   2. Al abrir el detalle de una entrada "Pre-quirúrgico" en el historial de HC, se ven todos los campos guardados (antecedentes, alergias, medicación, estudios complementarios, consentimiento informado, comentario) en vez de una tarjeta vacía
 
-**Plans**: TBD
+**Plans**: 1 plan
 **UI hint**: yes
+Plans:
+
+**Wave 1**
+
+- [ ] 66-01-PLAN.md — HCUI-01/02: elimina dropdown viejo + código muerto en HistoriaClinica; agrega rama de render pre_quirurgico en HCEntryContent + título legible
 
 ## Progress
 
@@ -371,7 +376,7 @@ Plans:
 | 63. Flujo CRM Automático (Backend) | v1.15 | 3/3 | Complete    | 2026-07-31 |
 | 64. Indicadores de Pendientes y Planilla Legible (Frontend) | v1.15 | 3/3 | Complete    | 2026-08-03 |
 | 65. Sync Tipo de Turno ↔ Plantilla HC (Backend) | v1.15 | 2/2 | Complete    | 2026-08-04 |
-| 66. Correcciones de UI de Historia Clínica (Frontend) | v1.15 | 0/TBD | Not started | - |
+| 66. Correcciones de UI de Historia Clínica (Frontend) | v1.15 | 0/1 | Planned | - |
 
 ---
 *Roadmap initialized: 2026-02-23 | v1.0 shipped: 2026-03-03 | v1.1 shipped: 2026-03-16 | v1.2 shipped: 2026-03-31 | v1.3 shipped: 2026-04-09 | v1.4 shipped: 2026-04-20 | v1.5 shipped: 2026-05-13 | v1.6 shipped: 2026-05-23 | v1.7 shipped: 2026-05-28 | v1.8 shipped: 2026-06-09 | v1.9 shipped: 2026-06-13 | v1.10 shipped: 2026-06-22 | v1.11 shipped: 2026-06-24 | v1.12 shipped: 2026-07-02 | v1.13 shipped: 2026-07-05 | v1.14 shipped: 2026-07-21 | v1.15 started: 2026-07-30*

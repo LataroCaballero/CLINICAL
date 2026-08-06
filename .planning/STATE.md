@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v1.15
 milestone_name: Flujo CRM Automático + Correcciones HC
-status: ready_to_plan
-stopped_at: Phase 65 complete (2/2) — ready to discuss Phase 66
-last_updated: 2026-08-04T21:07:23.240Z
+status: planning
+stopped_at: Phase 66 context gathered
+last_updated: "2026-08-06T15:22:25.684Z"
 last_activity: 2026-08-04
 progress:
   total_phases: 4
@@ -74,9 +74,9 @@ Items acknowledged y diferidos al cierre de v1.14 (2026-07-21):
 
 ## Session Continuity
 
-Last session: 2026-08-04T20:54:36.401Z
-Stopped at: Completed 65-02-PLAN.md (gap closure)
-Resume file: None
+Last session: 2026-08-06T15:22:25.680Z
+Stopped at: Phase 66 context gathered
+Resume file: .planning/phases/66-correcciones-de-ui-de-historia-cl-nica-frontend/66-CONTEXT.md
 
 ## Operator Next Steps
 

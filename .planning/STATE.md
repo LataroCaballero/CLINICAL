@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.15
 milestone_name: Flujo CRM Automático + Correcciones HC
-status: planning
+status: executing
 stopped_at: Phase 66 context gathered
-last_updated: "2026-08-06T15:22:25.684Z"
-last_activity: 2026-08-04
+last_updated: "2026-08-06T15:48:16.831Z"
+last_activity: 2026-08-06 -- Phase 66 planning complete
 progress:
   total_phases: 4
   completed_phases: 3
-  total_plans: 8
+  total_plans: 9
   completed_plans: 8
   percent: 75
 ---
@@ -27,8 +27,8 @@ See: .planning/PROJECT.md (updated 2026-07-30 after v1.15 roadmap)
 
 Phase: 66
 Plan: Not started
-Status: Ready to plan
-Last activity: 2026-08-04
+Status: Ready to execute
+Last activity: 2026-08-06 -- Phase 66 planning complete
 
 Progress: [██████████] 100%
 

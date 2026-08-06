@@ -24,6 +24,20 @@ export interface ContenidoPrimeraVez {
   presupuestoId?: string | null;
 }
 
+export interface ContenidoPreQuirurgico {
+  tipo: "pre_quirurgico";
+  antecedentes?: string[];
+  alergias?: string[];
+  medicacion?: string[];
+  estudiosComplementarios?: {
+    laboratorio: boolean;
+    ecg: boolean;
+    imagenes: string[];
+  } | null;
+  consentimientoInformadoAt?: string | null;
+  comentario?: string | null;
+}
+
 export interface ContenidoLibre {
   tipo?: "libre" | string;
   texto?: string;
@@ -31,6 +45,7 @@ export interface ContenidoLibre {
 
 export type ContenidoEntrada =
   | ContenidoPrimeraVez
+  | ContenidoPreQuirurgico
   | ContenidoLibre
   | Record<string, unknown>
   | null;
@@ -122,6 +137,67 @@ export function HCEntryChips({
         {c.comentario && (
           <p className="text-xs text-muted-foreground whitespace-pre-line pt-1">
             {c.comentario}
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  // ── Pre-quirúrgico ──
+  if (c.tipo === "pre_quirurgico") {
+    const pq = c as unknown as ContenidoPreQuirurgico;
+    const hasAny =
+      (pq.antecedentes?.length ?? 0) > 0 ||
+      (pq.alergias?.length ?? 0) > 0 ||
+      (pq.medicacion?.length ?? 0) > 0 ||
+      !!pq.consentimientoInformadoAt ||
+      !!pq.comentario;
+
+    if (!hasAny) {
+      return (
+        <p className="text-sm text-muted-foreground italic">(sin contenido)</p>
+      );
+    }
+
+    return (
+      <div className="space-y-1.5">
+        {(pq.antecedentes?.length ?? 0) > 0 && (
+          <div className="flex flex-wrap gap-1 items-center">
+            {pq.antecedentes!.map((a, i) => (
+              <Badge key={i} variant="outline" className="text-xs">
+                {a}
+              </Badge>
+            ))}
+          </div>
+        )}
+        {(pq.alergias?.length ?? 0) > 0 && (
+          <div className="flex flex-wrap gap-1 items-center">
+            {pq.alergias!.map((a, i) => (
+              <Badge key={i} variant="outline" className="text-xs">
+                {a}
+              </Badge>
+            ))}
+          </div>
+        )}
+        {(pq.medicacion?.length ?? 0) > 0 && (
+          <div className="flex flex-wrap gap-1 items-center">
+            {pq.medicacion!.map((m, i) => (
+              <Badge key={i} variant="outline" className="text-xs">
+                {m}
+              </Badge>
+            ))}
+          </div>
+        )}
+        {pq.consentimientoInformadoAt && (
+          <div className="flex flex-wrap gap-1 items-center">
+            <Badge variant="secondary" className="text-xs">
+              Consentimiento: Sí
+            </Badge>
+          </div>
+        )}
+        {pq.comentario && (
+          <p className="text-xs text-muted-foreground whitespace-pre-line pt-1">
+            {pq.comentario}
           </p>
         )}
       </div>
@@ -348,6 +424,88 @@ export function HCEntryFullContent({
             <h4 className="text-sm font-semibold">Comentario</h4>
             <p className="text-sm whitespace-pre-line p-3 bg-muted/40 rounded-lg">
               {comentario}
+            </p>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ── Pre-quirúrgico ──
+  if (c.tipo === "pre_quirurgico") {
+    const pq = c as unknown as ContenidoPreQuirurgico;
+    const listSection = (title: string, items?: string[]) =>
+      items && items.length > 0 ? (
+        <div className="space-y-2">
+          <h4 className="text-sm font-semibold">{title}</h4>
+          <div className="flex flex-wrap gap-1">
+            {items.map((it, i) => (
+              <Badge key={i} variant="outline" className="text-xs">
+                {it}
+              </Badge>
+            ))}
+          </div>
+        </div>
+      ) : null;
+
+    const hasAny =
+      (pq.antecedentes?.length ?? 0) > 0 ||
+      (pq.alergias?.length ?? 0) > 0 ||
+      (pq.medicacion?.length ?? 0) > 0 ||
+      !!pq.estudiosComplementarios ||
+      !!pq.consentimientoInformadoAt ||
+      !!pq.comentario;
+
+    if (!hasAny) {
+      return (
+        <div className="space-y-2">
+          <h4 className="text-sm font-medium text-muted-foreground">Contenido</h4>
+          <p className="text-sm text-muted-foreground italic">(sin contenido)</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-5">
+        {listSection("Antecedentes", pq.antecedentes)}
+        {listSection("Alergias", pq.alergias)}
+        {listSection("Medicación", pq.medicacion)}
+        {pq.estudiosComplementarios && (
+          <div className="space-y-2">
+            <h4 className="text-sm font-semibold">Estudios complementarios</h4>
+            <div className="p-3 bg-muted/40 rounded-lg space-y-1">
+              <p className="text-sm">
+                Laboratorio: {pq.estudiosComplementarios.laboratorio ? "Sí" : "No"}
+              </p>
+              <p className="text-sm">
+                ECG: {pq.estudiosComplementarios.ecg ? "Sí" : "No"}
+              </p>
+              {(pq.estudiosComplementarios.imagenes?.length ?? 0) > 0 && (
+                <div className="flex flex-wrap gap-1 pt-1">
+                  {pq.estudiosComplementarios.imagenes.map((im, i) => (
+                    <Badge key={i} variant="outline" className="text-xs">
+                      {im}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-semibold">Consentimiento informado:</span>
+          <Badge
+            variant={pq.consentimientoInformadoAt ? "secondary" : "outline"}
+            className="text-xs"
+          >
+            {pq.consentimientoInformadoAt ? "Sí" : "No"}
+          </Badge>
+        </div>
+        {pq.comentario && (
+          <div className="space-y-2">
+            <h4 className="text-sm font-semibold">Comentario</h4>
+            <p className="text-sm whitespace-pre-line p-3 bg-muted/40 rounded-lg">
+              {pq.comentario}
             </p>
           </div>
         )}

@@ -404,6 +404,7 @@ interface EntradaType {
 
 const TIPO_LABELS: Record<string, string> = {
   primera_vez: "Primera consulta",
+  pre_quirurgico: "Pre-quirúrgico",
   libre: "Texto libre",
   control: "Control",
   evolucion: "Evolución",

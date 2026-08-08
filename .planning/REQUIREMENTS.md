@@ -31,8 +31,8 @@ Requisitos de este milestone. Cada uno mapea a una fase del roadmap.
 
 ### Correcciones de UI de Historia Clínica
 
-- [ ] **HCUI-01**: Al agregar una nueva entrada de HC desde el PatientDrawer se usa el wizard nuevo (`HCCreatorForm`/`HCCreatorDialog`, el mismo de LiveTurno) en vez del formulario de texto libre viejo
-- [ ] **HCUI-02**: El detalle de una entrada "Pre-quirúrgico" en el historial de HC renderiza correctamente el JSONB guardado (antecedentes, alergias, medicación, estudios complementarios, consentimiento informado, comentario), en vez de mostrarse vacío
+- [x] **HCUI-01**: Al agregar una nueva entrada de HC desde el PatientDrawer se usa el wizard nuevo (`HCCreatorForm`/`HCCreatorDialog`, el mismo de LiveTurno) en vez del formulario de texto libre viejo
+- [x] **HCUI-02**: El detalle de una entrada "Pre-quirúrgico" en el historial de HC renderiza correctamente el JSONB guardado (antecedentes, alergias, medicación, estudios complementarios, consentimiento informado, comentario), en vez de mostrarse vacío
 
 ## Future Requirements
 
@@ -75,8 +75,8 @@ Qué fases cubren qué requisitos.
 | HCSYNC-01 | Phase 65 | Complete |
 | HCSYNC-02 | Phase 65 | Complete |
 | HCSYNC-03 | Phase 65 | Complete |
-| HCUI-01 | Phase 66 | Pending |
-| HCUI-02 | Phase 66 | Pending |
+| HCUI-01 | Phase 66 | Complete |
+| HCUI-02 | Phase 66 | Complete |
 
 **Coverage:**
 - v1.15 requirements: 11 total

@@ -4,8 +4,8 @@ milestone: v1.15
 milestone_name: Flujo CRM Automático + Correcciones HC
 status: executing
 stopped_at: Phase 66 context gathered
-last_updated: "2026-08-06T15:48:16.831Z"
-last_activity: 2026-08-06 -- Phase 66 planning complete
+last_updated: "2026-08-06T15:53:25.244Z"
+last_activity: 2026-08-06 -- Phase 66 execution started
 progress:
   total_phases: 4
   completed_phases: 3
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-30 after v1.15 roadmap)
 
 **Core value:** Que un cirujano plástico cierre más cirugías — el sistema hace visible qué pacientes seguir, cuándo y cómo, de la manera más automatizada posible
-**Current focus:** Phase 66 — correcciones de ui de historia clínica (frontend)
+**Current focus:** Phase 66 — correcciones-de-ui-de-historia-cl-nica-frontend
 
 ## Current Position
 
-Phase: 66
-Plan: Not started
-Status: Ready to execute
-Last activity: 2026-08-06 -- Phase 66 planning complete
+Phase: 66 (correcciones-de-ui-de-historia-cl-nica-frontend) — EXECUTING
+Plan: 1 of 1
+Status: Executing Phase 66
+Last activity: 2026-08-06 -- Phase 66 execution started
 
 Progress: [██████████] 100%
 

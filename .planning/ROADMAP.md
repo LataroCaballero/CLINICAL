@@ -218,7 +218,7 @@ Full details: `.planning/milestones/v1.14-ROADMAP.md`
 - [x] **Phase 63: Flujo CRM Automático (Backend)** - Transiciones automáticas de etapa CRM al crear paciente, agendar cirugía y cargar tratamiento en consultorio (completed 2026-07-31)
 - [x] **Phase 64: Indicadores de Pendientes y Planilla Legible (Frontend)** - Badge de pendiente por etapa en la card + columna "Último tratamiento" sin truncar información (completed 2026-08-03)
 - [x] **Phase 65: Sync Tipo de Turno ↔ Plantilla HC (Backend)** - El tipo de turno se ajusta automáticamente según la plantilla de HC cargada (verification: gaps_found 2026-08-04 — 1 gap blocks completion) (completed 2026-08-04)
-- [ ] **Phase 66: Correcciones de UI de Historia Clínica (Frontend)** - Wizard nuevo en PatientDrawer + fix de render del detalle Pre-quirúrgico
+- [x] **Phase 66: Correcciones de UI de Historia Clínica (Frontend)** - Wizard nuevo en PatientDrawer + fix de render del detalle Pre-quirúrgico (completed 2026-08-08)
 
 ## Phase Details
 
@@ -303,7 +303,7 @@ Plans:
 
 **Wave 1**
 
-- [ ] 66-01-PLAN.md — HCUI-01/02: elimina dropdown viejo + código muerto en HistoriaClinica; agrega rama de render pre_quirurgico en HCEntryContent + título legible
+- [x] 66-01-PLAN.md — HCUI-01/02: elimina dropdown viejo + código muerto en HistoriaClinica; agrega rama de render pre_quirurgico en HCEntryContent + título legible
 
 ## Progress
 
@@ -376,7 +376,7 @@ Plans:
 | 63. Flujo CRM Automático (Backend) | v1.15 | 3/3 | Complete    | 2026-07-31 |
 | 64. Indicadores de Pendientes y Planilla Legible (Frontend) | v1.15 | 3/3 | Complete    | 2026-08-03 |
 | 65. Sync Tipo de Turno ↔ Plantilla HC (Backend) | v1.15 | 2/2 | Complete    | 2026-08-04 |
-| 66. Correcciones de UI de Historia Clínica (Frontend) | v1.15 | 0/1 | Planned | - |
+| 66. Correcciones de UI de Historia Clínica (Frontend) | v1.15 | 1/1 | Complete   | 2026-08-08 |
 
 ---
 *Roadmap initialized: 2026-02-23 | v1.0 shipped: 2026-03-03 | v1.1 shipped: 2026-03-16 | v1.2 shipped: 2026-03-31 | v1.3 shipped: 2026-04-09 | v1.4 shipped: 2026-04-20 | v1.5 shipped: 2026-05-13 | v1.6 shipped: 2026-05-23 | v1.7 shipped: 2026-05-28 | v1.8 shipped: 2026-06-09 | v1.9 shipped: 2026-06-13 | v1.10 shipped: 2026-06-22 | v1.11 shipped: 2026-06-24 | v1.12 shipped: 2026-07-02 | v1.13 shipped: 2026-07-05 | v1.14 shipped: 2026-07-21 | v1.15 started: 2026-07-30*

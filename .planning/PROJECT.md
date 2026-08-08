@@ -149,8 +149,8 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 - [ ] **HCSYNC-01**: Plantilla "Primera vez" fija el tipo de turno en "Consulta"
 - [ ] **HCSYNC-02**: Plantilla "Tratamiento en consultorio" sobre turno "Consulta" cambia el tipo de turno a "Tratamiento"
 - [ ] **HCSYNC-03**: Plantilla "Pre-quirúrgico" fija el tipo de turno en "Pre-Quirúrgico"
-- [ ] **HCUI-01**: Agregar entrada de HC desde PatientDrawer usa el wizard nuevo (como LiveTurno)
-- [ ] **HCUI-02**: Detalle de entrada "Pre-quirúrgico" en el historial renderiza el JSONB completo (hoy sale vacío)
+- [x] **HCUI-01**: Agregar entrada de HC desde PatientDrawer usa el wizard nuevo (como LiveTurno) — validado en Phase 66
+- [x] **HCUI-02**: Detalle de entrada "Pre-quirúrgico" en el historial renderiza el JSONB completo (hoy sale vacío) — validado en Phase 66
 
 **Candidatos para próximos milestones / diferidos:**
 - [ ] Dashboard de estadísticas ejecutivas con reportes exportables y comparativas por período (REPORT-F01, diferido de v1.13)
@@ -375,7 +375,7 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-08-03 — Phase 64 (Indicadores de Pendientes y Planilla Legible, Frontend) completa: CONTACTO-03/04 y TRAT-07 validados (4/4 success criteria). Badge de pendiente por etapa en la card del kanban ("Dar turno" para NUEVO_LEAD, "Ser atendido" para TURNO_AGENDADO); backend `/turnos/rango` expone `tratamientos: string[]` (lista completa) sin tocar el colapso existente; planilla "Último tratamiento" muestra todos los tratamientos truncados por CSS con tooltip Radix al hover. Code review advisory: 3 warnings no bloqueantes (header counts no filter-aware, riesgo pre-existente de null-element en JSONB con segundo call site, serialización de free-text sin truncar por decisión de plan). 5 requisitos activos restantes (HCSYNC-01..03, HCUI-01/02). Próximo: Phase 65 (Sync Tipo de Turno ↔ Plantilla HC, backend).*
+*Last updated: 2026-08-08 — Phase 66 (Correcciones de UI de Historia Clínica, Frontend) completa: HCUI-01/HCUI-02 validados (8/8 must-haves, checkpoint humano aprobado). HCEntryContent.tsx suma una rama de render `pre_quirurgico` (chips + detalle) que muestra el JSONB persistido (antecedentes, alergias, medicación, estudios complementarios, consentimiento Sí/No, comentario) ocultando vacíos y sin sección `zonas`, con título legible en TIPO_LABELS; HistoriaClinica.tsx elimina el dropdown "Nueva entrada"/form de texto libre/selector de plantilla muertos, dejando el wizard "+ Nueva HC" como único camino de creación. Code review advisory: 1 warning no bloqueante (WR-01: guard `hasAny` de la preview omite `estudiosComplementarios`) + 2 info. Última phase del milestone v1.15 — HCSYNC-01..03 (Phase 65) y HCUI-01/02 (Phase 66) completos. Próximo: `/gsd:complete-milestone`.*
 
 *Prior: 2026-07-31 — Phase 63 (Flujo CRM Automático Backend) completa: EMBUDO-07/08/09 validados (transiciones automáticas de etapa CRM al crear paciente, agendar cirugía y cargar tratamiento en consultorio). Decisiones de scope: salida del kanban vía flujo=TRATAMIENTO+ocultar (patrón v1.13, no etapa nueva); "Último tratamiento" mantiene origen HC-del-turno (solo cambia display); sync HC→tipoTurno cubre los 3 casos con guard "sin turno → no-op".*
 

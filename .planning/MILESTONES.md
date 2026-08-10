@@ -1,5 +1,26 @@
 # Milestones
 
+## v1.15 Flujo CRM Automático + Correcciones HC (Shipped: 2026-08-10)
+
+**Phases completed:** 4 fases (63–66), 9 planes, 20 tareas
+**Stats:** 9 días (2026-07-31 → 2026-08-08) | 15 archivos de código | +1,658 / −189 líneas | 70 commits
+**Requirements:** 11/11 v1.15 completos ✓ (EMBUDO-07..09, CONTACTO-03/04, TRAT-07, HCSYNC-01..03, HCUI-01/02) | **Audit:** `tech_debt` (11/11 reqs, 4/4 fases, 9/9 seams WIRED, 1/1 flujo E2E, 0 blockers)
+
+**Key accomplishments:**
+
+1. **Embudo CRM automático de punta a punta (Phase 63):** `pacientes.service.ts::create()` setea `etapaCRM=NUEVO_LEAD` + `flujo=null` incondicionalmente, así el lead nuevo entra al board en su columna en vez de "Sin clasificar" (EMBUDO-07); `crearTurnoCirugia` mueve a `CONFIRMADO` sin depender del presupuesto aceptado, `crearTurno` deja de degradar etapas avanzadas salvo que el turno sea de tipo "Consulta", y `cancelarTurno` conserva `CONFIRMADO` + interés caliente exponiendo `requiereRecontacto` derivado en la lista de acción (EMBUDO-08).
+2. **Salida a planilla por tratamiento en consultorio (Phase 63):** helpers puros nuevos en `historia-clinica.flujo.helpers.ts` — `resolverTipoEntrada` fuerza el `tipoEntrada` server-side desde `dto.tipo` (D-08) y el branch TRATAMIENTO de `resolverNuevoFlujo` cubre `flujoActual=null` además de `PENDIENTE` (D-09); `crearEntrada` limpia `etapaCRM=null` al pasar a TRATAMIENTO (D-10, espejo de `updateFlujo`), de modo que el paciente sale del kanban con el patrón v1.13 (flujo=TRATAMIENTO + ocultar) y queda en la planilla con la fecha real del tratamiento (EMBUDO-09) — sin enum ni columna nueva.
+3. **Pendientes visibles por etapa en la card (Phase 64):** badge shadcn condicional por `columnId` en `PatientCard.tsx` — "Dar turno" para `NUEVO_LEAD` y "Ser atendido" para `TURNO_AGENDADO` — en la zona de registro de contacto inferior, alimentado 1:1 por las etapas que Phase 63 ahora puebla solas (CONTACTO-03/04).
+4. **Planilla de tratamientos sin pérdida silenciosa (Phase 64):** helper puro `listarTratamientosDeContenido` + campo `tratamientos: string[]` en `GET /turnos/rango` exponen la lista completa sin tocar el `ultimoTratamiento` colapsado existente; la celda "Último tratamiento" muestra todos los nombres separados por coma con truncado CSS y un Radix Tooltip que revela el texto completo, reemplazando el "primero +N-1" y el `title` nativo (TRAT-07).
+5. **Sync tipo de turno ↔ plantilla HC (Phase 65):** helper puro `resolverTipoTurnoSync` con escalera de prioridad Consulta < Tratamiento < Pre-Quirúrgico vía rank map (no-downgrade, unmapped=0, sentinel de cirugía), cableado dentro de la transacción de `crearEntrada` con `tx.turno.update`; el `turnoCtx` pre-fetch se extendió (patrón pgBouncer, sin segundo query en la tx) y el guard quedó endurecido a `if (dto.turnoId && turnoCtx)` — cerrando la única gap confirmada de `65-VERIFICATION.md`, donde un `turnoId` stale disparaba P2025 y abortaba el guardado completo de la HC (HCSYNC-01/02/03, incluido el no-op sin turno asociado).
+6. **HC en la ficha del paciente, consistente y completa (Phase 66):** `HCEntryContent.tsx` suma la rama de render `pre_quirurgico` (chips + detalle) que muestra el JSONB persistido — antecedentes, alergias, medicación, estudios complementarios, consentimiento Sí/No, comentario — ocultando vacíos y sin sección `zonas`, con título legible en `TIPO_LABELS` (HCUI-02); `HistoriaClinica.tsx` elimina el dropdown "Nueva entrada", el form de texto libre y el selector de plantilla muertos, dejando el wizard "+ Nueva HC" como único camino de creación, igual que LiveTurno (HCUI-01) — lo que además cierra el quick-task carried `1-eliminar-dropdown-tipo-de-consulta-de-hc`.
+
+**Known deferred items at close:** 0 abiertos — el audit de artefactos abiertos dio *all clear* (0 debug sessions, quick tasks, threads, todos, seeds, UAT gaps, verification gaps). Los 3 ítems diferidos al cierre de v1.14 quedaron resueltos: `62-HUMAN-UAT` y `62-VERIFICATION` cerrados, y el quick-task del dropdown de HC completado dentro de Phase 66.
+
+**Deuda técnica advisory registrada (no blockers, del audit):** D-06 gatea el reset cíclico del embudo en el string mágico `tipoTurno.nombre === 'Consulta'` (frágil a rename); los leads con `flujo=null` no son promovidos a CIRUGIA por la auto-clasificación genérica por tipo de turno (gap latente, no afecta los SC de v1.15); `console.log('ERROR CAPTURADO EN CATCH:')` en `pacientes.service.ts:76` loguea el error crudo (higiene de logging/PII); `listarTratamientosDeContenido` sin guard contra JSONB malformado (elementos null); ventana TOCTOU angosta entre el pre-fetch de `turnoCtx` y `tx.turno.update` (hoy inalcanzable en prod); `esCirugia: destino.esCirugia` es no-op con el seed actual; el guard `hasAny` de la preview de HC omite `estudiosComplementarios`. **Nyquist:** 0/4 fases con `*-VALIDATION.md` (validación deshabilitada en config).
+
+---
+
 ## v1.14 Portal — Firma Gated e Indicaciones Separadas (Shipped: 2026-07-21)
 
 **Phases completed:** 2 phases (61–62), 8 plans, 14 tasks

@@ -2,82 +2,84 @@
 gsd_state_version: 1.0
 milestone: v1.15
 milestone_name: Flujo CRM Automático + Correcciones HC
-status: milestone_complete
-stopped_at: Milestone complete (Phase 66 was final phase)
-last_updated: 2026-08-08T17:20:08.269Z
-last_activity: 2026-08-06 -- Phase 66 execution started
+status: Awaiting next milestone
+stopped_at: Milestone v1.15 archived
+last_updated: "2026-08-10T15:37:35.092Z"
+last_activity: 2026-08-10 — Milestone v1.15 completed and archived
 progress:
   total_phases: 4
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 9
   completed_plans: 9
-  percent: 75
+  percent: 100
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-07-30 after v1.15 roadmap)
+See: .planning/PROJECT.md (updated 2026-08-10 after v1.15 milestone)
 
 **Core value:** Que un cirujano plástico cierre más cirugías — el sistema hace visible qué pacientes seguir, cuándo y cómo, de la manera más automatizada posible
-**Current focus:** Milestone complete
+**Current focus:** Planificando el próximo milestone (`/gsd:new-milestone`)
 
 ## Current Position
 
-Phase: 66
-Plan: Not started
-Status: Milestone complete
-Last activity: 2026-08-08
+Phase: Milestone v1.15 complete (fases 63–66 archivadas)
+Plan: —
+Status: Awaiting next milestone
+Last activity: 2026-08-10 — Milestone v1.15 completed and archived
 
-Progress: [██████████] 100%
+Progress: [██████████] 100% (v1.15)
 
 ## Accumulated Context
 
 ### Decisions
 
-Full decision log en `.planning/PROJECT.md` (Key Decisions). Decisiones de v1.13/v1.14 archivadas en `.planning/milestones/v1.13-ROADMAP.md` / `v1.14-ROADMAP.md`.
-
-**Decisiones relevantes para v1.15 (roadmap):**
-
-- Fases derivadas por cohesión backend/frontend: Phase 63 (embudo CRM backend) → Phase 64 (indicadores + planilla frontend, depende de 63) → Phase 65 (sync tipo turno↔HC backend, independiente) → Phase 66 (correcciones UI de HC frontend, independiente)
-- EMBUDO-09 reutiliza el patrón v1.13 de "ocultar del board" (flujo=TRATAMIENTO) — no se agrega columna/etapa nueva
-- No se toca el enum `EtapaCRM` ni se hace backfill de pacientes existentes sin etapa (solo aplica hacia adelante)
-- HCSYNC-01/02/03 y HCUI-01/02 son trabajo net-new sin dependencia entre sí ni con el embudo CRM
-- [Phase 63-01]: flujo=null en create() en vez de ampliar filtro de getKanban (D-03 opción 1) — evita exponer históricos PENDIENTE en el board
-- [Phase 63-03]: resolverTipoEntrada fuerza tipoEntrada server-side desde dto.tipo (D-08); resolverNuevoFlujo branch TRATAMIENTO cubre flujoActual=null además de PENDIENTE (D-09); crearEntrada limpia etapaCRM=null al mover a TRATAMIENTO (D-10, espejo de updateFlujo)
-- [Phase 63-02]: D-04/D-05/D-06/D-07 aplicados sin desviaciones — crearTurnoCirugia confirma sin presupuesto, crearTurno guarda etapas avanzadas salvo Consulta, cancelarTurno mantiene CONFIRMADO+CALIENTE, getListaAccion expone requiereRecontacto derivado
-- [Phase 65]: resolverTipoTurnoSync usa un rank map (Record<string,number>) en vez de if/else chain para D-01 no-downgrade + D-03 unmapped=0
-- [Phase 65]: turnoCtx pre-fetch extendido (tipoTurnoId + tipoTurno.nombre) en vez de segundo query dentro de la tx, patrón pgBouncer consistente
-- [Phase 65-02]: Guard endurecido a if (dto.turnoId && turnoCtx) en el bloque de sync de crearEntrada — cierra la gap confirmada de 65-VERIFICATION.md (T-65-03)
+Full decision log en `.planning/PROJECT.md` (Key Decisions). Las decisiones de v1.15 quedaron consolidadas ahí y en `.planning/milestones/v1.15-ROADMAP.md`; las de v1.13/v1.14 en sus archivos de milestone respectivos.
 
 ### Known Tech Debt (carry-forward)
 
-- **Introducido en v1.13 (advisory):** `crearTurno` degrada etapas avanzadas a `TURNO_AGENDADO` en cualquier turno (intencional); paso 'cirugia' cuenta cirugías CANCELADA/SUSPENDIDA como completas.
-- **Pre-existente / carried:** `quick-task 1-eliminar-dropdown-tipo-de-consulta-de-hc` incompleto.
-- HistorialClinicoPanel y TurnoHCModal no migrados a HCEntryContent.tsx (diferido; HCUI-02 solo agrega el branch pre_quirúrgico faltante, no migra el componente).
-- AppointmentDetailModal y CalendarGrid no migrados a getEstadoTurnoChip (diferido).
+**Advisory de v1.15 (del audit, 0 blockers):**
+
+- D-06 gatea el reset cíclico del embudo en el string mágico `tipoTurno.nombre === 'Consulta'` (`turnos.service.ts:147`) — frágil a rename/variante, sin flag en el schema.
+- Los leads con `flujo=null` no son promovidos a CIRUGIA por la auto-clasificación genérica por tipo de turno (`turnos.service.ts:159-162`) ni por el branch CONSULTA_CIRUGIA de HC — ambos siguen gateados en `=== 'PENDIENTE'`. Latente, no afecta los SC de v1.15.
+- `listarTratamientosDeContenido` sin guard contra JSONB malformado (elementos null en el array) — segundo call site sobre un path pre-existente sin proteger.
+- Ventana TOCTOU angosta entre el pre-fetch de `turnoCtx` y `tx.turno.update` — hoy inalcanzable en prod (no hay path de borrado de turno); hardening opcional vía `tx.turno.updateMany`.
+- `esCirugia: destino.esCirugia` es no-op con el seed actual (los 3 destinos de sync tienen `esCirugia:false`) — footgun latente si cambia el seeding del catálogo.
+- El guard `hasAny` de `HCEntryChips` omite `estudiosComplementarios` (`HCEntryContent.tsx:149-154`) — una entrada con sólo estudios muestra "(sin contenido)" en la card, aunque el detalle renderiza bien.
+- IDOR sobre `dto.turnoId` pre-aceptado bajo el modelo single-tenant (T-65-01).
+- TipoTurno "Pre-Quirúrgico" seedeado con `flujoPaciente=CIRUGIA` y `esCirugia:false` — ortogonal a los seams auditados, flagueado para awareness de semántica del kanban.
+- Nyquist: 0/4 fases con `*-VALIDATION.md` (validación deshabilitada en `config.json`).
+
+**Carried de milestones previos:**
+
+- **v1.13 (advisory):** `crearTurno` degrada etapas avanzadas a `TURNO_AGENDADO` en cualquier turno (intencional); el paso 'cirugia' cuenta cirugías CANCELADA/SUSPENDIDA como completas.
+- HistorialClinicoPanel y TurnoHCModal no migrados a `HCEntryContent.tsx` (diferido desde v1.11; HCUI-02 sólo agregó el branch pre-quirúrgico).
+- AppointmentDetailModal y CalendarGrid no migrados a `getEstadoTurnoChip` (diferido).
 - STOCK-03: FACTURADOR excluido del backend de ordenes-consumo pero accede desde frontend.
-- EncryptionService dev fallback key — configurar ENCRYPTION_KEY en .env prod.
-- console.log('DTO RECIBIDO') en pacientes.service.ts — expone PII en logs.
+- EncryptionService dev fallback key — configurar `ENCRYPTION_KEY` en .env prod.
+- `console.log('DTO RECIBIDO')` + `console.log('ERROR CAPTURADO EN CATCH:')` en `pacientes.service.ts` — exponen PII / error crudo en logs.
 - **Gate legal pre-go-live (v1.12):** revisión del flujo de consentimiento (Ley 25506 / Ley 26529) antes del primer paciente quirúrgico real.
 
 ## Deferred Items
 
-Items acknowledged y diferidos al cierre de v1.14 (2026-07-21):
+Ninguno abierto. El audit de artefactos previo al cierre de v1.15 (2026-08-10) dio *all clear*: 0 debug sessions, quick tasks, threads, todos, seeds, UAT gaps, verification gaps y context questions.
 
-| Category | Item | Status |
-|----------|------|--------|
-| uat_gap | 62-HUMAN-UAT (5 escenarios de portal: gate de firma open-PDF+checkbox, sección indicaciones separada, acuse automático, indicador staff, board sync on focus) | partial |
-| verification_gap | 62-VERIFICATION | human_needed |
-| quick_task | 1-eliminar-dropdown-tipo-de-consulta-de-hc | missing |
+Los 3 ítems diferidos al cierre de v1.14 quedaron resueltos durante v1.15:
+
+| Category | Item | Resolución |
+|----------|------|------------|
+| uat_gap | 62-HUMAN-UAT (5 escenarios de portal) | cerrado |
+| verification_gap | 62-VERIFICATION | cerrado |
+| quick_task | 1-eliminar-dropdown-tipo-de-consulta-de-hc | completado en Phase 66 (HCUI-01) |
 
 ## Session Continuity
 
-Last session: 2026-08-06T15:22:25.680Z
-Stopped at: Phase 66 context gathered
-Resume file: .planning/phases/66-correcciones-de-ui-de-historia-cl-nica-frontend/66-CONTEXT.md
+Last session: 2026-08-10 — cierre y archivado del milestone v1.15
+Stopped at: Milestone v1.15 archived
+Resume file: — (sin trabajo en curso)
 
 ## Operator Next Steps
 
-- Phase 63 complete (EMBUDO-07/08/09). Proceed to Phase 64 (portal staff frontend, depends on 63) or run phase verification.
+- Arrancar el próximo milestone con `/gsd:new-milestone` (questioning → research → requirements → roadmap). `.planning/REQUIREMENTS.md` se regenera ahí.

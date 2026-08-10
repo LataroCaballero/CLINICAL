@@ -4,6 +4,54 @@
 
 ---
 
+## Milestone: v1.15 — Flujo CRM Automático + Correcciones HC
+
+**Shipped:** 2026-08-10
+**Phases:** 4 (63–66) | **Plans:** 9 | **Timeline:** 9 días (2026-07-31 → 2026-08-08)
+**Stats:** 15 archivos de código | +1,658 / −189 líneas | 20 tareas | 11/11 requisitos | audit `tech_debt` (11/11 reqs, 4/4 fases, 9/9 seams WIRED, 1/1 flujo E2E, 0 blockers) | **0 ítems diferidos al cierre**
+
+### What Was Built
+- **Embudo CRM automático (Phase 63)**: `create()` setea `etapaCRM=NUEVO_LEAD` + `flujo=null` incondicionalmente (EMBUDO-07); `crearTurnoCirugia` confirma sin presupuesto aceptado, `crearTurno` sólo degrada etapas avanzadas si el turno es "Consulta", y `cancelarTurno` conserva CONFIRMADO + caliente exponiendo `requiereRecontacto` derivado en la lista de acción (EMBUDO-08)
+- **Salida a planilla por tratamiento (Phase 63)**: helpers puros nuevos en `historia-clinica.flujo.helpers.ts` — `resolverTipoEntrada` fuerza el `tipoEntrada` server-side desde `dto.tipo` (D-08), el branch TRATAMIENTO de `resolverNuevoFlujo` cubre `flujoActual=null` además de `PENDIENTE` (D-09) y `crearEntrada` limpia `etapaCRM=null` (D-10) — el paciente sale del board con el patrón v1.13 y queda en la planilla con la fecha real (EMBUDO-09)
+- **Indicadores y planilla legible (Phase 64)**: badge condicional por `columnId` en `PatientCard.tsx` ("Dar turno" / "Ser atendido", CONTACTO-03/04); helper puro `listarTratamientosDeContenido` + campo `tratamientos: string[]` nuevo en `GET /turnos/rango`, con la celda mostrando la lista completa truncada por CSS y Radix Tooltip revelando el texto entero (TRAT-07)
+- **Sync tipo de turno ↔ plantilla HC (Phase 65)**: helper puro `resolverTipoTurnoSync` (escalera Consulta < Tratamiento < Pre-Quirúrgico vía rank map, no-downgrade, unmapped=0, sentinel de cirugía) dentro de la transacción de `crearEntrada` con `tx.turno.update` sobre un `turnoCtx` pre-fetch extendido (patrón pgBouncer); 65-02 endureció el guard a `if (dto.turnoId && turnoCtx)` (HCSYNC-01/02/03 + no-op sin turno)
+- **Correcciones de UI de HC (Phase 66)**: rama de render `pre_quirurgico` en `HCEntryContent.tsx` (chips + detalle del JSONB persistido, ocultando vacíos y sin sección `zonas`, con título legible en `TIPO_LABELS`) y eliminación del dropdown "Nueva entrada" + form de texto libre + selector de plantilla muertos, dejando el wizard "+ Nueva HC" como único camino (HCUI-01/02)
+
+### What Worked
+- **La racha de UAT diferida se cortó**: 3 milestones seguidos (v1.12/v1.13/v1.14) cerraron con verificación humana pendiente. v1.15 cerró con `audit-open` en *all clear* — 0 debug sessions, quick tasks, todos, UAT gaps y verification gaps. Las 4 fases pasaron VERIFICATION (10/10, 4/4, 12/12, 8/8) y Phase 66 tuvo checkpoint humano aprobado dentro de la fase, exactamente el contraataque que v1.14 identificó como el único que había funcionado
+- **El verifier atrapó un bug que rompía producción, no un detalle de estilo**: `65-VERIFICATION` dio `gaps_found` (11/12) porque un `dto.turnoId` stale hacía que `tx.turno.update` corriera contra una fila inexistente (Prisma P2025) y **abortara la transacción completa de guardado de la HC**. El plan de gap-closure 65-02 endureció el guard a `dto.turnoId && turnoCtx` y la re-verificación cerró en 12/12. Un sync "de conveniencia" habría podido tirar abajo el guardado clínico
+- **Helpers puros + TDD, cuarto milestone consecutivo**: `resolverTipoEntrada`, `listarTratamientosDeContenido` y `resolverTipoTurnoSync` siguen el patrón `*.helpers.ts` sin deps NestJS/Prisma. Testeables directo, reusables, y en el caso de `resolverTipoTurnoSync` el rank map (`Record<string,number>`) expresó no-downgrade y unmapped=0 como propiedades del dato en vez de ramas de control de flujo
+- **Extender el contrato en vez de mutarlo**: TRAT-07 agregó `tratamientos: string[]` y dejó intacto el `ultimoTratamiento` colapsado. Cero regresión en consumidores existentes y el display quedó como decisión puramente de frontend
+- **Reusar el patrón de salida del board en vez de migrar el enum**: EMBUDO-09 se resolvió con `flujo=TRATAMIENTO` + ocultar (patrón v1.13) — sin tocar `EtapaCRM` ni actualizar funnel, constantes frontend y `STEPPER_CHAIN`. Mismo razonamiento que el relabel de `PROCEDIMIENTO_REALIZADO` en v1.13
+- **Deuda carried finalmente saldada**: el quick-task `1-eliminar-dropdown-tipo-de-consulta-de-hc`, que venía migrando de milestone en milestone desde v1.13, se cerró como efecto natural de HCUI-01 en vez de como tarea suelta
+
+### What Was Inefficient
+- **El acoplamiento EMBUDO-07 ↔ EMBUDO-09 se descubrió durante la ejecución, no al planificar**: al escribir `flujo=null` en el alta (D-03), el branch TRATAMIENTO de `resolverNuevoFlujo` — que gateaba en `=== 'PENDIENTE'` — dejaba de aplicar a los leads nuevos. D-09 lo cubrió dentro de 63-03, pero el mismo gate quedó sin revisar en los otros dos consumidores (`turnos.service.ts:159-162` y el branch CONSULTA_CIRUGIA), y el audit lo levantó como WR-02: un cambio de invariante en una fase requería un barrido de todos sus lectores, no sólo del que se estaba tocando
+- **Gates de negocio sobre strings mágicos**: D-06 gatea el reset cíclico del embudo en `tipoTurno.nombre === 'Consulta'`. El catálogo de tipos de turno es editable desde la UI desde v1.8 — un rename silencioso rompe el comportamiento sin fallar ningún test. Es la segunda vez que aparece lógica clave anclada a un nombre en vez de a un flag de schema
+- **`config.workflow.research: false` en un milestone con 3 fases de decisiones de dominio**: las decisiones D-01..D-10 salieron todas de discusión, sin research. Funcionó para trabajo sobre patrones ya conocidos, pero D-06 y el gate por string son justo el tipo de decisión que un pase de research sobre el propio schema habría cuestionado
+- **Nyquist en 0/4**: ninguna fase generó `*-VALIDATION.md` (`nyquist_validation_enabled: false` en config). Es una decisión de configuración explícita, pero el audit la reporta como `overall: missing` en cada milestone, ruido recurrente que conviene resolver — activándolo o dejándolo documentado como decisión permanente
+- **Deuda de logging que sobrevive milestones**: el audit volvió a levantar `console.log` de PII/errores crudos en `pacientes.service.ts` (ahora dos sitios: línea 33 desde v1.2 y línea 76 nueva). Un fix de 2 líneas que lleva más de 10 milestones en la lista
+
+### Patterns Established
+- **Rank map en vez de cadena if/else para escaleras de prioridad**: `Record<string, number>` donde el valor codifica el orden convierte "no-downgrade" en `rankDestino > rankActual` y "valor desconocido" en `0` — propiedades del dato, no del flujo de control. Agregar un tipo nuevo es una línea del mapa
+- **Guard de existencia junto al guard de intención en escrituras dentro de transacción**: `if (dto.turnoId && turnoCtx)` — no alcanza con que el cliente haya pedido la escritura (`dto.turnoId`); hay que confirmar que la fila pre-fetcheada existe, o un P2025 aborta la transacción entera y se lleva puesta la operación principal
+- **Extender el payload con un campo nuevo en vez de cambiar la semántica del existente**: cuando el frontend necesita más detalle del que expone un campo colapsado, agregar el campo completo al lado deja a los consumidores actuales intactos y mueve la decisión de display a donde corresponde
+- **Forzar server-side los campos que gobiernan clasificación**: `resolverTipoEntrada` deriva `tipoEntrada` de `dto.tipo` en vez de confiar en lo que mande el cliente — el flujo del paciente depende de ese valor, así que no puede ser desalineable desde el payload
+
+### Key Lessons
+- **Cambiar un valor centinela obliga a barrer todos sus lectores**: pasar de `flujo=PENDIENTE` a `flujo=null` en el alta se sintió como un cambio de una línea. Tenía tres consumidores gateados en el valor viejo; se actualizó uno. Antes de cambiar el valor por defecto de un campo de estado, `rg` del valor anterior y decisión explícita fase por fase
+- **La verificación de fase se paga sola cuando el cambio toca una transacción**: `65-VERIFICATION` no encontró un detalle cosmético sino un path donde una feature secundaria abortaba el guardado de una historia clínica. En código transaccional, cada escritura nueva agrega una forma de romper la operación principal, y ese es el ángulo que hay que verificar primero
+- **La UAT dentro de la fase funciona — replicarlo, no celebrarlo una vez**: el checkpoint humano de Phase 66 y las verificaciones por fase produjeron el primer cierre sin ítems diferidos en 4 milestones. El riesgo ahora es tratarlo como un buen milestone en vez de como el default para toda fase con superficie visual
+- **Los strings mágicos sobre catálogos editables son bombas de tiempo**: si el usuario puede renombrar el dato desde la UI, la lógica de negocio no puede depender de su nombre. La solución es un flag en el schema (como `esCirugia`), no un comentario
+
+### Cost Observations
+- 4 fases, 9 planes, 20 tareas, +1,658 / −189 LOC en 9 días — buen ratio: milestone acotado, 15 archivos de código tocados, sin migración de schema ni dependencias nuevas
+- 2 fases backend (63, 65) + 2 frontend (64, 66), con sólo 64 dependiendo de 63; el resto pudo planificarse en paralelo
+- 1 plan de gap-closure (65-02) sobre 9 — el costo de verificación se concentró donde el riesgo era real (transacción) en vez de repartirse parejo
+- Cierre limpio: 0 artefactos abiertos, 0 ítems diferidos; toda la deuda registrada es advisory (7 ítems, ninguno blocker) y quedó explícita en STATE.md y Key Decisions
+
+---
+
 ## Milestone: v1.14 — Portal — Firma Gated e Indicaciones Separadas
 
 **Shipped:** 2026-07-21
@@ -556,6 +604,7 @@
 | v1.12 Prequirúrgico + Portal del Paciente | 6 | 30 | 8 días | ~variable | Milestone más grande desde v1.5; schema big-bang up-front + portal público seguro por capas; audit PASSED; 17 ítems de verificación humana diferidos |
 | v1.13 Embudo CRM Accionable | 4 | 8 | 3 días | ~variable | Milestone chico y acotado; contrato backend (`computePasosCrm`) consumido 1:1 por board/stepper; reuso de enum en vez de migración; audit `tech_debt` 0 blockers; 4 ítems diferidos (2 UAT humana + 2 deuda carried) |
 | v1.14 Portal — Firma Gated e Indicaciones Separadas | 2 | 8 | ~13 días | ~variable | Contrato backend-first otra vez (Phase 61 → 62); guard de source-shape como red de regresión donde el mock no llega; W-1 cerrada con refetch on focus; sin audit (acknowledge & proceed); 3 ítems diferidos + 2 deudas de diseño (CR-03, WR-01) |
+| v1.15 Flujo CRM Automático + Correcciones HC | 4 | 9 | 9 días | ~variable | Fases desacopladas (sólo 64 depende de 63); helpers puros + rank map; verificación por fase atrapó un P2025 que abortaba el guardado de HC (65-02 gap-closure); audit `tech_debt` 0 blockers; **primer cierre sin ítems diferidos desde v1.11** — se cortó la racha de UAT humana diferida |
 
 ### Cumulative Quality
 
@@ -576,16 +625,18 @@
 | v1.12 | TDD tests (brute-force lock 11 casos, catalogo-hc 101 total) | <10% | pdf-lib 1.17.1, @nestjs/throttler (cableado), multer + @types/multer |
 | v1.13 | TDD tests (computePasosCrm; spec del invariante etapa-no-afecta-conteo 8/8 + SECURED 5/5) | <10% | ninguna |
 | v1.14 | boundary test getKanban→computePasosCrm + guard de source-shape (falla si `take:1` vuelve al select `consentimientosFirmados`) | <10% | ninguna |
+| v1.15 | TDD sobre 3 helpers puros nuevos (`resolverTipoEntrada`, `listarTratamientosDeContenido`, `resolverTipoTurnoSync`) + test de regresión de visibilidad en getKanban (lead `flujo=null` en NUEVO_LEAD) + wiring tests del sync en `crearEntrada` | <10% | ninguna |
 
 ### Recurring Process Debt
 
-| Issue | v1.1 | v1.2 | v1.4 | v1.5 | v1.6 | v1.7 | v1.8 | v1.9 | v1.10 | v1.11 | v1.12 | v1.13 | v1.14 | Fix |
-|-------|------|------|------|------|------|------|------|------|-------|-------|-----------|-------|-------|------|
-| MILESTONES.md accomplishments vacíos | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | evitado (archivado a mano) | parcial (CLI pobló, reescrito a mano) | Actualizar formato SUMMARY.md con `one_liner:` field |
-| STATE.md progress desactualizado durante ejecución | ✗ | parcial | parcial | parcial | parcial | parcial | parcial | parcial | parcial | parcial | parcial | parcial | parcial | GSD executor actualiza STATE al final de cada plan |
-| Integration bugs detectados tarde (audit, no verify) | — | ✗ | ✓ | ✓ | sin audit | ✓ | sin audit | ✓ | ✓ | sin audit | ✓ | ✓ | sin audit | Audit antes de complete-milestone elimina retrabajo |
-| Audit saltado antes de archivar | — | — | — | — | ✗ | ✓ | ✗ | ✓ | ✓ | ✗ | ✓ | ✓ | ✗ | Correr /gsd:audit-milestone antes de /gsd:complete-milestone |
-| Progress table ROADMAP desalineada durante ejecución | — | — | — | — | — | — | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ (normalizada a mano) | ✓ (alineada) | Executor debe respetar header de columnas al agregar filas |
-| CLI sobrescribe archivo milestone-scoped con snapshot completo | — | — | — | — | — | — | — | ✗ | ✗ | n/a | ✓ | evitado (archivado a mano) | parcial (CLI archivó full ROADMAP, incluye v1.14 details) | `milestone complete` debería preservar el ROADMAP scoped del roadmapper |
-| CLI omite línea de Stats en MILESTONES.md | — | — | — | — | — | — | — | — | ✗ | ✗ | ✗ | evitado (archivado a mano) | ✗ (CLI omitió, agregado a mano) | `milestone complete` debería poblar Stats desde git/summaries |
-| UAT/verificación humana diferida al cierre en vez de por fase | — | — | — | — | — | ✗ | — | — | — | — | ✗ | ✗ (2/4 fases) | ✗ (3er milestone consecutivo) | Agendar verificación visual como gate de fase (Phase 59 lo hizo bien) |
+| Issue | v1.1 | v1.2 | v1.4 | v1.5 | v1.6 | v1.7 | v1.8 | v1.9 | v1.10 | v1.11 | v1.12 | v1.13 | v1.14 | v1.15 | Fix |
+|-------|------|------|------|------|------|------|------|------|-------|-------|-----------|-------|-------|-------|------|
+| MILESTONES.md accomplishments vacíos | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | evitado (archivado a mano) | parcial (CLI pobló, reescrito a mano) | parcial (CLI pobló, reescrito a mano) | Actualizar formato SUMMARY.md con `one_liner:` field |
+| STATE.md progress desactualizado durante ejecución | ✗ | parcial | parcial | parcial | parcial | parcial | parcial | parcial | parcial | parcial | parcial | parcial | parcial | parcial (quedó 75% con 4/4 fases hechas) | GSD executor actualiza STATE al final de cada plan |
+| Integration bugs detectados tarde (audit, no verify) | — | ✗ | ✓ | ✓ | sin audit | ✓ | sin audit | ✓ | ✓ | sin audit | ✓ | ✓ | sin audit | ✓ (verify de Phase 65 atrapó el P2025) | Audit antes de complete-milestone elimina retrabajo |
+| Audit saltado antes de archivar | — | — | — | — | ✗ | ✓ | ✗ | ✓ | ✓ | ✗ | ✓ | ✓ | ✗ | ✓ | Correr /gsd:audit-milestone antes de /gsd:complete-milestone |
+| Progress table ROADMAP desalineada durante ejecución | — | — | — | — | — | — | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ (normalizada a mano) | ✓ (alineada) | ✓ | Executor debe respetar header de columnas al agregar filas |
+| CLI sobrescribe archivo milestone-scoped con snapshot completo | — | — | — | — | — | — | — | ✗ | ✗ | n/a | ✓ | evitado (archivado a mano) | parcial (CLI archivó full ROADMAP, incluye v1.14 details) | parcial (CLI archivó el ROADMAP completo) | `milestone complete` debería preservar el ROADMAP scoped del roadmapper |
+| CLI omite línea de Stats en MILESTONES.md | — | — | — | — | — | — | — | — | ✗ | ✗ | ✗ | evitado (archivado a mano) | ✗ (CLI omitió, agregado a mano) | ✗ (CLI omitió, agregado a mano) | `milestone complete` debería poblar Stats desde git/summaries |
+| UAT/verificación humana diferida al cierre en vez de por fase | — | — | — | — | — | ✗ | — | — | — | — | ✗ | ✗ (2/4 fases) | ✗ (3er milestone consecutivo) | ✓ (0 ítems diferidos) | Agendar verificación visual como gate de fase (Phase 59 lo hizo bien) |
+| Directorios de fase borrados del disco sin archivar a milestones/ | — | — | — | — | — | — | — | — | — | — | — | — | ✗ (61–62 borradas, deleción sin commitear) | ✓ (recuperadas de HEAD y archivadas en v1.14-phases/) | Archivar fases como paso del cierre, nunca borrarlas sueltas |

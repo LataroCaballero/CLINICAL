@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.16
 milestone_name: Alta de Paciente sin Fricción
-status: Roadmap aprobado, listo para planificar
+status: executing
 stopped_at: Phase 67 context gathered
-last_updated: "2026-08-17T22:20:13.882Z"
-last_activity: 2026-08-17 — Milestone v1.16 iniciado, roadmap de 3 fases (67–69) aprobado
+last_updated: "2026-08-17T23:01:08.819Z"
+last_activity: 2026-08-17 -- Phase 67 planning complete
 progress:
   total_phases: 3
   completed_phases: 0
-  total_plans: 0
+  total_plans: 5
   completed_plans: 0
   percent: 0
 ---
@@ -27,8 +27,8 @@ See: .planning/PROJECT.md (updated 2026-08-17 al iniciar el milestone v1.16)
 
 Phase: 67 — Teléfono Opcional y Guards de Envío (Backend) — no iniciada
 Plan: — (pendiente de `/gsd:plan-phase 67`)
-Status: Roadmap aprobado, listo para planificar
-Last activity: 2026-08-17 — Milestone v1.16 iniciado, roadmap de 3 fases (67–69) aprobado
+Status: Ready to execute
+Last activity: 2026-08-17 -- Phase 67 planning complete
 
 Progress: [░░░░░░░░░░] 0% (0/3 fases)
 

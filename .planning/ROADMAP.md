@@ -241,13 +241,22 @@ Full details: `.planning/milestones/v1.15-ROADMAP.md`
 **Plans:** 5 plans (3 waves)
 
 Plans:
+**Wave 1**
+
 - [ ] 67-01-PLAN.md — Schema nullable + `@IsOptional()` + migración Prisma + ensanchar tipos (wave 1)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 67-02-PLAN.md — `normalizeTelefono()` en `create`/`update`/`updateContacto`, `suggest()` null-safe, comentario WR-02 del portal (wave 2)
 - [ ] 67-03-PLAN.md — Guard de teléfono en los 4 paths de envío de `WhatsappService` (wave 2)
 - [ ] 67-04-PLAN.md — Auditoría de reads downstream: reportes financieros y presupuestos (wave 2)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
 - [ ] 67-05-PLAN.md — Tests (pacientes extendido, whatsapp y presupuestos nuevos) + verificación completa (wave 3)
 
 **Success criteria:**
+
 1. Un `POST /pacientes` con sólo `nombreCompleto` y `dni` crea el paciente y devuelve 201 (hoy devuelve 400 por `telefono` faltante)
 2. Los pacientes existentes conservan su teléfono intacto después de la migración
 3. Intentar enviar un WhatsApp a un paciente sin teléfono devuelve un error en español identificable por el frontend, sin llegar a la API de Meta
@@ -255,6 +264,7 @@ Plans:
 5. La suite de tests existente del backend sigue pasando (incluida la validación de staging del portal en `pacientes.service.ts:436`, que hoy asume `telefono` string)
 
 **Notas de implementación:**
+
 - Migración Prisma: `telefono String` → `telefono String?`. Es una relajación de constraint, no destructiva.
 - `CreatePacienteDto`: agregar `@IsOptional()` sobre `telefono`.
 - Auditar los reads backend que asumen string: `pacientes.service.ts:166/973` (listas), `reportes-financieros.service.ts:522/563/599`, `paciente-portal.service.ts:142`, `whatsapp.service.ts:229/279/331/456`, `presupuestos.service.ts:458`, `presupuesto-email.service.ts:77`. `presupuesto-pdf.service.ts:143` ya lo trata como opcional.
@@ -267,6 +277,7 @@ Plans:
 **Requirements:** ALTA-01, ALTA-02, ALTA-03, ALTA-04, ALTA-05, ALTA-06, ALTA-07
 
 **Success criteria:**
+
 1. Buscar un paciente inexistente en el modal de turno muestra un mini-form con Nombre y DNI dentro del popover, en vez de un popover vacío
 2. El campo correspondiente viene precargado con lo que el usuario escribió: DNI si el query es numérico, nombre completo si es texto
 3. Crear el paciente lo deja seleccionado en el modal de turno, y confirmar el turno funciona sin pasos adicionales
@@ -275,6 +286,7 @@ Plans:
 6. El mini-form aparece en `QuickAppointment`, `NewAppointmentModal` y `SurgeryAppointmentModal`, y **no** aparece en `PatientFilters` ni `data-table-toolbar`
 
 **Notas de implementación:**
+
 - `AutocompletePaciente.tsx` gana una prop opcional (ej. `allowCreate`) — default off, de modo que los usos de filtro no cambien de comportamiento.
 - El popover hoy sólo abre con `data.length > 0 || isFetching`; hay que extender esa condición al caso "sin resultados" cuando `allowCreate` está activo.
 - El 409 de DNI duplicado ya viene con mensaje en español desde `pacientes.service.ts` — hay que renderizarlo en el form, no como toast.
@@ -288,12 +300,14 @@ Plans:
 **Requirements:** TEL-02, TEL-03, ENVIO-03
 
 **Success criteria:**
+
 1. El alta completa (`NewPacienteModal`) permite guardar un paciente sin cargar teléfono
 2. El autosuggest muestra un placeholder legible en vez de "Tel: null" para pacientes sin número
 3. La lista de pacientes, la ficha (`DatosCompletos.tsx`) y los reportes que muestran teléfono renderizan el placeholder en vez de vacío o "null"
 4. Los botones de envío por WhatsApp aparecen deshabilitados con tooltip explicativo cuando el paciente no tiene teléfono
 
 **Notas de implementación:**
+
 - Sitios de display identificados: `AutocompletePaciente.tsx:121` (`Tel: {pac.telefono}`), `DatosCompletos.tsx`, `NewPacienteModal.tsx`, `columns.tsx`, `ListaEsperaSheet.tsx`, páginas de reportes financieros/operativos.
 - Independiente de Phase 68 — puede ejecutarse en paralelo una vez cerrada la 67.
 

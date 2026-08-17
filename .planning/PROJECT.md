@@ -14,11 +14,27 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 
 **Última versión shipped:** v1.15 Flujo CRM Automático + Correcciones HC (2026-08-10) — 4 fases (63–66), 9 planes, 20 tareas, 11/11 requisitos, audit `tech_debt` con 0 blockers y 0 artefactos abiertos al cierre.
 
-**Próximo milestone:** sin definir — arrancar con `/gsd:new-milestone` (questioning → research → requirements → roadmap).
+**Milestone activo:** v1.16 Alta de Paciente sin Fricción — ver `## Current Milestone` abajo.
 
-**Candidatos en carpeta para el próximo ciclo** (ver Requirements → Active): dashboard de estadísticas ejecutivas con reportes exportables (REPORT-F01), automatizaciones de seguimiento por tiempo/etapa (REPORT-F02), módulos financieros interconectados con CRM, tipos de turno personalizados por profesional + color en calendario (TIPO-F01/F02), y vista de archivados con desarchivar en lote + archivado automático (CRM-F01/F02).
+**Candidatos en carpeta para ciclos posteriores** (ver Requirements → Active): dashboard de estadísticas ejecutivas con reportes exportables (REPORT-F01), automatizaciones de seguimiento por tiempo/etapa (REPORT-F02), módulos financieros interconectados con CRM, tipos de turno personalizados por profesional + color en calendario (TIPO-F01/F02), y vista de archivados con desarchivar en lote + archivado automático (CRM-F01/F02).
 
 **Gate legal pendiente pre-go-live (desde v1.12):** revisión del flujo de consentimiento (Ley 25506 / Ley 26529) antes del primer paciente quirúrgico real.
+
+## Current Milestone: v1.16 Alta de Paciente sin Fricción
+
+**Goal:** Que agendar un turno a un paciente nuevo no requiera registrarlo antes — se crea desde el mismo autosuggest con nombre y DNI.
+
+**Target features:**
+- `telefono` deja de ser obligatorio: migración Prisma a `telefono String?` + `@IsOptional()` en `CreatePacienteDto`, con auditoría de los sitios que hoy lo asumen string
+- Creación inline en el autosuggest: sin resultados, el popover expande un mini-form (Nombre + DNI) con "Crear y usar" que selecciona el paciente sin cerrar el modal de turno
+- Activación acotada a los tres modales de turno (`QuickAppointment`, `NewAppointmentModal`, `SurgeryAppointmentModal`) vía prop opcional; los usos de filtro quedan sin cambios
+- Guard de envíos sin teléfono: WhatsApp / presupuesto por WA rechazan con mensaje en español y la UI deshabilita la acción con tooltip
+
+**Key context:**
+- DNI sigue obligatorio y `@unique` — el 409 existente ("El DNI ingresado ya está registrado") debe renderizarse dentro del popover, no como toast que se pierde. Es el error más probable del flujo.
+- El paciente creado inline entra al kanban como `NUEVO_LEAD` por el `create()` de v1.15 (EMBUDO-07) y el turno que se agenda a continuación lo mueve a `TURNO_AGENDADO` por el flujo automático existente. Sin código CRM nuevo.
+- Blast radius de nullable: `AutocompletePaciente` (muestra `Tel: {pac.telefono}` crudo), `pacientes.service.ts:166/973`, reportes financieros, `DatosCompletos.tsx`, `NewPacienteModal.tsx`, y la validación `patch.telefono.trim().length < 6` en `pacientes.service.ts:436` (staging del portal) que asume string.
+- El paciente creado inline debe quedar asignado al profesional del contexto activo, igual que el alta normal.
 
 ## Requirements
 
@@ -143,7 +159,11 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 
 ### Active
 
-Sin milestone activo — próximos requisitos se definen en `/gsd:new-milestone`.
+**Milestone v1.16 — Alta de Paciente sin Fricción** (requisitos con REQ-ID en `.planning/REQUIREMENTS.md`):
+- [ ] `telefono` opcional en schema, DTO y formularios de alta
+- [ ] Creación de paciente inline desde el autosuggest (nombre + DNI) sin salir del modal de turno
+- [ ] Manejo explícito del DNI duplicado dentro del popover
+- [ ] Guard de envíos (WhatsApp / presupuesto por WA) para pacientes sin teléfono
 
 **Candidatos para próximos milestones / diferidos:**
 - [ ] Dashboard de estadísticas ejecutivas con reportes exportables y comparativas por período (REPORT-F01, diferido de v1.13)
@@ -388,7 +408,9 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-08-10 after v1.15 milestone — Flujo CRM Automático + Correcciones HC shipped (4 fases 63–66, 9 planes, 20 tareas, 11/11 requisitos, audit `tech_debt` con 0 blockers y 0 artefactos abiertos al cierre). El embudo del kanban refleja solo el estado real del paciente (lead nuevo en su columna, confirmación al agendar cirugía sin presupuesto, guard selectivo de degradación, recontacto tras cancelar, salida a planilla por tratamiento en consultorio), la card muestra el pendiente de su etapa, la planilla dejó de truncar tratamientos silenciosamente, el tipo de turno se sincroniza con la plantilla de HC cargada encima, y la HC de la ficha del paciente renderiza el detalle Pre-quirúrgico con el wizard como único camino de creación. Se resolvieron los 3 ítems diferidos de v1.14. Deuda advisory registrada en Key Decisions (⚠️ Revisit: gate por string 'Consulta', TOCTOU angosto en el sync de turno) y en el bloque "Shipped: v1.15". Próximo: `/gsd:new-milestone`.*
+*Last updated: 2026-08-17 al iniciar el milestone v1.16 — Alta de Paciente sin Fricción. Milestone chico (1–2 fases, numeración continúa desde la 66) enfocado en que agendar un turno a un paciente nuevo no requiera registrarlo antes: `telefono` pasa a nullable en schema/DTO, el autosuggest ofrece crear el paciente inline con nombre + DNI cuando no hay match (mini-form en el popover, activado sólo en los tres modales de turno), el DNI duplicado se muestra dentro del popover, y los envíos de WhatsApp/presupuesto quedan gateados para pacientes sin teléfono. Sin research (feature sobre código existente, blast radius ya mapeado).*
+
+*Prior: 2026-08-10 after v1.15 milestone — Flujo CRM Automático + Correcciones HC shipped (4 fases 63–66, 9 planes, 20 tareas, 11/11 requisitos, audit `tech_debt` con 0 blockers y 0 artefactos abiertos al cierre). El embudo del kanban refleja solo el estado real del paciente (lead nuevo en su columna, confirmación al agendar cirugía sin presupuesto, guard selectivo de degradación, recontacto tras cancelar, salida a planilla por tratamiento en consultorio), la card muestra el pendiente de su etapa, la planilla dejó de truncar tratamientos silenciosamente, el tipo de turno se sincroniza con la plantilla de HC cargada encima, y la HC de la ficha del paciente renderiza el detalle Pre-quirúrgico con el wizard como único camino de creación. Se resolvieron los 3 ítems diferidos de v1.14. Deuda advisory registrada en Key Decisions (⚠️ Revisit: gate por string 'Consulta', TOCTOU angosto en el sync de turno) y en el bloque "Shipped: v1.15". Próximo: `/gsd:new-milestone`.*
 
 *Prior: 2026-08-08 — Phase 66 (Correcciones de UI de Historia Clínica, Frontend) completa: HCUI-01/HCUI-02 validados (8/8 must-haves, checkpoint humano aprobado). HCEntryContent.tsx suma una rama de render `pre_quirurgico` (chips + detalle) que muestra el JSONB persistido (antecedentes, alergias, medicación, estudios complementarios, consentimiento Sí/No, comentario) ocultando vacíos y sin sección `zonas`, con título legible en TIPO_LABELS; HistoriaClinica.tsx elimina el dropdown "Nueva entrada"/form de texto libre/selector de plantilla muertos, dejando el wizard "+ Nueva HC" como único camino de creación. Code review advisory: 1 warning no bloqueante (WR-01: guard `hasAny` de la preview omite `estudiosComplementarios`) + 2 info. Última phase del milestone v1.15 — HCSYNC-01..03 (Phase 65) y HCUI-01/02 (Phase 66) completos. Próximo: `/gsd:complete-milestone`.*
 

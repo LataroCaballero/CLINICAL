@@ -1,17 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.15
-milestone_name: Flujo CRM Automático + Correcciones HC
-status: Awaiting next milestone
-stopped_at: Milestone v1.15 archived
-last_updated: "2026-08-10T15:37:35.092Z"
-last_activity: 2026-08-10 — Milestone v1.15 completed and archived
+milestone: v1.16
+milestone_name: Alta de Paciente sin Fricción
+status: planning
+last_updated: "2026-08-17T20:29:12.630Z"
+last_activity: 2026-08-17
 progress:
-  total_phases: 4
-  completed_phases: 4
-  total_plans: 9
-  completed_plans: 9
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -25,12 +24,10 @@ See: .planning/PROJECT.md (updated 2026-08-10 after v1.15 milestone)
 
 ## Current Position
 
-Phase: Milestone v1.15 complete (fases 63–66 archivadas)
+Phase: Not started (defining requirements)
 Plan: —
-Status: Awaiting next milestone
-Last activity: 2026-08-10 — Milestone v1.15 completed and archived
-
-Progress: [██████████] 100% (v1.15)
+Status: Defining requirements
+Last activity: 2026-08-17 — Milestone v1.16 started
 
 ## Accumulated Context
 

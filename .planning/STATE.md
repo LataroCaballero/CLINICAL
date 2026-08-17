@@ -6,7 +6,7 @@ status: planning
 last_updated: "2026-08-17T20:29:12.630Z"
 last_activity: 2026-08-17
 progress:
-  total_phases: 0
+  total_phases: 3
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -17,17 +17,29 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-08-10 after v1.15 milestone)
+See: .planning/PROJECT.md (updated 2026-08-17 al iniciar el milestone v1.16)
 
 **Core value:** Que un cirujano plástico cierre más cirugías — el sistema hace visible qué pacientes seguir, cuándo y cómo, de la manera más automatizada posible
-**Current focus:** Planificando el próximo milestone (`/gsd:new-milestone`)
+**Current focus:** v1.16 Alta de Paciente sin Fricción — Phase 67 (Teléfono Opcional y Guards de Envío, Backend)
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-08-17 — Milestone v1.16 started
+Phase: 67 — Teléfono Opcional y Guards de Envío (Backend) — no iniciada
+Plan: — (pendiente de `/gsd:plan-phase 67`)
+Status: Roadmap aprobado, listo para planificar
+Last activity: 2026-08-17 — Milestone v1.16 iniciado, roadmap de 3 fases (67–69) aprobado
+
+Progress: [░░░░░░░░░░] 0% (0/3 fases)
+
+### Roadmap v1.16
+
+| Fase | Nombre | Requisitos | Depende de |
+|------|--------|-----------|------------|
+| 67 | Teléfono Opcional y Guards de Envío (Backend) | TEL-01, ENVIO-01, ENVIO-02 | — |
+| 68 | Creación Inline en el Autosuggest (Frontend) | ALTA-01..07 | 67 |
+| 69 | Consistencia de Teléfono Opcional (Frontend) | TEL-02, TEL-03, ENVIO-03 | 67 |
+
+Las fases 68 y 69 son independientes entre sí y pueden ejecutarse en paralelo tras la 67.
 
 ## Accumulated Context
 
@@ -73,10 +85,12 @@ Los 3 ítems diferidos al cierre de v1.14 quedaron resueltos durante v1.15:
 
 ## Session Continuity
 
-Last session: 2026-08-10 — cierre y archivado del milestone v1.15
-Stopped at: Milestone v1.15 archived
+Last session: 2026-08-17 — inicio del milestone v1.16 (questioning → requirements → roadmap)
+Stopped at: Roadmap v1.16 aprobado y commiteado
 Resume file: — (sin trabajo en curso)
 
 ## Operator Next Steps
 
-- Arrancar el próximo milestone con `/gsd:new-milestone` (questioning → research → requirements → roadmap). `.planning/REQUIREMENTS.md` se regenera ahí.
+- `/gsd:discuss-phase 67` para juntar contexto antes de planificar, o `/gsd:plan-phase 67` para planificar directo.
+- Research salteado en este milestone (feature sobre código existente, blast radius mapeado en el roadmap).
+- Ojo en la Phase 67: el `LIKE` sobre `p.telefono` en `suggest()` devuelve NULL (no false) con teléfono nulo — verificar filtro y score.

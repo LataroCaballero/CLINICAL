@@ -61,28 +61,28 @@ Reconocidos pero diferidos. No entran en el roadmap de v1.16.
 
 ## Traceability
 
-Se completa durante la creación del roadmap.
+Cada requisito mapea a exactamente una fase. Ver `.planning/ROADMAP.md` para goals y success criteria.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| TEL-01 | — | Pending |
-| TEL-02 | — | Pending |
-| TEL-03 | — | Pending |
-| ALTA-01 | — | Pending |
-| ALTA-02 | — | Pending |
-| ALTA-03 | — | Pending |
-| ALTA-04 | — | Pending |
-| ALTA-05 | — | Pending |
-| ALTA-06 | — | Pending |
-| ALTA-07 | — | Pending |
-| ENVIO-01 | — | Pending |
-| ENVIO-02 | — | Pending |
-| ENVIO-03 | — | Pending |
+| TEL-01 | Phase 67 | Pending |
+| ENVIO-01 | Phase 67 | Pending |
+| ENVIO-02 | Phase 67 | Pending |
+| ALTA-01 | Phase 68 | Pending |
+| ALTA-02 | Phase 68 | Pending |
+| ALTA-03 | Phase 68 | Pending |
+| ALTA-04 | Phase 68 | Pending |
+| ALTA-05 | Phase 68 | Pending |
+| ALTA-06 | Phase 68 | Pending |
+| ALTA-07 | Phase 68 | Pending |
+| TEL-02 | Phase 69 | Pending |
+| TEL-03 | Phase 69 | Pending |
+| ENVIO-03 | Phase 69 | Pending |
 
 **Coverage:**
 - v1.16 requirements: 13 total
-- Mapped to phases: 0 (pendiente de roadmap)
-- Unmapped: 13 ⚠️
+- Mapped to phases: 13
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-08-17*

@@ -18,6 +18,7 @@
 - ✅ **v1.13 Embudo CRM Accionable** — Fases 57–60 (shipped 2026-07-05)
 - ✅ **v1.14 Portal — Firma Gated e Indicaciones Separadas** — Fases 61–62 (shipped 2026-07-21)
 - ✅ **v1.15 Flujo CRM Automático + Correcciones HC** — Fases 63–66 (shipped 2026-08-10)
+- ◆ **v1.16 Alta de Paciente sin Fricción** — Fases 67–69 (en curso)
 
 ## Phases
 
@@ -225,6 +226,68 @@ Full details: `.planning/milestones/v1.15-ROADMAP.md`
 
 </details>
 
+### ◆ v1.16 Alta de Paciente sin Fricción (Fases 67–69) — EN CURSO
+
+**Goal:** Que agendar un turno a un paciente nuevo no requiera registrarlo antes — se crea desde el mismo autosuggest con nombre y DNI.
+
+**Dependencias:** Phase 67 es prerequisito de 68 y 69. Las fases 68 y 69 son independientes entre sí y pueden ejecutarse en paralelo.
+
+#### Phase 67: Teléfono Opcional y Guards de Envío (Backend)
+
+**Goal:** Que el backend acepte y persista un paciente sin teléfono, y que los dos entrypoints de envío por WhatsApp fallen con un mensaje claro en vez de un error crudo cuando no hay número.
+
+**Requirements:** TEL-01, ENVIO-01, ENVIO-02
+
+**Success criteria:**
+1. Un `POST /pacientes` con sólo `nombreCompleto` y `dni` crea el paciente y devuelve 201 (hoy devuelve 400 por `telefono` faltante)
+2. Los pacientes existentes conservan su teléfono intacto después de la migración
+3. Intentar enviar un WhatsApp a un paciente sin teléfono devuelve un error en español identificable por el frontend, sin llegar a la API de Meta
+4. Intentar enviar un presupuesto por WhatsApp a un paciente sin teléfono devuelve el mismo error controlado
+5. La suite de tests existente del backend sigue pasando (incluida la validación de staging del portal en `pacientes.service.ts:436`, que hoy asume `telefono` string)
+
+**Notas de implementación:**
+- Migración Prisma: `telefono String` → `telefono String?`. Es una relajación de constraint, no destructiva.
+- `CreatePacienteDto`: agregar `@IsOptional()` sobre `telefono`.
+- Auditar los reads backend que asumen string: `pacientes.service.ts:166/973` (listas), `reportes-financieros.service.ts:522/563/599`, `paciente-portal.service.ts:142`, `whatsapp.service.ts:229/279/331/456`, `presupuestos.service.ts:458`, `presupuesto-email.service.ts:77`. `presupuesto-pdf.service.ts:143` ya lo trata como opcional.
+- El `suggest()` (`pacientes.service.ts:337`) tiene `p.telefono LIKE '%'||$q||'%'` en el WHERE y en el score — con NULL el `LIKE` da NULL (no false), verificar que no rompa el filtro ni el orden.
+
+#### Phase 68: Creación Inline en el Autosuggest (Frontend)
+
+**Goal:** Que al buscar un paciente que no existe, el usuario pueda crearlo con nombre y DNI ahí mismo y seguir agendando el turno sin cerrar el modal.
+
+**Requirements:** ALTA-01, ALTA-02, ALTA-03, ALTA-04, ALTA-05, ALTA-06, ALTA-07
+
+**Success criteria:**
+1. Buscar un paciente inexistente en el modal de turno muestra un mini-form con Nombre y DNI dentro del popover, en vez de un popover vacío
+2. El campo correspondiente viene precargado con lo que el usuario escribió: DNI si el query es numérico, nombre completo si es texto
+3. Crear el paciente lo deja seleccionado en el modal de turno, y confirmar el turno funciona sin pasos adicionales
+4. Ingresar un DNI ya registrado muestra el error dentro del mini-form, conservando lo cargado, y permite corregirlo
+5. El paciente creado queda asignado al profesional del contexto activo
+6. El mini-form aparece en `QuickAppointment`, `NewAppointmentModal` y `SurgeryAppointmentModal`, y **no** aparece en `PatientFilters` ni `data-table-toolbar`
+
+**Notas de implementación:**
+- `AutocompletePaciente.tsx` gana una prop opcional (ej. `allowCreate`) — default off, de modo que los usos de filtro no cambien de comportamiento.
+- El popover hoy sólo abre con `data.length > 0 || isFetching`; hay que extender esa condición al caso "sin resultados" cuando `allowCreate` está activo.
+- El 409 de DNI duplicado ya viene con mensaje en español desde `pacientes.service.ts` — hay que renderizarlo en el form, no como toast.
+- `profesionalId`: tomarlo del contexto profesional activo (`useEffectiveProfessionalId`), igual que el alta completa.
+- Popover dentro de Dialog: verificar foco y cierre por click-outside — el mini-form no debe cerrarse mientras se tipea.
+
+#### Phase 69: Consistencia de Teléfono Opcional (Frontend)
+
+**Goal:** Que un paciente sin teléfono se vea y se comporte bien en toda la app, no sólo en el flujo de alta inline.
+
+**Requirements:** TEL-02, TEL-03, ENVIO-03
+
+**Success criteria:**
+1. El alta completa (`NewPacienteModal`) permite guardar un paciente sin cargar teléfono
+2. El autosuggest muestra un placeholder legible en vez de "Tel: null" para pacientes sin número
+3. La lista de pacientes, la ficha (`DatosCompletos.tsx`) y los reportes que muestran teléfono renderizan el placeholder en vez de vacío o "null"
+4. Los botones de envío por WhatsApp aparecen deshabilitados con tooltip explicativo cuando el paciente no tiene teléfono
+
+**Notas de implementación:**
+- Sitios de display identificados: `AutocompletePaciente.tsx:121` (`Tel: {pac.telefono}`), `DatosCompletos.tsx`, `NewPacienteModal.tsx`, `columns.tsx`, `ListaEsperaSheet.tsx`, páginas de reportes financieros/operativos.
+- Independiente de Phase 68 — puede ejecutarse en paralelo una vez cerrada la 67.
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -297,6 +360,9 @@ Full details: `.planning/milestones/v1.15-ROADMAP.md`
 | 64. Indicadores de Pendientes y Planilla Legible (Frontend) | v1.15 | 3/3 | Complete    | 2026-08-03 |
 | 65. Sync Tipo de Turno ↔ Plantilla HC (Backend) | v1.15 | 2/2 | Complete    | 2026-08-04 |
 | 66. Correcciones de UI de Historia Clínica (Frontend) | v1.15 | 1/1 | Complete    | 2026-08-08 |
+| 67. Teléfono Opcional y Guards de Envío (Backend) | v1.16 | 0/? | Pending | — |
+| 68. Creación Inline en el Autosuggest (Frontend) | v1.16 | 0/? | Pending | — |
+| 69. Consistencia de Teléfono Opcional (Frontend) | v1.16 | 0/? | Pending | — |
 
 ---
 *Roadmap initialized: 2026-02-23 | v1.0 shipped: 2026-03-03 | v1.1 shipped: 2026-03-16 | v1.2 shipped: 2026-03-31 | v1.3 shipped: 2026-04-09 | v1.4 shipped: 2026-04-20 | v1.5 shipped: 2026-05-13 | v1.6 shipped: 2026-05-23 | v1.7 shipped: 2026-05-28 | v1.8 shipped: 2026-06-09 | v1.9 shipped: 2026-06-13 | v1.10 shipped: 2026-06-22 | v1.11 shipped: 2026-06-24 | v1.12 shipped: 2026-07-02 | v1.13 shipped: 2026-07-05 | v1.14 shipped: 2026-07-21 | v1.15 shipped: 2026-08-10*

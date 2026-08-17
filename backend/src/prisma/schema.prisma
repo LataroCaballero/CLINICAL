@@ -155,7 +155,7 @@ model Paciente {
   nombreCompleto                    String
   dni                               String                   @unique
   fechaNacimiento                   DateTime?
-  telefono                          String
+  telefono                          String?
   telefonoAlternativo               String?
   email                             String?
   direccion                         String?

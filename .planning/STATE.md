@@ -2,9 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.16
 milestone_name: Alta de Paciente sin Fricción
-status: planning
-last_updated: "2026-08-17T20:29:12.630Z"
-last_activity: 2026-08-17
+status: Roadmap aprobado, listo para planificar
+stopped_at: Phase 67 context gathered
+last_updated: "2026-08-17T22:20:13.882Z"
+last_activity: 2026-08-17 — Milestone v1.16 iniciado, roadmap de 3 fases (67–69) aprobado
 progress:
   total_phases: 3
   completed_phases: 0
@@ -85,9 +86,9 @@ Los 3 ítems diferidos al cierre de v1.14 quedaron resueltos durante v1.15:
 
 ## Session Continuity
 
-Last session: 2026-08-17 — inicio del milestone v1.16 (questioning → requirements → roadmap)
-Stopped at: Roadmap v1.16 aprobado y commiteado
-Resume file: — (sin trabajo en curso)
+Last session: 2026-08-17T22:20:13.879Z
+Stopped at: Phase 67 context gathered
+Resume file: .planning/phases/67-tel-fono-opcional-y-guards-de-env-o-backend/67-CONTEXT.md
 
 ## Operator Next Steps
 

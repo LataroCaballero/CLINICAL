@@ -238,6 +238,15 @@ Full details: `.planning/milestones/v1.15-ROADMAP.md`
 
 **Requirements:** TEL-01, ENVIO-01, ENVIO-02
 
+**Plans:** 5 plans (3 waves)
+
+Plans:
+- [ ] 67-01-PLAN.md — Schema nullable + `@IsOptional()` + migración Prisma + ensanchar tipos (wave 1)
+- [ ] 67-02-PLAN.md — `normalizeTelefono()` en `create`/`update`/`updateContacto`, `suggest()` null-safe, comentario WR-02 del portal (wave 2)
+- [ ] 67-03-PLAN.md — Guard de teléfono en los 4 paths de envío de `WhatsappService` (wave 2)
+- [ ] 67-04-PLAN.md — Auditoría de reads downstream: reportes financieros y presupuestos (wave 2)
+- [ ] 67-05-PLAN.md — Tests (pacientes extendido, whatsapp y presupuestos nuevos) + verificación completa (wave 3)
+
 **Success criteria:**
 1. Un `POST /pacientes` con sólo `nombreCompleto` y `dni` crea el paciente y devuelve 201 (hoy devuelve 400 por `telefono` faltante)
 2. Los pacientes existentes conservan su teléfono intacto después de la migración

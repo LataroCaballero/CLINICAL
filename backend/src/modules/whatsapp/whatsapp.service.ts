@@ -180,6 +180,23 @@ export class WhatsappService {
   }
 
   /**
+   * Guard compartido por los 4 paths que empujan `telefono` a la cola de envío.
+   * Bloquea si el valor es null, undefined o queda vacío tras trim() (D-03) — no
+   * valida forma del número, sólo existencia. No consulta telefonoAlternativo (D-04).
+   * Devuelve el string trimmeado para que el call site lo pase al payload del job.
+   */
+  private requireTelefonoParaEnvio(
+    telefono: string | null | undefined,
+  ): string {
+    if (!telefono || !telefono.trim()) {
+      throw new BadRequestException(
+        'El paciente no tiene un número de teléfono cargado. Agregá un teléfono en su ficha para poder enviarle mensajes de WhatsApp.',
+      );
+    }
+    return telefono.trim();
+  }
+
+  /**
    * Sends a WhatsApp template message.
    * Creates MensajeWhatsApp DB record, enqueues the send job.
    * Returns the DB record id (not waMessageId which is set after Meta response).
@@ -203,6 +220,7 @@ export class WhatsappService {
         'El paciente no ha dado su consentimiento para recibir mensajes de WhatsApp.',
       );
     }
+    const telefono = this.requireTelefonoParaEnvio(paciente.telefono);
 
     // Create pending DB record
     const mensaje = await this.prisma.mensajeWhatsApp.create({
@@ -226,7 +244,7 @@ export class WhatsappService {
         components: dto.components ?? [],
         phoneNumberId: config.phoneNumberId,
         accessToken: config.accessToken,
-        telefono: paciente.telefono,
+        telefono,
       },
       { attempts: 3, backoff: { type: 'exponential', delay: 1000 } },
     );
@@ -257,6 +275,7 @@ export class WhatsappService {
         'El paciente no ha dado su consentimiento para recibir mensajes de WhatsApp.',
       );
     }
+    const telefono = this.requireTelefonoParaEnvio(paciente.telefono);
 
     const mensaje = await this.prisma.mensajeWhatsApp.create({
       data: {
@@ -276,7 +295,7 @@ export class WhatsappService {
         freeText: texto,
         phoneNumberId: config.phoneNumberId,
         accessToken: config.accessToken,
-        telefono: paciente.telefono,
+        telefono,
       },
       { attempts: 3, backoff: { type: 'exponential', delay: 1000 } },
     );
@@ -308,6 +327,7 @@ export class WhatsappService {
         'El paciente no ha dado su consentimiento para recibir mensajes de WhatsApp.',
       );
     }
+    const telefono = this.requireTelefonoParaEnvio(paciente.telefono);
 
     const mensaje = await this.prisma.mensajeWhatsApp.create({
       data: {
@@ -328,7 +348,7 @@ export class WhatsappService {
         documentFilename: `presupuesto-${presupuestoId}.pdf`,
         phoneNumberId: config.phoneNumberId,
         accessToken: config.accessToken,
-        telefono: paciente.telefono,
+        telefono,
       },
       { attempts: 3, backoff: { type: 'exponential', delay: 1000 } },
     );

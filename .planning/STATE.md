@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.16
 milestone_name: Alta de Paciente sin Fricción
-status: executing
-stopped_at: "Plan 67-04 completado (TEL-01: reportes financieros + presupuestos.service.ts generatePdf() sin casts, auditoria de 12 sitios cerrada)"
-last_updated: "2026-08-18T22:13:14.525Z"
+status: verifying
+stopped_at: "Plan 67-05 completado (fase 67 cerrada: TEL-01/ENVIO-01/ENVIO-02 con cobertura de test para los 5 success criteria del ROADMAP)"
+last_updated: "2026-08-18T22:28:44.305Z"
 last_activity: 2026-08-18
 progress:
   total_phases: 3
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 5
-  completed_plans: 4
-  percent: 0
+  completed_plans: 5
+  percent: 33
 ---
 
 # Project State
@@ -27,10 +27,10 @@ See: .planning/PROJECT.md (updated 2026-08-17 al iniciar el milestone v1.16)
 
 Phase: 67 (tel-fono-opcional-y-guards-de-env-o-backend)
 Plan: 5 of 5 (Plans 1-2/5 complete — TEL-01)
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-08-18
 
-Progress: [████████░░] 80%
+Progress: [██████████] 100%
 
 ### Roadmap v1.16
 
@@ -52,6 +52,7 @@ Full decision log en `.planning/PROJECT.md` (Key Decisions). Las decisiones de v
 - [Phase 67-02]: normalizeTelefono() en PacientesService como unica definicion de teléfono valido (D-01/D-02/D-05/D-06); suggest() usa COALESCE(p.telefono, '') para ser NULL-safe, verificado con probe en transaccion con rollback (424==424)
 - [Phase 67-03]: requireTelefonoParaEnvio() en WhatsappService guarda los 4 paths (sendTemplateMessage, sendFreeText, sendPresupuestoPdf, retryMessage) que empujan telefono a la cola BullMQ — falsy-tras-trim sin fallback a telefonoAlternativo, BadRequestException plano en espanol; retryMessage se guardea despues del check de ownership y antes de mutar estado, para preservar NotFoundException anti-enumeracion y errorMsg original
 - [Phase 67-04]: Reportes financieros y presupuestos.service.ts::generatePdf() propagan telefono nullable sin as any ni placeholders; auditoria de 12 sitios del ROADMAP + presupuesto-pdf.service.ts:143 como precedente cerrada en 67-04-SUMMARY.md
+- [Phase 67-05]: requireTelefonoParaEnvio y normalizeTelefono cubiertos con 33 tests nuevos (pacientes/whatsapp/presupuestos); fix Rule 1: create() enmascaraba BadRequestException de telefono invalido como 500, corregido con rethrow explicito. Suite completa: 4 failed/18 failed tests, identico a la baseline preexistente. paciente-portal.service.spec.ts (WR-02) sin editar.
 
 ### Known Tech Debt (carry-forward)
 
@@ -95,12 +96,12 @@ Los 3 ítems diferidos al cierre de v1.14 quedaron resueltos durante v1.15:
 
 ## Session Continuity
 
-Last session: 2026-08-18T22:13:14.522Z
-Stopped at: Plan 67-04 completado (TEL-01: reportes financieros + presupuestos.service.ts generatePdf() sin casts, auditoria de 12 sitios cerrada)
+Last session: 2026-08-18T22:28:44.301Z
+Stopped at: Plan 67-05 completado (fase 67 cerrada: TEL-01/ENVIO-01/ENVIO-02 con cobertura de test para los 5 success criteria del ROADMAP)
 Resume file: 
 
 ## Operator Next Steps
 
-- Continuar con el plan 67-03 (wave 2, guard de teléfono en los 4 paths de envío de `WhatsappService` + presupuestos).
+- Fase 67 (backend) completa — 5/5 planes ejecutados, TEL-01/ENVIO-01/ENVIO-02 cubiertos con tests automatizados que trazan los 5 success criteria del ROADMAP. Ready for verification.
+- Fases 68 (Creación Inline en el Autosuggest) y 69 (Consistencia de Teléfono Opcional Frontend) pueden arrancar en paralelo — ambas dependen únicamente de la fase 67, ya cerrada.
 - Research salteado en este milestone (feature sobre código existente, blast radius mapeado en el roadmap).
-- Plan 67-02 completado: `normalizeTelefono()` centraliza la validación (create/update/updateContacto), `suggest()` es NULL-safe vía `COALESCE`. El guard de envío WA de 67-03 puede apoyarse en el criterio D-03 (falsy tras trim), sin necesidad de reusar `normalizeTelefono()`.

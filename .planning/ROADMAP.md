@@ -238,7 +238,7 @@ Full details: `.planning/milestones/v1.15-ROADMAP.md`
 
 **Requirements:** TEL-01, ENVIO-01, ENVIO-02
 
-**Plans:** 4/5 plans executed
+**Plans:** 5/5 plans complete
 
 Plans:
 **Wave 1**
@@ -253,7 +253,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 67-05-PLAN.md — Tests (pacientes extendido, whatsapp y presupuestos nuevos) + verificación completa (wave 3)
+- [x] 67-05-PLAN.md — Tests (pacientes extendido, whatsapp y presupuestos nuevos) + verificación completa (wave 3)
 
 **Success criteria:**
 
@@ -383,7 +383,7 @@ Plans:
 | 64. Indicadores de Pendientes y Planilla Legible (Frontend) | v1.15 | 3/3 | Complete    | 2026-08-03 |
 | 65. Sync Tipo de Turno ↔ Plantilla HC (Backend) | v1.15 | 2/2 | Complete    | 2026-08-04 |
 | 66. Correcciones de UI de Historia Clínica (Frontend) | v1.15 | 1/1 | Complete    | 2026-08-08 |
-| 67. Teléfono Opcional y Guards de Envío (Backend) | v1.16 | 4/5 | In Progress|  |
+| 67. Teléfono Opcional y Guards de Envío (Backend) | v1.16 | 5/5 | Complete   | 2026-08-18 |
 | 68. Creación Inline en el Autosuggest (Frontend) | v1.16 | 0/? | Pending | — |
 | 69. Consistencia de Teléfono Opcional (Frontend) | v1.16 | 0/? | Pending | — |
 

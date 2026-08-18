@@ -576,7 +576,9 @@ describe('PacientesService — portal link encrypt/recover (52-09)', () => {
 
   // ── normalizeTelefono() — teléfono opcional en create/update/updateContacto (Phase 67, TEL-01) ──
   describe('normalizeTelefono() — teléfono opcional (D-01/D-02/D-05/D-06/D-07)', () => {
-    function buildDto(overrides: Partial<CreatePacienteDto> = {}): CreatePacienteDto {
+    function buildDto(
+      overrides: Partial<CreatePacienteDto> = {},
+    ): CreatePacienteDto {
       return {
         nombreCompleto: 'Lead Sin Telefono',
         dni: '30222333',
@@ -585,7 +587,9 @@ describe('PacientesService — portal link encrypt/recover (52-09)', () => {
     }
 
     it('SC#1: create() con sólo nombreCompleto y dni no lanza y persiste telefono: null', async () => {
-      (prisma.paciente.create as jest.Mock).mockResolvedValue({ id: 'p-sin-tel' });
+      (prisma.paciente.create as jest.Mock).mockResolvedValue({
+        id: 'p-sin-tel',
+      });
 
       await expect(service.create(buildDto())).resolves.toBeDefined();
 
@@ -596,7 +600,9 @@ describe('PacientesService — portal link encrypt/recover (52-09)', () => {
     });
 
     it("D-01: create() con telefono: '' -> data.telefono === null", async () => {
-      (prisma.paciente.create as jest.Mock).mockResolvedValue({ id: 'p-vacio' });
+      (prisma.paciente.create as jest.Mock).mockResolvedValue({
+        id: 'p-vacio',
+      });
 
       await service.create(buildDto({ telefono: '' }));
 
@@ -605,7 +611,9 @@ describe('PacientesService — portal link encrypt/recover (52-09)', () => {
     });
 
     it("D-01: create() con telefono: '   ' (solo espacios) -> data.telefono === null", async () => {
-      (prisma.paciente.create as jest.Mock).mockResolvedValue({ id: 'p-espacios' });
+      (prisma.paciente.create as jest.Mock).mockResolvedValue({
+        id: 'p-espacios',
+      });
 
       await service.create(buildDto({ telefono: '   ' }));
 
@@ -623,16 +631,20 @@ describe('PacientesService — portal link encrypt/recover (52-09)', () => {
     });
 
     it("D-06: create() con telefono: '123' -> BadRequestException('Teléfono inválido'), sin llamar a prisma.paciente.create", async () => {
-      await expect(service.create(buildDto({ telefono: '123' }))).rejects.toThrow(
-        new BadRequestException('Teléfono inválido'),
-      );
+      await expect(
+        service.create(buildDto({ telefono: '123' })),
+      ).rejects.toThrow(new BadRequestException('Teléfono inválido'));
 
       expect(prisma.paciente.create as jest.Mock).not.toHaveBeenCalled();
     });
 
     it('D-02: update() sin la clave telefono -> data enviado a prisma.paciente.update NO tiene la propiedad telefono', async () => {
-      (prisma.paciente.findUnique as jest.Mock).mockResolvedValue({ id: 'p-upd-1' });
-      (prisma.paciente.update as jest.Mock).mockResolvedValue({ id: 'p-upd-1' });
+      (prisma.paciente.findUnique as jest.Mock).mockResolvedValue({
+        id: 'p-upd-1',
+      });
+      (prisma.paciente.update as jest.Mock).mockResolvedValue({
+        id: 'p-upd-1',
+      });
 
       await service.update('p-upd-1', { nombreCompleto: 'X' } as any);
 
@@ -641,8 +653,12 @@ describe('PacientesService — portal link encrypt/recover (52-09)', () => {
     });
 
     it('D-02: vaciar el teléfono desde el staff lo deja en null', async () => {
-      (prisma.paciente.findUnique as jest.Mock).mockResolvedValue({ id: 'p-upd-2' });
-      (prisma.paciente.update as jest.Mock).mockResolvedValue({ id: 'p-upd-2' });
+      (prisma.paciente.findUnique as jest.Mock).mockResolvedValue({
+        id: 'p-upd-2',
+      });
+      (prisma.paciente.update as jest.Mock).mockResolvedValue({
+        id: 'p-upd-2',
+      });
 
       await service.update('p-upd-2', { telefono: '' } as any);
 
@@ -651,7 +667,9 @@ describe('PacientesService — portal link encrypt/recover (52-09)', () => {
     });
 
     it('D-05: updatePacienteSection contacto con telefono vacío no lanza y persiste telefono: null', async () => {
-      (prisma.paciente.update as jest.Mock).mockResolvedValue({ id: 'p-contacto-1' });
+      (prisma.paciente.update as jest.Mock).mockResolvedValue({
+        id: 'p-contacto-1',
+      });
 
       await expect(
         service.updatePacienteSection('p-contacto-1', {
@@ -682,7 +700,9 @@ describe('PacientesService — portal link encrypt/recover (52-09)', () => {
             contactoEmergenciaRelacion: 'Padre',
           },
         } as any),
-      ).rejects.toThrow(new BadRequestException('Datos de emergencia inválidos'));
+      ).rejects.toThrow(
+        new BadRequestException('Datos de emergencia inválidos'),
+      );
     });
   });
 });

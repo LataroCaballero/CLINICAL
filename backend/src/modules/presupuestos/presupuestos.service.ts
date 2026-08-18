@@ -453,9 +453,9 @@ export class PresupuestosService {
       total: Number(presupuesto.total),
       paciente: {
         nombreCompleto: presupuesto.paciente.nombreCompleto,
-        dni: (presupuesto.paciente as any).dni,
-        email: (presupuesto.paciente as any).email,
-        telefono: (presupuesto.paciente as any).telefono,
+        dni: presupuesto.paciente.dni,
+        email: presupuesto.paciente.email,
+        telefono: presupuesto.paciente.telefono,
       },
       config: {
         nombreClinica: config?.nombreClinica,

@@ -1,8 +1,19 @@
--- AlterTable
-ALTER TABLE "Paciente" ALTER COLUMN "flujo" SET DEFAULT 'PENDIENTE';
-
--- CreateIndex
-CREATE INDEX "Paciente_flujo_idx" ON "Paciente"("flujo");
-
--- CreateIndex
-CREATE INDEX "Paciente_profesionalId_flujo_idx" ON "Paciente"("profesionalId", "flujo");
+-- Migracion intencionalmente vacia (no-op).
+--
+-- Esta migracion figura como aplicada en `_prisma_migrations` de la base viva, asi que
+-- su directorio tiene que existir en el historial local: sin el, `prisma migrate dev`
+-- aborta con "applied to the database but missing from the local migrations directory".
+--
+-- Su SQL original (ALTER COLUMN "flujo" SET DEFAULT + 2 CREATE INDEX) tenia un bug de
+-- ordenamiento por timestamp: corria ANTES de 20260416000000_flujo_paciente, que es la
+-- que realmente crea la columna "flujo". Contra la base real nunca dio problema porque
+-- se aplico una sola vez y en un momento en que la columna ya existia, pero la shadow
+-- database de `migrate dev` reproduce el historial completo en orden estricto y ahi
+-- falla con: column "flujo" of relation "Paciente" does not exist (P3006).
+--
+-- Por eso el SQL se movio a 20260416000001_flujo_paciente_defaults, que lo reimplementa
+-- de forma idempotente (IF NOT EXISTS) y en la posicion correcta. El commit a2af411 habia
+-- borrado este directorio entero; eso resolvia el replay pero rompia la correspondencia
+-- con el registro de la base. Dejarlo vacio satisface las dos cosas.
+--
+-- No agregar sentencias aca: el efecto ya lo cubre 20260416000001_flujo_paciente_defaults.

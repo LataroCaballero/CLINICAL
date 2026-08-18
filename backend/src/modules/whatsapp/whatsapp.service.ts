@@ -459,6 +459,7 @@ export class WhatsappService {
     if (!mensaje || mensaje.profesionalId !== profesionalId) {
       throw new NotFoundException('Mensaje no encontrado');
     }
+    const telefono = this.requireTelefonoParaEnvio(mensaje.paciente.telefono);
 
     // Reset to PENDIENTE
     await this.prisma.mensajeWhatsApp.update({
@@ -473,7 +474,7 @@ export class WhatsappService {
         mensajeId,
         phoneNumberId: config.phoneNumberId,
         accessToken: config.accessToken,
-        telefono: mensaje.paciente.telefono,
+        telefono,
         // Processor will determine message type from DB record
       },
       { attempts: 3, backoff: { type: 'exponential', delay: 1000 } },

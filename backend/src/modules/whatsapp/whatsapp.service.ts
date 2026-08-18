@@ -182,7 +182,8 @@ export class WhatsappService {
   /**
    * Guard compartido por los 4 paths que empujan `telefono` a la cola de envío.
    * Bloquea si el valor es null, undefined o queda vacío tras trim() (D-03) — no
-   * valida forma del número, sólo existencia. No consulta telefonoAlternativo (D-04).
+   * valida forma del número, sólo existencia, y no cae a ningún otro campo de
+   * contacto como canal alternativo de envío (D-04).
    * Devuelve el string trimmeado para que el call site lo pase al payload del job.
    */
   private requireTelefonoParaEnvio(

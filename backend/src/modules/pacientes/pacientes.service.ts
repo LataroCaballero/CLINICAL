@@ -408,7 +408,7 @@ export class PacientesService {
           (similarity(unaccent(p."nombreCompleto"), unaccent(${query})) * 0.7) +
           CASE WHEN p.dni = ${query} THEN 0.95 ELSE 0 END +
           CASE WHEN p.dni LIKE ${query} || '%' THEN 0.7 ELSE 0 END +
-          CASE WHEN p.telefono LIKE '%' || ${query} || '%' THEN 0.5 ELSE 0 END
+          CASE WHEN COALESCE(p.telefono, '') LIKE '%' || ${query} || '%' THEN 0.5 ELSE 0 END
         ) AS score
       FROM "Paciente" p
       WHERE
@@ -416,7 +416,7 @@ export class PacientesService {
           similarity(unaccent(p."nombreCompleto"), unaccent(${query})) > 0.25
           OR unaccent(p."nombreCompleto") ILIKE '%' || unaccent(${query}) || '%'
           OR p.dni LIKE ${query} || '%'
-          OR p.telefono LIKE '%' || ${query} || '%'
+          OR COALESCE(p.telefono, '') LIKE '%' || ${query} || '%'
         )
         ${profesionalFilter}
       ORDER BY score DESC

@@ -238,7 +238,7 @@ Full details: `.planning/milestones/v1.15-ROADMAP.md`
 
 **Requirements:** TEL-01, ENVIO-01, ENVIO-02
 
-**Plans:** 2/5 plans executed
+**Plans:** 3/5 plans executed
 
 Plans:
 **Wave 1**
@@ -248,7 +248,7 @@ Plans:
 **Wave 2** *(blocked on Wave 1 completion)*
 
 - [x] 67-02-PLAN.md — `normalizeTelefono()` en `create`/`update`/`updateContacto`, `suggest()` null-safe, comentario WR-02 del portal (wave 2)
-- [ ] 67-03-PLAN.md — Guard de teléfono en los 4 paths de envío de `WhatsappService` (wave 2)
+- [x] 67-03-PLAN.md — Guard de teléfono en los 4 paths de envío de `WhatsappService` (wave 2)
 - [ ] 67-04-PLAN.md — Auditoría de reads downstream: reportes financieros y presupuestos (wave 2)
 
 **Wave 3** *(blocked on Wave 2 completion)*
@@ -383,7 +383,7 @@ Plans:
 | 64. Indicadores de Pendientes y Planilla Legible (Frontend) | v1.15 | 3/3 | Complete    | 2026-08-03 |
 | 65. Sync Tipo de Turno ↔ Plantilla HC (Backend) | v1.15 | 2/2 | Complete    | 2026-08-04 |
 | 66. Correcciones de UI de Historia Clínica (Frontend) | v1.15 | 1/1 | Complete    | 2026-08-08 |
-| 67. Teléfono Opcional y Guards de Envío (Backend) | v1.16 | 2/5 | In Progress|  |
+| 67. Teléfono Opcional y Guards de Envío (Backend) | v1.16 | 3/5 | In Progress|  |
 | 68. Creación Inline en el Autosuggest (Frontend) | v1.16 | 0/? | Pending | — |
 | 69. Consistencia de Teléfono Opcional (Frontend) | v1.16 | 0/? | Pending | — |
 

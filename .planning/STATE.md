@@ -4,13 +4,13 @@ milestone: v1.16
 milestone_name: Alta de Paciente sin Fricción
 status: executing
 stopped_at: "Plan 67-02 completado (TEL-01: normalizeTelefono() + suggest() NULL-safe)"
-last_updated: "2026-08-18T22:02:03.628Z"
+last_updated: "2026-08-18T22:07:05.540Z"
 last_activity: 2026-08-18
 progress:
   total_phases: 3
   completed_phases: 0
   total_plans: 5
-  completed_plans: 2
+  completed_plans: 3
   percent: 0
 ---
 
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-08-17 al iniciar el milestone v1.16)
 ## Current Position
 
 Phase: 67 (tel-fono-opcional-y-guards-de-env-o-backend)
-Plan: 3 of 5 (Plans 1-2/5 complete — TEL-01)
+Plan: 4 of 5 (Plans 1-2/5 complete — TEL-01)
 Status: Ready to execute
 Last activity: 2026-08-18
 
-Progress: [████░░░░░░] 40%
+Progress: [██████░░░░] 60%
 
 ### Roadmap v1.16
 
@@ -50,6 +50,7 @@ Full decision log en `.planning/PROJECT.md` (Key Decisions). Las decisiones de v
 
 - [Phase 67]: TEL-01 aplicado end-to-end: Paciente.telefono nullable en schema, migracion aplicada (TEL_BASELINE=TEL_AFTER=424), DTO y 6 declaraciones de tipo ensanchadas a string | null
 - [Phase 67-02]: normalizeTelefono() en PacientesService como unica definicion de teléfono valido (D-01/D-02/D-05/D-06); suggest() usa COALESCE(p.telefono, '') para ser NULL-safe, verificado con probe en transaccion con rollback (424==424)
+- [Phase 67-03]: requireTelefonoParaEnvio() en WhatsappService guarda los 4 paths (sendTemplateMessage, sendFreeText, sendPresupuestoPdf, retryMessage) que empujan telefono a la cola BullMQ — falsy-tras-trim sin fallback a telefonoAlternativo, BadRequestException plano en espanol; retryMessage se guardea despues del check de ownership y antes de mutar estado, para preservar NotFoundException anti-enumeracion y errorMsg original
 
 ### Known Tech Debt (carry-forward)
 
@@ -93,7 +94,7 @@ Los 3 ítems diferidos al cierre de v1.14 quedaron resueltos durante v1.15:
 
 ## Session Continuity
 
-Last session: 2026-08-18T22:02:03.626Z
+Last session: 2026-08-18T22:07:05.537Z
 Stopped at: Plan 67-02 completado (TEL-01: normalizeTelefono() + suggest() NULL-safe)
 Resume file: None
 

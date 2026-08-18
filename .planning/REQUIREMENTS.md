@@ -25,8 +25,8 @@
 
 ### Guard de Envíos sin Teléfono
 
-- [ ] **ENVIO-01**: Al intentar enviar un WhatsApp a un paciente sin teléfono, el backend rechaza la operación y el usuario ve un mensaje claro en español en vez de un error crudo de Meta
-- [ ] **ENVIO-02**: Al intentar enviar un presupuesto por WhatsApp a un paciente sin teléfono, el backend rechaza la operación con el mismo mensaje claro
+- [x] **ENVIO-01**: Al intentar enviar un WhatsApp a un paciente sin teléfono, el backend rechaza la operación y el usuario ve un mensaje claro en español en vez de un error crudo de Meta
+- [x] **ENVIO-02**: Al intentar enviar un presupuesto por WhatsApp a un paciente sin teléfono, el backend rechaza la operación con el mismo mensaje claro
 - [ ] **ENVIO-03**: Los botones de envío por WhatsApp aparecen deshabilitados con tooltip explicativo cuando el paciente no tiene teléfono cargado
 
 ## Future Requirements
@@ -66,8 +66,8 @@ Cada requisito mapea a exactamente una fase. Ver `.planning/ROADMAP.md` para goa
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | TEL-01 | Phase 67 | Complete |
-| ENVIO-01 | Phase 67 | Pending |
-| ENVIO-02 | Phase 67 | Pending |
+| ENVIO-01 | Phase 67 | Complete |
+| ENVIO-02 | Phase 67 | Complete |
 | ALTA-01 | Phase 68 | Pending |
 | ALTA-02 | Phase 68 | Pending |
 | ALTA-03 | Phase 68 | Pending |

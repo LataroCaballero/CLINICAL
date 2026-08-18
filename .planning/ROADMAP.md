@@ -238,12 +238,12 @@ Full details: `.planning/milestones/v1.15-ROADMAP.md`
 
 **Requirements:** TEL-01, ENVIO-01, ENVIO-02
 
-**Plans:** 5 plans (3 waves)
+**Plans:** 1/5 plans executed
 
 Plans:
 **Wave 1**
 
-- [ ] 67-01-PLAN.md — Schema nullable + `@IsOptional()` + migración Prisma + ensanchar tipos (wave 1)
+- [x] 67-01-PLAN.md — Schema nullable + `@IsOptional()` + migración Prisma + ensanchar tipos (wave 1)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -383,7 +383,7 @@ Plans:
 | 64. Indicadores de Pendientes y Planilla Legible (Frontend) | v1.15 | 3/3 | Complete    | 2026-08-03 |
 | 65. Sync Tipo de Turno ↔ Plantilla HC (Backend) | v1.15 | 2/2 | Complete    | 2026-08-04 |
 | 66. Correcciones de UI de Historia Clínica (Frontend) | v1.15 | 1/1 | Complete    | 2026-08-08 |
-| 67. Teléfono Opcional y Guards de Envío (Backend) | v1.16 | 0/? | Pending | — |
+| 67. Teléfono Opcional y Guards de Envío (Backend) | v1.16 | 1/5 | In Progress|  |
 | 68. Creación Inline en el Autosuggest (Frontend) | v1.16 | 0/? | Pending | — |
 | 69. Consistencia de Teléfono Opcional (Frontend) | v1.16 | 0/? | Pending | — |
 

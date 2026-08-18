@@ -695,8 +695,11 @@ export class PacientePortalService {
     for (const key of allowed) {
       const value = (input as Record<string, unknown>)[key];
       // WR-02: `@IsOptional()` lets an explicit `null` pass DTO validation, but
-      // forwarding `null` into a non-nullable column (e.g. `telefono`) throws at
-      // the DB layer (500). Treat `null` like an absent field — no change.
+      // the portal never blanks out contact data — the staff CAN clear
+      // `telefono` via PacientesService.updateContacto (D-02), the
+      // patient-facing portal cannot: `telefono` is the channel the clinic
+      // uses to reach the patient, so this asymmetry is deliberate (D-08).
+      // Treat `null` like an absent field — no change.
       if (value !== undefined && value !== null) data[key] = value;
     }
     return data;

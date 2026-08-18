@@ -462,18 +462,14 @@ export class PacientesService {
   private async updateContacto(id: string, data: any) {
     // whitelist explícito
     const patch = {
-      telefono: data.telefono,
+      // TEL-01 (D-05/D-06): sin valor -> null (editar Contacto sin teléfono
+      // ya no da 400); con valor -> sigue validando forma vía normalizeTelefono().
+      telefono: this.normalizeTelefono(data.telefono),
       telefonoAlternativo: data.telefonoAlternativo ?? null,
       email: data.email ?? null,
     };
 
     // validación mínima backend
-    if (
-      typeof patch.telefono !== 'string' ||
-      patch.telefono.trim().length < 6
-    ) {
-      throw new BadRequestException('Teléfono inválido');
-    }
     if (patch.email && typeof patch.email !== 'string') {
       throw new BadRequestException('Email inválido');
     }

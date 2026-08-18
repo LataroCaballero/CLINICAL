@@ -4,8 +4,8 @@ milestone: v1.16
 milestone_name: Alta de Paciente sin Fricción
 status: executing
 stopped_at: Phase 67 context gathered
-last_updated: "2026-08-17T23:01:08.819Z"
-last_activity: 2026-08-17 -- Phase 67 planning complete
+last_updated: "2026-08-17T23:11:05.951Z"
+last_activity: 2026-08-17 -- Phase 67 execution started
 progress:
   total_phases: 3
   completed_phases: 0
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-08-17 al iniciar el milestone v1.16)
 
 **Core value:** Que un cirujano plástico cierre más cirugías — el sistema hace visible qué pacientes seguir, cuándo y cómo, de la manera más automatizada posible
-**Current focus:** v1.16 Alta de Paciente sin Fricción — Phase 67 (Teléfono Opcional y Guards de Envío, Backend)
+**Current focus:** Phase 67 — tel-fono-opcional-y-guards-de-env-o-backend
 
 ## Current Position
 
-Phase: 67 — Teléfono Opcional y Guards de Envío (Backend) — no iniciada
-Plan: — (pendiente de `/gsd:plan-phase 67`)
-Status: Ready to execute
-Last activity: 2026-08-17 -- Phase 67 planning complete
+Phase: 67 (tel-fono-opcional-y-guards-de-env-o-backend) — BLOCKED
+Plan: 1 of 5 (Task 1/3 done, Task 2 blocked)
+Status: Blocked — DB connectivity (ver Blockers abajo)
+Last activity: 2026-08-17 -- Plan 67-01 Task 1 committed, Task 2 blocked on DB connection
 
 Progress: [░░░░░░░░░░] 0% (0/3 fases)
 
@@ -72,6 +72,10 @@ Full decision log en `.planning/PROJECT.md` (Key Decisions). Las decisiones de v
 - `console.log('DTO RECIBIDO')` + `console.log('ERROR CAPTURADO EN CATCH:')` en `pacientes.service.ts` — exponen PII / error crudo en logs.
 - **Gate legal pre-go-live (v1.12):** revisión del flujo de consentimiento (Ley 25506 / Ley 26529) antes del primer paciente quirúrgico real.
 
+## Blockers
+
+- **Plan 67-01, Task 2 (BLOCKING) — sin conexión a la base de datos.** `npx prisma migrate status` y un `paciente.count()` directo devuelven `FATAL: (ENOTFOUND) tenant/user postgres.wgszojgeaybsjbmbqpff not found` desde el pooler Supabase (`aws-1-sa-east-1.pooler.supabase.com:5432`). La conectividad a internet del entorno está OK (ping a 8.8.8.8 exitoso); el error viene del lado del pooler/tenant, no de la red local. Task 1 (schema + DTO nullable) ya está commiteado. Task 2 no puede generar/aplicar la migración `telefono_opcional` sin acceso a la base — es BLOCKING para el resto del plan (Task 3 depende del cliente Prisma regenerado). **Acción requerida del usuario:** verificar el estado del proyecto Supabase (activo/pausado) y que `DATABASE_URL` en `backend/.env` tenga el project ref correcto, luego re-ejecutar el plan 67-01 desde Task 2.
+
 ## Deferred Items
 
 Ninguno abierto. El audit de artefactos previo al cierre de v1.15 (2026-08-10) dio *all clear*: 0 debug sessions, quick tasks, threads, todos, seeds, UAT gaps, verification gaps y context questions.
@@ -92,6 +96,6 @@ Resume file: .planning/phases/67-tel-fono-opcional-y-guards-de-env-o-backend/67-
 
 ## Operator Next Steps
 
-- `/gsd:discuss-phase 67` para juntar contexto antes de planificar, o `/gsd:plan-phase 67` para planificar directo.
+- **Bloqueante inmediato:** restablecer la conexión a la base (ver Blockers arriba) y volver a correr el plan 67-01 desde Task 2.
 - Research salteado en este milestone (feature sobre código existente, blast radius mapeado en el roadmap).
 - Ojo en la Phase 67: el `LIKE` sobre `p.telefono` en `suggest()` devuelve NULL (no false) con teléfono nulo — verificar filtro y score.

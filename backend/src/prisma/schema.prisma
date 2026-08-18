@@ -881,6 +881,7 @@ model Cirugia {
   @@index([pacienteId])
   @@index([profesionalId])
   @@index([fecha])
+  @@index([cirugiaCatalogoId])
 }
 
 enum EstadoCirugia {

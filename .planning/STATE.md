@@ -27,8 +27,8 @@ See: .planning/PROJECT.md (updated 2026-08-17 al iniciar el milestone v1.16)
 
 Phase: 67 (tel-fono-opcional-y-guards-de-env-o-backend) — BLOCKED
 Plan: 1 of 5 (Task 1/3 done, Task 2 blocked)
-Status: Blocked — DB connectivity (ver Blockers abajo)
-Last activity: 2026-08-17 -- Plan 67-01 Task 1 committed, Task 2 blocked on DB connection
+Status: Blocked — schema drift on live DB detected by `prisma migrate dev` (ver Blockers abajo)
+Last activity: 2026-08-18 -- Plan 67-01 Task 2 aborted: DB reconnected OK, but `migrate dev` detected drift (missing local migration `20260415221758_flujo_paciente` + undocumented `OrdenConsumo`/`OrdenConsumoInsumo` tables) and offered only `migrate reset`; executor aborted per plan's explicit no-reset rule
 
 Progress: [░░░░░░░░░░] 0% (0/3 fases)
 
@@ -74,7 +74,12 @@ Full decision log en `.planning/PROJECT.md` (Key Decisions). Las decisiones de v
 
 ## Blockers
 
-- **Plan 67-01, Task 2 (BLOCKING) — sin conexión a la base de datos.** `npx prisma migrate status` y un `paciente.count()` directo devuelven `FATAL: (ENOTFOUND) tenant/user postgres.wgszojgeaybsjbmbqpff not found` desde el pooler Supabase (`aws-1-sa-east-1.pooler.supabase.com:5432`). La conectividad a internet del entorno está OK (ping a 8.8.8.8 exitoso); el error viene del lado del pooler/tenant, no de la red local. Task 1 (schema + DTO nullable) ya está commiteado. Task 2 no puede generar/aplicar la migración `telefono_opcional` sin acceso a la base — es BLOCKING para el resto del plan (Task 3 depende del cliente Prisma regenerado). **Acción requerida del usuario:** verificar el estado del proyecto Supabase (activo/pausado) y que `DATABASE_URL` en `backend/.env` tenga el project ref correcto, luego re-ejecutar el plan 67-01 desde Task 2.
+- **Plan 67-01, Task 2 (BLOCKING) — drift de schema detectado por Prisma en la base viva.** La conectividad a la DB fue restablecida y verificada (`npx prisma migrate status` reportó "53 migrations found" / "Database schema is up to date!" antes de correr `migrate dev`, y `TEL_BASELINE` se capturó en 424 pacientes). Al ejecutar `npx prisma migrate dev --name telefono_opcional`, Prisma detectó drift entre el historial de migraciones local y el schema real de la base:
+  - Tablas/enum presentes en la base pero no reflejados como esperado por el historial: `OrdenConsumo`, `OrdenConsumoInsumo`, enum `EstadoOrdenConsumo` (con sus índices y FKs).
+  - Migración aplicada en la base pero **ausente del directorio local** `backend/src/prisma/migrations/`: `20260415221758_flujo_paciente`.
+  - Prisma CLI ofreció como única salida `prisma migrate reset` ("We need to reset the 'public' schema... You may use prisma migrate reset to drop the development database. All data will be lost.") — **el ejecutor abortó sin ejecutar `migrate reset`** ni ninguna variante destructiva, por regla explícita del plan (T-67-01/T-67-02). No se generó ningún archivo de migración (`git status` confirma el directorio `migrations/` limpio); no hubo pérdida ni riesgo de pérdida de datos.
+  - Task 1 (schema + DTO nullable) sigue commiteado y verificado (`8ed5da9`). Task 2 no puede continuar sin resolver el drift; Task 3 depende del cliente Prisma regenerado tras la migración aplicada — ambos quedan bloqueados.
+  - **Acción requerida del usuario:** investigar por qué falta `20260415221758_flujo_paciente` en el repo (¿se aplicó manualmente contra la base sin commitear el archivo? ¿otro entorno/rama la generó?) y decidir el camino de reconciliación — candidatos típicos son recuperar/commitear el archivo de migración faltante, o usar `prisma migrate resolve --applied 20260415221758_flujo_paciente` (y evaluar si `OrdenConsumo`/`OrdenConsumoInsumo` también necesitan una migración de baseline) **sin** pasar por `migrate reset`. Ninguna de estas acciones es responsabilidad del ejecutor automatizado — requiere una decisión informada sobre el historial real de la base. Tras resolver el drift, re-ejecutar el plan 67-01 desde Task 2.
 
 ## Deferred Items
 

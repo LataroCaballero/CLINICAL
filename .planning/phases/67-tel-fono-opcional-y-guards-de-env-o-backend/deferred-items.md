@@ -16,6 +16,23 @@ Two of the 44 errors are in files this plan's Task 3 partially edited
 the telefono-nullability edits themselves — confirmed unrelated to the `telefono`
 change by inspection.
 
+Plan 67-04 (Task 2) touched `presupuestos.service.ts::generatePdf()` and found
+`presupuestos.service.ts:21` (`Decimal` imported but never used) also pre-existing —
+`git blame` traces it to `b0c219cc` (2026-01-07), seven months before this phase
+started, unrelated to the `telefono` cast removal on the same file.
+
+## Pre-existing test failure: `reportes.controller.spec.ts` (out of scope for 67-04)
+
+`npm run test -- reportes` reports 15 failed / 55 passed across 6 suites. All 15
+failures are in `reportes.controller.spec.ts`, which fails to bootstrap its
+`TestingModule` (`JwtAuthGuard` cannot be resolved — a DI wiring gap in the spec
+file itself, unrelated to any Prisma/telefono type). `reportes-financieros.service.ts`
+— the file Plan 67-04's Task 1 actually audited — has zero diff from this plan
+(confirmed via `git status --short`) and its own spec,
+`reportes-financieros.service.spec.ts`, passes (`PASS`). The controller spec last
+changed 2026-06-18, two months before this phase started. Logged here rather than
+fixed inline, per the Scope Boundary rule.
+
 Per the Scope Boundary rule (only auto-fix issues directly caused by the current
 task's changes), these are logged here and left untouched rather than fixed inline.
 

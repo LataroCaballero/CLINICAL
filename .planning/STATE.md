@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.16
 milestone_name: Alta de Paciente sin Fricción
 status: executing
-stopped_at: "Plan 67-02 completado (TEL-01: normalizeTelefono() + suggest() NULL-safe)"
-last_updated: "2026-08-18T22:07:05.540Z"
+stopped_at: "Plan 67-04 completado (TEL-01: reportes financieros + presupuestos.service.ts generatePdf() sin casts, auditoria de 12 sitios cerrada)"
+last_updated: "2026-08-18T22:13:14.525Z"
 last_activity: 2026-08-18
 progress:
   total_phases: 3
   completed_phases: 0
   total_plans: 5
-  completed_plans: 3
+  completed_plans: 4
   percent: 0
 ---
 
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-08-17 al iniciar el milestone v1.16)
 ## Current Position
 
 Phase: 67 (tel-fono-opcional-y-guards-de-env-o-backend)
-Plan: 4 of 5 (Plans 1-2/5 complete — TEL-01)
+Plan: 5 of 5 (Plans 1-2/5 complete — TEL-01)
 Status: Ready to execute
 Last activity: 2026-08-18
 
-Progress: [██████░░░░] 60%
+Progress: [████████░░] 80%
 
 ### Roadmap v1.16
 
@@ -51,6 +51,7 @@ Full decision log en `.planning/PROJECT.md` (Key Decisions). Las decisiones de v
 - [Phase 67]: TEL-01 aplicado end-to-end: Paciente.telefono nullable en schema, migracion aplicada (TEL_BASELINE=TEL_AFTER=424), DTO y 6 declaraciones de tipo ensanchadas a string | null
 - [Phase 67-02]: normalizeTelefono() en PacientesService como unica definicion de teléfono valido (D-01/D-02/D-05/D-06); suggest() usa COALESCE(p.telefono, '') para ser NULL-safe, verificado con probe en transaccion con rollback (424==424)
 - [Phase 67-03]: requireTelefonoParaEnvio() en WhatsappService guarda los 4 paths (sendTemplateMessage, sendFreeText, sendPresupuestoPdf, retryMessage) que empujan telefono a la cola BullMQ — falsy-tras-trim sin fallback a telefonoAlternativo, BadRequestException plano en espanol; retryMessage se guardea despues del check de ownership y antes de mutar estado, para preservar NotFoundException anti-enumeracion y errorMsg original
+- [Phase 67-04]: Reportes financieros y presupuestos.service.ts::generatePdf() propagan telefono nullable sin as any ni placeholders; auditoria de 12 sitios del ROADMAP + presupuesto-pdf.service.ts:143 como precedente cerrada en 67-04-SUMMARY.md
 
 ### Known Tech Debt (carry-forward)
 
@@ -94,9 +95,9 @@ Los 3 ítems diferidos al cierre de v1.14 quedaron resueltos durante v1.15:
 
 ## Session Continuity
 
-Last session: 2026-08-18T22:07:05.537Z
-Stopped at: Plan 67-02 completado (TEL-01: normalizeTelefono() + suggest() NULL-safe)
-Resume file: None
+Last session: 2026-08-18T22:13:14.522Z
+Stopped at: Plan 67-04 completado (TEL-01: reportes financieros + presupuestos.service.ts generatePdf() sin casts, auditoria de 12 sitios cerrada)
+Resume file: 
 
 ## Operator Next Steps
 

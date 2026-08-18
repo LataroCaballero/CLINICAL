@@ -27,8 +27,8 @@ See: .planning/PROJECT.md (updated 2026-08-17 al iniciar el milestone v1.16)
 
 Phase: 67 (tel-fono-opcional-y-guards-de-env-o-backend) — BLOCKED
 Plan: 1 of 5 (Task 1/3 done, Task 2 blocked)
-Status: Blocked — schema drift on live DB detected by `prisma migrate dev` (ver Blockers abajo)
-Last activity: 2026-08-18 -- Plan 67-01 Task 2 aborted: DB reconnected OK, but `migrate dev` detected drift (missing local migration `20260415221758_flujo_paciente` + undocumented `OrdenConsumo`/`OrdenConsumoInsumo` tables) and offered only `migrate reset`; executor aborted per plan's explicit no-reset rule
+Status: Blocked — `prisma migrate dev` fails P3006 against the shadow database due to a migration-history ordering bug in the just-restored `20260415221758_flujo_paciente` file (ver Blockers abajo)
+Last activity: 2026-08-18 -- Plan 67-01 Task 2 aborted again: the two prior blockers (DB connectivity, missing-migration/undocumented-table drift) were resolved by the orchestrator in `d7d59f4`, and `npx prisma migrate status` / `migrate diff` both confirmed clean. Re-running `npx prisma migrate dev --name telefono_opcional` still fails, with a new root cause: P3006, "Migration `20260415221758_flujo_paciente` failed to apply cleanly to the shadow database — column \"flujo\" of relation \"Paciente\" does not exist". No SQL was applied to the live DB (shadow-db-only failure, confirmed by `migrate status` still reporting up to date afterward) and no new migration directory was created.
 
 Progress: [░░░░░░░░░░] 0% (0/3 fases)
 
@@ -74,12 +74,21 @@ Full decision log en `.planning/PROJECT.md` (Key Decisions). Las decisiones de v
 
 ## Blockers
 
-- **Plan 67-01, Task 2 (BLOCKING) — drift de schema detectado por Prisma en la base viva.** La conectividad a la DB fue restablecida y verificada (`npx prisma migrate status` reportó "53 migrations found" / "Database schema is up to date!" antes de correr `migrate dev`, y `TEL_BASELINE` se capturó en 424 pacientes). Al ejecutar `npx prisma migrate dev --name telefono_opcional`, Prisma detectó drift entre el historial de migraciones local y el schema real de la base:
-  - Tablas/enum presentes en la base pero no reflejados como esperado por el historial: `OrdenConsumo`, `OrdenConsumoInsumo`, enum `EstadoOrdenConsumo` (con sus índices y FKs).
-  - Migración aplicada en la base pero **ausente del directorio local** `backend/src/prisma/migrations/`: `20260415221758_flujo_paciente`.
-  - Prisma CLI ofreció como única salida `prisma migrate reset` ("We need to reset the 'public' schema... You may use prisma migrate reset to drop the development database. All data will be lost.") — **el ejecutor abortó sin ejecutar `migrate reset`** ni ninguna variante destructiva, por regla explícita del plan (T-67-01/T-67-02). No se generó ningún archivo de migración (`git status` confirma el directorio `migrations/` limpio); no hubo pérdida ni riesgo de pérdida de datos.
-  - Task 1 (schema + DTO nullable) sigue commiteado y verificado (`8ed5da9`). Task 2 no puede continuar sin resolver el drift; Task 3 depende del cliente Prisma regenerado tras la migración aplicada — ambos quedan bloqueados.
-  - **Acción requerida del usuario:** investigar por qué falta `20260415221758_flujo_paciente` en el repo (¿se aplicó manualmente contra la base sin commitear el archivo? ¿otro entorno/rama la generó?) y decidir el camino de reconciliación — candidatos típicos son recuperar/commitear el archivo de migración faltante, o usar `prisma migrate resolve --applied 20260415221758_flujo_paciente` (y evaluar si `OrdenConsumo`/`OrdenConsumoInsumo` también necesitan una migración de baseline) **sin** pasar por `migrate reset`. Ninguna de estas acciones es responsabilidad del ejecutor automatizado — requiere una decisión informada sobre el historial real de la base. Tras resolver el drift, re-ejecutar el plan 67-01 desde Task 2.
+- **Plan 67-01, Task 2 (BLOCKING) — bug de orden temporal en la migración restaurada `20260415221758_flujo_paciente`, expuesto por el shadow database de `migrate dev`.** Los dos blockers previos (conectividad + drift de historial faltante/tablas no documentadas) fueron resueltos por el orquestador en el commit `d7d59f4` y quedaron verificados de forma independiente en esta corrida:
+  - `npx prisma migrate status` reporta "55 migrations found" / "Database schema is up to date!".
+  - `npx prisma migrate diff --from-schema-datasource ... --to-schema-datamodel ...` devuelve exactamente una sentencia: `ALTER TABLE "Paciente" ALTER COLUMN "telefono" DROP NOT NULL;` — confirma que no hay drift adicional pendiente contra la base real.
+  - `TEL_BASELINE` re-medido en esta corrida: **424** (coincide con la medición previa).
+
+  Pese a eso, `npx prisma migrate dev --name telefono_opcional` vuelve a fallar, con una causa raíz distinta y nueva:
+  - Error `P3006`: *"Migration `20260415221758_flujo_paciente` failed to apply cleanly to the shadow database. Error: column \"flujo\" of relation \"Paciente\" does not exist"*.
+  - Causa: el archivo `20260415221758_flujo_paciente/migration.sql` restaurado desde git en `d7d59f4` contiene su contenido SQL **original y roto** (`ALTER TABLE "Paciente" ALTER COLUMN "flujo" SET DEFAULT ...` + 2 `CREATE INDEX`), que corre *antes* — por orden de timestamp — que `20260416000000_flujo_paciente`, la migración que en realidad crea la columna `flujo`. El propio comentario de cabecera de `20260416000001_flujo_paciente_defaults/migration.sql` documenta este bug explícitamente: *"Moved here from 20260415221758_flujo_paciente which had a timestamp ordering bug (it ran before 20260416000000_flujo_paciente which actually creates the column)"* — esa migración posterior ya reimplementa el mismo efecto con `IF NOT EXISTS`, precisamente para ser un reemplazo idempotente y bien ordenado.
+  - Contra la base real esto nunca causó una falla histórica (por eso `migrate status` da "up to date" y el archivo se aplicó con éxito en algún momento contra una base donde `flujo` ya existía), pero el **shadow database** que `migrate dev` construye desde cero SÍ repite el historial completo en orden estricto de timestamp, y ahí el bug de orden se manifiesta de inmediato, bloqueando la generación de cualquier migración nueva (incluida la de este plan) hasta que se resuelva.
+  - No se ejecutó ninguna sentencia SQL contra la base real: `P3006` es una falla exclusiva del shadow database (temporal, descartado por Prisma al fallar). `npx prisma migrate status` corrido después de la falla sigue reportando "up to date". `git status` confirma que no se creó ningún directorio de migración nuevo.
+  - Task 1 (schema + DTO nullable) sigue commiteado y verificado (`8ed5da9`). Task 2 sigue bloqueado; Task 3 depende del cliente Prisma regenerado tras la migración aplicada — ambos permanecen bloqueados.
+  - **Acción requerida del usuario:** decidir cómo reconciliar el contenido de `20260415221758_flujo_paciente/migration.sql` sin ejecutar `migrate reset` ni `db push --accept-data-loss`. Candidatos a evaluar (decisión de historial de migraciones, no un auto-fix seguro para el ejecutor):
+    1. Neutralizar el SQL de `20260415221758_flujo_paciente` a un no-op (su efecto real ya está duplicado, de forma idempotente, en `20260416000001_flujo_paciente_defaults`) — pero esto cambia el checksum de una migración ya marcada como aplicada en la base real, lo que Prisma probablemente reporte como modificación de un archivo ya aplicado y requiera `migrate resolve` adicional.
+    2. Alguna otra vía de reconciliación de historial que el usuario prefiera (p.ej. renombrar/squash, o aceptar el checksum-mismatch resultante de la opción 1 y resolverlo explícitamente).
+  - Tras resolver, re-ejecutar el plan 67-01 desde Task 2. El resto del plan (Task 2 pasos 2-6 y Task 3 completo) sigue pendiente.
 
 ## Deferred Items
 
@@ -95,12 +104,12 @@ Los 3 ítems diferidos al cierre de v1.14 quedaron resueltos durante v1.15:
 
 ## Session Continuity
 
-Last session: 2026-08-17T22:20:13.879Z
-Stopped at: Phase 67 context gathered
-Resume file: .planning/phases/67-tel-fono-opcional-y-guards-de-env-o-backend/67-CONTEXT.md
+Last session: 2026-08-18T00:00:00.000Z
+Stopped at: Plan 67-01 Task 2 aborted (segunda vez) — P3006 en shadow database por bug de orden en `20260415221758_flujo_paciente`
+Resume file: .planning/phases/67-tel-fono-opcional-y-guards-de-env-o-backend/67-01-PLAN.md
 
 ## Operator Next Steps
 
-- **Bloqueante inmediato:** restablecer la conexión a la base (ver Blockers arriba) y volver a correr el plan 67-01 desde Task 2.
+- **Bloqueante inmediato:** decidir la reconciliación del contenido de `20260415221758_flujo_paciente/migration.sql` (ver Blockers arriba) — requiere juicio sobre el historial real de migraciones, no es auto-fixeable por el ejecutor. Tras resolver, volver a correr el plan 67-01 desde Task 2.
 - Research salteado en este milestone (feature sobre código existente, blast radius mapeado en el roadmap).
 - Ojo en la Phase 67: el `LIKE` sobre `p.telefono` en `suggest()` devuelve NULL (no false) con teléfono nulo — verificar filtro y score.

@@ -349,7 +349,7 @@ export class PacientesService {
           id: string;
           nombreCompleto: string;
           dni: string;
-          telefono: string;
+          telefono: string | null;
           fotoUrl: string | null;
           score: number;
         }>

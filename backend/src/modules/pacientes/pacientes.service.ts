@@ -68,6 +68,9 @@ export class PacientesService {
         // OR:[{flujo:CIRUGIA},{flujo:null}] de getKanban (D-03 opcion 1).
         etapaCRM: EtapaCRM.NUEVO_LEAD,
         flujo: null,
+        // TEL-01 (D-01): el frontend manda telefono: '' (no undefined) cuando
+        // el campo queda en blanco — normalizeTelefono() lo deja en null.
+        telefono: this.normalizeTelefono(dto.telefono),
       };
       return this.prisma.paciente.create({
         data,
@@ -210,7 +213,15 @@ export class PacientesService {
     await this.ensureExists(id);
     return this.prisma.paciente.update({
       where: { id },
-      data: dto,
+      data: {
+        ...dto,
+        // TEL-01 (D-02): sólo intervenir si telefono viene presente en el
+        // parcial — ausente no debe forzarse a null, pero '' presente sí
+        // debe quedar en null (vaciar el campo es una corrección legítima).
+        ...(dto.telefono !== undefined
+          ? { telefono: this.normalizeTelefono(dto.telefono) }
+          : {}),
+      },
     });
   }
 
@@ -332,6 +343,31 @@ export class PacientesService {
   private async ensureExists(id: string) {
     const exists = await this.prisma.paciente.findUnique({ where: { id } });
     if (!exists) throw new NotFoundException('Paciente no encontrado');
+  }
+
+  /**
+   * Única definición de "teléfono válido" del módulo (D-06). No global
+   * ValidationPipe is active, so `@IsString()` on the DTO is inert — this is
+   * the runtime re-check, and the single place the ≥6-char threshold lives.
+   * Usado por create(), update() y updateContacto() (D-01/D-02/D-05).
+   *
+   * - null/undefined -> null
+   * - string vacío tras trim -> null (vaciar el campo es una corrección legítima)
+   * - string con contenido y <6 chars -> BadRequestException('Teléfono inválido')
+   * - string con contenido y >=6 chars -> valor trimmeado
+   * - cualquier otro tipo -> BadRequestException('Teléfono inválido')
+   */
+  private normalizeTelefono(value: unknown): string | null {
+    if (value === null || value === undefined) return null;
+    if (typeof value !== 'string') {
+      throw new BadRequestException('Teléfono inválido');
+    }
+    const trimmed = value.trim();
+    if (trimmed === '') return null;
+    if (trimmed.length < 6) {
+      throw new BadRequestException('Teléfono inválido');
+    }
+    return trimmed;
   }
 
   async suggest(q: string, profesionalId?: string): Promise<PacienteSuggest[]> {

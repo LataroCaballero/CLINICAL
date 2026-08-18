@@ -9,7 +9,7 @@
  *   (sufficient to verify round-trip logic without AES overhead)
  */
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException } from '@nestjs/common';
+import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { readFileSync } from 'fs';
 import { join } from 'path';
@@ -571,6 +571,118 @@ describe('PacientesService — portal link encrypt/recover (52-09)', () => {
           EstadoCirugia.SUSPENDIDA,
         ]),
       );
+    });
+  });
+
+  // ── normalizeTelefono() — teléfono opcional en create/update/updateContacto (Phase 67, TEL-01) ──
+  describe('normalizeTelefono() — teléfono opcional (D-01/D-02/D-05/D-06/D-07)', () => {
+    function buildDto(overrides: Partial<CreatePacienteDto> = {}): CreatePacienteDto {
+      return {
+        nombreCompleto: 'Lead Sin Telefono',
+        dni: '30222333',
+        ...overrides,
+      } as CreatePacienteDto;
+    }
+
+    it('SC#1: create() con sólo nombreCompleto y dni no lanza y persiste telefono: null', async () => {
+      (prisma.paciente.create as jest.Mock).mockResolvedValue({ id: 'p-sin-tel' });
+
+      await expect(service.create(buildDto())).resolves.toBeDefined();
+
+      const callArg = (prisma.paciente.create as jest.Mock).mock.calls[0][0];
+      expect(callArg.data.telefono).toBeNull();
+      expect(callArg.data.etapaCRM).toBe(EtapaCRM.NUEVO_LEAD);
+      expect(callArg.data.flujo).toBeNull();
+    });
+
+    it("D-01: create() con telefono: '' -> data.telefono === null", async () => {
+      (prisma.paciente.create as jest.Mock).mockResolvedValue({ id: 'p-vacio' });
+
+      await service.create(buildDto({ telefono: '' }));
+
+      const callArg = (prisma.paciente.create as jest.Mock).mock.calls[0][0];
+      expect(callArg.data.telefono).toBeNull();
+    });
+
+    it("D-01: create() con telefono: '   ' (solo espacios) -> data.telefono === null", async () => {
+      (prisma.paciente.create as jest.Mock).mockResolvedValue({ id: 'p-espacios' });
+
+      await service.create(buildDto({ telefono: '   ' }));
+
+      const callArg = (prisma.paciente.create as jest.Mock).mock.calls[0][0];
+      expect(callArg.data.telefono).toBeNull();
+    });
+
+    it("D-01: create() con telefono: ' 1123456789 ' -> data.telefono === '1123456789' (trimmeado)", async () => {
+      (prisma.paciente.create as jest.Mock).mockResolvedValue({ id: 'p-trim' });
+
+      await service.create(buildDto({ telefono: ' 1123456789 ' }));
+
+      const callArg = (prisma.paciente.create as jest.Mock).mock.calls[0][0];
+      expect(callArg.data.telefono).toBe('1123456789');
+    });
+
+    it("D-06: create() con telefono: '123' -> BadRequestException('Teléfono inválido'), sin llamar a prisma.paciente.create", async () => {
+      await expect(service.create(buildDto({ telefono: '123' }))).rejects.toThrow(
+        new BadRequestException('Teléfono inválido'),
+      );
+
+      expect(prisma.paciente.create as jest.Mock).not.toHaveBeenCalled();
+    });
+
+    it('D-02: update() sin la clave telefono -> data enviado a prisma.paciente.update NO tiene la propiedad telefono', async () => {
+      (prisma.paciente.findUnique as jest.Mock).mockResolvedValue({ id: 'p-upd-1' });
+      (prisma.paciente.update as jest.Mock).mockResolvedValue({ id: 'p-upd-1' });
+
+      await service.update('p-upd-1', { nombreCompleto: 'X' } as any);
+
+      const callArg = (prisma.paciente.update as jest.Mock).mock.calls[0][0];
+      expect(callArg.data).not.toHaveProperty('telefono');
+    });
+
+    it('D-02: vaciar el teléfono desde el staff lo deja en null', async () => {
+      (prisma.paciente.findUnique as jest.Mock).mockResolvedValue({ id: 'p-upd-2' });
+      (prisma.paciente.update as jest.Mock).mockResolvedValue({ id: 'p-upd-2' });
+
+      await service.update('p-upd-2', { telefono: '' } as any);
+
+      const callArg = (prisma.paciente.update as jest.Mock).mock.calls[0][0];
+      expect(callArg.data.telefono).toBeNull();
+    });
+
+    it('D-05: updatePacienteSection contacto con telefono vacío no lanza y persiste telefono: null', async () => {
+      (prisma.paciente.update as jest.Mock).mockResolvedValue({ id: 'p-contacto-1' });
+
+      await expect(
+        service.updatePacienteSection('p-contacto-1', {
+          section: 'contacto',
+          data: { telefono: '', email: 'a@b.com' },
+        } as any),
+      ).resolves.toBeDefined();
+
+      const callArg = (prisma.paciente.update as jest.Mock).mock.calls[0][0];
+      expect(callArg.data.telefono).toBeNull();
+    });
+
+    it("D-06: updatePacienteSection contacto con telefono: '123' -> BadRequestException('Teléfono inválido')", async () => {
+      await expect(
+        service.updatePacienteSection('p-contacto-2', {
+          section: 'contacto',
+          data: { telefono: '123' },
+        } as any),
+      ).rejects.toThrow(new BadRequestException('Teléfono inválido'));
+    });
+
+    it("D-07: updatePacienteSection emergencia sin contactoEmergenciaTelefono sigue lanzando BadRequestException('Datos de emergencia inválidos')", async () => {
+      await expect(
+        service.updatePacienteSection('p-emergencia-1', {
+          section: 'emergencia',
+          data: {
+            contactoEmergenciaNombre: 'Juan',
+            contactoEmergenciaRelacion: 'Padre',
+          },
+        } as any),
+      ).rejects.toThrow(new BadRequestException('Datos de emergencia inválidos'));
     });
   });
 });

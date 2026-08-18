@@ -78,6 +78,13 @@ export class PacientesService {
     } catch (error: any) {
       console.log('ERROR CAPTURADO EN CATCH:', error);
 
+      // TEL-01 (D-06): un teléfono inválido normalizado por normalizeTelefono()
+      // lanza BadRequestException *dentro* de este try — sin este rethrow, el
+      // catch-all de abajo lo enmascara como 500 en vez de propagar el 400.
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+
       // Manejar directamente por STRUCTURE
       if (error.code === 'P2002' && error.meta?.target?.includes('dni')) {
         throw new ConflictException('El DNI ingresado ya está registrado.');

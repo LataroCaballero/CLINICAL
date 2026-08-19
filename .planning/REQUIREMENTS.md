@@ -18,7 +18,7 @@
 - [ ] **ALTA-01**: Cuando la búsqueda del autosuggest no arroja resultados, el usuario ve la opción de crear un paciente nuevo sin salir del modal de turno
 - [ ] **ALTA-02**: El usuario puede crear el paciente cargando únicamente nombre completo y DNI
 - [ ] **ALTA-03**: El formulario inline precarga el campo correspondiente con lo que el usuario ya escribió: DNI si el query es numérico, nombre completo si es texto
-- [ ] **ALTA-04**: Al crear el paciente, queda seleccionado automáticamente en el modal de turno y el usuario puede confirmar el turno sin pasos adicionales
+- [x] **ALTA-04**: Al crear el paciente, queda seleccionado automáticamente en el modal de turno y el usuario puede confirmar el turno sin pasos adicionales
 - [ ] **ALTA-05**: Si el DNI ingresado ya está registrado, el usuario ve el error dentro del formulario inline y puede corregirlo sin perder lo que ya cargó
 - [ ] **ALTA-06**: El paciente creado inline queda asignado al profesional del contexto activo, igual que en el alta completa
 - [ ] **ALTA-07**: La creación inline está disponible en los tres modales de turno (`QuickAppointment`, `NewAppointmentModal`, `SurgeryAppointmentModal`) y no aparece en los usos de filtro del autosuggest (`PatientFilters`, `data-table-toolbar`)
@@ -71,7 +71,7 @@ Cada requisito mapea a exactamente una fase. Ver `.planning/ROADMAP.md` para goa
 | ALTA-01 | Phase 68 | Pending |
 | ALTA-02 | Phase 68 | Pending |
 | ALTA-03 | Phase 68 | Pending |
-| ALTA-04 | Phase 68 | Pending |
+| ALTA-04 | Phase 68 | Complete |
 | ALTA-05 | Phase 68 | Pending |
 | ALTA-06 | Phase 68 | Pending |
 | ALTA-07 | Phase 68 | Pending |

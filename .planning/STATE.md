@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.16
 milestone_name: Alta de Paciente sin Fricción
-status: executing
-stopped_at: Phase 68 context gathered
-last_updated: "2026-08-19T21:33:57.793Z"
-last_activity: 2026-08-19 -- Phase 68 planning complete
+status: verifying
+stopped_at: Completed 68-04-PLAN.md (checkpoint approved by user, phase 68 ready for verification)
+last_updated: "2026-08-19T22:16:52.969Z"
+last_activity: 2026-08-19
 progress:
   total_phases: 3
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 9
-  completed_plans: 8
-  percent: 33
+  completed_plans: 9
+  percent: 67
 ---
 
 # Project State
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-08-17 al iniciar el milestone v1.16)
 ## Current Position
 
 Phase: 68 (creaci-n-inline-en-el-autosuggest-frontend) — EXECUTING
-Plan: 1 of 3
-Status: Ready to execute
-Last activity: 2026-08-19 -- Phase 68 planning complete
+Plan: 4 of 4
+Status: Phase complete — ready for verification
+Last activity: 2026-08-19
 
 Progress: [██████████] 100%
 
@@ -53,6 +53,7 @@ Full decision log en `.planning/PROJECT.md` (Key Decisions). Las decisiones de v
 - [Phase 67-03]: requireTelefonoParaEnvio() en WhatsappService guarda los 4 paths (sendTemplateMessage, sendFreeText, sendPresupuestoPdf, retryMessage) que empujan telefono a la cola BullMQ — falsy-tras-trim sin fallback a telefonoAlternativo, BadRequestException plano en espanol; retryMessage se guardea despues del check de ownership y antes de mutar estado, para preservar NotFoundException anti-enumeracion y errorMsg original
 - [Phase 67-04]: Reportes financieros y presupuestos.service.ts::generatePdf() propagan telefono nullable sin as any ni placeholders; auditoria de 12 sitios del ROADMAP + presupuesto-pdf.service.ts:143 como precedente cerrada en 67-04-SUMMARY.md
 - [Phase 67-05]: requireTelefonoParaEnvio y normalizeTelefono cubiertos con 33 tests nuevos (pacientes/whatsapp/presupuestos); fix Rule 1: create() enmascaraba BadRequestException de telefono invalido como 500, corregido con rethrow explicito. Suite completa: 4 failed/18 failed tests, identico a la baseline preexistente. paciente-portal.service.spec.ts (WR-02) sin editar.
+- [Phase 68]: 68-04 cerrado: alta inline resistente al desmontaje (mutateAsync+await) y guard de createPending bloquea Escape mientras el POST /pacientes esta en vuelo (gap #2 de 68-VERIFICATION.md); Task 3 aprobada por el usuario con 'approved' sin desglose granular por escenario
 
 ### Known Tech Debt (carry-forward)
 
@@ -96,11 +97,11 @@ Los 3 ítems diferidos al cierre de v1.14 quedaron resueltos durante v1.15:
 
 ## Session Continuity
 
-Last session: 2026-08-19T00:53:21.228Z
-Stopped at: Phase 68 context gathered
+Last session: 2026-08-19T22:16:52.966Z
+Stopped at: Completed 68-04-PLAN.md (checkpoint approved by user, phase 68 ready for verification)
 Resume file: 
 
-.planning/phases/68-creaci-n-inline-en-el-autosuggest-frontend/68-CONTEXT.md
+.planning/phases/68-creaci-n-inline-en-el-autosuggest-frontend/68-04-SUMMARY.md
 
 - Fase 67 (backend) completa — 5/5 planes ejecutados, TEL-01/ENVIO-01/ENVIO-02 cubiertos con tests automatizados que trazan los 5 success criteria del ROADMAP. Ready for verification.
 - Fases 68 (Creación Inline en el Autosuggest) y 69 (Consistencia de Teléfono Opcional Frontend) pueden arrancar en paralelo — ambas dependen únicamente de la fase 67, ya cerrada.

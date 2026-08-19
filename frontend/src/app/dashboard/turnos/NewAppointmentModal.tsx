@@ -214,6 +214,8 @@ export default function NewAppointmentModal({
             <AutocompletePaciente
               value={pacienteNombre}
               avatarUrl={pacienteFotoUrl}
+              allowCreate
+              profesionalIdParaAlta={effectiveProfessionalId}
               onClear={() => {
                 setValue("pacienteId", "");
                 setValue("pacienteNombre", "");

@@ -359,11 +359,23 @@ export default function QuickAppointment({ profesionalId }: Props) {
           </DialogHeader>
 
           <div className="grid gap-4 py-4">
+            {/*
+              D-08/ALTA-06: la búsqueda de este autosuggest filtra por el profesional
+              que usePacienteSuggest resuelve internamente vía el hook de profesional
+              efectivo, mientras que el alta usa profesionalIdParaAlta (la prop de esta
+              agenda). En NewAppointmentModal y SurgeryAppointmentModal son el mismo
+              valor, pero acá pueden diverger si el profesional seleccionado en el
+              contexto global no es el de esta agenda. Se prioriza el profesional del
+              turno (esta prop), porque el paciente debe quedar bajo quien lo va a
+              atender; cambiar el filtro de búsqueda está fuera de alcance de la fase.
+            */}
             {/* Paciente */}
             <AutocompletePaciente
               onSelect={(p) => setPaciente(p)}
               value={paciente?.nombreCompleto}
               avatarUrl={paciente?.fotoUrl}
+              allowCreate
+              profesionalIdParaAlta={profesionalId}
             />
 
             {/* Tipo de turno */}

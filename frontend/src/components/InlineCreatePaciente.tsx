@@ -4,10 +4,12 @@ import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useUIStore } from "@/lib/stores/useUIStore";
+import { useCreatePaciente } from "@/hooks/useCreatePaciente";
 import { cn } from "@/lib/utils";
 
 export type PacienteCreado = {
@@ -23,6 +25,12 @@ type Props = {
   profesionalId?: string | null;
   onCreated: (paciente: PacienteCreado) => void;
   onCancel: () => void;
+};
+
+/** El repo no tiene códigos de error estructurados (Phase 67, D-10). */
+type ApiError = {
+  response?: { status?: number; data?: { message?: string } };
+  message?: string;
 };
 
 const schema = z.object({
@@ -66,6 +74,7 @@ export default function InlineCreatePaciente({
   onCancel,
 }: Props) {
   const { focusModeEnabled: fm } = useUIStore();
+  const { mutate, isPending } = useCreatePaciente();
   const [prefill] = useState(() => buildPrefill(query));
   const nombreRef = useRef<HTMLInputElement | null>(null);
   const dniRef = useRef<HTMLInputElement | null>(null);
@@ -75,6 +84,7 @@ export default function InlineCreatePaciente({
     handleSubmit,
     watch,
     setValue,
+    setError,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -101,13 +111,44 @@ export default function InlineCreatePaciente({
   );
 
   function onSubmit(data: FormValues) {
-    // El armado del payload real y el POST se completan en la Task 2 de este plan.
-    void data;
-    void profesionalId;
+    const payload = {
+      nombreCompleto: data.nombreCompleto.trim(),
+      dni: data.dni,
+      telefono: data.telefono?.trim() ?? "",
+      profesionalId: profesionalId ?? undefined,
+      estado: "ACTIVO",
+      consentimientoFirmado: false,
+      indicacionesEnviadas: false,
+    };
+
+    mutate(payload, {
+      onSuccess: (creado: PacienteCreado) => {
+        toast.success(`${creado.nombreCompleto} creado correctamente`);
+        onCreated(creado);
+      },
+      onError: (error: ApiError) => {
+        const status = error?.response?.status;
+        const message = error?.response?.data?.message || error?.message;
+
+        if (status === 409 || message?.includes("DNI")) {
+          setError("dni", { message: "Este DNI ya está registrado" });
+          return;
+        }
+        toast.error(message || "Error al crear el paciente");
+      },
+    });
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      e.stopPropagation();
+      handleSubmit(onSubmit)();
+    }
   }
 
   return (
-    <div className="p-3 grid gap-3">
+    <div className="p-3 grid gap-3" onKeyDown={handleKeyDown}>
       <div className="grid gap-1.5">
         <label className="text-sm font-medium text-muted-foreground">
           Nombre completo <span className="text-destructive">*</span>
@@ -168,11 +209,11 @@ export default function InlineCreatePaciente({
       </div>
 
       <div className="flex justify-end gap-2 pt-1">
-        <Button type="button" variant="outline" onClick={onCancel}>
+        <Button type="button" variant="outline" onClick={onCancel} disabled={isPending}>
           Cancelar
         </Button>
-        <Button type="button" onClick={handleSubmit(onSubmit)}>
-          Crear paciente
+        <Button type="button" onClick={handleSubmit(onSubmit)} disabled={isPending}>
+          {isPending ? "Creando..." : "Crear paciente"}
         </Button>
       </div>
     </div>

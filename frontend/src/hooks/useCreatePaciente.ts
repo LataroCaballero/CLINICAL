@@ -12,6 +12,9 @@ export function useCreatePaciente() {
         onSuccess: () => {
             // Invalidar queries de pacientes para refrescar la lista
             queryClient.invalidateQueries({ queryKey: ["pacientes"] });
+            // Invalidar sugerencias del autosuggest (Phase 68, ALTA-04) para que una
+            // busqueda inmediata posterior encuentre al paciente recien creado
+            queryClient.invalidateQueries({ queryKey: ["pacientes-suggest"] });
         },
     });
 }

@@ -25,6 +25,12 @@ type Props = {
   profesionalId?: string | null;
   onCreated: (paciente: PacienteCreado) => void;
   onCancel: () => void;
+  /**
+   * gap #2 de 68-VERIFICATION.md / D-13: reporta el `isPending` del alta al
+   * padre (AutocompletePaciente) para que sepa que hay un POST en vuelo y no
+   * lo descarte con Escape mientras está corriendo.
+   */
+  onPendingChange?: (pending: boolean) => void;
 };
 
 /** El repo no tiene códigos de error estructurados (Phase 67, D-10). */
@@ -72,9 +78,10 @@ export default function InlineCreatePaciente({
   profesionalId,
   onCreated,
   onCancel,
+  onPendingChange,
 }: Props) {
   const { focusModeEnabled: fm } = useUIStore();
-  const { mutate, isPending } = useCreatePaciente();
+  const { mutateAsync, isPending } = useCreatePaciente();
   const [prefill] = useState(() => buildPrefill(query));
   const nombreRef = useRef<HTMLInputElement | null>(null);
   const dniRef = useRef<HTMLInputElement | null>(null);
@@ -105,12 +112,22 @@ export default function InlineCreatePaciente({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // gap #2 / D-13: reporta el isPending del alta al padre. La cleanup fuerza
+  // false al desmontar para que el padre nunca quede con `true` colgado
+  // (si no, Escape quedaría bloqueado para siempre tras el desmontaje).
+  useEffect(() => {
+    onPendingChange?.(isPending);
+    return () => {
+      onPendingChange?.(false);
+    };
+  }, [isPending, onPendingChange]);
+
   const fieldClassName = cn(
     fm &&
       "bg-[var(--fc-bg-surface)] border-[var(--fc-border)] text-[var(--fc-text-primary)] placeholder:text-slate-500"
   );
 
-  function onSubmit(data: FormValues) {
+  async function onSubmit(data: FormValues) {
     const payload = {
       nombreCompleto: data.nombreCompleto.trim(),
       dni: data.dni,
@@ -121,30 +138,36 @@ export default function InlineCreatePaciente({
       indicacionesEnviadas: false,
     };
 
-    mutate(payload, {
-      onSuccess: (creado: PacienteCreado) => {
-        toast.success(`${creado.nombreCompleto} creado correctamente`);
-        onCreated(creado);
-      },
-      onError: (error: ApiError) => {
-        const status = error?.response?.status;
-        const message = error?.response?.data?.message || error?.message;
+    // gap #2 de 68-VERIFICATION.md: los callbacks de nivel mutate() viven en
+    // el MutationObserver de TanStack Query v5 y no disparan tras el
+    // desmontaje. La continuación de un await es un closure de JS, no está
+    // atada al ciclo de vida de React, así que corre igual y el paciente
+    // creado nunca se pierde en silencio (D-07 / ALTA-04).
+    try {
+      const creado = (await mutateAsync(payload)) as PacienteCreado;
+      toast.success(`${creado.nombreCompleto} creado correctamente`);
+      onCreated(creado);
+    } catch (err) {
+      const error = err as ApiError;
+      const status = error?.response?.status;
+      const message = error?.response?.data?.message || error?.message;
 
-        if (status === 409 || message?.includes("DNI")) {
-          setError("dni", { message: "Este DNI ya está registrado" });
-          return;
-        }
-        toast.error(message || "Error al crear el paciente");
-      },
-    });
+      if (status === 409 || message?.includes("DNI")) {
+        setError("dni", { message: "Este DNI ya está registrado" });
+        return;
+      }
+      toast.error(message || "Error al crear el paciente");
+    }
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      e.stopPropagation();
-      handleSubmit(onSubmit)();
-    }
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    e.stopPropagation();
+    // WR-02: bloquear Enter repetido/sostenido mientras el alta está en
+    // vuelo, en paridad con el disabled={isPending} de ambos botones.
+    if (isPending) return;
+    void handleSubmit(onSubmit)();
   }
 
   return (

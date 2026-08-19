@@ -384,7 +384,7 @@ Plans:
 | 65. Sync Tipo de Turno ↔ Plantilla HC (Backend) | v1.15 | 2/2 | Complete    | 2026-08-04 |
 | 66. Correcciones de UI de Historia Clínica (Frontend) | v1.15 | 1/1 | Complete    | 2026-08-08 |
 | 67. Teléfono Opcional y Guards de Envío (Backend) | v1.16 | 5/5 | Complete    | 2026-08-19 |
-| 68. Creación Inline en el Autosuggest (Frontend) | v1.16 | 2/3 | In Progress|  |
+| 68. Creación Inline en el Autosuggest (Frontend) | v1.16 | 3/3 | Complete   | 2026-08-19 |
 | 69. Consistencia de Teléfono Opcional (Frontend) | v1.16 | 0/? | Pending | — |
 
 ---

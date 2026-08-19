@@ -694,12 +694,17 @@ export class PacientePortalService {
     const data: Record<string, unknown> = {};
     for (const key of allowed) {
       const value = (input as Record<string, unknown>)[key];
-      // WR-02: `@IsOptional()` lets an explicit `null` pass DTO validation, but
-      // the portal never blanks out contact data — the staff CAN clear
-      // `telefono` via PacientesService.updateContacto (D-02), the
-      // patient-facing portal cannot: `telefono` is the channel the clinic
-      // uses to reach the patient, so this asymmetry is deliberate (D-08).
+      // WR-02: `@IsOptional()` lets an explicit `null` pass DTO validation.
       // Treat `null` like an absent field — no change.
+      //
+      // CAVEAT (67-REVIEW CR-02): esto NO alcanza para impedir que el portal
+      // blanquee el teléfono. El DTO declara `telefono` como
+      // `@IsOptional() @IsString()` sin largo mínimo, así que un `''` explícito
+      // pasa la validación, no es null ni undefined, y llega a la columna.
+      // Preexistente a la fase 67, no introducido por ella. El envío igual falla
+      // cerrado (`requireTelefonoParaEnvio()` bloquea vacío-tras-trim), pero deja
+      // un tercer estado `''` que no coincide con los chequeos `telefono !== null`.
+      // Cerrarlo requiere validar largo mínimo en UpdateContactoPortalDto.
       if (value !== undefined && value !== null) data[key] = value;
     }
     return data;

@@ -81,6 +81,11 @@ export class PacientesService {
       // TEL-01 (D-06): un teléfono inválido normalizado por normalizeTelefono()
       // lanza BadRequestException *dentro* de este try — sin este rethrow, el
       // catch-all de abajo lo enmascara como 500 en vez de propagar el 400.
+      // Funciona porque normalizeTelefono() tira de forma SÍNCRONA, antes del
+      // return. Ojo (67-REVIEW CR-03): el `return this.prisma.paciente.create()`
+      // de arriba no está await-eado, así que un rechazo de Prisma escapa a este
+      // catch y la rama P2002 -> 409 de abajo es inalcanzable. Preexistente a la
+      // fase 67; se arregla agregando el `await` al return.
       if (error instanceof BadRequestException) {
         throw error;
       }
@@ -468,13 +473,24 @@ export class PacientesService {
 
   private async updateContacto(id: string, data: any) {
     // whitelist explícito
-    const patch = {
-      // TEL-01 (D-05/D-06): sin valor -> null (editar Contacto sin teléfono
-      // ya no da 400); con valor -> sigue validando forma vía normalizeTelefono().
-      telefono: this.normalizeTelefono(data.telefono),
+    const patch: {
+      telefono?: string | null;
+      telefonoAlternativo: string | null;
+      email: string | null;
+    } = {
       telefonoAlternativo: data.telefonoAlternativo ?? null,
       email: data.email ?? null,
     };
+
+    // TEL-01 (D-05/D-06): editar Contacto sin teléfono ya no da 400, pero hay que
+    // distinguir "no mandé el campo" de "lo vacié a propósito". Si `telefono` viene
+    // ausente/undefined NO se toca la columna; mandarlo como '' o null la limpia, y
+    // un valor con forma inválida sigue tirando 400 vía normalizeTelefono().
+    // Sin este guard, un PATCH que simplemente omite el campo pisaba con NULL el
+    // teléfono guardado — una request que antes se rechazaba pasaba a destruir datos.
+    if (data.telefono !== undefined) {
+      patch.telefono = this.normalizeTelefono(data.telefono);
+    }
 
     // validación mínima backend
     if (patch.email && typeof patch.email !== 'string') {

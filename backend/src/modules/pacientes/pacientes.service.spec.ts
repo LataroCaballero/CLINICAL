@@ -682,6 +682,40 @@ describe('PacientesService — portal link encrypt/recover (52-09)', () => {
       expect(callArg.data.telefono).toBeNull();
     });
 
+    it('CR-01: updatePacienteSection contacto SIN la clave telefono no toca la columna', async () => {
+      (prisma.paciente.update as jest.Mock).mockResolvedValue({
+        id: 'p-contacto-omit',
+      });
+
+      await expect(
+        service.updatePacienteSection('p-contacto-omit', {
+          section: 'contacto',
+          data: { email: 'a@b.com' },
+        } as any),
+      ).resolves.toBeDefined();
+
+      // Omitir el campo != vaciarlo: el patch no debe incluir `telefono`, o el
+      // update pisaría con NULL el teléfono guardado (pérdida de datos silenciosa).
+      const callArg = (prisma.paciente.update as jest.Mock).mock.calls[0][0];
+      expect(callArg.data).not.toHaveProperty('telefono');
+    });
+
+    it('CR-01: updatePacienteSection contacto con telefono: null sí limpia la columna', async () => {
+      (prisma.paciente.update as jest.Mock).mockResolvedValue({
+        id: 'p-contacto-null',
+      });
+
+      await expect(
+        service.updatePacienteSection('p-contacto-null', {
+          section: 'contacto',
+          data: { telefono: null, email: 'a@b.com' },
+        } as any),
+      ).resolves.toBeDefined();
+
+      const callArg = (prisma.paciente.update as jest.Mock).mock.calls[0][0];
+      expect(callArg.data.telefono).toBeNull();
+    });
+
     it("D-06: updatePacienteSection contacto con telefono: '123' -> BadRequestException('Teléfono inválido')", async () => {
       await expect(
         service.updatePacienteSection('p-contacto-2', {

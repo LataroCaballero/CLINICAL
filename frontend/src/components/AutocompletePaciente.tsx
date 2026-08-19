@@ -39,6 +39,7 @@ export default function AutocompletePaciente({
 }: Props) {
   const [query, setQuery] = useState("");
   const [creating, setCreating] = useState(false);
+  const [createPending, setCreatePending] = useState(false);
   const { data = [], isFetching, isSuccess } = usePacienteSuggest(query);
   const { focusModeEnabled: fm } = useUIStore();
 
@@ -118,12 +119,20 @@ export default function AutocompletePaciente({
         style={{ width: "var(--radix-popper-anchor-width)" }}
         onOpenAutoFocus={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => {
-          // D-13: sólo cierra el mini-form; el stopPropagation frena el burbujeo
-          // hacia el Dialog del turno (un Escape reflejo tipeando el DNI no debe
-          // descartar el turno a medio cargar). Con creating=false no hace nada.
+          // D-13: sólo cierra el mini-form. Con creating=false no hace nada.
+          // Lo que evita que este Escape alcance al Dialog del turno es el
+          // short-circuit isHighestLayer de Radix combinado con
+          // preventDefault() (IN-03 de 68-REVIEW.md) — el descarte de Radix
+          // escucha a nivel documento en fase de captura, así que
+          // stopPropagation() no es la barrera real; se conserva igual por
+          // no alterar comportamiento existente.
+          // gap #2 de 68-VERIFICATION.md: mientras el alta está en vuelo
+          // (createPending) tampoco se cierra el mini-form, en espejo del
+          // disabled={isPending} que ya tiene el botón Cancelar.
           if (!creating) return;
           e.preventDefault();
           e.stopPropagation();
+          if (createPending) return;
           setCreating(false);
         }}
         onPointerDownOutside={(e) => {
@@ -144,6 +153,7 @@ export default function AutocompletePaciente({
               setCreating(false);
             }}
             onCancel={() => setCreating(false)}
+            onPendingChange={setCreatePending}
           />
         ) : (
           <>

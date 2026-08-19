@@ -40,13 +40,13 @@ completed: 2026-08-19
 
 # Phase 68 Plan 03: Habilitar creación inline en los tres modales de turno Summary
 
-**Los tres call sites de turno (`NewAppointmentModal`, `SurgeryAppointmentModal`, `QuickAppointment`) reciben `allowCreate` + `profesionalIdParaAlta` con la misma expresión de profesional que ya usaban para el turno, y los dos usos de filtro (`PatientFilters`, `data-table-toolbar`) quedan auditados por comando como no tocados — la verificación manual cross-modal (Task 3) queda pendiente de checkpoint humano.**
+**Los tres call sites de turno (`NewAppointmentModal`, `SurgeryAppointmentModal`, `QuickAppointment`) reciben `allowCreate` + `profesionalIdParaAlta` con la misma expresión de profesional que ya usaban para el turno, los dos usos de filtro (`PatientFilters`, `data-table-toolbar`) quedan auditados por comando como no tocados, y la verificación manual cross-modal (Task 3) fue aprobada por el usuario.**
 
 ## Performance
 
-- **Duration:** ~25 min (Tasks 1-2, autonomous)
+- **Duration:** ~25 min (Tasks 1-2, autonomous) + checkpoint humano
 - **Completed:** 2026-08-19
-- **Tasks:** 2/3 (Task 3 es checkpoint:human-verify, pendiente)
+- **Tasks:** 3/3
 - **Files modified:** 3
 
 ## Accomplishments
@@ -66,7 +66,7 @@ Each task was committed atomically:
 
 1. **Task 1: Habilitar la creación inline en NewAppointmentModal y SurgeryAppointmentModal** - `a24d09d` (feat)
 2. **Task 2: Habilitar en QuickAppointment, documentar la divergencia de profesional y auditar el fence de ALTA-07** - `8243458` (feat)
-3. **Task 3: Verificación manual cross-modal — dismiss, no-submit y turno confirmado** - PENDIENTE (checkpoint:human-verify, no autoaprobable)
+3. **Task 3: Verificación manual cross-modal — dismiss, no-submit y turno confirmado** - APROBADA por el usuario en el checkpoint (ver "Task 3 — Resultado del checkpoint")
 
 _Note: worktree mode — the orchestrator applies the plan-metadata commit centrally after merge; STATE.md/ROADMAP.md are not touched by this agent._
 
@@ -92,21 +92,81 @@ None - plan executed exactly as written. La única adaptación fue de redacción
 
 None - no external service configuration required.
 
+## Task 3 — Resultado del checkpoint (human-verify)
+
+### Procedencia del registro — leer antes que la tabla
+
+Los resultados de abajo **no fueron observados por ningún agente**. La verificación la ejecutó el
+usuario contra un dev server, y su respuesta al checkpoint fue la señal de reanudación en bloque
+definida por el propio plan (`68-03-PLAN.md`, línea 245):
+
+> *"Escribir 'approved' si los 8 pasos pasan en los tres modales y los dos chequeos de fence salen limpios."*
+
+El usuario respondió exactamente: **`approved`**. Por contrato del plan, eso significa 24/24 celdas
+pasadas y ambos fence checks limpios, y así queda registrado. Lo que **no** hay es reporte celda por
+celda: el usuario no detalló cada paso individualmente. Ninguna celda de esta tabla debe leerse como
+una observación narrada por un agente.
+
+### 8 pasos × 3 modales (24 celdas)
+
+Modal A = `NewAppointmentModal` · Modal B = `SurgeryAppointmentModal` · Modal C = `QuickAppointment`
+
+| # | Paso | Ref | A | B | C |
+|---|------|-----|---|---|---|
+| 1 | Fila de crear aparece a ≥3 chars, no a 2 | D-01/D-03 | ✓ | ✓ | ✓ |
+| 2 | Mini-form precargado, foco en DNI, modal abierto detrás | ALTA-03 | ✓ | ✓ | ✓ |
+| 3 | Congelamiento: escribir arriba no reemplaza el form | D-04 | ✓ | ✓ | ✓ |
+| 4 | Click afuera **no** cierra el mini-form | D-14 | ✓ | ✓ | ✓ |
+| 5 | Escape cierra **sólo** el mini-form; fecha/tipo/obs intactos | D-13 | ✓ | ✓ | ✓ |
+| 6 | Crear con Enter **y** con botón **no** submitea el turno | ALTA-04 | ✓ | ✓ | ✓ |
+| 7 | El turno se confirma con el paciente recién creado | ALTA-04 | ✓ | ✓ | ✓ |
+| 8 | DNI duplicado: error bajo el campo, conserva nombre/teléfono | ALTA-05 | ✓ | ✓ | ✓ |
+
+**Pasos 5 y 6 en A y B específicamente:** ambos registrados como pasados en `NewAppointmentModal` y
+en `SurgeryAppointmentModal`, que es lo que exige el acceptance criteria — son los dos únicos
+archivos con `<form>` y por lo tanto los únicos donde el paso 6 puede exponer el fallo de submit
+accidental. `QuickAppointment` no tiene `<form>`, así que su ✓ en el paso 6 confirma no-regresión
+pero no cuenta como evidencia del riesgo.
+
+### Chequeo de profesional (ALTA-06/D-08)
+
+**Resultado: PASADO** por aprobación del usuario.
+
+**Limitación registrada:** el plan pedía anotar *qué* profesional tenía la agenda de
+`QuickAppointment`, *cuál* estaba en el contexto global y *bajo cuál* quedó el paciente. El usuario
+no itemizó esos valores en su respuesta `approved`. **No se registran valores concretos porque no
+fueron reportados** — inventarlos falsificaría el registro. Si más adelante hace falta la evidencia
+específica del escenario del hallazgo #7 (contexto global distinto al de la agenda), hay que
+re-correr ese chequeo y anotar los tres valores.
+
+### Chequeo del fence (ALTA-07)
+
+**Resultado: PASADO** por aprobación del usuario — *"¿apareció la fila de crear?"* → **no**, en ambos.
+
+| Lugar | ¿Apareció la fila de crear? |
+|-------|------------------------------|
+| Pacientes → barra de búsqueda (`PatientFilters`) | No |
+| Toolbar de filtro de tablas (`data-table-toolbar`) | No |
+
+Esto es consistente con la auditoría por comando, que sí es observación directa y fue re-corrida por
+el orquestador sobre el árbol ya mergeado: `rg -c "allowCreate|profesionalIdParaAlta"` sobre
+`PatientFilters.tsx` y `data-table-toolbar.tsx` devuelve exit 1 (cero coincidencias), y `allowCreate`
+aparece exactamente 1 vez en cada uno de los tres modales de turno y en ningún otro lado del repo.
+`npx tsc --noEmit` exit 0 post-merge.
+
 ## Next Phase Readiness
 
-Los tres call sites de turno están cableados y verificados por comando (typecheck limpio, lint dentro de baseline, props presentes exactamente donde deben estar y ausentes donde no deben, fence auditado con `git status`/`git diff --stat` vacíos). Lo que falta para cerrar el plan es exclusivamente lo que ningún comando puede probar en este repo: la interacción Popover-dentro-de-Dialog (Escape, click-outside, no-submit del turno) en los tres modales reales, con `npm run dev` corriendo.
-
-**Task 3 (checkpoint:human-verify) queda pendiente** — no fue autoaprobada por este agente, tal como exige el protocolo de checkpoints. El siguiente agente (o el usuario, vía el orquestador) debe:
-1. Levantar `cd frontend && npm run dev`.
-2. Recorrer los 8 pasos × 3 modales descritos en la Task 3 del plan (`.planning/phases/68-creaci-n-inline-en-el-autosuggest-frontend/68-03-PLAN.md`, líneas 223-243).
-3. Correr el chequeo de profesional (ALTA-06/D-08) en `QuickAppointment` y el chequeo de fence en `PatientFilters`/`data-table-toolbar`.
-4. Registrar los resultados de las 24 celdas (8 pasos × 3 modales) + los dos chequeos adicionales en una actualización de este SUMMARY antes de dar la fase por cerrada.
+Los tres call sites de turno están cableados y verificados por comando (typecheck limpio, lint dentro
+de baseline, props presentes exactamente donde deben estar y ausentes donde no deben, fence auditado
+con `git status`/`git diff --stat` vacíos), y el riesgo técnico central de la fase —la interacción
+Popover-dentro-de-Dialog (Escape, click-outside, no-submit del turno), sin precedente en el repo—
+quedó cerrado con la aprobación del checkpoint humano.
 
 Nada bajo `backend/` fue modificado (`git status --porcelain backend/` vacío, verificado en cada task). `git status --porcelain frontend/src` lista únicamente los tres archivos de este plan.
 
 ---
 *Phase: 68-creaci-n-inline-en-el-autosuggest-frontend*
-*Completed: 2026-08-19 (Tasks 1-2; Task 3 checkpoint pendiente)*
+*Completed: 2026-08-19 (Tasks 1-3; checkpoint aprobado por el usuario)*
 
 ## Self-Check: PASSED
 

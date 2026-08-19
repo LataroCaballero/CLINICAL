@@ -14,7 +14,7 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 
 **Última versión shipped:** v1.15 Flujo CRM Automático + Correcciones HC (2026-08-10) — 4 fases (63–66), 9 planes, 20 tareas, 11/11 requisitos, audit `tech_debt` con 0 blockers y 0 artefactos abiertos al cierre.
 
-**Milestone activo:** v1.16 Alta de Paciente sin Fricción — ver `## Current Milestone` abajo.
+**Milestone activo:** v1.16 Alta de Paciente sin Fricción — ver `## Current Milestone` abajo. Phase 67 completa (2026-08-19): `Paciente.telefono` es opcional de punta a punta (migración aplicada, 424 teléfonos existentes intactos) y los cuatro entrypoints de envío por WhatsApp fallan cerrado antes de tocar Meta, crear el registro o encolar el job. TEL-01 / ENVIO-01 / ENVIO-02 validados.
 
 **Candidatos en carpeta para ciclos posteriores** (ver Requirements → Active): dashboard de estadísticas ejecutivas con reportes exportables (REPORT-F01), automatizaciones de seguimiento por tiempo/etapa (REPORT-F02), módulos financieros interconectados con CRM, tipos de turno personalizados por profesional + color en calendario (TIPO-F01/F02), y vista de archivados con desarchivar en lote + archivado automático (CRM-F01/F02).
 

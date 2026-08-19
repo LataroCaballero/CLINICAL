@@ -103,3 +103,12 @@ Nada bajo `backend/` fue modificado (`git status --porcelain backend/` vacío, v
 ---
 *Phase: 68-creaci-n-inline-en-el-autosuggest-frontend*
 *Completed: 2026-08-19*
+
+## Self-Check: PASSED
+
+- FOUND: `frontend/src/components/InlineCreatePaciente.tsx`
+- FOUND: `frontend/src/hooks/useCreatePaciente.ts`
+- FOUND: `.planning/phases/68-creaci-n-inline-en-el-autosuggest-frontend/68-01-SUMMARY.md`
+- FOUND commit: `321929d`
+- FOUND commit: `0f06a9b`
+- FOUND commit: `80eaa6f`

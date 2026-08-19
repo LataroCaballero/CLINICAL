@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v1.16
 milestone_name: Alta de Paciente sin Fricción
-status: verifying
-stopped_at: "Plan 67-05 completado (fase 67 cerrada: TEL-01/ENVIO-01/ENVIO-02 con cobertura de test para los 5 success criteria del ROADMAP)"
-last_updated: "2026-08-18T22:28:44.305Z"
+status: ready_to_plan
+stopped_at: Phase 67 complete (5/5) — ready to discuss Phase 68
+last_updated: 2026-08-19T00:16:31.339Z
 last_activity: 2026-08-18
 progress:
   total_phases: 3
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-08-17 al iniciar el milestone v1.16)
 
 **Core value:** Que un cirujano plástico cierre más cirugías — el sistema hace visible qué pacientes seguir, cuándo y cómo, de la manera más automatizada posible
-**Current focus:** Phase 67 — tel-fono-opcional-y-guards-de-env-o-backend
+**Current focus:** Phase 68 — creación inline en el autosuggest (frontend)
 
 ## Current Position
 
-Phase: 67 (tel-fono-opcional-y-guards-de-env-o-backend)
-Plan: 5 of 5 (Plans 1-2/5 complete — TEL-01)
-Status: Phase complete — ready for verification
-Last activity: 2026-08-18
+Phase: 68
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-08-19
 
 Progress: [██████████] 100%
 

@@ -1,8 +1,8 @@
 ---
 phase: 68-creaci-n-inline-en-el-autosuggest-frontend
-verified: 2026-08-19T21:00:00Z
+verified: 2026-08-19T23:10:00Z
 status: gaps_found
-score: 10/12 must-haves verified
+score: 12/14 must-haves verified
 overrides_applied: 1
 overrides:
   - must_have: "El paciente creado inline queda asignado al profesional del contexto activo, igual que en el alta completa (Roadmap SC5 / ALTA-06)"
@@ -22,231 +22,264 @@ overrides:
       creado ante desmontaje in-flight).
     accepted_by: "Lautaro Caballero"
     accepted_at: "2026-08-19T00:00:00Z"
+re_verification:
+  previous_status: gaps_found
+  previous_score: 10/12
+  gaps_closed:
+    - "El feedback post-creación (toast + selección automática, D-07) ocurre de forma confiable incluso si el usuario descarta el mini-form (Escape) o cierra el Dialog del turno mientras el POST está en vuelo — cerrado por 68-04 (mutateAsync + try/catch local, createPending + guard en onEscapeKeyDown). Confirmado por lectura directa de fuente, no sólo por la SUMMARY."
+  gaps_remaining:
+    - "El paciente creado inline queda asignado al profesional del contexto activo (ALTA-06/SC5) — sigue sin gate; cubierto por el override firmado arriba, no reabierto."
+  regressions: []
 gaps:
-  - truth: "El paciente creado inline queda asignado al profesional del contexto activo, igual que en el alta completa (Roadmap SC5 / ALTA-06)"
+  - truth: "SC3/ALTA-04 en QuickAppointment: cerrar el Dialog del turno mientras el alta está en vuelo no deja un paciente pre-seleccionado, huérfano de un turno distinto, que además no se puede quitar con la X"
     status: failed
     reason: >
-      canOfferCreate (AutocompletePaciente.tsx:52-57) does not gate on
-      profesionalIdParaAlta. In NewAppointmentModal and SurgeryAppointmentModal,
-      effectiveProfessionalId can be null (ADMIN/SECRETARIA with no professional
-      selected in the global context, or still loading), yet the "Crear paciente"
-      row still appears and InlineCreatePaciente.tsx:118 posts
-      profesionalId: profesionalId ?? undefined. The only guard against a null
-      professional (NewAppointmentModal.tsx:131 / SurgeryAppointmentModal.tsx:178,
-      "Debe seleccionar un profesional") fires on TURNO submit, which happens
-      strictly after the inline patient POST already succeeded. Result: a
-      patient record persists with profesionalId = null, invisible to every
-      professional-scoped read (suggest, getKanban, obtenerListaPacientes), and
-      the DNI is permanently burned against future correct creation (409).
-      68-CONTEXT.md D-08 explicitly discarded blocking creation on a null
-      professional on the stated premise that "ese caso ya está cortado aguas
-      abajo por NewAppointmentModal.tsx:132" — that premise is false: the
-      downstream block only stops the turno, not the patient POST, which is an
-      independent mutate() call triggered by the mini-form's own submit.
+      Confirmado por lectura directa de código (no heredado de 68-REVIEW.md,
+      re-derivado independientemente esta sesión). QuickAppointment.tsx monta
+      <AutocompletePaciente> sin `onClear` (único de los tres call sites que no
+      lo pasa — NewAppointmentModal.tsx:219 y SurgeryAppointmentModal.tsx:228 sí
+      lo pasan), y `paciente` sólo se resetea en el camino de éxito de
+      `confirmarTurno` (:224-229); ni `onOpenChange={setOpen}` (:352) ni el botón
+      Cancelar (:419) lo limpian. Antes de 68-04 esto era inofensivo porque un
+      alta abandonada en vuelo simplemente se perdía en silencio (gap #2
+      original) y nunca llegaba a `onSelect`. El propio arreglo de 68-04 (Capa 2:
+      `mutateAsync` + `await` que sobrevive al desmontaje) hace que la
+      continuación SÍ corra tras cerrar el Dialog — pero a diferencia de lo que
+      documenta el residuo aceptado T-68-04 ("el usuario ve el toast pero el
+      paciente no queda seleccionado, porque el formulario ya no está en
+      pantalla"), en QuickAppointment el componente padre NO se desmonta al
+      cerrar su Dialog interno (sólo se desmonta el `DialogContent` de Radix; el
+      panel deslizable que contiene a `QuickAppointment` sigue montado mientras
+      `quickAppointmentOpen` sea true en `turnos/page.tsx`). Por eso
+      `onCreated → onSelect(pac) → setPaciente(p)` sí corre y sí muta estado
+      real: el paciente creado queda seleccionado, pero para el PRÓXIMO turno
+      que el usuario abra en ese panel — no el que estaba creando — y sin forma
+      de quitarlo (X es no-op). Riesgo confirmado: `confirmarTurno()` puede
+      postear un turno con el `pacienteId` equivocado si el usuario no repara en
+      el chip precargado.
     artifacts:
-      - path: "frontend/src/components/AutocompletePaciente.tsx"
-        issue: "canOfferCreate (lines 52-57) omits profesionalIdParaAlta from its gate"
-      - path: "frontend/src/components/InlineCreatePaciente.tsx"
-        issue: "line 118 silently falls back to profesionalId: undefined with no defense-in-depth check before mutate()"
+      - path: "frontend/src/app/dashboard/components/QuickAppointment.tsx"
+        issue: "<AutocompletePaciente> (líneas ~373-379) no recibe onClear; `paciente` sólo se limpia en el camino de éxito de confirmarTurno (:224-229), no en onOpenChange ni en Cancelar (:419)"
     missing:
-      - "Add `!!profesionalIdParaAlta` to canOfferCreate in AutocompletePaciente.tsx so the create row itself is not offered without a resolved professional"
-      - "Add a guard in InlineCreatePaciente.tsx onSubmit (or disable the button) when profesionalId is falsy, with a clear message instead of silently posting profesionalId: undefined"
-  - truth: "El feedback post-creación (toast + selección automática, D-07) ocurre de forma confiable siempre que el POST se resuelva con éxito, incluso si el usuario cierra el mini-form o el modal de turno mientras el request está en vuelo"
-    status: failed
-    reason: >
-      onEscapeKeyDown in AutocompletePaciente.tsx:120-128 guards only on
-      `creating`, not on InlineCreatePaciente's isPending. The Cancel button IS
-      disabled while isPending (InlineCreatePaciente.tsx:212) but Escape is not,
-      and the same unmount happens if the user closes the containing Dialog (X /
-      Cancel / overlay) mid-request. TanStack Query v5 stores mutate()-level
-      callbacks (onSuccess/onError, defined in InlineCreatePaciente.tsx:124-139)
-      on the MutationObserver, which is destroyed when the component unmounts;
-      those callbacks are confirmed to not fire post-unmount. Net effect
-      verified in code: the patient IS created server-side (POST completes,
-      and useCreatePaciente.ts's hook-level onSuccess — which lives on the
-      Mutation object itself, not the observer — does still invalidate
-      ["pacientes"] / ["pacientes-suggest"]), but toast.success and
-      onCreated(creado) never run: no selection into the appointment form, no
-      visible confirmation. A same-DNI retry then hits the 409
-      "Este DNI ya está registrado" with no patient selected — a dead end for
-      that specific interaction, defeating "seguir agendando el turno sin
-      cerrar el modal" for that path.
-    artifacts:
-      - path: "frontend/src/components/AutocompletePaciente.tsx"
-        issue: "onEscapeKeyDown (lines 120-128) unconditionally calls setCreating(false) while creating, with no isPending guard, unmounting InlineCreatePaciente mid-request"
-      - path: "frontend/src/components/InlineCreatePaciente.tsx"
-        issue: "onSuccess/onError are passed as mutate()-level callbacks (lines 124-139), which TanStack Query v5 does not guarantee to fire after the owning component unmounts"
-    missing:
-      - "Lift isPending into AutocompletePaciente (or add an onPendingChange callback from the mini-form) and block Escape dismissal while a create request is in flight, mirroring the existing disabled={isPending} on the Cancel button"
-      - "Make success handling resilient to unmount (e.g. mutateAsync + local try/catch, or move toast/selection into the hook-level onSuccess in useCreatePaciente.ts) so a created patient is never dropped silently"
+      - "Agregar onClear={() => setPaciente(null)} al <AutocompletePaciente> de QuickAppointment.tsx, igual que en los otros dos call sites"
+      - "Resetear paciente (y el resto del form) en onOpenChange={(o) => { setOpen(o); if (!o) resetForm(); }}, no sólo en el camino de éxito, para que cerrar el Dialog por X/overlay/Cancelar no deje estado contaminado para la próxima apertura"
+missing_reevaluate_context: false
 deferred: []
-human_verification: []
+human_verification:
+  - test: "Confirmar en vivo (throttling Slow 3G) que un Enter sostenido/repetido en el mini-form de InlineCreatePaciente dispara exactamente un único POST /pacientes en la pestaña Network, en los 3 modales."
+    expected: "Un solo POST /pacientes, un solo toast, sin error 409 espurio."
+    why_human: >
+      El checkpoint humano de la Task 3 de 68-04 recibió una aprobación global
+      ('approved') sin el desglose granular que el plan pedía explícitamente
+      (conteo exacto de POSTs en el Escenario C, resultado por modal en el
+      Escenario E) — documentado con honestidad en 68-04-SUMMARY.md. Por otro
+      lado, la traza de código de WR-02 (68-REVIEW.md) muestra que
+      `handleSubmit` de RHF es asíncrono (espera al resolver de zod antes de
+      invocar `onSubmit`, que es recién donde `isPending` pasa a `true`), así
+      que dos Enter en el mismo tick pueden ambos leer `isPending === false` y
+      disparar dos POST antes de que el guard de 68-04 (`if (isPending) return`)
+      surta efecto. El `@unique` de `dni` acota el daño a un 409 silencioso, no a
+      duplicación de pacientes, pero la garantía "un solo POST" que el plan 04
+      declaró cerrada no está confirmada de forma concluyente ni por código
+      (guard basado en estado, no en un ref síncrono) ni por evidencia humana
+      itemizada.
 ---
 
 # Phase 68: Creación Inline en el Autosuggest (Frontend) Verification Report
 
 **Phase Goal:** Que al buscar un paciente que no existe, el usuario pueda crearlo con nombre y DNI ahí mismo y seguir agendando el turno sin cerrar el modal.
-**Verified:** 2026-08-19T21:00:00Z
+**Verified:** 2026-08-19T23:10:00Z
 **Status:** gaps_found
-**Re-verification:** No — initial verification
+**Re-verification:** Yes — after gap closure (plan 68-04)
 
 ## Goal Achievement
 
-The phase built the correct architecture and the **happy path works**: a zero/insufficient-result
-search offers a "Crear paciente" row, clicking it opens a self-contained mini-form inside the same
-popover, submitting it POSTs to `/pacientes`, selects the new patient into the appointment form, and
-the turno can be confirmed without closing the modal. This was independently confirmed by direct
-code reading of `AutocompletePaciente.tsx` and `InlineCreatePaciente.tsx`, not merely inferred from
-SUMMARY.md.
+68-04 closed the previously-identified gap #2 (silent loss of a successfully-created patient on
+in-flight dismissal) with a two-layer fix confirmed by direct source reading: `onEscapeKeyDown` now
+blocks dismissal while a `createPending` flag is true, and `InlineCreatePaciente`'s success/error
+handling moved from `mutate()`-level callbacks (destroyed with the MutationObserver on unmount) to a
+local `try`/`catch` around `await mutateAsync(...)` (a JS closure that survives unmount). This is
+verified directly in `frontend/src/components/AutocompletePaciente.tsx:121-137` and
+`frontend/src/components/InlineCreatePaciente.tsx:118-161`, not merely inferred from the SUMMARY.
 
-However, two edge paths that a real user will hit — not merely a code reviewer's hypothetical — break
-the goal for those paths, and both are directly on the roadmap's declared success criteria (SC3 and
-SC5), not incidental code smells:
+Gap #1 (ALTA-06 / orphaned patient when `profesionalIdParaAlta` is null) remains formally accepted
+via the signed `overrides:` block from the prior verification pass. It is preserved unchanged — the
+override is **not** re-opened here. `canOfferCreate` still omits `profesionalIdParaAlta` and
+`InlineCreatePaciente.tsx:135` still posts `profesionalId: profesionalId ?? undefined` with no guard,
+exactly as the override describes.
 
-1. **A patient can be created and permanently orphaned (unassigned to any professional) before the
-   app ever tells the user a professional must be selected** (breaks Roadmap SC5 / ALTA-06).
-2. **A patient can be created server-side and then silently lost to the UI** if the user presses
-   Escape or closes the Dialog while the POST is in flight (breaks Roadmap SC3's "sin pasos
-   adicionales" / ALTA-04 for that specific interaction, and burns the DNI for the retry).
+**However, closing gap #2 surfaced a new, distinct defect that neither the original verification nor
+68-04's plan anticipated:** `QuickAppointment.tsx` is the one call site (of three) that never passed
+`onClear` to `AutocompletePaciente`, and it only resets `paciente` on the turno-submit success path —
+not on Dialog close. Before 68-04, an abandoned in-flight creation was lost silently (that was gap #2
+itself) and never reached `onSelect`. Now that the success continuation survives unmount by design
+(Capa 2), it *does* reach `onSelect(pac) → setPaciente(p)` in `QuickAppointment` even after its Dialog
+is closed — because closing that Dialog only unmounts the Radix `DialogContent` portal, not the
+`QuickAppointment` component itself (which stays mounted as long as the sliding "Turno rápido" panel
+in `turnos/page.tsx` is open). The result is a stale, unremovable patient chip pre-loaded into the
+*next* unrelated appointment created from that panel — worse than the residual the plan documented
+("no autoselection because the form isn't on screen"), because here the wrong patient *is* selected,
+with no way to clear it (`onClear` is absent, so the X button is a no-op). This was independently
+re-derived from source in this session (`QuickAppointment.tsx`, `AutocompletePaciente.tsx`), and
+corroborates `68-REVIEW.md`'s CR-01 exactly, run after 68-04 and read directly, not inherited as a
+conclusion.
 
-Both were independently re-derived from the source files listed in `<files_to_read>` — not inherited
-from `68-REVIEW.md`'s conclusions. The review's CR-01 and CR-02 are confirmed accurate.
-
-**On the human-verify checkpoint approval:** the user's "approved" response to Task 3 is real evidence
-for the 8-step script as written, and that script exercises the happy path plus the `creating=true`
-Escape/click-outside/no-submit scenarios competently. It does **not** exercise either gap here: step 6
-tests Escape/click-outside only with the mini-form already open (`creating=true`), never mid-request
-(`isPending=true`), and no step in the script puts the tester into a session where
-`effectiveProfessionalId` is null before creating a patient. The approval and these two defects are
-not mutually exclusive — they cover disjoint scenarios. Per the verification brief, the approval is
-not treated as evidence against defects confirmed directly in code.
+This sits on the same declared Roadmap success criterion as the original gap #2 (SC3 / ALTA-04:
+"crear el paciente lo deja seleccionado ... y confirmar el turno funciona sin pasos adicionales") and
+carries a materially higher risk than the closed gap — a clinic user can submit a turno against the
+wrong patient without realizing it. Per the decision tree, this phase cannot be marked `passed`.
 
 ### Observable Truths
 
 | # | Truth | Status | Evidence |
 |---|-------|--------|----------|
-| 1 | SC1/D-01: búsqueda sin resultados muestra fila "Crear paciente" en vez de popover vacío | ✓ VERIFIED | `AutocompletePaciente.tsx:186-198`, row renders conditionally on `canOfferCreate` |
-| 2 | SC2/D-09/D-10/D-11: precarga DNI si el query es todo dígitos, Nombre si no, DNI normalizado a dígitos, Nombre capitalizado sólo al precargar | ✓ VERIFIED | `InlineCreatePaciente.tsx:49-68` (`buildPrefill`, `stripSeparators`, `capitalizarNombre`) matches D-09 examples exactly; DNI field uses controlled `watch`/`setValue` with `.replace(/\D/g, "")` (`:176-185`) |
-| 3 | SC3/D-07/ALTA-04 (happy path): crear el paciente lo deja seleccionado y el turno se confirma sin pasos extra | ✓ VERIFIED | `onCreated={(pac) => { onSelect(pac); setQuery(""); setCreating(false); }}` (`AutocompletePaciente.tsx:141-145`); human-verify Task 3 steps 6-7 approved in all 3 modals |
-| 3b | SC3/D-07 (in-flight dismissal): the same guarantee holds even if the user dismisses mid-request | ✗ FAILED | See gap #2 above — CR-01 confirmed in code (`AutocompletePaciente.tsx:120-128`, `InlineCreatePaciente.tsx:124-139`) |
-| 4 | SC4/D-12/ALTA-05: DNI duplicado muestra error inline bajo el campo, conservando lo cargado | ✓ VERIFIED | `InlineCreatePaciente.tsx:129-136` (`status === 409 \|\| message?.includes("DNI")` → `setError("dni", ...)`, no reset); human-verify Task 3 step 8 approved |
-| 5 | SC5/D-08/ALTA-06 (resolved professional): patient created under the active professional context | ✓ VERIFIED (for the resolved case) | `profesionalIdParaAlta={effectiveProfessionalId}` / `={profesionalId}` at all 3 call sites, matching the turno payload exactly (`NewAppointmentModal.tsx:161/218`, `SurgeryAppointmentModal.tsx:146/227`, `QuickAppointment.tsx:183/211/378`) |
-| 5b | SC5/D-08/ALTA-06 (unresolved professional): creation is gated or the record stays assigned even when the professional context is null | ✗ FAILED | See gap #1 above — CR-02 confirmed in code; `canOfferCreate` (`AutocompletePaciente.tsx:52-57`) has no `profesionalIdParaAlta` term |
-| 6 | SC6/ALTA-07: mini-form aparece en los 3 modales de turno y no en `PatientFilters`/`data-table-toolbar` | ✓ VERIFIED | `grep -c 'allowCreate\|profesionalIdParaAlta'` = 0 in both filter call sites (re-run this session); `showDropdown` collapses to `!value && query.length > 0 && (data.length > 0 \|\| isFetching)` when `allowCreate=false` (creating and canOfferCreate are structurally always false) |
-| 7 | ALTA-01/D-02/D-03: create row only at ≥3 debounced chars, after fetch resolves, appears with or without existing results | ✓ VERIFIED | `canOfferCreate = allowCreate && !creating && debouncedQuery.trim().length >= 3 && !isFetching && isSuccess` (`AutocompletePaciente.tsx:52-57`); row placed after `.map()`, inside the `!isFetching` branch, no `sticky` |
-| 8 | ALTA-02: patient can be created with only Nombre + DNI (Teléfono optional) | ✓ VERIFIED | Zod schema: `telefono: z.string().optional().refine(...)` (`InlineCreatePaciente.tsx:39-44`); payload sends `telefono: data.telefono?.trim() ?? ""`, backend normalizes to null (Phase 67 contract) |
-| 9 | D-13/D-14 (creating=true state): Escape closes only the mini-form, not the Dialog; click-outside does not close the mini-form | ✓ VERIFIED | `onEscapeKeyDown`/`onPointerDownOutside` in `AutocompletePaciente.tsx:120-135`; human-verify Task 3 steps 4-5 approved in all 3 modals. Note: this truth is scoped by the plan to the `creating=true` state and is verified only for that state — see WR-01 below for the adjacent, unverified state |
-| 10 | Mini-form never renders `<form>` or an untyped button, so it cannot submit the containing turno `<form>` | ✓ VERIFIED | `grep -c "<form" InlineCreatePaciente.tsx` = 0; all buttons `type="button"`; Enter handled via `handleKeyDown` with `preventDefault`/`stopPropagation` (`InlineCreatePaciente.tsx:142-148`); human-verify Task 3 step 6 approved specifically in the two `<form>`-bearing modals |
-| 11 | No backend files touched (frontend-only phase boundary) | ✓ VERIFIED | `git status --porcelain backend/` empty per plan verification gates and SUMMARY claims, consistent with `files_modified` in all 3 PLAN frontmatters |
-| 12 | Requirements ALTA-01..07 all claimed by some plan (no orphans) | ✓ VERIFIED | Union of `requirements:` across 68-01/02/03-PLAN.md = {ALTA-01..07}, matches REQUIREMENTS.md Phase 68 mapping exactly |
+| 1 | SC1/D-01: búsqueda sin resultados muestra fila "Crear paciente" en vez de popover vacío | ✓ VERIFIED | `AutocompletePaciente.tsx:196-208`, unchanged since prior pass |
+| 2 | SC2/D-09/D-10/D-11: precarga DNI si el query es todo dígitos, Nombre si es texto | ✓ VERIFIED | `InlineCreatePaciente.tsx:67-74` (`buildPrefill`), unchanged |
+| 3 | SC3/D-07/ALTA-04 (happy path, los 3 modales): crear el paciente lo deja seleccionado y el turno se confirma sin pasos extra | ✓ VERIFIED | `onCreated={(pac) => { onSelect(pac); setQuery(""); setCreating(false); }}` (`AutocompletePaciente.tsx:150-154`); human-verify aprobado en 68-03 |
+| 3b | SC3/D-07/ALTA-04 (descarte en vuelo, gap #2 original): Escape en vuelo no cierra el mini-form ni pierde el paciente; el toast/selección corre igual si sobrevive el árbol | ✓ VERIFIED | `onEscapeKeyDown` corta con `if (createPending) return` (`AutocompletePaciente.tsx:132-136`); `onSubmit` usa `await mutateAsync` en `try`/`catch` local (`InlineCreatePaciente.tsx:130-160`), sobrevive al desmontaje. Confirmado por lectura de código, corroborado por CR-01/IN-03 de `68-REVIEW.md` |
+| 3c | SC3/ALTA-04 en `QuickAppointment` específicamente: cerrar el Dialog en vuelo no deja un paciente huérfano/irremovible preseleccionado en un turno futuro distinto | ✗ FAILED | Ver gap arriba — `QuickAppointment.tsx` sin `onClear`, reset sólo en el camino de éxito; confirmado por lectura directa (CR-01) |
+| 4 | SC4/D-12/ALTA-05: DNI duplicado muestra error inline bajo el campo, conservando lo cargado | ✓ VERIFIED | `InlineCreatePaciente.tsx:155-158` (`status === 409` → `setError("dni", ...)`), unchanged |
+| 5 | SC5/D-08/ALTA-06 (profesional resuelto): paciente creado bajo el profesional del contexto activo | ✓ VERIFIED (caso resuelto) | `profesionalIdParaAlta={...}` idéntico al payload del turno en los 3 call sites, unchanged |
+| 5b | SC5/D-08/ALTA-06 (profesional no resuelto): creación gateada o registro correctamente asignado incluso con contexto nulo | PASSED (override) | Override firmado, ver frontmatter. `canOfferCreate` sigue sin `profesionalIdParaAlta`, submit sigue sin guard — comportamiento aceptado explícitamente, no reabierto |
+| 6 | SC6/ALTA-07: mini-form en los 3 modales de turno, ausente en `PatientFilters`/`data-table-toolbar` | ✓ VERIFIED | `grep -c 'allowCreate\|profesionalIdParaAlta'` = 0 en ambos call sites de filtro, re-confirmado esta sesión |
+| 7 | ALTA-01/D-02/D-03: fila de crear sólo a ≥3 caracteres debounceados, tras resolver el fetch | ✓ VERIFIED | `canOfferCreate` expression unchanged (`AutocompletePaciente.tsx:53-58`), confirmado idéntico al plan 04 (prohibición explícita de tocarla, verificada) |
+| 8 | ALTA-02: paciente creable con sólo Nombre + DNI (Teléfono opcional) | ✓ VERIFIED | Zod schema unchanged (`InlineCreatePaciente.tsx:45-51`) |
+| 9 | D-13/D-14 (creating=true, sin alta en vuelo): Escape cierra sólo el mini-form; click-outside no lo cierra | ✓ VERIFIED | `onEscapeKeyDown`/`onPointerDownOutside` (`AutocompletePaciente.tsx:121-144`), lógica D-13/D-14 preservada, sólo se agregó el early-return de `createPending` |
+| 10 | Mini-form nunca renderiza `<form>` ni un botón sin `type`, no puede submitear el `<form>` del turno | ✓ VERIFIED | `grep -c "<form" InlineCreatePaciente.tsx` = 0 (re-confirmado esta sesión); todos los botones `type="button"` |
+| 11 | Frontera de fase: sin archivos de backend tocados | ✓ VERIFIED | `git diff --name-only d19435f..HEAD` lista sólo `AutocompletePaciente.tsx`, `InlineCreatePaciente.tsx` y archivos de `.planning/`; `git status --porcelain backend/` sólo tiene ruido preexistente (`tsconfig.build.tsbuildinfo`, `tsconfig.tsbuildinfo`) |
+| 12 | ALTA-01..07 todos reclamados por algún plan (sin huérfanos) | ✓ VERIFIED | Unión de `requirements:` en 68-01..04 = {ALTA-01..07} |
+| 13 | WR-02 (must-have explícito de 68-04-PLAN): Enter repetido/sostenido no dispara `POST /pacientes` concurrentes | ? UNCERTAIN | Guard `if (isPending) return` presente (`InlineCreatePaciente.tsx:163-171`), pero es un guard de estado, no síncrono: `handleSubmit` de RHF espera al resolver de zod antes de invocar `onSubmit` (que es donde `mutateAsync`/`isPending=true` arranca), dejando una ventana de mismo-tick donde dos Enter pueden ambos leer `isPending===false`. Acotado por `dni @unique` (409 silencioso, no duplicación), pero no cerrado de forma comprobable. Evidencia humana del Escenario C no fue itemizada (ver `68-04-SUMMARY.md`, "Evidencia del checkpoint humano") — ver Human Verification |
 
-**Score:** 10/12 truths verified (2 FAILED, both BLOCKER-level, both bearing directly on declared
-Roadmap success criteria SC3 and SC5)
+**Score:** 12/14 truths resolved favorably (10 VERIFIED + 1 PASSED-override + 1 that flips from FAILED
+to VERIFIED since the prior pass), **1 new FAILED (BLOCKER)**, **1 UNCERTAIN (WARNING)**.
+
+### Deferred Items (per 68-04's own scope fence, not re-opened here)
+
+- **WR-01** — Escape es inerte con la fila "Crear paciente" visible pero el mini-form aún sin abrir. Diferido explícitamente; D-13 está acotado a `creating=true`.
+- **WR-03** — el campo DNI evita `register()`, el error 409 no se auto-limpia al retipear. Diferido explícitamente.
+- **CR-02** (backend, preexistente) — `Paciente.dni` `@unique` global vs `suggest` filtrado por `profesionalId` produce un 409 sin salida de recuperación en escenarios multi-profesional. Preexistente al modelo de datos, esta fase amplía la superficie pero no lo introduce. Fuera de alcance del frontend-only boundary de esta fase.
+- **WR-10** (backend, preexistente) — `backend/src/main.ts` no registra `ValidationPipe` global; los decoradores de `CreatePacienteDto` no corren. Preexistente, fuera de alcance de esta fase.
+- **WR-04 a WR-09, IN-01 a IN-08** (`68-REVIEW.md`) — warnings/info de calidad (a11y, tipado `any`, foot-guns de dependencias, timers sin cleanup) que no bloquean el goal de la fase; quedan como deuda registrada, no como gaps de este reporte.
 
 ### Required Artifacts
 
 | Artifact | Expected | Status | Details |
 |----------|----------|--------|---------|
-| `frontend/src/components/InlineCreatePaciente.tsx` | Self-contained mini-form, RHF+Zod, POST via `useCreatePaciente`, returns created record | ✓ VERIFIED (exists, substantive, wired) | 221 lines; exports `InlineCreatePaciente`, `PacienteCreado`, `buildPrefill` as required |
-| `frontend/src/hooks/useCreatePaciente.ts` | Mutation with `["pacientes"]` + `["pacientes-suggest"]` invalidation | ✓ VERIFIED | Both `invalidateQueries` calls present (lines 14, 17) |
-| `frontend/src/components/AutocompletePaciente.tsx` | Opt-in create branch, search freeze, Popover/Dialog dismiss coordination | ⚠️ VERIFIED WITH GAPS | Component exists, is wired into all 3 modals, and the happy path is substantive — but the gate condition (`canOfferCreate`) and the dismiss guard (`onEscapeKeyDown`) both have confirmed logic gaps (see Gaps) |
-| `frontend/src/app/dashboard/turnos/NewAppointmentModal.tsx` | Call site with `allowCreate` + `profesionalIdParaAlta={effectiveProfessionalId}` | ✓ VERIFIED | Confirmed at lines 217-218 |
-| `frontend/src/app/dashboard/turnos/SurgeryAppointmentModal.tsx` | Same, only in the `else` branch of `pacienteIdProp` ternary | ✓ VERIFIED | Confirmed at lines 226-227, inside the non-preselected branch |
-| `frontend/src/app/dashboard/components/QuickAppointment.tsx` | Call site with `allowCreate` + `profesionalIdParaAlta={profesionalId}` | ✓ VERIFIED | Confirmed at lines 377-378 |
+| `frontend/src/components/InlineCreatePaciente.tsx` | Mini-form resistente al desmontaje, `mutateAsync` + `try`/`catch` | ✓ VERIFIED | 244 líneas; `await mutateAsync(payload)` dentro de `try`, `onPendingChange` presente |
+| `frontend/src/components/AutocompletePaciente.tsx` | `createPending` + guard de Escape en vuelo, `canOfferCreate`/D-14 intactos | ✓ VERIFIED | 214 líneas; `createPending` state + `onPendingChange={setCreatePending}` + `if (createPending) return` en `onEscapeKeyDown` |
+| `frontend/src/app/dashboard/turnos/NewAppointmentModal.tsx` | `onClear` + `allowCreate` + `profesionalIdParaAlta` | ✓ VERIFIED | `onClear` presente (:219), sin cambios en esta ronda |
+| `frontend/src/app/dashboard/turnos/SurgeryAppointmentModal.tsx` | Idem, sólo rama sin preselección | ✓ VERIFIED | `onClear` presente (:228), sin cambios en esta ronda |
+| `frontend/src/app/dashboard/components/QuickAppointment.tsx` | `allowCreate` + `profesionalIdParaAlta` | ⚠️ VERIFIED WITH GAP | Props presentes, pero **sin `onClear`** y sin reset en `onOpenChange`/Cancelar — no tocado por 68-04 (fuera de su alcance declarado), pero es la fuente del nuevo gap (CR-01) |
 
 ### Key Link Verification
 
 | From | To | Via | Status | Details |
 |------|-----|-----|--------|---------|
-| `InlineCreatePaciente.tsx` | `useCreatePaciente.ts` | `mutate(payload, {onSuccess, onError})` | ⚠️ PARTIAL | Wired and functional in the happy path; the callbacks are mutate()-level and are not resilient to unmount (gap #2) |
-| `AutocompletePaciente.tsx` | `InlineCreatePaciente.tsx` | conditional render inside `PopoverContent` when `creating` | ✓ WIRED | `{creating ? <InlineCreatePaciente .../> : ...}` (lines 137-147) |
-| `onCreated` (mini-form) | `onSelect` (call site) | `AutocompletePaciente`'s inline `onCreated` handler | ✓ WIRED | Same handoff path as list-selection; no adapter needed, confirmed at all 3 call sites |
-| `PopoverContent` | Radix dismiss layer | `onEscapeKeyDown` / `onPointerDownOutside` with `preventDefault` | ⚠️ PARTIAL | Correct for the `creating && !isPending` state; not guarded for `creating && isPending` (gap #2) |
-| Call sites | `AutocompletePaciente` | `profesionalIdParaAlta={...}` matching the turno payload expression | ✓ WIRED | Identical expression at all 3 sites, confirmed by direct read, not grep alone |
-| `AutocompletePaciente`'s create gate | `profesionalIdParaAlta` | `canOfferCreate` should require a resolved professional | ✗ NOT WIRED | `canOfferCreate` never references `profesionalIdParaAlta` (gap #1) |
+| `InlineCreatePaciente.tsx` | `useCreatePaciente.ts` | `await mutateAsync(payload)` en closure local | ✓ WIRED | Sobrevive al desmontaje, confirmado por lectura directa |
+| `AutocompletePaciente.tsx` | `InlineCreatePaciente.tsx` | `onPendingChange={setCreatePending}` | ✓ WIRED | Setter de estado pasado directo (identidad estable), efecto con cleanup a `false` |
+| `PopoverContent` (Escape) | dismiss layer | `if (createPending) return` antes de `setCreating(false)` | ✓ WIRED | Orden confirmado: `preventDefault`/`stopPropagation` primero, guard de pending después |
+| `onCreated` (mini-form) | `onSelect` (call site) | handler inline de `AutocompletePaciente` | ⚠️ PARTIAL en `QuickAppointment` | El handoff funciona técnicamente, pero sin `onClear`/reset en el call site el resultado es un estado contaminado tras cierre en vuelo — ver gap CR-01 |
+| `AutocompletePaciente`'s create gate | `profesionalIdParaAlta` | `canOfferCreate` | ✗ NOT WIRED (aceptado por override) | Sin cambios respecto a la ronda anterior |
 
 ### Requirements Coverage
 
 | Requirement | Source Plan | Description | Status | Evidence |
 |-------------|-------------|-------------|--------|----------|
-| ALTA-01 | 68-02 | Ver opción de crear cuando no hay resultados | ✓ SATISFIED | `canOfferCreate` + create row |
-| ALTA-02 | 68-01 | Crear cargando sólo nombre y DNI | ✓ SATISFIED | Zod schema, telefono optional |
-| ALTA-03 | 68-01, 68-02 | Precarga del campo correspondiente | ✓ SATISFIED | `buildPrefill` |
-| ALTA-04 | 68-02, 68-03 | Selección automática + confirmar turno sin pasos extra | ⚠️ PARTIALLY SATISFIED | Happy path yes; in-flight-dismissal path no (gap #2) |
-| ALTA-05 | 68-01 | Error de DNI duplicado inline, sin perder lo cargado | ✓ SATISFIED | `setError("dni", ...)` branch |
-| ALTA-06 | 68-01, 68-03 | Paciente creado bajo el profesional del contexto activo | ✗ BLOCKED | `canOfferCreate` doesn't require a resolved professional (gap #1) |
-| ALTA-07 | 68-02, 68-03 | Disponible en los 3 modales de turno, ausente en los 2 usos de filtro | ✓ SATISFIED | Fence audited by grep + git status/diff, re-confirmed this session |
+| ALTA-01 | 68-02 | Ver opción de crear cuando no hay resultados | ✓ SATISFIED | Sin cambios |
+| ALTA-02 | 68-01 | Crear cargando sólo nombre y DNI | ✓ SATISFIED | Sin cambios |
+| ALTA-03 | 68-01, 68-02 | Precarga del campo correspondiente | ✓ SATISFIED | Sin cambios |
+| ALTA-04 | 68-02, 68-03, 68-04 | Selección automática + confirmar turno sin pasos extra | ⚠️ PARTIALLY SATISFIED | Descarte en vuelo cerrado en `NewAppointmentModal`/`SurgeryAppointmentModal`; **`QuickAppointment` tiene un defecto nuevo (CR-01)** que puede seleccionar el paciente equivocado en un turno futuro |
+| ALTA-05 | 68-01 | Error de DNI duplicado inline, sin perder lo cargado | ✓ SATISFIED | Sin cambios |
+| ALTA-06 | 68-01, 68-03 | Paciente creado bajo el profesional del contexto activo | PASSED (override) | Ver frontmatter `overrides:` |
+| ALTA-07 | 68-02, 68-03 | Disponible en los 3 modales de turno, ausente en los 2 usos de filtro | ✓ SATISFIED | Fence re-auditado esta sesión, intacto |
 
 ### Anti-Patterns Found
 
 | File | Line | Pattern | Severity | Impact |
 |------|------|---------|----------|--------|
-| `AutocompletePaciente.tsx` | 52-57 | `canOfferCreate` omits `profesionalIdParaAlta` | 🛑 Blocker | Orphaned patient records possible (ALTA-06) |
-| `AutocompletePaciente.tsx` / `InlineCreatePaciente.tsx` | 120-128 / 124-139 | `onEscapeKeyDown` not guarded on `isPending`; success/error callbacks are mutate()-level | 🛑 Blocker | Silent data loss + burned DNI on retry (ALTA-04/D-07) |
-| `AutocompletePaciente.tsx` | 61-63, 120-128 | Zero-result search with `allowCreate` on keeps the popover open with no `onOpenChange`; `onEscapeKeyDown` returns early when `!creating`, so Escape neither closes the dropdown nor reaches the Dialog | ⚠️ Warning | Escape appears to do nothing in the "row visible, form not yet opened" state — a UX regression from pre-phase behavior (previously a fruitless search closed the popover and Escape reached the Dialog). This is WR-01 from `68-REVIEW.md`, independently re-derived from the Radix `isHighestLayer` + controlled-`open`-without-`onOpenChange` mechanics in the code. Not exercised by the approved human-verify script (which only tests Escape with `creating=true`) |
-| `InlineCreatePaciente.tsx` | 142-148 | `handleKeyDown` has no `isPending` guard before calling `handleSubmit(onSubmit)()` | ⚠️ Warning | Repeated/held Enter can fire concurrent POSTs; DNI uniqueness prevents dupes but produces a stray error path (WR-02 from review) |
-| `InlineCreatePaciente.tsx` | 176-185 | DNI field bypasses `register()`, driven by `watch`/`setValue` only | ⚠️ Warning | The manual `setError("dni", ...)` from a 409 never auto-clears as the user retypes; only clears on next submit (WR-03 from review) |
-| `QuickAppointment.tsx` | comment near :373-378 | Documented divergence: search filters by `useEffectiveProfessionalId()`, alta uses `profesionalId` prop | ℹ️ Info | Can make a freshly-created patient unfindable if the two diverge (WR-08 from review); documented in code as accepted |
+| `QuickAppointment.tsx` | ~373-379, 224-229, 352, 419 | `<AutocompletePaciente>` sin `onClear`; `paciente` sólo se resetea en el camino de éxito | 🛑 Blocker | Chip de paciente irremovible + posible turno con `pacienteId` equivocado tras cierre en vuelo (CR-01) |
+| `InlineCreatePaciente.tsx` | 163-171 | Guard `isPending` en `handleKeyDown` es de estado, no síncrono; `handleSubmit` de RHF es async | ⚠️ Warning | Ventana de mismo-tick para doble `POST /pacientes` en Enter sostenido; acotada por `dni @unique` (WR-02, no cerrado del todo pese a lo declarado en 68-04) |
+| `AutocompletePaciente.tsx` | 61-63, 121-137 | Búsqueda con `allowCreate` deja Escape inerte cuando la fila está visible pero el mini-form no está abierto | ⚠️ Warning (diferido) | WR-01, ya diferido explícitamente por 68-04 |
+| `InlineCreatePaciente.tsx` | 199-208 | Campo DNI no pasa por `register()`, error 409 no se auto-limpia al retipear | ⚠️ Warning (diferido) | WR-03, ya diferido explícitamente por 68-04 |
+| `AutocompletePaciente.tsx` / `pacientes.service.ts` | — | `dni @unique` global vs `suggest` filtrado por profesional | ℹ️ Info (preexistente) | CR-02, fuera de alcance frontend-only, deuda de backend |
+| `main.ts` | — | Sin `ValidationPipe` global | ℹ️ Info (preexistente) | WR-10, fuera de alcance frontend-only, deuda de backend |
 
-No `TBD`/`FIXME`/`XXX` debt markers found in any file modified by this phase (checked directly this
-session).
+No `TBD`/`FIXME`/`XXX` sin referencia formal encontrados en los archivos tocados por esta fase.
+
+### Behavioral Spot-Checks
+
+Sin runner de tests en `frontend/`. Gates ya corridos y reportados por el orquestador (no re-ejecutados
+en esta pasada, per instrucción explícita):
+- `npx next build`: exit 0, 33 rutas prerenderizadas (requiere Node ≥20.9; el shell default 18.20.8 no
+  corre el build — limitación de entorno, no defecto de código).
+- Sin test runner en `frontend/` (`package.json` scripts = dev/build/start/lint).
+- Regresión backend: 81/81 specs de la fase 67, igual al baseline documentado.
+- Drift de schema: ninguno. Drift de codebase: `warn` sólo en tooling/docs de raíz, no relacionado a esta fase.
+
+### Probe Execution
+
+No aplica — fase de UI de frontend sin probes declarados ni convencionales (`scripts/*/tests/probe-*.sh`
+no encontrados relacionados a esta fase).
 
 ### Human Verification Required
 
-None outstanding — the one scenario that would otherwise require human confirmation (Escape in the
-zero-result/no-form-open state, WR-01) is confirmable from Radix's documented dismiss-layer mechanics
-and the component's own controlled-`open`-without-`onOpenChange` wiring, both read directly in this
-session. It is reported as a Warning-level anti-pattern, not as a blocking gap, because it is not one
-of the phase's declared must-haves (`D-13` is explicitly scoped to `creating=true` in both
-`68-CONTEXT.md` and `68-02-PLAN.md`).
+### 1. Conteo exacto de `POST /pacientes` en Enter sostenido (WR-02, Escenario C de 68-04)
+
+**Test:** Con throttling Slow 3G, abrir el mini-form de creación en cada uno de los 3 modales, cargar
+un DNI nuevo y mantener/golpear Enter 5-6 veces desde el campo Teléfono. Contar en la pestaña Network
+del navegador cuántos `POST /pacientes` se disparan.
+**Expected:** Exactamente un `POST /pacientes`, un solo toast verde, sin error 409.
+**Why human:** El guard `if (isPending) return` de 68-04 es de estado (`useState`), y `handleSubmit`
+de React Hook Form es asíncrono (espera al resolver de zod antes de invocar `onSubmit`, que es donde
+recién arranca `mutateAsync`/`isPending=true`) — hay una ventana de mismo-tick donde dos eventos de
+teclado pueden ambos leer `isPending===false`. El checkpoint humano de la Task 3 de 68-04 recibió una
+aprobación global sin este conteo específico (documentado honestamente en `68-04-SUMMARY.md`). El
+impacto está acotado por `dni @unique` (un 409 silencioso, no duplicación de pacientes), pero la
+garantía "un solo POST" declarada cerrada por el plan no está confirmada de forma concluyente.
 
 ### Gaps Summary
 
-Two BLOCKER-level gaps, both directly on declared Roadmap SC's, both re-derived independently from
-source in this session (not inherited from `68-REVIEW.md`'s conclusions, though they corroborate
-CR-01 and CR-02 exactly):
+**Un gap BLOCKER nuevo, surgido como efecto colateral del propio arreglo de 68-04:**
 
-1. **Orphaned patients possible (ALTA-06 / SC5).** The inline "Crear paciente" offer does not require
-   a resolved `profesionalIdParaAlta`. In `NewAppointmentModal`/`SurgeryAppointmentModal`, when
-   `effectiveProfessionalId` is null (ADMIN/SECRETARIA with no professional selected, or still
-   loading), the create row still appears and the POST still fires with `profesionalId: undefined`.
-   The existing "Debe seleccionar un profesional" guard only fires on turno submit — after the patient
-   already exists, unassigned and invisible to professional-scoped reads, with its DNI burned. The
-   planning decision in `68-CONTEXT.md` (D-08) that discarded blocking this case rested on the claim
-   that it's "already cut off downstream by `NewAppointmentModal.tsx:132`" — that claim does not hold
-   up against the actual code, because the inline patient POST and the turno submit guard are
-   independent code paths.
+`QuickAppointment.tsx` es el único de los tres call sites que nunca recibió `onClear`, y su `paciente`
+sólo se resetea en el camino de éxito de `confirmarTurno()`. Antes de 68-04 esto era inofensivo: un
+alta abandonada en vuelo se perdía en silencio (gap #2 original) y nunca llegaba a `onSelect`. La Capa
+2 de 68-04 (hacer el éxito resistente al desmontaje vía `mutateAsync` + `await`) es exactamente lo que
+convierte esto en un defecto activo: la continuación del `await` sí corre tras cerrar el Dialog interno
+de `QuickAppointment` (porque el componente padre no se desmonta — sólo el `DialogContent` de Radix se
+desmonta; el panel deslizable que lo contiene sigue montado), así que `setPaciente(p)` muta estado real
+sobre un componente vivo. Resultado: un paciente creado durante un alta abandonada queda pre-seleccionado
+e irremovible (sin `onClear`, la X es no-op) para el **próximo** turno que el usuario abra en ese panel —
+no el que estaba creando —, con riesgo de que `confirmarTurno()` postee el `pacienteId` equivocado.
 
-2. **Silent loss of a successfully-created patient (ALTA-04 / SC3, in-flight dismissal only).**
-   Escape (or closing the containing Dialog) while the create request is in flight unmounts the
-   mini-form before its `onSuccess`/`onError` callbacks — which are mutate()-level, per TanStack Query
-   v5 semantics — can fire. The patient is created server-side but never surfaces to the user: no
-   toast, no selection. A retry with the same data then hits a 409 dead end.
+Esto es peor que el residuo T-68-04 que el plan documentó y aceptó ("el usuario ve el toast pero el
+paciente no queda seleccionado, porque el form ya no está en pantalla"): esa afirmación es correcta para
+`NewAppointmentModal`/`SurgeryAppointmentModal` (que sí desmontan completos y sí tienen `onClear`), pero
+falsa para `QuickAppointment`. El threat model de 68-04 (T-68-04, disposición "accept") no distinguió
+esta diferencia estructural entre call sites.
 
-Both gaps are narrow (specific interaction timing / specific professional-context state), and the
-core "search → create → keep scheduling" happy path is real and human-verified across all three
-modals. This is why the score is 10/12 rather than lower — but both gaps sit squarely on declared
-Roadmap success criteria (SC3, SC5) and REQUIREMENTS.md wording (ALTA-04, ALTA-06), so per the
-decision tree this phase cannot be marked `passed`.
-
-**This looks like an oversight, not an intentional deviation**, with one caveat: D-08 in
-`68-CONTEXT.md` did explicitly discuss and reject blocking creation on a null professional — but on a
-factual premise (downstream blocking already covers it) that the code review and this verification
-both show to be incorrect. If, after understanding the corrected consequence (orphaned, unrecoverable
-patient records), the developer still wants to accept this behavior, add to this file's frontmatter:
+**Esto no parece intencional.** A diferencia del gap #1 (ALTA-06), no hay ninguna decisión de
+`68-CONTEXT.md` ni discusión en los planes que contemple este caso — 68-03-PLAN.md sí decidió
+explícitamente no pasar `onClear` en `QuickAppointment` ("Este call site no pasa `onClear` y sigue sin
+pasarlo"), pero esa decisión se tomó **antes** de que existiera la Capa 2 de 68-04 que hace que la
+selección post-cierre sea alcanzable; nada en el registro de decisiones evalúa esa combinación.
 
 ```yaml
 overrides:
-  - must_have: "El paciente creado inline queda asignado al profesional del contexto activo, igual que en el alta completa (Roadmap SC5 / ALTA-06)"
-    reason: "{why this deviation is acceptable, given the corrected understanding that the downstream guard does not prevent it}"
-    accepted_by: "{name}"
-    accepted_at: "{ISO timestamp}"
+  - must_have: "SC3/ALTA-04 en QuickAppointment: cerrar el Dialog del turno mientras el alta está en vuelo no deja un paciente pre-seleccionado, huérfano de un turno distinto, que además no se puede quitar con la X"
+    reason: "{por qué esta desviación es aceptable, entendiendo el riesgo de postear un turno con el pacienteId equivocado}"
+    accepted_by: "{nombre}"
+    accepted_at: "{timestamp ISO}"
 ```
 
-No such override exists for gap #2 (in-flight dismissal) — nothing in the planning documents
-discusses or accepts that scenario; it should be treated as a straightforward defect to fix.
+Si no se acepta el override, el fix es acotado: agregar `onClear={() => setPaciente(null)}` al
+`<AutocompletePaciente>` de `QuickAppointment.tsx` (igual que en los otros dos call sites) y resetear el
+formulario en `onOpenChange` (no sólo en el camino de éxito de `confirmarTurno`).
+
+**Adicionalmente, un ítem UNCERTAIN (WARNING) que requiere confirmación humana** antes de dar por cerrado
+WR-02 tal como 68-04 lo declaró: ver "Human Verification Required" arriba.
 
 ---
 
-_Verified: 2026-08-19T21:00:00Z_
+_Verified: 2026-08-19T23:10:00Z_
 _Verifier: Claude (gsd-verifier)_

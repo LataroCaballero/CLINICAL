@@ -3,7 +3,25 @@ phase: 68-creaci-n-inline-en-el-autosuggest-frontend
 verified: 2026-08-19T21:00:00Z
 status: gaps_found
 score: 10/12 must-haves verified
-overrides_applied: 0
+overrides_applied: 1
+overrides:
+  - must_have: "El paciente creado inline queda asignado al profesional del contexto activo, igual que en el alta completa (Roadmap SC5 / ALTA-06)"
+    reason: >
+      Desviación aceptada explícitamente por el desarrollador durante
+      /gsd:plan-phase 68 --gaps, con la consecuencia corregida a la vista: se
+      confirmó que la premisa de D-08 (68-CONTEXT.md) es falsa — el guard
+      "Debe seleccionar un profesional" de NewAppointmentModal.tsx:131 /
+      SurgeryAppointmentModal.tsx:178 corta el submit del turno, no el POST
+      inline del paciente, que es una mutate() independiente. Con este override
+      se acepta que un ADMIN/SECRETARIA en vista global (o durante la carga del
+      contexto) pueda crear un paciente con profesionalId = null: el registro
+      queda invisible a toda lectura profesional-scoped (suggest, getKanban,
+      obtenerListaPacientes) y su DNI queda quemado contra un alta correcta
+      posterior (409). No se planifica remediación para ALTA-06 en esta ronda de
+      gap closure; sólo se cierra el gap #2 (pérdida silenciosa del paciente
+      creado ante desmontaje in-flight).
+    accepted_by: "Lautaro Caballero"
+    accepted_at: "2026-08-19T00:00:00Z"
 gaps:
   - truth: "El paciente creado inline queda asignado al profesional del contexto activo, igual que en el alta completa (Roadmap SC5 / ALTA-06)"
     status: failed

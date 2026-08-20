@@ -85,6 +85,15 @@ export default function InlineCreatePaciente({
   const [prefill] = useState(() => buildPrefill(query));
   const nombreRef = useRef<HTMLInputElement | null>(null);
   const dniRef = useRef<HTMLInputElement | null>(null);
+  /**
+   * WR-02 de 68-REVIEW.md / truth #13 de 68-VERIFICATION.md: candado
+   * síncrono contra el doble submit. `isPending` (useState) no alcanza
+   * porque `handleSubmit` de RHF hace `await resolver(...)` (zod) antes de
+   * invocar `onSubmit`, así que dos eventos del mismo tick leen ambos
+   * `isPending === false`. Un ref se escribe y se lee de forma síncrona: el
+   * segundo evento ya lo ve en `true`.
+   */
+  const submittingRef = useRef(false);
 
   const {
     register,
@@ -128,6 +137,9 @@ export default function InlineCreatePaciente({
   );
 
   async function onSubmit(data: FormValues) {
+    if (submittingRef.current) return;
+    submittingRef.current = true;
+
     const payload = {
       nombreCompleto: data.nombreCompleto.trim(),
       dni: data.dni,
@@ -157,6 +169,8 @@ export default function InlineCreatePaciente({
         return;
       }
       toast.error(message || "Error al crear el paciente");
+    } finally {
+      submittingRef.current = false;
     }
   }
 

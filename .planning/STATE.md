@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v1.16
 milestone_name: Alta de Paciente sin Fricción
-status: executing
-stopped_at: "Completed 68-06-PLAN.md (gap closure BLOCKER: gaps[0]/CR-01 y gaps[1]/CR-02 cerrados; checkpoint aprobado por el usuario, 'todo ok' sin desglose; phase 68 lista para re-verificación)"
-last_updated: "2026-08-20T22:31:29.946Z"
+status: ready_to_plan
+stopped_at: Phase 68 complete (6/6) — ready to discuss Phase 69
+last_updated: 2026-08-20T22:52:35.935Z
 last_activity: 2026-08-20
 progress:
   total_phases: 3
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-08-17 al iniciar el milestone v1.16)
 
 **Core value:** Que un cirujano plástico cierre más cirugías — el sistema hace visible qué pacientes seguir, cuándo y cómo, de la manera más automatizada posible
-**Current focus:** Phase 68 — creaci-n-inline-en-el-autosuggest-frontend
+**Current focus:** Phase 69 — consistencia de teléfono opcional (frontend)
 
 ## Current Position
 
-Phase: 68 (creaci-n-inline-en-el-autosuggest-frontend) — EXECUTION COMPLETE, PENDING RE-VERIFICATION
-Plan: 6 of 6
-Status: Todos los planes de la fase 68 ejecutados (68-01..68-06); gaps BLOCKER de 68-VERIFICATION.md cerrados en 68-06. Pendiente: re-correr /gsd:verify-phase.
+Phase: 69
+Plan: Not started
+Status: Ready to plan
 Last activity: 2026-08-20
 
 Progress: [███░░░░░░░] 33% (fases verificadas) — 11/11 planes ejecutados en fases 67+68

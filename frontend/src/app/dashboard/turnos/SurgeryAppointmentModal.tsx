@@ -122,6 +122,29 @@ export default function SurgeryAppointmentModal({
     },
   });
 
+  // gaps[0] de 68-VERIFICATION.md / CR-01 de 68-REVIEW.md: el guard de
+  // generación solo no alcanzaba porque el closure de un alta abandonada
+  // aterriza con el modal YA CERRADO, cuando dialogSessionRef.current y
+  // dialogSession todavía coinciden — el guard lo deja pasar y escribe
+  // sobre el useForm vivo. Este efecto unifica el reset (antes sólo corría
+  // al cerrar) con el sello de generación (antes sólo corría al abrir): el
+  // reset corre en AMBAS transiciones y el sello sólo al abrir, después del
+  // reset, así que ningún pacienteId heredado sobrevive a la reapertura.
+  // ADVERTENCIA: este efecto DEBE quedar declarado ANTES de los dos efectos
+  // de seed de abajo (defaultDate y pacienteIdProp/CRM) — React flushea los
+  // efectos en orden de declaración, y reset() sin argumentos restaura los
+  // defaultValues del primer render. Si este efecto quedara después de los
+  // seeds, su reset() pisaría la precarga desde CRM y rompería un camino
+  // que hoy funciona. No reordenar.
+  useEffect(() => {
+    reset();
+    setPacienteFotoUrl(null);
+    if (open) {
+      dialogSessionRef.current += 1;
+      setDialogSession(dialogSessionRef.current);
+    }
+  }, [open, reset]);
+
   useEffect(() => {
     if (open && defaultDate) {
       setValue("fecha", defaultDate);
@@ -135,30 +158,6 @@ export default function SurgeryAppointmentModal({
       setValue("pacienteNombre", pacienteNombreProp ?? "");
     }
   }, [open, pacienteIdProp, pacienteNombreProp, setValue]);
-
-  useEffect(() => {
-    if (!open) {
-      reset();
-      setPacienteFotoUrl(null);
-    }
-  }, [open, reset]);
-
-  // gaps[0] de 68-VERIFICATION.md: este modal no tiene handler de apertura
-  // propio, `open` llega por prop desde el padre. El incremento vive en un
-  // efecto dedicado, sólo en la apertura, sin mezclarse con los efectos de
-  // arriba (que reaccionan a otras deps que no son aperturas). Ventana
-  // conocida: el incremento ocurre después del primer paint de la sesión
-  // nueva; en ese primer paint dialogSession y dialogSessionRef.current
-  // todavía coinciden, así que el caso normal no se rompe. La única ventana
-  // es de un tick entre el flush del efecto y el re-render que propaga el
-  // state, inalcanzable a mano, y su modo de falla es seguro: descarta una
-  // selección legítima con aviso, nunca postea un paciente equivocado.
-  useEffect(() => {
-    if (open) {
-      dialogSessionRef.current += 1;
-      setDialogSession(dialogSessionRef.current);
-    }
-  }, [open]);
 
   const pacienteNombre = watch("pacienteNombre");
   const fecha = watch("fecha");

@@ -29,7 +29,7 @@ import { CalendarIcon, Loader2, Scissors, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -78,6 +78,15 @@ export default function NewAppointmentModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [esSobreturno, setEsSobreturno] = useState(false);
 
+  // gaps[0] de 68-VERIFICATION.md: guard de generación de sesión, portado
+  // desde QuickAppointment.tsx (Task 1). dialogSessionRef es la generación
+  // vigente, legible de forma síncrona desde un closure viejo; dialogSession
+  // es la generación DE ESTE RENDER, la que queda sellada en los closures
+  // creados acá — sellarla desde ref.current sería leer estado mutable en
+  // fase de render, por eso el par ref+state.
+  const dialogSessionRef = useRef(0);
+  const [dialogSession, setDialogSession] = useState(0);
+
   const {
     register,
     handleSubmit,
@@ -122,6 +131,23 @@ export default function NewAppointmentModal({
     }
     setEsSobreturno(false);
   }, [selectedEvent, reset, open]);
+
+  // gaps[0] de 68-VERIFICATION.md: este modal no tiene handler de apertura
+  // propio, `open` llega por prop desde el padre. El incremento vive en un
+  // efecto dedicado, sólo en la apertura, sin mezclarse con el reset de
+  // arriba (que reacciona a otras deps que no son aperturas). Ventana
+  // conocida: el incremento ocurre después del primer paint de la sesión
+  // nueva; en ese primer paint dialogSession y dialogSessionRef.current
+  // todavía coinciden, así que el caso normal no se rompe. La única ventana
+  // es de un tick entre el flush del efecto y el re-render que propaga el
+  // state, inalcanzable a mano, y su modo de falla es seguro: descarta una
+  // selección legítima con aviso, nunca postea un paciente equivocado.
+  useEffect(() => {
+    if (open) {
+      dialogSessionRef.current += 1;
+      setDialogSession(dialogSessionRef.current);
+    }
+  }, [open]);
 
   const pacienteNombre = watch("pacienteNombre");
   const fecha = watch("fecha");
@@ -222,6 +248,12 @@ export default function NewAppointmentModal({
                 setPacienteFotoUrl(null);
               }}
               onSelect={(pac) => {
+                if (dialogSession !== dialogSessionRef.current) {
+                  toast.info(
+                    "El paciente se creó, pero ese turno ya se había cerrado. Buscalo en el listado para agendarlo."
+                  );
+                  return;
+                }
                 setValue("pacienteId", pac.id);
                 setValue("pacienteNombre", pac.nombreCompleto);
                 setPacienteFotoUrl(pac.fotoUrl || null);

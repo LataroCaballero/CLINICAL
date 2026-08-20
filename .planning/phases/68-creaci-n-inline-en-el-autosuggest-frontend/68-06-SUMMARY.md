@@ -132,3 +132,7 @@ Este plan **no** marca la Fase 68 como Complete — esa decisión pertenece a la
 ---
 *Phase: 68-creaci-n-inline-en-el-autosuggest-frontend*
 *Completed: 2026-08-20*
+
+## Self-Check: PASSED
+
+Los 2 archivos frontend modificados (`SurgeryAppointmentModal.tsx`, `InlineCreatePaciente.tsx`) y este `68-06-SUMMARY.md` se verificaron presentes en el filesystem. Los 3 commits de este plan (`4d5d18b`, `e53f456`, `c9c4261`) se verificaron presentes en `git log --oneline --all`. Sin items faltantes.

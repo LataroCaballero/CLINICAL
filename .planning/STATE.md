@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.16
 milestone_name: Alta de Paciente sin Fricción
 status: executing
-stopped_at: "Completed 68-05-PLAN.md (checkpoint aprobado por el usuario — A/B/C/D: PASS; phase 68 ready for verification)"
-last_updated: "2026-08-20T21:46:45.131Z"
-last_activity: 2026-08-20 -- Phase 68 planning complete
+stopped_at: "Completed 68-06-PLAN.md (gap closure BLOCKER: gaps[0]/CR-01 y gaps[1]/CR-02 cerrados; checkpoint aprobado por el usuario, 'todo ok' sin desglose; phase 68 lista para re-verificación)"
+last_updated: "2026-08-20T22:31:29.946Z"
+last_activity: 2026-08-20
 progress:
   total_phases: 3
   completed_phases: 1
   total_plans: 11
-  completed_plans: 10
+  completed_plans: 11
   percent: 33
 ---
 
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-08-17 al iniciar el milestone v1.16)
 
 **Core value:** Que un cirujano plástico cierre más cirugías — el sistema hace visible qué pacientes seguir, cuándo y cómo, de la manera más automatizada posible
-**Current focus:** Phase 68 — creaci-n-inline-en-el-autosuggest-frontend (5/5 planes ejecutados, verificación con gaps)
+**Current focus:** Phase 68 — creaci-n-inline-en-el-autosuggest-frontend
 
 ## Current Position
 
-Phase: 68 (creaci-n-inline-en-el-autosuggest-frontend) — GAPS FOUND (5/5 planes ejecutados, 12/14 must-haves)
-Plan: 5 of 5
-Status: Ready to execute
-Last activity: 2026-08-20 -- Phase 68 planning complete
+Phase: 68 (creaci-n-inline-en-el-autosuggest-frontend) — EXECUTION COMPLETE, PENDING RE-VERIFICATION
+Plan: 6 of 6
+Status: Todos los planes de la fase 68 ejecutados (68-01..68-06); gaps BLOCKER de 68-VERIFICATION.md cerrados en 68-06. Pendiente: re-correr /gsd:verify-phase.
+Last activity: 2026-08-20
 
-Progress: [██████████] 100%
+Progress: [███░░░░░░░] 33% (fases verificadas) — 11/11 planes ejecutados en fases 67+68
 
 ### Roadmap v1.16
 
@@ -55,6 +55,7 @@ Full decision log en `.planning/PROJECT.md` (Key Decisions). Las decisiones de v
 - [Phase 67-05]: requireTelefonoParaEnvio y normalizeTelefono cubiertos con 33 tests nuevos (pacientes/whatsapp/presupuestos); fix Rule 1: create() enmascaraba BadRequestException de telefono invalido como 500, corregido con rethrow explicito. Suite completa: 4 failed/18 failed tests, identico a la baseline preexistente. paciente-portal.service.spec.ts (WR-02) sin editar.
 - [Phase 68]: 68-04 cerrado: alta inline resistente al desmontaje (mutateAsync+await) y guard de createPending bloquea Escape mientras el POST /pacientes esta en vuelo (gap #2 de 68-VERIFICATION.md); Task 3 aprobada por el usuario con 'approved' sin desglose granular por escenario
 - [Phase 68-05]: gap BLOCKER (gaps[0]/CR-01) y gap WARNING (WR-02) de 68-VERIFICATION.md cerrados: guard de generacion de sesion (dialogSessionRef+dialogSession) portado a los 3 call sites de turno (QuickAppointment/NewAppointmentModal/SurgeryAppointmentModal), corrigiendo la premisa falsa de 68-VERIFICATION.md:257 de que solo QuickAppointment estaba expuesto; candado sincrono submittingRef en InlineCreatePaciente cierra la garantia de un solo POST /pacientes por submit; verificacion humana itemizada (A/B/C/D: PASS) aprobada por el usuario
+- [Phase 68-06]: 2 gaps BLOCKER remanentes de 68-VERIFICATION.md cerrados (gaps[0]/CR-01 y gaps[1]/CR-02). SurgeryAppointmentModal.tsx: los dos efectos separados (reset solo al cerrar, sello de sesion solo al abrir) se unificaron en un unico useEffect declarado antes de los seeds de defaultDate/pacienteIdProp — el reset() corre ahora en ambas transiciones del Dialog, cerrando la ventana donde un alta abandonada podia sobrevivir a la reapertura y viajar en POST /turnos/cirugia. InlineCreatePaciente.tsx: handleKeyDown ya no cancela el Enter dirigido a un boton enfocado (closest("button") antes de preventDefault), asi que Cancelar vuelve a cancelar sin crear un Paciente real. Checkpoint humano de Task 3 respondido con aprobacion GLOBAL ("todo ok", sin desglose por escenario ni detalle de Network/modal) — registrado asi en 68-06-SUMMARY.md sin inventar detalle no observado. Fase 68 (6/6 planes ejecutados) queda pendiente de re-verificacion por /gsd:verify-phase; no se marca Complete en STATE.md ni ROADMAP.md por decision del orquestador
 
 ### Known Tech Debt (carry-forward)
 
@@ -98,10 +99,11 @@ Los 3 ítems diferidos al cierre de v1.14 quedaron resueltos durante v1.15:
 
 ## Session Continuity
 
-Last session: 2026-08-20T17:11:28.001Z
-Stopped at: Completed 68-05-PLAN.md (checkpoint aprobado por el usuario — A/B/C/D: PASS; phase 68 ready for verification)
-Resume file: .planning/phases/68-creaci-n-inline-en-el-autosuggest-frontend/68-05-SUMMARY.md
+Last session: 2026-08-20T22:31:29.946Z
+Stopped at: Completed 68-06-PLAN.md (gap closure BLOCKER: gaps[0]/CR-01 y gaps[1]/CR-02 cerrados; checkpoint aprobado por el usuario, "todo ok" sin desglose por escenario; phase 68 con 6/6 planes ejecutados, lista para re-verificación)
+Resume file: .planning/phases/68-creaci-n-inline-en-el-autosuggest-frontend/68-06-SUMMARY.md
 
 - Fase 67 (backend) completa — 5/5 planes ejecutados, TEL-01/ENVIO-01/ENVIO-02 cubiertos con tests automatizados que trazan los 5 success criteria del ROADMAP. Ready for verification.
-- Fases 68 (Creación Inline en el Autosuggest) y 69 (Consistencia de Teléfono Opcional Frontend) pueden arrancar en paralelo — ambas dependen únicamente de la fase 67, ya cerrada.
+- Fase 68 (Creación Inline en el Autosuggest) — 6/6 planes ejecutados (68-01..68-06). Los 2 gaps BLOCKER que dejó abiertos la ronda anterior de /gsd:verify-phase (68-VERIFICATION.md gaps[0]/CR-01 y gaps[1]/CR-02) quedaron cerrados en 68-06. Pendiente: re-correr /gsd:verify-phase contra el código actual antes de marcar la fase Complete.
+- Fase 69 (Consistencia de Teléfono Opcional Frontend) no iniciada — depende únicamente de la fase 67, ya cerrada.
 - Research salteado en este milestone (feature sobre código existente, blast radius mapeado en el roadmap).

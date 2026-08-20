@@ -176,11 +176,19 @@ export default function InlineCreatePaciente({
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
     if (e.key !== "Enter") return;
+    // gap #1 de 68-VERIFICATION.md / CR-02 de 68-REVIEW.md: la activación de
+    // un <button> con Enter es la acción por defecto del keydown. Un
+    // preventDefault() indiscriminado la cancelaba y caía igual al submit —
+    // la tecla de descarte (Cancelar) terminaba creando el paciente. Si el
+    // foco está sobre un botón, salir temprano y dejar que su activación
+    // nativa dispare su propio onClick.
+    const target = e.target as HTMLElement;
+    if (target.closest("button")) return;
     e.preventDefault();
     e.stopPropagation();
     // WR-02: bloquear Enter repetido/sostenido mientras el alta está en
     // vuelo, en paridad con el disabled={isPending} de ambos botones.
-    if (isPending) return;
+    if (isPending || submittingRef.current) return;
     void handleSubmit(onSubmit)();
   }
 

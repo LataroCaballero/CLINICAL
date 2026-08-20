@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.16
 milestone_name: Alta de Paciente sin Fricción
 status: executing
-stopped_at: Completed 68-04-PLAN.md (checkpoint approved by user, phase 68 ready for verification)
-last_updated: "2026-08-20T16:51:06.156Z"
-last_activity: 2026-08-20 -- Phase 68 planning complete
+stopped_at: "Completed 68-05-PLAN.md (checkpoint aprobado por el usuario — A/B/C/D: PASS; phase 68 ready for verification)"
+last_updated: "2026-08-20T17:11:28.003Z"
+last_activity: 2026-08-20
 progress:
   total_phases: 3
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 10
-  completed_plans: 9
-  percent: 33
+  completed_plans: 10
+  percent: 67
 ---
 
 # Project State
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-08-17 al iniciar el milestone v1.16)
 
 **Core value:** Que un cirujano plástico cierre más cirugías — el sistema hace visible qué pacientes seguir, cuándo y cómo, de la manera más automatizada posible
-**Current focus:** Phase 68 — creaci-n-inline-en-el-autosuggest-frontend
+**Current focus:** Phase 68 — creaci-n-inline-en-el-autosuggest-frontend (completa, lista para verificación)
 
 ## Current Position
 
-Phase: 68 (creaci-n-inline-en-el-autosuggest-frontend) — EXECUTING
-Plan: 4 of 4
-Status: Ready to execute
-Last activity: 2026-08-20 -- Phase 68 planning complete
+Phase: 68 (creaci-n-inline-en-el-autosuggest-frontend) — COMPLETE (5/5 planes)
+Plan: 5 of 5
+Status: Ready for /gsd:verify-phase 68
+Last activity: 2026-08-20
 
 Progress: [██████████] 100%
 
@@ -54,6 +54,7 @@ Full decision log en `.planning/PROJECT.md` (Key Decisions). Las decisiones de v
 - [Phase 67-04]: Reportes financieros y presupuestos.service.ts::generatePdf() propagan telefono nullable sin as any ni placeholders; auditoria de 12 sitios del ROADMAP + presupuesto-pdf.service.ts:143 como precedente cerrada en 67-04-SUMMARY.md
 - [Phase 67-05]: requireTelefonoParaEnvio y normalizeTelefono cubiertos con 33 tests nuevos (pacientes/whatsapp/presupuestos); fix Rule 1: create() enmascaraba BadRequestException de telefono invalido como 500, corregido con rethrow explicito. Suite completa: 4 failed/18 failed tests, identico a la baseline preexistente. paciente-portal.service.spec.ts (WR-02) sin editar.
 - [Phase 68]: 68-04 cerrado: alta inline resistente al desmontaje (mutateAsync+await) y guard de createPending bloquea Escape mientras el POST /pacientes esta en vuelo (gap #2 de 68-VERIFICATION.md); Task 3 aprobada por el usuario con 'approved' sin desglose granular por escenario
+- [Phase 68-05]: gap BLOCKER (gaps[0]/CR-01) y gap WARNING (WR-02) de 68-VERIFICATION.md cerrados: guard de generacion de sesion (dialogSessionRef+dialogSession) portado a los 3 call sites de turno (QuickAppointment/NewAppointmentModal/SurgeryAppointmentModal), corrigiendo la premisa falsa de 68-VERIFICATION.md:257 de que solo QuickAppointment estaba expuesto; candado sincrono submittingRef en InlineCreatePaciente cierra la garantia de un solo POST /pacientes por submit; verificacion humana itemizada (A/B/C/D: PASS) aprobada por el usuario
 
 ### Known Tech Debt (carry-forward)
 
@@ -97,11 +98,9 @@ Los 3 ítems diferidos al cierre de v1.14 quedaron resueltos durante v1.15:
 
 ## Session Continuity
 
-Last session: 2026-08-19T22:16:52.966Z
-Stopped at: Completed 68-04-PLAN.md (checkpoint approved by user, phase 68 ready for verification)
-Resume file: 
-
-.planning/phases/68-creaci-n-inline-en-el-autosuggest-frontend/68-04-SUMMARY.md
+Last session: 2026-08-20T17:11:28.001Z
+Stopped at: Completed 68-05-PLAN.md (checkpoint aprobado por el usuario — A/B/C/D: PASS; phase 68 ready for verification)
+Resume file: .planning/phases/68-creaci-n-inline-en-el-autosuggest-frontend/68-05-SUMMARY.md
 
 - Fase 67 (backend) completa — 5/5 planes ejecutados, TEL-01/ENVIO-01/ENVIO-02 cubiertos con tests automatizados que trazan los 5 success criteria del ROADMAP. Ready for verification.
 - Fases 68 (Creación Inline en el Autosuggest) y 69 (Consistencia de Teléfono Opcional Frontend) pueden arrancar en paralelo — ambas dependen únicamente de la fase 67, ya cerrada.

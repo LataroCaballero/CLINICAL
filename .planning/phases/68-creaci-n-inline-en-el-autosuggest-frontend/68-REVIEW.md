@@ -1,6 +1,6 @@
 ---
 phase: 68-creaci-n-inline-en-el-autosuggest-frontend
-reviewed: 2026-08-19T22:26:36Z
+reviewed: 2026-08-20T00:00:00Z
 depth: standard
 files_reviewed: 6
 files_reviewed_list:
@@ -12,626 +12,617 @@ files_reviewed_list:
   - frontend/src/hooks/useCreatePaciente.ts
 findings:
   critical: 2
-  warning: 11
+  warning: 10
   info: 8
-  total: 21
+  total: 20
 status: issues_found
 ---
 
 # Phase 68: Code Review Report
 
-**Reviewed:** 2026-08-19T22:26:36Z
+**Reviewed:** 2026-08-20T00:00:00Z
 **Depth:** standard
 **Files Reviewed:** 6
 **Status:** issues_found
 
 ## Summary
 
-Segunda pasada adversarial sobre la creación inline de pacientes en el autosuggest,
-posterior a la ejecución del plan 68-04 (`mutateAsync` + `try/catch` local,
-`onPendingChange`, guarda `isPending` en `handleKeyDown`, y el early-return
-`if (createPending)` en `onEscapeKeyDown`).
+Tercera pasada adversarial, posterior al plan 68-05 (guard de generación de sesión
+`dialogSessionRef` en los tres call sites + candado síncrono `submittingRef` en
+`InlineCreatePaciente`).
 
-Evaluación general: el mecanismo nuevo de 68-04 es **correcto en su núcleo**. Tracé
-el ciclo de vida completo del flag `createPending`:
+**Lo que sí quedó cerrado (verificado línea por línea, no aceptado por reporte):**
 
-- `isPending` false→true: el effect corre `cleanup(false)` y luego `onPendingChange(true)`
-  en el mismo commit; React batchea y el padre queda en `true`. OK.
-- Éxito: la notificación del `MutationObserver` (microtask) y la continuación del
-  `await` (`onCreated` → `setCreating(false)`) caen en el mismo lote; el hijo se
-  desmonta y la cleanup deja `createPending=false`. **No queda pegado en `true`.**
-- Error: `isPending`→false dispara el effect antes del desmontaje. OK.
-- Desmontaje del padre (Dialog cerrado en vuelo): React siempre corre la cleanup del
-  hijo, y el `setCreatePending(false)` resultante sobre un padre desmontado es un
-  no-op en React 18+. **Sin warnings ni fuga.**
-- `setError("dni")` post-desmontaje: RHF escribe en su store interno y notifica por
-  Subject; no hay `setState` sobre un árbol desmontado. **No es un defecto real.**
+- El candado `submittingRef` (`InlineCreatePaciente.tsx:96,140-141,172-174`) **sí**
+  cierra la ventana de doble submit que `isPending` no cerraba: la escritura del ref
+  ocurre en el mismo tick síncrono en que entra `onSubmit`, después del `await` del
+  resolver de zod, así que dos eventos del mismo tick ven `true` en el segundo. El
+  `finally` lo libera en las tres salidas (éxito, 409 con `return` temprano, error
+  genérico). Sin fugas.
+- El guard de generación en `QuickAppointment.tsx` **sí** cierra la carrera que
+  reportó `gaps[0]`: `abrirDialogTurno()` (:225-230) incrementa ref y state en el
+  mismo handler batcheado, así que `dialogSession` y `dialogSessionRef.current` sólo
+  divergen para closures congelados en el árbol que Radix desmontó al cerrar el
+  `DialogContent`. Además ahora sí pasa `onClear` (:418) y sí resetea en
+  `onOpenChange` (:390-393), los dos `missing` del gap.
 
-Dicho eso, la fase **no está limpia**. Encontré dos defectos bloqueantes (uno de
-estado fantasma no removible en `QuickAppointment`, otro de callejón sin salida
-multi-tenant por el `@unique` global de `dni`), más once warnings — entre ellos una
-ventana de carrera de doble submit que la guarda `isPending` de 68-04 **no cierra**,
-porque `handleSubmit` es asíncrono.
+**Lo que NO quedó cerrado.** El guard se portó a los otros dos modales de forma
+mecánica, sin re-derivar el ciclo de vida de cada uno, y en `SurgeryAppointmentModal`
+protege exactamente el caso que ya era inofensivo y deja abierto el que importa: ese
+modal **no tiene reset en la apertura** (sólo en el cierre), así que un alta que
+aterriza con el Dialog cerrado escribe en el form y el chip fantasma sobrevive a la
+siguiente apertura sin que el guard llegue a compararse. Es el mismo defecto CR-01 de
+la ronda anterior, migrado de archivo. En `QuickAppointment` está cubierto porque
+`abrirDialogTurno()` resetea; en `NewAppointmentModal` está cubierto por accidente,
+porque su efecto de reset lleva `open` en las dependencias.
 
-**Disposiciones previas respetadas (no re-abiertas):** ALTA-06 / paciente huérfano
-(`canOfferCreate` sin gate sobre `profesionalIdParaAlta` y `profesionalId ?? undefined`
-sin guarda) está aceptado vía `overrides:` firmado en `68-VERIFICATION.md`. La
-atribución `stopPropagation()` vs `isHighestLayer` + `preventDefault()` ya fue
-corregida en los comentarios por 68-04 y la verifiqué correcta contra el
-comportamiento de `DismissableLayer` de `@radix-ui/react-popover ^1.1.15`.
+Segundo bloqueante, nuevo y no relacionado con el guard: el `handleKeyDown` del
+mini-form hace `preventDefault()` sobre **todo** Enter del subárbol, lo que mata la
+activación nativa del botón *Cancelar* y a continuación dispara el submit — Enter
+sobre Cancelar **crea el paciente**.
 
-**Nota sobre substrato estructural:** el prompt no incluyó bloque
-`<structural_findings>`, así que no hay pre-pass estructural que reportar. Todos los
-hallazgos de abajo son narrativos, derivados de lectura directa.
+Además quedan 10 warnings, varios heredados sin resolver (a11y, DNI fuera de
+`register()`, prefill de teléfono en DNI) y tres nuevos derivados de esta ronda
+(el `useEffect` post-paint del guard, el toast que miente cuando descarta una
+selección de la lista, y `canOfferCreate` confiando en un `isSuccess` que el backend
+produce también cuando la búsqueda falló).
 
----
+## Structural Findings (fallow)
+
+No se recibió `<structural_findings>` para esta revisión: no hubo pre-pasada
+estructural. Todo lo que sigue es narrativo.
+
+## Narrative Findings (AI reviewer)
+
+Hallazgos derivados de lectura directa de los 6 archivos en scope, con verificación
+cruzada contra `frontend/src/hooks/usePacienteSuggest.ts`,
+`frontend/src/app/dashboard/turnos/page.tsx`,
+`backend/src/modules/pacientes/pacientes.service.ts`,
+`backend/src/modules/pacientes/dto/create-paciente.dto.ts`,
+`backend/src/prisma-client-exception/prisma-client-exception.filter.ts` y
+`backend/src/main.ts`.
 
 ## Critical Issues
 
-### CR-01: `QuickAppointment` deja un paciente fantasma imposible de quitar
+### CR-01: `SurgeryAppointmentModal` no resetea al abrir — el chip fantasma sobrevive al guard y puede programar una cirugía al paciente equivocado
 
-**File:** `frontend/src/app/dashboard/components/QuickAppointment.tsx:373-379` (montaje), `:352` (Dialog), `:419` (Cancelar), `:224-229` (único reset)
-**Issue:**
-`QuickAppointment` monta `<AutocompletePaciente>` **sin pasar `onClear`**, a
-diferencia de `NewAppointmentModal.tsx:219-223` y `SurgeryAppointmentModal.tsx:228-232`
-que sí lo pasan. En `AutocompletePaciente.tsx:90-99` el botón X ejecuta
-`onClear?.()` (no-op acá) y `setQuery("")`, pero `value` viene de
-`paciente?.nombreCompleto` en el padre y nunca se limpia: **el chip del paciente
-seleccionado es irremovible**.
+**File:** `frontend/src/app/dashboard/turnos/SurgeryAppointmentModal.tsx:139-161` (efectos), `:259-269` (guard)
+**Severity:** BLOCKER
 
-Se combina con un segundo defecto en el mismo archivo: el Dialog resetea `paciente`
-**sólo en el camino de éxito** (`:224-229`). Ni `onOpenChange={setOpen}` (`:352`) ni
-el botón Cancelar (`:419`) lo limpian.
+**Issue:** El guard de generación sólo puede descartar un `onSelect` tardío **si la
+generación ya avanzó**, y en este modal la generación avanza únicamente en la
+apertura (`:156-161`). La ventana peligrosa es la que va del cierre a la siguiente
+apertura, y ahí ref y state todavía coinciden, así que el guard deja pasar la
+escritura. El único reset del formulario está condicionado a `!open` (`:139-144`),
+o sea que corre **antes** de que aterrice el POST y ya no vuelve a correr al reabrir.
 
-La fase 68 convierte esto de molestia en riesgo clínico, porque ahora hay un camino
-que setea `paciente` **con el Dialog ya cerrado**: si el POST de alta inline está en
-vuelo y el usuario cierra el Dialog (Escape sobre la capa del Dialog u overlay — el
-guard `createPending` sólo protege la capa del Popover, no la del Dialog), el
-`DialogContent` se desmonta, pero `QuickAppointment` sigue montado y la continuación
-del `await` en `InlineCreatePaciente.tsx:147-149` ejecuta `onCreated` →
-`onSelect(pac)` → `setPaciente(p)`. Secuencia resultante:
+Traza completa (todos los pasos son alcanzables a mano; el botón *Cancelar* del
+`DialogFooter` (:410-416) no está deshabilitado durante el alta y cerrar por ahí no
+lo bloquea ni `onPointerDownOutside` ni `onEscapeKeyDown` de `AutocompletePaciente`,
+que sólo defienden el Popover):
 
-1. El usuario abre el Dialog y crea un paciente inline; cierra el Dialog en vuelo.
-2. `paciente` queda seteado sobre un Dialog cerrado (sin toast visible en contexto).
-3. Más tarde abre el Dialog para **otro** paciente y ve un chip pre-seleccionado.
-4. Hace clic en la X → no pasa nada. No hay forma de deseleccionar sin recargar.
-5. Si no advierte el chip, `confirmarTurno()` (`:209-216`) postea el turno con el
+1. `open=true` → efecto `:156` deja `ref=1`, `dialogSession=1`.
+2. El usuario abre el mini-form, submitea; `POST /pacientes` en vuelo (red lenta).
+3. El usuario cierra el Dialog con *Cancelar* → efecto `:139` corre `reset()` +
+   `setPacienteFotoUrl(null)`. `ref` y `dialogSession` siguen en 1.
+4. El POST resuelve. La continuación del `await` (`InlineCreatePaciente.tsx:159-161`)
+   llama a `onCreated` → `onSelect(pac)`. Guard: `1 !== 1` es **falso** → pasa.
+   Se ejecutan `setValue("pacienteId", X)`, `setValue("pacienteNombre", ...)`,
+   `setPacienteFotoUrl(...)` sobre el form de un modal cerrado.
+5. El usuario reabre el modal para otra cirugía. Corren los efectos `:125`, `:132`
+   y `:156` — **ninguno resetea**. El chip del paciente del paso 2 aparece
+   pre-seleccionado y `data.pacienteId` ya está poblado, así que la validación de
+   `onSubmit` (`:209-212`) no lo detiene.
+6. El usuario completa procedimiento/fecha y postea `POST /turnos/cirugia` con el
    `pacienteId` equivocado.
 
-**Fix:**
+`QuickAppointment` no tiene el problema (`abrirDialogTurno()` llama `resetForm()`) y
+`NewAppointmentModal` tampoco (su efecto de reset lleva `open` en deps y corre
+también en la apertura). Este modal es el único de los tres sin reset de apertura, y
+es justo al que se le portó el guard suponiendo simetría.
+
+**Fix:** No alcanza con el guard; hay que resetear en la apertura. Unificar el efecto
+de sesión con un reset incondicional, dejando el seed de `defaultDate`/`pacienteIdProp`
+después:
+
 ```tsx
-// QuickAppointment.tsx
-<AutocompletePaciente
-  onSelect={(p) => setPaciente(p)}
-  value={paciente?.nombreCompleto}
-  avatarUrl={paciente?.fotoUrl}
-  onClear={() => setPaciente(null)}        // <-- faltante
-  allowCreate
-  profesionalIdParaAlta={profesionalId}
-/>
-
-// y resetear el formulario al cerrar, no sólo al confirmar:
-function resetForm() {
-  setPaciente(null);
-  setTipoTurnoId("");
-  setObservaciones("");
-  setSelectedTime(null);
-}
-
-<Dialog
-  open={open}
-  onOpenChange={(o) => {
-    setOpen(o);
-    if (!o) resetForm();
-  }}
->
+// SurgeryAppointmentModal.tsx — reemplaza el efecto :139-144 y el :156-161
+useEffect(() => {
+  if (open) {
+    // reset ANTES de sellar la generación nueva: mata cualquier escritura
+    // tardía que haya aterrizado con el modal cerrado (chip fantasma).
+    reset();
+    setPacienteFotoUrl(null);
+    dialogSessionRef.current += 1;
+    setDialogSession(dialogSessionRef.current);
+  } else {
+    reset();
+    setPacienteFotoUrl(null);
+  }
+}, [open, reset]);
 ```
-(El `resetForm()` en `confirmarTurno` pasa a ser redundante y se puede colapsar.)
+
+Y verificar que los efectos de seed (`:125-129` y `:132-137`) queden declarados
+**después** de este, para que el `setValue("fecha")` / `setValue("pacienteId")` del
+flujo CRM no sea pisado por el `reset()`. Nota adicional: `reset()` sin argumentos
+restaura los `defaultValues` capturados en el primer render, con el `defaultDate`
+inicial — por eso el seed de fecha tiene que correr después.
 
 ---
 
-### CR-02: Callejón sin salida multi-tenant — DNI globalmente `@unique` + `suggest` filtrado por profesional
+### CR-02: Enter sobre el botón *Cancelar* del mini-form crea el paciente
 
-**File:** `frontend/src/components/AutocompletePaciente.tsx:53-58` (`canOfferCreate`), `frontend/src/components/InlineCreatePaciente.tsx:155-158` (manejo del 409)
-**Issue:**
-Tres hechos que sólo colisionan a partir de esta fase:
+**File:** `frontend/src/components/InlineCreatePaciente.tsx:177-185`
+**Severity:** BLOCKER
 
-1. `Paciente.dni` es `@unique` **global**, no por profesional
-   (`backend/src/prisma/schema.prisma:156`).
-2. `GET /pacientes/suggest` filtra por `profesionalId`
-   (`pacientes.service.ts:389-391`: `AND p."profesionalId" = ${profesionalId}`),
-   así que un paciente de otro profesional **no aparece nunca** en el autosuggest.
-3. `canOfferCreate` ofrece "Crear paciente" precisamente cuando la búsqueda no
-   devolvió coincidencias visibles.
+**Issue:** `handleKeyDown` está montado en el `<div>` contenedor (`:188`) y hace
+`e.preventDefault()` sobre **cualquier** Enter que burbujee, sin mirar el target:
 
-Camino garantizado a fallar, con datos reales de una clínica multi-profesional:
-
-- Secretaria en el contexto del profesional B busca "Juan Pérez", que existe pero
-  está asignado al profesional A → `suggest` devuelve `[]`.
-- Aparece la fila "Crear paciente: …" (comportamiento por diseño, D-03).
-- Completa el DNI → Prisma tira P2002 → `PrismaClientExceptionFilter` lo mapea a 409
-  → la UI muestra "Este DNI ya está registrado" **en un formulario donde el paciente
-  no es visible ni buscable por ningún medio**.
-- No hay afordancia de recuperación: ni "ver paciente existente", ni "asignármelo",
-  ni link al listado global. El usuario queda trabado y no puede agendar el turno.
-
-Esta es la única salida de error posible para un caso de uso frecuente, y la feature
-completa de la fase 68 (agendar sin salir del modal) es inalcanzable en él. El
-modelo de tenancy es preexistente, pero esta fase es la que expone el dead-end como
-único resultado.
-
-**Fix (mínimo aceptable, sin tocar el modelo):** al recibir 409, resolver el
-paciente existente y ofrecer seleccionarlo, en vez de dejar sólo el error de campo.
 ```tsx
-if (status === 409) {
-  setError("dni", {
-    message:
-      "Ese DNI ya existe en el sistema (posiblemente bajo otro profesional). " +
-      "Buscalo desde Pacientes o pedí que te lo asignen.",
-  });
-  return;
+function handleKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
+  if (e.key !== "Enter") return;
+  e.preventDefault();   // <-- mata la activación nativa del <button> enfocado
+  e.stopPropagation();
+  if (isPending) return;
+  void handleSubmit(onSubmit)();   // <-- y submitea igual
 }
 ```
-**Fix (correcto):** exponer un lookup por DNI no filtrado por profesional
-(p. ej. `GET /pacientes/by-dni/:dni`, autorizado por rol) y, ante el 409, ofrecer un
-botón "Usar paciente existente" que dispare `onCreated(pacienteExistente)`. Si el
-negocio requiere aislamiento real por profesional, el `@unique` de `dni` debe pasar
-a `@@unique([dni, profesionalId])` con su migración.
 
----
+La activación de un `<button>` con Enter es la **acción por defecto del keydown**
+(el `click` se sintetiza como default action). `preventDefault()` la cancela. Por lo
+tanto, un usuario que tabula hasta *Cancelar* (`:249-251`) y presiona Enter:
+
+1. no dispara `onCancel` (el click nunca se sintetiza), y
+2. dispara `handleSubmit(onSubmit)` → `POST /pacientes`.
+
+Es decir: la tecla que el usuario usa para **descartar** ejecuta la escritura. En un
+sistema clínico con `dni @unique` global eso deja un `Paciente` real, no removible
+desde este flujo, atribuido al profesional del turno. Aplica también a *Cancelar* del
+teclado en los tres modales, y es 100 % determinista (no es una carrera).
+
+**Fix:** No interceptar Enter cuando el foco está sobre un control que ya tiene
+semántica propia de activación:
+
+```tsx
+function handleKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
+  if (e.key !== "Enter") return;
+  const target = e.target as HTMLElement;
+  // Los botones (y textareas, si se agregan) manejan Enter por su cuenta.
+  if (target.closest("button")) return;
+  e.preventDefault();
+  e.stopPropagation();
+  if (isPending || submittingRef.current) return;
+  void handleSubmit(onSubmit)();
+}
+```
+
+(Notar que el early-return usa `isPending`, que es state y llega tarde; conviene
+sumar `submittingRef.current`, que ya existe y es síncrono.)
 
 ## Warnings
 
-### WR-01: Escape es completamente inerte mientras el dropdown está abierto (diferido por 68-04)
+### WR-01: `canOfferCreate` no distingue "no hay resultados" de "la búsqueda falló"
 
-**File:** `frontend/src/components/AutocompletePaciente.tsx:70` (`<Popover open={showDropdown}>` sin `onOpenChange`), `:121-137`
-**Issue:** Re-reporte del hallazgo diferido, ampliado tras trazar `DismissableLayer`.
-El `open` del Popover es state-driven y `<Popover>` **no recibe `onOpenChange`**.
-Cuando `creating === false`, el handler `onEscapeKeyDown` hace `return` sin
-`preventDefault()`, con lo cual Radix ejecuta su rama por defecto:
-`event.preventDefault(); onDismiss();`. El `onDismiss` intenta cerrar vía
-`onOpenChange` — que no existe → **no-op**. Y como Radix ya llamó a
-`preventDefault()` y la capa del Popover es la más alta, el Dialog contenedor
-tampoco recibe el Escape.
+**File:** `frontend/src/components/AutocompletePaciente.tsx:53-58`
+**Severity:** WARNING
 
-Resultado: con el dropdown abierto (con resultados, o con la fila "Crear paciente"
-visible pero el mini-form aún cerrado), **Escape no hace absolutamente nada**: ni
-cierra el dropdown, ni cierra el modal de turno. El usuario percibe la app como
-trabada.
+**Issue:** `canOfferCreate` exige `isSuccess && !isFetching`, con el argumento (D-03)
+de que eso evita el falso negativo de la ventana pre-fetch. Pero el backend
+(`backend/src/modules/pacientes/pacientes.service.ts:440-447`) **traga cualquier
+excepción del `suggest` y devuelve `[]`**:
 
-**Fix:** hacer que la capa del Popover consuma Escape sólo cuando tiene algo que
-cerrar, y devolver el estado explícitamente:
+```ts
+} catch (err) {
+  console.error('❌ ERROR EN SUGGEST:', err);
+  return [];   // 200 OK con array vacío
+}
+```
+
+Un fallo de la query raw (p. ej. la extensión `unaccent`/`pg_trgm` no disponible, o un
+timeout de pool) se le presenta a TanStack Query como éxito con 0 filas → `isSuccess`
+true, `data.length === 0` → aparece "Crear paciente: …". El usuario, que ve un
+paciente existente reportado como inexistente, lo re-crea. Si tipea el DNI exacto
+choca con el `@unique` (409), pero si lo tipea con un dígito distinto o desde una
+búsqueda por nombre, **crea un duplicado real de un paciente vivo**.
+
+**Fix:** Que la oferta de alta dependa de una respuesta positivamente vacía, no de la
+ausencia de error. Mínimo, en el frontend, no ofrecer alta cuando la query trae
+`isError` y exigir que el backend deje de enmascarar; el arreglo correcto es hacer que
+`suggest` propague el error (`throw`) en vez de `return []`, y acá:
+
+```tsx
+const { data = [], isFetching, isSuccess, isError } = usePacienteSuggest(query);
+
+const canOfferCreate =
+  allowCreate && !creating && !isError &&
+  debouncedQuery.trim().length >= 3 && !isFetching && isSuccess;
+```
+
+---
+
+### WR-02: la fila "Crear paciente" deja el Popover abierto y Escape queda completamente inerte
+
+**File:** `frontend/src/components/AutocompletePaciente.tsx:62-64`, `:121-137`
+**Severity:** WARNING
+
+**Issue:** `showDropdown` sumó `|| canOfferCreate`, así que ahora el Popover queda
+abierto también en el caso "query ≥ 3 y 0 resultados", que antes lo cerraba. Con el
+Popover abierto es la capa más alta del stack de Radix, y su `onEscapeKeyDown`
+(`:121-137`) hace `if (!creating) return;` — sin `preventDefault()`. Consecuencia en
+cadena:
+
+1. Radix dispara `onDismiss` del Popover, pero `open={showDropdown}` es controlado y
+   no hay `onOpenChange` en el `<Popover>` (`:70`) → el Popover no se cierra.
+2. El Dialog del turno **no recibe el Escape**, porque no es la capa más alta
+   (`isHighestLayer` corta antes).
+
+Resultado: con la fila de alta visible, Escape no cierra nada. Antes de esta fase, en
+ese mismo estado (0 resultados) el dropdown estaba cerrado y Escape sí cerraba el
+Dialog. Es una regresión de comportamiento introducida por la nueva condición, no sólo
+el WR-01 heredado.
+
+**Fix:** hacer que Escape sin `creating` cierre el dropdown de verdad, limpiando la
+query, que es lo único que lo mantiene abierto:
+
 ```tsx
 onEscapeKeyDown={(e) => {
+  e.preventDefault();
+  e.stopPropagation();
   if (creating) {
-    e.preventDefault();
     if (createPending) return;
     setCreating(false);
     return;
   }
-  if (query.length > 0) {
-    e.preventDefault();
-    setQuery("");     // cierra el dropdown por vía de estado
-    return;
-  }
-  // sin nada que cerrar: dejar burbujear para que el Dialog se cierre
+  setQuery("");   // cierra el dropdown: showDropdown pasa a false
 }}
 ```
 
 ---
 
-### WR-02: La guarda `isPending` de 68-04 no cierra la ventana de doble submit
+### WR-03: `NewAppointmentModal` resetea el formulario ante cualquier re-render del padre, incluido el paciente recién creado
 
-**File:** `frontend/src/components/InlineCreatePaciente.tsx:163-171` y `:238`
-**Issue:** `handleKeyDown` verifica `if (isPending) return` **antes** de
-`handleSubmit(onSubmit)()`, pero `handleSubmit` de RHF es asíncrono: hace
-`await resolver(values, ...)` (zodResolver) antes de invocar `onSubmit`, y
-`onSubmit` recién ahí llama a `mutateAsync`, que es cuando `isPending` pasa a
-`true`. Dos Enter (o dos clics rápidos, `:238`, mismo problema con
-`disabled={isPending}`) dentro del mismo tick ven ambos `isPending === false` y
-disparan **dos POST /pacientes**.
+**File:** `frontend/src/app/dashboard/turnos/NewAppointmentModal.tsx:110-133`
+**Severity:** WARNING
 
-Con `dni @unique` el segundo devuelve 409, así que no se duplica la fila; pero el
-primero ya resolvió `onCreated` → desmontaje, y el `setError("dni")` del segundo
-cae sobre un componente desmontado: el usuario no ve nada y el segundo request
-queda como ruido de error en el backend. Si en el futuro el `@unique` se relaja
-(ver CR-02), esto pasa a crear pacientes duplicados.
+**Issue:** El efecto de reset depende de `selectedEvent`, y el padre
+(`frontend/src/app/dashboard/turnos/page.tsx:502-506`) construye ese prop como
+**objeto literal nuevo en cada render**:
 
-**Fix:** guardia síncrona con `useRef`, que no depende del ciclo de render:
 ```tsx
-const submittingRef = useRef(false);
+selectedEvent={listaEsperaPacienteId ? { pacienteId: listaEsperaPacienteId }
+  : newSlotDate ? { fecha: ..., hora: ... } : null}
+```
 
-async function onSubmit(data: FormValues) {
-  if (submittingRef.current) return;
-  submittingRef.current = true;
-  try {
-    // ... mutateAsync / toast / onCreated
-  } catch (err) {
-    // ...
-  } finally {
-    submittingRef.current = false;
-  }
-}
+Con el modal abierto desde un slot del calendario (`newSlotDate` seteado, el camino
+más usado), cualquier re-render de `turnos/page.tsx` cambia la identidad del objeto,
+el efecto vuelve a correr y hace `reset({...})`: se pierde el tipo de turno, la hora,
+las observaciones y — lo relevante para esta fase — el `pacienteId`/`pacienteNombre`
+que acaba de escribir el alta inline. El guard de generación no protege de esto: la
+escritura fue legítima y el borrado viene después.
+
+Mitigado hoy sólo por `refetchOnWindowFocus: false` + `staleTime: 30_000`
+(`frontend/src/app/providers.tsx:12-13`), no por diseño.
+
+**Fix:** estabilizar la identidad en el padre y, defensivamente, no atar el reset a un
+prop de identidad inestable:
+
+```tsx
+// turnos/page.tsx
+const selectedEventForNewModal = useMemo(
+  () => (listaEsperaPacienteId ? { pacienteId: listaEsperaPacienteId }
+      : newSlotDate ? { fecha: newSlotDate.toISOString(), hora: ... } : null),
+  [listaEsperaPacienteId, newSlotDate]
+);
 ```
 
 ---
 
-### WR-03: El campo DNI no pasa por `register()`, así que el error del 409 no se limpia al retipear (diferido por 68-04)
+### WR-04: el incremento de generación corre después del paint y el toast de descarte miente cuando la selección vino de la lista
 
-**File:** `frontend/src/components/InlineCreatePaciente.tsx:199-208`
-**Issue:** Re-reporte del hallazgo diferido. El input de DNI usa
-`value={watch("dni")}` + `setValue("dni", ..., { shouldValidate: false })` y
-`ref={dniRef}`; **nunca se llama `register("dni")`** para ese input. Consecuencias
-concretas:
+**File:** `frontend/src/app/dashboard/turnos/NewAppointmentModal.tsx:145-150`, `:250-256`; `frontend/src/app/dashboard/turnos/SurgeryAppointmentModal.tsx:156-161`, `:259-265`
+**Severity:** WARNING
 
-1. `setError("dni", { message: "Este DNI ya está registrado" })` (`:156`) queda
-   pegado: al corregir el DNI, `shouldValidate: false` impide revalidar y RHF no
-   limpia errores de campos no registrados por cambio de valor. El usuario ve el
-   error de duplicado sobre un DNI nuevo y correcto.
-2. El campo queda fuera del ciclo de `mount`/`unmount` de RHF; funciona hoy porque
-   `defaultValues` siembra `_formValues` y `setValue` lo actualiza, pero es un
-   contrato no documentado de RHF.
+**Issue:** Dos defectos del mismo guard portado:
 
-**Fix:** registrar el campo y sanitizar en el `onChange` registrado, conservando el
-filtro numérico:
+1. `useEffect` corre **después** del paint de la apertura, así que existe una ventana
+   (documentada en el comentario como "inalcanzable a mano") en la que
+   `dialogSessionRef.current` ya avanzó y `dialogSession` todavía no. El propio
+   comentario admite el agujero y lo acepta; es innecesario aceptarlo, porque
+   `useLayoutEffect` lo cierra por completo (corre antes del paint y su `setState`
+   se flushea sincrónicamente), sin cambiar ninguna otra semántica.
+2. El mensaje del descarte es una afirmación de hecho — *"El paciente se creó…"* —
+   pero `onSelect` es el **mismo** callback que usa el click sobre una sugerencia
+   existente (`AutocompletePaciente.tsx:171-174`). Si el guard descarta esa rama, el
+   sistema le informa al usuario una creación que nunca ocurrió. En un sistema
+   clínico, un mensaje que afirma la existencia de un registro que no existe es
+   peor que un mensaje genérico.
+
+**Fix:**
+
 ```tsx
-const dniField = register("dni");
+useLayoutEffect(() => {
+  if (open) {
+    dialogSessionRef.current += 1;
+    setDialogSession(dialogSessionRef.current);
+  }
+}, [open]);
+```
+
+y desacoplar el mensaje del origen — por ejemplo pasando el motivo desde
+`AutocompletePaciente` (`onSelect(pac, { origin: "create" | "list" })`), o usando un
+texto neutro: `"Ese turno ya se había cerrado. Volvé a buscar al paciente."`.
+
+---
+
+### WR-05: `buildPrefill` mete un teléfono en el campo DNI y el DNI no tiene cota superior
+
+**File:** `frontend/src/components/InlineCreatePaciente.tsx:42-51`, `:67-74`
+**Severity:** WARNING
+
+**Issue:** El input de búsqueda anuncia explícitamente "Buscar paciente por nombre,
+DNI **o teléfono**" (`AutocompletePaciente.tsx:106`), y el backend efectivamente
+matchea por teléfono (`pacientes.service.ts:430`). Pero `buildPrefill` clasifica
+*cualquier* query 100 % dígitos como DNI:
+
+- `"1122334455"` (celular sin separadores) → precarga **DNI = 1122334455**.
+- `"+54 11 2233 4455"` → el `+` sobrevive a `stripSeparators`, así que cae en la rama
+  de nombre y precarga **Nombre = "+54 11 2233 4455"**.
+
+El schema sólo exige `min(7)` y el input filtra no-dígitos sin `maxLength`, así que un
+número de 10-11 dígitos pasa la validación del cliente; el backend tampoco valida
+longitud (`@IsString()` a secas en `CreatePacienteDto`). El DNI es la clave de
+identidad `@unique` global del paciente: una vez creado con un teléfono adentro, el
+registro queda ocupando ese DNI para siempre y el duplicado real del paciente será
+imposible de crear después.
+
+**Fix:** acotar el rango plausible de DNI argentino y no precargar cuando la longitud
+delata un teléfono:
+
+```ts
+const schema = z.object({
+  // ...
+  dni: z.string().min(7, "Mínimo 7 dígitos").max(9, "Máximo 9 dígitos"),
+});
+
+export function buildPrefill(query: string) {
+  const stripped = stripSeparators(query);
+  if (/^\d{7,9}$/.test(stripped)) return { dni: stripped, nombreCompleto: "" };
+  return { dni: "", nombreCompleto: capitalizarNombre(query.trim()) };
+}
+```
+
+y `maxLength={9}` en el input de DNI (`:213-222`).
+
+---
+
+### WR-06: el alta inline postea campos controlados por el cliente contra un endpoint sin validación de DTO
+
+**File:** `frontend/src/hooks/useCreatePaciente.ts:8-11`; `frontend/src/components/InlineCreatePaciente.tsx:143-151`
+**Severity:** WARNING
+
+**Issue:** `backend/src/main.ts` **no registra ningún `ValidationPipe` global** (no hay
+`useGlobalPipes`), así que los decoradores de `CreatePacienteDto` no corren nunca y
+`PacientesService.create` hace `prisma.paciente.create({ data: { ...dto } })`
+(`pacientes.service.ts:56-77`). El body llega crudo a Prisma: cualquier columna del
+modelo `Paciente` es escribible desde el cliente (incluido `usuarioId`, que es
+`@unique` y vincula al paciente con una cuenta de usuario). Este es el clásico
+mass-assignment.
+
+El hook de esta fase agrava la superficie porque `mutationFn: async (data: any)`
+acepta cualquier forma y el componente ya envía flags de negocio armados en la UI
+(`estado: "ACTIVO"`, `consentimientoFirmado: false`, `indicacionesEnviadas: false`,
+`profesionalId`), normalizando que el cliente sea la fuente de verdad de esos campos.
+
+Marcado como preexistente/backend en `68-VERIFICATION.md` (WR-10, diferido). Se
+re-levanta porque sigue abierto y porque esta fase agrega un nuevo punto de entrada
+público al endpoint (antes el alta era sólo el formulario completo de pacientes).
+
+**Fix (backend, fuera del scope de archivos de esta fase pero requerido antes de
+producción):**
+
+```ts
+// backend/src/main.ts
+app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }));
+```
+
+y tipar el hook: `mutationFn: async (data: CreatePacienteInput) => ...`.
+
+---
+
+### WR-07: los labels del mini-form no están asociados a sus inputs
+
+**File:** `frontend/src/components/InlineCreatePaciente.tsx:190-192`, `:210-212`, `:231-233`
+**Severity:** WARNING
+
+**Issue:** Los tres campos usan `<label className="...">` sin `htmlFor`, y los
+`<Input>` no tienen `id`. No hay asociación programática: lectores de pantalla anuncian
+los inputs sin nombre accesible, y el click sobre el texto del label no enfoca el
+campo. El mini-form vive dentro de un Popover dentro de un Dialog, donde la
+orientación por teclado/lector es justamente la más frágil. Reportado en la ronda
+anterior (WR-07) y no corregido.
+
+**Fix:**
+
+```tsx
+const nombreId = useId();
 // ...
+<label htmlFor={nombreId} className="...">Nombre completo *</label>
+<Input id={nombreId} {...register("nombreCompleto")} ... />
+```
+
+---
+
+### WR-08: el campo DNI evita `register()`; el error del 409 queda pegado al retipear
+
+**File:** `frontend/src/components/InlineCreatePaciente.tsx:213-222`, `:167-170`
+**Severity:** WARNING
+
+**Issue:** El input de DNI se maneja con `value={watch("dni")}` +
+`setValue(..., { shouldValidate: false })`, sin `register()`. `setError("dni", ...)`
+del camino 409 (`:167-170`) escribe un error sobre un campo no registrado: como no hay
+validación en cambio, el mensaje *"Este DNI ya está registrado"* permanece en pantalla
+mientras el usuario corrige el número, y sólo desaparece cuando vuelve a submitear.
+El usuario ve simultáneamente un DNI nuevo y el cartel de que ese DNI ya existe.
+Reportado en la ronda anterior (WR-03), diferido, sigue abierto.
+
+**Fix:** registrar el campo con normalización y limpiar el error al tipear:
+
+```tsx
 <Input
-  {...dniField}
-  ref={(el) => { dniField.ref(el); dniRef.current = el; }}
-  onChange={(e) => {
-    e.target.value = e.target.value.replace(/\D/g, "");
-    void dniField.onChange(e);
-    clearErrors("dni");            // limpia el 409 manual
-  }}
+  {...register("dni", {
+    onChange: (e) => {
+      e.target.value = e.target.value.replace(/\D/g, "");
+      clearErrors("dni");
+    },
+  })}
+  ref={(el) => { register("dni").ref(el); dniRef.current = el; }}
   inputMode="numeric"
+  maxLength={9}
 />
 ```
 
 ---
 
-### WR-04: `buildPrefill` precarga un teléfono en el campo DNI
+### WR-09: mientras el POST está en vuelo el mini-form no se puede cerrar por ninguna vía, y no hay timeout
 
-**File:** `frontend/src/components/InlineCreatePaciente.tsx:68-74`, placeholder en `AutocompletePaciente.tsx:106`
-**Issue:** `buildPrefill` decide "todo dígitos ⇒ es un DNI" (D-09). Pero el
-placeholder del autosuggest invita explícitamente a buscar **"por nombre, DNI o
-teléfono"**, y `suggest` efectivamente busca por teléfono. Un usuario que busca
-`"1122334455"`, no encuentra al paciente y hace clic en "Crear paciente" obtiene el
-**teléfono precargado en el campo DNI**, con el campo Teléfono vacío. Como
-`stripSeparators` también come espacios, puntos y guiones, `"11 2233-4455"` cae en la
-misma rama. La validación (`min(7)`) acepta 10 dígitos sin objetar.
+**File:** `frontend/src/components/AutocompletePaciente.tsx:132-136`, `:138-144`; `frontend/src/components/InlineCreatePaciente.tsx:249-254`
+**Severity:** WARNING
 
-Es un registro clínico con DNI inválido, difícil de detectar después y que además
-consume el `@unique` global de `dni` (agravando CR-02).
+**Issue:** Con `createPending === true` quedan bloqueadas las tres salidas del
+mini-form a la vez: Escape (`if (createPending) return`), click afuera
+(`onPointerDownOutside` → `preventDefault()`) y el botón *Cancelar*
+(`disabled={isPending}`). La instancia de axios (`frontend/src/lib/api.ts`) no define
+`timeout`, y la mutación no usa `AbortSignal`. Si la request queda colgada (proxy que
+no responde, red que se cae sin RST), `isPending` no vuelve nunca a `false` y el
+mini-form queda inmovilizado hasta que el usuario cierre el Dialog completo — que es
+la única salida que quedó, y sólo funciona porque `preventDefault()` del Popover no
+cancela el click nativo sobre el botón *Cancelar* del `DialogFooter`.
 
-**Fix:** desambiguar por longitud típica de DNI argentino y, ante ambigüedad,
-precargar teléfono en vez de DNI:
+**Fix:** poner un techo temporal y una salida de emergencia:
+
 ```ts
-export function buildPrefill(query: string) {
-  const stripped = stripSeparators(query);
-  const esNumerico = stripped.length > 0 && /^\d+$/.test(stripped);
-  if (esNumerico && stripped.length >= 7 && stripped.length <= 8) {
-    return { dni: stripped, telefono: "", nombreCompleto: "" };
-  }
-  if (esNumerico) {
-    // 9+ dígitos: casi seguro un teléfono
-    return { dni: "", telefono: stripped, nombreCompleto: "" };
-  }
-  return { dni: "", telefono: "", nombreCompleto: capitalizarNombre(query.trim()) };
-}
+// lib/api.ts
+export const api = axios.create({ baseURL: ..., timeout: 30_000 });
 ```
-(Requiere sumar `telefono` a `defaultValues` y ajustar el foco inicial de D-04.)
+
+y permitir cancelar el mini-form tras el timeout (o mantener *Cancelar* habilitado,
+descartando el resultado con el mismo guard de generación que ya existe en los
+padres).
 
 ---
 
-### WR-05: El `try` de 68-04 abarca también los callbacks de éxito
+### WR-10: `any` en la frontera del paciente creado + cast sin validar → `pacienteId: undefined` puede llegar a `POST /turnos`
 
-**File:** `frontend/src/components/InlineCreatePaciente.tsx:146-160`
-**Issue:** `toast.success(...)` y `onCreated(creado)` viven **dentro** del `try`. Si
-cualquiera de los dos lanza — hoy el caso más plausible es una respuesta inesperada
-donde `creado` sea `null` y `creado.nombreCompleto` tire `TypeError`, o un
-`onSelect` de un consumidor futuro que falle — el `catch` lo trata como fallo de
-alta: `status` es `undefined`, `message` es el texto del error de JS, y se muestra
-`toast.error("Cannot read properties of null…")`. El paciente **sí fue creado**, pero
-la UI dice lo contrario e invita al reintento (que chocará con el 409 de CR-02).
+**File:** `frontend/src/components/AutocompletePaciente.tsx:18`; `frontend/src/components/InlineCreatePaciente.tsx:159`; `frontend/src/app/dashboard/components/QuickAppointment.tsx:163`
+**Severity:** WARNING
 
-**Fix:** acotar el `try` a la llamada de red y sacar la continuación afuera.
-```tsx
-let creado: PacienteCreado;
-try {
-  creado = (await mutateAsync(payload)) as PacienteCreado;
-} catch (err) {
-  const error = err as ApiError;
-  const status = error?.response?.status;
-  const message = error?.response?.data?.message || error?.message;
-  if (status === 409) { setError("dni", { message: "Este DNI ya está registrado" }); return; }
-  toast.error(message || "Error al crear el paciente");
-  return;
-}
-toast.success(`${creado?.nombreCompleto ?? "Paciente"} creado correctamente`);
-onCreated(creado);
-```
+**Issue:** La cadena completa del dato nuevo está sin tipar de punta a punta:
+`mutationFn: async (data: any)` devuelve `any` → `(await mutateAsync(payload)) as PacienteCreado`
+es una aserción, no una validación → `onSelect: (paciente: any) => void` → los tres
+call sites leen `pac.id` / `pac.nombreCompleto` sin chequear. Si el backend cambia la
+forma de la respuesta (o devuelve un envelope `{ data: ... }`), no falla nada visible:
+`pac.id` queda `undefined`, el chip muestra `undefined`, y `confirmarTurno()`
+(`QuickAppointment.tsx:248`) postea `pacienteId: undefined`. TypeScript no puede
+ayudar porque el `any` desactiva todos los chequeos. El repo ya tiene Zod como
+dependencia (se usa acá mismo, `:42-51`).
 
----
+**Fix:** validar la respuesta en el borde y tipar `onSelect`:
 
-### WR-06: Cast sin validación de la respuesta del alta
-
-**File:** `frontend/src/components/InlineCreatePaciente.tsx:147`, `frontend/src/hooks/useCreatePaciente.ts:8-11`
-**Issue:** `useCreatePaciente` tipa `mutationFn: async (data: any)` y devuelve
-`response.data` sin tipo; `InlineCreatePaciente` hace
-`(await mutateAsync(payload)) as PacienteCreado`. El cast es una aserción, no una
-verificación: si el backend deja de devolver `id`/`nombreCompleto` (envoltura de
-respuesta, DTO de salida, etc.), `onCreated` propaga `undefined` a
-`setValue("pacienteId", undefined)` (`NewAppointmentModal.tsx:225`) y a
-`setPaciente({...})` con `nombreCompleto` undefined → `value` cae a falsy → el chip
-nunca aparece y el paciente queda creado pero **no seleccionado, en silencio**. El
-compilador no protege nada porque el origen es `any`.
-
-**Fix:** tipar el hook y validar el mínimo en el punto de uso.
 ```ts
-// useCreatePaciente.ts
-export type PacienteCreadoDTO = { id: string; nombreCompleto: string; fotoUrl?: string | null };
-return useMutation<PacienteCreadoDTO, unknown, CreatePacienteInput>({ ... });
-
-// InlineCreatePaciente.tsx
-if (!creado?.id || !creado?.nombreCompleto) {
-  toast.error("El paciente se creó pero la respuesta fue inesperada. Buscalo manualmente.");
-  return;
-}
+const pacienteCreadoSchema = z.object({
+  id: z.string(),
+  nombreCompleto: z.string(),
+  fotoUrl: z.string().nullable().optional(),
+});
+const creado = pacienteCreadoSchema.parse(await mutateAsync(payload));
 ```
 
----
-
-### WR-07: El mini-form no asocia labels con inputs (a11y rota)
-
-**File:** `frontend/src/components/InlineCreatePaciente.tsx:176-178`, `:196-198`, `:217-219`
-**Issue:** Los tres `<label>` no tienen `htmlFor`, los `<Input>` no tienen `id`, y
-los inputs no están anidados dentro del label. Un lector de pantalla anuncia tres
-campos de texto sin nombre accesible. Se agrava porque el mini-form vive dentro de
-un `PopoverPrimitive.Portal` con `onOpenAutoFocus` cancelado (`AutocompletePaciente.tsx:120`):
-la única señal de contexto que recibe el usuario de lector de pantalla es el foco
-programático a 50 ms, sin `role`/`aria-label` en el contenedor.
-
-Los `Alert` de error tampoco están enlazados vía `aria-describedby` ni marcados con
-`aria-invalid`.
-
-**Fix:**
-```tsx
-const nombreId = useId();
-// ...
-<label htmlFor={nombreId} className="...">Nombre completo <span aria-hidden>*</span></label>
-<Input id={nombreId} aria-invalid={!!errors.nombreCompleto}
-       aria-describedby={errors.nombreCompleto ? `${nombreId}-err` : undefined} ... />
-{errors.nombreCompleto && (
-  <Alert id={`${nombreId}-err`} role="alert" variant="destructive" className="py-2"> ... </Alert>
-)}
-```
-Y en `PopoverContent`, cuando `creating`, agregar `role="dialog"` +
-`aria-label="Crear paciente"`.
-
----
-
-### WR-08: `onPendingChange` en el array de dependencias es un foot-gun de render infinito
-
-**File:** `frontend/src/components/InlineCreatePaciente.tsx:118-123`
-**Issue:** El effect declara `[isPending, onPendingChange]` y su cleanup invoca
-`onPendingChange?.(false)`. Hoy funciona porque el único consumidor pasa
-`setCreatePending` (`AutocompletePaciente.tsx:156`), que es una referencia estable de
-`useState`. Pero el contrato público de la prop no lo exige: cualquier consumidor
-que pase una lambda inline (`onPendingChange={(p) => setAlgo(p)}`) entra en bucle:
-identidad nueva por render → cleanup `(false)` → setState en el padre → re-render →
-lambda nueva → cleanup `(false)` + effect `(true)` → setState → … Ese es exactamente
-el patrón que un dev escribiría sin leer el comentario.
-
-Además, la cleanup emite un `false` espurio en **cada** cambio de `isPending`
-(false→true dispara `cleanup(false)` seguido de `(true)`); hoy React lo batchea, pero
-es ruido innecesario en el contrato.
-
-**Fix:** estabilizar el callback vía ref y sacarlo de las deps.
-```tsx
-const onPendingChangeRef = useRef(onPendingChange);
-useEffect(() => { onPendingChangeRef.current = onPendingChange; });
-
-useEffect(() => {
-  onPendingChangeRef.current?.(isPending);
-}, [isPending]);
-
-useEffect(() => () => { onPendingChangeRef.current?.(false); }, []); // sólo al desmontar
-```
-
----
-
-### WR-09: `canOfferCreate` depende del orden de llamada de dos hooks independientes
-
-**File:** `frontend/src/components/AutocompletePaciente.tsx:43` y `:49`
-**Issue:** El comentario dice "mismo delay converge al mismo valor", pero no
-convergen en el mismo commit: son dos `useDebounce` distintos con dos `setTimeout`
-distintos, y los callbacks de `setTimeout` son **macrotasks separadas**, sin batching
-compartido. Lo que hoy salva a `canOfferCreate` es puro orden de declaración: como
-`usePacienteSuggest(query)` (línea 43) se llama antes que `useDebounce(query, 300)`
-(línea 49), su effect registra el timer primero y dispara primero, así que el
-`queryKey` cambia (y `isSuccess` cae a `false`) **antes** de que `debouncedQuery` se
-actualice.
-
-Invertir esas dos líneas — un reordenamiento de imports/hooks completamente
-inocente — abre un render intermedio con `debouncedQuery` nuevo e `isSuccess`/`data`
-todavía del query anterior: la fila "Crear paciente" aparece (o desaparece)
-incorrectamente y el usuario puede alcanzar a clickearla. Es un acoplamiento
-invisible y sin test que lo proteja.
-
-**Fix:** eliminar el debounce duplicado exponiendo el valor debounceado desde el
-hook dueño de la búsqueda, que además es la única fuente de verdad:
 ```ts
-// usePacienteSuggest.ts
-export function usePacienteSuggest(query: string) {
-  const debounced = useDebounce(query, 300);
-  const result = useQuery({ ... });
-  return { ...result, debouncedQuery: debounced };
-}
-
 // AutocompletePaciente.tsx
-const { data = [], isFetching, isSuccess, debouncedQuery } = usePacienteSuggest(query);
+type PacienteSeleccionado = { id: string; nombreCompleto: string; fotoUrl?: string | null };
+type Props = { onSelect: (paciente: PacienteSeleccionado) => void; /* ... */ };
 ```
-
----
-
-### WR-10: `profesionalIdParaAlta` es un id de tenant controlado por el cliente contra un endpoint sin validación
-
-**File:** `frontend/src/components/AutocompletePaciente.tsx:29`/`:149`, `frontend/src/components/InlineCreatePaciente.tsx:135`
-**Issue:** La fase abre un **nuevo camino de escritura** a `POST /pacientes` desde
-tres modales, enviando `profesionalId` tal cual desde el cliente. Verifiqué el lado
-servidor:
-
-- `backend/src/main.ts` **no registra `ValidationPipe` global** (ni `useGlobalPipes`,
-  ni `APP_PIPE` en `app.module.ts`): los decoradores de `CreatePacienteDto`
-  (`@IsString`, `@IsEnum`, etc.) **nunca se ejecutan**. Toda la validación de
-  `nombreCompleto`/`dni` que la fase agrega vive **sólo en el zod del cliente**
-  (`InlineCreatePaciente.tsx:42-51`) y es trivialmente evitable con un request directo.
-- `PacientesController` está anotado
-  `@Auth('ADMIN','PROFESIONAL','SECRETARIA','FACTURADOR')` y `create()` pasa el DTO a
-  `prisma.paciente.create` sin verificar que el `profesionalId` recibido pertenezca al
-  tenant/usuario que llama. Un `SECRETARIA` puede sembrar pacientes bajo cualquier
-  profesional del sistema.
-
-La causa raíz es de backend y preexistente, pero esta fase es la que amplía la
-superficie (tres nuevos puntos de entrada, con el id de profesional viajando como
-prop desde el cliente). No debería darse por cerrada la fase sin registrar la deuda.
-
-**Fix (backend, fuera de estos archivos pero requerido):**
-```ts
-// main.ts
-app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }));
-
-// pacientes.service.ts create()
-// derivar profesionalId del usuario autenticado, o validar pertenencia:
-if (dto.profesionalId && !(await this.puedeAsignar(userId, dto.profesionalId))) {
-  throw new ForbiddenException('Profesional no permitido');
-}
-```
-
----
-
-### WR-11: El input de búsqueda sigue activo mientras el mini-form está abierto
-
-**File:** `frontend/src/components/AutocompletePaciente.tsx:104-111` vs `:146-157`
-**Issue:** Con `creating === true` el `<Input>` de búsqueda se sigue renderizando y
-es editable (sólo se oculta cuando `value` es truthy). Efectos concretos:
-
-- Cada tecla dispara nuevas `usePacienteSuggest` cuyos resultados **nunca se muestran**
-  (la rama `creating ?` los reemplaza por el mini-form): requests al backend cuya
-  respuesta se descarta siempre.
-- `prefill` se congela en el montaje (`InlineCreatePaciente.tsx:85`), así que el texto
-  visible arriba y los campos de abajo se desincronizan sin señal alguna para el
-  usuario.
-- Es alcanzable por teclado: `Shift+Tab` desde el campo Nombre lleva el foco fuera del
-  mini-form al input de búsqueda, sin trap ni indicación de que el foco salió del
-  formulario de alta.
-
-**Fix:** desactivar la búsqueda mientras se crea.
-```tsx
-{!value && (
-  <Input
-    placeholder="Buscar paciente por nombre, DNI o teléfono"
-    value={query}
-    onChange={(e) => setQuery(e.target.value)}
-    disabled={creating}
-    className={...}
-  />
-)}
-```
-
----
 
 ## Info
 
-### IN-01: `register("nombreCompleto")` se invoca dos veces para el mismo input
+### IN-01: `register("nombreCompleto")` se invoca dos veces por cada callback de ref
 
-**File:** `frontend/src/components/InlineCreatePaciente.tsx:180-184`
-**Issue:** El spread `{...register("nombreCompleto")}` ya aporta un `ref`, que queda
-sobrescrito por el `ref` explícito, y dentro de ese callback se vuelve a llamar
-`register("nombreCompleto")` en cada invocación del ref. Funciona (la segunda llamada
-toma la rama "field ya existe"), pero es trabajo redundante en fase de commit y
-oscurece la intención.
-**Fix:** destructurar una sola vez —
-`const nombreField = register("nombreCompleto");` y usar
-`{...nombreField} ref={(el) => { nombreField.ref(el); nombreRef.current = el; }}`.
+**File:** `frontend/src/components/InlineCreatePaciente.tsx:193-198`
+**Issue:** El spread `{...register("nombreCompleto")}` ya registra el campo, y dentro
+del callback de `ref` se vuelve a llamar `register("nombreCompleto").ref(el)` — o sea
+una registración extra por cada invocación del ref (montaje, desmontaje, cada cambio
+de identidad del callback).
+**Fix:** destructurar una vez, como recomienda RHF:
+`const { ref: rhfRef, ...nombreField } = register("nombreCompleto");` y luego
+`<Input {...nombreField} ref={(el) => { rhfRef(el); nombreRef.current = el; }} />`.
 
 ### IN-02: `setTimeout` de foco sin `clearTimeout` y con número mágico
 
-**File:** `frontend/src/components/InlineCreatePaciente.tsx:106-113`
-**Issue:** El effect de foco crea un `setTimeout(..., 50)` y no lo cancela en la
-cleanup. No revienta (los refs quedan en `null` al desmontar y hay `?.`), pero deja un
-timer huérfano y el `50` no está explicado — es un workaround del
-`onOpenAutoFocus={e => e.preventDefault()}` del padre.
+**File:** `frontend/src/components/InlineCreatePaciente.tsx:115-122`
+**Issue:** El efecto de foco programa un `setTimeout(..., 50)` y no lo limpia. No
+crashea (los refs son opcionales y quedan `null`), pero deja un timer huérfano si el
+mini-form se desmonta en los primeros 50 ms, y el `50` es un número mágico atado a la
+animación del Popover.
 **Fix:** `const t = setTimeout(...); return () => clearTimeout(t);` y extraer
-`const FOCUS_DELAY_MS = 50;` con comentario.
+`const FOCUS_DELAY_MS = 50;` con un comentario que explique a qué animación responde.
 
-### IN-03: `message?.includes("DNI")` es una rama muerta
+### IN-03: el debounce está duplicado y acopla el componente a las internas del hook
 
-**File:** `frontend/src/components/InlineCreatePaciente.tsx:155`
-**Issue:** El fallback por texto nunca se cumple contra este backend:
-`PrismaClientExceptionFilter` devuelve el mensaje crudo de Prisma
-(`Unique constraint failed on the fields: (\`dni\`)`), en minúscula, y `includes` es
-case-sensitive. La rama sólo sobrevive por el `status === 409` que la precede.
-**Fix:** eliminar el fallback (el 409 alcanza) o hacerlo case-insensitive:
-`message?.toLowerCase().includes("dni")`.
+**File:** `frontend/src/components/AutocompletePaciente.tsx:49`
+**Issue:** `usePacienteSuggest` ya hace `useDebounce(query, 300)` internamente y el
+componente lo repite con el mismo delay, apoyándose en que ambos timers convergen. Es
+correcto hoy sólo porque los dos delays son idénticos y se programan en el mismo
+commit: cambiar el 300 en un solo lado desincroniza `canOfferCreate` de la query real.
+**Fix:** que `usePacienteSuggest` devuelva su `debounced` y consumirlo acá, en vez de
+recomputarlo.
 
-### IN-04: `any` en las fronteras de datos del flujo nuevo
+### IN-04: dos toasts contradictorios en el camino de descarte
 
-**File:** `frontend/src/components/AutocompletePaciente.tsx:18` y `:167`, `frontend/src/hooks/useCreatePaciente.ts:8`, `frontend/src/components/InlineCreatePaciente.tsx:19`
-**Issue:** `onSelect: (paciente: any)`, `data.map((pac: any) => …)`,
-`mutationFn: async (data: any)` y el index signature `[key: string]: unknown` de
-`PacienteCreado` desactivan toda verificación de tipos en el camino
-alta → selección → payload del turno. Es lo que permite que WR-06 pase inadvertido.
-**Fix:** definir un `PacienteSuggestItem`/`PacienteCreadoDTO` en `frontend/src/types/`
-y usarlo en las tres firmas.
+**File:** `frontend/src/components/InlineCreatePaciente.tsx:160`; call sites del guard
+**Issue:** El éxito dispara `toast.success("... creado correctamente")` y acto seguido
+el guard del padre dispara `toast.info("... ese turno ya se había cerrado")`. Los dos
+quedan apilados en pantalla diciendo cosas distintas sobre el mismo evento.
+**Fix:** que el toast de éxito lo emita quien decide el desenlace (el padre), o
+suprimirlo cuando el padre descarta.
 
-### IN-05: `<img>` de sugerencia sin `alt`
+### IN-05: valores de negocio hardcodeados en el payload del componente de UI
 
-**File:** `frontend/src/components/AutocompletePaciente.tsx:178-181`
-**Issue:** La foto del paciente en la lista de resultados no tiene atributo `alt`
-(el `<img>` del chip seleccionado, `:77-81`, sí lo tiene). Inconsistente y ruidoso
-para lectores de pantalla.
-**Fix:** `alt={pac.nombreCompleto}` o `alt=""` si se considera decorativa.
-
-### IN-06: El label del botón usa `query` en vivo pero la condición usa `debouncedQuery`
-
-**File:** `frontend/src/components/AutocompletePaciente.tsx:53-58` vs `:206`
-**Issue:** `canOfferCreate` se evalúa sobre `debouncedQuery` (≥3), pero el texto
-`Crear paciente: "${query}"` y el `query` que se le pasa a `InlineCreatePaciente`
-(`:148`) son el valor inmediato. Durante los 300 ms de debounce el usuario puede
-borrar hasta `"J"`, ver la fila todavía ofrecida como `Crear paciente: "J"` y
-clickearla, obteniendo un prefill de un carácter que falla la validación `min(3)`.
-**Fix:** usar `debouncedQuery` tanto para el label como para el `query` que recibe el
-mini-form.
-
-### IN-07: `creating` no se resetea si `value` pasa a truthy por una vía externa
-
-**File:** `frontend/src/components/AutocompletePaciente.tsx:41`, `:62-64`
-**Issue:** `setCreating(false)` sólo ocurre en `onCreated`, `onCancel` y Escape. Si el
-padre setea `value` por otro camino mientras `creating === true` (p. ej. el `reset()`
-por cambio de `selectedEvent` en `NewAppointmentModal.tsx:101-124` con el modal
-abierto), `showDropdown` cae a `false` por el `!value`, el mini-form se desmonta y
-`creating` **queda en `true`**; si después se limpia el paciente con la X, el
-dropdown reabre directo en el mini-form con un `query` obsoleto. Hoy es latente
-(los consumidores desmontan el `DialogContent` al cerrar), pero es una máquina de
-estados sin invariante.
-**Fix:** `useEffect(() => { if (value) setCreating(false); }, [value]);`
-
-### IN-08: Valores del payload de alta hardcodeados en el componente
-
-**File:** `frontend/src/components/InlineCreatePaciente.tsx:131-139`
+**File:** `frontend/src/components/InlineCreatePaciente.tsx:143-151`
 **Issue:** `estado: "ACTIVO"`, `consentimientoFirmado: false`, `indicacionesEnviadas: false`
-son literales embebidos en la UI que duplican defaults que **ya existen en el schema**
-(`schema.prisma:172-175`: `@default(false)` y `@default(ACTIVO)`). Enviarlos es
-redundante y crea dos fuentes de verdad; `"ACTIVO"` además es un string suelto contra
-un enum de Prisma, sin chequeo de tipos (no hay `ValidationPipe`, ver WR-10).
-**Fix:** omitir los tres campos del payload y dejar que el default del schema gobierne;
-si se necesitan explícitos, importarlos desde un tipo compartido en vez de literales.
+son defaults de dominio embebidos en un componente de presentación; el backend ya
+impone sus propios defaults (`etapaCRM: NUEVO_LEAD`, `flujo: null`). Dos fuentes de
+verdad para el estado inicial de un paciente.
+**Fix:** no enviarlos y dejar que el default del schema/servicio gobierne.
+
+### IN-06: `capitalizarNombre` destruye mayúsculas internas
+
+**File:** `frontend/src/components/InlineCreatePaciente.tsx:59-65`
+**Issue:** `palabra.slice(1).toLowerCase()` convierte `"McDonald"` → `"Mcdonald"` y
+`"D'Angelo"` → `"D'angelo"`. Es sólo un prefill editable, pero en un campo de identidad
+el usuario tiende a no corregir lo que ya viene "formateado".
+**Fix:** capitalizar sólo si la palabra viene toda en minúsculas o toda en mayúsculas,
+y dejar intacto cualquier casing mixto.
+
+### IN-07: `errors` desestructurado y nunca usado en `NewAppointmentModal`
+
+**File:** `frontend/src/app/dashboard/turnos/NewAppointmentModal.tsx:96`
+**Issue:** `formState: { errors }` se extrae pero no se referencia en ningún punto del
+JSX (la validación es manual con `toast.error` dentro de `onSubmit`). Suscribirse a
+`formState.errors` en RHF tiene costo de re-render por proxy y sugiere una validación
+declarativa que no existe.
+**Fix:** eliminar la desestructuración, o usarla y mover las validaciones de
+`onSubmit:156-175` a reglas de `register`/resolver.
+
+### IN-08: `<img>` de sugerencia sin `alt`
+
+**File:** `frontend/src/components/AutocompletePaciente.tsx:177-181`
+**Issue:** La foto del paciente en la lista de sugerencias no tiene `alt` (la del chip
+seleccionado sí, `:79`). Un lector de pantalla anuncia la URL de la imagen.
+**Fix:** `alt=""` (decorativa, el nombre ya está en el texto contiguo) o
+`alt={pac.nombreCompleto}`.
 
 ---
 
-_Reviewed: 2026-08-19T22:26:36Z_
+_Reviewed: 2026-08-20T00:00:00Z_
 _Reviewer: Claude (gsd-code-reviewer)_
 _Depth: standard_

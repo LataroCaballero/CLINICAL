@@ -593,7 +593,7 @@ export default function DatosCompletos({
                     value={
                         <EditableInput
                             disabled={!isEditing("contacto") || saving}
-                            value={contactoForm.telefono}
+                            value={contactoForm.telefono ?? ""}
                             onChange={(v) => setContactoForm((f) => ({ ...f, telefono: v }))}
                             error={contactoErrors.telefono}
                         />

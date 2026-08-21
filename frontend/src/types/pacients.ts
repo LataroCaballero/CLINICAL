@@ -3,7 +3,7 @@ export interface PacienteListItem {
   fotoUrl?: string | null;
   nombreCompleto: string;
   dni: string;
-  telefono: string;
+  telefono: string | null;
   email?: string | null;
   obraSocialNombre?: string | null;
   plan?: string | null;
@@ -35,7 +35,7 @@ export interface PacienteDetalle {
   fotoUrl?: string | null;
   nombreCompleto: string;
   dni: string;
-  telefono: string;
+  telefono: string | null;
   telefonoAlternativo?: string | null;
   email?: string | null;
   fechaNacimiento?: string | null;

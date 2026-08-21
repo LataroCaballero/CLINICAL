@@ -57,7 +57,7 @@ export interface ReporteCuentasPorCobrar {
 export interface CuentaPorCobrar {
   pacienteId: string;
   nombreCompleto: string;
-  telefono: string;
+  telefono: string | null;
   email: string | null;
   saldoActual: number;
   saldoVencido: number;
@@ -74,7 +74,7 @@ export interface ReporteMorosidad {
 export interface CuentaMorosa {
   pacienteId: string;
   nombreCompleto: string;
-  telefono: string;
+  telefono: string | null;
   montoVencido: number;
   diasMorosidad: number;
   ultimoPago: string | null;

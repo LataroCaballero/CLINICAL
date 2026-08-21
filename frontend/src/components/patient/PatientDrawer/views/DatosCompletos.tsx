@@ -103,7 +103,12 @@ export default function DatosCompletos({
     /* ------- SCHEMAS ------- */
 
     const contactoSchema = z.object({
-        telefono: z.string().min(6, "Teléfono inválido").max(20, "Teléfono inválido"),
+        telefono: z
+            .string()
+            .optional()
+            .refine((v) => !v || v.trim() === "" || (v.trim().length >= 6 && v.trim().length <= 20), {
+                message: "Teléfono inválido",
+            }),
         telefonoAlternativo: z.string().min(6).max(20).optional().nullable(),
         email: z.string().email("Email inválido").optional().nullable(),
     });

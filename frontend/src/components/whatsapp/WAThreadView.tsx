@@ -22,11 +22,13 @@ import {
 } from '@/hooks/useWAThread';
 import { DeliveryIcon } from './DeliveryIcon';
 import SendWAMessageModal from './SendWAMessageModal';
+import { getMotivoBloqueoWhatsApp } from '@/lib/telefono';
 
 type Props = {
   pacienteId: string;
   pacienteNombre?: string;
   whatsappOptIn: boolean;
+  pacienteTelefono?: string | null;
   onBack: () => void;
   pacienteEmail?: string;
 };
@@ -60,6 +62,7 @@ export default function WAThreadView({
   pacienteId,
   pacienteNombre,
   whatsappOptIn,
+  pacienteTelefono = null,
   onBack,
   pacienteEmail,
 }: Props) {
@@ -73,6 +76,7 @@ export default function WAThreadView({
 
   const canSendFreeText = isWithin24h(messages);
   const groups = groupMessagesByDate(messages);
+  const motivoBloqueoWA = getMotivoBloqueoWhatsApp(pacienteTelefono, whatsappOptIn);
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -202,7 +206,7 @@ export default function WAThreadView({
       <div className="shrink-0 bg-white border-t px-4 py-3 space-y-2">
         {/* Send template button */}
         <div className="flex items-center gap-2">
-          {whatsappOptIn ? (
+          {!motivoBloqueoWA ? (
             <Button
               variant="outline"
               size="sm"
@@ -228,7 +232,7 @@ export default function WAThreadView({
                 </span>
               </TooltipTrigger>
               <TooltipContent>
-                El paciente no tiene opt-in para WhatsApp
+                {motivoBloqueoWA}
               </TooltipContent>
             </Tooltip>
           )}
@@ -251,7 +255,7 @@ export default function WAThreadView({
                   : 'Sin ventana de 24h activa'
               }
               className="resize-none min-h-[40px] max-h-[100px] text-sm"
-              disabled={!canSendFreeText || !whatsappOptIn}
+              disabled={!canSendFreeText || !!motivoBloqueoWA}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
@@ -259,19 +263,26 @@ export default function WAThreadView({
                 }
               }}
             />
-            <Button
-              size="icon"
-              className="h-9 w-9 shrink-0"
-              disabled={
-                !freeText.trim() ||
-                !canSendFreeText ||
-                !whatsappOptIn ||
-                sendFreeText.isPending
-              }
-              onClick={handleSendFreeText}
-            >
-              <Send className="h-4 w-4" />
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="shrink-0">
+                  <Button
+                    size="icon"
+                    className="h-9 w-9 shrink-0"
+                    disabled={
+                      !freeText.trim() ||
+                      !canSendFreeText ||
+                      !!motivoBloqueoWA ||
+                      sendFreeText.isPending
+                    }
+                    onClick={handleSendFreeText}
+                  >
+                    <Send className="h-4 w-4" />
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              {motivoBloqueoWA && <TooltipContent>{motivoBloqueoWA}</TooltipContent>}
+            </Tooltip>
           </div>
         </div>
       </div>

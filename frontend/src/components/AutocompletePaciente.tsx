@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/popover";
 import { Loader2, X, Plus } from "lucide-react";
 import InlineCreatePaciente from "@/components/InlineCreatePaciente";
+import { tieneTelefono } from "@/lib/telefono";
 
 type Props = {
   onSelect: (paciente: any) => void;
@@ -187,7 +188,8 @@ export default function AutocompletePaciente({
                   <div className="flex flex-col">
                     <span className="font-medium">{pac.nombreCompleto}</span>
                     <span className="text-xs text-gray-500">
-                      DNI: {pac.dni} — Tel: {pac.telefono}
+                      DNI: {pac.dni}
+                      {tieneTelefono(pac.telefono) ? ` — Tel: ${pac.telefono}` : ""}
                     </span>
                   </div>
                 </button>

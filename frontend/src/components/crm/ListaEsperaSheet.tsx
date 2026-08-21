@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Clock, CalendarPlus, Phone } from "lucide-react";
 import { useListaEspera } from "@/hooks/useListaEspera";
+import { formatTelefono, tieneTelefono } from "@/lib/telefono";
 
 interface Props {
   open: boolean;
@@ -88,13 +89,20 @@ export function ListaEsperaSheet({ open, onOpenChange, profesionalId, onDarTurno
                     )}
 
                     <div className="flex items-center gap-2">
-                      <a
-                        href={`tel:${p.telefono}`}
-                        className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700"
-                      >
-                        <Phone className="h-3 w-3" />
-                        {p.telefono}
-                      </a>
+                      {tieneTelefono(p.telefono) ? (
+                        <a
+                          href={`tel:${p.telefono}`}
+                          className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700"
+                        >
+                          <Phone className="h-3 w-3" />
+                          {p.telefono}
+                        </a>
+                      ) : (
+                        <span className="flex items-center gap-1 text-xs text-gray-400">
+                          <Phone className="h-3 w-3" />
+                          {formatTelefono(p.telefono)}
+                        </span>
+                      )}
                       {onDarTurno && (
                         <Button
                           size="sm"

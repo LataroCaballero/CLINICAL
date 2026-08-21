@@ -4,7 +4,7 @@ import { api } from "@/lib/api";
 export interface PacienteListaEspera {
   id: string;
   nombreCompleto: string;
-  telefono: string;
+  telefono: string | null;
   comentarioListaEspera: string | null;
   fechaListaEspera: string | null;
   tratamiento: string | null;

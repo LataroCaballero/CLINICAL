@@ -81,7 +81,7 @@ export interface ReporteTurnos {
 export interface PacienteAusentista {
   pacienteId: string;
   nombreCompleto: string;
-  telefono: string;
+  telefono: string | null;
   cantidadAusencias: number;
   totalTurnos: number;
   tasaAusentismo: number;

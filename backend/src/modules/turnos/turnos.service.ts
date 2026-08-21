@@ -569,6 +569,7 @@ export class TurnosService {
             id: true,
             nombreCompleto: true,
             whatsappOptIn: true,
+            telefono: true,
           },
         },
         tipoTurno: {

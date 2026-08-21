@@ -44,6 +44,7 @@ interface CalendarEvent {
   paciente: string;
   pacienteId?: string;
   whatsappOptIn?: boolean;
+  telefono?: string | null;
   start: Date;
   end: Date;
   tipo: string;
@@ -288,6 +289,7 @@ export default function TurnosPage() {
       paciente: t.paciente?.nombreCompleto ?? "",
       pacienteId: t.pacienteId ?? undefined,
       whatsappOptIn: t.paciente?.whatsappOptIn ?? false,
+      telefono: t.paciente?.telefono ?? null,
       start: new Date(t.inicio),
       end: new Date(t.fin),
       tipo: t.tipoTurno?.nombre ?? "Turno",

@@ -34,6 +34,7 @@ import { es } from "date-fns/locale";
 import { Trash2, Plus, Send, FileText, MessageSquare, Loader2 } from "lucide-react";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
+import { getMotivoBloqueoWhatsApp } from "@/lib/telefono";
 import {
   Tooltip,
   TooltipContent,
@@ -44,6 +45,7 @@ type Props = {
   pacienteId: string;
   pacienteEmail?: string;
   pacienteOptIn?: boolean;
+  pacienteTelefono?: string | null;
   onBack: () => void;
 };
 
@@ -56,7 +58,7 @@ const estadoColors: Record<string, string> = {
   VENCIDO: "bg-amber-100 text-amber-700",
 };
 
-export default function PresupuestosView({ pacienteId, pacienteEmail = "", pacienteOptIn = false, onBack }: Props) {
+export default function PresupuestosView({ pacienteId, pacienteEmail = "", pacienteOptIn = false, pacienteTelefono = null, onBack }: Props) {
   const { data: presupuestos = [], isLoading } = usePresupuestos(pacienteId);
   const createPresupuesto = useCreatePresupuesto();
   const aceptarPresupuesto = useAceptarPresupuesto();
@@ -102,6 +104,7 @@ export default function PresupuestosView({ pacienteId, pacienteEmail = "", pacie
   const descuentoNum = parseFloat(descuentos) || 0;
   const total = subtotal - descuentoNum;
   const simbolo = moneda === "USD" ? "U$S" : "$";
+  const motivoBloqueoWA = getMotivoBloqueoWhatsApp(pacienteTelefono, pacienteOptIn);
 
   const handleCreate = async () => {
     if (!profesionalId) return;
@@ -217,7 +220,7 @@ export default function PresupuestosView({ pacienteId, pacienteEmail = "", pacie
                       <Button
                         size="sm"
                         variant="outline"
-                        disabled={!pacienteOptIn || sendingWAId === p.id}
+                        disabled={!!motivoBloqueoWA || sendingWAId === p.id}
                         onClick={async () => {
                           setSendingWAId(p.id);
                           try {
@@ -239,8 +242,8 @@ export default function PresupuestosView({ pacienteId, pacienteEmail = "", pacie
                       </Button>
                     </span>
                   </TooltipTrigger>
-                  {!pacienteOptIn && (
-                    <TooltipContent>El paciente no tiene opt-in para WhatsApp</TooltipContent>
+                  {motivoBloqueoWA && (
+                    <TooltipContent>{motivoBloqueoWA}</TooltipContent>
                   )}
                 </Tooltip>
                 {puedeBorrar && (

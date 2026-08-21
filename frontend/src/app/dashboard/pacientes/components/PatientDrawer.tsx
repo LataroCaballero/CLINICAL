@@ -132,6 +132,7 @@ export default function PatientDrawer({
                 pacienteId={paciente.id}
                 pacienteEmail={paciente.email ?? ""}
                 pacienteOptIn={(paciente as any).whatsappOptIn ?? false}
+                pacienteTelefono={paciente.telefono ?? null}
                 onBack={() => setView("default")}
               />
             }
@@ -140,6 +141,7 @@ export default function PatientDrawer({
                 pacienteId={paciente.id}
                 pacienteNombre={paciente.nombreCompleto}
                 whatsappOptIn={(paciente as any).whatsappOptIn ?? false}
+                pacienteTelefono={paciente.telefono ?? null}
                 onBack={() => setView("default")}
               />
             }

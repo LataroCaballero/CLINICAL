@@ -103,6 +103,16 @@ None - no external service configuration required.
 - `SendWAMessageModal.tsx` sigue sin guard propio ni recibiendo teléfono, tal como especifica D-11 — los 2 controles de este plan bloquean aguas arriba antes de abrirlo.
 - `npx tsc --noEmit` corrido una sola vez al final (tras el fix), sin errores. No se corrió `npm run lint`, `npm run build` ni tests — quedan para el gate post-merge del orquestador, según indica `verification_budget`.
 
+## Self-Check: PASSED
+
+- FOUND: frontend/src/app/dashboard/pacientes/components/PacienteDetails.tsx
+- FOUND: frontend/src/app/dashboard/turnos/AppointmentDetailModal.tsx
+- FOUND: .planning/phases/69-consistencia-de-tel-fono-opcional-frontend/69-06-SUMMARY.md
+- FOUND commit: 2bcbd18
+- FOUND commit: fc23bf0
+- FOUND commit: 11cbf53
+- FOUND commit: 12cbb41
+
 ---
 *Phase: 69-consistencia-de-tel-fono-opcional-frontend*
 *Completed: 2026-08-21*

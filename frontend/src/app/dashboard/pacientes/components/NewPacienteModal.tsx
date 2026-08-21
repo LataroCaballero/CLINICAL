@@ -31,7 +31,12 @@ import { toast } from "sonner";
 const schema = z.object({
   dni: z.string().min(7, "Mínimo 7 dígitos"),
   nombreCompleto: z.string().min(3, "Mínimo 3 caracteres"),
-  telefono: z.string().min(6, "Teléfono inválido"),
+  telefono: z
+    .string()
+    .optional()
+    .refine((v) => !v || v.trim() === "" || v.trim().length >= 6, {
+      message: "Teléfono inválido",
+    }),
   email: z
     .string()
     .optional()
@@ -84,7 +89,7 @@ export default function NewPacienteModal({
     const payload = {
       dni: data.dni.trim(),
       nombreCompleto: data.nombreCompleto.trim(),
-      telefono: data.telefono.trim(),
+      telefono: data.telefono?.trim() ?? "",
       email: data.email?.trim() || undefined,
       obraSocialId: data.obraSocialId || undefined,
       plan: data.plan || undefined,
@@ -167,7 +172,7 @@ export default function NewPacienteModal({
           {/* Teléfono */}
           <div className="grid gap-1.5">
             <label className="text-sm font-medium text-muted-foreground">
-              Teléfono <span className="text-destructive">*</span>
+              Teléfono <span className="text-muted-foreground/60 font-normal">(opcional)</span>
             </label>
             <PhoneInput
               value={watch("telefono") || ""}

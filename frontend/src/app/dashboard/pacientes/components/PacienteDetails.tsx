@@ -31,6 +31,7 @@ import { FlujoBadge } from "./FlujoBadge";
 import { CambiarFlujoModal } from "./CambiarFlujoModal";
 import { WhatsappOptInToggle } from "./WhatsappOptInToggle";
 import SendWAMessageModal from "@/components/whatsapp/SendWAMessageModal";
+import { formatTelefono } from "@/lib/telefono";
 
 export default function PacienteDetails({ paciente, onAction }: { paciente: any; onAction?: (view: "default" | "datos" | "historia" | "turnos" | "mensajes" | "cuenta" | "presupuestos") => void }) {
   const [waModalOpen, setWaModalOpen] = useState(false);
@@ -183,7 +184,7 @@ export default function PacienteDetails({ paciente, onAction }: { paciente: any;
               <Mail className="w-4 h-4" /> {paciente.email || "Sin email"}
             </p>
             <p className="flex items-center gap-2">
-              <Phone className="w-4 h-4" /> {paciente.telefono || "-"}
+              <Phone className="w-4 h-4" /> {formatTelefono(paciente.telefono)}
             </p>
             {/* TODO: actualizar tipo Paciente tras regenerar Prisma client */}
             <div className="pt-1">

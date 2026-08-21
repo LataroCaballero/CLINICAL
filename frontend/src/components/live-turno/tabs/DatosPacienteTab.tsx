@@ -24,6 +24,7 @@ import { useLiveTurnoStore } from '@/store/live-turno.store';
 import { usePaciente } from '@/hooks/usePaciente';
 import DatosCompletos from '@/components/patient/PatientDrawer/views/DatosCompletos';
 import { MedicalChips } from '@/components/ui/MedicalChips';
+import { formatTelefono } from '@/lib/telefono';
 
 export function DatosPacienteTab() {
   const { session } = useLiveTurnoStore();
@@ -195,7 +196,7 @@ export function DatosPacienteTab() {
               <span className="text-sm text-gray-500">Telefono</span>
               <p className="font-medium flex items-center gap-2">
                 <Phone className="w-4 h-4 text-gray-400" />
-                {paciente.telefono || '-'}
+                {formatTelefono(paciente.telefono)}
               </p>
             </div>
             <div>

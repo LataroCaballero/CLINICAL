@@ -8,6 +8,7 @@ import { ExportButton } from "../../components/ExportButton";
 import { useReporteAusentismo } from "@/hooks/useReportesOperativos";
 import { PacienteAusentista } from "@/types/reportes";
 import { UserX, AlertTriangle, Percent } from "lucide-react";
+import { formatTelefono } from "@/lib/telefono";
 
 export default function ReporteAusentismoPage() {
   const [filters, setFilters] = useState<FiltrosValues>({});
@@ -23,7 +24,11 @@ export default function ReporteAusentismoPage() {
 
   const columnasAusentistas: ColumnDef<PacienteAusentista>[] = [
     { key: "nombreCompleto", header: "Paciente" },
-    { key: "telefono", header: "Teléfono" },
+    {
+      key: "telefono",
+      header: "Teléfono",
+      render: (value: string) => formatTelefono(value),
+    },
     { key: "cantidadAusencias", header: "Ausencias", align: "center" },
     { key: "totalTurnos", header: "Total Turnos", align: "center" },
     {

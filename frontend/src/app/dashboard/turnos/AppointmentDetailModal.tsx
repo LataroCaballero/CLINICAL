@@ -43,6 +43,7 @@ import SendWAMessageModal from "@/components/whatsapp/SendWAMessageModal";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { getMotivoBloqueoWhatsApp } from "@/lib/telefono";
 import { toast } from "sonner";
 import { useReprogramarTurno } from "@/hooks/useReprogramarTurnos";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -96,6 +97,7 @@ export default function AppointmentDetailModal({
   const [newDate, setNewDate] = useState<Date | undefined>(undefined);
   const [newTime, setNewTime] = useState("");
   const [waModalOpen, setWaModalOpen] = useState(false);
+  const motivoBloqueoWA = getMotivoBloqueoWhatsApp(event.telefono, event.whatsappOptIn);
   const [editingObs, setEditingObs] = useState(false);
   const [obsValue, setObsValue] = useState(event?.observaciones ?? "");
 
@@ -372,7 +374,7 @@ export default function AppointmentDetailModal({
                       <Button
                         variant="outline"
                         className="w-full"
-                        disabled={!event.whatsappOptIn}
+                        disabled={!!motivoBloqueoWA}
                         onClick={() => setWaModalOpen(true)}
                       >
                         <MessageSquare className="w-4 h-4 mr-2" />
@@ -380,8 +382,8 @@ export default function AppointmentDetailModal({
                       </Button>
                     </span>
                   </TooltipTrigger>
-                  {!event.whatsappOptIn && (
-                    <TooltipContent>El paciente no tiene opt-in para WhatsApp</TooltipContent>
+                  {motivoBloqueoWA && (
+                    <TooltipContent>{motivoBloqueoWA}</TooltipContent>
                   )}
                 </Tooltip>
               )}

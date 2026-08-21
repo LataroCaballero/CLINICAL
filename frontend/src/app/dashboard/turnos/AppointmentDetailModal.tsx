@@ -97,7 +97,6 @@ export default function AppointmentDetailModal({
   const [newDate, setNewDate] = useState<Date | undefined>(undefined);
   const [newTime, setNewTime] = useState("");
   const [waModalOpen, setWaModalOpen] = useState(false);
-  const motivoBloqueoWA = getMotivoBloqueoWhatsApp(event.telefono, event.whatsappOptIn);
   const [editingObs, setEditingObs] = useState(false);
   const [obsValue, setObsValue] = useState(event?.observaciones ?? "");
 
@@ -156,6 +155,8 @@ export default function AppointmentDetailModal({
   });
 
   if (!event) return null;
+
+  const motivoBloqueoWA = getMotivoBloqueoWhatsApp(event.telefono, event.whatsappOptIn);
 
   const canReschedule = event.estado !== "CANCELADO" && event.estado !== "FINALIZADO";
 

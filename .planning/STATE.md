@@ -104,7 +104,7 @@ Stopped at: v1.16 archivado, tagueado y committeado
 
 - Milestone v1.16 completo: 3 fases (67–69), 21 planes, 53 tareas, 13/13 requisitos. Las 3 fases verificadas `passed`; 68 y 69 requirieron rondas de gap-closure antes de cerrar.
 - `/gsd:audit-milestone` corrido antes de archivar: status `tech_debt`, 13/13 reqs, 13/13 seams WIRED, 1/1 flujo E2E, 0 blockers, 0 flujos rotos.
-- Archivos en `.planning/milestones/`: `v1.16-ROADMAP.md`, `v1.16-REQUIREMENTS.md`, `v1.16-MILESTONE-AUDIT.md`. Los directorios de fase quedaron en `.planning/phases/` (no archivados) — usar `/gsd:cleanup` si se quieren mover.
+- Archivos en `.planning/milestones/`: `v1.16-ROADMAP.md`, `v1.16-REQUIREMENTS.md`, `v1.16-MILESTONE-AUDIT.md`. Los 3 directorios de fase se archivaron en `.planning/milestones/v1.16-phases/` (21 planes, 21 summaries, verifications y reviews), alineado con v1.0–v1.15.
 - `.planning/REQUIREMENTS.md` eliminado vía `git rm` — el próximo milestone crea uno fresco.
 - Research salteado en v1.16 (feature sobre código existente). El audit sugiere que un pase de research sobre `pacientes` habría levantado la asimetría del `ValidationPipe` antes de que TEL-01 se apoyara en un decorator muerto.
 

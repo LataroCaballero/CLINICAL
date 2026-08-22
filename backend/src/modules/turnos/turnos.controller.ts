@@ -121,6 +121,7 @@ export class TurnosController {
 
   @Get('rango')
   obtenerPorRango(
+    @Req() req: any,
     @Query('profesionalId') profesionalId: string,
     @Query('desde') desde: string,
     @Query('hasta') hasta: string,
@@ -131,8 +132,19 @@ export class TurnosController {
       );
     }
 
+    const scope = resolveScope({
+      user: req.user,
+      requestedProfesionalId: profesionalId,
+    });
+
+    if (!scope.profesionalId) {
+      throw new BadRequestException(
+        'No se pudo resolver el profesional para el rango solicitado.',
+      );
+    }
+
     return this.turnosService.obtenerTurnosPorRango(
-      profesionalId,
+      scope.profesionalId,
       desde,
       hasta,
     );

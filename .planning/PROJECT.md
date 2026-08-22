@@ -12,31 +12,19 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 
 ## Current State
 
-**Última versión shipped:** v1.15 Flujo CRM Automático + Correcciones HC (2026-08-10) — 4 fases (63–66), 9 planes, 20 tareas, 11/11 requisitos, audit `tech_debt` con 0 blockers y 0 artefactos abiertos al cierre.
+**Última versión shipped:** v1.16 Alta de Paciente sin Fricción (2026-08-22) — 3 fases (67–69), 21 planes, 53 tareas, 13/13 requisitos, audit `tech_debt` con 0 blockers, 0 flujos rotos y 0 artefactos abiertos al cierre. Agendar un turno a un paciente nuevo ya no requiere registrarlo antes: se crea desde el mismo autosuggest con nombre y DNI, sin teléfono y sin cerrar el modal.
 
-**Milestone activo:** v1.16 Alta de Paciente sin Fricción — ver `## Current Milestone` abajo. Phase 67 completa (2026-08-19): `Paciente.telefono` es opcional de punta a punta (migración aplicada, 424 teléfonos existentes intactos) y los cuatro entrypoints de envío por WhatsApp fallan cerrado antes de tocar Meta, crear el registro o encolar el job. TEL-01 / ENVIO-01 / ENVIO-02 validados. Phase 68 completa (2026-08-20): creación inline desde el autosuggest, acotada por opt-in a los tres modales de turno; los dos usos de filtro quedaron sin cambios. ALTA-01..ALTA-07 validados (14/14 must-haves, 6 planes) — ALTA-06 cerrado con un **override firmado** que acepta `profesionalId: null` cuando el profesional no está resuelto (ADMIN/SECRETARIA en vista global). Requirió dos rondas de gap closure: 68-06 cerró el reset-on-open de `SurgeryAppointmentModal` (un alta abandonada podía programar cirugía al paciente equivocado) y el Enter sobre *Cancelar* del mini-form (la tecla de descarte creaba un `Paciente` real con `dni @unique`).
+**Milestone activo:** ninguno — próximo ciclo por definir con `/gsd:new-milestone`.
 
-**Deuda abierta que dejó la fase 68 (no bloquea el milestone, pero es riesgo real):** `68-REVIEW.md` escaló **CR-03 (BLOCKER)** — `backend/src/main.ts` no registra ningún `ValidationPipe` global, así que los decoradores de class-validator no corren salvo en las rutas de `paciente-portal` que lo aplican per-route. `POST /pacientes` acepta campos extra que fluyen por `prisma.paciente.create({ data: { ...dto } })` hacia `usuarioId String? @unique` y `profesionalId String?`: una secretaria autenticada puede colgar un paciente de un `Usuario` arbitrario o de otro profesional. Es preexistente (la fase 68 no tocó backend) y de alcance más ancho que pacientes. Merece fase propia.
+**Deuda prioritaria que dejó v1.16** (ver `.planning/milestones/v1.16-MILESTONE-AUDIT.md`, 16 ítems catalogados, 0 blockers). Las dos que importan son **pre-existentes pero pasaron a ser load-bearing para requisitos recién shippeados**:
 
-**Candidatos en carpeta para ciclos posteriores** (ver Requirements → Active): dashboard de estadísticas ejecutivas con reportes exportables (REPORT-F01), automatizaciones de seguimiento por tiempo/etapa (REPORT-F02), módulos financieros interconectados con CRM, tipos de turno personalizados por profesional + color en calendario (TIPO-F01/F02), y vista de archivados con desarchivar en lote + archivado automático (CRM-F01/F02).
+1. **`POST /pacientes` sin `ValidationPipe` (TD-01).** No hay pipe global (`main.ts` sólo registra `PrismaClientExceptionFilter`, cero `APP_PIPE` en `src/`) ni per-route en `pacientes.controller.ts:48-51`. Consecuencia (a): el `@IsOptional()` que agregó la Fase 67 **nunca corre** — TEL-01 funciona por `normalizeTelefono()`, no por el decorator, así que la racionalización documentada del schema es incorrecta y engaña al próximo que la lea. Consecuencia (b): el spread `{...dto}` de `pacientes.service.ts:57` permite mass-assignment de cualquier columna Prisma no sobrescrita después del spread — `usuarioId` (FK que liga el paciente a una cuenta de login del portal), `whatsappOptIn`, `scoreConversion`, `crmArchivado`, `temperatura`, `motivoPerdida`. El patrón de fix ya existe y está probado en el repo: `paciente-portal.controller.ts` aplica `new ValidationPipe({ whitelist: true })` per-route en 4 rutas, comentado como "load-bearing SC#3 guard". `pacientes` es la asimetría.
+2. **ALTA-05 depende de un `await` faltante (TD-02).** `pacientes.service.ts:75` retorna la promesa de Prisma sin await dentro del `try`, así que la rama `P2002 → ConflictException('El DNI ingresado ya está registrado.')` de `:94-96` es código muerto: el error sube crudo al `PrismaClientExceptionFilter`, que devuelve 409 con el mensaje de Prisma. El requisito pasa sólo porque `InlineCreatePaciente.tsx:167` chequea `status === 409` sin mirar el mensaje — un refactor de cualquiera de los dos lados lo rompe en silencio. Fix: agregar `await`.
+3. **Cero cobertura automatizada del deliverable central de la Fase 68 (TD-08).** No hay test para `InlineCreatePaciente.tsx` ni `AutocompletePaciente.tsx` — o sea ALTA-01..07 completo. La infraestructura ya está instalada (Vitest + Testing Library, 69-09), sólo falta usarla.
+
+**Candidatos en carpeta para ciclos posteriores** (ver Requirements → Active): dashboard de estadísticas ejecutivas con reportes exportables (REPORT-F01), automatizaciones de seguimiento por tiempo/etapa (REPORT-F02), módulos financieros interconectados con CRM, tipos de turno personalizados por profesional + color en calendario (TIPO-F01/F02), vista de archivados con desarchivar en lote + archivado automático (CRM-F01/F02), y los diferidos de v1.16: vista de fichas incompletas (FICHA-F01/F02), guard de teléfono en la lista de acción CRM (ENVIO-F01), email como canal alternativo (ENVIO-F02) y alta inline sin DNI con identificador temporal (ALTA-F01).
 
 **Gate legal pendiente pre-go-live (desde v1.12):** revisión del flujo de consentimiento (Ley 25506 / Ley 26529) antes del primer paciente quirúrgico real.
-
-## Current Milestone: v1.16 Alta de Paciente sin Fricción
-
-**Goal:** Que agendar un turno a un paciente nuevo no requiera registrarlo antes — se crea desde el mismo autosuggest con nombre y DNI.
-
-**Target features:**
-- `telefono` deja de ser obligatorio: migración Prisma a `telefono String?` + `@IsOptional()` en `CreatePacienteDto`, con auditoría de los sitios que hoy lo asumen string
-- Creación inline en el autosuggest: sin resultados, el popover expande un mini-form (Nombre + DNI) con "Crear y usar" que selecciona el paciente sin cerrar el modal de turno
-- Activación acotada a los tres modales de turno (`QuickAppointment`, `NewAppointmentModal`, `SurgeryAppointmentModal`) vía prop opcional; los usos de filtro quedan sin cambios
-- Guard de envíos sin teléfono: WhatsApp / presupuesto por WA rechazan con mensaje en español y la UI deshabilita la acción con tooltip
-
-**Key context:**
-- DNI sigue obligatorio y `@unique` — el 409 existente ("El DNI ingresado ya está registrado") debe renderizarse dentro del popover, no como toast que se pierde. Es el error más probable del flujo.
-- El paciente creado inline entra al kanban como `NUEVO_LEAD` por el `create()` de v1.15 (EMBUDO-07) y el turno que se agenda a continuación lo mueve a `TURNO_AGENDADO` por el flujo automático existente. Sin código CRM nuevo.
-- Blast radius de nullable: `AutocompletePaciente` (muestra `Tel: {pac.telefono}` crudo), `pacientes.service.ts:166/973`, reportes financieros, `DatosCompletos.tsx`, `NewPacienteModal.tsx`, y la validación `patch.telefono.trim().length < 6` en `pacientes.service.ts:436` (staging del portal) que asume string.
-- El paciente creado inline debe quedar asignado al profesional del contexto activo, igual que el alta normal.
 
 ## Requirements
 
@@ -158,14 +146,14 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 - ✓ Planilla de tratamientos sin pérdida silenciosa: helper puro `listarTratamientosDeContenido` + campo `tratamientos: string[]` en `GET /turnos/rango`; la celda muestra todos los tratamientos truncados por CSS con Radix Tooltip que revela el texto completo (reemplaza "primero +N-1" y el `title` nativo) — v1.15 (TRAT-07)
 - ✓ Sync tipo de turno ↔ plantilla HC vía helper puro `resolverTipoTurnoSync` (escalera Consulta < Tratamiento < Pre-Quirúrgico por rank map, no-downgrade, sentinel de cirugía) dentro de la transacción de `crearEntrada`, con guard `dto.turnoId && turnoCtx` (no-op sin turno asociado, inmune a `turnoId` stale) — v1.15 (HCSYNC-01, HCSYNC-02, HCSYNC-03)
 - ✓ HC en la ficha del paciente consistente y completa: rama de render `pre_quirurgico` en `HCEntryContent.tsx` (antecedentes, alergias, medicación, estudios complementarios, consentimiento, comentario) y wizard "+ Nueva HC" como único camino de creación tras eliminar el dropdown/form de texto libre muertos — v1.15 (HCUI-01, HCUI-02)
+- ✓ `Paciente.telefono` opcional end-to-end: migración `DROP NOT NULL` sin pérdida (424/424 teléfonos preservados), 6 declaraciones TypeScript ensanchadas, y `normalizeTelefono()` como definición única de "teléfono válido" en `create()`/`update()`/`updateContacto()` (`''`/whitespace → `null`), con `suggest()` NULL-safe vía `COALESCE` — v1.16 (TEL-01). **Nota:** el mecanismo real es `normalizeTelefono()`, no el `@IsOptional()` del DTO, que nunca corre por falta de `ValidationPipe` (ver Current State → TD-01)
+- ✓ Alta de paciente inline desde el autosuggest: sin resultados, el popover expande un mini-form con Nombre + DNI (teléfono opcional), precarga inteligente según el query (DNI si es todo dígitos, nombre si es texto), 409 de DNI duplicado renderizado bajo el campo, y el paciente queda seleccionado para confirmar el turno sin pasos extra — v1.16 (ALTA-01..05)
+- ✓ Activación opt-in del alta inline: `AutocompletePaciente` gana `allowCreate`/`profesionalIdParaAlta`, presente en los 3 modales de turno y ausente en los usos de filtro, sin cambio de comportamiento cuando está apagada — v1.16 (ALTA-07). ALTA-06 (asignación al profesional del contexto) cerrado con **override firmado** que acepta `profesionalId: null` cuando el contexto no está resuelto
+- ✓ Guards de envío sin teléfono en ambos lados: `requireTelefonoParaEnvio()` cubre los 4 paths de `WhatsappService` que encolan a BullMQ, fallando con `BadRequestException` en español antes de tocar Meta/DB/cola; en el frontend `getMotivoBloqueoWhatsApp` deshabilita los 5 entrypoints con tooltip explicativo, con precedencia sobre el opt-in — v1.16 (ENVIO-01, ENVIO-02, ENVIO-03)
+- ✓ Teléfono opcional consistente en toda la app: `lib/telefono.ts` como SSOT frontend (`formatTelefono`/`tieneTelefono`/`getMotivoBloqueoWhatsApp`) consumido por los 5 sitios de display, más el alta completa (`NewPacienteModal`) y `DatosCompletos` con schemas Zod relajados — v1.16 (TEL-02, TEL-03)
+- ✓ IDOR de `GET /turnos/rango` cerrado: `obtenerPorRango` resuelve el scope con `resolveScope` igual que `findAll`, con guard explícito ante `scope.profesionalId` falsy — un `PROFESIONAL` autenticado ya no puede leer nombre, teléfono y opt-in de pacientes de otro profesional por query string — v1.16 (T-69-16, hallazgo fuera de requisitos)
 
 ### Active
-
-**Milestone v1.16 — Alta de Paciente sin Fricción** (requisitos con REQ-ID en `.planning/REQUIREMENTS.md`):
-- [ ] `telefono` opcional en schema, DTO y formularios de alta
-- [ ] Creación de paciente inline desde el autosuggest (nombre + DNI) sin salir del modal de turno
-- [ ] Manejo explícito del DNI duplicado dentro del popover
-- [ ] Guard de envíos (WhatsApp / presupuesto por WA) para pacientes sin teléfono
 
 **Candidatos para próximos milestones / diferidos:**
 - [ ] Dashboard de estadísticas ejecutivas con reportes exportables y comparativas por período (REPORT-F01, diferido de v1.13)
@@ -173,6 +161,10 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 - [ ] Módulos financieros optimizados e interconectados con CRM
 - [ ] Tipos de turno personalizados por profesional desde Configuración (TIPO-F01) + color por tipo en calendario (TIPO-F02) — diferido de v1.8
 - [ ] CRM: vista de pacientes archivados con desarchivar en lote (CRM-F01) + archivado automático tras N días en PERDIDO (CRM-F02) — diferido de v1.8
+- [ ] Vista de pacientes con ficha incompleta para completar en lote (FICHA-F01) + indicador de "ficha incompleta" en card del kanban y lista (FICHA-F02) — diferido de v1.16
+- [ ] Guard de teléfono faltante en la lista de acción CRM y el contacto rápido del kanban (ENVIO-F01) + email como canal alternativo automático (ENVIO-F02) — diferido de v1.16
+- [ ] Alta inline sin DNI, con identificador temporal a reconciliar después (ALTA-F01) — diferido de v1.16
+- [ ] **Deuda de v1.16 que conviene priorizar:** `await` faltante en `pacientes.service.ts:75` que deja muerta la rama del 409 en español (TD-02, one-liner); `ValidationPipe({ whitelist: true })` per-route en `pacientes.controller.ts` contra mass-assignment (TD-01); tests de `InlineCreatePaciente`/`AutocompletePaciente` sobre la infra Vitest ya instalada (TD-08)
 
 ### Out of Scope
 
@@ -186,6 +178,16 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 - Backfill de `etapaCRM` en pacientes existentes sin etapa — EMBUDO-07 aplica sólo hacia adelante; los históricos no se re-clasifican (v1.15)
 - Cambiar el origen de "Último tratamiento" a `Paciente.tratamiento` — se mantiene el origen por-turno (HC del turno) para preservar precisión por fila; sólo cambió el display (v1.15)
 - Migrar `HistorialClinicoPanel`/`TurnoHCModal` al componente compartido de HC — fuera de scope salvo lo mínimo para HCUI-02; sigue como deuda abierta (v1.15)
+- Hacer `dni` opcional o no-único — es la clave de identidad del paciente y el 409 de duplicado es el guard que evita fichas dobles (v1.16)
+- Backfill de teléfonos en pacientes existentes — TEL-01 aplica sólo hacia adelante; los históricos ya tienen número y no se tocan (v1.16)
+- Creación inline en los usos de filtro del autosuggest (`PatientFilters`, `data-table-toolbar`) — filtran una tabla; crear un paciente desde un filtro no tiene sentido de producto (v1.16)
+- Nueva etapa o columna CRM para el paciente creado inline — entra como `NUEVO_LEAD` por el `create()` de v1.15 y el turno lo mueve a `TURNO_AGENDADO` por el flujo existente; sin código CRM nuevo (v1.16)
+- Flag/columna `fichaIncompleta` en el schema — derivable de los campos nulos; persistir el estado ahora es prematuro (v1.16, ver FICHA-F01)
+- Refactor del autosuggest a un combobox de shadcn — el componente actual (Popover + Input) funciona; el alcance fue sumarle la rama de creación, no rediseñarlo (v1.16)
+
+## Shipped: v1.16 Alta de Paciente sin Fricción ✅
+
+13/13 requisitos completados en 6 días (2026-08-17 → 2026-08-22). 3 fases (67–69), 21 planes, 53 tareas, 144 commits, +2,097 / −139 líneas en 49 archivos de código. Audit `tech_debt` (13/13 reqs, 3/3 fases verificadas, 13/13 seams WIRED, 1/1 flujo E2E, 0 blockers, 0 flujos rotos). El flujo insignia quedó trazado end-to-end en fuente: buscar un paciente inexistente en el autosuggest de cualquiera de los tres modales de turno expande un mini-form con Nombre + DNI precargado según lo que se tipeó, el `POST /pacientes` manda `telefono: ""` que `normalizeTelefono()` convierte a `null`, el paciente entra al kanban como `NUEVO_LEAD` y el turno que se confirma a continuación lo mueve a `TURNO_AGENDADO` — sin teléfono en ningún paso y sin cerrar el modal. En backend, `Paciente.telefono` pasó a nullable con una migración de una sola sentencia sin pérdida (424/424 teléfonos preservados) y un único `requireTelefonoParaEnvio()` cierra los 4 paths de `WhatsappService` que encolan a BullMQ, fallando en español antes de tocar Meta. En frontend, `lib/telefono.ts` unificó placeholder y motivo de bloqueo en los 5 sitios de display y los 5 entrypoints de envío. **Dos defectos que sólo el runtime podía delatar** se cerraron con tests de render que montan el componente real en jsdom: el atajo de WhatsApp del calendario colgaba de un `event.pacienteId` que el `select` de Prisma nunca traía (guard bien escrito pero inalcanzable), y los controles de WhatsApp del drawer quedaban bloqueados tras cargarle el teléfono al paciente hasta recargar la página. **De yapa:** se instaló el primer runner de tests de frontend del repo (Vitest + Testing Library con jsdom, validado con pruebas negativas) y se cerró el IDOR T-69-16 en `GET /turnos/rango`. **Cierre limpio:** 0 artefactos abiertos. **Override firmado:** ALTA-06 acepta `profesionalId: null` cuando el contexto profesional no está resuelto. **Deuda prioritaria:** ver Current State — el `await` faltante que deja muerta la rama del 409 (TD-02), la ausencia de `ValidationPipe` en `POST /pacientes` (TD-01) y la falta de tests sobre ALTA-01..07 (TD-08). Ver `.planning/milestones/v1.16-ROADMAP.md` y `v1.16-MILESTONE-AUDIT.md` para detalles.
 
 ## Shipped: v1.15 Flujo CRM Automático + Correcciones HC ✅
 
@@ -278,6 +280,11 @@ El producto se vende por suscripción con tiers: el tier base incluye gestión d
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
+| v1.16: `telefono` nullable en vez de mantenerlo obligatorio con placeholder | El dato no siempre existe al momento de agendar; forzar un valor falso ensucia la base y rompe los envíos igual | ✓ Bueno — migración sin pérdida (424/424), `normalizeTelefono()` centralizó la definición de "válido" |
+| v1.16: guard de envío en el servicio, no en el controller | Los 4 paths que encolan a BullMQ pasan por `WhatsappService`; guardar ahí cubre también los llamados internos, no sólo los HTTP | ✓ Bueno — 4/4 paths cubiertos, sin ruta de bypass encontrada por el audit |
+| v1.16: alta inline como prop opt-in (`allowCreate`) y no como comportamiento por defecto del autosuggest | El mismo componente se usa para filtrar tablas, donde crear un paciente no tiene sentido de producto | ✓ Bueno — los 2 usos de filtro quedaron sin un solo cambio de comportamiento |
+| v1.16: aceptar `profesionalId: null` en el alta inline (override ALTA-06) | Bloquear la creación cuando el contexto profesional no está resuelto rompía el flujo para ADMIN/SECRETARIA en vista global | ⚠️ Revisar — firmado y reconfirmado 2 veces, pero deja pacientes sin profesional asignado; conviene decidir si se cierra con un gate o se acepta permanentemente |
+| v1.16: instalar runner de tests de frontend a mitad del milestone | Los planes 69-07/08 necesitaban assertar comportamiento de DOM (presencia en el árbol, invalidación de cache) — cosas que leer el fuente no puede probar | ✓ Bueno — encontró 2 defectos que 3 rondas de lectura de fuente habían dado por buenos |
 | CRM antes que finanzas | El diferencial de venta es la conversión, no las finanzas | ✓ Correcto — v1.0 entregó CRM completo |
 | WhatsApp Business API (no links/templates externos) | Experiencia integrada, aunque tiene fricción de aprobación Meta | ✓ Correcto — integración completa implementada |
 | Web-first, no app móvil | Velocidad de desarrollo, mercado objetivo usa desktop en clínica | ✓ Correcto — sin demanda de móvil hasta ahora |
@@ -410,7 +417,9 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-08-17 al iniciar el milestone v1.16 — Alta de Paciente sin Fricción. Milestone chico (1–2 fases, numeración continúa desde la 66) enfocado en que agendar un turno a un paciente nuevo no requiera registrarlo antes: `telefono` pasa a nullable en schema/DTO, el autosuggest ofrece crear el paciente inline con nombre + DNI cuando no hay match (mini-form en el popover, activado sólo en los tres modales de turno), el DNI duplicado se muestra dentro del popover, y los envíos de WhatsApp/presupuesto quedan gateados para pacientes sin teléfono. Sin research (feature sobre código existente, blast radius ya mapeado).*
+*Last updated: 2026-08-22 after v1.16 milestone — Alta de Paciente sin Fricción shipped (3 fases 67–69, 21 planes, 53 tareas, 13/13 requisitos, audit `tech_debt` con 0 blockers, 0 flujos rotos y 0 artefactos abiertos al cierre). Agendar un turno a un paciente nuevo ya no requiere registrarlo antes: el autosuggest de los tres modales de turno expande un mini-form con Nombre + DNI precargado, crea el paciente sin teléfono y lo deja seleccionado para confirmar el turno. `Paciente.telefono` es nullable end-to-end (migración sin pérdida, 424/424 preservados), `requireTelefonoParaEnvio()` cierra los 4 paths de envío WA antes de tocar Meta, y `lib/telefono.ts` unificó placeholder y bloqueo en frontend. Se instaló el primer runner de tests de frontend del repo (Vitest + Testing Library) y se cerró el IDOR T-69-16 en `GET /turnos/rango`. Deuda prioritaria para el próximo ciclo: el `await` faltante de `pacientes.service.ts:75` (TD-02), `ValidationPipe` en `POST /pacientes` (TD-01) y tests sobre ALTA-01..07 (TD-08).*
+
+*Prior: 2026-08-17 al iniciar el milestone v1.16 — Alta de Paciente sin Fricción. Milestone chico (1–2 fases, numeración continúa desde la 66) enfocado en que agendar un turno a un paciente nuevo no requiera registrarlo antes: `telefono` pasa a nullable en schema/DTO, el autosuggest ofrece crear el paciente inline con nombre + DNI cuando no hay match (mini-form en el popover, activado sólo en los tres modales de turno), el DNI duplicado se muestra dentro del popover, y los envíos de WhatsApp/presupuesto quedan gateados para pacientes sin teléfono. Sin research (feature sobre código existente, blast radius ya mapeado).*
 
 *Prior: 2026-08-10 after v1.15 milestone — Flujo CRM Automático + Correcciones HC shipped (4 fases 63–66, 9 planes, 20 tareas, 11/11 requisitos, audit `tech_debt` con 0 blockers y 0 artefactos abiertos al cierre). El embudo del kanban refleja solo el estado real del paciente (lead nuevo en su columna, confirmación al agendar cirugía sin presupuesto, guard selectivo de degradación, recontacto tras cancelar, salida a planilla por tratamiento en consultorio), la card muestra el pendiente de su etapa, la planilla dejó de truncar tratamientos silenciosamente, el tipo de turno se sincroniza con la plantilla de HC cargada encima, y la HC de la ficha del paciente renderiza el detalle Pre-quirúrgico con el wizard como único camino de creación. Se resolvieron los 3 ítems diferidos de v1.14. Deuda advisory registrada en Key Decisions (⚠️ Revisit: gate por string 'Consulta', TOCTOU angosto en el sync de turno) y en el bloque "Shipped: v1.15". Próximo: `/gsd:new-milestone`.*
 

@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.16
 milestone_name: Alta de Paciente sin Fricción
 status: executing
-stopped_at: Completed 69-09-PLAN.md
-last_updated: "2026-08-22T02:13:48.191Z"
+stopped_at: Completed 69-10-PLAN.md
+last_updated: "2026-08-22T02:30:18.747Z"
 last_activity: 2026-08-22
 progress:
   total_phases: 3
   completed_phases: 2
   total_plans: 21
-  completed_plans: 18
+  completed_plans: 19
   percent: 67
 ---
 
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-08-17 al iniciar el milestone v1.16)
 ## Current Position
 
 Phase: 69 (consistencia-de-tel-fono-opcional-frontend) — EXECUTING
-Plan: 2 of 10
+Plan: 3 of 10
 Status: Ready to execute
 Last activity: 2026-08-22
 
-Progress: [█████████░] 86%
+Progress: [█████████░] 90%
 
 ### Roadmap v1.16
 
@@ -57,6 +57,7 @@ Full decision log en `.planning/PROJECT.md` (Key Decisions). Las decisiones de v
 - [Phase 68-05]: gap BLOCKER (gaps[0]/CR-01) y gap WARNING (WR-02) de 68-VERIFICATION.md cerrados: guard de generacion de sesion (dialogSessionRef+dialogSession) portado a los 3 call sites de turno (QuickAppointment/NewAppointmentModal/SurgeryAppointmentModal), corrigiendo la premisa falsa de 68-VERIFICATION.md:257 de que solo QuickAppointment estaba expuesto; candado sincrono submittingRef en InlineCreatePaciente cierra la garantia de un solo POST /pacientes por submit; verificacion humana itemizada (A/B/C/D: PASS) aprobada por el usuario
 - [Phase 68-06]: 2 gaps BLOCKER remanentes de 68-VERIFICATION.md cerrados (gaps[0]/CR-01 y gaps[1]/CR-02). SurgeryAppointmentModal.tsx: los dos efectos separados (reset solo al cerrar, sello de sesion solo al abrir) se unificaron en un unico useEffect declarado antes de los seeds de defaultDate/pacienteIdProp — el reset() corre ahora en ambas transiciones del Dialog, cerrando la ventana donde un alta abandonada podia sobrevivir a la reapertura y viajar en POST /turnos/cirugia. InlineCreatePaciente.tsx: handleKeyDown ya no cancela el Enter dirigido a un boton enfocado (closest("button") antes de preventDefault), asi que Cancelar vuelve a cancelar sin crear un Paciente real. Checkpoint humano de Task 3 respondido con aprobacion GLOBAL ("todo ok", sin desglose por escenario ni detalle de Network/modal) — registrado asi en 68-06-SUMMARY.md sin inventar detalle no observado. Fase 68 (6/6 planes ejecutados) queda pendiente de re-verificacion por /gsd:verify-phase; no se marca Complete en STATE.md ni ROADMAP.md por decision del orquestador
 - [Phase 69]: Plan 69-09: runner de tests vitest+Testing Library instalado en frontend/, verificado con smoke test de lib/telefono.ts (11 tests) y dos pruebas negativas (assertion falsa, alias roto) — Los planes 07 y 08 necesitan poder assertar comportamiento de render/DOM en vez de leer el fuente; npm run build/tsc verificados bajo Node 20 via nvm (entorno default tiene Node 18, insuficiente para Next 16, deuda preexistente no introducida por este plan)
+- [Phase 69-10]: IDOR de GET /turnos/rango (T-69-16) cerrado: obtenerPorRango resuelve el scope con resolveScope igual que findAll; guard explicito ante scope.profesionalId falsy (T-69-28); PROFESIONAL ya no puede leer la agenda de otro via query string, ADMIN/SECRETARIA sin cambios (probado con test negativo: revertir el fix hace fallar el test 1 y no afecta el test 2)
 
 ### Known Tech Debt (carry-forward)
 
@@ -100,9 +101,9 @@ Los 3 ítems diferidos al cierre de v1.14 quedaron resueltos durante v1.15:
 
 ## Session Continuity
 
-Last session: 2026-08-22T02:13:48.188Z
-Stopped at: Completed 69-09-PLAN.md
-Resume file: .planning/phases/69-consistencia-de-tel-fono-opcional-frontend/69-09-SUMMARY.md
+Last session: 2026-08-22T02:30:18.744Z
+Stopped at: Completed 69-10-PLAN.md
+Resume file: .planning/phases/69-consistencia-de-tel-fono-opcional-frontend/69-10-SUMMARY.md
 
 - Fase 67 (backend) completa — 5/5 planes ejecutados, TEL-01/ENVIO-01/ENVIO-02 cubiertos con tests automatizados que trazan los 5 success criteria del ROADMAP. Ready for verification.
 - Fase 68 (Creación Inline en el Autosuggest) — 6/6 planes ejecutados (68-01..68-06). Los 2 gaps BLOCKER que dejó abiertos la ronda anterior de /gsd:verify-phase (68-VERIFICATION.md gaps[0]/CR-01 y gaps[1]/CR-02) quedaron cerrados en 68-06. Pendiente: re-correr /gsd:verify-phase contra el código actual antes de marcar la fase Complete.

@@ -10,7 +10,7 @@
 ### Teléfono Opcional
 
 - [x] **TEL-01**: El sistema permite persistir un paciente sin teléfono (`Paciente.telefono` nullable en schema + `@IsOptional()` en `CreatePacienteDto`), sin alterar los pacientes existentes que ya tienen número
-- [ ] **TEL-02**: El usuario puede dar de alta un paciente desde el formulario completo (`NewPacienteModal`) sin cargar teléfono
+- [x] **TEL-02**: El usuario puede dar de alta un paciente desde el formulario completo (`NewPacienteModal`) sin cargar teléfono
 - [x] **TEL-03**: Las vistas que muestran el teléfono de un paciente (autosuggest, lista de pacientes, ficha, reportes) muestran un placeholder legible (ej. "—") en vez de "null" o vacío cuando no hay número
 
 ### Creación Inline de Paciente
@@ -75,7 +75,7 @@ Cada requisito mapea a exactamente una fase. Ver `.planning/ROADMAP.md` para goa
 | ALTA-05 | Phase 68 | Complete |
 | ALTA-06 | Phase 68 | Complete |
 | ALTA-07 | Phase 68 | Complete |
-| TEL-02 | Phase 69 | Pending |
+| TEL-02 | Phase 69 | Complete |
 | TEL-03 | Phase 69 | Complete |
 | ENVIO-03 | Phase 69 | Complete |
 

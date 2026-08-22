@@ -27,7 +27,7 @@
 
 - [x] **ENVIO-01**: Al intentar enviar un WhatsApp a un paciente sin teléfono, el backend rechaza la operación y el usuario ve un mensaje claro en español en vez de un error crudo de Meta
 - [x] **ENVIO-02**: Al intentar enviar un presupuesto por WhatsApp a un paciente sin teléfono, el backend rechaza la operación con el mismo mensaje claro
-- [ ] **ENVIO-03**: Los botones de envío por WhatsApp aparecen deshabilitados con tooltip explicativo cuando el paciente no tiene teléfono cargado
+- [x] **ENVIO-03**: Los botones de envío por WhatsApp aparecen deshabilitados con tooltip explicativo cuando el paciente no tiene teléfono cargado
 
 ## Future Requirements
 
@@ -77,7 +77,7 @@ Cada requisito mapea a exactamente una fase. Ver `.planning/ROADMAP.md` para goa
 | ALTA-07 | Phase 68 | Complete |
 | TEL-02 | Phase 69 | Pending |
 | TEL-03 | Phase 69 | Pending |
-| ENVIO-03 | Phase 69 | Pending |
+| ENVIO-03 | Phase 69 | Complete |
 
 **Coverage:**
 - v1.16 requirements: 13 total

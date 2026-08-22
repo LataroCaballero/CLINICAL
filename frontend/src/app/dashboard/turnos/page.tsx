@@ -280,14 +280,14 @@ export default function TurnosPage() {
 
   // Map turnos -> eventos (excluir cancelados del calendario)
   useEffect(() => {
-    const mapped: CalendarEvent[] = (turnosRango as any[])
+    const mapped: CalendarEvent[] = turnosRango
       .filter((t) => t.estado !== "CANCELADO")
       .map((t) => ({
       id: t.id,
       title: `${t.tipoTurno?.nombre ?? "Turno"} – ${t.paciente?.nombreCompleto ?? ""
         }`,
       paciente: t.paciente?.nombreCompleto ?? "",
-      pacienteId: t.pacienteId ?? undefined,
+      pacienteId: t.pacienteId ?? t.paciente?.id ?? undefined,
       whatsappOptIn: t.paciente?.whatsappOptIn ?? false,
       telefono: t.paciente?.telefono ?? null,
       start: new Date(t.inicio),

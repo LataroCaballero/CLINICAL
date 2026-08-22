@@ -81,6 +81,7 @@ describe('TurnosService', () => {
       turno: {
         findFirst: jest.fn(),
         findUnique: jest.fn(),
+        findMany: jest.fn(),
         create: jest.fn(),
         update: jest.fn(),
       },
@@ -374,6 +375,61 @@ describe('TurnosService', () => {
       expect(prisma.cirugia.update).not.toHaveBeenCalled();
       expect(prisma.paciente.update).not.toHaveBeenCalled();
       expect(prisma.contactoLog.create).not.toHaveBeenCalled();
+    });
+  });
+
+  // ── obtenerTurnosPorRango — el select devuelve el FK pacienteId (CR-01 / D-13) ──
+  describe('obtenerTurnosPorRango — el select devuelve el FK pacienteId (CR-01 / D-13)', () => {
+    it('Test del contrato del select: findMany se invoca con pacienteId, esSobreturno y paciente.telefono en el select', async () => {
+      (prisma.turno.findMany as jest.Mock).mockResolvedValue([]);
+
+      await service.obtenerTurnosPorRango(
+        'prof-1',
+        '2026-01-01',
+        '2026-01-31',
+      );
+
+      expect(prisma.turno.findMany).toHaveBeenCalledTimes(1);
+      const callArg = (prisma.turno.findMany as jest.Mock).mock.calls[0][0];
+      expect(callArg.select.pacienteId).toBe(true);
+      expect(callArg.select.esSobreturno).toBe(true);
+      expect(callArg.select.paciente.select.telefono).toBe(true);
+    });
+
+    it('Test del passthrough: el elemento devuelto conserva pacienteId y telefono tal como vinieron del select', async () => {
+      (prisma.turno.findMany as jest.Mock).mockResolvedValue([
+        {
+          id: 'turno-1',
+          inicio: new Date('2026-01-15T13:00:00.000Z'),
+          fin: new Date('2026-01-15T13:30:00.000Z'),
+          estado: EstadoTurno.PENDIENTE,
+          observaciones: null,
+          pacienteId: 'paciente-1',
+          esSobreturno: false,
+          paciente: {
+            id: 'paciente-1',
+            nombreCompleto: 'Juana Perez',
+            whatsappOptIn: true,
+            telefono: '+541122334455',
+          },
+          tipoTurno: {
+            id: 'tipo-1',
+            nombre: 'Consulta',
+            flujoPaciente: null,
+          },
+          entradaHC: null,
+        },
+      ]);
+
+      const result = await service.obtenerTurnosPorRango(
+        'prof-1',
+        '2026-01-01',
+        '2026-01-31',
+      );
+
+      expect(result).toHaveLength(1);
+      expect(result[0].pacienteId).toBe('paciente-1');
+      expect(result[0].paciente.telefono).toBe('+541122334455');
     });
   });
 });

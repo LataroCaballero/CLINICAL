@@ -564,6 +564,8 @@ export class TurnosService {
         fin: true,
         estado: true,
         observaciones: true,
+        pacienteId: true,
+        esSobreturno: true,
         paciente: {
           select: {
             id: true,

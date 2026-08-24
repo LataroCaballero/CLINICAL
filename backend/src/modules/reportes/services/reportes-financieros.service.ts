@@ -551,7 +551,7 @@ export class ReportesFinancierosService {
       Array<{
         pacienteId: string;
         nombreCompleto: string;
-        telefono: string;
+        telefono: string | null;
         montoVencido: Decimal;
         ultimoCargo: Date;
         ultimoPago: Date | null;

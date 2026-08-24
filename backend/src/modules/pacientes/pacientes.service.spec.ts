@@ -9,11 +9,15 @@
  *   (sufficient to verify round-trip logic without AES overhead)
  */
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException } from '@nestjs/common';
+import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { readFileSync } from 'fs';
+import { join } from 'path';
 import { PacientesService } from './pacientes.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EncryptionService } from '../whatsapp/crypto/encryption.service';
+import { EtapaCRM, EstadoPaciente, EstadoCirugia } from '@prisma/client';
+import { CreatePacienteDto } from './dto/create-paciente.dto';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -49,6 +53,11 @@ describe('PacientesService — portal link encrypt/recover (52-09)', () => {
       paciente: {
         findUnique: jest.fn(),
         update: jest.fn(),
+        findMany: jest.fn(),
+        create: jest.fn(),
+      },
+      contactoLog: {
+        count: jest.fn().mockResolvedValue(0),
       },
     };
     const mockConfigService = {
@@ -257,5 +266,525 @@ describe('PacientesService — portal link encrypt/recover (52-09)', () => {
       logSpy.mockRestore();
       errSpy.mockRestore();
     });
+  });
+
+  // ── getKanban -> computePasosCrm boundary (WR-01/SC#3, INDIC-04) ──────────
+  // Ejercita la forma real del select de getKanban (sin take:1) contra
+  // computePasosCrm. Atrapa la regresion si se reintroduce take:1 en el
+  // select de consentimientosFirmados (61-REVIEW.md WR-01).
+
+  describe('getKanban -> computePasosCrm boundary (WR-01/SC#3)', () => {
+    const KANBAN_PACIENTE_ID = 'paciente-kanban-uuid-1';
+
+    function buildKanbanPaciente(overrides: {
+      indicacionesLeidasAt: Date | null;
+      indicacionesEnviadas: boolean;
+      consentimientosFirmados: Array<{
+        firmadoAt: Date;
+        indicacionesLeidasAt: Date | null;
+      }>;
+    }) {
+      return {
+        id: KANBAN_PACIENTE_ID,
+        nombreCompleto: 'Paciente Kanban Test',
+        fotoUrl: null,
+        etapaCRM: 'CONFIRMADO',
+        temperatura: null,
+        scoreConversion: null,
+        tratamiento: null,
+        lugarIntervencion: null,
+        updatedAt: new Date('2026-06-01'),
+        enListaEspera: false,
+        comentarioListaEspera: null,
+        flujo: null,
+        presupuestos: [],
+        turnos: [],
+        contactos: [],
+        autorizaciones: [],
+        consentimientoFirmado: false,
+        indicacionesEnviadas: overrides.indicacionesEnviadas,
+        indicacionesLeidasAt: overrides.indicacionesLeidasAt,
+        cirugias: [],
+        historiasClinicas: [],
+        consentimientosFirmados: overrides.consentimientosFirmados,
+      };
+    }
+
+    async function getPacienteFromKanban(profesionalId: string, id: string) {
+      const result = await service.getKanban(profesionalId);
+      const flat = result.flatMap((c) => c.pacientes);
+      const found = flat.find((p) => p.id === id);
+      if (!found) throw new Error('Paciente no encontrado en resultado de getKanban');
+      return found;
+    }
+
+    it('Test A (regresion): fila mas reciente indicacionesLeidasAt=null + fila antigua con receipt legacy -> indicacionesPreop completo', async () => {
+      (prisma.paciente.findMany as jest.Mock).mockResolvedValue([
+        buildKanbanPaciente({
+          indicacionesLeidasAt: null,
+          indicacionesEnviadas: false,
+          consentimientosFirmados: [
+            {
+              firmadoAt: new Date('2025-01-01'),
+              indicacionesLeidasAt: new Date('2025-01-01'),
+            },
+            {
+              firmadoAt: new Date('2026-06-01'),
+              indicacionesLeidasAt: null,
+            },
+          ],
+        }),
+      ]);
+
+      const paciente = await getPacienteFromKanban('prof-1', KANBAN_PACIENTE_ID);
+
+      expect(paciente.pasos.indicacionesPreop).toBe('completo');
+    });
+
+    it('Test B (no-regresion Paso 4): mismo mock multi-zona mantiene consentimiento completo', async () => {
+      (prisma.paciente.findMany as jest.Mock).mockResolvedValue([
+        buildKanbanPaciente({
+          indicacionesLeidasAt: null,
+          indicacionesEnviadas: false,
+          consentimientosFirmados: [
+            {
+              firmadoAt: new Date('2025-01-01'),
+              indicacionesLeidasAt: new Date('2025-01-01'),
+            },
+            {
+              firmadoAt: new Date('2026-06-01'),
+              indicacionesLeidasAt: null,
+            },
+          ],
+        }),
+      ]);
+
+      const paciente = await getPacienteFromKanban('prof-1', KANBAN_PACIENTE_ID);
+
+      expect(paciente.pasos.consentimiento).toBe('completo');
+    });
+
+    it('Test C (pendiente real): sin receipts en ninguna fuente -> indicacionesPreop pendiente', async () => {
+      (prisma.paciente.findMany as jest.Mock).mockResolvedValue([
+        buildKanbanPaciente({
+          indicacionesLeidasAt: null,
+          indicacionesEnviadas: false,
+          consentimientosFirmados: [
+            {
+              firmadoAt: new Date('2025-01-01'),
+              indicacionesLeidasAt: null,
+            },
+            {
+              firmadoAt: new Date('2026-06-01'),
+              indicacionesLeidasAt: null,
+            },
+          ],
+        }),
+      ]);
+
+      const paciente = await getPacienteFromKanban('prof-1', KANBAN_PACIENTE_ID);
+
+      expect(paciente.pasos.indicacionesPreop).toBe('pendiente');
+    });
+  });
+
+  // ── create() — default etapaCRM=NUEVO_LEAD + flujo=null (EMBUDO-07) ────────
+  describe('create() — default etapaCRM=NUEVO_LEAD + flujo=null (D-01/D-03)', () => {
+    function buildDto(overrides: Partial<CreatePacienteDto> = {}): CreatePacienteDto {
+      return {
+        nombreCompleto: 'Lead Nuevo',
+        dni: '30111222',
+        telefono: '+5491100000000',
+        ...overrides,
+      } as CreatePacienteDto;
+    }
+
+    it('Test A: create() con DTO tipico -> data.etapaCRM === NUEVO_LEAD', async () => {
+      (prisma.paciente.create as jest.Mock).mockResolvedValue({ id: 'p-1' });
+
+      await service.create(buildDto());
+
+      const callArg = (prisma.paciente.create as jest.Mock).mock.calls[0][0];
+      expect(callArg.data.etapaCRM).toBe(EtapaCRM.NUEVO_LEAD);
+    });
+
+    it('Test B: create() con DTO con otros campos poblados -> data.etapaCRM sigue siendo NUEVO_LEAD', async () => {
+      (prisma.paciente.create as jest.Mock).mockResolvedValue({ id: 'p-2' });
+
+      await service.create(
+        buildDto({ estado: EstadoPaciente.ACTIVO, email: 'lead@example.com' }),
+      );
+
+      const callArg = (prisma.paciente.create as jest.Mock).mock.calls[0][0];
+      expect(callArg.data.etapaCRM).toBe(EtapaCRM.NUEVO_LEAD);
+    });
+
+    it('Test C: create() con DTO tipico -> data.flujo === null', async () => {
+      (prisma.paciente.create as jest.Mock).mockResolvedValue({ id: 'p-3' });
+
+      await service.create(buildDto());
+
+      const callArg = (prisma.paciente.create as jest.Mock).mock.calls[0][0];
+      expect(callArg.data.flujo).toBeNull();
+    });
+
+    it('Test D: prisma.paciente.create se invoca una sola vez con etapaCRM=NUEVO_LEAD y flujo=null simultaneos', async () => {
+      (prisma.paciente.create as jest.Mock).mockResolvedValue({ id: 'p-4' });
+
+      await service.create(buildDto());
+
+      expect(prisma.paciente.create as jest.Mock).toHaveBeenCalledTimes(1);
+      const callArg = (prisma.paciente.create as jest.Mock).mock.calls[0][0];
+      expect(callArg.data.etapaCRM).toBe(EtapaCRM.NUEVO_LEAD);
+      expect(callArg.data.flujo).toBeNull();
+    });
+  });
+
+  // ── getKanban — visibilidad del lead nuevo (EMBUDO-07, Task 2) ──────────────
+  describe('getKanban — lead nuevo (etapaCRM=NUEVO_LEAD, flujo=null) es visible', () => {
+    it('paciente con etapaCRM=NUEVO_LEAD y flujo=null cae en la columna NUEVO_LEAD (no SIN_CLASIFICAR)', async () => {
+      (prisma.paciente.findMany as jest.Mock).mockResolvedValue([
+        {
+          id: 'lead-nuevo-1',
+          nombreCompleto: 'Lead Nuevo Kanban',
+          fotoUrl: null,
+          etapaCRM: EtapaCRM.NUEVO_LEAD,
+          temperatura: null,
+          scoreConversion: null,
+          tratamiento: null,
+          lugarIntervencion: null,
+          updatedAt: new Date('2026-07-31'),
+          enListaEspera: false,
+          comentarioListaEspera: null,
+          flujo: null,
+          presupuestos: [],
+          turnos: [],
+          contactos: [],
+          autorizaciones: [],
+          consentimientoFirmado: false,
+          indicacionesEnviadas: false,
+          indicacionesLeidasAt: null,
+          cirugias: [],
+          historiasClinicas: [],
+          consentimientosFirmados: [],
+        },
+      ]);
+
+      const result = await service.getKanban('prof-1');
+
+      const nuevoLeadCol = result.find((c) => c.etapa === 'NUEVO_LEAD');
+      const sinClasificarCol = result.find((c) => c.etapa === 'SIN_CLASIFICAR');
+
+      expect(nuevoLeadCol?.pacientes.some((p) => p.id === 'lead-nuevo-1')).toBe(
+        true,
+      );
+      expect(
+        sinClasificarCol?.pacientes.some((p) => p.id === 'lead-nuevo-1'),
+      ).toBe(false);
+    });
+
+    it('el where de getKanban conserva el filtro OR:[{flujo:CIRUGIA},{flujo:null}] (invariante v1.13) del que depende la visibilidad flujo=null', async () => {
+      (prisma.paciente.findMany as jest.Mock).mockResolvedValue([]);
+
+      await service.getKanban('prof-1');
+
+      const callArg = (prisma.paciente.findMany as jest.Mock).mock.calls[0][0];
+      expect(callArg.where.OR).toEqual([
+        { flujo: 'CIRUGIA' },
+        { flujo: null },
+      ]);
+    });
+  });
+
+  // ── getListaAccion — recontacto derivado por cirugia cancelada (D-07) ────
+  describe('getListaAccion — requiereRecontacto derivado (D-07)', () => {
+    function buildPaciente(overrides: {
+      id: string;
+      etapaCRM: EtapaCRM;
+      cirugias: Array<{ estado: EstadoCirugia; fecha: Date }>;
+    }) {
+      return {
+        id: overrides.id,
+        nombreCompleto: `Paciente ${overrides.id}`,
+        telefono: '+5491100000000',
+        etapaCRM: overrides.etapaCRM,
+        temperatura: null,
+        createdAt: new Date('2026-01-01'),
+        contactos: [],
+        cirugias: overrides.cirugias,
+      };
+    }
+
+    it('Test C: paciente CONFIRMADO con cirugia CANCELADA y sin PROGRAMADA futura -> requiereRecontacto true', async () => {
+      (prisma.paciente.findMany as jest.Mock).mockResolvedValue([
+        buildPaciente({
+          id: 'paciente-c',
+          etapaCRM: EtapaCRM.CONFIRMADO,
+          cirugias: [
+            { estado: EstadoCirugia.CANCELADA, fecha: new Date('2026-01-10') },
+          ],
+        }),
+      ]);
+
+      const result = await service.getListaAccion('prof-1');
+
+      const item = result.items.find((i) => i.id === 'paciente-c');
+      expect(item).toBeDefined();
+      expect(item?.requiereRecontacto).toBe(true);
+    });
+
+    it('Test D: paciente CONFIRMADO con cirugia CANCELADA pero con PROGRAMADA futura -> NO aparece (reprogramada)', async () => {
+      // El where real excluye este caso via NOT cirugias PROGRAMADA futura;
+      // el mock de findMany simula que Prisma ya filtro este paciente.
+      (prisma.paciente.findMany as jest.Mock).mockResolvedValue([]);
+
+      const result = await service.getListaAccion('prof-1');
+
+      expect(result.items.find((i) => i.id === 'paciente-d')).toBeUndefined();
+    });
+
+    it('Test E: paciente CONFIRMADO "normal" (sin cirugia cancelada) -> sigue excluido (no aparece)', async () => {
+      // El where real excluye CONFIRMADO salvo rama recontacto; el mock
+      // simula que Prisma ya filtro a este paciente por no matchear ninguna rama.
+      (prisma.paciente.findMany as jest.Mock).mockResolvedValue([]);
+
+      const result = await service.getListaAccion('prof-1');
+
+      expect(result.items.find((i) => i.id === 'paciente-e')).toBeUndefined();
+    });
+
+    it('el where de getListaAccion agrega la rama OR de recontacto (CONFIRMADO + cirugia CANCELADA/SUSPENDIDA sin PROGRAMADA futura)', async () => {
+      (prisma.paciente.findMany as jest.Mock).mockResolvedValue([]);
+
+      await service.getListaAccion('prof-1');
+
+      const callArg = (prisma.paciente.findMany as jest.Mock).mock.calls[0][0];
+      const orBranches = callArg.where.OR as Array<Record<string, unknown>>;
+      const recontactoBranch = orBranches.find(
+        (b) => b.etapaCRM === EtapaCRM.CONFIRMADO,
+      );
+      expect(recontactoBranch).toBeDefined();
+      const cirugiasSome = (recontactoBranch as any).cirugias.some;
+      expect(cirugiasSome.estado.in).toEqual(
+        expect.arrayContaining([
+          EstadoCirugia.CANCELADA,
+          EstadoCirugia.SUSPENDIDA,
+        ]),
+      );
+    });
+  });
+
+  // ── normalizeTelefono() — teléfono opcional en create/update/updateContacto (Phase 67, TEL-01) ──
+  describe('normalizeTelefono() — teléfono opcional (D-01/D-02/D-05/D-06/D-07)', () => {
+    function buildDto(
+      overrides: Partial<CreatePacienteDto> = {},
+    ): CreatePacienteDto {
+      return {
+        nombreCompleto: 'Lead Sin Telefono',
+        dni: '30222333',
+        ...overrides,
+      } as CreatePacienteDto;
+    }
+
+    it('SC#1: create() con sólo nombreCompleto y dni no lanza y persiste telefono: null', async () => {
+      (prisma.paciente.create as jest.Mock).mockResolvedValue({
+        id: 'p-sin-tel',
+      });
+
+      await expect(service.create(buildDto())).resolves.toBeDefined();
+
+      const callArg = (prisma.paciente.create as jest.Mock).mock.calls[0][0];
+      expect(callArg.data.telefono).toBeNull();
+      expect(callArg.data.etapaCRM).toBe(EtapaCRM.NUEVO_LEAD);
+      expect(callArg.data.flujo).toBeNull();
+    });
+
+    it("D-01: create() con telefono: '' -> data.telefono === null", async () => {
+      (prisma.paciente.create as jest.Mock).mockResolvedValue({
+        id: 'p-vacio',
+      });
+
+      await service.create(buildDto({ telefono: '' }));
+
+      const callArg = (prisma.paciente.create as jest.Mock).mock.calls[0][0];
+      expect(callArg.data.telefono).toBeNull();
+    });
+
+    it("D-01: create() con telefono: '   ' (solo espacios) -> data.telefono === null", async () => {
+      (prisma.paciente.create as jest.Mock).mockResolvedValue({
+        id: 'p-espacios',
+      });
+
+      await service.create(buildDto({ telefono: '   ' }));
+
+      const callArg = (prisma.paciente.create as jest.Mock).mock.calls[0][0];
+      expect(callArg.data.telefono).toBeNull();
+    });
+
+    it("D-01: create() con telefono: ' 1123456789 ' -> data.telefono === '1123456789' (trimmeado)", async () => {
+      (prisma.paciente.create as jest.Mock).mockResolvedValue({ id: 'p-trim' });
+
+      await service.create(buildDto({ telefono: ' 1123456789 ' }));
+
+      const callArg = (prisma.paciente.create as jest.Mock).mock.calls[0][0];
+      expect(callArg.data.telefono).toBe('1123456789');
+    });
+
+    it("D-06: create() con telefono: '123' -> BadRequestException('Teléfono inválido'), sin llamar a prisma.paciente.create", async () => {
+      await expect(
+        service.create(buildDto({ telefono: '123' })),
+      ).rejects.toThrow(new BadRequestException('Teléfono inválido'));
+
+      expect(prisma.paciente.create as jest.Mock).not.toHaveBeenCalled();
+    });
+
+    it('D-02: update() sin la clave telefono -> data enviado a prisma.paciente.update NO tiene la propiedad telefono', async () => {
+      (prisma.paciente.findUnique as jest.Mock).mockResolvedValue({
+        id: 'p-upd-1',
+      });
+      (prisma.paciente.update as jest.Mock).mockResolvedValue({
+        id: 'p-upd-1',
+      });
+
+      await service.update('p-upd-1', { nombreCompleto: 'X' } as any);
+
+      const callArg = (prisma.paciente.update as jest.Mock).mock.calls[0][0];
+      expect(callArg.data).not.toHaveProperty('telefono');
+    });
+
+    it('D-02: vaciar el teléfono desde el staff lo deja en null', async () => {
+      (prisma.paciente.findUnique as jest.Mock).mockResolvedValue({
+        id: 'p-upd-2',
+      });
+      (prisma.paciente.update as jest.Mock).mockResolvedValue({
+        id: 'p-upd-2',
+      });
+
+      await service.update('p-upd-2', { telefono: '' } as any);
+
+      const callArg = (prisma.paciente.update as jest.Mock).mock.calls[0][0];
+      expect(callArg.data.telefono).toBeNull();
+    });
+
+    it('D-05: updatePacienteSection contacto con telefono vacío no lanza y persiste telefono: null', async () => {
+      (prisma.paciente.update as jest.Mock).mockResolvedValue({
+        id: 'p-contacto-1',
+      });
+
+      await expect(
+        service.updatePacienteSection('p-contacto-1', {
+          section: 'contacto',
+          data: { telefono: '', email: 'a@b.com' },
+        } as any),
+      ).resolves.toBeDefined();
+
+      const callArg = (prisma.paciente.update as jest.Mock).mock.calls[0][0];
+      expect(callArg.data.telefono).toBeNull();
+    });
+
+    it('CR-01: updatePacienteSection contacto SIN la clave telefono no toca la columna', async () => {
+      (prisma.paciente.update as jest.Mock).mockResolvedValue({
+        id: 'p-contacto-omit',
+      });
+
+      await expect(
+        service.updatePacienteSection('p-contacto-omit', {
+          section: 'contacto',
+          data: { email: 'a@b.com' },
+        } as any),
+      ).resolves.toBeDefined();
+
+      // Omitir el campo != vaciarlo: el patch no debe incluir `telefono`, o el
+      // update pisaría con NULL el teléfono guardado (pérdida de datos silenciosa).
+      const callArg = (prisma.paciente.update as jest.Mock).mock.calls[0][0];
+      expect(callArg.data).not.toHaveProperty('telefono');
+    });
+
+    it('CR-01: updatePacienteSection contacto con telefono: null sí limpia la columna', async () => {
+      (prisma.paciente.update as jest.Mock).mockResolvedValue({
+        id: 'p-contacto-null',
+      });
+
+      await expect(
+        service.updatePacienteSection('p-contacto-null', {
+          section: 'contacto',
+          data: { telefono: null, email: 'a@b.com' },
+        } as any),
+      ).resolves.toBeDefined();
+
+      const callArg = (prisma.paciente.update as jest.Mock).mock.calls[0][0];
+      expect(callArg.data.telefono).toBeNull();
+    });
+
+    it("D-06: updatePacienteSection contacto con telefono: '123' -> BadRequestException('Teléfono inválido')", async () => {
+      await expect(
+        service.updatePacienteSection('p-contacto-2', {
+          section: 'contacto',
+          data: { telefono: '123' },
+        } as any),
+      ).rejects.toThrow(new BadRequestException('Teléfono inválido'));
+    });
+
+    it("D-07: updatePacienteSection emergencia sin contactoEmergenciaTelefono sigue lanzando BadRequestException('Datos de emergencia inválidos')", async () => {
+      await expect(
+        service.updatePacienteSection('p-emergencia-1', {
+          section: 'emergencia',
+          data: {
+            contactoEmergenciaNombre: 'Juan',
+            contactoEmergenciaRelacion: 'Padre',
+          },
+        } as any),
+      ).rejects.toThrow(
+        new BadRequestException('Datos de emergencia inválidos'),
+      );
+    });
+  });
+});
+
+// ── getKanban consentimientosFirmados select — source-shape guard (INDIC-04) ─
+// Guard estatico (no mockea Prisma, no instancia el service): lee la fuente
+// real de pacientes.service.ts y aisla el bloque `consentimientosFirmados: { ... }`
+// por balance de llaves desde su llave de apertura, para que el comentario
+// documental "Sin take:1" (que precede la llave) no genere falso positivo.
+// Cierra el gap de 61-VERIFICATION.md: el test de frontera de 61-04 mockea
+// findMany con datos hechos a mano, por lo que reintroducir take:1 en el select
+// real dejaria esa suite en verde sin este guard.
+describe('getKanban consentimientosFirmados select — source-shape guard (take regression, INDIC-04)', () => {
+  it('el bloque consentimientosFirmados no tiene take/orderBy y conserva firmadoAt + indicacionesLeidasAt', () => {
+    const sourcePath = join(__dirname, 'pacientes.service.ts');
+    const source: string = readFileSync(sourcePath, 'utf8');
+
+    const keyIndex = source.indexOf('consentimientosFirmados:');
+    expect(keyIndex).not.toBe(-1);
+
+    const openBraceIndex = source.indexOf('{', keyIndex);
+    expect(openBraceIndex).not.toBe(-1);
+
+    let depth = 0;
+    let endIndex = -1;
+    for (let i = openBraceIndex; i < source.length; i++) {
+      const ch = source[i];
+      if (ch === '{') depth++;
+      else if (ch === '}') {
+        depth--;
+        if (depth === 0) {
+          endIndex = i;
+          break;
+        }
+      }
+    }
+    expect(endIndex).not.toBe(-1);
+
+    const block = source.slice(openBraceIndex, endIndex + 1);
+
+    // Falsificacion: reintroducir take/orderBy en el select real de
+    // consentimientosFirmados (pacientes.service.ts) rompe estos asserts.
+    expect(block).not.toMatch(/\btake\b/);
+    expect(block).not.toMatch(/\borderBy\b/);
+
+    // No-degradacion del select (T-61-10): solo estos 2 campos, sin ampliar
+    // a datos forenses (hash/ip/userAgent/PDF).
+    expect(block).toMatch(/firmadoAt/);
+    expect(block).toMatch(/indicacionesLeidasAt/);
   });
 });

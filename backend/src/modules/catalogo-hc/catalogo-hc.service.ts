@@ -756,7 +756,9 @@ export class CatalogoHCService {
    * Saves or clears the indicacionesUrl for a ZonaHC (CONS-02).
    * Ownership guard mirrors renombrarZona: NotFoundException for non-owned or missing zona.
    * profesionalId comes from JWT scope — never from request body (T-53-08).
-   * Allows null to clear the URL (D-02 / T-53-11 @IsUrl validated in DTO).
+   * Allows null to clear the URL. URL is validated server-side in this method
+   * (new URL + http/https-only + maxLength 2048); the DTO class-validator
+   * decorators do NOT run (no global ValidationPipe) — cr-01.
    */
   async actualizarIndicacionesUrl(
     profesionalId: string,

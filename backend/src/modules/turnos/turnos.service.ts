@@ -16,13 +16,18 @@ import {
   EtapaCRM,
   TipoContacto,
   FlujoPaciente,
+  TemperaturaPaciente,
+  Prisma,
 } from '@prisma/client';
 import { getDayRange } from '@/src/common/utils/date-range';
 import { ReprogramarTurnoDto } from './dto/reprogramar-turno.dto';
 import { IniciarSesionDto } from './dto/iniciar-sesion.dto';
 import { CerrarSesionDto } from './dto/cerrar-sesion.dto';
 import { CuentasCorrientesService } from '../cuentas-corrientes/cuentas-corrientes.service';
-import { resumirTratamientosDeContenido } from '../historia-clinica/historia-clinica.contenido.helpers';
+import {
+  resumirTratamientosDeContenido,
+  listarTratamientosDeContenido,
+} from '../historia-clinica/historia-clinica.contenido.helpers';
 
 @Injectable()
 export class TurnosService {
@@ -51,7 +56,12 @@ export class TurnosService {
       }),
       this.prisma.tipoTurno.findUnique({
         where: { id: dto.tipoTurnoId },
-        select: { id: true, duracionDefault: true, flujoPaciente: true },
+        select: {
+          id: true,
+          nombre: true,
+          duracionDefault: true,
+          flujoPaciente: true,
+        },
       }),
     ]);
 
@@ -128,17 +138,25 @@ export class TurnosService {
       },
     });
 
-    // 5) CRM auto-transition: un nuevo turno SIEMPRE reactiva a TURNO_AGENDADO
-    // desde cualquier etapa incluidas PERDIDO y PROCEDIMIENTO_REALIZADO (D-09, EMBUDO-05).
-    // El guard forward-only fue eliminado en este path — la reactivación es incondicional.
+    // 5) CRM auto-transition: guard selectivo de degradación (D-05/D-06).
+    // Un turno nuevo NO degrada una etapa avanzada (CONFIRMADO/PROCEDIMIENTO_REALIZADO)
+    // a TURNO_AGENDADO — EXCEPTO cuando el turno es de tipo "Consulta", que reinicia
+    // el ciclo (el embudo es cíclico: cada cirugía nueva empieza con una Consulta).
+    // PERDIDO/CONSULTADO/etc. (etapas no avanzadas) siguen reactivando siempre.
     const pacienteCRM = await this.prisma.paciente.findUnique({
       where: { id: dto.pacienteId },
       select: { etapaCRM: true, profesionalId: true, flujo: true },
     });
-    await this.prisma.paciente.update({
-      where: { id: dto.pacienteId },
-      data: { etapaCRM: EtapaCRM.TURNO_AGENDADO },
-    });
+    const esConsulta = tipoTurno.nombre === 'Consulta'; // D-06
+    const etapaAvanzada =
+      pacienteCRM?.etapaCRM === EtapaCRM.CONFIRMADO ||
+      pacienteCRM?.etapaCRM === EtapaCRM.PROCEDIMIENTO_REALIZADO;
+    if (esConsulta || !etapaAvanzada) {
+      await this.prisma.paciente.update({
+        where: { id: dto.pacienteId },
+        data: { etapaCRM: EtapaCRM.TURNO_AGENDADO }, // D-05
+      });
+    }
 
     // 5.5) Flujo auto-update (best-effort — no bloquea creación del turno)
     if (
@@ -215,7 +233,14 @@ export class TurnosService {
   async cancelarTurno(turnoId: string) {
     const turno = await this.prisma.turno.findUnique({
       where: { id: turnoId },
-      select: { id: true, estado: true },
+      select: {
+        id: true,
+        estado: true,
+        esCirugia: true,
+        cirugiaId: true,
+        pacienteId: true,
+        profesionalId: true,
+      },
     });
 
     if (!turno) {
@@ -229,6 +254,45 @@ export class TurnosService {
       throw new BadRequestException(
         `No se puede cancelar un turno en estado ${turno.estado}.`,
       );
+    }
+
+    // D-07: cancelar un turno de cirugía NO degrada etapaCRM (el paciente
+    // sigue CONFIRMADO — el presupuesto ya fue confirmado). En cambio dispara
+    // señales de recontacto: temperatura CALIENTE + cirugía CANCELADA
+    // (queryable, alimenta getListaAccion) + contactoLog de auditoría.
+    if (turno.esCirugia) {
+      const turnoUpdate = this.prisma.turno.update({
+        where: { id: turnoId },
+        data: { estado: EstadoTurno.CANCELADO },
+      });
+      const operaciones: Prisma.PrismaPromise<unknown>[] = [turnoUpdate];
+
+      if (turno.cirugiaId) {
+        operaciones.push(
+          this.prisma.cirugia.update({
+            where: { id: turno.cirugiaId },
+            data: { estado: EstadoCirugia.CANCELADA },
+          }),
+        );
+      }
+
+      operaciones.push(
+        this.prisma.paciente.update({
+          where: { id: turno.pacienteId },
+          data: { temperatura: TemperaturaPaciente.CALIENTE },
+        }),
+        this.prisma.contactoLog.create({
+          data: {
+            pacienteId: turno.pacienteId,
+            profesionalId: turno.profesionalId,
+            tipo: TipoContacto.SISTEMA,
+            nota: 'Cirugía cancelada — requiere recontacto',
+          },
+        }),
+      );
+
+      const [turnoActualizado] = await this.prisma.$transaction(operaciones);
+      return turnoActualizado;
     }
 
     return this.prisma.turno.update({
@@ -500,11 +564,14 @@ export class TurnosService {
         fin: true,
         estado: true,
         observaciones: true,
+        pacienteId: true,
+        esSobreturno: true,
         paciente: {
           select: {
             id: true,
             nombreCompleto: true,
             whatsappOptIn: true,
+            telefono: true,
           },
         },
         tipoTurno: {
@@ -530,6 +597,9 @@ export class TurnosService {
       return {
         ...rest,
         ultimoTratamiento: resumirTratamientosDeContenido(
+          entradaHC?.contenido ?? null,
+        ),
+        tratamientos: listarTratamientosDeContenido(
           entradaHC?.contenido ?? null,
         ),
         tipoEntradaHC: entradaHC?.tipoEntrada ?? null,
@@ -764,6 +834,23 @@ export class TurnosService {
           },
           tipoTurno: { select: { id: true, nombre: true } },
           cirugia: true,
+        },
+      });
+
+      // CRM auto-transition: agendar cirugía confirma al paciente sin depender
+      // de presupuesto aceptado (D-04, EMBUDO-08). Escritura dentro de la MISMA
+      // tx — nunca abrir una tx anidada.
+      await tx.paciente.update({
+        where: { id: dto.pacienteId },
+        data: { etapaCRM: EtapaCRM.CONFIRMADO },
+      });
+
+      await tx.contactoLog.create({
+        data: {
+          pacienteId: dto.pacienteId,
+          profesionalId: dto.profesionalId,
+          tipo: TipoContacto.SISTEMA,
+          nota: 'Cirugía agendada — confirmado',
         },
       });
 

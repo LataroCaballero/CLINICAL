@@ -1,12 +1,18 @@
-import { IsBoolean, IsString, IsUUID } from 'class-validator';
+import { IsString, IsUUID } from 'class-validator';
 
 /**
  * Narrow write surface for the patient-portal consent signing endpoint (CONS-04).
  *
- * Declares THREE fields: `zonaId`, `signaturePngDataUrl`, `indicacionesLeidas`.
- * The patient identity (`pacienteId`) is ALWAYS derived from the portal-scoped
- * JWT (`req.user.pacienteId`) in the controller — it is never declared here so
- * it cannot be injected via the request body (D-12, pitfall 12, T-56-12).
+ * Declares TWO fields: `zonaId`, `signaturePngDataUrl`. The patient identity
+ * (`pacienteId`) is ALWAYS derived from the portal-scoped JWT
+ * (`req.user.pacienteId`) in the controller — it is never declared here so it
+ * cannot be injected via the request body (D-12, pitfall 12, T-56-12).
+ *
+ * Signing is decoupled from indicaciones state (CONS-11, D-03): this DTO
+ * declares no field for the indicaciones read-receipt. A stale front-end that
+ * still sends that legacy field is silently stripped by the controller's
+ * per-route `new ValidationPipe({ whitelist: true })` — it never reaches the
+ * service.
  *
  * The `signaturePngDataUrl` is expected to be a `data:image/png;base64,<base64>`
  * data URL. The prefix is stripped server-side in the service before base64
@@ -22,7 +28,4 @@ export class FirmarConsentimientoPortalDto {
 
   @IsString()
   signaturePngDataUrl: string; // data URL — prefix stripped server-side
-
-  @IsBoolean()
-  indicacionesLeidas: boolean; // must be true; service validates (D-11)
 }

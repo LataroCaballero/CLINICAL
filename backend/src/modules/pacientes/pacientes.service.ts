@@ -24,6 +24,7 @@ import {
   TipoTareaSeguimiento,
   TipoContacto,
   Prisma,
+  EstadoCirugia,
 } from '@prisma/client';
 import { EstadoPresupuesto } from '@prisma/client';
 import { BadRequestException } from '@nestjs/common';
@@ -51,7 +52,6 @@ export class PacientesService {
 
   // Crear
   async create(dto: CreatePacienteDto) {
-    console.log('DTO RECIBIDO:', dto);
     try {
       const data = {
         ...dto,
@@ -61,12 +61,34 @@ export class PacientesService {
         fechaIndicaciones: dto.fechaIndicaciones
           ? new Date(dto.fechaIndicaciones)
           : null,
+        // EMBUDO-07 (D-01/D-03): un lead recien creado entra al kanban en
+        // NUEVO_LEAD (no "Sin clasificar"). CreatePacienteDto NO transporta
+        // etapaCRM/flujo, asi que este default es incondicional. flujo=null
+        // (en vez del default de schema PENDIENTE) para pasar el filtro
+        // OR:[{flujo:CIRUGIA},{flujo:null}] de getKanban (D-03 opcion 1).
+        etapaCRM: EtapaCRM.NUEVO_LEAD,
+        flujo: null,
+        // TEL-01 (D-01): el frontend manda telefono: '' (no undefined) cuando
+        // el campo queda en blanco — normalizeTelefono() lo deja en null.
+        telefono: this.normalizeTelefono(dto.telefono),
       };
       return this.prisma.paciente.create({
         data,
       });
     } catch (error: any) {
       console.log('ERROR CAPTURADO EN CATCH:', error);
+
+      // TEL-01 (D-06): un teléfono inválido normalizado por normalizeTelefono()
+      // lanza BadRequestException *dentro* de este try — sin este rethrow, el
+      // catch-all de abajo lo enmascara como 500 en vez de propagar el 400.
+      // Funciona porque normalizeTelefono() tira de forma SÍNCRONA, antes del
+      // return. Ojo (67-REVIEW CR-03): el `return this.prisma.paciente.create()`
+      // de arriba no está await-eado, así que un rechazo de Prisma escapa a este
+      // catch y la rama P2002 -> 409 de abajo es inalcanzable. Preexistente a la
+      // fase 67; se arregla agregando el `await` al return.
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
 
       // Manejar directamente por STRUCTURE
       if (error.code === 'P2002' && error.meta?.target?.includes('dni')) {
@@ -203,7 +225,15 @@ export class PacientesService {
     await this.ensureExists(id);
     return this.prisma.paciente.update({
       where: { id },
-      data: dto,
+      data: {
+        ...dto,
+        // TEL-01 (D-02): sólo intervenir si telefono viene presente en el
+        // parcial — ausente no debe forzarse a null, pero '' presente sí
+        // debe quedar en null (vaciar el campo es una corrección legítima).
+        ...(dto.telefono !== undefined
+          ? { telefono: this.normalizeTelefono(dto.telefono) }
+          : {}),
+      },
     });
   }
 
@@ -327,6 +357,31 @@ export class PacientesService {
     if (!exists) throw new NotFoundException('Paciente no encontrado');
   }
 
+  /**
+   * Única definición de "teléfono válido" del módulo (D-06). No global
+   * ValidationPipe is active, so `@IsString()` on the DTO is inert — this is
+   * the runtime re-check, and the single place the ≥6-char threshold lives.
+   * Usado por create(), update() y updateContacto() (D-01/D-02/D-05).
+   *
+   * - null/undefined -> null
+   * - string vacío tras trim -> null (vaciar el campo es una corrección legítima)
+   * - string con contenido y <6 chars -> BadRequestException('Teléfono inválido')
+   * - string con contenido y >=6 chars -> valor trimmeado
+   * - cualquier otro tipo -> BadRequestException('Teléfono inválido')
+   */
+  private normalizeTelefono(value: unknown): string | null {
+    if (value === null || value === undefined) return null;
+    if (typeof value !== 'string') {
+      throw new BadRequestException('Teléfono inválido');
+    }
+    const trimmed = value.trim();
+    if (trimmed === '') return null;
+    if (trimmed.length < 6) {
+      throw new BadRequestException('Teléfono inválido');
+    }
+    return trimmed;
+  }
+
   async suggest(q: string, profesionalId?: string): Promise<PacienteSuggest[]> {
     if (!q || q.trim().length < 2) return [];
 
@@ -342,7 +397,7 @@ export class PacientesService {
           id: string;
           nombreCompleto: string;
           dni: string;
-          telefono: string;
+          telefono: string | null;
           fotoUrl: string | null;
           score: number;
         }>
@@ -365,7 +420,7 @@ export class PacientesService {
           (similarity(unaccent(p."nombreCompleto"), unaccent(${query})) * 0.7) +
           CASE WHEN p.dni = ${query} THEN 0.95 ELSE 0 END +
           CASE WHEN p.dni LIKE ${query} || '%' THEN 0.7 ELSE 0 END +
-          CASE WHEN p.telefono LIKE '%' || ${query} || '%' THEN 0.5 ELSE 0 END
+          CASE WHEN COALESCE(p.telefono, '') LIKE '%' || ${query} || '%' THEN 0.5 ELSE 0 END
         ) AS score
       FROM "Paciente" p
       WHERE
@@ -373,7 +428,7 @@ export class PacientesService {
           similarity(unaccent(p."nombreCompleto"), unaccent(${query})) > 0.25
           OR unaccent(p."nombreCompleto") ILIKE '%' || unaccent(${query}) || '%'
           OR p.dni LIKE ${query} || '%'
-          OR p.telefono LIKE '%' || ${query} || '%'
+          OR COALESCE(p.telefono, '') LIKE '%' || ${query} || '%'
         )
         ${profesionalFilter}
       ORDER BY score DESC
@@ -418,19 +473,26 @@ export class PacientesService {
 
   private async updateContacto(id: string, data: any) {
     // whitelist explícito
-    const patch = {
-      telefono: data.telefono,
+    const patch: {
+      telefono?: string | null;
+      telefonoAlternativo: string | null;
+      email: string | null;
+    } = {
       telefonoAlternativo: data.telefonoAlternativo ?? null,
       email: data.email ?? null,
     };
 
-    // validación mínima backend
-    if (
-      typeof patch.telefono !== 'string' ||
-      patch.telefono.trim().length < 6
-    ) {
-      throw new BadRequestException('Teléfono inválido');
+    // TEL-01 (D-05/D-06): editar Contacto sin teléfono ya no da 400, pero hay que
+    // distinguir "no mandé el campo" de "lo vacié a propósito". Si `telefono` viene
+    // ausente/undefined NO se toca la columna; mandarlo como '' o null la limpia, y
+    // un valor con forma inválida sigue tirando 400 vía normalizeTelefono().
+    // Sin este guard, un PATCH que simplemente omite el campo pisaba con NULL el
+    // teléfono guardado — una request que antes se rechazaba pasaba a destruir datos.
+    if (data.telefono !== undefined) {
+      patch.telefono = this.normalizeTelefono(data.telefono);
     }
+
+    // validación mínima backend
     if (patch.email && typeof patch.email !== 'string') {
       throw new BadRequestException('Email inválido');
     }
@@ -659,6 +721,7 @@ export class PacientesService {
         // Payload enriquecido para pasos del stepper (D-04/D-05)
         consentimientoFirmado: true,
         indicacionesEnviadas: true,
+        indicacionesLeidasAt: true, // v1.14 primary source, INDIC-04
         cirugias: {
           select: { fecha: true, estado: true },
           orderBy: { fecha: 'desc' },
@@ -670,10 +733,13 @@ export class PacientesService {
             },
           },
         },
+        // Sin take:1: computePasosCrm recorre TODAS las filas con .some (Paso 4
+        // firmadoAt, Paso 5 Fallback 1 indicacionesLeidasAt). Truncar a la mas
+        // reciente rompia el Fallback 1 legacy v1.12 en pacientes multi-zona
+        // (WR-01/SC#3, 61-REVIEW.md). Solo 2 campos seleccionados — sin over-fetch
+        // de datos forenses append-only (T-61-10).
         consentimientosFirmados: {
           select: { firmadoAt: true, indicacionesLeidasAt: true },
-          take: 1,
-          orderBy: { firmadoAt: 'desc' },
         },
       },
       orderBy: { updatedAt: 'desc' },
@@ -737,6 +803,8 @@ export class PacientesService {
           comentarioListaEspera: p.comentarioListaEspera,
           pendingAutorizaciones: p.autorizaciones.length,
           flujo: p.flujo ?? null,
+          // Display-only, does not govern pasos.indicacionesPreop (D-08). INDIC-05.
+          indicacionesLeidasAt: p.indicacionesLeidasAt,
           // Computed step-state payload (D-04/D-05). Values: 'completo' | 'pendiente'.
           ...computePasosCrm({
             presupuestos: p.presupuestos,
@@ -745,6 +813,7 @@ export class PacientesService {
             consentimientosFirmados: p.consentimientosFirmados,
             consentimientoFirmado: p.consentimientoFirmado,
             indicacionesEnviadas: p.indicacionesEnviadas,
+            indicacionesLeidasAt: p.indicacionesLeidasAt,
           }),
         };
       }),
@@ -874,21 +943,52 @@ export class PacientesService {
       where: { profesionalId, fecha: { gte: hoyInicio } },
     });
 
-    // Pacientes activos del profesional, excluyendo los contactados hoy, CONFIRMADO y PERDIDO
+    const ahora = new Date();
+
+    // Pacientes activos del profesional, excluyendo los contactados hoy.
+    // Rama normal: etapaCRM no cerrada (excluye CONFIRMADO/PERDIDO), flujo visible.
+    // Rama recontacto (D-07): CONFIRMADO con cirugía CANCELADA/SUSPENDIDA y sin
+    // cirugía PROGRAMADA futura — reaparece porque requiere que la secretaria
+    // decida (nueva fecha, PERDIDO, o sacarlo del embudo). Derivado, schema-free.
     const pacientes = await this.prisma.paciente.findMany({
       where: {
         profesionalId,
         crmArchivado: false,
-        etapaCRM: { notIn: ['CONFIRMADO', 'PERDIDO'] as EtapaCRM[] },
         NOT: {
           contactos: { some: { fecha: { gte: hoyInicio } } },
         },
-        OR: [{ flujo: FlujoPaciente.CIRUGIA }, { flujo: null }],
+        OR: [
+          {
+            etapaCRM: { notIn: ['CONFIRMADO', 'PERDIDO'] as EtapaCRM[] },
+            OR: [{ flujo: FlujoPaciente.CIRUGIA }, { flujo: null }],
+          },
+          {
+            etapaCRM: EtapaCRM.CONFIRMADO,
+            cirugias: {
+              some: {
+                estado: {
+                  in: [EstadoCirugia.CANCELADA, EstadoCirugia.SUSPENDIDA],
+                },
+              },
+            },
+            NOT: {
+              cirugias: {
+                some: {
+                  estado: EstadoCirugia.PROGRAMADA,
+                  fecha: { gte: ahora },
+                },
+              },
+            },
+          },
+        ],
       },
       include: {
         contactos: {
           orderBy: { fecha: 'desc' },
           take: 1,
+        },
+        cirugias: {
+          select: { estado: true, fecha: true },
         },
       },
     });
@@ -905,6 +1005,23 @@ export class PacientesService {
         p.temperatura,
         p.etapaCRM,
       );
+      // requiereRecontacto: computado, no persistido (D-07). Solo true cuando
+      // matchea exactamente la rama recontacto del where (CONFIRMADO + cirugía
+      // CANCELADA/SUSPENDIDA sin cirugía PROGRAMADA futura).
+      const estadosRecontacto: EstadoCirugia[] = [
+        EstadoCirugia.CANCELADA,
+        EstadoCirugia.SUSPENDIDA,
+      ];
+      const tieneCirugiaCanceladaOSuspendida = p.cirugias.some((c) =>
+        estadosRecontacto.includes(c.estado),
+      );
+      const tieneCirugiaProgramadaFutura = p.cirugias.some(
+        (c) => c.estado === EstadoCirugia.PROGRAMADA && c.fecha >= ahora,
+      );
+      const requiereRecontacto =
+        p.etapaCRM === EtapaCRM.CONFIRMADO &&
+        tieneCirugiaCanceladaOSuspendida &&
+        !tieneCirugiaProgramadaFutura;
       return {
         id: p.id,
         nombreCompleto: p.nombreCompleto,
@@ -914,6 +1031,7 @@ export class PacientesService {
         diasSinContacto,
         score,
         ultimoContactoFecha: ultimoContacto,
+        requiereRecontacto,
       };
     });
 

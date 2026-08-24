@@ -27,6 +27,7 @@ const mockPrisma = {
   paciente: {
     findUnique: jest.fn(),
     update: jest.fn(),
+    updateMany: jest.fn(),
   },
   cirugia: {
     findFirst: jest.fn(),
@@ -73,6 +74,7 @@ describe('PacientePortalService', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     mockPrisma.paciente.update.mockResolvedValue({});
+    mockPrisma.paciente.updateMany.mockResolvedValue({ count: 1 });
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -478,14 +480,14 @@ describe('PacientePortalService', () => {
 
   // ── firmarConsentimiento write path (56-05 + 56-09 union validation) ────────
   describe('firmarConsentimiento', () => {
+    // No `indicacionesLeidas` field — signing is decoupled from indicaciones
+    // state (CONS-11, D-02/D-03, Phase 61).
     const dto = {
       zonaId: 'z1',
       signaturePngDataUrl: 'data:image/png;base64,iVBORw0KGgo=',
-      indicacionesLeidas: true,
     };
 
-    it('signs an HC-derived consent even with NO programmed surgery (write path unioned with read path — 56-09)', async () => {
-      // No surgery, but the patient's FINALIZED HC references zona z1.
+    const setupSignableZona = () => {
       mockPrisma.cirugia.findMany.mockResolvedValue([]);
       mockPrisma.historiaClinica.findMany.mockResolvedValue([
         { entradas: [{ contenido: { zonas: [{ zonaId: 'z1' }] } }] },
@@ -505,6 +507,11 @@ describe('PacientePortalService', () => {
       });
       mockStorage.save.mockResolvedValue('signed/z1.pdf');
       mockPrisma.consentimientoFirmado.create.mockResolvedValue({});
+    };
+
+    it('signs an HC-derived consent even with NO programmed surgery (write path unioned with read path — 56-09)', async () => {
+      // No surgery, but the patient's FINALIZED HC references zona z1.
+      setupSignableZona();
 
       const res = await service.firmarConsentimiento(PAC_ID, dto, '1.2.3.4', 'UA');
 
@@ -530,6 +537,64 @@ describe('PacientePortalService', () => {
         service.firmarConsentimiento(PAC_ID, dto, '1.2.3.4', 'UA'),
       ).rejects.toBeInstanceOf(NotFoundException);
       expect(mockPrisma.consentimientoFirmado.create).not.toHaveBeenCalled();
+    });
+
+    // ── CONS-11 / D-02 / D-03 decoupling ──────────────────────────────────────
+    it('signs successfully with a dto that carries no indicacionesLeidas field (D-02/D-03)', async () => {
+      setupSignableZona();
+
+      const res = await service.firmarConsentimiento(PAC_ID, dto, '1.2.3.4', 'UA');
+
+      expect(res).toEqual({ ok: true });
+    });
+
+    it('signs successfully even if a stale dto shape sets indicacionesLeidas=false (D-02)', async () => {
+      setupSignableZona();
+      const staleDto = { ...dto, indicacionesLeidas: false } as never;
+
+      const res = await service.firmarConsentimiento(
+        PAC_ID,
+        staleDto,
+        '1.2.3.4',
+        'UA',
+      );
+
+      expect(res).toEqual({ ok: true });
+    });
+
+    it('creates the forensic record WITHOUT an indicacionesLeidasAt key (D-02)', async () => {
+      setupSignableZona();
+
+      await service.firmarConsentimiento(PAC_ID, dto, '1.2.3.4', 'UA');
+
+      const data = mockPrisma.consentimientoFirmado.create.mock.calls[0][0].data;
+      expect(data).not.toHaveProperty('indicacionesLeidasAt');
+    });
+  });
+
+  // ── registrarAcuseIndicaciones (INDIC-03, D-06/D-07) ────────────────────────
+  describe('registrarAcuseIndicaciones', () => {
+    it('sets the timestamp via updateMany with a set-once WHERE guard and returns { ok: true }', async () => {
+      mockPrisma.paciente.updateMany.mockResolvedValue({ count: 1 });
+
+      const res = await service.registrarAcuseIndicaciones(PAC_ID);
+
+      expect(res).toEqual({ ok: true });
+      expect(mockPrisma.paciente.updateMany).toHaveBeenCalledWith({
+        where: { id: PAC_ID, indicacionesLeidasAt: null },
+        data: { indicacionesLeidasAt: expect.any(Date) },
+      });
+    });
+
+    it('is idempotent: a second acuse matching 0 rows still returns { ok: true } without overwriting', async () => {
+      // Simulates the retry case: the first acuse already set the timestamp,
+      // so the `indicacionesLeidasAt: null` filter matches 0 rows this time.
+      mockPrisma.paciente.updateMany.mockResolvedValue({ count: 0 });
+
+      const res = await service.registrarAcuseIndicaciones(PAC_ID);
+
+      expect(res).toEqual({ ok: true });
+      expect(mockPrisma.paciente.updateMany).toHaveBeenCalledTimes(1);
     });
   });
 });

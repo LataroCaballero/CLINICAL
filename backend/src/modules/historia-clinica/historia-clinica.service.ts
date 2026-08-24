@@ -1,8 +1,12 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { Prisma } from '@prisma/client';
+import { Prisma, TipoEntradaHC } from '@prisma/client';
 import { CreateEntradaDto } from './dto/crear-entrada.dto';
-import { resolverNuevoFlujo } from './historia-clinica.flujo.helpers';
+import {
+  resolverNuevoFlujo,
+  resolverTipoEntrada,
+  resolverTipoTurnoSync,
+} from './historia-clinica.flujo.helpers';
 import {
   construirContenidoPrimeraVez,
   derivarPerfilPrimeraVez,
@@ -10,7 +14,7 @@ import {
 import { CatalogoHCService } from '../catalogo-hc/catalogo-hc.service';
 
 // Re-export so existing imports from this file still work
-export { resolverNuevoFlujo };
+export { resolverNuevoFlujo, resolverTipoEntrada };
 
 @Injectable()
 export class HistoriaClinicaService {
@@ -221,13 +225,27 @@ export class HistoriaClinicaService {
       }
     }
 
-    // Pre-fetch turno.esCirugia outside tx (pgBouncer pattern — same as other pre-fetches)
+    // Pre-fetch turno.esCirugia + tipoTurno outside tx (pgBouncer pattern — same as
+    // other pre-fetches). tipoTurnoId/tipoTurno.nombre added for HCSYNC-01/02/03 to
+    // avoid a second round-trip inside the transaction.
     const turnoCtx = dto.turnoId
       ? await this.prisma.turno.findUnique({
           where: { id: dto.turnoId },
-          select: { esCirugia: true },
+          select: {
+            esCirugia: true,
+            tipoTurnoId: true,
+            tipoTurno: { select: { nombre: true } },
+          },
         })
       : null;
+
+    // D-08: forzado server-side del tipoEntrada según dto.tipo (evita que el cliente evada
+    // la reclasificación mandando un tipoEntrada distinto, T-63-08). Cubre pre_quirurgico
+    // (comportamiento existente) y tratamiento_en_consultorio (EMBUDO-09, nuevo).
+    const tipoEntradaResuelto = resolverTipoEntrada(
+      dto.tipo,
+      dto.tipoEntrada,
+    ) as TipoEntradaHC | undefined;
 
     // Una sola transacción: buscar/crear historia + crear entrada + actualizar paciente
     const entrada = await this.prisma.$transaction(async (tx) => {
@@ -244,11 +262,7 @@ export class HistoriaClinicaService {
         data: {
           historiaClinicaId: historia.id,
           contenido,
-          // pre_quirurgico forces tipoEntrada PREOPERATORIO regardless of what client passes
-          tipoEntrada:
-            dto.tipo === 'pre_quirurgico'
-              ? 'PREOPERATORIO'
-              : (dto.tipoEntrada ?? undefined),
+          tipoEntrada: tipoEntradaResuelto,
           ...(fechaFinal && { fecha: fechaFinal }),
           // D-10: persist estudios in dedicated queryable column (PREOP-09)
           ...(dto.tipo === 'pre_quirurgico' && dto.estudiosComplementarios
@@ -266,7 +280,7 @@ export class HistoriaClinicaService {
         select: { flujo: true },
       });
       const nuevoFlujo = resolverNuevoFlujo(
-        dto.tipoEntrada,
+        tipoEntradaResuelto,
         pac?.flujo,
         turnoCtx?.esCirugia ?? false,
       );
@@ -278,8 +292,43 @@ export class HistoriaClinicaService {
             ...(diagnosticoStr !== null && { diagnostico: diagnosticoStr }),
             ...(tratamientoStr !== null && { tratamiento: tratamientoStr }),
             ...(nuevoFlujo && { flujo: nuevoFlujo }),
+            // D-10: al salir al TRATAMIENTO se oculta del board (patrón v1.13) y se limpia
+            // la etapa CRM, espejo de updateFlujo() en pacientes.service.ts
+            ...(nuevoFlujo === 'TRATAMIENTO' && { etapaCRM: null }),
           },
         });
+      }
+
+      // HCSYNC-01/02/03: sync Turno.tipoTurno with the HC plantilla being saved on it.
+      // D-09 guard: without dto.turnoId, no turno query/update runs at all (retroactive
+      // entries from PatientDrawer never touch tipoTurno). D-06: independent of the
+      // paciente.flujo/etapaCRM block above — no effects on it. Guard also requires
+      // turnoCtx (pre-fetch resolved the turno) so a stale/deleted turnoId short-circuits
+      // the whole block instead of reaching tx.turno.update against a missing row
+      // (Prisma P2025 would otherwise abort the entire HC-save transaction, T-65-03).
+      if (dto.turnoId && turnoCtx) {
+        const targetNombre = resolverTipoTurnoSync(
+          dto.tipo,
+          turnoCtx?.tipoTurno?.nombre,
+          turnoCtx?.esCirugia ?? false,
+        );
+        if (targetNombre) {
+          const destino = await tx.tipoTurno.findUnique({
+            where: { nombre: targetNombre },
+            select: { id: true, esCirugia: true },
+          });
+          // Defensive skip if destino doesn't exist (never break HC save); idempotent
+          // skip if it already matches the current tipoTurnoId (D-05).
+          if (destino && destino.id !== turnoCtx?.tipoTurnoId) {
+            await tx.turno.update({
+              where: { id: dto.turnoId },
+              data: {
+                tipoTurnoId: destino.id,
+                esCirugia: destino.esCirugia,
+              },
+            });
+          }
+        }
       }
 
       // D-09: Union-dedup profile merge for pre_quirurgico

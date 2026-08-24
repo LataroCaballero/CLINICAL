@@ -9,6 +9,7 @@ import { useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function DatosCompletos({
     paciente,
@@ -18,6 +19,15 @@ export default function DatosCompletos({
     onBack: () => void;
 }) {
     if (!paciente) return null;
+
+    const queryClient = useQueryClient();
+
+    // usePaciente() agrega el id del profesional efectivo como tercer elemento
+    // de su queryKey (["paciente", id, <profesional>]), que este componente no
+    // conoce. Usamos invalidación parcial por prefijo de 2 elementos para
+    // cubrir todas sus variantes (mismo criterio que useUpdateWhatsappOptIn.ts).
+    const invalidatePaciente = () =>
+        queryClient.invalidateQueries({ queryKey: ["paciente", paciente.id] });
 
     const [editingSection, setEditingSection] = useState<string | null>(null);
 
@@ -103,7 +113,12 @@ export default function DatosCompletos({
     /* ------- SCHEMAS ------- */
 
     const contactoSchema = z.object({
-        telefono: z.string().min(6, "Teléfono inválido").max(20, "Teléfono inválido"),
+        telefono: z
+            .string()
+            .optional()
+            .refine((v) => !v || v.trim() === "" || (v.trim().length >= 6 && v.trim().length <= 20), {
+                message: "Teléfono inválido",
+            }),
         telefonoAlternativo: z.string().min(6).max(20).optional().nullable(),
         email: z.string().email("Email inválido").optional().nullable(),
     });
@@ -223,6 +238,8 @@ export default function DatosCompletos({
                 data: result.data,
             });
 
+            await invalidatePaciente();
+
             toast.success("Datos de contacto actualizados correctamente");
             setEditingSection(null);
         } catch (e) {
@@ -269,6 +286,8 @@ export default function DatosCompletos({
                 section: "emergencia",
                 data: result.data,
             });
+
+            await invalidatePaciente();
 
             toast.success("Contacto de emergencia actualizado correctamente");
             setEditingSection(null);
@@ -318,6 +337,8 @@ export default function DatosCompletos({
                 data: result.data,
             });
 
+            await invalidatePaciente();
+
             toast.success("Cobertura médica actualizada correctamente");
             setEditingSection(null);
         } catch {
@@ -363,6 +384,8 @@ export default function DatosCompletos({
                 section: "clinica",
                 data: result.data,
             });
+
+            await invalidatePaciente();
 
             toast.success("Información clínica actualizada correctamente");
             setEditingSection(null);
@@ -422,6 +445,8 @@ export default function DatosCompletos({
                 data: result.data,
             });
 
+            await invalidatePaciente();
+
             toast.success("Estado del paciente actualizado correctamente");
             setEditingSection(null);
         } catch {
@@ -476,6 +501,8 @@ export default function DatosCompletos({
                 section: "personales",
                 data: result.data,
             });
+
+            await invalidatePaciente();
 
             toast.success("Datos personales actualizados correctamente");
             setEditingSection(null);
@@ -588,7 +615,7 @@ export default function DatosCompletos({
                     value={
                         <EditableInput
                             disabled={!isEditing("contacto") || saving}
-                            value={contactoForm.telefono}
+                            value={contactoForm.telefono ?? ""}
                             onChange={(v) => setContactoForm((f) => ({ ...f, telefono: v }))}
                             error={contactoErrors.telefono}
                         />

@@ -18,6 +18,7 @@ interface CalendarEvent {
   paciente: string;
   pacienteId?: string;
   whatsappOptIn?: boolean;
+  telefono?: string | null;
   start: Date;
   end: Date;
   tipo: string;

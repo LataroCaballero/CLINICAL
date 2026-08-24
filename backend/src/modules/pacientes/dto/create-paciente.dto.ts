@@ -20,8 +20,9 @@ export class CreatePacienteDto {
   @IsDateString()
   fechaNacimiento?: string;
 
+  @IsOptional()
   @IsString()
-  telefono: string;
+  telefono?: string;
 
   @IsOptional()
   @IsString()

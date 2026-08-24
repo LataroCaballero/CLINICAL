@@ -165,6 +165,17 @@ export default function QuickAppointment({ profesionalId }: Props) {
   const [observaciones, setObservaciones] = React.useState("");
   const [duracionMinutos, setDuracionMinutos] = React.useState<number>(30);
 
+  // gaps[0] de 68-VERIFICATION.md: guard de generación de sesión del Dialog.
+  // dialogSessionRef es la generación vigente, legible de forma síncrona desde
+  // un closure viejo (onSelect de una apertura anterior). dialogSession es la
+  // generación DE ESTE RENDER, la que queda sellada dentro de los closures que
+  // se crean acá — sellarla desde ref.current sería leer estado mutable en fase
+  // de render, por eso el par ref+state. No agrega renders: el único punto que
+  // incrementa la generación (abrirDialogTurno) ya abre el Dialog en el mismo
+  // handler, y React batchea ambas actualizaciones en un solo render.
+  const dialogSessionRef = React.useRef(0);
+  const [dialogSession, setDialogSession] = React.useState(0);
+
   // Determinar si el día seleccionado es de cirugía
   const isSurgeryDaySelected = date ? isSurgeryDay(date, agenda ?? null) : false;
 
@@ -190,6 +201,33 @@ export default function QuickAppointment({ profesionalId }: Props) {
   const availableHours = date
     ? filterAvailableSlots(allSlots, turnosDelDia, date, duracionMinutos)
     : [];
+
+  // gaps[0] de 68-VERIFICATION.md / CR-01 de 68-REVIEW.md: reset único del
+  // Dialog de turno. Alcance deliberado: sólo los tres campos que pertenecen
+  // al Dialog. selectedTime NO entra acá — el slot horario lo elige el
+  // usuario en la tarjeta de atrás y el botón Continuar lo exige antes de
+  // abrir el Dialog; si resetForm() lo limpiara, abrirDialogTurno() dejaría
+  // el Dialog abierto con "Hora: —" y confirmarTurno() cortaría con
+  // "Completá paciente, tipo de turno, fecha y horario". No "completar" esto.
+  function resetForm() {
+    setPaciente(null);
+    setTipoTurnoId("");
+    setObservaciones("");
+  }
+
+  // Única puerta de apertura del Dialog de turno. El incremento de la
+  // generación va antes de abrir el Dialog: reabrirlo de forma programática
+  // no dispara onOpenChange (Radix sólo lo llama en dismiss/trigger propios),
+  // así que sin este helper el formulario
+  // heredaría lo que quedó de la apertura anterior. Este reset limpia lo
+  // heredado pero NO cierra por sí solo la carrera del alta abandonada que
+  // aterriza tarde — eso lo hace el guard de generación comparado en onSelect.
+  function abrirDialogTurno() {
+    dialogSessionRef.current += 1;
+    setDialogSession(dialogSessionRef.current);
+    resetForm();
+    setOpen(true);
+  }
 
   async function confirmarTurno() {
     if (!paciente || !tipoTurnoId || !date || !selectedTime) {
@@ -224,9 +262,7 @@ export default function QuickAppointment({ profesionalId }: Props) {
       // Reset
       setOpen(false);
       setSelectedTime(null);
-      setPaciente(null);
-      setTipoTurnoId("");
-      setObservaciones("");
+      resetForm();
     } catch (error: any) {
       const message =
         error?.response?.data?.message ||
@@ -331,7 +367,7 @@ export default function QuickAppointment({ profesionalId }: Props) {
               if (isSurgeryDaySelected) {
                 setSurgeryModalOpen(true);
               } else {
-                setOpen(true);
+                abrirDialogTurno();
               }
             }}
             className="bg-indigo-500 hover:bg-indigo-600 text-white"
@@ -349,7 +385,13 @@ export default function QuickAppointment({ profesionalId }: Props) {
       </Card>
 
       {/* Modal */}
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog
+        open={open}
+        onOpenChange={(o) => {
+          setOpen(o);
+          if (!o) resetForm();
+        }}
+      >
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>Agendar nuevo turno</DialogTitle>
@@ -359,11 +401,38 @@ export default function QuickAppointment({ profesionalId }: Props) {
           </DialogHeader>
 
           <div className="grid gap-4 py-4">
+            {/*
+              D-08/ALTA-06: la búsqueda de este autosuggest filtra por el profesional
+              que usePacienteSuggest resuelve internamente vía el hook de profesional
+              efectivo, mientras que el alta usa profesionalIdParaAlta (la prop de esta
+              agenda). En NewAppointmentModal y SurgeryAppointmentModal son el mismo
+              valor, pero acá pueden diverger si el profesional seleccionado en el
+              contexto global no es el de esta agenda. Se prioriza el profesional del
+              turno (esta prop), porque el paciente debe quedar bajo quien lo va a
+              atender; cambiar el filtro de búsqueda está fuera de alcance de la fase.
+            */}
             {/* Paciente */}
             <AutocompletePaciente
-              onSelect={(p) => setPaciente(p)}
               value={paciente?.nombreCompleto}
               avatarUrl={paciente?.fotoUrl}
+              onClear={() => setPaciente(null)}
+              allowCreate
+              profesionalIdParaAlta={profesionalId}
+              onSelect={(p) => {
+                // gaps[0] de 68-VERIFICATION.md: un onSelect sellado en la
+                // generación de una sesión anterior (Dialog A) no puede
+                // escribir sobre el paciente que el usuario eligió a mano en
+                // la sesión vigente (Dialog B). Si un alta abandonada
+                // aterriza tarde con una generación vieja, se descarta y se
+                // avisa en vez de pisar la selección vigente en silencio.
+                if (dialogSession !== dialogSessionRef.current) {
+                  toast.info(
+                    "El paciente se creó, pero ese turno ya se había cerrado. Buscalo en el listado para agendarlo."
+                  );
+                  return;
+                }
+                setPaciente(p);
+              }}
             />
 
             {/* Tipo de turno */}
@@ -404,7 +473,10 @@ export default function QuickAppointment({ profesionalId }: Props) {
           <DialogFooter>
             <Button
               variant="outline"
-              onClick={() => setOpen(false)}
+              onClick={() => {
+                setOpen(false);
+                resetForm();
+              }}
               disabled={isSubmitting}
             >
               Cancelar

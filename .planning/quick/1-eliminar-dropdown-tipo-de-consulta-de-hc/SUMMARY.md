@@ -1,6 +1,7 @@
 ---
 phase: quick-1-eliminar-dropdown-tipo-de-consulta-de-hc
 plan: 01
+status: complete
 subsystem: ui
 tags: [react, historia-clinica, hc-creator, tipo-entrada]
 

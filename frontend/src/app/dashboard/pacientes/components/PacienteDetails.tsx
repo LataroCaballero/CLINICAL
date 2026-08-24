@@ -31,9 +31,14 @@ import { FlujoBadge } from "./FlujoBadge";
 import { CambiarFlujoModal } from "./CambiarFlujoModal";
 import { WhatsappOptInToggle } from "./WhatsappOptInToggle";
 import SendWAMessageModal from "@/components/whatsapp/SendWAMessageModal";
+import { formatTelefono, getMotivoBloqueoWhatsApp } from "@/lib/telefono";
 
 export default function PacienteDetails({ paciente, onAction }: { paciente: any; onAction?: (view: "default" | "datos" | "historia" | "turnos" | "mensajes" | "cuenta" | "presupuestos") => void }) {
   const [waModalOpen, setWaModalOpen] = useState(false);
+  const motivoBloqueoWA = getMotivoBloqueoWhatsApp(
+    paciente.telefono,
+    (paciente as any).whatsappOptIn,
+  );
   const [cambiarFlujoOpen, setCambiarFlujoOpen] = useState(false);
   const [optimisticFlujo, setOptimisticFlujo] = useState<"CIRUGIA" | "TRATAMIENTO" | "PENDIENTE" | null>(null);
   const displayFlujo = optimisticFlujo ?? (paciente.flujo as any) ?? null;
@@ -183,7 +188,7 @@ export default function PacienteDetails({ paciente, onAction }: { paciente: any;
               <Mail className="w-4 h-4" /> {paciente.email || "Sin email"}
             </p>
             <p className="flex items-center gap-2">
-              <Phone className="w-4 h-4" /> {paciente.telefono || "-"}
+              <Phone className="w-4 h-4" /> {formatTelefono(paciente.telefono)}
             </p>
             {/* TODO: actualizar tipo Paciente tras regenerar Prisma client */}
             <div className="pt-1">
@@ -314,7 +319,7 @@ export default function PacienteDetails({ paciente, onAction }: { paciente: any;
                 <Button
                   variant="outline"
                   className="flex flex-col items-center justify-center p-3 border rounded-md hover:bg-muted transition text-sm min-h-[70px] w-full h-auto"
-                  disabled={!(paciente as any).whatsappOptIn}
+                  disabled={!!motivoBloqueoWA}
                   onClick={() => setWaModalOpen(true)}
                 >
                   <MessageSquare className="w-5 h-5 text-green-600 mb-1" />
@@ -322,8 +327,8 @@ export default function PacienteDetails({ paciente, onAction }: { paciente: any;
                 </Button>
               </span>
             </TooltipTrigger>
-            {!(paciente as any).whatsappOptIn && (
-              <TooltipContent>El paciente no tiene opt-in para WhatsApp</TooltipContent>
+            {motivoBloqueoWA && (
+              <TooltipContent>{motivoBloqueoWA}</TooltipContent>
             )}
           </Tooltip>
         </div>

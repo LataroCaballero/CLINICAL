@@ -16,6 +16,9 @@
 - ✅ **v1.11 HC Completa en Ficha de Paciente** — Fase 50 (shipped 2026-06-24)
 - ✅ **v1.12 Prequirúrgico Estructurado + Portal del Paciente** — Fases 51–56 (shipped 2026-07-02)
 - ✅ **v1.13 Embudo CRM Accionable** — Fases 57–60 (shipped 2026-07-05)
+- ✅ **v1.14 Portal — Firma Gated e Indicaciones Separadas** — Fases 61–62 (shipped 2026-07-21)
+- ✅ **v1.15 Flujo CRM Automático + Correcciones HC** — Fases 63–66 (shipped 2026-08-10)
+- ✅ **v1.16 Alta de Paciente sin Fricción** — Fases 67–69 (shipped 2026-08-22)
 
 ## Phases
 
@@ -197,6 +200,45 @@ Full details: `.planning/milestones/v1.13-ROADMAP.md`
 
 </details>
 
+<details>
+<summary>✅ v1.14 Portal — Firma Gated e Indicaciones Separadas (Fases 61–62) — SHIPPED 2026-07-21</summary>
+
+**Goal:** Endurecer el flujo legal del portal del paciente — firmar el consentimiento requiere abrir el PDF y tildar leído; las indicaciones se separan en su propia sección con acuse de lectura registrado en el perfil; y el board CRM refleja ambos estados sin recarga manual (cierre deuda W-1).
+
+- [x] Phase 61: Backend — Schema, Decoupling e Indicaciones (5/5 planes) — completado 2026-07-17
+- [x] Phase 62: Portal + Staff Frontend — Gate, Secciones y Sincronización (3/3 planes) — completado 2026-07-21
+
+Full details: `.planning/milestones/v1.14-ROADMAP.md`
+
+</details>
+
+<details>
+<summary>✅ v1.15 Flujo CRM Automático + Correcciones HC (Fases 63–66) — SHIPPED 2026-08-10</summary>
+
+**Goal:** Que el embudo del kanban refleje automáticamente el estado real de cada paciente (entrada → agenda → atención → tratamiento/confirmación) y corregir las fricciones de carga y visualización de Historia Clínica.
+
+- [x] Phase 63: Flujo CRM Automático (Backend) (3/3 planes) — completado 2026-07-31
+- [x] Phase 64: Indicadores de Pendientes y Planilla Legible (Frontend) (3/3 planes) — completado 2026-08-03
+- [x] Phase 65: Sync Tipo de Turno ↔ Plantilla HC (Backend) (2/2 planes) — completado 2026-08-04
+- [x] Phase 66: Correcciones de UI de Historia Clínica (Frontend) (1/1 plan) — completado 2026-08-08
+
+Full details: `.planning/milestones/v1.15-ROADMAP.md`
+
+</details>
+
+<details>
+<summary>✅ v1.16 Alta de Paciente sin Fricción (Fases 67–69) — SHIPPED 2026-08-22</summary>
+
+**Goal:** Que agendar un turno a un paciente nuevo no requiera registrarlo antes — se crea desde el mismo autosuggest con nombre y DNI.
+
+- [x] Phase 67: Teléfono Opcional y Guards de Envío (Backend) (5/5 planes) — completado 2026-08-19
+- [x] Phase 68: Creación Inline en el Autosuggest (Frontend) (6/6 planes) — completado 2026-08-20
+- [x] Phase 69: Consistencia de Teléfono Opcional (Frontend) (10/10 planes) — completado 2026-08-22
+
+Full details: `.planning/milestones/v1.16-ROADMAP.md`
+
+</details>
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -263,6 +305,15 @@ Full details: `.planning/milestones/v1.13-ROADMAP.md`
 | 58. Kanban Board — Columnas, Tarjetas y Etiquetas | v1.13 | 1/1 | Complete | 2026-07-04 |
 | 59. Stepper Accionable | v1.13 | 3/3 | Complete | 2026-07-05 |
 | 60. Estadísticas sobre Registros Reales | v1.13 | 2/2 | Complete | 2026-07-05 |
+| 61. Backend — Schema, Decoupling e Indicaciones | v1.14 | 5/5 | Complete    | 2026-07-17 |
+| 62. Portal + Staff Frontend — Gate, Secciones y Sincronización | v1.14 | 3/3 | Complete    | 2026-07-21 |
+| 63. Flujo CRM Automático (Backend) | v1.15 | 3/3 | Complete    | 2026-07-31 |
+| 64. Indicadores de Pendientes y Planilla Legible (Frontend) | v1.15 | 3/3 | Complete    | 2026-08-03 |
+| 65. Sync Tipo de Turno ↔ Plantilla HC (Backend) | v1.15 | 2/2 | Complete    | 2026-08-04 |
+| 66. Correcciones de UI de Historia Clínica (Frontend) | v1.15 | 1/1 | Complete    | 2026-08-08 |
+| 67. Teléfono Opcional y Guards de Envío (Backend) | v1.16 | 5/5 | Complete    | 2026-08-19 |
+| 68. Creación Inline en el Autosuggest (Frontend) | v1.16 | 6/6 | Complete    | 2026-08-20 |
+| 69. Consistencia de Teléfono Opcional (Frontend) | v1.16 | 10/10 | Complete    | 2026-08-22 |
 
 ---
-*Roadmap initialized: 2026-02-23 | v1.0 shipped: 2026-03-03 | v1.1 shipped: 2026-03-16 | v1.2 shipped: 2026-03-31 | v1.3 shipped: 2026-04-09 | v1.4 shipped: 2026-04-20 | v1.5 shipped: 2026-05-13 | v1.6 shipped: 2026-05-23 | v1.7 shipped: 2026-05-28 | v1.8 shipped: 2026-06-09 | v1.9 shipped: 2026-06-13 | v1.10 shipped: 2026-06-22 | v1.11 shipped: 2026-06-24 | v1.12 shipped: 2026-07-02 | v1.13 shipped: 2026-07-05*
+*Roadmap initialized: 2026-02-23 | v1.0 shipped: 2026-03-03 | v1.1 shipped: 2026-03-16 | v1.2 shipped: 2026-03-31 | v1.3 shipped: 2026-04-09 | v1.4 shipped: 2026-04-20 | v1.5 shipped: 2026-05-13 | v1.6 shipped: 2026-05-23 | v1.7 shipped: 2026-05-28 | v1.8 shipped: 2026-06-09 | v1.9 shipped: 2026-06-13 | v1.10 shipped: 2026-06-22 | v1.11 shipped: 2026-06-24 | v1.12 shipped: 2026-07-02 | v1.13 shipped: 2026-07-05 | v1.14 shipped: 2026-07-21 | v1.15 shipped: 2026-08-10 | v1.16 shipped: 2026-08-22*

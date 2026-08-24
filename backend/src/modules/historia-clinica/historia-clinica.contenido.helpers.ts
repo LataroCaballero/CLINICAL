@@ -103,29 +103,9 @@ export function resumirTratamientosDeContenido(
   }
   const c = contenido as Record<string, unknown>;
 
-  // --- Collect treatment names ---
-
-  // Priority 1: v1.9 zona-grouped shape
-  if (Array.isArray(c.zonas) && (c.zonas as unknown[]).length > 0) {
-    const nombres = (
-      c.zonas as Array<{ tratamientos?: Array<{ nombre?: unknown }> }>
-    )
-      .flatMap((z) => z.tratamientos ?? [])
-      .map((t) => (typeof t.nombre === 'string' ? t.nombre.trim() : ''))
-      .filter((n) => n.length > 0);
-
+  const nombres = extraerNombresTratamiento(c);
+  if (nombres.length > 0) {
     return formatearResumen(nombres);
-  }
-
-  // Priority 2: flat tratamientos array (legacy + tratamiento_en_consultorio with catalog)
-  if (Array.isArray(c.tratamientos)) {
-    const nombres = (c.tratamientos as Array<{ nombre?: unknown }>)
-      .map((t) => (typeof t.nombre === 'string' ? t.nombre.trim() : ''))
-      .filter((n) => n.length > 0);
-
-    if (nombres.length > 0) {
-      return formatearResumen(nombres);
-    }
   }
 
   // Priority 3: free text fallback
@@ -142,6 +122,39 @@ export function resumirTratamientosDeContenido(
 }
 
 /**
+ * Extractor privado compartido: colecta los nombres de tratamiento de las
+ * prioridades 1 (zonas agrupadas) y 2 (tratamientos planos), sin colapsar
+ * ni tocar la rama free-text (`texto`), que cada consumidor maneja distinto.
+ */
+function extraerNombresTratamiento(contenido: unknown): string[] {
+  if (
+    contenido === null ||
+    contenido === undefined ||
+    typeof contenido !== 'object'
+  ) {
+    return [];
+  }
+  const c = contenido as Record<string, unknown>;
+
+  // Priority 1: v1.9 zona-grouped shape
+  if (Array.isArray(c.zonas) && (c.zonas as unknown[]).length > 0) {
+    return (c.zonas as Array<{ tratamientos?: Array<{ nombre?: unknown }> }>)
+      .flatMap((z) => z.tratamientos ?? [])
+      .map((t) => (typeof t.nombre === 'string' ? t.nombre.trim() : ''))
+      .filter((n) => n.length > 0);
+  }
+
+  // Priority 2: flat tratamientos array (legacy + tratamiento_en_consultorio with catalog)
+  if (Array.isArray(c.tratamientos)) {
+    return (c.tratamientos as Array<{ nombre?: unknown }>)
+      .map((t) => (typeof t.nombre === 'string' ? t.nombre.trim() : ''))
+      .filter((n) => n.length > 0);
+  }
+
+  return [];
+}
+
+/**
  * Formatea una lista de nombres de tratamiento con resumen-con-conteo:
  * - 1 nombre → nombre exacto
  * - N nombres → `${primero} +${N-1}`
@@ -151,6 +164,40 @@ function formatearResumen(nombres: string[]): string | null {
   if (nombres.length === 0) return null;
   if (nombres.length === 1) return nombres[0];
   return `${nombres[0]} +${nombres.length - 1}`;
+}
+
+/**
+ * Lista COMPLETA de nombres de tratamiento del turno, sin colapsar
+ * (D-07: complementa a `resumirTratamientosDeContenido`, que sigue
+ * devolviendo el string colapsado sin cambios).
+ *
+ * Shapes soportados (mismas 3 prioridades que resumirTratamientosDeContenido):
+ * - v1.9 agrupado: `{ zonas: [{ tratamientos: [{nombre}] }] }` → todos los nombres
+ * - Legacy plano: `{ tratamientos: [{nombre}] }` → todos los nombres
+ * - Texto libre: `{ texto: string }` → `[texto.trim()]` completo, SIN aplicar TEXTO_LIMITE
+ * - Sin información: `[]`
+ */
+export function listarTratamientosDeContenido(contenido: unknown): string[] {
+  const nombres = extraerNombresTratamiento(contenido);
+  if (nombres.length > 0) {
+    return nombres;
+  }
+
+  if (
+    contenido !== null &&
+    contenido !== undefined &&
+    typeof contenido === 'object'
+  ) {
+    const c = contenido as Record<string, unknown>;
+    if (typeof c.texto === 'string') {
+      const texto = c.texto.trim();
+      if (texto.length > 0) {
+        return [texto];
+      }
+    }
+  }
+
+  return [];
 }
 
 /**

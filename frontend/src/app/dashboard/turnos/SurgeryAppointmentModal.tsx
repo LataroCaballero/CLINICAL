@@ -29,7 +29,7 @@ import { CalendarIcon, Loader2, Scissors } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -89,6 +89,15 @@ export default function SurgeryAppointmentModal({
 
   const [pacienteFotoUrl, setPacienteFotoUrl] = useState<string | null>(null);
 
+  // gaps[0] de 68-VERIFICATION.md: guard de generación de sesión, portado
+  // desde QuickAppointment.tsx (Task 1). dialogSessionRef es la generación
+  // vigente, legible de forma síncrona desde un closure viejo; dialogSession
+  // es la generación DE ESTE RENDER, la que queda sellada en los closures
+  // creados acá — sellarla desde ref.current sería leer estado mutable en
+  // fase de render, por eso el par ref+state.
+  const dialogSessionRef = useRef(0);
+  const [dialogSession, setDialogSession] = useState(0);
+
   const {
     register,
     handleSubmit,
@@ -113,6 +122,29 @@ export default function SurgeryAppointmentModal({
     },
   });
 
+  // gaps[0] de 68-VERIFICATION.md / CR-01 de 68-REVIEW.md: el guard de
+  // generación solo no alcanzaba porque el closure de un alta abandonada
+  // aterriza con el modal YA CERRADO, cuando dialogSessionRef.current y
+  // dialogSession todavía coinciden — el guard lo deja pasar y escribe
+  // sobre el useForm vivo. Este efecto unifica el reset (antes sólo corría
+  // al cerrar) con el sello de generación (antes sólo corría al abrir): el
+  // reset corre en AMBAS transiciones y el sello sólo al abrir, después del
+  // reset, así que ningún pacienteId heredado sobrevive a la reapertura.
+  // ADVERTENCIA: este efecto DEBE quedar declarado ANTES de los dos efectos
+  // de seed de abajo (defaultDate y pacienteIdProp/CRM) — React flushea los
+  // efectos en orden de declaración, y reset() sin argumentos restaura los
+  // defaultValues del primer render. Si este efecto quedara después de los
+  // seeds, su reset() pisaría la precarga desde CRM y rompería un camino
+  // que hoy funciona. No reordenar.
+  useEffect(() => {
+    reset();
+    setPacienteFotoUrl(null);
+    if (open) {
+      dialogSessionRef.current += 1;
+      setDialogSession(dialogSessionRef.current);
+    }
+  }, [open, reset]);
+
   useEffect(() => {
     if (open && defaultDate) {
       setValue("fecha", defaultDate);
@@ -126,13 +158,6 @@ export default function SurgeryAppointmentModal({
       setValue("pacienteNombre", pacienteNombreProp ?? "");
     }
   }, [open, pacienteIdProp, pacienteNombreProp, setValue]);
-
-  useEffect(() => {
-    if (!open) {
-      reset();
-      setPacienteFotoUrl(null);
-    }
-  }, [open, reset]);
 
   const pacienteNombre = watch("pacienteNombre");
   const fecha = watch("fecha");
@@ -223,12 +248,20 @@ export default function SurgeryAppointmentModal({
               <AutocompletePaciente
                 value={pacienteNombre}
                 avatarUrl={pacienteFotoUrl}
+                allowCreate
+                profesionalIdParaAlta={effectiveProfessionalId}
                 onClear={() => {
                   setValue("pacienteId", "");
                   setValue("pacienteNombre", "");
                   setPacienteFotoUrl(null);
                 }}
                 onSelect={(pac) => {
+                  if (dialogSession !== dialogSessionRef.current) {
+                    toast.info(
+                      "El paciente se creó, pero ese turno ya se había cerrado. Buscalo en el listado para agendarlo."
+                    );
+                    return;
+                  }
                   setValue("pacienteId", pac.id);
                   setValue("pacienteNombre", pac.nombreCompleto);
                   setPacienteFotoUrl(pac.fotoUrl || null);

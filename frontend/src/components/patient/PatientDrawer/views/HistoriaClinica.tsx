@@ -5,7 +5,6 @@
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -14,12 +13,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,10 +24,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
-  Plus,
   FileText,
   ArrowLeft,
-  ChevronDown,
   FileCode,
   Loader2,
   Trash2,
@@ -47,17 +38,13 @@ import {
 import { toast } from "sonner";
 
 import { useHistoriaClinica } from "@/hooks/useHistoriaClinica";
-import { useCreateHistoriaClinicaEntry } from "@/hooks/useCreateHistoriaClinicaEntry";
-import { useAvailableHCTemplates } from "@/hooks/useHCTemplates";
 import {
-  useCreateHCEntry,
   useHCDraftEntries,
   useHCEntry,
   useDeleteHCEntry,
 } from "@/hooks/useHCEntries";
 import { DynamicTemplateWizard } from "@/components/hc-templates/runner";
 import type {
-  HCTemplateWithCurrentVersion,
   TemplateSchema,
   HCEntryFromTemplate,
 } from "@/types/hc-templates";
@@ -70,9 +57,6 @@ interface Props {
 }
 
 export default function HistoriaClinica({ pacienteId, onBack }: Props) {
-  const [showForm, setShowForm] = useState(false);
-  const [contenido, setContenido] = useState("");
-  const [showTemplateSelector, setShowTemplateSelector] = useState(false);
   const [wizardEntryId, setWizardEntryId] = useState<string | null>(null);
   const [wizardSchema, setWizardSchema] = useState<TemplateSchema | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<HCEntryFromTemplate | null>(null);
@@ -80,9 +64,6 @@ export default function HistoriaClinica({ pacienteId, onBack }: Props) {
 
   const { data: entradas = [], isLoading, isError } = useHistoriaClinica(pacienteId);
   const { data: drafts = [] } = useHCDraftEntries(pacienteId);
-  const { data: templates = [] } = useAvailableHCTemplates();
-  const createEntry = useCreateHistoriaClinicaEntry();
-  const createTemplateEntry = useCreateHCEntry();
   const deleteEntry = useDeleteHCEntry();
 
   // Load entry data for wizard
@@ -90,35 +71,6 @@ export default function HistoriaClinica({ pacienteId, onBack }: Props) {
     wizardEntryId ? pacienteId : null,
     wizardEntryId
   );
-
-  const handleGuardar = async () => {
-    if (!contenido.trim()) return;
-
-    await createEntry.mutateAsync({ pacienteId, dto: { tipo: 'libre', texto: contenido } });
-    setContenido("");
-    setShowForm(false);
-  };
-
-  const handleSelectTemplate = async (template: HCTemplateWithCurrentVersion) => {
-    if (!template.currentVersion) return;
-
-    setShowTemplateSelector(false);
-
-    try {
-      const entry = await createTemplateEntry.mutateAsync({
-        pacienteId,
-        dto: {
-          templateId: template.id,
-          templateVersionId: template.currentVersion.id,
-        },
-      });
-
-      setWizardEntryId(entry.id);
-      setWizardSchema(template.currentVersion.schema);
-    } catch {
-      // Error handled by mutation
-    }
-  };
 
   const handleContinueDraft = async (draft: HCEntryFromTemplate) => {
     // El draft ya tiene el schema en templateVersion
@@ -191,28 +143,6 @@ export default function HistoriaClinica({ pacienteId, onBack }: Props) {
             <FileText className="w-5 h-5" /> Historia clínica
           </h3>
         </div>
-
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button size="sm">
-              <Plus className="w-4 h-4 mr-1" />
-              Nueva entrada
-              <ChevronDown className="w-4 h-4 ml-1" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => setShowForm(true)}>
-              <FileText className="w-4 h-4 mr-2" />
-              Texto libre
-            </DropdownMenuItem>
-            {templates.length > 0 && (
-              <DropdownMenuItem onClick={() => setShowTemplateSelector(true)}>
-                <FileCode className="w-4 h-4 mr-2" />
-                Usar plantilla
-              </DropdownMenuItem>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
       </div>
 
       {/* DRAFTS */}
@@ -259,27 +189,6 @@ export default function HistoriaClinica({ pacienteId, onBack }: Props) {
         </Card>
       )}
 
-      {/* FORM NUEVA ENTRADA (texto libre) */}
-      {showForm && (
-        <Card className="p-4 space-y-4">
-          <h4 className="font-medium">Nueva entrada (texto libre)</h4>
-          <Textarea
-            placeholder="Escribí la evolución, observaciones o indicaciones clínicas…"
-            value={contenido}
-            onChange={(e) => setContenido(e.target.value)}
-            rows={4}
-          />
-          <div className="flex justify-end gap-2">
-            <Button variant="ghost" onClick={() => setShowForm(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={handleGuardar} disabled={createEntry.isPending}>
-              Guardar
-            </Button>
-          </div>
-        </Card>
-      )}
-
       <Separator />
 
       {/* LISTADO */}
@@ -308,39 +217,6 @@ export default function HistoriaClinica({ pacienteId, onBack }: Props) {
           />
         ))}
       </div>
-
-      {/* TEMPLATE SELECTOR MODAL */}
-      <Dialog open={showTemplateSelector} onOpenChange={setShowTemplateSelector}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Seleccionar plantilla</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-2 py-4">
-            {templates.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-4">
-                No hay plantillas disponibles.
-                <br />
-                Creá una desde Configuración &rarr; Plantillas HC
-              </p>
-            ) : (
-              templates.map((template) => (
-                <Card
-                  key={template.id}
-                  className="p-4 cursor-pointer hover:border-primary transition-colors"
-                  onClick={() => handleSelectTemplate(template)}
-                >
-                  <div className="font-medium">{template.nombre}</div>
-                  {template.descripcion && (
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {template.descripcion}
-                    </p>
-                  )}
-                </Card>
-              ))
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
 
       {/* DELETE CONFIRMATION */}
       <AlertDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
@@ -404,6 +280,7 @@ interface EntradaType {
 
 const TIPO_LABELS: Record<string, string> = {
   primera_vez: "Primera consulta",
+  pre_quirurgico: "Pre-quirúrgico",
   libre: "Texto libre",
   control: "Control",
   evolucion: "Evolución",

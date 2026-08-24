@@ -31,6 +31,9 @@ interface EtapaStepperProps {
   pasos?: PasosCrm;
   flujo?: KanbanPatient["flujo"];
   onCirugiaClick?: () => void;
+  // Phase 62 (INDIC-05) — display-only fecha de lectura de indicaciones.
+  // NO gobierna el coloreo del dot (eso sigue siendo pasos.indicacionesPreop).
+  indicacionesLeidasAt?: string | null;
 }
 
 export function EtapaStepper({
@@ -42,6 +45,7 @@ export function EtapaStepper({
   pasos,
   flujo,
   onCirugiaClick,
+  indicacionesLeidasAt,
 }: EtapaStepperProps) {
   const displayEtapa = optimisticEtapa ?? etapaActual;
 
@@ -221,6 +225,8 @@ export function EtapaStepper({
                     />
                     <span className="text-xs text-muted-foreground">
                       Indicaciones preop
+                      {indicacionesLeidasAt &&
+                        ` · leídas ${new Date(indicacionesLeidasAt).toLocaleDateString("es-AR")}`}
                     </span>
                   </div>
                 </div>

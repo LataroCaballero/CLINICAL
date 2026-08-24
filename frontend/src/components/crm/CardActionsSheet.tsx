@@ -163,6 +163,7 @@ export function CardActionsSheet({
             onHCClick={profesionalId ? () => setHcOpen(true) : undefined}
             pasos={patient.pasos}
             flujo={patient.flujo}
+            indicacionesLeidasAt={patient.indicacionesLeidasAt}
             onCirugiaClick={profesionalId ? () => setTurnoOpen(true) : undefined}
           />
         </div>

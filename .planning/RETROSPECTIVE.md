@@ -4,6 +4,144 @@
 
 ---
 
+## Milestone: v1.16 — Alta de Paciente sin Fricción
+
+**Shipped:** 2026-08-22
+**Phases:** 3 (67–69) | **Plans:** 21 | **Timeline:** 6 días (2026-08-17 → 2026-08-22)
+**Stats:** 49 archivos de código | +2,097 / −139 líneas | 53 tareas | 144 commits (24 feat, 21 fix, 8 test) | 13/13 requisitos | audit `tech_debt` (13/13 reqs, 3/3 fases, 13/13 seams WIRED, 1/1 flujo E2E, 0 blockers) | **0 ítems diferidos al cierre**
+
+### What Was Built
+- **Teléfono opcional end-to-end (Phase 67)**: `Paciente.telefono` nullable vía migración de una sola sentencia (`DROP NOT NULL`, 424/424 teléfonos preservados, verificado con baseline y probe en transacción con rollback); `normalizeTelefono()` como definición única de "teléfono válido" en `create()`/`update()`/`updateContacto()`; `suggest()` NULL-safe vía `COALESCE(p.telefono, '')` sin romper filtro ni orden (TEL-01)
+- **Guards de envío que fallan cerrado (Phase 67)**: `requireTelefonoParaEnvio()` cubre los 4 paths que empujan `telefono` a BullMQ — `sendTemplateMessage`, `sendFreeText`, `sendPresupuestoPdf`, `retryMessage` — con `BadRequestException` en español antes de tocar Meta, crear el registro o mutar estado; en `retryMessage` el guard va después del check de ownership para preservar el `NotFoundException` anti-enumeración (ENVIO-01/02)
+- **Alta inline en el autosuggest (Phase 68)**: `InlineCreatePaciente` monta dentro del popover cuando no hay resultados, con precarga según el tipo de query (DNI si es todo dígitos, nombre si es texto), 409 de DNI duplicado renderizado bajo el campo, y selección automática para confirmar el turno sin pasos extra; `AutocompletePaciente` ganó `allowCreate`/`profesionalIdParaAlta` opt-in, activo en los 3 modales de turno y ausente en los 2 usos de filtro (ALTA-01..07)
+- **SSOT de teléfono en frontend (Phase 69)**: `lib/telefono.ts` con `formatTelefono`/`tieneTelefono`/`getMotivoBloqueoWhatsApp` consumido por los 5 sitios de display y los 5 entrypoints de envío WA, con precedencia del bloqueo por teléfono sobre el opt-in; alta completa y `DatosCompletos` con schemas Zod relajados calcando el molde de la Phase 68 (TEL-02/03, ENVIO-03)
+- **Infra y seguridad de yapa (Phase 69)**: primer runner de tests de frontend del repo (Vitest + Testing Library con jsdom, validado con dos pruebas negativas), y cierre del IDOR **T-69-16** — `obtenerPorRango` pasó a resolver el scope con `resolveScope` igual que `findAll`, así que un `PROFESIONAL` ya no lee la agenda de otro por query string
+
+### What Worked
+- **Instalar el runner de tests a mitad de milestone pagó de inmediato**: los planes 69-07/08 pidieron poder assertar comportamiento de DOM en vez de leer fuente, y eso destapó dos defectos que **tres rondas previas de lectura de código habían dado por buenos**: el atajo de WhatsApp del calendario colgaba de `{event.pacienteId && ...}` con ese campo siempre `undefined` porque el `select` de Prisma nunca lo traía (el guard estaba perfectamente escrito y era inalcanzable), y los controles WA del drawer quedaban bloqueados tras cargar el teléfono hasta recargar la página. Ninguno de los dos es visible leyendo el fuente — el primero exige preguntar "¿este JSX llega a renderizarse?" y el segundo "¿el cache se entera?"
+- **El verifier no se dejó comprar por los SUMMARY**: las fases 68 y 69 llegaron a `passed` recién en la tercera y segunda pasada respectivamente. La verificación de 68 re-derivó los ataques paso a paso contra el código actual en vez de heredar las conclusiones de `68-06-SUMMARY.md`, y en el camino **corrigió una premisa falsa de la ronda anterior** (que sólo `QuickAppointment` estaba expuesto a la carrera, cuando eran los tres modales)
+- **Un helper único por concepto, tercer milestone consecutivo**: `normalizeTelefono()` en backend y `lib/telefono.ts` en frontend concentraron "qué es un teléfono válido" y "cómo se muestra cuando no hay" en un lugar cada uno. El audit no encontró ni un sitio de display sin migrar en un componente vivo — resultado directo de haber escrito el SSOT en el plan 01 antes de tocar los consumidores
+- **Prop opt-in en vez de fork del componente**: `allowCreate` dejó que el mismo `AutocompletePaciente` sirviera a los 3 modales de turno y a los 2 usos de filtro sin un solo cambio de comportamiento en los segundos. La alternativa (duplicar el componente) habría creado dos autosuggest divergentes para siempre
+- **El scope se mantuvo honesto bajo presión**: la Fase 68 encontró el agujero de `ValidationPipe` (CR-03, BLOCKER) y **no lo arregló** — era backend, la fase era frontend-only, y `git diff --name-only -- backend/` quedó vacío como prueba. Se documentó y se dejó para una decisión de roadmap en vez de expandir la fase
+
+### What Was Inefficient
+- **Tres rondas de gap-closure en la Fase 68 sobre carreras de UI**: 68-04, 68-05 y 68-06 fueron todas fixes de la misma familia — un `POST /pacientes` en vuelo que resuelve después de que el usuario cerró/canceló/reabrió el modal. Cada ronda cerró una variante y destapó la siguiente. La causa raíz es estructural: **los tres modales de turno se montan incondicionalmente y no se desmontan al cerrar**, así que todo callback async en vuelo pisa estado vivo. Se atacó variante por variante en vez de atacar el montaje
+- **La Fase 69 necesitó 10 planes para 3 requisitos**: los planes 07–10 fueron todos gap-closure, incluyendo uno (69-09) dedicado a instalar el runner de tests que recién ahí se descubrió necesario, y otro (69-10) a cerrar un IDOR pre-existente que resultó ser **dependencia** del fix de 69-07. La cadena de dependencias no estaba mapeada al planificar
+- **`@IsOptional()` se agregó sin verificar que corriera**: la Fase 67 puso el decorator en `CreatePacienteDto` y lo dio por mecanismo de TEL-01. No hay `ValidationPipe` en el proyecto, así que nunca ejecuta. El requisito funciona igual — por `normalizeTelefono()` — pero durante cinco días la documentación del schema afirmó algo falso, y el `67-VERIFICATION.md` lo marcó ✓ VERIFIED leyendo el archivo del DTO en vez de preguntar si el decorator se ejecuta
+- **Cero tests sobre el deliverable central**: 18 tests de frontend cubren `telefono.ts`, `DatosCompletos` y `AppointmentDetailModal`. `InlineCreatePaciente` y `AutocompletePaciente` — o sea ALTA-01..07 completo, el corazón del milestone — no tienen ninguno, pese a que la infra quedó instalada dentro del mismo milestone
+- **`config.workflow.research: false` otra vez, y otra vez se notó**: la asimetría del `ValidationPipe` (presente per-route en `paciente-portal`, ausente en `pacientes`) estaba escrita en comentarios del propio repo desde v1.12. Un pase de research sobre el módulo que se iba a tocar la habría levantado antes de que TEL-01 se apoyara en un decorator muerto
+
+### Patterns Established
+- **Verificar el efecto observable, no la presencia del código**: un guard puede estar perfectamente escrito y ser inalcanzable; una invalidación de cache puede estar en el `finally` en vez del `then` y "existir" igual. Los dos defectos de la Fase 69 pasaron tres rondas de lectura de fuente y cayeron en el primer test que montó el componente. Cuando el criterio de éxito es "el usuario ve X", la evidencia tiene que ser "X está en el DOM", no "el código que renderiza X existe"
+- **La prueba negativa como parte del entregable**: 69-09 validó el runner nuevo rompiendo una assertion y un alias a propósito para confirmar que falla cuando debe; 69-10 revirtió el fix del IDOR para confirmar que el test lo detecta; 69-08 comentó la invalidación y la movió al `finally` para confirmar que el test la distingue. Un test que nunca se vio fallar no prueba nada
+- **Guard de existencia + guard de intención, ahora también en frontend async**: el patrón que v1.15 estableció para escrituras en transacción (`dto.turnoId && turnoCtx`) tiene su espejo en UI: no alcanza con que el callback async traiga un resultado válido (`onSelect(pac)`), hay que confirmar que el contexto que lo pidió sigue vivo (`dialogSession === dialogSessionRef.current`). Misma forma, dominio distinto
+- **Prop opt-in con default apagado para extender un componente compartido**: agregar la capacidad nueva detrás de una prop que por defecto no cambia nada permite auditar el no-cambio por comando (`git diff` vacío en los call sites viejos) en vez de por inspección
+
+### Key Lessons
+- **Un decorator no es un mecanismo hasta que algo lo ejecuta**: `@IsOptional()` es declarativo — sin `ValidationPipe` es un comentario con sintaxis de TypeScript. Antes de apoyar un requisito en class-validator, verificar que el pipe esté registrado. El mismo razonamiento aplica a cualquier metadata: decoradores de Nest, `@Column` de ORMs, schemas que nadie invoca
+- **Cuando el tercer fix de la misma familia sigue apareciendo, el bug es estructural**: tres rondas de gap-closure sobre carreras de alta inline eran tres síntomas de que los modales no se desmontan al cerrar. Atacar variantes es reactivo; la señal de "esta es la tercera" debería disparar la pregunta por la causa común antes que el cuarto parche
+- **La deuda pre-existente cambia de criticidad cuando un requisito nuevo se apoya en ella**: el `await` faltante de `create()` estaba flagueado desde la Fase 67 como inofensivo. Con ALTA-05 shippeado, la rama muerta del 409 pasó a ser lo único que separa "el usuario ve el error de DNI duplicado" de "el usuario ve un mensaje crudo de Prisma" — y lo que salva el flujo es un `status === 409` defensivo en el frontend, no el diseño. **Al cerrar un milestone, revisar qué deuda vieja quedó en el camino crítico de algo nuevo**
+- **El costo de verificación se concentra donde no se puso el instrumento**: las fases con tests automatizados cerraron sus gaps en una ronda; la que no los tenía (68, frontend puro sin runner hasta 69-09) necesitó tres. El runner llegó tarde para la Fase 68 y a tiempo para la 69 — la diferencia se ve en el conteo de planes
+
+### Cost Observations
+- 3 fases, 21 planes, 53 tareas, +2,097 / −139 LOC en 6 días — el ratio planes/requisito (21/13) es el más alto de los últimos milestones, casi enteramente por gap-closure: 3 de los 6 planes de la Fase 68 y 4 de los 10 de la 69
+- 144 commits para 49 archivos de código — 24 `feat` contra 21 `fix`, un ratio que refleja las rondas de corrección más que la construcción
+- 1 fase backend (67) + 2 frontend (68, 69), con 68 y 69 independientes entre sí tras la 67 — planificadas para paralelo, ejecutadas en secuencia
+- El milestone dejó infraestructura que sobrevive: runner de tests de frontend donde no había ninguno, y un SSOT de teléfono que el próximo requisito de contacto puede reusar directo
+
+---
+
+## Milestone: v1.15 — Flujo CRM Automático + Correcciones HC
+
+**Shipped:** 2026-08-10
+**Phases:** 4 (63–66) | **Plans:** 9 | **Timeline:** 9 días (2026-07-31 → 2026-08-08)
+**Stats:** 15 archivos de código | +1,658 / −189 líneas | 20 tareas | 11/11 requisitos | audit `tech_debt` (11/11 reqs, 4/4 fases, 9/9 seams WIRED, 1/1 flujo E2E, 0 blockers) | **0 ítems diferidos al cierre**
+
+### What Was Built
+- **Embudo CRM automático (Phase 63)**: `create()` setea `etapaCRM=NUEVO_LEAD` + `flujo=null` incondicionalmente (EMBUDO-07); `crearTurnoCirugia` confirma sin presupuesto aceptado, `crearTurno` sólo degrada etapas avanzadas si el turno es "Consulta", y `cancelarTurno` conserva CONFIRMADO + caliente exponiendo `requiereRecontacto` derivado en la lista de acción (EMBUDO-08)
+- **Salida a planilla por tratamiento (Phase 63)**: helpers puros nuevos en `historia-clinica.flujo.helpers.ts` — `resolverTipoEntrada` fuerza el `tipoEntrada` server-side desde `dto.tipo` (D-08), el branch TRATAMIENTO de `resolverNuevoFlujo` cubre `flujoActual=null` además de `PENDIENTE` (D-09) y `crearEntrada` limpia `etapaCRM=null` (D-10) — el paciente sale del board con el patrón v1.13 y queda en la planilla con la fecha real (EMBUDO-09)
+- **Indicadores y planilla legible (Phase 64)**: badge condicional por `columnId` en `PatientCard.tsx` ("Dar turno" / "Ser atendido", CONTACTO-03/04); helper puro `listarTratamientosDeContenido` + campo `tratamientos: string[]` nuevo en `GET /turnos/rango`, con la celda mostrando la lista completa truncada por CSS y Radix Tooltip revelando el texto entero (TRAT-07)
+- **Sync tipo de turno ↔ plantilla HC (Phase 65)**: helper puro `resolverTipoTurnoSync` (escalera Consulta < Tratamiento < Pre-Quirúrgico vía rank map, no-downgrade, unmapped=0, sentinel de cirugía) dentro de la transacción de `crearEntrada` con `tx.turno.update` sobre un `turnoCtx` pre-fetch extendido (patrón pgBouncer); 65-02 endureció el guard a `if (dto.turnoId && turnoCtx)` (HCSYNC-01/02/03 + no-op sin turno)
+- **Correcciones de UI de HC (Phase 66)**: rama de render `pre_quirurgico` en `HCEntryContent.tsx` (chips + detalle del JSONB persistido, ocultando vacíos y sin sección `zonas`, con título legible en `TIPO_LABELS`) y eliminación del dropdown "Nueva entrada" + form de texto libre + selector de plantilla muertos, dejando el wizard "+ Nueva HC" como único camino (HCUI-01/02)
+
+### What Worked
+- **La racha de UAT diferida se cortó**: 3 milestones seguidos (v1.12/v1.13/v1.14) cerraron con verificación humana pendiente. v1.15 cerró con `audit-open` en *all clear* — 0 debug sessions, quick tasks, todos, UAT gaps y verification gaps. Las 4 fases pasaron VERIFICATION (10/10, 4/4, 12/12, 8/8) y Phase 66 tuvo checkpoint humano aprobado dentro de la fase, exactamente el contraataque que v1.14 identificó como el único que había funcionado
+- **El verifier atrapó un bug que rompía producción, no un detalle de estilo**: `65-VERIFICATION` dio `gaps_found` (11/12) porque un `dto.turnoId` stale hacía que `tx.turno.update` corriera contra una fila inexistente (Prisma P2025) y **abortara la transacción completa de guardado de la HC**. El plan de gap-closure 65-02 endureció el guard a `dto.turnoId && turnoCtx` y la re-verificación cerró en 12/12. Un sync "de conveniencia" habría podido tirar abajo el guardado clínico
+- **Helpers puros + TDD, cuarto milestone consecutivo**: `resolverTipoEntrada`, `listarTratamientosDeContenido` y `resolverTipoTurnoSync` siguen el patrón `*.helpers.ts` sin deps NestJS/Prisma. Testeables directo, reusables, y en el caso de `resolverTipoTurnoSync` el rank map (`Record<string,number>`) expresó no-downgrade y unmapped=0 como propiedades del dato en vez de ramas de control de flujo
+- **Extender el contrato en vez de mutarlo**: TRAT-07 agregó `tratamientos: string[]` y dejó intacto el `ultimoTratamiento` colapsado. Cero regresión en consumidores existentes y el display quedó como decisión puramente de frontend
+- **Reusar el patrón de salida del board en vez de migrar el enum**: EMBUDO-09 se resolvió con `flujo=TRATAMIENTO` + ocultar (patrón v1.13) — sin tocar `EtapaCRM` ni actualizar funnel, constantes frontend y `STEPPER_CHAIN`. Mismo razonamiento que el relabel de `PROCEDIMIENTO_REALIZADO` en v1.13
+- **Deuda carried finalmente saldada**: el quick-task `1-eliminar-dropdown-tipo-de-consulta-de-hc`, que venía migrando de milestone en milestone desde v1.13, se cerró como efecto natural de HCUI-01 en vez de como tarea suelta
+
+### What Was Inefficient
+- **El acoplamiento EMBUDO-07 ↔ EMBUDO-09 se descubrió durante la ejecución, no al planificar**: al escribir `flujo=null` en el alta (D-03), el branch TRATAMIENTO de `resolverNuevoFlujo` — que gateaba en `=== 'PENDIENTE'` — dejaba de aplicar a los leads nuevos. D-09 lo cubrió dentro de 63-03, pero el mismo gate quedó sin revisar en los otros dos consumidores (`turnos.service.ts:159-162` y el branch CONSULTA_CIRUGIA), y el audit lo levantó como WR-02: un cambio de invariante en una fase requería un barrido de todos sus lectores, no sólo del que se estaba tocando
+- **Gates de negocio sobre strings mágicos**: D-06 gatea el reset cíclico del embudo en `tipoTurno.nombre === 'Consulta'`. El catálogo de tipos de turno es editable desde la UI desde v1.8 — un rename silencioso rompe el comportamiento sin fallar ningún test. Es la segunda vez que aparece lógica clave anclada a un nombre en vez de a un flag de schema
+- **`config.workflow.research: false` en un milestone con 3 fases de decisiones de dominio**: las decisiones D-01..D-10 salieron todas de discusión, sin research. Funcionó para trabajo sobre patrones ya conocidos, pero D-06 y el gate por string son justo el tipo de decisión que un pase de research sobre el propio schema habría cuestionado
+- **Nyquist en 0/4**: ninguna fase generó `*-VALIDATION.md` (`nyquist_validation_enabled: false` en config). Es una decisión de configuración explícita, pero el audit la reporta como `overall: missing` en cada milestone, ruido recurrente que conviene resolver — activándolo o dejándolo documentado como decisión permanente
+- **Deuda de logging que sobrevive milestones**: el audit volvió a levantar `console.log` de PII/errores crudos en `pacientes.service.ts` (ahora dos sitios: línea 33 desde v1.2 y línea 76 nueva). Un fix de 2 líneas que lleva más de 10 milestones en la lista
+
+### Patterns Established
+- **Rank map en vez de cadena if/else para escaleras de prioridad**: `Record<string, number>` donde el valor codifica el orden convierte "no-downgrade" en `rankDestino > rankActual` y "valor desconocido" en `0` — propiedades del dato, no del flujo de control. Agregar un tipo nuevo es una línea del mapa
+- **Guard de existencia junto al guard de intención en escrituras dentro de transacción**: `if (dto.turnoId && turnoCtx)` — no alcanza con que el cliente haya pedido la escritura (`dto.turnoId`); hay que confirmar que la fila pre-fetcheada existe, o un P2025 aborta la transacción entera y se lleva puesta la operación principal
+- **Extender el payload con un campo nuevo en vez de cambiar la semántica del existente**: cuando el frontend necesita más detalle del que expone un campo colapsado, agregar el campo completo al lado deja a los consumidores actuales intactos y mueve la decisión de display a donde corresponde
+- **Forzar server-side los campos que gobiernan clasificación**: `resolverTipoEntrada` deriva `tipoEntrada` de `dto.tipo` en vez de confiar en lo que mande el cliente — el flujo del paciente depende de ese valor, así que no puede ser desalineable desde el payload
+
+### Key Lessons
+- **Cambiar un valor centinela obliga a barrer todos sus lectores**: pasar de `flujo=PENDIENTE` a `flujo=null` en el alta se sintió como un cambio de una línea. Tenía tres consumidores gateados en el valor viejo; se actualizó uno. Antes de cambiar el valor por defecto de un campo de estado, `rg` del valor anterior y decisión explícita fase por fase
+- **La verificación de fase se paga sola cuando el cambio toca una transacción**: `65-VERIFICATION` no encontró un detalle cosmético sino un path donde una feature secundaria abortaba el guardado de una historia clínica. En código transaccional, cada escritura nueva agrega una forma de romper la operación principal, y ese es el ángulo que hay que verificar primero
+- **La UAT dentro de la fase funciona — replicarlo, no celebrarlo una vez**: el checkpoint humano de Phase 66 y las verificaciones por fase produjeron el primer cierre sin ítems diferidos en 4 milestones. El riesgo ahora es tratarlo como un buen milestone en vez de como el default para toda fase con superficie visual
+- **Los strings mágicos sobre catálogos editables son bombas de tiempo**: si el usuario puede renombrar el dato desde la UI, la lógica de negocio no puede depender de su nombre. La solución es un flag en el schema (como `esCirugia`), no un comentario
+
+### Cost Observations
+- 4 fases, 9 planes, 20 tareas, +1,658 / −189 LOC en 9 días — buen ratio: milestone acotado, 15 archivos de código tocados, sin migración de schema ni dependencias nuevas
+- 2 fases backend (63, 65) + 2 frontend (64, 66), con sólo 64 dependiendo de 63; el resto pudo planificarse en paralelo
+- 1 plan de gap-closure (65-02) sobre 9 — el costo de verificación se concentró donde el riesgo era real (transacción) en vez de repartirse parejo
+- Cierre limpio: 0 artefactos abiertos, 0 ítems diferidos; toda la deuda registrada es advisory (7 ítems, ninguno blocker) y quedó explícita en STATE.md y Key Decisions
+
+---
+
+## Milestone: v1.14 — Portal — Firma Gated e Indicaciones Separadas
+
+**Shipped:** 2026-07-21
+**Phases:** 2 (61–62) | **Plans:** 8 | **Timeline:** ~13 días (2026-07-08 → 2026-07-21)
+**Stats:** 46 archivos | +3,979 / −137 líneas | 14 tareas | 10/10 requisitos | sin `/gsd:audit-milestone` (acknowledge & proceed, 0 blockers de código)
+
+### What Was Built
+- **Schema + acuse persistido (Phase 61)**: campo global set-once `Paciente.indicacionesLeidasAt` (INDIC-03) y `ConsentimientoFirmado.indicacionesLeidasAt` relajado a nullable vía DROP NOT NULL (preserva timestamps forenses v1.12), aplicado con el patrón pgBouncer sobre Supabase en vivo; cierre de cr-01 confirmando que la validación stored-XSS ya existía (solo docstring engañoso)
+- **Desacople del consentimiento (Phase 61)**: `firmarConsentimiento` sin dependencia de `indicacionesLeidas` (removido del DTO, CONS-11) + endpoint portal-scoped set-once de acuse; `computePasosCrm` deriva `indicacionesPreop` del acuse del perfil con las 2 fuentes legacy como fallbacks sin regresión
+- **Gap-closure de non-regresión (Phase 61, 61-04/61-05)**: removido el truncamiento `take:1`/`orderBy` de `consentimientosFirmados` en `getKanban` (rompía los fallbacks `.some()` en multi-zona, WR-01/SC#3) + test de frontera + guard de source-shape en Jest que lee `pacientes.service.ts` y falla si el `take` se reintroduce
+- **Frontend portal + staff (Phase 62)**: gate de firma con dos condiciones client-side (abrir PDF + tildar "Leí el consentimiento", CONS-09/10), sección de consentimiento limpia de indicaciones (CONS-12), `PortalIndicaciones.tsx` net-new como 5ª sección con acuse automático al abrir el link (INDIC-01/02), fecha de lectura en el stepper del staff (INDIC-05) y board CRM fresco vía refetch on window focus cerrando W-1 (EMBUDO-06)
+
+### What Worked
+- **Contrato backend primero, otra vez**: Phase 61 fijó el campo del perfil + la forma del payload de `computePasosCrm`; Phase 62 (frontend) consumió sin re-derivar lógica de pasos. Mismo modelo que v1.13, misma baja fricción de integración
+- **Guard de source-shape como red de regresión donde el mock no llega**: el test de frontera de 61-04 usaba `findMany` mockeado y no podía detectar la reintroducción de `take:1`; 61-05 agregó un guard que lee el archivo fuente y falla ante el patrón. La verificación de fase (`61-VERIFICATION.md`) detectó exactamente ese gap y forzó el guard durable — el verifier hizo su trabajo
+- **Cerrar deuda verificando, no reimplementando**: cr-01 (stored-XSS) se cerró confirmando que `actualizarIndicacionesUrl` ya tenía la validación server-side completa — solo se corrigió el docstring engañoso. Evitó trabajo net-new sobre algo ya resuelto
+- **W-1 cerrada con la herramienta más barata**: refetch on window focus (+ `staleTime` a 0) resolvió la sincronización del board sin websockets ni polling — la deuda de v1.13 se saldó con ~1 línea de config de query, no con infra nueva
+- **Preservar evidencia legal por diseño**: relajar `ConsentimientoFirmado.indicacionesLeidasAt` con DROP NOT NULL (no DROP COLUMN) mantuvo intactos los timestamps forenses de v1.12 mientras la fuente canónica migraba al perfil
+
+### What Was Inefficient
+- **Tercer milestone consecutivo difiriendo UAT humana al cierre**: v1.12 lo señaló, v1.13 lo repitió, y v1.14 volvió a caer — `62-HUMAN-UAT` quedó `partial` (5 escenarios de portal) y `62-VERIFICATION` en `human_needed`. Phase 62 es 100% superficie visual (gates de portal, acuse on-click, indicador staff) y aun así la confirmación en browser se acumuló. El anti-patrón dejó de ser un desliz puntual y es crónico
+- **CR-03 shipped como deuda de modelado**: el acuse es un campo global/set-once pero el stepper del staff lo muestra por zona — impreciso en pacientes multi-zona. Se aceptó tras UAT, pero es una discordancia dato-vs-UI que se decidió después de construir ambos lados, no antes
+- **Sin milestone audit**: se cerró con `acknowledge & proceed` sin correr `/gsd:audit-milestone`. Requisitos 10/10 y código verificado/wired, pero sin el gate de integración cross-phase/E2E que sí se corrió en v1.13
+- **~13 días de wall-clock para 2 fases / +4k LOC**: Phase 61 (backend) tardó del 07-08 al 07-17 — largo para su tamaño, con las dos gap-closure (61-04/61-05) sumando ciclos que un boundary test bien diseñado desde el inicio habría evitado
+
+### Patterns Established
+- **Source-shape guard en Jest**: cuando un test de comportamiento depende de mocks que no pueden observar una regresión estructural (p.ej. un `take:1` reintroducido en un select), un guard que lee el archivo fuente y asserta contra el patrón prohibido es la red durable. Complementa —no reemplaza— al test de comportamiento
+- **Campo de acuse global/set-once en el perfil con fallbacks legacy (sin backfill)**: la fuente canónica pasa a un campo nuevo del perfil; las fuentes previas quedan como fallbacks `.some()` de solo lectura, preservando snapshots históricos sin migrar datos
+- **Relajar nullability (DROP NOT NULL) en vez de DROP COLUMN** para desacoplar una columna sin perder los datos forenses ya registrados en ella
+
+### Key Lessons
+- **La UAT humana diferida es ya un defecto de proceso, no una nota de cierre**: 3 milestones seguidos (v1.12/v1.13/v1.14). El único contraataque que funcionó fue el de Phase 59 (v1.13): un plan de UAT explícito *dentro* de la fase visual. Para v1.15 hay que hacerlo default en fases frontend, o el ítem seguirá migrando de milestone en milestone
+- **Decidir la granularidad del dato antes de la forma de la UI**: CR-03 nació de construir un campo global y una UI por-zona en paralelo y descubrir el desajuste al final. Cuando el dato y su display tienen cardinalidades distintas, la decisión de granularidad va antes del diseño de ambos lados
+- **El verifier gana su costo cuando el test tiene puntos ciegos**: `61-VERIFICATION` encontró que el boundary test mockeado no cubría la regresión real y forzó el guard de source-shape. Sin ese paso, 61-04 habría dado una falsa sensación de cobertura
+- **Cerrar deuda a veces es leer el código, no escribirlo**: cr-01 se saldó verificando que la protección ya existía. Antes de reimplementar una mitigación "faltante", confirmar que no está ya presente bajo otro nombre
+
+### Cost Observations
+- 2 fases, 8 planes, 14 tareas, +3,979 LOC en ~13 días — LOC alto para 2 fases (frontend portal + staff pesa), wall-clock inflado por la fase backend y sus 2 gap-closure
+- Mix: migración de schema + refactor de servicio backend (Phase 61) + ensamblaje frontend reusando el GET de consentimiento existente para indicaciones (Phase 62)
+- Cierre con 3 ítems diferidos (2 verificación humana/browser + 1 deuda carried) y 2 deudas de diseño aceptadas (CR-03, WR-01); sin audit de milestone
+
+---
+
 ## Milestone: v1.13 — Embudo CRM Accionable
 
 **Shipped:** 2026-07-05
@@ -512,6 +650,9 @@
 | v1.11 HC Completa en Ficha de Paciente | 1 | 1 | 1 día | ~variable | Milestone mínimo solo-frontend — port de render con componente compartido; sin audit (verificado vía VERIFICATION + visual) |
 | v1.12 Prequirúrgico + Portal del Paciente | 6 | 30 | 8 días | ~variable | Milestone más grande desde v1.5; schema big-bang up-front + portal público seguro por capas; audit PASSED; 17 ítems de verificación humana diferidos |
 | v1.13 Embudo CRM Accionable | 4 | 8 | 3 días | ~variable | Milestone chico y acotado; contrato backend (`computePasosCrm`) consumido 1:1 por board/stepper; reuso de enum en vez de migración; audit `tech_debt` 0 blockers; 4 ítems diferidos (2 UAT humana + 2 deuda carried) |
+| v1.14 Portal — Firma Gated e Indicaciones Separadas | 2 | 8 | ~13 días | ~variable | Contrato backend-first otra vez (Phase 61 → 62); guard de source-shape como red de regresión donde el mock no llega; W-1 cerrada con refetch on focus; sin audit (acknowledge & proceed); 3 ítems diferidos + 2 deudas de diseño (CR-03, WR-01) |
+| v1.15 Flujo CRM Automático + Correcciones HC | 4 | 9 | 9 días | ~variable | Fases desacopladas (sólo 64 depende de 63); helpers puros + rank map; verificación por fase atrapó un P2025 que abortaba el guardado de HC (65-02 gap-closure); audit `tech_debt` 0 blockers; **primer cierre sin ítems diferidos desde v1.11** — se cortó la racha de UAT humana diferida |
+| v1.16 Alta de Paciente sin Fricción | 3 | 21 | 6 días | ~variable | Ratio planes/requisito más alto (21/13), casi todo gap-closure (3 de 6 en Phase 68, 4 de 10 en Phase 69); runner de tests de frontend instalado a mitad de milestone (69-09) destapó 2 defectos que 3 rondas de lectura de fuente habían dado por buenos; audit `tech_debt` 0 blockers; **segundo cierre consecutivo sin ítems diferidos** |
 
 ### Cumulative Quality
 
@@ -531,16 +672,20 @@
 | v1.11 | ninguno (cambio puramente de presentación) | <10% | ninguna |
 | v1.12 | TDD tests (brute-force lock 11 casos, catalogo-hc 101 total) | <10% | pdf-lib 1.17.1, @nestjs/throttler (cableado), multer + @types/multer |
 | v1.13 | TDD tests (computePasosCrm; spec del invariante etapa-no-afecta-conteo 8/8 + SECURED 5/5) | <10% | ninguna |
+| v1.14 | boundary test getKanban→computePasosCrm + guard de source-shape (falla si `take:1` vuelve al select `consentimientosFirmados`) | <10% | ninguna |
+| v1.15 | TDD sobre 3 helpers puros nuevos (`resolverTipoEntrada`, `listarTratamientosDeContenido`, `resolverTipoTurnoSync`) + test de regresión de visibilidad en getKanban (lead `flujo=null` en NUEVO_LEAD) + wiring tests del sync en `crearEntrada` | <10% | ninguna |
+| v1.16 | 33 tests backend (normalizeTelefono, requireTelefonoParaEnvio, presupuestos) + 15 en `turnos` (select contract + IDOR scope) + **primer suite de frontend del repo**: 18 tests vitest/jsdom (telefono SSOT 11, DatosCompletos 3, AppointmentDetailModal 4) | <10% | **vitest, @testing-library/react, jsdom** (frontend, dev) |
 
 ### Recurring Process Debt
 
-| Issue | v1.1 | v1.2 | v1.4 | v1.5 | v1.6 | v1.7 | v1.8 | v1.9 | v1.10 | v1.11 | v1.12 | v1.13 | Fix |
-|-------|------|------|------|------|------|------|------|------|-------|-------|-----------|-------|------|
-| MILESTONES.md accomplishments vacíos | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | evitado (archivado a mano) | Actualizar formato SUMMARY.md con `one_liner:` field |
-| STATE.md progress desactualizado durante ejecución | ✗ | parcial | parcial | parcial | parcial | parcial | parcial | parcial | parcial | parcial | parcial | parcial | GSD executor actualiza STATE al final de cada plan |
-| Integration bugs detectados tarde (audit, no verify) | — | ✗ | ✓ | ✓ | sin audit | ✓ | sin audit | ✓ | ✓ | sin audit | ✓ | ✓ | Audit antes de complete-milestone elimina retrabajo |
-| Audit saltado antes de archivar | — | — | — | — | ✗ | ✓ | ✗ | ✓ | ✓ | ✗ | ✓ | ✓ | Correr /gsd:audit-milestone antes de /gsd:complete-milestone |
-| Progress table ROADMAP desalineada durante ejecución | — | — | — | — | — | — | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ (normalizada a mano) | Executor debe respetar header de columnas al agregar filas |
-| CLI sobrescribe archivo milestone-scoped con snapshot completo | — | — | — | — | — | — | — | ✗ | ✗ | n/a | ✓ | evitado (archivado a mano) | `milestone complete` debería preservar el ROADMAP scoped del roadmapper |
-| CLI omite línea de Stats en MILESTONES.md | — | — | — | — | — | — | — | — | ✗ | ✗ | ✗ | evitado (archivado a mano) | `milestone complete` debería poblar Stats desde git/summaries |
-| UAT/verificación humana diferida al cierre en vez de por fase | — | — | — | — | — | ✗ | — | — | — | — | ✗ | ✗ (2/4 fases) | Agendar verificación visual como gate de fase (Phase 59 lo hizo bien) |
+| Issue | v1.1 | v1.2 | v1.4 | v1.5 | v1.6 | v1.7 | v1.8 | v1.9 | v1.10 | v1.11 | v1.12 | v1.13 | v1.14 | v1.15 | v1.16 | Fix |
+|-------|------|------|------|------|------|------|------|------|-------|-------|-----------|-------|-------|-------|------|------|
+| MILESTONES.md accomplishments vacíos | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | evitado (archivado a mano) | parcial (CLI pobló, reescrito a mano) | parcial (CLI pobló, reescrito a mano) | parcial (CLI volcó los 21 crudos + 1 basura, reescrito a mano) | Actualizar formato SUMMARY.md con `one_liner:` field |
+| STATE.md progress desactualizado durante ejecución | ✗ | parcial | parcial | parcial | parcial | parcial | parcial | parcial | parcial | parcial | parcial | parcial | parcial | parcial (quedó 75% con 4/4 fases hechas) | parcial (`stopped_at` quedó en 69-08 con 69-10 ya hecho) | GSD executor actualiza STATE al final de cada plan |
+| Integration bugs detectados tarde (audit, no verify) | — | ✗ | ✓ | ✓ | sin audit | ✓ | sin audit | ✓ | ✓ | sin audit | ✓ | ✓ | sin audit | ✓ (verify de Phase 65 atrapó el P2025) | ✓ (verify de Phase 69 atrapó el guard inalcanzable y el cache stale) | Audit antes de complete-milestone elimina retrabajo |
+| Audit saltado antes de archivar | — | — | — | — | ✗ | ✓ | ✗ | ✓ | ✓ | ✗ | ✓ | ✓ | ✗ | ✓ | ✓ | Correr /gsd:audit-milestone antes de /gsd:complete-milestone |
+| Progress table ROADMAP desalineada durante ejecución | — | — | — | — | — | — | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ (normalizada a mano) | ✓ (alineada) | ✓ | ✓ | Executor debe respetar header de columnas al agregar filas |
+| CLI sobrescribe archivo milestone-scoped con snapshot completo | — | — | — | — | — | — | — | ✗ | ✗ | n/a | ✓ | evitado (archivado a mano) | parcial (CLI archivó full ROADMAP, incluye v1.14 details) | parcial (CLI archivó el ROADMAP completo) | parcial (CLI archivó el ROADMAP completo otra vez) | `milestone complete` debería preservar el ROADMAP scoped del roadmapper |
+| CLI omite línea de Stats en MILESTONES.md | — | — | — | — | — | — | — | — | ✗ | ✗ | ✗ | evitado (archivado a mano) | ✗ (CLI omitió, agregado a mano) | ✗ (CLI omitió, agregado a mano) | ✗ (CLI omitió, agregado a mano) | `milestone complete` debería poblar Stats desde git/summaries |
+| UAT/verificación humana diferida al cierre en vez de por fase | — | — | — | — | — | ✗ | — | — | — | — | ✗ | ✗ (2/4 fases) | ✗ (3er milestone consecutivo) | ✓ (0 ítems diferidos) | ✓ (0 ítems diferidos, 2do consecutivo) | Agendar verificación visual como gate de fase (Phase 59 lo hizo bien) |
+| Directorios de fase borrados del disco sin archivar a milestones/ | — | — | — | — | — | — | — | — | — | — | — | — | ✗ (61–62 borradas, deleción sin commitear) | ✓ (recuperadas de HEAD y archivadas en v1.14-phases/) | ✓ (no se borraron; `archived: false`, quedan en `.planning/phases/`) | Archivar fases como paso del cierre, nunca borrarlas sueltas |

@@ -14,6 +14,7 @@ import { DollarSign, AlertTriangle, Clock, Users } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { formatTelefono } from "@/lib/telefono";
 
 export default function ReporteCuentasPage() {
   const [soloVencidas, setSoloVencidas] = useState(false);
@@ -30,7 +31,11 @@ export default function ReporteCuentasPage() {
 
   const columnasCuentas: ColumnDef<CuentaPorCobrar>[] = [
     { key: "nombreCompleto", header: "Paciente" },
-    { key: "telefono", header: "Teléfono" },
+    {
+      key: "telefono",
+      header: "Teléfono",
+      render: (value: string) => formatTelefono(value),
+    },
     {
       key: "saldoActual",
       header: "Saldo Actual",
@@ -57,7 +62,11 @@ export default function ReporteCuentasPage() {
 
   const columnasMorosidad: ColumnDef<CuentaMorosa>[] = [
     { key: "nombreCompleto", header: "Paciente" },
-    { key: "telefono", header: "Teléfono" },
+    {
+      key: "telefono",
+      header: "Teléfono",
+      render: (value: string) => formatTelefono(value),
+    },
     {
       key: "montoVencido",
       header: "Monto Vencido",

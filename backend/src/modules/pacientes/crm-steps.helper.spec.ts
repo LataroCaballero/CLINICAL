@@ -9,7 +9,8 @@
  *   2. presupuesto   — Presupuesto in estado ENVIADO or ACEPTADO
  *   3. cirugia       — any Cirugia record exists (fecha is required in model)
  *   4. consentimiento — ConsentimientoFirmado.firmadoAt (v1.12 primary) OR legacy flag
- *   5. indicacionesPreop — ConsentimientoFirmado.indicacionesLeidasAt (v1.12 primary) OR legacy flag
+ *   5. indicacionesPreop — Paciente.indicacionesLeidasAt (v1.14 primary) OR
+ *      ConsentimientoFirmado.indicacionesLeidasAt (v1.12 fallback) OR legacy flag
  */
 import { computePasosCrm, PacientePasosInput } from './crm-steps.helper';
 
@@ -22,6 +23,7 @@ function emptyInput(): PacientePasosInput {
     consentimientosFirmados: [],
     consentimientoFirmado: false,
     indicacionesEnviadas: false,
+    indicacionesLeidasAt: null,
   };
 }
 
@@ -195,7 +197,15 @@ describe('computePasosCrm — consentimiento', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('computePasosCrm — indicacionesPreop', () => {
-  it('is completo when ConsentimientoFirmado.indicacionesLeidasAt is present (v1.12 primary)', () => {
+  it('is completo when Paciente.indicacionesLeidasAt is present (v1.14 primary), even without consentimiento firmado or legacy flag', () => {
+    const result = computePasosCrm({
+      ...emptyInput(),
+      indicacionesLeidasAt: new Date(),
+    });
+    expect(result.pasos.indicacionesPreop).toBe('completo');
+  });
+
+  it('is completo via ConsentimientoFirmado.indicacionesLeidasAt (fallback 1, legacy v1.12) when primary is absent', () => {
     const result = computePasosCrm({
       ...emptyInput(),
       consentimientosFirmados: [
@@ -205,7 +215,7 @@ describe('computePasosCrm — indicacionesPreop', () => {
     expect(result.pasos.indicacionesPreop).toBe('completo');
   });
 
-  it('is completo via legacy indicacionesEnviadas flag (fallback for pre-v1.12)', () => {
+  it('is completo via legacy indicacionesEnviadas flag (fallback 2, pre-v1.12) when primary and fallback 1 are absent', () => {
     const result = computePasosCrm({
       ...emptyInput(),
       indicacionesEnviadas: true,
@@ -213,7 +223,7 @@ describe('computePasosCrm — indicacionesPreop', () => {
     expect(result.pasos.indicacionesPreop).toBe('completo');
   });
 
-  it('is pendiente when no ConsentimientoFirmado.indicacionesLeidasAt and legacy flag is false', () => {
+  it('is pendiente when all 3 sources (indicacionesLeidasAt, ConsentimientoFirmado.indicacionesLeidasAt, indicacionesEnviadas) are absent/null/false', () => {
     const result = computePasosCrm(emptyInput());
     expect(result.pasos.indicacionesPreop).toBe('pendiente');
   });
@@ -276,6 +286,7 @@ describe('computePasosCrm — robustez con null/undefined', () => {
         consentimientosFirmados: undefined as any,
         consentimientoFirmado: undefined as any,
         indicacionesEnviadas: undefined as any,
+        indicacionesLeidasAt: undefined as any,
       }),
     ).not.toThrow();
   });
@@ -288,6 +299,7 @@ describe('computePasosCrm — robustez con null/undefined', () => {
       consentimientosFirmados: undefined as any,
       consentimientoFirmado: undefined as any,
       indicacionesEnviadas: undefined as any,
+      indicacionesLeidasAt: undefined as any,
     });
     expect(result.pasos.hc).toBe('pendiente');
     expect(result.pasos.presupuesto).toBe('pendiente');
@@ -306,6 +318,7 @@ describe('computePasosCrm — robustez con null/undefined', () => {
         consentimientosFirmados: null as any,
         consentimientoFirmado: null as any,
         indicacionesEnviadas: null as any,
+        indicacionesLeidasAt: null as any,
       }),
     ).not.toThrow();
   });

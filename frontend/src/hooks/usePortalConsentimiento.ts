@@ -33,8 +33,6 @@ export interface FirmarConsentimientoPayload {
   zonaId: string;
   /** Raw output of SignaturePad.toDataURL('image/png') — not re-encoded (T-56-19) */
   signaturePngDataUrl: string;
-  /** Must be true to pass the D-11 gate; always sent as true from the confirmed click */
-  indicacionesLeidas: boolean;
 }
 
 // ── Query: GET /paciente-portal/public/consentimiento ────────────────────────
@@ -61,6 +59,23 @@ export function useFirmarConsentimiento() {
       const { data } = await portalApi.post(
         "/paciente-portal/public/consentimiento/firmar",
         payload
+      );
+      return data as { ok: boolean };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["portal-consentimiento"] });
+    },
+  });
+}
+
+// ── Mutation: POST /paciente-portal/public/indicaciones/acuse ────────────────
+
+export function useAcusarIndicaciones() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const { data } = await portalApi.post(
+        "/paciente-portal/public/indicaciones/acuse"
       );
       return data as { ok: boolean };
     },

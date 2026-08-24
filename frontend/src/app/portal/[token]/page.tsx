@@ -16,6 +16,7 @@ import {
   User,
   Heart,
   FileSignature,
+  ClipboardList,
   MessageCircle,
   ShieldAlert,
 } from "lucide-react";
@@ -25,6 +26,7 @@ import { PortalInfoBasica } from "@/components/portal/PortalInfoBasica";
 import { PortalSalud } from "@/components/portal/PortalSalud";
 import { PortalConsultas } from "@/components/portal/PortalConsultas";
 import { PortalConsentimiento } from "@/components/portal/PortalConsentimiento";
+import { PortalIndicaciones } from "@/components/portal/PortalIndicaciones";
 
 // ── State machine ────────────────────────────────────────────────────────────
 type PageState = "loading" | "dni-gate" | "blocked" | "ready" | "error";
@@ -34,6 +36,7 @@ const SECCIONES = [
   { id: "info", label: "Info basica", icon: User },
   { id: "salud", label: "Salud", icon: Heart },
   { id: "consentimiento", label: "Consentimiento", icon: FileSignature },
+  { id: "indicaciones", label: "Indicaciones", icon: ClipboardList },
   { id: "consultas", label: "Consultas", icon: MessageCircle },
 ];
 
@@ -359,7 +362,23 @@ export default function PortalPacientePage() {
           </AccordionContent>
         </AccordionItem>
 
-        {/* 4. Consultas */}
+        {/* 4. Indicaciones — separate from Consentimiento (INDIC-01) */}
+        <AccordionItem
+          value="indicaciones"
+          className="border rounded-xl bg-white shadow-sm px-4"
+        >
+          <AccordionTrigger className="hover:no-underline">
+            <div className="flex items-center gap-2">
+              <ClipboardList className="w-4 h-4 text-amber-500" />
+              <span className="font-semibold text-base">Indicaciones</span>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent>
+            <PortalIndicaciones />
+          </AccordionContent>
+        </AccordionItem>
+
+        {/* 5. Consultas */}
         <AccordionItem
           value="consultas"
           className="border rounded-xl bg-white shadow-sm px-4"

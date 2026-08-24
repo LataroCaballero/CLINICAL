@@ -155,7 +155,7 @@ model Paciente {
   nombreCompleto                    String
   dni                               String                   @unique
   fechaNacimiento                   DateTime?
-  telefono                          String
+  telefono                          String?
   telefonoAlternativo               String?
   email                             String?
   direccion                         String?
@@ -214,6 +214,7 @@ model Paciente {
   medicacion                        String[]
   adicciones                        String[]
   consentimientoFirmadoAt           DateTime?
+  indicacionesLeidasAt              DateTime? // INDIC-03: acuse global set-once
   portalToken                       String?                  @unique // SHA-256 hash, never plaintext (PITFALL 1)
   portalTokenGeneradoAt             DateTime?
   portalTokenCifrado                String? // raw portal token cifrado AES-256-GCM (recuperable); lookup sigue por portalToken hash (amplía D-12)
@@ -880,6 +881,7 @@ model Cirugia {
   @@index([pacienteId])
   @@index([profesionalId])
   @@index([fecha])
+  @@index([cirugiaCatalogoId])
 }
 
 enum EstadoCirugia {
@@ -1434,7 +1436,7 @@ model ConsentimientoFirmado {
   versionNumero               Int // snapshot from ConsentimientoZonaArchivo.version
   hashSha256                  String // SHA-256 of signed PDF buffer
   firmadoAt                   DateTime @default(now()) // UTC, DB default — T-56-02
-  indicacionesLeidasAt        DateTime // set at signing time, required
+  indicacionesLeidasAt        DateTime? // legacy v1.12 forensic value; new rows leave NULL (D-01)
 
   paciente                  Paciente                  @relation(fields: [pacienteId], references: [id])
   zona                      ZonaHC                    @relation(fields: [zonaId], references: [id])
